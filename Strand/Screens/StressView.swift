@@ -74,6 +74,7 @@ struct StressView: View {
 
     var body: some View {
         ScreenScaffold(title: "Stress", subtitle: "Autonomic load across your waking day",
+                       quietSubtitle: true,
                        // PERF (scroll): lazy column — byte-identical layout (LazyVStack == eager VStack
                        // alignment/spacing/header). The content is one inner eager VStack, so the staggered
                        // section reveal is unchanged; this only defers building that stack until it scrolls in.
@@ -415,6 +416,15 @@ struct StressView: View {
                     StatePill("\(model.band.title)", tone: model.band.tone, showsDot: true)
                 }
 
+                #if os(iOS)
+                // The number and the band pill already state the score. The generated coaching
+                // sentence repeated both and added advice the chart does not measure.
+                HStack {
+                    Spacer(minLength: 0)
+                    StressHeroGauge(score: model.score, tint: StressRamp.color(model.score))
+                    Spacer(minLength: 0)
+                }
+                #else
                 HStack(alignment: .center, spacing: NoopMetrics.space5) {
                     // The stress-level vessel: fills to score/3, tinted to the live band, the value
                     // counting up over it. Taps splash the gauge (the numeral is hit-transparent).
@@ -433,6 +443,7 @@ struct StressView: View {
                     }
                     Spacer(minLength: 0)
                 }
+                #endif
             }
         }
     }

@@ -26,6 +26,7 @@ struct HealthView: View {
     var body: some View {
         ScreenScaffold(title: "Health Monitor",
                        subtitle: "Live vitals, streamed from the strap.",
+                       quietSubtitle: true,
                        // PERF (scroll): lazy column — byte-identical layout (LazyVStack == eager VStack
                        // alignment/spacing/header); builds the trailing vitals/skin-temp/age sections on
                        // demand instead of all up-front.

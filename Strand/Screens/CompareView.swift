@@ -172,6 +172,7 @@ struct CompareView: View {
 
     var body: some View {
         ScreenScaffold(title: "Compare", subtitle: "Overlay signals, draw conclusions.",
+                       quietSubtitle: true,
                        // PERF (scroll): lazy column — byte-identical layout (LazyVStack == eager VStack
                        // alignment/spacing/header). The content is one inner eager VStack; no staggered
                        // reveals, and the only GeometryReaders are chart-local (.chartOverlay plot rects),

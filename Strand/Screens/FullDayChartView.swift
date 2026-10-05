@@ -84,7 +84,8 @@ struct FullDayChartView: View {
     private var visibleWindow: ClosedRange<Date> { zoomDomain ?? dayBounds }
 
     var body: some View {
-        ScreenScaffold(title: "Deep Timeline", subtitle: "Every second of your day, zoomable.") {
+        ScreenScaffold(title: "Deep Timeline", subtitle: "Every second of your day, zoomable.",
+                       quietSubtitle: true) {
             metricPills
             dayNav
             sourcePill

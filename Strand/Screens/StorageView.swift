@@ -19,7 +19,8 @@ struct StorageView: View {
 
     var body: some View {
         ScreenScaffold(title: "Storage",
-                       subtitle: "Where NOOP's on-device space is going, and a one-tap clean-up.") {
+                       subtitle: "Where NOOP's on-device space is going, and a one-tap clean-up.",
+                       quietSubtitle: true) {
             VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
                 if loading && report == nil {
                     StatePill("Measuring…", tone: .accent, pulsing: true)

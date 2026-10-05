@@ -156,6 +156,7 @@ struct SleepView: View {
         // status bar and stable on overscroll — pulling to the top reveals the scene, not surfaceBase.
         ScreenScaffold(title: resolved == nil ? "Sleep" : nil,
                        subtitle: resolved == nil ? "Last night, read in two seconds." : nil,
+                       quietSubtitle: true,
                        // PERF (scroll): lazy column — byte-identical layout (LazyVStack == eager VStack
                        // alignment/spacing/header), builds trailing trend/ledger cards on demand. Combined
                        // with dropping the top-level LiveState observation (the sleep-mark card + the

@@ -60,6 +60,7 @@ struct CoachView: View {
     var body: some View {
         ScreenScaffold(title: "Coach",
                        subtitle: "Ask about your charge, effort, rest and workouts, grounded in your own numbers.",
+                       quietSubtitle: true,
                        // Liquid finish: the same full-bleed day-of-sky backdrop Today + the other liquid
                        // tabs carry, so Coach sits in one atmosphere. Static + non-interactive; the frosted
                        // message/setup cards below sit on the opaque canvas and stay legible.

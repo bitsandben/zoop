@@ -22,7 +22,8 @@ struct PowerSavingView: View {
 
     var body: some View {
         ScreenScaffold(title: "Power saving",
-                       subtitle: "Ease the load on your strap when its battery is running low.") {
+                       subtitle: "Ease the load on your strap when its battery is running low.",
+                       quietSubtitle: true) {
             VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
                 NoopCard {
                     VStack(alignment: .leading, spacing: 16) {

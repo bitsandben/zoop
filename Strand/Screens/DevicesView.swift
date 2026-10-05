@@ -23,6 +23,7 @@ struct DevicesView: View {
     var body: some View {
         ScreenScaffold(title: "Devices",
                        subtitle: "Pair and manage the bands NOOP reads from.",
+                       quietSubtitle: true,
                        // The day-of-sky liquid backdrop, matching Today / Health / Sleep / Trends: a fixed,
                        // full-bleed time-of-day sky behind the scroll content (it does not scroll).
                        topBackground: liquidScaffoldSky()) {

@@ -110,6 +110,7 @@ struct LiveView: View {
     var body: some View {
         ScreenScaffold(title: "Live Body Console",
                        subtitle: "Current physiology, strap trust, and session controls in one working view.",
+                       quietSubtitle: true,
                        topBackground: liquidScaffoldSky()) {
             VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
                 consoleHeader

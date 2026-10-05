@@ -181,6 +181,7 @@ private struct BreathingContent: View {
     var body: some View {
         ScreenScaffold(title: "Breathe",
                        subtitle: "Haptic-paced breathing · find your pace · calm down",
+                       quietSubtitle: true,
                        // Liquid finish: the same full-bleed day-of-sky backdrop Today + the other liquid
                        // tabs carry, so Breathe sits in one atmosphere.
                        topBackground: liquidScaffoldSky()) {

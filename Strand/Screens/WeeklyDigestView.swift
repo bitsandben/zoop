@@ -87,6 +87,7 @@ struct WeeklyDigestView: View {
     var body: some View {
         ScreenScaffold(title: "Week in review",
                        subtitle: "Your Monday-to-Sunday, read in one glance.",
+                       quietSubtitle: true,
                        // PERF: chart-heavy column (per-score summary cards with gauges, the metric grid
                        // and the focal-points list, all inside WeeklyDigestContent). The LazyVStack path
                        // is byte-identical layout. The content is kept in its inner VStack(sectionGap=22)

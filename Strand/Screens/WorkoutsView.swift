@@ -178,6 +178,7 @@ struct WorkoutsView: View {
         let unscopedRows = sessions(for: resolved)
         let trendRows = recoveryTrendRows(from: unscopedRows)
         return ScreenScaffold(title: "Workouts", subtitle: "Every session, threaded together.",
+                               quietSubtitle: true,
                        onRefresh: { await repo.refresh() },
                        // PERF: the column ends in the full "All Sessions" log (the breakdown grid, the
                        // zones card, and a row-per-session table). On a large imported history the eager

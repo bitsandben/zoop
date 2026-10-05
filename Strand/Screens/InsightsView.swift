@@ -210,6 +210,7 @@ struct InsightsView: View {
 
     var body: some View {
         ScreenScaffold(title: "Insights", subtitle: "Interrogate what affects what.",
+                       quietSubtitle: true,
                        // PERF (scroll): lazy column, byte-identical layout (LazyVStack == eager VStack
                        // alignment/spacing/header). The content is one inner eager VStack, so any nested
                        // staggered reveals are unchanged; this only defers building that stack on scroll-in.

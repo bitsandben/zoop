@@ -503,6 +503,7 @@ struct MetricExplorerView: View {
         // `staggeredAppear` here and identical column alignment/spacing (20) + per-child bottom padding,
         // so the layout is byte-identical to the eager VStack.
         ScreenScaffold(title: "Explore", subtitle: "Every signal, one tap deep.",
+                       quietSubtitle: true,
                        onRefresh: { await repo.refresh() }, lazy: true,
                        topBackground: liquidScaffoldSky()) {
             // A quiet, non-blocking hint while the empty-dot probe runs its first pass. The rows below

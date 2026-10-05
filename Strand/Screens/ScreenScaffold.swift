@@ -20,6 +20,9 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
     /// Optional full-bleed view drawn behind the scroll content at the TOP of the screen (e.g. Today's
     /// day-cycle scene). Defaults to nil so other screens stay on the flat canvas; nil renders nothing.
     var topBackground: AnyView? = nil
+    /// iOS hides this screen's subtitle when set. The string stays in the call for macOS, where the
+    /// second line still renders. Used for taglines that restated the title.
+    var quietSubtitle: Bool = false
     /// Optional element pinned to the header's trailing edge (e.g. the strap-battery badge on Today).
     /// Defaults to `EmptyView` via the convenience init below, so other screens are unaffected.
     @ViewBuilder var trailing: () -> Trailing
@@ -118,17 +121,31 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 if let title {
-                    // Match the liquid home's title face (SF Rounded 28) so every page's header reads
-                    // identically (2026-07-02 cohesion pass).
+                    // iOS uses a quieter title so the numbers below the header lead. macOS keeps the
+                    // 28pt face the cohesion pass locked to the liquid home.
+                    #if os(iOS)
+                    Text(title).font(StrandFont.rounded(22)).foregroundStyle(StrandPalette.textPrimary)
+                    #else
                     Text(title).font(StrandFont.rounded(28)).foregroundStyle(StrandPalette.textPrimary)
+                    #endif
                 }
-                if let subtitle {
+                if showsSubtitle, let subtitle {
                     Text(subtitle).font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
                 }
             }
             Spacer(minLength: 0)
             trailing()
         }
+    }
+
+    /// Taglines stay on macOS. On iOS they drop when the screen opts in, so a date or a subpage
+    /// name passed as `subtitle` still shows unless that screen asks for quiet.
+    private var showsSubtitle: Bool {
+        #if os(iOS)
+        !quietSubtitle
+        #else
+        true
+        #endif
     }
 }
 
@@ -137,9 +154,11 @@ extension ScreenScaffold where Trailing == EmptyView {
     /// call site (which never passed `trailing`) source-compatible.
     init(title: LocalizedStringKey?, subtitle: LocalizedStringKey? = nil,
          onRefresh: (() async -> Void)? = nil, lazy: Bool = false, topBackground: AnyView? = nil,
+         quietSubtitle: Bool = false,
          @ViewBuilder content: @escaping () -> Content) {
         self.init(title: title, subtitle: subtitle, onRefresh: onRefresh, lazy: lazy,
-                  topBackground: topBackground, trailing: { EmptyView() }, content: content)
+                  topBackground: topBackground, quietSubtitle: quietSubtitle,
+                  trailing: { EmptyView() }, content: content)
     }
 }
 
@@ -169,8 +188,10 @@ struct ComingSoon: View {
                 .foregroundStyle(StrandPalette.accent)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 8) {
+                #if !os(iOS)
                 Text("Coming together")
                     .font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
+                #endif
                 Text(what)
                     .font(StrandFont.body).foregroundStyle(StrandPalette.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)

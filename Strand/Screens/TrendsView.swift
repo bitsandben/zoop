@@ -296,7 +296,8 @@ struct TrendsView: View {
                        // section reveal is unchanged; this only defers building that stack until it scrolls in.
                        onRefresh: { await repo.refresh() },
                        lazy: true,
-                       topBackground: liquidScaffoldSky()) {
+                       topBackground: liquidScaffoldSky(),
+                       quietSubtitle: true) {
             if repo.days.isEmpty {
                 ComingSoon(what: repo.loaded
                     ? "Trends need history to draw. Import your WHOOP export in Data Sources to see weeks, months and years instantly."
@@ -308,6 +309,9 @@ struct TrendsView: View {
                 VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
                     // The main card list ripples in once on appear (Reduce-Motion safe).
                     Group {
+                        #if os(iOS)
+                        weeklyChargeBars
+                        #endif
                         // Week-in-review digest (#208) with prev/next week browsing (#710) — self-hides
                         // only when NO week in history has data. Past weeks render in the same format.
                         weeklyDigestNav
@@ -348,6 +352,57 @@ struct TrendsView: View {
             sleepPerfRevision += 1
         }
     }
+
+    // MARK: Week bars (iOS)
+
+    // Last seven stored days of Charge, drawn as value-tinted bars. Days without a score keep
+    // their tick so a gap stays visible. Hidden until two scores exist — one bar is not a week.
+    #if os(iOS)
+    @ViewBuilder
+    private var weeklyChargeBars: some View {
+        let recent = Array(repo.days.suffix(7))
+        let scored = recent.compactMap(\.recovery)
+        if scored.count >= 2 {
+            NoopCard {
+                VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+                    Text("Charge").strandOverline()
+                    HStack(alignment: .bottom, spacing: NoopMetrics.space2) {
+                        ForEach(recent, id: \.day) { day in
+                            chargeBar(day)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func chargeBar(_ day: DailyMetric) -> some View {
+        let value = day.recovery
+        let height = CGFloat(value.map { max(0.08, min(1, $0 / 100)) } ?? 0.08) * (NoopMetrics.space8 * 2)
+        return VStack(spacing: NoopMetrics.space1) {
+            Text(value.map { "\(Int($0.rounded()))" } ?? " ")
+                .font(StrandFont.captionNumber)
+                .foregroundStyle(StrandPalette.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+            RoundedRectangle(cornerRadius: NoopMetrics.space1, style: .continuous)
+                .fill(value.map { StrandPalette.recoveryColor($0) } ?? StrandPalette.hairline)
+                .frame(maxWidth: .infinity)
+                .frame(height: height)
+            Text(weekdayTick(day.day))
+                .font(StrandFont.caption)
+                .foregroundStyle(StrandPalette.textTertiary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func weekdayTick(_ key: String) -> String {
+        guard let d = date(key) else { return "" }
+        return d.formatted(.dateTime.weekday(.narrow).locale(locale))
+    }
+    #endif
 
     // MARK: Week-in-review digest with prev/next week browsing (#710)
 
@@ -567,10 +622,12 @@ struct TrendsView: View {
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: NoopMetrics.space1) {
                     Text("Export trends report").strandOverline()
+                    #if !os(iOS)
                     Text("A shareable one-page PDF of recovery, sleep, HRV, resting HR and strain over a range, saved on your \(Platform.deviceNoun).")
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .fixedSize(horizontal: false, vertical: true)
+                    #endif
                 }
                 Spacer(minLength: NoopMetrics.space2)
                 // The card's call-to-action — routed through the unified button system (secondary kind:
