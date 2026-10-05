@@ -48,6 +48,10 @@
     <string name="nav_settings">Definições</string>
     <string name="nav_test_centre">Centro de testes</string>
     <string name="nav_more">Mais</string>
+    <string name="nav_bar_home">Início</string>
+    <string name="nav_bar_health">Saúde</string>
+    <string name="nav_bar_coach">Coach de IA</string>
+    <string name="nav_bar_more">Mais</string>
     <string name="more_group_insights">Análises</string>
     <string name="more_group_body">Corpo</string>
     <string name="more_group_data">Dados</string>
@@ -1990,6 +1994,7 @@
     <string name="settings_language">Idioma</string>
     <string name="settings_choose_language">Escolher idioma</string>
     <string name="settings_language_system">Predefinição do sistema</string>
+    <string name="settings_language_detail">O NOOP está disponível em inglês e alemão. Sistema segue um telemóvel em alemão e, caso contrário, usa inglês. Reabre o NOOP para aplicar a alteração.</string>
     <string name="settings_appearance_detail">Escolhe Claro, Escuro ou segue o teu sistema. Escuro é o característico quase preto; Claro mantém o mesmo visual limpo num ecrã luminoso.</string>
     <string name="settings_theme_light">Claro</string>
     <string name="settings_theme_dark">Escuro</string>

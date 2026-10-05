@@ -34,6 +34,9 @@ import kotlinx.coroutines.runBlocking
 class NoopApplication : Application() {
 
     override fun attachBaseContext(base: Context) {
+        // Settings first, then language: a wiped prefs file is filled from the on-device snapshot
+        // before the UI locale is chosen, so an update does not come back in the wrong language.
+        com.noop.persist.LocalSettingsArchive.restoreIfMissing(base)
         super.attachBaseContext(AppLanguagePrefs.wrap(base))
         // UI resource lookup is intentionally available before onCreate: data-driven presentation
         // helpers (release notes, metric catalogs) can resolve a resource without becoming
@@ -59,6 +62,8 @@ class NoopApplication : Application() {
         // case it exists for is a strap that stopped talking. Scheduled here rather than beside a widget
         // so it does not inherit that widget's lifecycle. KEEP, so this is a no-op once scheduled.
         com.noop.notif.StaleBatteryWorker.ensureScheduled(this)
+        // After the one-time prefs migrations above, so the snapshot matches what this launch will use.
+        com.noop.persist.LocalSettingsArchive.snapshot(this)
     }
 
     /** Process-wide Room-backed store. One instance shared by the UI and the background service. */

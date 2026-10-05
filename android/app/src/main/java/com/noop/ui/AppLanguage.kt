@@ -8,24 +8,33 @@ import java.util.Locale
 
 /**
  * App-owned UI language. Units and time zone remain independent, while locale-sensitive display
- * formatting follows this selection through [Locale.setDefault]. Adding a language here therefore
- * requires auditing default-locale parsers and formatters, especially persistent day keys: storage
- * formats must pin their locale and chronology before supporting different numeral or calendar systems.
+ * formatting follows this selection through [Locale.setDefault].
+ *
+ * Only English and German are offered. System follows a German phone and uses English otherwise, so a
+ * device set to another language cannot surface a leftover translation. Storage formats must still pin
+ * their locale and chronology; this selection must not leak into persistent day keys.
  */
 enum class AppLanguage(val storageValue: String?, val autonym: String) {
     SYSTEM(null, ""),
     ENGLISH("en", "English"),
-    GERMAN("de", "Deutsch"),
-    SPANISH("es", "Español"),
-    FRENCH("fr", "Français"),
-    ITALIAN("it", "Italiano"),
-    PORTUGUESE("pt-PT", "Português"),
-    POLISH("pl", "Polski"),
-    CHINESE("zh", "中文");
+    GERMAN("de", "Deutsch");
 
     companion object {
         fun fromStorage(raw: String?): AppLanguage =
             entries.firstOrNull { it.storageValue == raw } ?: SYSTEM
+
+        /**
+         * English, German, or — for System and any legacy tag (Spanish, French, …) — German only when
+         * [systemLanguage] itself is German.
+         */
+        fun resolvedTag(stored: String?, systemLanguage: String): String = when (fromStorage(stored)) {
+            GERMAN -> "de"
+            ENGLISH -> "en"
+            SYSTEM -> if (languageSubtag(systemLanguage) == "de") "de" else "en"
+        }
+
+        private fun languageSubtag(tag: String): String =
+            tag.lowercase().substringBefore('-').substringBefore('_')
     }
 }
 
@@ -42,15 +51,16 @@ object AppLanguagePrefs {
     private fun prefs(context: Context) =
         context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
-    fun selected(context: Context): AppLanguage =
-        AppLanguage.fromStorage(prefs(context).getString(KEY, null))
+    fun selected(context: Context): AppLanguage {
+        canonicalize(context)
+        return AppLanguage.fromStorage(prefs(context).getString(KEY, null))
+    }
 
     fun wrap(context: Context): Context {
-        val language = selected(context)
+        canonicalize(context)
+        val language = AppLanguage.fromStorage(prefs(context).getString(KEY, null))
         val locales = localesFor(language)
         Locale.setDefault(locales[0])
-        if (language == AppLanguage.SYSTEM) return context
-
         val configuration = Configuration(context.resources.configuration)
         configuration.setLocales(locales)
         return context.createConfigurationContext(configuration)
@@ -60,8 +70,19 @@ object AppLanguagePrefs {
         prefs(context).edit().apply {
             if (language == AppLanguage.SYSTEM) remove(KEY)
             else putString(KEY, language.storageValue)
-        }.apply()
+        }.commit()
+        applyToResources(context, language)
+    }
 
+    /** Drop a stored tag this build no longer offers (es, fr, …) so the picker lands on System. */
+    private fun canonicalize(context: Context) {
+        val raw = prefs(context).getString(KEY, null) ?: return
+        if (AppLanguage.entries.none { it.storageValue == raw }) {
+            prefs(context).edit().remove(KEY).commit()
+        }
+    }
+
+    private fun applyToResources(context: Context, language: AppLanguage) {
         // The Application outlives Activity.recreate(), so update its Resources too. That keeps
         // uiString() and a running foreground service from retaining the previous language.
         val appResources = context.applicationContext.resources
@@ -74,10 +95,8 @@ object AppLanguagePrefs {
     }
 
     private fun localesFor(language: AppLanguage): LocaleList {
-        if (language == AppLanguage.SYSTEM) {
-            val system = Resources.getSystem().configuration.locales
-            return if (system.isEmpty) LocaleList(Locale.ENGLISH) else system
-        }
-        return LocaleList(Locale.forLanguageTag(checkNotNull(language.storageValue)))
+        val system = Resources.getSystem().configuration.locales
+        val systemTag = if (system.isEmpty) "en" else system[0].toLanguageTag()
+        return LocaleList.forLanguageTags(AppLanguage.resolvedTag(language.storageValue, systemTag))
     }
 }

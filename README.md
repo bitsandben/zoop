@@ -90,9 +90,10 @@ Pre-built apps you can run right now:
 > - **Still blocked by Play Protect?** It's your call to make for an unsigned app you trust: open the
 >   **Play Store → your profile icon → Play Protect → ⚙ Settings**, toggle **"Scan apps with Play
 >   Protect" off**, install NOOP, then switch it **back on**.
-> - **Reinstalling is safe.** Uninstalling and installing again won't hurt anything — NOOP keeps all
->   data on-device with `allowBackup=false`, so a reinstall simply starts fresh. There's no cloud copy
->   to lose either way.
+> - **An update keeps your data.** Installing a newer build over the app that is already on the phone
+>   leaves the on-device database and settings in place, including after the app itself is updated.
+>   Uninstalling is different: `allowBackup=false` means Android does not upload that data, so a
+>   remove-and-reinstall starts fresh. There is no cloud copy either way.
 
 Prefer to build it yourself? See [`docs/BUILD.md`](docs/BUILD.md).
 

@@ -50,6 +50,10 @@
     <string name="nav_test_centre">Тестовый центр</string>
     <string name="nav_self_hosted_push">Свой сервер push</string>
     <string name="nav_more">Ещё</string>
+    <string name="nav_bar_home">Главная</string>
+    <string name="nav_bar_health">Здоровье</string>
+    <string name="nav_bar_coach">ИИ-коуч</string>
+    <string name="nav_bar_more">Ещё</string>
     <string name="push_title">Свой сервер push</string>
     <string name="push_subtitle">Эксперимент · Android</string>
     <string name="push_destination_title">Ваш адрес</string>
@@ -1987,6 +1991,7 @@
     <string name="settings_language">Язык</string>
     <string name="settings_choose_language">Выбрать язык</string>
     <string name="settings_language_system">Системный</string>
+    <string name="settings_language_detail">NOOP доступен на английском и немецком. Система следует немецкому телефону, иначе используется английский. Перезапустите NOOP, чтобы применить изменение.</string>
     <string name="settings_appearance_detail">Выберите светлую, тёмную тему или системную. Тёмная — фирменный почти чёрный вид; светлая сохраняет тот же чистый стиль на светлом фоне.</string>
     <string name="settings_theme_light">Светлая</string>
     <string name="settings_theme_dark">Тёмная</string>

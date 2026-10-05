@@ -52,6 +52,10 @@ struct StrandiOSApp: App {
     @AppStorage(UnitPrefs.systemKey) private var unitSystemRaw = UnitSystem.metric.rawValue
 
     init() {
+        // Settings before anything else reads them. An update keeps the database in the app
+        // container; this restores the preferences file if that half came back empty.
+        LocalSettingsArchive.restoreIfEmpty()
+        AppLanguage.installAtLaunch()
         // #1008: pin the pre-change Overnight-only default for existing installs before
         // anything reads it. Idempotent; a no-op on fresh installs and after the first launch.
         PuffinExperiment.migrateContinuousHrvOvernightDefault()
@@ -175,6 +179,7 @@ struct StrandiOSApp: App {
         model.healthWriteBack = { [weak bridge] in
             _ = await bridge?.writeBackAfterNewData()
         }
+        LocalSettingsArchive.snapshot()
     }
 
     /// The Shortcut-import alert's presentation binding, hoisted OUT of the `.alert` chain.
