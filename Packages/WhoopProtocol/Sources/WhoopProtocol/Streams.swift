@@ -45,7 +45,7 @@ public enum StandardHRContact: String, Equatable, Codable, Sendable {
 /// what lets scoring read one copy while both stay on disk as each other's cross-check.
 ///
 /// The raw values are the DURABLE, cross-platform storage codes for `rrInterval.srcChannel` and must
-/// stay in lockstep with Kotlin `RrSourceChannel` — they are written to SQLite and cross the `.noopbak`
+/// stay in lockstep with Kotlin `RrSourceChannel` — they are written to SQLite and cross the `.zoopbak`
 /// boundary, so they are a wire format, not an implementation detail. Never renumber a case; only append.
 public enum RRSourceChannel: Int, Equatable, Codable, Sendable, CaseIterable {
     /// Oura 0x80 `green_ibi_quality_event` — the green-LED beat train, gated on the ring's own

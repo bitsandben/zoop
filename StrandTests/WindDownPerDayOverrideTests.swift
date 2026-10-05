@@ -1,7 +1,7 @@
 import XCTest
 @testable import Strand
 
-/// PR#554 (MumiZed, reimplemented as NoopApp) — per-day wake overrides for the wind-down nudge.
+/// PR#554 (MumiZed, reimplemented as ZoopApp) — per-day wake overrides for the wind-down nudge.
 ///
 /// The nudge derives its fire time from the user's wake time minus sleep need minus lead. Per-day overrides
 /// let a single weekday use a DIFFERENT wake time (a weekend lie-in, say) while every un-overridden day

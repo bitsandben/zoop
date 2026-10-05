@@ -19,7 +19,7 @@ struct OuraTokens: Equatable, Codable {
 /// under a fixed service, so tokens never land in UserDefaults, a plist, or on disk in the clear.
 /// Mirrors AIKeyStore exactly (delete-then-add, ThisDeviceOnly Keychain accessibility).
 enum OuraTokenStore {
-    private static let service = "com.noop.oura"
+    private static let service = "com.zoop.oura"
     private static let account = "oauth-tokens"
 
     private static var baseQuery: [String: Any] {

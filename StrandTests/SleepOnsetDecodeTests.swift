@@ -18,7 +18,7 @@ import XCTest
 /// Android twin: SleepScreen's onset stub-test caller needs the same both-format decode.
 final class SleepOnsetDecodeTests: XCTestCase {
 
-    /// The REAL 12:16 → 1:22 first-sleep fragment (deviceId my-whoop-noop, startTs 1784013364),
+    /// The REAL 12:16 → 1:22 first-sleep fragment (deviceId my-whoop-zoop, startTs 1784013364),
     /// byte-for-byte as stored on the device: an on-device computed night's SEGMENT ARRAY.
     /// Non-wake sum: light 926 s + deep 1320 s + rem 990 s = 3236 s ≈ 53.9 asleep minutes.
     private static let fragmentStagesJSON = """

@@ -17,7 +17,7 @@ workouts.
 
 | Feature | NOOP source | HealthKit output | Idempotency key |
 |---|---|---|---|
-| Sleep sessions | `WhoopStore.sleepSessions` — computed (`deviceId+"-noop"`) unioned with imported (`deviceId`), imported wins on `startTs` | One `.inBed` sample spanning `effectiveStartTs→endTs`, plus one `HKCategorySample` per stage segment: `deep→.asleepDeep`, `rem→.asleepREM`, `light→.asleepCore`, `wake`/`awake`→`.awake`. Sessions without `stagesJSON` get one `.asleepUnspecified` block. | `noop:<deviceId>:sleep:<startTs>` on every sample of the session |
+| Sleep sessions | `WhoopStore.sleepSessions` — computed (`deviceId+"-zoop"`) unioned with imported (`deviceId`), imported wins on `startTs` | One `.inBed` sample spanning `effectiveStartTs→endTs`, plus one `HKCategorySample` per stage segment: `deep→.asleepDeep`, `rem→.asleepREM`, `light→.asleepCore`, `wake`/`awake`→`.awake`. Sessions without `stagesJSON` get one `.asleepUnspecified` block. | `noop:<deviceId>:sleep:<startTs>` on every sample of the session |
 | Heart rate | `WhoopStore.hrBuckets(bucketSeconds: 60)` under the strap device id (measured-first with PPG fallback, same read the charts use) | 1-minute `heartRate` samples, 24/7. Raw 1 Hz deliberately downsampled: ~86–170k samples/day would bloat the Health store; 1/min matches Apple Watch background cadence and beats Oura's 5-min. | Forward-only cursor in UserDefaults (`hkHRWriteCursor.v1.<deviceId>`) + a 48 h rewrite window: each run deletes NOOP-authored HR in the window (source-scoped, date-range predicate) and rewrites, so late strap offloads inside 48 h reconcile. First run backfills the full 14-day window. |
 | Workouts | `WhoopStore.workouts` for both device ids, **excluding** `source == "apple-health"` (those were imported FROM Health — writing them back would duplicate) | `HKWorkoutBuilder` workout with reverse-mapped `HKWorkoutActivityType`, an `activeEnergyBurned` sample when `energyKcal` is present, a distance sample for distance sports when `distanceM` is present. | `noop:<deviceId>:workout:<startTs>` in workout metadata; delete-then-write on `workoutType()` |
 | Nightly vitals (existing) | unchanged | unchanged types, but stamped at the day's sleep-session end (wake time) when one exists instead of fabricated noon | unchanged (`noop:<deviceId>:<hkid>:<day>`), so re-stamping replaces cleanly |
@@ -57,5 +57,5 @@ wake the observers. Verified against the current predicates.
 - Stage-segment parsing/clamping/normalization is a pure function in `Packages/StrandImport`
   (`HealthWriteback.stageIntervals`) with `swift test` coverage: valid JSON, nil/garbage JSON,
   `wake` vs `awake` vocab, segments clamped to session bounds, zero-length segments dropped.
-- HealthKit itself is not unit-testable; app-target changes are verified by compiling `NOOPiOS`
+- HealthKit itself is not unit-testable; app-target changes are verified by compiling `ZoopiOS`
   locally (no default CI covers app targets per CLAUDE.md).

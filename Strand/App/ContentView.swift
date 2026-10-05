@@ -4,11 +4,11 @@ import StrandDesign
 /// Root — the sidebar shell, with the first-run onboarding/pairing wizard overlaid until complete,
 /// and a "What's New" changelog sheet shown automatically after an update.
 struct ContentView: View {
-    @AppStorage("noop.onboarded") private var onboarded = false
-    @AppStorage("noop.lastSeenChangelogVersion") private var lastSeenChangelog = ""
-    @AppStorage("noop.acceptedTermsVersion") private var acceptedTerms = ""
+    @AppStorage("zoop.onboarded") private var onboarded = false
+    @AppStorage("zoop.lastSeenChangelogVersion") private var lastSeenChangelog = ""
+    @AppStorage("zoop.acceptedTermsVersion") private var acceptedTerms = ""
     /// Local timestamp of the last terms acceptance — the on-device consent record (version + when).
-    @AppStorage("noop.acceptedTermsAt") private var acceptedTermsAt = ""
+    @AppStorage("zoop.acceptedTermsAt") private var acceptedTermsAt = ""
     @State private var showWhatsNew = false
 
     var body: some View {

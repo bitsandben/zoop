@@ -107,7 +107,7 @@ still the best way to avoid wasted work — it's just not an enforced gate.
 The codebase is split into reusable, cross-platform Swift packages plus a thin platform-specific app
 layer. The **macOS app is the reference implementation**; **Android ships as a full app** under
 `android/`, and **iOS was folded into `main` in v1.94** and is a **build-from-source-only target**
-(`NOOPiOS` / `NOOPiOSWidgets`) — no App Store/TestFlight, to keep the project anonymous (see
+(`ZoopiOS` / `ZoopiOSWidgets`) — no App Store/TestFlight, to keep the project anonymous (see
 [`IOS.md`](IOS.md)). All reuse the same packages where they can.
 
 ```
@@ -304,7 +304,7 @@ xcodebuild -project Strand.xcodeproj -scheme Strand -destination 'platform=macOS
 ```
 
 The scheme is `Strand`; the built product is `NOOP.app` (`project.yml` sets `PRODUCT_NAME: NOOP`,
-bundle id `com.noopapp.noop`). The app is **sandboxed** with the Bluetooth and
+bundle id `com.zoopapp.zoop`). The app is **sandboxed** with the Bluetooth and
 user-selected-files entitlements and is **ad-hoc signed** — no Apple Developer account needed for a
 personal build. See [`BUILD.md`](BUILD.md) for the signed-bundle recipe and pairing notes.
 
@@ -334,7 +334,7 @@ anonymous, offline, sideloaded project — not a gap to fill with more gates.
   [CONTRIBUTING.md](../CONTRIBUTING.md#what-ci-checks) maps them.
 - **On relevant PRs:** `app-build.yml` is active and path-filtered to the Apple app/test targets,
   `Packages/**`, `project.yml` and its own workflow file. It compiles `Strand` on `macos-15` and
-  `NOOPiOS` on `macos-26` (for the iOS 26 SDK), and runs `StrandTests` on the macOS leg; the iOS leg
+  `ZoopiOS` on `macos-26` (for the iOS 26 SDK), and runs `StrandTests` on the macOS leg; the iOS leg
   is compile-only. Before concluding an app-layer change is validated, build locally or verify the
   corresponding app checks passed on the current PR head. Package tests alone do not compile Apple
   app targets; Android's app compile and unit tests are covered by `android.yml`.
@@ -390,13 +390,13 @@ labels, use the `Text.strandOverline()` helper rather than styling by hand.
 
 ### Components — compose, don't reinvent
 
-From `Components.swift` and the chart files. The locked surface is **`NoopCard`** (one radius,
+From `Components.swift` and the chart files. The locked surface is **`ZoopCard`** (one radius,
 border, fill, and hover behavior). Build screens from the shared pieces:
 
 | Component | Use |
 |---|---|
-| `NoopCard` | The one card surface. Every card is this. |
-| `StatTile` | Uniform fixed-height metric tile (`NoopMetrics.tileHeight`), with optional sparkline + delta. |
+| `ZoopCard` | The one card surface. Every card is this. |
+| `StatTile` | Uniform fixed-height metric tile (`ZoopMetrics.tileHeight`), with optional sparkline + delta. |
 | `ChartCard` / `ChartFooter` | Header + fixed-height chart body + optional footer stats. |
 | `SectionHeader` | Overline + title + optional trailing. |
 | `InsightCard` | Category / status / detail insight block. |
@@ -404,7 +404,7 @@ border, fill, and hover behavior). Build screens from the shared pieces:
 | `SourceBadge` | "MY-WHOOP" / "APPLE HEALTH" provenance chip. |
 | `RecoveryRing`, `StrainGauge`, `Hypnogram`, `Sparkline`, `TrendChart`, `YearHeatStrip`, `StatePill` | Charts/indicators. |
 
-Spacing and sizing come from `NoopMetrics` (`cardRadius`, `cardPadding`, `gap`, `sectionGap`,
+Spacing and sizing come from `ZoopMetrics` (`cardRadius`, `cardPadding`, `gap`, `sectionGap`,
 `screenPadding`, `tileHeight`, `chartHeight`) and animation from `StrandMotion`
 (`interactive`, `gentle`, `hero`, …). Do not introduce magic numbers for these.
 
@@ -431,7 +431,7 @@ then used. Screens stay thin; the system stays canonical.
 - **`@MainActor` for UI-touching state.** `FrameRouter` and live-state types are main-actor isolated;
   `CBCentralManager` is created on `.main` so delegate callbacks land on the main actor. Don't move
   CoreBluetooth work off-main without a very good reason.
-- **No anonymous magic.** Reach for an existing constant/enum (`NoopMetrics`, `StrandPalette`,
+- **No anonymous magic.** Reach for an existing constant/enum (`ZoopMetrics`, `StrandPalette`,
   `WhoopCommand`, `MetricCatalog`) before introducing a literal.
 - **Validate before you trust.** Any data coming off the wire is gated on the **full integrity
   verdict** *and* range-checked before it can drive state (see `FrameRouter.handle` rejecting every
@@ -575,8 +575,8 @@ to the Explore / Compare / tile UI. The catalog is the contract.
 
 ### Add a new screen
 
-1. **Build it from `StrandDesign`.** Compose `NoopCard`, `StatTile`, `ChartCard`, `SectionHeader`,
-   etc.; pull every color/font/size from `StrandPalette` / `StrandFont` / `NoopMetrics`. Use the
+1. **Build it from `StrandDesign`.** Compose `ZoopCard`, `StatTile`, `ChartCard`, `SectionHeader`,
+   etc.; pull every color/font/size from `StrandPalette` / `StrandFont` / `ZoopMetrics`. Use the
    shared `ScreenScaffold` for the standard screen chrome (see existing screens in `Strand/Screens`).
 2. **Register it in the sidebar.** `Strand/App/RootView.swift` drives navigation from the `NavItem`
    enum:
@@ -738,7 +738,7 @@ Contributions toward these are welcome — open an issue to coordinate first.
   [Releases](https://github.com/ryanbr/noop/releases). Continued real-hardware testing across more devices is always welcome
   (an emulator can't reach a physical strap).
 - **iOS (build-from-source target on `main`).** iOS was folded into `main` in v1.94 as a first-class
-  build-from-source target — the `NOOPiOS` and `NOOPiOSWidgets` schemes (app target plus widgets, a
+  build-from-source target — the `ZoopiOS` and `ZoopiOSWidgets` schemes (app target plus widgets, a
   Live Activity, and HealthKit), built against current code in Xcode, with CI compiling both macOS and
   iOS on every change. It is **build-it-yourself only, intentionally not shipped:** iOS has no
   anonymous distribution path (the App Store and TestFlight both require a real Apple Developer

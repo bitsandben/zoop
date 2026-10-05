@@ -26,16 +26,16 @@ final class ScoreInputProvenanceStoreTests: XCTestCase {
             dailyMetrics: [daily],
             metricPoints: [rest],
             provenance: provenance,
-            deviceId: "my-whoop-noop",
+            deviceId: "my-whoop-zoop",
             from: daily.day,
             to: daily.day
         )
 
         let storedDaily = try await store.dailyMetrics(
-            deviceId: "my-whoop-noop", from: daily.day, to: daily.day
+            deviceId: "my-whoop-zoop", from: daily.day, to: daily.day
         )
         let source = try await store.scoreInputSource(
-            deviceId: "my-whoop-noop", day: daily.day, key: "recovery"
+            deviceId: "my-whoop-zoop", day: daily.day, key: "recovery"
         )
         XCTAssertEqual(storedDaily.first?.recovery, 71)
         XCTAssertEqual(source, "polar-1")
@@ -51,7 +51,7 @@ final class ScoreInputProvenanceStoreTests: XCTestCase {
                 .init(day: day, key: "recovery", sourceId: "polar-1"),
                 .init(day: day, key: "strain", sourceId: "polar-1"),
             ],
-            deviceId: "my-whoop-noop",
+            deviceId: "my-whoop-zoop",
             from: day,
             to: day
         )
@@ -59,16 +59,16 @@ final class ScoreInputProvenanceStoreTests: XCTestCase {
             dailyMetrics: [makeDaily(day: day, recovery: 72, strain: nil)],
             metricPoints: [],
             provenance: [.init(day: day, key: "recovery", sourceId: "oura-api")],
-            deviceId: "my-whoop-noop",
+            deviceId: "my-whoop-zoop",
             from: day,
             to: day
         )
 
         let recoverySource = try await store.scoreInputSource(
-            deviceId: "my-whoop-noop", day: day, key: "recovery"
+            deviceId: "my-whoop-zoop", day: day, key: "recovery"
         )
         let strainSource = try await store.scoreInputSource(
-            deviceId: "my-whoop-noop", day: day, key: "strain"
+            deviceId: "my-whoop-zoop", day: day, key: "strain"
         )
         XCTAssertEqual(recoverySource, "oura-api")
         XCTAssertNil(strainSource)
@@ -85,17 +85,17 @@ final class ScoreInputProvenanceStoreTests: XCTestCase {
             dailyMetrics: [makeDaily(day: day, recovery: 71, strain: 42)],
             metricPoints: [],
             provenance: [.init(day: day, key: "recovery", sourceId: "polar-1")],
-            deviceId: "my-whoop-noop", from: day, to: day
+            deviceId: "my-whoop-zoop", from: day, to: day
         )
         // An EMPTY pass over the same window must leave the stored row + provenance untouched.
         try await store.persistComputedScores(
             dailyMetrics: [],
             metricPoints: [],
             provenance: [],
-            deviceId: "my-whoop-noop", from: day, to: day
+            deviceId: "my-whoop-zoop", from: day, to: day
         )
-        let storedDaily = try await store.dailyMetrics(deviceId: "my-whoop-noop", from: day, to: day)
-        let source = try await store.scoreInputSource(deviceId: "my-whoop-noop", day: day, key: "recovery")
+        let storedDaily = try await store.dailyMetrics(deviceId: "my-whoop-zoop", from: day, to: day)
+        let source = try await store.scoreInputSource(deviceId: "my-whoop-zoop", day: day, key: "recovery")
         XCTAssertEqual(storedDaily.first?.recovery, 71)   // window not wiped
         XCTAssertEqual(source, "polar-1")                 // provenance not wiped
     }
@@ -106,7 +106,7 @@ final class ScoreInputProvenanceStoreTests: XCTestCase {
         try await store.persistMetricSeriesWithProvenance(
             points: [MetricPoint(day: day, key: "vo2max_est", value: 48)],
             provenance: [ScoreInputProvenanceRow(day: day, key: "vo2max_est", sourceId: "nes")],
-            deviceId: "my-whoop-noop"
+            deviceId: "my-whoop-zoop"
         )
 
         // A normal daily-score replacement spans this Saturday but does not own weekly VO₂max metadata.
@@ -114,15 +114,15 @@ final class ScoreInputProvenanceStoreTests: XCTestCase {
             dailyMetrics: [makeDaily(day: day, recovery: 71, strain: 42)],
             metricPoints: [],
             provenance: [.init(day: day, key: "recovery", sourceId: "my-whoop")],
-            deviceId: "my-whoop-noop",
+            deviceId: "my-whoop-zoop",
             from: day,
             to: day
         )
 
         let points = try await store.metricSeries(
-            deviceId: "my-whoop-noop", key: "vo2max_est", from: day, to: day)
+            deviceId: "my-whoop-zoop", key: "vo2max_est", from: day, to: day)
         let estimator = try await store.scoreInputSource(
-            deviceId: "my-whoop-noop", day: day, key: "vo2max_est")
+            deviceId: "my-whoop-zoop", day: day, key: "vo2max_est")
         XCTAssertEqual(points.first?.value, 48)
         XCTAssertEqual(estimator, Vo2MaxEstimator.nes.rawValue)
     }

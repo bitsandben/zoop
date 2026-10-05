@@ -207,7 +207,7 @@ struct AppleHealthView: View {
                 // No data yet, but iOS can grant live access right here — keep the Enable card above
                 // the (now live-aware) empty-state copy so the richer path isn't hidden behind a
                 // manual .zip export.
-                VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                     liveSyncCard
                     // #348 — when the build can't carry the HealthKit entitlement there's no "Enable"
                     // button to tap, so the empty-state copy must point at the file/Shortcuts path
@@ -222,7 +222,7 @@ struct AppleHealthView: View {
             } else if !loaded {
                 loadingState
             } else {
-                VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                     #if os(iOS)
                     liveSyncCard
                     #endif
@@ -351,7 +351,7 @@ struct AppleHealthView: View {
     }
 
     private var loadingState: some View {
-        NoopCard(tint: StrandPalette.metricCyan) {
+        ZoopCard(tint: StrandPalette.metricCyan) {
             HStack(spacing: 10) {
                 ConnectionDot(tone: .accent, pulsing: true)
                 Text("Reading your Apple Health history…")
@@ -484,9 +484,9 @@ struct AppleHealthView: View {
 
     private var tileGrid: some View {
         LazyVGrid(
-            columns: [GridItem(.adaptive(minimum: 168), spacing: NoopMetrics.gap)],
+            columns: [GridItem(.adaptive(minimum: 168), spacing: ZoopMetrics.gap)],
             alignment: .leading,
-            spacing: NoopMetrics.gap
+            spacing: ZoopMetrics.gap
         ) {
             statTile(key: "steps", label: "Steps",
                      accent: StrandPalette.metricCyan, fmt: { intString($0) })
@@ -567,7 +567,7 @@ struct AppleHealthView: View {
     // MARK: - Chart sections (uniform ChartCard, same height per page)
 
     private var heartSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Heart & Vitals", overline: "Cardiac",
                           trailing: range.caption)
             chartCard(title: "Resting heart rate", key: "resting_hr",
@@ -586,7 +586,7 @@ struct AppleHealthView: View {
     }
 
     private var activitySection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Activity & Energy", overline: "Movement",
                           trailing: range.caption)
             chartCard(title: "Steps", key: "steps",
@@ -599,7 +599,7 @@ struct AppleHealthView: View {
     }
 
     private var bodySection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Body Composition", overline: "Slow threads",
                           trailing: range.caption)
             chartCard(title: "Weight", key: "weight",
@@ -618,7 +618,7 @@ struct AppleHealthView: View {
     }
 
     private var sleepSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Sleep", overline: "Rest",
                           trailing: range.caption)
             chartCard(title: "Asleep", key: "asleep_min",
@@ -656,7 +656,7 @@ struct AppleHealthView: View {
                         gradient: gradient,
                         valueRange: valueRange(pts, fallback: fallback),
                         showsArea: true,
-                        height: NoopMetrics.chartHeight,
+                        height: ZoopMetrics.chartHeight,
                         valueFormat: fmt
                     )
                 } else if let only = vals.last {

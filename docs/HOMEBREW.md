@@ -26,7 +26,7 @@ brew upgrade --cask noop   # later updates
 
 To bring that back, a public `homebrew-noop` tap repo must be created under this fork's org (e.g.
 `ryanbr/homebrew-noop`), holding `Casks/noop.rb` pointing at the macOS `.zip` attached to each release.
-`Tools/update-homebrew-cask.sh` still automates the cask refresh, but it defaults to the dead `NoopApp`
+`Tools/update-homebrew-cask.sh` still automates the cask refresh, but it defaults to the dead `ZoopApp`
 tap — point it at the new repo via the `FORGE_ORG` / `FORGE_REPO` environment variables:
 
 ```bash

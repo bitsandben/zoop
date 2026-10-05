@@ -445,7 +445,7 @@ final class AppModel: ObservableObject {
 
         // Turn the strap's offloaded raw data into dashboard scores on launch and every 15
         // minutes, so recovery / strain / sleep populate from the strap itself with no import.
-        // IntelligenceEngine computes, persists under "my-whoop-noop", and refreshes the dashboard.
+        // IntelligenceEngine computes, persists under "my-whoop-zoop", and refreshes the dashboard.
         // One-shot reclaim of any stale Documents/Inbox picker drops a previous build left behind
         // before cleanup() reclaimed the original, PLUS any stranded `noop-*` temp scratch (e.g. the
         // multi-GB `noop-health-*` export.xml an interrupted import leaves behind , #590). Off the main
@@ -599,10 +599,10 @@ final class AppModel: ObservableObject {
     /// so it can't collide) — the same sentinel the Android twin uses.
     private func recordAppVersionChangeIfNeeded() async {
         let current = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
-        let last = UserDefaults.standard.string(forKey: "noop.lastSeenVersion")
+        let last = UserDefaults.standard.string(forKey: "zoop.lastSeenVersion")
         guard AppVersionEvent.shouldRecord(lastSeen: last, current: current), let last else {
             // First launch (last == nil) or unchanged: nothing to record, just anchor the pointer.
-            UserDefaults.standard.set(current, forKey: "noop.lastSeenVersion")
+            UserDefaults.standard.set(current, forKey: "zoop.lastSeenVersion")
             return
         }
         // A real transition: advance the pointer only once the event is durably recorded, so a not-yet-ready
@@ -613,7 +613,7 @@ final class AppModel: ObservableObject {
         do {
             try await store.recordEvent(deviceId: "noop-app", ts: Int(Date().timeIntervalSince1970),
                                         kind: AppVersionEvent.kind, payloadJSON: payload)
-            UserDefaults.standard.set(current, forKey: "noop.lastSeenVersion")
+            UserDefaults.standard.set(current, forKey: "zoop.lastSeenVersion")
         } catch {
             // insert failed — leave last-seen so the transition is retried next launch
         }
@@ -2142,7 +2142,7 @@ final class AppModel: ObservableObject {
     /// #polar-debug: whether a connecting Polar strap logs the model NOOP identifies it as (+ its PMD/HRV
     /// capability summary) to the strap log. Default off; the Test Centre only exposes the toggle when a
     /// Polar strap is paired. Diagnostic-only — nothing gates behaviour on it. Twin of Android
-    /// `NoopPrefs.KEY_POLAR_DEBUG_LOGGING`.
+    /// `ZoopPrefs.KEY_POLAR_DEBUG_LOGGING`.
     static let polarDebugLoggingKey = "noopPolarDebugLogging"
     var polarDebugLogging: Bool {
         get { UserDefaults.standard.bool(forKey: Self.polarDebugLoggingKey) }
@@ -2305,7 +2305,7 @@ final class AppModel: ObservableObject {
         // IS the canonical source id, but the strap's real id is `deviceId`/`computed` , map explicitly.)
         let sources: [(FusionSource, String)] = [
             (.whoopImport, deviceId),
-            (.noopComputed, deviceId + "-noop"),
+            (.zoopComputed, deviceId + "-zoop"),
             (.appleHealth, appleDeviceId),
             (.xiaomiBand, FusionSource.xiaomiBand.rawValue),
         ]
@@ -2404,7 +2404,7 @@ final class AppModel: ObservableObject {
     nonisolated static func materializeForImport(_ picked: URL) async throws -> ImportFile {
         #if os(iOS)
         let ext = picked.pathExtension.isEmpty ? "dat" : picked.pathExtension
-        let dst = NoopScratch.file("import-\(UUID().uuidString)")
+        let dst = ZoopScratch.file("import-\(UUID().uuidString)")
             .appendingPathExtension(ext)
         var coordError: NSError?
         var ioError: Error?
@@ -2581,7 +2581,7 @@ final class AppModel: ObservableObject {
     /// [purgeImportTemp] would actually reclaim, so the Storage screen cannot attribute another
     /// program's disk to NOOP (#2446).
     nonisolated static func importTempSizeBytes() -> Int64 {
-        NoopScratch.sizeBytes { item in
+        ZoopScratch.sizeBytes { item in
             let vals = try? item.resourceValues(forKeys: [.fileSizeKey, .isDirectoryKey])
             if vals?.isDirectory == true { return directorySizeBytes(item) }
             return Int64(vals?.fileSize ?? 0)
@@ -2615,10 +2615,10 @@ final class AppModel: ObservableObject {
     /// Remove NOOP's stranded temp scratch: everything in the folder it owns, plus the flat scratch
     /// earlier builds wrote (the multi-GB `noop-health-*` export.xml an interrupted import leaves
     /// behind, #590). Keeps `purgeImportInbox`'s 60 s in-flight guard, so a concurrent import or
-    /// export is not disturbed. See `NoopScratch` for why ownership is a folder and not a prefix.
-    nonisolated static func purgeImportTemp() { NoopScratch.purge() }
+    /// export is not disturbed. See `ZoopScratch` for why ownership is a folder and not a prefix.
+    nonisolated static func purgeImportTemp() { ZoopScratch.purge() }
 
-    /// Handle a `noop://import-health` deep link (PR #581), the HealthKit-free Shortcuts import for
+    /// Handle a `zoop://import-health` deep link (PR #581), the HealthKit-free Shortcuts import for
     /// sideloaded installs. Custom URL schemes are forgeable by other apps/sites, so this only decodes
     /// and stages the payload. The iOS shell shows a confirmation alert before `confirmHealthImport()`
     /// writes anything into the `apple-health` source.

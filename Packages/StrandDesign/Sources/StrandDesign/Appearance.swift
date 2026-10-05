@@ -31,7 +31,7 @@ public enum ChartStyle: String, CaseIterable, Identifiable, Sendable {
 /// changes the drawing, and Filled/Ribbon fall back to Classic on a night with no timestamped segments.
 /// The byte-identical twin is Android `SleepChartStyle` (Units.kt): same `classic`/`filled`/`ribbon`
 /// rawValues and the same `sleep.chart.style` key, so a device reads its own choice consistently.
-/// Device-local (NOT in the `.noopbak` whitelist), like the Android pref.
+/// Device-local (NOT in the `.zoopbak` whitelist), like the Android pref.
 public enum SleepChartStyle: String, CaseIterable, Identifiable, Sendable {
     case classic       // per-stage-rows timeline (the default, unchanged)
     case filled        // stepped hypnogram filled to the baseline, NOOP sleep colours
@@ -77,7 +77,7 @@ public enum SleepStagePalette: String, Sendable { case noop, oura, garmin }
 public extension View {
     func chartStyle(_ raw: String) -> some View {
         StrandPalette.chartStyle = ChartStyle.resolve(raw)
-        return self.id("noop.chartStyle.\(raw)")
+        return self.id("zoop.chartStyle.\(raw)")
     }
 }
 
@@ -86,9 +86,9 @@ public extension View {
 /// via `StrandPalette.accentChoice` (+ `StrandPalette.customAccentHex` for `.custom`), set from
 /// `@AppStorage(AccentColor.storageKey)` / `@AppStorage(AccentColor.customHexKey)` at the app root; the
 /// `accent`/`accentHover`/`accentMuted`/`focusRing` accessors in `StrandPalette` branch on it. Mirror in
-/// Kotlin via `Palette.accentChoice` + `NoopPrefs.accentColor`/`accentCustomHex`.
+/// Kotlin via `Palette.accentChoice` + `ZoopPrefs.accentColor`/`accentCustomHex`.
 public enum AccentColor: String, CaseIterable, Identifiable, Sendable {
-    case mint        // the brand default (#1068 NoopVisualStyle.mint world)
+    case mint        // the brand default (#1068 ZoopVisualStyle.mint world)
     case whoopBlue   // the classic WHOOP link blue
     case custom      // a user-picked colour (hex stored separately)
 
@@ -112,7 +112,7 @@ public enum AccentColor: String, CaseIterable, Identifiable, Sendable {
     /// The chrome accent. `.custom` resolves the stored hex at read time.
     public var accent: Color {
         switch self {
-        case .mint:      return NoopVisualStyle.mint
+        case .mint:      return ZoopVisualStyle.mint
         case .whoopBlue: return Color(light: "#234F9E", dark: "#60A0E0")
         case .custom:    return Color(hex: StrandPalette.customAccentHex)
         }
@@ -121,7 +121,7 @@ public enum AccentColor: String, CaseIterable, Identifiable, Sendable {
     /// The brighter hover/pressed accent. For `.custom` it is the chosen colour lightened toward white.
     public var accentHover: Color {
         switch self {
-        case .mint:      return NoopVisualStyle.mintGlow
+        case .mint:      return ZoopVisualStyle.mintGlow
         case .whoopBlue: return Color(light: "#3A6FC0", dark: "#8FBEEC")
         case .custom:    return AccentColor.lighten(StrandPalette.customAccentHex)
         }
@@ -131,7 +131,7 @@ public enum AccentColor: String, CaseIterable, Identifiable, Sendable {
     /// composites over whatever surface is behind it — the same 0.18 the mint world uses.
     public var accentMuted: Color {
         switch self {
-        case .mint:      return NoopVisualStyle.mintDeep.opacity(0.18)
+        case .mint:      return ZoopVisualStyle.mintDeep.opacity(0.18)
         case .whoopBlue: return Color(light: "#234F9E", dark: "#60A0E0").opacity(0.18)
         case .custom:    return Color(hex: StrandPalette.customAccentHex).opacity(0.18)
         }
@@ -155,7 +155,7 @@ public extension View {
     func noopAccent(_ raw: String, customHex: String) -> some View {
         StrandPalette.accentChoice = AccentColor.resolve(raw)
         StrandPalette.customAccentHex = customHex
-        return self.id("noop.accent.\(raw).\(customHex)")
+        return self.id("zoop.accent.\(raw).\(customHex)")
     }
 }
 
@@ -288,47 +288,47 @@ public enum AppearanceMode: String, CaseIterable, Identifiable, Sendable {
 /// so this gates whether Today passes a `SceneScreenBackground` into its scaffold. When OFF, Today drops
 /// the scene and falls back to the opaque `surfaceBase`; the cards already sit on an opaque canvas, so
 /// they stay perfectly readable. Read in `TodayView` via `@AppStorage(SceneBackgroundPrefs.enabledKey)`
-/// and toggled from Settings → Appearance. Mirror in Kotlin via `NoopPrefs.showDayCycleBackground`.
+/// and toggled from Settings → Appearance. Mirror in Kotlin via `ZoopPrefs.showDayCycleBackground`.
 public enum SceneBackgroundPrefs {
     /// The @AppStorage key shared by TodayView and the Settings toggle. Default value is `true`.
-    public static let enabledKey = "noop.showDayCycleBackground"
+    public static let enabledKey = "zoop.showDayCycleBackground"
 }
 
 /// Card-surface opacity as a PERCENT (0 = fully see-through, 100 = solid; default 100). `FrostedCardSurface`
 /// reads it via `@AppStorage(CardAppearancePrefs.opacityKey)` and fades the whole glass by it, so cards
 /// (Heart Rate, Key Metrics, Recovery Vitals, …) can be made see-through from Settings → Appearance; the
-/// card content stays fully readable. Mirror in Kotlin via `NoopPrefs.cardOpacityPercent`.
+/// card content stays fully readable. Mirror in Kotlin via `ZoopPrefs.cardOpacityPercent`.
 public enum CardAppearancePrefs {
-    public static let opacityKey = "noop.cardOpacityPercent"
+    public static let opacityKey = "zoop.cardOpacityPercent"
     public static let defaultPercent = 100
 }
 
 /// "Sky behind cards" (opt-in, default OFF): extend the day-cycle sky behind the WHOLE Today scroll (not
 /// just the top band) so the Card-transparency setting reveals it under every card. Read in `LiquidTodayView`
 /// via `@AppStorage(SkyBehindCardsPrefs.enabledKey)` and toggled from Settings → Appearance. Mirror in
-/// Kotlin via `NoopPrefs.skyBehindCards`.
+/// Kotlin via `ZoopPrefs.skyBehindCards`.
 public enum SkyBehindCardsPrefs {
-    public static let enabledKey = "noop.skyBehindCards"
+    public static let enabledKey = "zoop.skyBehindCards"
 }
 
 /// Custom background image (#custom-background): a user-picked photo drawn full-bleed behind every screen,
 /// REPLACING the day-cycle sky when enabled (precedence: image > sky > plain canvas). The image itself is
 /// a device-local file (Application Support on Apple, `filesDir` on Android) — like the avatar it is
-/// deliberately kept OUT of the `.noopbak` whitelist. Read in the scaffold sky provider + Today's inline
-/// sky. Mirror in Kotlin via `NoopPrefs.backgroundImageEnabled` / `.backgroundFillMode` /
+/// deliberately kept OUT of the `.zoopbak` whitelist. Read in the scaffold sky provider + Today's inline
+/// sky. Mirror in Kotlin via `ZoopPrefs.backgroundImageEnabled` / `.backgroundFillMode` /
 /// `.backgroundImagePresent` — the three key strings are byte-identical across platforms.
 public enum BackgroundImagePrefs {
     /// Master gate — when true AND an image is present, the custom image overrides the sky. Default false.
-    public static let enabledKey = "noop.backgroundImageEnabled"
+    public static let enabledKey = "zoop.backgroundImageEnabled"
     /// The `BackgroundFillMode` rawValue. Default `"fill"`.
-    public static let fillModeKey = "noop.backgroundFillMode"
+    public static let fillModeKey = "zoop.backgroundFillMode"
     /// Whether a background image file has been stored (so the UI can offer Remove and the provider can
     /// skip a decode when absent). Default false.
-    public static let presentKey = "noop.backgroundImagePresent"
+    public static let presentKey = "zoop.backgroundImagePresent"
     /// The recent-images list (MRU, up to 3), serialized as `"<file>,<fillMode>;<file>,<fillMode>;…"`.
     /// Device-local like the image files — the filenames differ per device, so only the KEY is shared,
     /// not the value. Default `""`.
-    public static let recentsKey = "noop.backgroundRecents"
+    public static let recentsKey = "zoop.backgroundRecents"
 }
 
 /// How a custom background image is scaled to the screen. RawValues are byte-identical to the Kotlin
@@ -371,7 +371,7 @@ private struct AdditiveBloom: ViewModifier {
 
 /// Card / floating-surface elevation. Dark separates surfaces by a lighter FILL (no resting shadow);
 /// light separates white-on-paper by a soft DROP SHADOW. Reads the scheme itself and deepens on hover.
-private struct NoopElevation: ViewModifier {
+private struct ZoopElevation: ViewModifier {
     @Environment(\.colorScheme) private var scheme
     var hovering: Bool
     func body(content: Content) -> some View {
@@ -390,5 +390,5 @@ public extension View {
     func additiveBloom() -> some View { modifier(AdditiveBloom()) }
 
     /// Apply the per-scheme card/surface elevation (shadow on light, lighter-fill idiom on dark).
-    func noopElevation(hovering: Bool = false) -> some View { modifier(NoopElevation(hovering: hovering)) }
+    func noopElevation(hovering: Bool = false) -> some View { modifier(ZoopElevation(hovering: hovering)) }
 }

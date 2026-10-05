@@ -13,7 +13,7 @@ final class SettingsDisclosureDefaultsTests: XCTestCase {
     }
 
     func testKeyMatchesAndroidSuffix() {
-        // iOS @AppStorage("settingsAdvancedOpen"); Android persists "noop.settingsAdvancedOpen".
+        // iOS @AppStorage("settingsAdvancedOpen"); Android persists "zoop.settingsAdvancedOpen".
         XCTAssertEqual(SettingsDisclosureDefaults.advancedOpenKey, "settingsAdvancedOpen")
     }
 

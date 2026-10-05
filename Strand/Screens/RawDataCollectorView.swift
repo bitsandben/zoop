@@ -32,7 +32,7 @@ struct RawDataCollectorView: View {
             title: "5/MG Raw Data Collector",
             subtitle: "Record a bounded 100 Hz motion session and export its complete timeline."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                 coverageCard
                 controls
                 historicalRangeCard
@@ -84,7 +84,7 @@ struct RawDataCollectorView: View {
 
     private var coverageCard: some View {
         StrandCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
                 Text("Capture coverage").font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
                 Text(live.connected ? "Band: connected\(live.bonded ? " + paired" : "; pairing")"
                                     : "Band: disconnected")
@@ -104,10 +104,10 @@ struct RawDataCollectorView: View {
 
     @ViewBuilder private var controls: some View {
         if store.active != nil {
-            NoopButton("Stop session", systemImage: "stop.fill", kind: .destructive,
+            ZoopButton("Stop session", systemImage: "stop.fill", kind: .destructive,
                        fullWidth: true) { Task { await stop() } }
         } else {
-            NoopButton("Start raw-data session", systemImage: "record.circle", kind: .primary,
+            ZoopButton("Start raw-data session", systemImage: "record.circle", kind: .primary,
                        fullWidth: true) { start() }
                 .disabled(!live.bonded)
         }
@@ -115,13 +115,13 @@ struct RawDataCollectorView: View {
 
     private var historicalRangeCard: some View {
         StrandCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 Text("Historical export window").font(StrandFont.headline)
                 Text("Create a session from synchronized history without starting a live capture. 100 Hz coverage is included wherever it still exists in the rolling buffer.")
                     .font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
                 DatePicker("From", selection: $historicalFrom)
                 DatePicker("To", selection: $historicalTo, in: historicalFrom...)
-                NoopButton("Add historical session", systemImage: "clock.arrow.circlepath",
+                ZoopButton("Add historical session", systemImage: "clock.arrow.circlepath",
                            kind: .secondary, fullWidth: true) {
                     _ = store.createHistorical(deviceId: model.ble.deviceId,
                                                from: historicalFrom, to: historicalTo)
@@ -132,13 +132,13 @@ struct RawDataCollectorView: View {
     }
 
     private var sessionsSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
             Text("Recorded sessions").font(StrandFont.title2).foregroundStyle(StrandPalette.textPrimary)
             if store.sessions.isEmpty {
                 Text("No sessions recorded yet.").font(StrandFont.subhead)
                     .foregroundStyle(StrandPalette.textSecondary)
             } else {
-                NoopButton("Delete all sessions", systemImage: "trash", kind: .destructive,
+                ZoopButton("Delete all sessions", systemImage: "trash", kind: .destructive,
                            fullWidth: true) { confirmDeleteAll = true }
                     .disabled(store.active != nil)
                 ForEach(store.sessions) { session in sessionCard(session) }
@@ -149,7 +149,7 @@ struct RawDataCollectorView: View {
     private func sessionCard(_ session: RawDataSessionStore.Session) -> some View {
         let coverageText = imuCoverage[session.id, default: "no complete seconds"]
         return StrandCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 Text(Self.range(session)).font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
                 if !session.active, let endMs = session.endedAtMs {
                     DatePicker("From", selection: Binding(
@@ -177,13 +177,13 @@ struct RawDataCollectorView: View {
                     set: { store.setComment($0, sessionId: session.id) }
                 ), axis: .vertical)
                     .textFieldStyle(.roundedBorder).lineLimit(2...4)
-                NoopButton("Add marker", systemImage: "mappin.and.ellipse", kind: .secondary,
+                ZoopButton("Add marker", systemImage: "mappin.and.ellipse", kind: .secondary,
                            fullWidth: true) { editMarker(nil, in: session) }
                 let markers = session.events.filter { $0.kind == "marker" }.sorted { $0.atMs < $1.atMs }
                 ForEach(markers) { marker in
                     Button { editMarker(marker, in: session) } label: {
                         HStack {
-                            VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                            VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
                                 (Text(Self.markerLabel(marker.markerType))
                                     + Text(verbatim: " · \(Self.time(marker.atMs))"))
                                     .font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
@@ -197,12 +197,12 @@ struct RawDataCollectorView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                NoopButton(exportingId == session.id ? "Building export…" : "Export session",
+                ZoopButton(exportingId == session.id ? "Building export…" : "Export session",
                            systemImage: "square.and.arrow.up", kind: .secondary, fullWidth: true) {
                     Task { await export(session) }
                 }
                 .disabled(session.active || exportingId != nil)
-                NoopButton("Delete session", systemImage: "trash", kind: .destructive,
+                ZoopButton("Delete session", systemImage: "trash", kind: .destructive,
                            fullWidth: true) { deleteCandidate = session }
                     .disabled(session.active || exportingId != nil)
             }

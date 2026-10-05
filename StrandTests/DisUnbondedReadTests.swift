@@ -43,7 +43,7 @@ final class DisUnbondedReadTests: XCTestCase {
     // MARK: - the refusal latch key
 
     func testTheRefusalKeyIsCaseInsensitiveAndTrimmed() {
-        XCTAssertEqual(disRefusedPrefKey("AABB-11"), "noop.disRefused.aabb-11")
+        XCTAssertEqual(disRefusedPrefKey("AABB-11"), "zoop.disRefused.aabb-11")
         XCTAssertEqual(disRefusedPrefKey("  AABB-11 "), disRefusedPrefKey("aabb-11"))
     }
 

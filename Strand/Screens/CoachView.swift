@@ -287,10 +287,10 @@ struct CoachView: View {
 
                 HStack {
                     if coach.provider == .custom {
-                        NoopButton("Connect", systemImage: "link", kind: .primary, action: connectCustom)
+                        ZoopButton("Connect", systemImage: "link", kind: .primary, action: connectCustom)
                             .disabled(coach.customBaseURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     } else {
-                        NoopButton("Save key", systemImage: "key.fill", kind: .primary, action: saveKey)
+                        ZoopButton("Save key", systemImage: "key.fill", kind: .primary, action: saveKey)
                             .disabled(keyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                     Spacer()
@@ -359,7 +359,7 @@ struct CoachView: View {
                         .accessibilityLabel("Custom model id")
 
                     Button("Use", action: applyCustomModel)
-                        .buttonStyle(NoopButtonStyle(.secondary))
+                        .buttonStyle(ZoopButtonStyle(.secondary))
                         .disabled(customModelDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         .accessibilityLabel("Use custom model")
                 }
@@ -647,7 +647,7 @@ struct CoachView: View {
                     .onSubmit(saveRepairedKey)
                     .accessibilityLabel(coach.keyRejected ? Text("Corrected API key") : Text("API key"))
                 HStack {
-                    NoopButton("Update key", systemImage: "key.fill", kind: .primary, action: saveRepairedKey)
+                    ZoopButton("Update key", systemImage: "key.fill", kind: .primary, action: saveRepairedKey)
                         .disabled(keyFix.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     Spacer()
                     if showKeyEditor && !coach.keyRejected {
@@ -800,7 +800,7 @@ struct CoachView: View {
             .accessibilityLabel("Send")
         }
         .padding(8)
-        .background(NoopPanelSurface(cornerRadius: 16))
+        .background(ZoopPanelSurface(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
             .strokeBorder(StrandPalette.hairline, lineWidth: 1))
     }

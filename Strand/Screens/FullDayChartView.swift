@@ -133,12 +133,12 @@ struct FullDayChartView: View {
     private var metricPills: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             SegmentedPillControl(Repository.TimelineMetric.allCases, selection: $metric) { $0.title }
-                .padding(.vertical, NoopMetrics.space1 / 2)
+                .padding(.vertical, ZoopMetrics.space1 / 2)
         }
     }
 
     @ViewBuilder private var sourcePill: some View {
-        HStack(spacing: NoopMetrics.rowSpacing) {
+        HStack(spacing: ZoopMetrics.rowSpacing) {
             Image(systemName: "dot.radiowaves.left.and.right")
                 .font(StrandFont.footnote.weight(.medium))
                 .foregroundStyle(StrandPalette.textTertiary)
@@ -153,13 +153,13 @@ struct FullDayChartView: View {
             SegmentedPillControl([true, false], selection: $ownedOnly) { $0 ? String(localized: "Owned") : String(localized: "All") }
                 .fixedSize()
         }
-        .padding(.horizontal, NoopMetrics.space1)
+        .padding(.horizontal, ZoopMetrics.space1)
     }
 
     /// Day stepper — move the whole timeline back/forward a day so a user can reach the days that actually
     /// hold their data, not just today (#597). Forward is clamped at today (no future days).
     private var dayNav: some View {
-        HStack(spacing: NoopMetrics.cardInnerSpacing) {
+        HStack(spacing: ZoopMetrics.cardInnerSpacing) {
             Button { stepDay(-1) } label: {
                 Image(systemName: "chevron.left").font(StrandFont.headline.weight(.semibold))
             }
@@ -182,7 +182,7 @@ struct FullDayChartView: View {
             .disabled(isOnLatestDay)
             .accessibilityLabel("Next day")
         }
-        .padding(.horizontal, NoopMetrics.space1)
+        .padding(.horizontal, ZoopMetrics.space1)
     }
 
     private var isOnLatestDay: Bool { dayStart >= Repository.logicalDayStart(Date()) }
@@ -278,7 +278,7 @@ struct FullDayChartView: View {
     // MARK: States
 
     private var loadingState: some View {
-        VStack(spacing: NoopMetrics.rowSpacing) {
+        VStack(spacing: ZoopMetrics.rowSpacing) {
             ProgressView().controlSize(.large)
             Text("Loading the day…")
                 .font(StrandFont.footnote)
@@ -290,7 +290,7 @@ struct FullDayChartView: View {
     /// Honest empty/dash state — a window the strap offloaded nothing for (a not-yet-synced stretch, an
     /// off-wrist gap, or a metric this device doesn't record). Never a fabricated flat line.
     private var emptyState: some View {
-        VStack(spacing: NoopMetrics.space2) {
+        VStack(spacing: ZoopMetrics.space2) {
             Image(systemName: "waveform.slash")
                 .font(.system(size: 26, weight: .light))
                 .foregroundStyle(StrandPalette.textTertiary)
@@ -303,7 +303,7 @@ struct FullDayChartView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, NoopMetrics.space6)
+        .padding(.horizontal, ZoopMetrics.space6)
     }
 
     /// #623: on a 5.0/MG the SpO2 + raw respiration tracks are PERMANENTLY empty (4.0-only wire signals),
@@ -323,7 +323,7 @@ struct FullDayChartView: View {
     }
 
     @ViewBuilder private var zoomHint: some View {
-        HStack(spacing: NoopMetrics.space2) {
+        HStack(spacing: ZoopMetrics.space2) {
             Image(systemName: zoomDomain == nil ? "arrow.up.left.and.arrow.down.right" : "arrow.down.right.and.arrow.up.left")
                 .font(StrandFont.footnote.weight(.semibold))
             #if os(macOS)
@@ -343,8 +343,8 @@ struct FullDayChartView: View {
         }
         .font(StrandFont.footnote)
         .foregroundStyle(StrandPalette.textTertiary)
-        .padding(.horizontal, NoopMetrics.space1)
-        .padding(.top, NoopMetrics.space1 / 2)
+        .padding(.horizontal, ZoopMetrics.space1)
+        .padding(.top, ZoopMetrics.space1 / 2)
     }
 
     private var statsFooter: some View {

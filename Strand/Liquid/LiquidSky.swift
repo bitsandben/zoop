@@ -117,7 +117,7 @@ struct LiquidSky: View {
     /// no gate of its own — a second call site would have been silently ungated. `pausesFrames` makes the
     /// frame loop stand down from inside, so the gate travels with the view.
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @ObservedObject private var motion = NoopMotionState.shared
+    @ObservedObject private var motion = ZoopMotionState.shared
 
     var body: some View {
         // The sky must dissolve into the SAME canvas colour the body uses (theme-aware surfaceBase),

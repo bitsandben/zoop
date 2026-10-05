@@ -80,9 +80,9 @@ struct LiftMusclePicker: View {
     @Binding var secondaries: Set<LiftMuscle>
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Muscles", overline: "Counted once per exercise")
-            NoopCard {
+            ZoopCard {
                 VStack(alignment: .leading, spacing: 14) {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Primary").strandOverline()

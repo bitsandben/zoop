@@ -72,7 +72,7 @@ final class HelloSuppressionTests: XCTestCase {
     /// key instead of reading the first.
     func testTheLatchKeyIsCaseInsensitiveAndTrimmed() {
         let upper = helloSuppressionPrefKey("AABBCCDD-1122")
-        XCTAssertEqual(upper, "noop.helloUnanswered.aabbccdd-1122")
+        XCTAssertEqual(upper, "zoop.helloUnanswered.aabbccdd-1122")
         XCTAssertEqual(helloSuppressionPrefKey("  aabbccdd-1122  "), upper)
     }
 

@@ -13,7 +13,7 @@ set -euo pipefail
 APP="${1:?usage: $0 path/to/NOOP.app}"
 [ -d "$APP" ] || { echo "no such app bundle: $APP" >&2; exit 1; }
 
-WIDGET="$APP/PlugIns/NOOPWidgets.appex"
+WIDGET="$APP/PlugIns/ZoopWidgets.appex"
 [ -d "$WIDGET" ] || { echo "widget extension missing: $WIDGET" >&2; exit 1; }
 
 APP_INFO="$APP/Info.plist"

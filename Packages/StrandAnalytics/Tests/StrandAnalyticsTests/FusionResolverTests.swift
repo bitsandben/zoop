@@ -150,7 +150,7 @@ final class FusionResolverTests: XCTestCase {
         // Three sources; the winner's value must be exactly the value that source supplied.
         let inputs = [
             FusionInput(source: .appleHealth, value: 55),
-            FusionInput(source: .noopComputed, value: 53),
+            FusionInput(source: .zoopComputed, value: 53),
             FusionInput(source: .whoopImport, value: 52),
         ]
         let point = FusionResolver.resolve(metricKey: "rhr", inputs: inputs)

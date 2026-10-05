@@ -4,7 +4,7 @@ import ZIPFoundation
 
 /// The WRITE side of #1014: what an export checks about the file it just produced.
 ///
-/// `writeVerifiedBackupZip` has re-opened every `.noopbak` it writes since #1014 and refused to leave a
+/// `writeVerifiedBackupZip` has re-opened every `.zoopbak` it writes since #1014 and refused to leave a
 /// torn one behind, and until now nothing tested that it does. These are those tests, driven against
 /// hand-built archives through the extracted `DataBackup.verifyWrittenBackup(at:)`.
 ///
@@ -32,14 +32,14 @@ final class BackupWriteIntegrityTests: XCTestCase {
         Data((0..<n).map { _ in UInt8.random(in: 0...255) })
     }
 
-    /// A `.noopbak` with a plausible database entry, written the way an export writes one.
+    /// A `.zoopbak` with a plausible database entry, written the way an export writes one.
     private func makeBackup(dbBody: Data? = nil) throws -> URL {
         let db = tmp.appendingPathComponent("source.sqlite")
         var bytes = Data("SQLite format 3".utf8)
         bytes.append(0x00)
         bytes.append(incompressible(8_192))
         try (dbBody ?? bytes).write(to: db)
-        let dest = tmp.appendingPathComponent("good.noopbak")
+        let dest = tmp.appendingPathComponent("good.zoopbak")
         try DataBackup.writeBackupForTesting(databaseAt: db, to: dest)
         return dest
     }
@@ -69,7 +69,7 @@ final class BackupWriteIntegrityTests: XCTestCase {
     /// A perfectly valid archive that simply does not carry a database. The container is fine; the
     /// contents are not what a restore needs, and calling it a good backup would be the same lie.
     func testAnArchiveWithoutTheDatabaseEntryIsNotIntact() throws {
-        let dest = tmp.appendingPathComponent("no-db.noopbak")
+        let dest = tmp.appendingPathComponent("no-db.zoopbak")
         let archive = try Archive(url: dest, accessMode: .create)
         let payload = tmp.appendingPathComponent("settings.json")
         try Data("{}".utf8).write(to: payload)
@@ -80,19 +80,19 @@ final class BackupWriteIntegrityTests: XCTestCase {
     /// Shorter than SQLite's own file header, so it cannot be a database whatever else it looks like.
     /// Guards the size floor specifically: the entry IS present and IS named correctly here.
     func testADatabaseEntryBelowTheHeaderSizeIsNotIntact() throws {
-        let dest = tmp.appendingPathComponent("tiny.noopbak")
+        let dest = tmp.appendingPathComponent("tiny.zoopbak")
         let archive = try Archive(url: dest, accessMode: .create)
         let payload = tmp.appendingPathComponent("tiny.sqlite")
         try Data("SQLite format 3\u{0}".utf8).write(to: payload)
         XCTAssertLessThan(16, Int(DataBackup.minimumBackupEntryBytes),
                           "precondition: the magic alone is shorter than the floor, so this tests the floor")
-        try archive.addEntry(with: "noop-backup.sqlite", fileURL: payload, compressionMethod: .deflate)
+        try archive.addEntry(with: "zoop-backup.sqlite", fileURL: payload, compressionMethod: .deflate)
         XCTAssertEqual(DataBackup.verifyWrittenBackup(at: dest), .torn)
     }
 
     /// Never an archive at all: answered with a verdict rather than thrown, which is the contract.
     func testSomethingThatIsNotAnArchiveIsNotIntact() throws {
-        let junk = tmp.appendingPathComponent("junk.noopbak")
+        let junk = tmp.appendingPathComponent("junk.zoopbak")
         // Readable, so we DID look; it simply is not an archive. That is a torn verdict, not an
         // unverifiable one, and the distinction decides whether the caller deletes it.
         try Data(repeating: 0x41, count: 4_096).write(to: junk)
@@ -105,7 +105,7 @@ final class BackupWriteIntegrityTests: XCTestCase {
     /// delete. Before this the check returned a plain Bool, so a transient read failure and a genuinely
     /// cut-short archive were the same answer, and the destructive one.
     func testAFileThatCannotBeReadIsUnverifiableRatherThanTorn() {
-        XCTAssertEqual(DataBackup.verifyWrittenBackup(at: tmp.appendingPathComponent("absent.noopbak")),
+        XCTAssertEqual(DataBackup.verifyWrittenBackup(at: tmp.appendingPathComponent("absent.zoopbak")),
                        .unverifiable)
     }
 
@@ -113,6 +113,6 @@ final class BackupWriteIntegrityTests: XCTestCase {
     func testTheBooleanWrapperTracksTheVerdict() throws {
         let good = try makeBackup()
         XCTAssertTrue(DataBackup.writtenBackupIsIntact(at: good))
-        XCTAssertFalse(DataBackup.writtenBackupIsIntact(at: tmp.appendingPathComponent("absent.noopbak")))
+        XCTAssertFalse(DataBackup.writtenBackupIsIntact(at: tmp.appendingPathComponent("absent.zoopbak")))
     }
 }

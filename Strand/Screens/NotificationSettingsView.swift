@@ -12,7 +12,7 @@ struct NotificationSettingsView: View {
     var body: some View {
         ScreenScaffold(title: "Notifications",
                        subtitle: "Buzz your strap when these apps notify you. Everything runs on \(Platform.deviceNounPhrase).") {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                 masterCard
                     .staggeredAppear(index: 0)
                 // #926: the "every pattern buzzes the same on a 5/MG" note that used to sit here is GONE —
@@ -41,7 +41,7 @@ struct NotificationSettingsView: View {
     private var masterCard: some View {
         AlertSection(icon: "bell.badge.fill", title: String(localized: "Wrist alerts"),
                      blurb: String(localized: "When on, NOOP taps your wrist for the apps you pick below, so you can leave the \(Platform.deviceNoun) and still feel what matters.")) {
-            VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                 Toggle(isOn: $store.masterEnabled) {
                     Text("Enable wrist alerts")
                         .font(StrandFont.body)
@@ -61,7 +61,7 @@ struct NotificationSettingsView: View {
                     } label: {
                         Label("Test buzz", systemImage: "waveform.path")
                     }
-                    .buttonStyle(NoopButtonStyle(.secondary))
+                    .buttonStyle(ZoopButtonStyle(.secondary))
                     .disabled(!live.bonded)
                     .help(live.bonded ? "Fire a test buzz now" : "Connect your strap to test")
                     .accessibilityHint(live.bonded ? "Fires a test buzz on your strap" : "Connect your strap to enable")
@@ -83,9 +83,9 @@ struct NotificationSettingsView: View {
                 .foregroundStyle(StrandPalette.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(NoopMetrics.space3)
+        .padding(ZoopMetrics.space3)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(NoopPanelSurface(tint: StrandPalette.accent, cornerRadius: 10))
+        .background(ZoopPanelSurface(tint: StrandPalette.accent, cornerRadius: 10))
         .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
             .stroke(StrandPalette.accent.opacity(0.22), lineWidth: 1))
     }
@@ -304,10 +304,10 @@ private struct AlertSection<Content: View>: View {
 
     var body: some View {
         StrandCard(padding: 20, tint: StrandPalette.accent) {
-            VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(overline)").strandOverline()
-                    HStack(spacing: NoopMetrics.space2 + 2) {
+                    HStack(spacing: ZoopMetrics.space2 + 2) {
                         Image(systemName: icon)
                             .foregroundStyle(StrandPalette.accent)
                             .accessibilityHidden(true)

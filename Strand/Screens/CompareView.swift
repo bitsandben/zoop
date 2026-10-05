@@ -137,7 +137,7 @@ struct CompareView: View {
     private static let defaultKeys = ["recovery", "sleep_performance", "weight"]
 
     // #358 parity (Android ComparePrefs): the time window + the ordered metric selection persist across
-    // visits — a UI preference, not `.noopbak` data. Selection is stored as comma-joined descriptor ids
+    // visits — a UI preference, not `.zoopbak` data. Selection is stored as comma-joined descriptor ids
     // ("source:key"). Both are restored PRE-render (window straight off @AppStorage, selection via a
     // static initial value), so Compare opens directly on the saved state — matching Android, with no
     // default-then-restore flash.
@@ -180,7 +180,7 @@ struct CompareView: View {
                        // Liquid finish: the day-of-sky backdrop carries the liquid atmosphere across the
                        // analysis tabs, exactly like Today and the batch-1 screens.
                        topBackground: liquidScaffoldSky()) {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 metricSection
 
                 if selected.count < minSelection {
@@ -344,10 +344,10 @@ struct CompareView: View {
     // MARK: - Metric picker section (chips + range control)
 
     private var metricSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Metrics", overline: "Overlay 2-4 signals")
-            NoopCard {
-                VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            ZoopCard {
+                VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     // Responsive: range pills + the Add menu side-by-side when there's room, else
                     // stacked so the pills don't overflow/clip on a narrow window (ported from the iOS port).
                     ViewThatFits(in: .horizontal) {
@@ -357,7 +357,7 @@ struct CompareView: View {
                             Spacer()
                             addMenu
                         }
-                        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                             SegmentedPillControl(CompareRange.allCases, selection: rangeBinding) { $0.label }
                                 .accessibilityLabel("Time range")
                             addMenu
@@ -445,7 +445,7 @@ struct CompareView: View {
     @ViewBuilder
     private func overlaySection(_ series: [CompareSeries]) -> some View {
         let nonEmpty = series.filter { !$0.rows.isEmpty }
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Overlay", overline: "\(range.phrase)")
             ChartCard(
                 title: "Normalized overlay",
@@ -459,7 +459,7 @@ struct CompareView: View {
             ) {
                 // The overlay is min–max NORMALIZED 0–1, so the Effort scale never touches the line shape;
                 // only the per-series hover read-outs convert (passed through to the tooltip). (#268)
-                OverlayChart(series: nonEmpty, effortScale: effortScale, height: NoopMetrics.chartHeight)
+                OverlayChart(series: nonEmpty, effortScale: effortScale, height: ZoopMetrics.chartHeight)
             } footer: {
                 legend(nonEmpty)
             }
@@ -561,7 +561,7 @@ struct CompareView: View {
     @ViewBuilder
     private func correlationSection(_ series: [CompareSeries]) -> some View {
         let pairs = pairResults(series)
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("How They Move Together",
                           overline: "Pearson r · \(range.phrase)",
                           trailing: pairs.isEmpty ? nil
@@ -569,7 +569,7 @@ struct CompareView: View {
                                                         : String(localized: "\(pairs.count) pairs")))
 
             if pairs.isEmpty {
-                NoopCard {
+                ZoopCard {
                     Text("Not enough overlapping days between these metrics in \(range.phrase). Widen the range.")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
@@ -584,12 +584,12 @@ struct CompareView: View {
         }
     }
 
-    /// One pairwise correlation as its own NoopCard.
+    /// One pairwise correlation as its own ZoopCard.
     private func pairCard(_ p: PairResult) -> some View {
         let tint = correlationColor(p.r)
         // Frosted card washed by the relationship's own colour (green positive / rose negative), with a
         // TrendChip surfacing the signed direction at a glance — the Today delta idiom, applied to r.
-        return NoopCard(tint: tint) {
+        return ZoopCard(tint: tint) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 10) {
                     // A small liquid vessel filled to the correlation STRENGTH (|r|, a neutral 0–1
@@ -1120,7 +1120,7 @@ private struct MultiTooltip: View {
             }
         }
         .padding(10)
-        .background(NoopPanelSurface(cornerRadius: 10, elevated: true))
+        .background(ZoopPanelSurface(cornerRadius: 10, elevated: true))
         .frame(width: tooltipWidth, alignment: .leading)
         .position(x: clampedX, y: tooltipHeight / 2 + 8)
         .allowsHitTesting(false)

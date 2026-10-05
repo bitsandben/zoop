@@ -29,14 +29,14 @@ struct LiftProgramImportSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     if let parsed {
                         preview(parsed)
                     } else {
                         intro
                     }
                     if let failure {
-                        NoopCard {
+                        ZoopCard {
                             Text(failure)
                                 .font(StrandFont.footnote)
                                 .foregroundStyle(StrandPalette.statusCritical)
@@ -44,7 +44,7 @@ struct LiftProgramImportSheet: View {
                         }
                     }
                 }
-                .padding(NoopMetrics.screenPadding)
+                .padding(ZoopMetrics.screenPadding)
             }
             .background(StrandPalette.surfaceBase)
             .navigationTitle("Import a program")
@@ -79,8 +79,8 @@ struct LiftProgramImportSheet: View {
     }()
 
     private var intro: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
-            NoopCard {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
+            ZoopCard {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Fill it in on a computer")
                         .font(StrandFont.headline)
@@ -107,9 +107,9 @@ struct LiftProgramImportSheet: View {
     }
 
     private func preview(_ result: LiftProgramImportResult) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             ForEach(Array(result.programs.enumerated()), id: \.offset) { _, program in
-                NoopCard {
+                ZoopCard {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(program.name)
                             .font(StrandFont.headline)
@@ -133,7 +133,7 @@ struct LiftProgramImportSheet: View {
             }
 
             if !result.warnings.isEmpty {
-                NoopCard {
+                ZoopCard {
                     VStack(alignment: .leading, spacing: 6) {
                         // No count in the heading: the warnings are listed directly beneath it, so
                         // the number adds nothing — and it dodges plural agreement in ten languages.
@@ -163,7 +163,7 @@ struct LiftProgramImportSheet: View {
             } label: {
                 Label("Choose a different file", systemImage: "arrow.triangle.2.circlepath")
             }
-            .buttonStyle(NoopButtonStyle(.secondary))
+            .buttonStyle(ZoopButtonStyle(.secondary))
         }
     }
 

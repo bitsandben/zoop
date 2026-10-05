@@ -76,12 +76,12 @@ public struct WatchScoreSnapshot: Codable, Equatable, Sendable {
 
     /// The shared app group both the watch app and its complication read the snapshot from. Injected
     /// from the `APP_GROUP_ID` build setting (see project.yml) via the `AppGroupIdentifier` Info.plist
-    /// key on every target that touches it (NOOPiOS, NOOPWatch, NOOPWatchComplications), mirroring
+    /// key on every target that touches it (ZoopiOS, ZoopWatch, ZoopWatchComplications), mirroring
     /// `WidgetSnapshot.suiteName` — this package builds standalone (`swift test`) with no host bundle,
     /// so the fallback below is the canonical upstream group and only applies there.
     public static let appGroupId: String = {
         Bundle.main.object(forInfoDictionaryKey: "AppGroupIdentifier") as? String
-            ?? "group.com.noopapp.noop"
+            ?? "group.com.zoopapp.zoop"
     }()
     /// The UserDefaults key the latest snapshot is stored under in the shared app group.
     public static let storageKey = "latestWatchSnapshot"

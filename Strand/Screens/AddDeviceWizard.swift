@@ -179,7 +179,7 @@ struct AddDeviceWizard: View {
             header
             Divider().overlay(StrandPalette.hairline)
             ScrollView {
-                VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     if type == .oura {
                         // The Oura type runs its OWN step machine (gate -> prep -> pick -> confirm ->
                         // adopting/failed), NOT the generic prep/pick/confirm. Parity with the Android flow.
@@ -1500,7 +1500,7 @@ private struct WhoopPickList: View {
     let onRescan: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             ScanStatusBar(searching: true, onRescan: onRescan)
             let found = ble.discoveredWhoops.sorted { $0.rssi > $1.rssi }
             if found.isEmpty {
@@ -1526,7 +1526,7 @@ private struct HRPickList: View {
     let onRescan: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             ScanStatusBar(searching: scanner.scanning, onRescan: onRescan)
             if scanner.discovered.isEmpty {
                 SearchingCard()
@@ -1555,7 +1555,7 @@ private struct FTMSPickList: View {
     let onRescan: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             ScanStatusBar(searching: scanner.scanning, onRescan: onRescan)
             if scanner.discovered.isEmpty {
                 SearchingCard()
@@ -1580,7 +1580,7 @@ private struct HuamiPickList: View {
     let onRescan: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             ScanStatusBar(searching: scanner.scanning, onRescan: onRescan)
             if scanner.discovered.isEmpty {
                 SearchingCard()
@@ -1610,7 +1610,7 @@ private struct OuraPickList: View {
     let onUseImport: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             ScanStatusBar(searching: scanner.scanning, onRescan: onRescan)
             if let msg = scanner.needsPairing {
                 // Honest needs-pairing state: the ring won't answer (still Oura-owned / not reset). Never a

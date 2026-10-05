@@ -14,15 +14,15 @@ import XCTest
 final class BackgroundTaskIdentityTests: XCTestCase {
 
     private let permitted = [
-        "com.noopapp.noop.debugexport",
-        "com.noopapp.noop.coachbrief",
-        "com.noopapp.noop.healthwriteback",
-        "com.noopapp.noop.rescore",
+        "com.zoopapp.zoop.debugexport",
+        "com.zoopapp.zoop.coachbrief",
+        "com.zoopapp.zoop.healthwriteback",
+        "com.zoopapp.zoop.rescore",
     ]
 
     func testAnUntouchedBuildReportsNothing() {
         XCTAssertNil(IOSDiagnostics.backgroundTaskIdentityFault(
-            runtimeID: "com.noopapp.noop", permitted: permitted))
+            runtimeID: "com.zoopapp.zoop", permitted: permitted))
     }
 
     /// The reported shape: the re-signer rewrote the bundle id and left the permitted list alone.
@@ -31,7 +31,7 @@ final class BackgroundTaskIdentityTests: XCTestCase {
             runtimeID: "com.example.noop.resigned", permitted: permitted)
         guard let line else { return XCTFail("a mismatched bundle id must be reported") }
         XCTAssertTrue(line.contains("com.example.noop.resigned"), line)
-        XCTAssertTrue(line.contains("com.noopapp.noop"), "it must name the id Info.plist permits: \(line)")
+        XCTAssertTrue(line.contains("com.zoopapp.zoop"), "it must name the id Info.plist permits: \(line)")
         // Tracks the copy on purpose: the wording IS the diagnostic, so a reader has to be able to tell
         // at a glance that nothing will run. It was "CANNOT REGISTER" until that read as a tested outcome
         // rather than what it is, an inference from the plist. A future rewording updates this with it.
@@ -40,7 +40,7 @@ final class BackgroundTaskIdentityTests: XCTestCase {
 
     /// A build that declares no background tasks is not broken, and must not be told it is.
     func testNoPermittedIdentifiersIsNotAFault() {
-        XCTAssertNil(IOSDiagnostics.backgroundTaskIdentityFault(runtimeID: "com.noopapp.noop", permitted: []))
+        XCTAssertNil(IOSDiagnostics.backgroundTaskIdentityFault(runtimeID: "com.zoopapp.zoop", permitted: []))
     }
 
     /// A fork or staging prefix is a legitimate build, not a fault: its own id matches its own plist.
@@ -50,17 +50,17 @@ final class BackgroundTaskIdentityTests: XCTestCase {
             permitted: ["com.mine.noop.rescore", "com.mine.noop.coachbrief"]))
     }
 
-    /// A PREFIX collision must not read as a match: `com.noopapp.noop2` is a different app, and
+    /// A PREFIX collision must not read as a match: `com.zoopapp.zoop2` is a different app, and
     /// `hasPrefix` without the dot separator would wrongly clear it.
     func testASiblingIdSharingAPrefixIsStillAFault() {
         XCTAssertNotNil(IOSDiagnostics.backgroundTaskIdentityFault(
-            runtimeID: "com.noopapp.noop2", permitted: permitted))
+            runtimeID: "com.zoopapp.zoop2", permitted: permitted))
     }
 
     /// Partially rewritten lists still register what they can, so that is not the failure this names.
     func testAListWithAtLeastOneMatchingIdentifierIsNotAFault() {
         XCTAssertNil(IOSDiagnostics.backgroundTaskIdentityFault(
-            runtimeID: "com.noopapp.noop",
-            permitted: ["com.other.app.rescore", "com.noopapp.noop.coachbrief"]))
+            runtimeID: "com.zoopapp.zoop",
+            permitted: ["com.other.app.rescore", "com.zoopapp.zoop.coachbrief"]))
     }
 }

@@ -9,7 +9,7 @@ import XCTest
 /// `DismissedSleepSpansTests` (the tombstone-lift half) this covers the whole undo path.
 final class SleepDeleteUndoStoreTests: XCTestCase {
 
-    private let computed = "my-whoop-noop"
+    private let computed = "my-whoop-zoop"
     private let imported = "my-whoop"
 
     /// The same session as it reads back from `deviceId`. `sleepSessions` stamps the device it read the

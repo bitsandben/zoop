@@ -37,7 +37,7 @@ struct ChatMessage: Identifiable, Equatable {
 /// Keychain Services wrapper for the user's API key. Uses a generic-password item under a fixed
 /// service so the key never lands in UserDefaults, a plist, or on disk in the clear.
 enum AIKeyStore {
-    private static let service = "com.noop.aicoach"
+    private static let service = "com.zoop.aicoach"
     private static let account = "api-key"
 
     private static var baseQuery: [String: Any] {
@@ -524,7 +524,7 @@ final class AICoachEngine: ObservableObject {
     /// the existing list intact. Requires a saved key.
     /// When the live catalogue was last pulled for `provider`, keyed per provider so switching does
     /// not hide one provider's stale list behind another's refresh. Kotlin twin:
-    /// `NoopPrefs.coachModelsRefreshedAt`.
+    /// `ZoopPrefs.coachModelsRefreshedAt`.
     static func modelsRefreshedKey(_ provider: AIProvider) -> String {
         "ai.modelsRefreshed.\(provider.rawValue)"
     }

@@ -96,7 +96,7 @@ final class ReadSpineActiveDeviceTests: XCTestCase {
         XCTAssertEqual(repo.deviceId, canonicalId)
     }
 
-    /// The computed ("-noop") sibling: the union reads BOTH the active strap's computed sibling AND the
+    /// The computed ("-zoop") sibling: the union reads BOTH the active strap's computed sibling AND the
     /// canonical computed sibling, so a day scored under the canonical id before a re-add still surfaces, and
     /// a day scored under the re-added strap's sibling also surfaces.
     @MainActor
@@ -108,8 +108,8 @@ final class ReadSpineActiveDeviceTests: XCTestCase {
         // One computed day banked under the CANONICAL sibling (older), one under the re-added strap's sibling.
         let todayKey = Repository.localDayKey(Date())
         let yKey = Repository.localDayKey(Date().addingTimeInterval(-3 * 86_400))
-        _ = try await store.upsertDailyMetrics([dailyMetric(day: yKey, recovery: 60)], deviceId: canonicalId + "-noop")
-        _ = try await store.upsertDailyMetrics([dailyMetric(day: todayKey, recovery: 66)], deviceId: newId + "-noop")
+        _ = try await store.upsertDailyMetrics([dailyMetric(day: yKey, recovery: 60)], deviceId: canonicalId + "-zoop")
+        _ = try await store.upsertDailyMetrics([dailyMetric(day: todayKey, recovery: 66)], deviceId: newId + "-zoop")
 
         let repo = Repository(deviceId: canonicalId)
         repo.setStoreForTesting(store)

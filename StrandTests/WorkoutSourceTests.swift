@@ -18,9 +18,9 @@ final class WorkoutSourceTests: XCTestCase {
     // MARK: - classify
 
     func testClassifyOrdersNoopBeforeWhoop() {
-        // "my-whoop-noop" contains "whoop" — the -noop suffix MUST win, else a detected bout
+        // "my-whoop-zoop" contains "whoop" — the -noop suffix MUST win, else a detected bout
         // would be classified as an imported WHOOP row and become un-dismissable.
-        XCTAssertEqual(WorkoutSource.classify("my-whoop-noop"), .detected)
+        XCTAssertEqual(WorkoutSource.classify("my-whoop-zoop"), .detected)
         XCTAssertEqual(WorkoutSource.classify("whoop"), .whoop)
         XCTAssertEqual(WorkoutSource.classify("manual"), .manual)
         XCTAssertEqual(WorkoutSource.classify("lifting"), .lifting)
@@ -53,8 +53,8 @@ final class WorkoutSourceTests: XCTestCase {
 
     func testIsDismissedOnlyHidesOverlappingDetectedRows() {
         let spans = WorkoutSource.parseDismissedSpans(["1000:2000"])
-        let detectedOverlap = row(start: 1500, end: 2500, sport: "detected", source: "my-whoop-noop")
-        let detectedClear = row(start: 3000, end: 4000, sport: "detected", source: "my-whoop-noop")
+        let detectedOverlap = row(start: 1500, end: 2500, sport: "detected", source: "my-whoop-zoop")
+        let detectedClear = row(start: 3000, end: 4000, sport: "detected", source: "my-whoop-zoop")
         let manualOverlap = row(start: 1500, end: 2500, sport: "Running", source: "manual")
         XCTAssertTrue(WorkoutSource.isDismissed(detectedOverlap, spans: spans))
         XCTAssertFalse(WorkoutSource.isDismissed(detectedClear, spans: spans))
@@ -65,12 +65,12 @@ final class WorkoutSourceTests: XCTestCase {
     func testIsDismissedSurvivesStartTsDrift() {
         // A re-detected bout whose boundary drifted a little still overlaps the dismissed span.
         let spans = WorkoutSource.parseDismissedSpans(["1000:2000"])
-        let drifted = row(start: 1040, end: 2030, sport: "detected", source: "my-whoop-noop")
+        let drifted = row(start: 1040, end: 2030, sport: "detected", source: "my-whoop-zoop")
         XCTAssertTrue(WorkoutSource.isDismissed(drifted, spans: spans))
     }
 
     func testDismissedTokenRoundTrips() {
-        let r = row(start: 1700000000, end: 1700003600, sport: "detected", source: "my-whoop-noop")
+        let r = row(start: 1700000000, end: 1700003600, sport: "detected", source: "my-whoop-zoop")
         let token = WorkoutSource.dismissedToken(for: r)
         XCTAssertEqual(token, "1700000000:1700003600")
         let spans = WorkoutSource.parseDismissedSpans([token])
@@ -177,7 +177,7 @@ final class WorkoutSourceTests: XCTestCase {
         // A live/manual "Strength" session and its detected twin (different sport, wider window) overlap
         // heavily. Before the next engine pass both show; the read-time guard drops the detected shadow.
         let manual = richRow(start: 1000, end: 4600, sport: "Strength Training", source: "manual")
-        let detected = row(start: 900, end: 4800, sport: "detected", source: "my-whoop-noop",
+        let detected = row(start: 900, end: 4800, sport: "detected", source: "my-whoop-zoop",
                            avgHr: 175, maxHr: 190, strain: 19.0)   // wider window, implausibly hot
         let out = WorkoutSource.dedupCrossSource([detected, manual])
         XCTAssertEqual(out.count, 1)
@@ -186,7 +186,7 @@ final class WorkoutSourceTests: XCTestCase {
 
     func testDetectedBoutKeptWhenItDoesNotOverlapAnyReal() {
         // A detected bout on its own (no real session in its window) is untouched.
-        let detected = row(start: 1000, end: 4600, sport: "detected", source: "my-whoop-noop",
+        let detected = row(start: 1000, end: 4600, sport: "detected", source: "my-whoop-zoop",
                            avgHr: 150, maxHr: 170, strain: 12.0)
         let manualLater = richRow(start: 20_000, end: 23_600, sport: "Running", source: "manual")
         let out = WorkoutSource.dedupCrossSource([detected, manualLater])
@@ -198,7 +198,7 @@ final class WorkoutSourceTests: XCTestCase {
         // Back-to-back: a detected bout and a manual session that only touch at the edge (<50% of shorter)
         // are genuinely separate and both survive.
         let manual = richRow(start: 1000, end: 4600, sport: "Running", source: "manual")   // 60 min
-        let detected = row(start: 4500, end: 8100, sport: "detected", source: "my-whoop-noop",
+        let detected = row(start: 4500, end: 8100, sport: "detected", source: "my-whoop-zoop",
                            avgHr: 150, strain: 12.0)                                        // 60 min, 100 s overlap
         let out = WorkoutSource.dedupCrossSource([manual, detected])
         XCTAssertEqual(out.count, 2)
@@ -207,7 +207,7 @@ final class WorkoutSourceTests: XCTestCase {
     func testDedupTraceEmitsDroppedShadowLineAndStaysByteIdentical() {
         // The trace twin must drop the same detected shadow the plain path does AND name it, without diverging.
         let manual = richRow(start: 1000, end: 4600, sport: "Strength Training", source: "manual")
-        let detected = row(start: 900, end: 4800, sport: "detected", source: "my-whoop-noop",
+        let detected = row(start: 900, end: 4800, sport: "detected", source: "my-whoop-zoop",
                            avgHr: 175, strain: 19.0)
         let plain = WorkoutSource.dedupCrossSource([detected, manual])
         let (kept, trace) = WorkoutSource.dedupCrossSourceTrace([detected, manual])
@@ -375,7 +375,7 @@ final class WorkoutSourceTests: XCTestCase {
         let run = fullRow(start: 100, end: 3700, sport: "Running", source: "whoop")
         let manualRun = fullRow(start: 5000, end: 8600, sport: "Running", source: "manual")
         let cycle = fullRow(start: 9000, end: 12000, sport: "Cycling", source: "manual")
-        let detected = fullRow(start: 13000, end: 14000, sport: "detected", source: "my-whoop-noop")
+        let detected = fullRow(start: 13000, end: 14000, sport: "detected", source: "my-whoop-zoop")
         let rows = [run, manualRun, cycle, detected]
 
         // Sport filter uses the DISPLAYED name.
@@ -397,7 +397,7 @@ final class WorkoutSourceTests: XCTestCase {
 
     func testMergeEligibilityGatesOnManualOrDetected() {
         let manual = fullRow(start: 100, end: 3700, sport: "Running", source: "manual")
-        let detected = fullRow(start: 100, end: 3700, sport: "detected", source: "my-whoop-noop")
+        let detected = fullRow(start: 100, end: 3700, sport: "detected", source: "my-whoop-zoop")
         let whoop = fullRow(start: 100, end: 3700, sport: "Running", source: "whoop")
         let apple = fullRow(start: 100, end: 3700, sport: "Running", source: "apple-health")
         XCTAssertTrue(WorkoutMerge.isMergeable(manual))
@@ -458,13 +458,13 @@ final class WorkoutSourceTests: XCTestCase {
 
     func testMergeSportResolutionPrefersRealLabelOverDetected() {
         // A detected bout + a manual "Strength Training": the real label wins, detected never does.
-        let detected = fullRow(start: 1000, end: 4600, sport: "detected", source: "my-whoop-noop")
+        let detected = fullRow(start: 1000, end: 4600, sport: "detected", source: "my-whoop-zoop")
         let manual = fullRow(start: 4600, end: 6000, sport: "Strength Training", source: "manual")
         XCTAssertEqual(WorkoutMerge.resolvedSport([detected, manual]), "Strength Training")
         XCTAssertEqual(WorkoutMerge.merge([detected, manual])?.sport, "Strength Training")
         // All-detected: no label to resolve, so the caller must pick (nil), and merge falls back to
         // "Activity" unless a sport override is supplied.
-        let detected2 = fullRow(start: 6000, end: 7000, sport: "detected", source: "my-whoop-noop")
+        let detected2 = fullRow(start: 6000, end: 7000, sport: "detected", source: "my-whoop-zoop")
         XCTAssertNil(WorkoutMerge.resolvedSport([detected, detected2]))
         XCTAssertEqual(WorkoutMerge.merge([detected, detected2])?.sport, "Activity")
         XCTAssertEqual(WorkoutMerge.merge([detected, detected2], sport: "Yoga")?.sport, "Yoga")

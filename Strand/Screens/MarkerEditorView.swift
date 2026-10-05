@@ -53,7 +53,7 @@ struct MarkerEditorView: View {
     var body: some View {
         ScreenScaffold(title: "Add a reading",
                        subtitle: "Type in a number from your own report. It stays on \(Platform.deviceNounPhrase).") {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 markerSection
                 if selection != nil || addingCustom {
                     readingSection
@@ -77,9 +77,9 @@ struct MarkerEditorView: View {
     // MARK: - Marker picker
 
     private var markerSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Marker", overline: "what are you logging?")
-            NoopCard {
+            ZoopCard {
                 VStack(alignment: .leading, spacing: 12) {
                     if addingCustom {
                         customMarkerFields
@@ -102,7 +102,7 @@ struct MarkerEditorView: View {
     }
 
     private var searchField: some View {
-        NoopLiquidGlassSearchField(text: $search,
+        ZoopLiquidGlassSearchField(text: $search,
                                    prompt: String(localized: "Search markers (e.g. LDL, ferritin)"),
                                    accessibilityLabel: String(localized: "Search markers"))
     }
@@ -211,9 +211,9 @@ struct MarkerEditorView: View {
     // MARK: - Reading inputs
 
     private var readingSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Reading", overline: "your number, date and any note")
-            NoopCard {
+            ZoopCard {
                 VStack(alignment: .leading, spacing: 14) {
                     if isBloodPressure {
                         bloodPressureFields

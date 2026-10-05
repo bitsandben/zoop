@@ -445,15 +445,15 @@
       "r = %+.2f"
     ],
     [
-      "android/app/src/main/java/com/noop/ui/NoopLimitationsScreen.kt",
+      "android/app/src/main/java/com/noop/ui/ZoopLimitationsScreen.kt",
       "${row.feature}: WHOOP 4.0 ${row.whoop4.spoken}, 5.0/MG ${row.whoop5.spoken}"
     ],
     [
-      "android/app/src/main/java/com/noop/ui/NoopLimitationsScreen.kt",
+      "android/app/src/main/java/com/noop/ui/ZoopLimitationsScreen.kt",
       "5.0/MG"
     ],
     [
-      "android/app/src/main/java/com/noop/ui/NoopLimitationsScreen.kt",
+      "android/app/src/main/java/com/noop/ui/ZoopLimitationsScreen.kt",
       "Feature"
     ],
     [
@@ -855,31 +855,31 @@
   ],
   "ios": [
     [
-      "NOOPWatch/WatchBreatheView.swift",
+      "ZoopWatch/WatchBreatheView.swift",
       "Follow the guided cue"
     ],
     [
-      "NOOPWatch/WatchBreatheView.swift",
+      "ZoopWatch/WatchBreatheView.swift",
       "Hold for \\(secs) seconds"
     ],
     [
-      "NOOPWatch/WatchBreatheView.swift",
+      "ZoopWatch/WatchBreatheView.swift",
       "Push"
     ],
     [
-      "NOOPWatch/WatchBreatheView.swift",
+      "ZoopWatch/WatchBreatheView.swift",
       "Regular"
     ],
     [
-      "NOOPWatch/WatchBreatheView.swift",
+      "ZoopWatch/WatchBreatheView.swift",
       "\\(breathCount) breaths · \\(timeString(sessionSeconds))/\\(timeString(target))"
     ],
     [
-      "NOOPWatch/WatchBreatheView.swift",
+      "ZoopWatch/WatchBreatheView.swift",
       "\\(title) · \\(sessionLength.label)"
     ],
     [
-      "NOOPWatch/WatchBreatheView.swift",
+      "ZoopWatch/WatchBreatheView.swift",
       "\\(title) · guided"
     ],
     [

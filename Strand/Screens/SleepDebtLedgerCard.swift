@@ -21,16 +21,16 @@ struct SleepDebtLedgerCard: View {
 
     var body: some View {
         let ledger = model.sleepDebtLedger
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Sleep-debt ledger", overline: "Last 14 nights")
-            NoopCard(tint: StrandPalette.restColor) {
+            ZoopCard(tint: StrandPalette.restColor) {
                 if ledger.nightCount == 0 {
                     Text("No nights with sleep data yet. Your ledger fills in as you wear the strap to bed.")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
-                    VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                         // Headline: net balance (count-up on appear) + the short tag (DEBT / SURPLUS / ON
                         // TARGET). The number ticks from the accumulated magnitude via the same formatter.
                         HStack(alignment: .firstTextBaseline) {
@@ -42,7 +42,7 @@ struct SleepDebtLedgerCard: View {
                             )
                             .lineLimit(1)
                             .minimumScaleFactor(0.6)
-                            Spacer(minLength: NoopMetrics.space2)
+                            Spacer(minLength: ZoopMetrics.space2)
                             Text(debtTag(ledger))
                                 .font(StrandFont.captionNumber)
                                 .foregroundStyle(debtBalanceColor(ledger))

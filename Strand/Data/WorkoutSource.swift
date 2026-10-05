@@ -8,12 +8,12 @@ import StrandAnalytics   // WorkoutsTrace: the dedup-decision line formatter for
 ///   - "whoop"        — WhoopImporter (imported WHOOP session)
 ///   - "apple_health" / "apple-health" — AppleHealthImport
 ///   - "manual"       — AppModel.endWorkout (v1.67 live session) AND the retro add/edit sheet
-///   - "my-whoop-noop"— legacy IntelligenceEngine detected bouts (source == the computed deviceId,
-///                       i.e. it ends in "-noop"). These remain readable/editable but are no longer
+///   - "my-whoop-zoop"— legacy IntelligenceEngine detected bouts (source == the computed deviceId,
+///                       i.e. it ends in "-zoop"). These remain readable/editable but are no longer
 ///                       created or reconciled by `analyzeRecent`.
 ///
-/// Classification order matters: "-noop" is checked BEFORE "whoop" because the computed id
-/// "my-whoop-noop" also contains the substring "whoop".
+/// Classification order matters: "-zoop" is checked BEFORE "whoop" because the computed id
+/// "my-whoop-zoop" also contains the substring "whoop".
 enum WorkoutSource: Equatable {
     case whoop, apple, detected, manual, lifting, activityFile
 
@@ -24,7 +24,7 @@ enum WorkoutSource: Equatable {
 
     static func classify(_ source: String) -> WorkoutSource {
         let s = source.lowercased()
-        if s.hasSuffix("-noop") { return .detected }   // BEFORE whoop: "my-whoop-noop" contains "whoop"
+        if s.hasSuffix("-zoop") { return .detected }   // BEFORE whoop: "my-whoop-zoop" contains "whoop"
         if s == "manual" { return .manual }
         if s == "lifting" { return .lifting }          // imported Hevy / Liftosaur strength session
         if s == "activity-file" { return .activityFile } // imported GPX / TCX / FIT activity file

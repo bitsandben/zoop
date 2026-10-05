@@ -9,8 +9,8 @@ import Foundation
 // The longitudinal view, rebuilt on the locked Noop component system so every
 // surface, height and gap is identical: one SegmentedPillControl for the range,
 // a hero recovery ChartCard, a uniform grid of HRV / Resting HR / Day Strain
-// ChartCards (all NoopMetrics.chartHeight tall), and the whole history as a
-// recovery YearHeatStrip in a NoopCard. No hand-sized cards anywhere.
+// ChartCards (all ZoopMetrics.chartHeight tall), and the whole history as a
+// recovery YearHeatStrip in a ZoopCard. No hand-sized cards anywhere.
 
 struct TrendsView: View {
     @EnvironmentObject var repo: Repository
@@ -218,7 +218,7 @@ struct TrendsView: View {
                 guard let better = higherIsBetter else { return StrandPalette.textTertiary }
                 return (d > 0) == better ? StrandPalette.statusPositive : StrandPalette.metricRose
             }()
-            VStack(alignment: .leading, spacing: NoopMetrics.spaceHalf) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.spaceHalf) {
                 // Match the neighbouring ChartFooter columns so the delta is self-describing instead
                 // of appearing as an unlabeled pill at the edge of the statistics row.
                 Text("Trend")
@@ -305,7 +305,7 @@ struct TrendsView: View {
                 // Reuse the resolved windows until the data, range, or loaded Rest series changes.
                 // An unrelated Repository publication must not re-filter five years of history.
                 let metrics = resolvedMetrics
-                VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                     // The main card list ripples in once on appear (Reduce-Motion safe).
                     Group {
                         // Week-in-review digest (#208) with prev/next week browsing (#710) — self-hides
@@ -399,7 +399,7 @@ struct TrendsView: View {
         if repo.days.isEmpty {
             EmptyView()
         } else {
-            VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                 weekNavBar(digest: digest)
                 if digest.isEmpty {
                     // This particular week had no readings — keep the chevrons above so the user can move on.
@@ -408,11 +408,11 @@ struct TrendsView: View {
                         message: "Step to another week with the arrows above to see its review.")
                 } else {
                     WeeklyDigestContent(digest: digest, compact: true, showsHeader: false)
-                        .padding(.top, NoopMetrics.space1)
+                        .padding(.top, ZoopMetrics.space1)
                     // Share this week's recap as an image. Renders the digest card (with its header) to a
                     // PNG off-screen and hands it to the share sheet / Save panel — reuses TrendsReport's
                     // ImageRenderer path. Only offered when the week actually holds data.
-                    NoopButton("Share recap", systemImage: "square.and.arrow.up", kind: .secondary) {
+                    ZoopButton("Share recap", systemImage: "square.and.arrow.up", kind: .secondary) {
                         let page = WeeklyDigestContent(digest: digest, compact: true, showsHeader: true)
                             .frame(width: 380)
                             .padding(24)
@@ -432,7 +432,7 @@ struct TrendsView: View {
         let atNewest = weekOffset >= 0
         let daysSummary = String(localized: "\(digest.daysWithData)/7 days")
         let daysAccessibility = String(localized: "\(digest.daysWithData) of 7 days had data")
-        return HStack(spacing: NoopMetrics.cardInnerSpacing) {
+        return HStack(spacing: ZoopMetrics.cardInnerSpacing) {
             Button { stepWeek(-1) } label: {
                 Image(systemName: "chevron.left").font(StrandFont.headline.weight(.semibold))
             }
@@ -465,7 +465,7 @@ struct TrendsView: View {
             .disabled(atNewest)
             .accessibilityLabel("Next week")
         }
-        .padding(.horizontal, NoopMetrics.space1)
+        .padding(.horizontal, ZoopMetrics.space1)
         .accessibilityElement(children: .contain)
     }
 
@@ -489,8 +489,8 @@ struct TrendsView: View {
         let effortAvg = mean(effort.points)   // stored 0–100 internal Effort scale
         let restAvg = mean(rest.points)
         if chargeAvg != nil || effortAvg != nil || restAvg != nil {
-            NoopCard {
-                VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
+            ZoopCard {
+                VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                     SectionHeader("Week in review", overline: "Charge · Effort · Rest")
                     if let v = chargeAvg {
                         pipScoreRow(label: "Charge", value: v, range: 0...100,
@@ -530,13 +530,13 @@ struct TrendsView: View {
     /// headline metric, exactly where it reads well (not on a chart).
     private func pipScoreRow(label: LocalizedStringKey, value: Double, range: ClosedRange<Double>,
                              tint: Color, frac: Double, format: @escaping (Double) -> String) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
             Text(label)
                 .font(StrandFont.overline)
                 .tracking(StrandFont.overlineTracking)
                 .textCase(.uppercase)
                 .foregroundStyle(StrandPalette.textSecondary)
-            HStack(spacing: NoopMetrics.space3) {
+            HStack(spacing: ZoopMetrics.space3) {
                 // Static (posed) vessel — a small liquid gauge, not a live 60fps canvas, so the three
                 // in this card cost a single cached frame each (same call as Today's small vessels).
                 LiquidVessel(value: max(0, min(1, frac)), tint: tint, animated: false)
@@ -559,23 +559,23 @@ struct TrendsView: View {
     /// A footer entry that opens the shareable-report sheet. Flat WHOOP card with a blue accent
     /// action — the icon, label and "Export" CTA all read in the accent (blue) world, no gold.
     private var exportReportRow: some View {
-        NoopCard(tint: StrandPalette.accent) {
-            HStack(spacing: NoopMetrics.space3) {
+        ZoopCard(tint: StrandPalette.accent) {
+            HStack(spacing: ZoopMetrics.space3) {
                 Image(systemName: "doc.richtext")
                     .font(StrandFont.title2)
                     .foregroundStyle(StrandPalette.accent)
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
                     Text("Export trends report").strandOverline()
                     Text("A shareable one-page PDF of recovery, sleep, HRV, resting HR and strain over a range, saved on your \(Platform.deviceNoun).")
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer(minLength: NoopMetrics.space2)
+                Spacer(minLength: ZoopMetrics.space2)
                 // The card's call-to-action — routed through the unified button system (secondary kind:
                 // a quiet raised capsule that reads as the card action, not the one primary on the page).
-                NoopButton("Export", systemImage: "square.and.arrow.up", kind: .secondary) {
+                ZoopButton("Export", systemImage: "square.and.arrow.up", kind: .secondary) {
                     showingReport = true
                 }
                 .fixedSize()
@@ -589,8 +589,8 @@ struct TrendsView: View {
     private func rangeBar(recovery: ResolvedMetric) -> some View {
         let cap = recovery.caption
         let isWide = recovery.widened
-        return VStack(alignment: .leading, spacing: NoopMetrics.space2) {
-            HStack(spacing: NoopMetrics.space2) {
+        return VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
+            HStack(spacing: ZoopMetrics.space2) {
                 // Six ranges plus the trailing-window caption need to share a compact iPhone row.
                 // Let the segmented control collapse to equal-width cells instead of squeezing the
                 // caption narrower than one word (which wrapped the final G in TRAILING by itself).
@@ -598,7 +598,7 @@ struct TrendsView: View {
                                      adaptsToAvailableWidth: true) { $0.label }
                 // Keep the caption's two lines internally leading-aligned, but anchor the whole
                 // caption column to the page's trailing edge.
-                Spacer(minLength: NoopMetrics.space2)
+                Spacer(minLength: ZoopMetrics.space2)
                 rangeCaption
             }
             Text(cap)
@@ -622,7 +622,7 @@ struct TrendsView: View {
             // the hero only names its window so the count isn't doubled in one card height.
             subtitle: rangeSubtitle,
             trailing: avg.map { "\(Int($0.rounded()))" },
-            height: NoopMetrics.chartHeight,
+            height: ZoopMetrics.chartHeight,
             chart: {
                 if pts.count >= 2 {
                     glowChart(points: pts,
@@ -638,7 +638,7 @@ struct TrendsView: View {
                 }
             },
             footer: {
-                VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
                     HStack {
                         ChartFooter([
                             ("Avg", avg.map { "\(Int($0.rounded()))" } ?? "—"),
@@ -663,15 +663,15 @@ struct TrendsView: View {
     // MARK: Small multiples — HRV / Resting HR / Day Strain
 
     private func smallMultiples(hrv: ResolvedMetric, rhr: ResolvedMetric, strain: ResolvedMetric) -> some View {
-        let cols = [GridItem(.adaptive(minimum: 320), spacing: NoopMetrics.gap)]
+        let cols = [GridItem(.adaptive(minimum: 320), spacing: ZoopMetrics.gap)]
         let hrvPts = hrv.points
         let rhrPts = rhr.points
         let strainPts = strain.points
 
-        return VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        return VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             // No trailing window label — the range bar's overline already states it.
             SectionHeader("Daily signals", overline: "Trends")
-            LazyVGrid(columns: cols, alignment: .leading, spacing: NoopMetrics.gap) {
+            LazyVGrid(columns: cols, alignment: .leading, spacing: ZoopMetrics.gap) {
                 // HRV / Resting HR are Charge sub-signals → the Charge (green) card world, each line
                 // keeping its established metric hue for legibility. Effort is the WHOOP blue strain world.
                 metricChart(
@@ -739,7 +739,7 @@ struct TrendsView: View {
             title: title,
             subtitle: subtitle,
             trailing: avg.map(fmt),
-            height: NoopMetrics.chartHeight,
+            height: ZoopMetrics.chartHeight,
             tint: tint,
             chart: {
                 if pts.count >= 2 {
@@ -781,14 +781,14 @@ struct TrendsView: View {
             return RecoveryDay(date: dt, score: d.recovery)
         }
         let title = (range == .all && repo.days.count > 365) ? String(localized: "Charge (all history)") : String(localized: "Charge (past year)")
-        return NoopCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
+        return ZoopCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                 SectionHeader("\(title)", overline: "Calendar", trailing: String(localized: "\(recoveryDays.filter { $0.score != nil }.count) days"))
                 if recoveryDays.isEmpty {
                     sparsePlaceholder.frame(height: 120)
                 } else {
                     ScrollView(.horizontal, showsIndicators: false) {
-                        YearHeatStrip(days: recoveryDays).padding(.vertical, NoopMetrics.space1 / 2)
+                        YearHeatStrip(days: recoveryDays).padding(.vertical, ZoopMetrics.space1 / 2)
                     }
                     Divider().overlay(StrandPalette.hairline)
                     legend
@@ -798,14 +798,14 @@ struct TrendsView: View {
     }
 
     private var legend: some View {
-        HStack(spacing: NoopMetrics.space2) {
+        HStack(spacing: ZoopMetrics.space2) {
             Text("Depleted")
                 .font(StrandFont.footnote)
                 .foregroundStyle(StrandPalette.textTertiary)
                 .fixedSize()
             LinearGradient(gradient: StrandPalette.recoveryGradient, startPoint: .leading, endPoint: .trailing)
                 .frame(maxWidth: .infinity)
-                .frame(height: NoopMetrics.indicatorTrackHeight)
+                .frame(height: ZoopMetrics.indicatorTrackHeight)
                 .clipShape(Capsule())
                 .accessibilityHidden(true)
             Text("Peaked")
@@ -843,7 +843,7 @@ struct TrendsView: View {
         TrendChart(points: pts, gradient: gradient, valueRange: valueRange,
                    showsArea: true,
                    showsBars: TrendChartStyle(rawValue: trendChartStyleRaw) == .bar,
-                   height: NoopMetrics.chartHeight, valueFormat: valueFormat,
+                   height: ZoopMetrics.chartHeight, valueFormat: valueFormat,
                    accessibilityLabel: accessibilityLabel, nowCapColor: tip)
     }
 
@@ -852,7 +852,7 @@ struct TrendsView: View {
             .font(StrandFont.subhead)
             .foregroundStyle(StrandPalette.textTertiary)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .background(NoopPanelSurface(cornerRadius: 12))
+            .background(ZoopPanelSurface(cornerRadius: 12))
     }
 }
 

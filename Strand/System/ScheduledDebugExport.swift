@@ -47,7 +47,7 @@ enum ScheduledDebugExport {
     // MARK: - Retention (#650: these accumulated in Documents with no cleanup and no visible cap)
 
     /// Retention choices offered by the scheduled-export keep-count picker. Mirrors Android's
-    /// `EXPORT_KEEP_OPTIONS`. A longer range than `FolderBackup.keepOptions` (the `.noopbak` backup
+    /// `EXPORT_KEEP_OPTIONS`. A longer range than `FolderBackup.keepOptions` (the `.zoopbak` backup
     /// picker) since a scheduled export is a small text/JSON pair, not a whole-DB snapshot.
     static let keepOptions = [3, 7, 14, 30, 60]
 
@@ -131,7 +131,7 @@ enum ScheduledDebugExport {
     /// BUNDLE_ID_PREFIX (see Config/BundleId.xcconfig) automatically and always matches the iOS target's
     /// `BGTaskSchedulerPermittedIdentifiers` (Info.plist), which is built from `$(PRODUCT_BUNDLE_IDENTIFIER)`
     /// the same way. Must also be registered at launch for `submit` to succeed — wired in the app entry point.
-    static let bgTaskIdentifier = (Bundle.main.bundleIdentifier ?? "com.noopapp.noop") + ".debugexport"
+    static let bgTaskIdentifier = (Bundle.main.bundleIdentifier ?? "com.zoopapp.zoop") + ".debugexport"
 
     static var isEnabled: Bool { UserDefaults.standard.bool(forKey: K.enabled) }
 

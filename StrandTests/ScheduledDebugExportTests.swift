@@ -4,7 +4,7 @@ import XCTest
 /// Pure retention logic behind the scheduled debug export's "Clear scheduled exports" / keep-count
 /// pruning (#650). Mirror of `LogExportRetentionTest` on Android — same shape (stamp extraction,
 /// keep-N, oldest-first) applied to the `noop-strap-log-<stamp>.txt` / `noop-raw-capture-<stamp>.json`
-/// pair NOOP drops into Documents instead of a `.noopbak` snapshot.
+/// pair NOOP drops into Documents instead of a `.zoopbak` snapshot.
 ///
 /// `ScheduledDebugExport` is @MainActor (mirrors `WindDownNudge`), so this test class is too.
 @MainActor
@@ -19,7 +19,7 @@ final class ScheduledDebugExportTests: XCTestCase {
         XCTAssertNil(ScheduledDebugExport.exportStamp(fromFilename: "random.txt"))
         XCTAssertNil(ScheduledDebugExport.exportStamp(fromFilename: "noop-strap-log-260617-0700.json")) // wrong ext for this prefix
         XCTAssertNil(ScheduledDebugExport.exportStamp(fromFilename: "noop-raw-capture-260617-0700.txt")) // wrong ext for this prefix
-        XCTAssertNil(ScheduledDebugExport.exportStamp(fromFilename: "noop-backup-20260617-070000.noopbak")) // unrelated feature
+        XCTAssertNil(ScheduledDebugExport.exportStamp(fromFilename: "zoop-backup-20260617-070000.zoopbak")) // unrelated feature
     }
 
     func testPruneKeepsNewestNGenerations() {
@@ -45,7 +45,7 @@ final class ScheduledDebugExportTests: XCTestCase {
         let names = [
             "noop-strap-log-260610-0700.txt", "noop-raw-capture-260610-0700.json",
             "noop-strap-log-260617-0700.txt", "noop-raw-capture-260617-0700.json",
-            "noop-backup-20260617-070000.noopbak", // Backup & Sync file — never a prune candidate here
+            "zoop-backup-20260617-070000.zoopbak", // Backup & Sync file — never a prune candidate here
         ]
         let pruned = ScheduledDebugExport.exportStampsToPrune(names, keep: 1)
         XCTAssertEqual(pruned, ["260610-0700"])

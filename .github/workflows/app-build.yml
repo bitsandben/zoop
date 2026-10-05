@@ -29,13 +29,13 @@ on:
       - 'StrandiOSShared/**'
       - 'StrandiOSWidgets/**'
       # The watch app and its complications, for the same reason StrandTests is named above: the
-      # NOOPiOS scheme BUILDS them (NOOPiOS embeds NOOPWatch, which embeds NOOPWatchComplications),
+      # ZoopiOS scheme BUILDS them (ZoopiOS embeds ZoopWatch, which embeds ZoopWatchComplications),
       # but neither directory sits under any glob here, so a PR touching only them matched nothing
       # and compiled nothing. A broken watch target merged unverified and surfaced on the next PR
       # that happened to touch Strand/**, pointing at the wrong change. #2227 translated 25
       # complication strings and got no build at all, which is what surfaced this.
-      - 'NOOPWatch/**'
-      - 'NOOPWatchComplications/**'
+      - 'ZoopWatch/**'
+      - 'ZoopWatchComplications/**'
       - 'Packages/**'
       - 'project.yml'
       - '.github/workflows/app-build.yml'
@@ -43,7 +43,7 @@ on:
   # gates, so a push run rebuilt content that had just been built - on macOS runners, which GitHub
   # bills at 10x Linux for a two-runner matrix (macos-15 for the universal macOS leg, macos-26 for
   # the iOS 26 SDK). A RELEASE pushes straight to main with no PR, but fork-release.yml builds both
-  # Strand and NOOPiOS itself, so that path keeps its own compile gate. The gap this leaves is a
+  # Strand and ZoopiOS itself, so that path keeps its own compile gate. The gap this leaves is a
   # direct non-release push to main; `workflow_dispatch` below covers checking one on demand.
   # `pr:` builds a PR's MERGE RESULT without pushing anything. Checking "does this PR compile once
   # merged?" used to mean creating a throwaway `ci/` branch holding main+PR and dispatching at it —
@@ -81,8 +81,8 @@ jobs:
             runner: macos-15
           # iOS needs the iOS 26 SDK (Liquid Glass's `glassEffect`, landed 2026-07-07) which macos-15's
           # default Xcode doesn't ship — matches the runner fork-testing-build.yml / fork-release.yml
-          # already use for their NOOPiOS legs. macos-15 stays correct for the macOS/Strand leg above.
-          - scheme: NOOPiOS
+          # already use for their ZoopiOS legs. macos-15 stays correct for the macOS/Strand leg above.
+          - scheme: ZoopiOS
             destination: 'generic/platform=iOS Simulator'
             extra_args: ''
             runner: macos-26
@@ -132,7 +132,7 @@ jobs:
           build
 
       # Run the app-target unit tests (StrandTests, wired into the Strand scheme's test action in
-      # project.yml). ONLY the macOS/Strand leg: StrandTests is hosted in the macOS app; the NOOPiOS
+      # project.yml). ONLY the macOS/Strand leg: StrandTests is hosted in the macOS app; the ZoopiOS
       # leg stays compile-only. Uses a concrete (runnable) macOS destination, not the universal
       # generic one above. This is what runs the pure app-target logic tests (backfill continuation,
       # scheduled-report / strain-target policy, etc.) that swift-packages can't reach.

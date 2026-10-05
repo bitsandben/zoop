@@ -9,10 +9,10 @@ import UIKit
 /// localization catalog and follow the language selected in the app. The menu is installed at launch;
 /// changing the app language requires the same process restart that updates every other localized bundle.
 enum HomeScreenQuickAction: String, CaseIterable {
-    case liveHeartRate = "com.noop.quick-action.live-heart-rate"
-    case startWorkout = "com.noop.quick-action.start-workout"
-    case logJournal = "com.noop.quick-action.log-journal"
-    case breathe = "com.noop.quick-action.breathe"
+    case liveHeartRate = "com.zoop.quick-action.live-heart-rate"
+    case startWorkout = "com.zoop.quick-action.start-workout"
+    case logJournal = "com.zoop.quick-action.log-journal"
+    case breathe = "com.zoop.quick-action.breathe"
 
     init?(shortcutItem: UIApplicationShortcutItem) {
         self.init(rawValue: shortcutItem.type)

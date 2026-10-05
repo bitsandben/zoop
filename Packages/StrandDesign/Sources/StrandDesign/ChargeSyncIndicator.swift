@@ -6,7 +6,7 @@ import SwiftUI
 /// each interpolate between the SAME battery and spinner values, and a literal edited on one side only
 /// is exactly the kind of asymmetry that reads as "one direction feels wrong" without being visible in a
 /// diff. These are one component's internal drawing values — stroke weights and glyph tones — rather
-/// than layout spacing, so they stay file-private instead of joining `NoopMetrics`, whose scale is for
+/// than layout spacing, so they stay file-private instead of joining `ZoopMetrics`, whose scale is for
 /// margins BETWEEN things. The ring's inset is the exception and does live there, because the header
 /// sizes its sibling controls against it.
 private enum SyncRing {
@@ -65,7 +65,7 @@ public struct ChargeSyncIndicator: View {
     }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @ObservedObject private var motion = NoopMotionState.shared
+    @ObservedObject private var motion = ZoopMotionState.shared
 
     private var poseStill: Bool { motion.poseStill(reduceMotion) }
 
@@ -153,8 +153,8 @@ public struct ChargeSyncIndicator: View {
         ZStack(alignment: .leading) {
             indicatorContents
                 .frame(
-                    width: NoopMetrics.compactControlSize,
-                    height: NoopMetrics.compactControlSize
+                    width: ZoopMetrics.compactControlSize,
+                    height: ZoopMetrics.compactControlSize
                 )
 
             // `bundle: .module` here and on the measuring reader: `Text(LocalizedStringKey)` resolves
@@ -169,17 +169,17 @@ public struct ChargeSyncIndicator: View {
                 .foregroundStyle(StrandPalette.textPrimary.opacity(SyncRing.labelOpacity))
                 .lineLimit(1)
                 .allowsTightening(true)
-                .minimumScaleFactor(NoopMetrics.syncIndicatorMinimumLabelScale)
+                .minimumScaleFactor(ZoopMetrics.syncIndicatorMinimumLabelScale)
                 .dynamicTypeSize(...DynamicTypeSize.large)
                 .frame(
                     width: expandedWidth
-                        - NoopMetrics.compactControlSize
-                        - NoopMetrics.syncIndicatorLabelSpacing,
+                        - ZoopMetrics.compactControlSize
+                        - ZoopMetrics.syncIndicatorLabelSpacing,
                     alignment: .leading
                 )
                 .offset(
-                    x: NoopMetrics.compactControlSize
-                        + NoopMetrics.syncIndicatorLabelSpacing
+                    x: ZoopMetrics.compactControlSize
+                        + ZoopMetrics.syncIndicatorLabelSpacing
                 )
                 .opacity(showsLabel ? 1 : 0)
                 .accessibilityHidden(true)
@@ -196,10 +196,10 @@ public struct ChargeSyncIndicator: View {
             labelWidth = measured
         }
         .frame(
-            width: NoopMetrics.compactControlSize
-                + (expandedWidth - NoopMetrics.compactControlSize)
+            width: ZoopMetrics.compactControlSize
+                + (expandedWidth - ZoopMetrics.compactControlSize)
                 * CGFloat(pillProgress),
-            height: NoopMetrics.compactControlSize,
+            height: ZoopMetrics.compactControlSize,
             alignment: .leading
         )
         // No surface of its own. The host supplies the chrome — on the Today header that is
@@ -259,7 +259,7 @@ public struct ChargeSyncIndicator: View {
                     style: StrokeStyle(lineWidth: SyncRing.batteryWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
-                .padding(NoopMetrics.syncIndicatorArcInset)
+                .padding(ZoopMetrics.syncIndicatorArcInset)
             Text("\(Int(percent.rounded()))")
                 .font(StrandFont.number(SyncRing.numberSize, weight: .bold))
                 .foregroundStyle(StrandPalette.textPrimary.opacity(SyncRing.numberOpacity))
@@ -310,7 +310,7 @@ public struct ChargeSyncIndicator: View {
                     StrandPalette.liquidHeart.opacity(SyncRing.trackOpacity),
                     lineWidth: SyncRing.trackWidth
                 )
-                .padding(NoopMetrics.syncIndicatorArcInset)
+                .padding(ZoopMetrics.syncIndicatorArcInset)
             Circle()
                 .trim(from: 0, to: phase.arc)
                 .stroke(
@@ -318,7 +318,7 @@ public struct ChargeSyncIndicator: View {
                     style: StrokeStyle(lineWidth: SyncRing.spinnerWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(phase.degrees - 90))
-                .padding(NoopMetrics.syncIndicatorArcInset)
+                .padding(ZoopMetrics.syncIndicatorArcInset)
             chunkNumber
         }
     }
@@ -582,13 +582,13 @@ public struct ChargeSyncIndicator: View {
     /// hug-then-cap behaviour is testable directly: at 0 it must not fall below the compact circle, and a
     /// label longer than the cap must not be allowed to widen the control.
     static func expandedWidth(labelWidth: CGFloat) -> CGFloat {
-        let hugged = NoopMetrics.compactControlSize
-            + NoopMetrics.syncIndicatorLabelSpacing
+        let hugged = ZoopMetrics.compactControlSize
+            + ZoopMetrics.syncIndicatorLabelSpacing
             + labelWidth
-            + NoopMetrics.syncIndicatorLabelSpacing
+            + ZoopMetrics.syncIndicatorLabelSpacing
         return min(
-            NoopMetrics.syncIndicatorExpandedWidth,
-            max(NoopMetrics.compactControlSize, hugged)
+            ZoopMetrics.syncIndicatorExpandedWidth,
+            max(ZoopMetrics.compactControlSize, hugged)
         )
     }
 }
@@ -680,7 +680,7 @@ private struct ChargeSyncMorph: View, Animatable {
         // percent appear as a separate tacked-on growth.
         let arc = exitStartArc + (batteryArc - exitStartArc) * eased
         // One radius across the whole morph — only colour, sweep and stroke weight move.
-        let inset = NoopMetrics.syncIndicatorArcInset
+        let inset = ZoopMetrics.syncIndicatorArcInset
         // `1 − eased`, because the wind-down runs the entry's ramp backwards: at eased 0 it is still the
         // spinner's weight, and it has arrived back at the battery ring's by the time eased reaches 1.
         let lineWidth = SyncRing.width(eased: 1 - eased)
@@ -735,7 +735,7 @@ private struct ChargeSyncMorph: View, Animatable {
             : min(1, travel / StrandMotion.syncIndicatorColourTravelDegrees)
 
         // One radius across the whole morph — only colour, sweep and stroke weight move.
-        let inset = NoopMetrics.syncIndicatorArcInset
+        let inset = ZoopMetrics.syncIndicatorArcInset
         let lineWidth = SyncRing.width(eased: eased)
 
         return ZStack {
@@ -844,7 +844,7 @@ public extension View {
     /// design system. `headerControlReserveWidth` is only the pre-measurement default, so the first
     /// frame is not laid out against a reserve of zero.
     func headerTrailingControlFadeMask(
-        reserving reserve: CGFloat = NoopMetrics.headerControlReserveWidth
+        reserving reserve: CGFloat = ZoopMetrics.headerControlReserveWidth
     ) -> some View {
         mask {
             HStack(spacing: 0) {
@@ -854,7 +854,7 @@ public extension View {
                     startPoint: .leading,
                     endPoint: .trailing
                 )
-                .frame(width: NoopMetrics.headerTextFadeWidth)
+                .frame(width: ZoopMetrics.headerTextFadeWidth)
                 Color.clear.frame(width: max(0, reserve))
             }
         }
@@ -870,19 +870,19 @@ private struct ChargeSyncIndicatorPreview: View {
     }
 
     var body: some View {
-        VStack(spacing: NoopMetrics.space5) {
-            HStack(spacing: NoopMetrics.space2) {
+        VStack(spacing: ZoopMetrics.space5) {
+            HStack(spacing: ZoopMetrics.space2) {
                 Text(verbatim: greeting)
                     .font(StrandFont.title1)
                     .foregroundStyle(StrandPalette.onDarkPrimary)
                     .lineLimit(2)
                     .headerTrailingControlFadeMask()
-                HStack(spacing: NoopMetrics.space1) {
+                HStack(spacing: ZoopMetrics.space1) {
                     Circle()
                         .fill(StrandPalette.onDarkPrimary.opacity(0.16))
                         .frame(
-                            width: NoopMetrics.compactControlSize,
-                            height: NoopMetrics.compactControlSize
+                            width: ZoopMetrics.compactControlSize,
+                            height: ZoopMetrics.compactControlSize
                         )
                     ChargeSyncIndicator(
                         batteryState: .charge(percent: 68, charging: false),
@@ -891,8 +891,8 @@ private struct ChargeSyncIndicatorPreview: View {
                     Circle()
                         .fill(StrandPalette.onDarkPrimary.opacity(0.16))
                         .frame(
-                            width: NoopMetrics.compactControlSize,
-                            height: NoopMetrics.compactControlSize
+                            width: ZoopMetrics.compactControlSize,
+                            height: ZoopMetrics.compactControlSize
                         )
                 }
             }
@@ -904,7 +904,7 @@ private struct ChargeSyncIndicatorPreview: View {
             }
             .font(StrandFont.body)
         }
-        .padding(NoopMetrics.space5)
+        .padding(ZoopMetrics.space5)
         .frame(width: 440, height: 180)
         .background(StrandPalette.accent)
         .preferredColorScheme(.dark)
@@ -925,10 +925,10 @@ private struct ChargeSyncIndicatorHosted: View {
             syncing: syncing,
             chunks: 3
         )
-        .padding(NoopMetrics.syncIndicatorGlassPadding)
+        .padding(ZoopMetrics.syncIndicatorGlassPadding)
         .background(Capsule(style: .continuous).fill(StrandPalette.heroFill))
         .overlay(Capsule(style: .continuous).strokeBorder(StrandPalette.heroBorder, lineWidth: 1))
-        .padding(NoopMetrics.space5)
+        .padding(ZoopMetrics.space5)
     }
 }
 

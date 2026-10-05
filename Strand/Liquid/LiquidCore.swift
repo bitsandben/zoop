@@ -11,7 +11,7 @@
 //  that drifts and re-catches the light, a reflection that follows the tilt.
 
 import SwiftUI
-import StrandDesign   // NoopMotionState / QuietMotionPrefs — the shared quiet-motion gate
+import StrandDesign   // ZoopMotionState / QuietMotionPrefs — the shared quiet-motion gate
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -79,7 +79,7 @@ final class LiquidMotion {
     /// read from the Canvas draw on main — a one-frame-stale value is harmless for a decorative slosh.
     private let motionQueue: OperationQueue = {
         let q = OperationQueue()
-        q.name = "com.noop.liquid.motion"
+        q.name = "com.zoop.liquid.motion"
         q.qualityOfService = .userInteractive
         q.maxConcurrentOperationCount = 1
         return q
@@ -112,7 +112,7 @@ final class LiquidMotion {
     }
 
     /// The three signals that mean "no decorative motion", read imperatively. Views read
-    /// `NoopMotionState` instead (it publishes, so they invalidate); this is the sensor's own read,
+    /// `ZoopMotionState` instead (it publishes, so they invalidate); this is the sensor's own read,
     /// off the same underlying facts, so the two can never disagree.
     static var quietNow: Bool {
         if ProcessInfo.processInfo.isLowPowerModeEnabled { return true }

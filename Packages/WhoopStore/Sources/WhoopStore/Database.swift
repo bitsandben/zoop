@@ -583,7 +583,7 @@ extension WhoopStore {
 
         // #423: WHOOP 5/MG raw-IMU offload capture (100 Hz 6-axis). `samples` is a packed i16 LE BLOB of
         // the six wire columns (ax…az,gx…gz). Twin of the Android `rawImuSample` table (MIGRATION_20_21);
-        // same column order + PK so a `.noopbak` round-trips byte-for-byte.
+        // same column order + PK so a `.zoopbak` round-trips byte-for-byte.
         //
         // Historical rolling cache. Its opt-in writer retained at most 3,600 one-second rows, but no analytics,
         // UI or export consumed them. v41 retires those legacy rows after file-backed capture replaces the cache.
@@ -602,7 +602,7 @@ extension WhoopStore {
         // Metric-level keys keep mixed-source days honest and make missing legacy metadata explicit.
         migrator.registerMigration("v29-score-input-provenance") { db in
             try db.create(table: "scoreInputProvenance") { t in
-                t.column("deviceId", .text).notNull()   // computed "-noop" namespace
+                t.column("deviceId", .text).notNull()   // computed "-zoop" namespace
                 t.column("day", .text).notNull()
                 t.column("key", .text).notNull()
                 t.column("sourceId", .text).notNull()
@@ -911,7 +911,7 @@ extension WhoopStore {
         // streamed turns can share to the second) so replay order is exact. `provider` isn't filtered
         // on for v1 (a conversation is a conversation across a provider switch) but is carried so a
         // future per-provider view/filter doesn't need another migration. Never added to the
-        // `.noopbak` backup whitelist (a separate, deliberate decision — CLAUDE.md's backup contract).
+        // `.zoopbak` backup whitelist (a separate, deliberate decision — CLAUDE.md's backup contract).
         migrator.registerMigration("v43-coach-messages") { db in
             try db.create(table: "coachMessage", options: [.ifNotExists]) { t in
                 t.column("id", .text).primaryKey()

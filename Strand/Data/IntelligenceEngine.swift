@@ -65,7 +65,7 @@ final class IntelligenceEngine: ObservableObject {
     /// trace, or a config change all fall through to the identical full path; the cache only ever skips the
     /// analyzeDay STAGE, so pass 2 (baselines, recovery recompute, stale-day eviction, heal) is byte-
     /// unaffected and there is no banking / data-loss surface. In-memory + per-device; never persisted,
-    /// never crosses `.noopbak`. The engine is a single long-lived instance (AppModel), so this survives the
+    /// never crosses `.zoopbak`. The engine is a single long-lived instance (AppModel), so this survives the
     /// storm's back-to-back passes the drain is made of. See `AnalyzeRecentDayCache` (StrandAnalytics).
     private var dayScanCache: [String: (key: String, scan: DayScan)] = [:]
     /// UserDefaults key holding the persisted `stepsMotionCache` payload. Versioned in the key as well as
@@ -230,7 +230,7 @@ final class IntelligenceEngine: ObservableObject {
         /// byte mean (unchanged); an Oura owner gets the ring's ceiling@100 `0x6F` mean
         /// (`AnalyticsEngine.nightlySpo2CeilingMean`, queue 11a). nil when the toggle is OFF or the
         /// night has no in-band reading for its owner's device. Written to metricSeries as
-        /// "spo2_candidate" under the "-noop" device ID in pass 2 — same key for both devices, since the
+        /// "spo2_candidate" under the "-zoop" device ID in pass 2 — same key for both devices, since the
         /// series is always read scoped to one device's own computed ID.
         let spo2Candidate: Int?
         /// #1118: whether this night's in-sleep R-R is OVER-COUNTED (`crossSecondOverCount` /
@@ -306,7 +306,7 @@ final class IntelligenceEngine: ObservableObject {
     }
 
     // NOTE (#814 union-model follow-up): the engine intentionally has NO `adoptActiveDeviceId`. Its write
-    // target (`deviceId + "-noop"`) and imported-baseline read (`hist` under `deviceId`) stay STABLE on the
+    // target (`deviceId + "-zoop"`) and imported-baseline read (`hist` under `deviceId`) stay STABLE on the
     // canonical "my-whoop" so a remove+re-add never orphans the computed history. The active strap's raw is
     // still read + scored per day via `resolveDayOwner` (which uses the registry's own active id), and the
     // result lands on the canonical `-noop` sibling; the Repository unions the canonical history with the
@@ -625,7 +625,7 @@ final class IntelligenceEngine: ObservableObject {
     /// the Android `recomputeFitnessAgeOnly`.
     func recomputeFitnessAgeOnly(maxDays: Int = 21) async -> Bool {
         guard let store = await repo.storeHandle() else { return false }
-        let computedId = deviceId + "-noop"
+        let computedId = deviceId + "-zoop"
         let now = Int(Date().timeIntervalSince1970)
         let tzOffset = TimeZone.current.secondsFromGMT()
         let nowLocalMidnight = Self.midnightLocal(now, offsetSec: tzOffset)
@@ -660,7 +660,7 @@ final class IntelligenceEngine: ObservableObject {
     /// double-rescale the large population already on 0–100 (→ ~0–476). We do that by running the normal
     /// `analyzeRecent` once with the `maxDays` cap lifted to the full history, then persist a flag so it
     /// runs exactly once. IMPORTED rows are never rewritten here (the engine only ever writes under the
-    /// "-noop" computed source) , those are handled by re-import. A day already on 0–100 is recomputed
+    /// "-zoop" computed source) , those are handled by re-import. A day already on 0–100 is recomputed
     /// from the same raw HR and lands on 0–100 again: UNCHANGED axis (verified by test). This entry point
     /// now shares a pass with sleep-wear repair; cached-only days are preserved in both repairs.
     func runEffortRescoreIfNeeded(historyDays: Int = 4000) async {
@@ -979,14 +979,14 @@ final class IntelligenceEngine: ObservableObject {
         // ── Learned habitual midsleep (#547) ──────────────────────────────────
         // Compute the user's habitual midsleep ONCE per run from the trailing sleep history so the
         // main-night scored pick aligns to their REAL bedtime (a late/shift sleeper), not a fixed clock
-        // band. Read the stored sleep sessions (imported WHOOP-export + computed "-noop") over the
+        // band. Read the stored sleep sessions (imported WHOOP-export + computed "-zoop") over the
         // analysis window, make one HistoryBlock per session keyed by the LOCAL calendar day of its
         // midpoint, and let the learner pick the longest block per day (so naps drop out automatically).
         // Returns nil under `habitualMinDays` of history → cold-start: every `analyzeDay`/`sleepEditedDaily`
         // call below stays on the overnight-band bonus. The same value threads into both seams so analytics
         // and the Sleep tab resolve to the identical block. (#547)
         let (habitualMidsleepSec, nightlyHours) = await Self.computeHabitualSleep(
-            store: store, importedId: deviceId, computedId: deviceId + "-noop",
+            store: store, importedId: deviceId, computedId: deviceId + "-zoop",
             windowStart: nowLocalMidnight - maxDays * 86_400 - StreamReadCap.lookbackSeconds,
             windowEnd: now, finishedBefore: nowLocalMidnight, offsetSec: tzOffset)
         // Wave 0 (SL1/T1): personal sleep REGULARITY + population-anchored NEED, computed ONCE from the
@@ -1012,7 +1012,7 @@ final class IntelligenceEngine: ObservableObject {
         // The per-day SCORING ORDER, the `hr.count >= 200` skip, and the maxDays semantics are unchanged;
         // only the executor the reads resume on changes. Diagnostic (#691) lines are computed inside (pure
         // inputs) and returned so they can be replayed through `diagnosticSink` here, in the SAME order.
-        let computedId = deviceId + "-noop"
+        let computedId = deviceId + "-zoop"
         // Bind `deviceId` (a MainActor instance `let`) to a local Sendable `String` so the @Sendable
         // detached closure captures the VALUE, never `self` (which would be an isolation violation).
         let ownerFallbackId = deviceId
@@ -1036,7 +1036,7 @@ final class IntelligenceEngine: ObservableObject {
         // #103/queue-11a: read the SpO₂ candidate display toggle ONCE here (off the detached executor,
         // matching the other toggle reads above). When ON, each night's candidate mean (WHOOP:
         // `spo2_candidate_82`; Oura: ceiling@100 `0x6F`, see the per-day block below) is written to
-        // metricSeries as "spo2_candidate" under the "-noop" device ID, so the Blood Oxygen tile can
+        // metricSeries as "spo2_candidate" under the "-zoop" device ID, so the Blood Oxygen tile can
         // surface it as a "strap estimate (unverified)" fallback. Default OFF per the derived-biosignal
         // rule (CLAUDE.md) — neither candidate is a validated calibration.
         let spo2CandidateDisplayOn = PuffinExperiment.spo2CandidateDisplayEnabled
@@ -1971,7 +1971,7 @@ final class IntelligenceEngine: ObservableObject {
         // ── Charge baselines (#2525). Each baseline is folded from the wearer's OWN nights over the last
         // `ChargeBaselines.windowDays` calendar days, counted back from today; imported vendor nights only
         // SEED it until the own nights alone would be trusted, then drop out (see `ChargeBaselines`). This
-        // is still the BLE-only recovery fix: the "-noop" nightly avgHrv/restingHr feed the baseline so a
+        // is still the BLE-only recovery fix: the "-zoop" nightly avgHrv/restingHr feed the baseline so a
         // strap-only user crosses Baselines.minNightsSeed and recovery lights up.
         //
         // Before #2525 the own nights came from this pass's scan window while `hist` (every imported row,
@@ -2008,7 +2008,7 @@ final class IntelligenceEngine: ObservableObject {
         // so the manual Recalibrate re-anchors the whole Charge build-up (HRV + resting HR + resp + skin)
         // together. The respiration baseline is additionally scoped to the CURRENT device era.
         // `deviceEraEpoch` returns 0.0 for a single-brand history — every WHOOP-origin id (import, strap,
-        // the "-noop" computed sibling, the Apple/HC riders) buckets to one brand — so a WHOOP-only user is
+        // the "-zoop" computed sibling, the Apple/HC riders) buckets to one brand — so a WHOOP-only user is
         // unaffected; `max` keeps whichever cut is LATER, since both mean "ignore nights before this".
         // KNOWN GAP, and pre-existing: the bucket is per BRAND, so it does not separate an imported WHOOP
         // vendor rate from NOOP's own RSA estimate on WHOOP nights; since #2525 the two meet only while the
@@ -2101,7 +2101,7 @@ final class IntelligenceEngine: ObservableObject {
         // User-corrected sleep windows override the detected sleep when scoring a day's sleep aggregates,
         // so Rest + recovery honor the edit , not just the Sleep tab's session view. An edited block
         // substitutes its detected twin (matched by the stable detected startTs) before totals recompute.
-        // Scope (#318): this only covers the COMPUTED ("-noop") source , the days noop scores itself. An
+        // Scope (#318): this only covers the COMPUTED ("-zoop") source , the days noop scores itself. An
         // edit to an IMPORTED (WHOOP-export) night updates the displayed session, but its dashboard
         // recovery/performance come verbatim from the export and are NOT recomputed here (we don't
         // reproduce WHOOP's cloud scoring). That's an accepted limitation, documented on the PR.
@@ -2310,7 +2310,7 @@ final class IntelligenceEngine: ObservableObject {
             }
             // #103: persist the SpO₂ candidate @82 nightly mean to metricSeries as "spo2_candidate" so the
             // Blood Oxygen tile can surface it as a "strap estimate (unverified)" fallback when the toggle
-            // is ON. Written under the "-noop" computed device ID, never to `spo2Pct` — the candidate has
+            // is ON. Written under the "-zoop" computed device ID, never to `spo2Pct` — the candidate has
             // split cross-device evidence and stays behind the experimental display toggle.
             if let cand = spo2CandidateByDay[daily.day] {
                 restPoints.append(MetricPoint(day: daily.day, key: "spo2_candidate", value: Double(cand)))
@@ -2322,7 +2322,7 @@ final class IntelligenceEngine: ObservableObject {
                 restPoints.append(MetricPoint(day: daily.day, key: "hrv_rr_overcount", value: oc ? 1.0 : 0.0))
             }
             // #1169 shadow metric: the primary-session mean RHR, stored beside the shipped floor
-            // (daily.restingHr) under the "-noop" computed ID. Instrumentation only — never shown, never
+            // (daily.restingHr) under the "-zoop" computed ID. Instrumentation only — never shown, never
             // scored — so the mean-vs-floor comparison the issue needs can be evaluated from exports later.
             if let v = primarySessionRHRByDay[daily.day] {
                 restPoints.append(MetricPoint(day: daily.day, key: "rhr_primary_session", value: v))
@@ -2427,7 +2427,7 @@ final class IntelligenceEngine: ObservableObject {
         markPostLoopPhase("watchFold")
         // #277 migration: the loop now keys days by the LOCAL calendar day. A prior run (before this
         // fix) wrote the SAME period under UTC-day keys, so without a cleanup an off-by-one UTC row and
-        // the new local row would coexist as duplicate days. We reconcile the COMPUTED ("-noop") daily
+        // the new local row would coexist as duplicate days. We reconcile the COMPUTED ("-zoop") daily
         // rows across the recompute window [oldest enumerated local day, newest]: UPSERT the freshly
         // local-keyed rows FIRST, then delete only the STALE rows the new run no longer produces.
         //
@@ -2445,7 +2445,7 @@ final class IntelligenceEngine: ObservableObject {
         // resting HR) but no raw HR stream, so the raw-HR loop never scored their days and the import left
         // recovery nil , Today/Recovery show a blank Charge. Score it from the daily aggregate vs the person's
         // own baseline with the SAME `watchRecoveries` engine the apple fold uses (which reuses
-        // RecoveryScorer.recovery verbatim), then write the score under the COMPUTED ("-noop") source so it
+        // RecoveryScorer.recovery verbatim), then write the score under the COMPUTED ("-zoop") source so it
         // merges onto Today exactly like a live day. The imported daily row keeps its raw values untouched;
         // the computed row carries the NOOP-derived Charge + the Rest composite. HONEST DATA: the engine
         // returns nil + calibrating until the HRV baseline is usable, so an import-only day stays calibrating
@@ -2492,7 +2492,7 @@ final class IntelligenceEngine: ObservableObject {
             out[index] = out[index].withLegacyScore(hrv: snapshot.avgHrv, recovery: snapshot.recovery)
         }
 
-        // Persist the computed scores under a dedicated "-noop" source so the WHOLE dashboard
+        // Persist the computed scores under a dedicated "-zoop" source so the WHOLE dashboard
         // (Today / Recovery / Strain / Sleep / Trends), not just this screen, reads them. The
         // Repository merges these UNDER any imported "my-whoop" rows, so a real WHOOP import
         // always wins; this only fills the days the strap collected but no import covered.
@@ -2592,7 +2592,7 @@ final class IntelligenceEngine: ObservableObject {
         markPostLoopPhase("persist")
         // ── Fitness Age (Phase 2) , weekly, keyed to the week's Saturday ────────────────────────────
         // Roll the last 7 computed days into the Nes/HUNT inputs and upsert a weekly Fitness Age (+ an
-        // optional VO₂max when a waist is set) under the same "-noop" source. Idempotent on the Saturday
+        // optional VO₂max when a waist is set) under the same "-zoop" source. Idempotent on the Saturday
         // key, so the number refines through the week and finalises on Saturday. Engine = FitnessAgeEngine
         // (StrandAnalytics), fully unit-tested; the body term cancels so the headline needs no body metric.
         let fa7 = dailies.sorted { $0.day < $1.day }.suffix(7)
@@ -2653,7 +2653,7 @@ final class IntelligenceEngine: ObservableObject {
         // estimate them: calibrate the strap's daily MOTION VOLUME against the phone's real step count
         // on the days both exist, then apply that personal coefficient to the strap-only days. Engine =
         // StepsEstimateEngine (StrandAnalytics), fully unit-tested; this block is pure orchestration ,
-        // gather points, fit, store under the same "-noop" source, mirror to ProfileStore for the UI.
+        // gather points, fit, store under the same "-zoop" source, mirror to ProfileStore for the UI.
         //
         // Idempotent: re-upserts the same (computedId, day, "steps_est") rows. Inert until there's a
         // calibration , a single-source / no-phone user sees no estimate until they set a manual `k`.
@@ -3046,7 +3046,7 @@ final class IntelligenceEngine: ObservableObject {
     /// UserDefaults key for the #836 idle-tick gate: the complete raw-analysis fingerprint the last completed
     /// `analyzeRecent` scored against. A non-forced tick whose current fingerprint equals this skips the
     /// 21-day rescore; cleared implicitly by any scoring-stream insert (the fingerprint moves), so it self-heals.
-    private static let analyzeWatermarkKey = "noop.analyzeWatermark"
+    private static let analyzeWatermarkKey = "zoop.analyzeWatermark"
 
     /// CAPTURE-B (#814/#799): build the universal `dayOwner …` self-diagnostic line VERBATIM (the Test
     /// Centre export parser depends on this exact shape). `readId` is the owner this day was read+scored

@@ -2920,7 +2920,7 @@ public final class BLEManager: NSObject, ObservableObject {
             }
             // Stamped against the strap that actually completed this offload, never globally: the single
             // key reported one strap's sync on another's screen, and it read as reassuring rather than
-            // wrong — see LastSyncAttribution. Kotlin twin: NoopPrefs.setLastSyncAtFor.
+            // wrong — see LastSyncAttribution. Kotlin twin: ZoopPrefs.setLastSyncAtFor.
             if let key = LastSyncAttribution.prefKey(peripheralId: peripheral?.identifier.uuidString) {
                 UserDefaults.standard.set(state.lastSyncedAt, forKey: key)
             }
@@ -3950,12 +3950,12 @@ public final class BLEManager: NSObject, ObservableObject {
     /// landing (or the no-reply timeout). The result dialog shows a "waiting…" line for this value.
     public static let extendedBatteryProbeWaiting = "__waiting__"
     private static let extendedBatteryProbeTimeout: TimeInterval = 8
-    private static let extendedBatteryPrevPayloadKey = "noop.592.prevPayload"
+    private static let extendedBatteryPrevPayloadKey = "zoop.592.prevPayload"
 
     // #690 body-location probe (twins of the #592 constants above).
     public static let bodyLocationProbeWaiting = "__waiting__"
     private static let bodyLocationProbeTimeout: TimeInterval = 8
-    private static let bodyLocationPrevPayloadKey = "noop.690.prevPayload"
+    private static let bodyLocationPrevPayloadKey = "zoop.690.prevPayload"
 
     /// #592 opcode probe: send the read-only GET_EXTENDED_BATTERY_INFO(98) and surface the strap's reply
     /// (raw hex + payload triage + capture diff) on `LiveState.extendedBatteryProbe` for the Devices dialog.
@@ -7260,7 +7260,7 @@ extension BLEManager: @preconcurrency CBPeripheralDelegate {
                 // its own comment concedes - so `perDevice` always resolved nil and iOS fell back to a
                 // global value that is wrong the moment a second strap exists. This site DOES have the
                 // peripheral, so it is the one place that can attribute a firmware honestly. Kotlin twin:
-                // NoopPrefs.setFirmwareFor beside the same publish.
+                // ZoopPrefs.setFirmwareFor beside the same publish.
                 if let key = FirmwareAttribution.prefKey(peripheralId: peripheral.identifier.uuidString),
                    let fw = disFirmware {
                     UserDefaults.standard.set(fw, forKey: key)

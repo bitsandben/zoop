@@ -10,7 +10,7 @@ import StrandAnalytics
 // (or kg/cm with °F). Default is Metric — most of the world, and it matches what we store.
 //
 // Persisted via @AppStorage (UserDefaults), the same mechanism every other macOS NOOP preference uses.
-// The Android side mirrors this exactly in Units.kt + NoopPrefs.
+// The Android side mirrors this exactly in Units.kt + ZoopPrefs.
 
 /// A Metric/Imperial display choice. Body measurements and exercise distance persist separate values.
 enum UnitSystem: String, CaseIterable, Identifiable {
@@ -44,7 +44,7 @@ enum EffortScale: String, CaseIterable, Identifiable {
 /// How the trend charts (Trends tab) are drawn — a purely cosmetic, display-only toggle. The plotted
 /// data is identical on both settings; only the mark geometry changes (gradient line + area vs vertical
 /// bars). Default is the classic line. Distinct from `ChartStyle`, which chooses the colour ramp; this
-/// chooses line-vs-bar. Mirrored on Android by NoopPrefs("trend.chart.style").
+/// chooses line-vs-bar. Mirrored on Android by ZoopPrefs("trend.chart.style").
 enum TrendChartStyle: String, CaseIterable, Identifiable {
     /// The classic gradient-stroked line with a soft area fill (the long-standing look).
     case line
@@ -58,7 +58,7 @@ enum TrendChartStyle: String, CaseIterable, Identifiable {
 /// Which sleep window the nightly HRV is measured over (#141). NOOP historically averages RMSSD across the
 /// WHOLE night (every stage); WHOOP/Polar/etc. sample the last slow-wave-sleep window, which reads lower.
 /// This lets a user match that. It CHANGES the computed avgHrv (NOT display-only), so a switch re-scores +
-/// re-baselines. Default is the historical whole-night value. Mirrored on Android by NoopPrefs("hrv.window").
+/// re-baselines. Default is the historical whole-night value. Mirrored on Android by ZoopPrefs("hrv.window").
 enum HrvWindow: String, CaseIterable, Identifiable {
     /// RMSSD averaged over every 5-min window of the night (NOOP's long-standing value).
     case whole
@@ -94,17 +94,17 @@ enum UnitPrefs {
     /// stored ever changes. Same key string as the Android `units.skinTempDisplay` pref.
     static let skinTempDisplayKey = "units.skinTempDisplay"
     /// Effort display scale (#268). Stored raw is an `EffortScale` rawValue; an unset/unknown value
-    /// resolves to `.hundred` (NOOP's native axis). Mirrored on Android by NoopPrefs("effort.scale").
+    /// resolves to `.hundred` (NOOP's native axis). Mirrored on Android by ZoopPrefs("effort.scale").
     static let effortScaleKey = "effort.scale"
 
     /// Trend chart style (line vs bar). Stored raw is a `TrendChartStyle` rawValue; an unset/unknown
     /// value resolves to `.line` (the classic look). Display-only — the plotted data never changes.
-    /// Mirrored on Android by NoopPrefs("trend.chart.style").
+    /// Mirrored on Android by ZoopPrefs("trend.chart.style").
     static let trendChartStyleKey = "trend.chart.style"
 
     /// Nightly-HRV window (#141). Stored raw is an `HrvWindow` rawValue; unset/unknown resolves to `.whole`
     /// (the historical whole-night value). NOT display-only — it changes the computed avgHrv, so the engine
-    /// reads it and a Settings switch re-scores. Mirrored on Android by NoopPrefs("hrv.window").
+    /// reads it and a Settings switch re-scores. Mirrored on Android by ZoopPrefs("hrv.window").
     static let hrvWindowKey = "hrv.window"
 
     /// Display factor for the #268 Effort scale: the stored 0-100 value multiplied by this renders on

@@ -107,7 +107,7 @@ final class TimestampHealTests: XCTestCase {
         // Imported history (bare device id) years before the 2023-11 floor — must survive.
         _ = try await store.upsertDailyMetrics([day("2018-03-04"), day("2020-11-20")], deviceId: "my-whoop")
         // A computed row below the floor — bad-clock garbage, must be purged.
-        _ = try await store.upsertDailyMetrics([day("2019-01-01")], deviceId: "my-whoop-noop")
+        _ = try await store.upsertDailyMetrics([day("2019-01-01")], deviceId: "my-whoop-zoop")
         let oldImportTs = 1_520_000_000   // 2018-03, below MIN_PLAUSIBLE_UNIX
         _ = try await store.upsertSleepSessions([
             CachedSleepSession(startTs: oldImportTs, endTs: oldImportTs + 20_000, efficiency: nil,
@@ -116,14 +116,14 @@ final class TimestampHealTests: XCTestCase {
         _ = try await store.upsertSleepSessions([
             CachedSleepSession(startTs: oldImportTs, endTs: oldImportTs + 20_000, efficiency: nil,
                                restingHr: nil, avgHrv: nil, stagesJSON: nil),
-        ], deviceId: "my-whoop-noop")
+        ], deviceId: "my-whoop-zoop")
 
         let result = try await store.healImplausibleTimestamps(now: now, todayLocalDayKey: todayKey)
         XCTAssertEqual(result.computedRowsDeleted, 2, "only the computed daily + computed sleep below the floor")
 
         let imported = try await store.dailyMetrics(deviceId: "my-whoop", from: "1900-01-01", to: "2999-12-31")
         XCTAssertEqual(imported.map(\.day).sorted(), ["2018-03-04", "2020-11-20"], "imported history preserved")
-        let computed = try await store.dailyMetrics(deviceId: "my-whoop-noop", from: "1900-01-01", to: "2999-12-31")
+        let computed = try await store.dailyMetrics(deviceId: "my-whoop-zoop", from: "1900-01-01", to: "2999-12-31")
         XCTAssertTrue(computed.isEmpty, "computed pre-floor garbage purged")
         let importedSleeps = try await store.sleepSessions(deviceId: "my-whoop", from: 0, to: Int.max, limit: 1000)
         XCTAssertEqual(importedSleeps.count, 1, "imported sleep session preserved")

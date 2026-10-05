@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="docs/assets/logo-v3.png" alt="NOOP" width="72">
+  <img src="docs/assets/logo-v3.png" alt="Zoop" width="72">
 </p>
 
-<h1 align="center">NOOP</h1>
+<h1 align="center">Zoop</h1>
 
-<p align="center"><b>Your strap. Your data. Your machine. Offline, on-device, no cloud.</b></p>
+<p align="center"><b>Private NOOP fork (2oop → Zoop). Your strap. Your data. Offline, on-device.</b></p>
 
-<p align="center"><sub>Now in the all-new <b>Liquid Metal</b> design: one living look across iPhone, Android and Mac.</sub></p>
+<p align="center"><sub><b>This fork develops iOS only</b> — see <code>CLAUDE.md</code>. Upstream NOOP also ships Android and Mac.</sub></p>
 
 <p align="center">
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-macOS%20%C2%B7%20Android%20%C2%B7%20iOS-E8B84B?style=flat-square">
@@ -395,7 +395,7 @@ Packages/
   StrandAnalytics/       HRV / recovery / strain / sleep / correlation math
   StrandImport/          WHOOP CSV + Apple Health importers
   StrandDesign/          SwiftUI design system (palette, components, charts)
-  NoopLocalAccess/       local read-only data-access layer (on-device, no network)
+  ZoopLocalAccess/       local read-only data-access layer (on-device, no network)
 Tools/Backfill/          CLI tool for backfilling decoded data
 Fixtures/                sample WHOOP export for tests
 ```
@@ -498,7 +498,7 @@ open Strand.xcodeproj
 
 Notes:
 
-- Bundle id `com.noopapp.noop`, product name **NOOP**, sandboxed with the
+- Bundle id `com.zoopapp.zoop`, product name **NOOP**, sandboxed with the
   Bluetooth and user-selected-files entitlements.
 - Swift Package Manager resolves the only third-party dependencies automatically:
   **GRDB.swift** (SQLite) and **ZIPFoundation** (export unzip).
@@ -606,7 +606,7 @@ NOOP is public and built to be hard to erase. **Clone it freely** — `git clone
 
 Two simple asks:
 
-- **Keep it non-commercial** and keep the [`LICENSE`](LICENSE) + `Copyright 2026 NoopApp` notice intact (PolyForm Noncommercial — mirror and use freely, just don't sell it or ship it in a paid product).
+- **Keep it non-commercial** and keep the [`LICENSE`](LICENSE) + `Copyright 2026 ZoopApp` notice intact (PolyForm Noncommercial — mirror and use freely, just don't sell it or ship it in a paid product).
 - **Point people back to the canonical home, [github.com/ryanbr/noop](https://github.com/ryanbr/noop)**, so everyone lands on the current code and releases rather than a stale fork.
 
 That's it — copy away.

@@ -61,7 +61,7 @@ final class BackfillerHexDumpBudgetTests: XCTestCase {
 
     /// A minimal store, mirroring the fakes the other Backfiller suites use. The protocol has no default
     /// implementations, so every requirement is stubbed here.
-    private final class NoopStore: BackfillStoreWriting {
+    private final class ZoopStore: BackfillStoreWriting {
         @discardableResult
         func insert(_ streams: Streams, deviceId: String) async throws
             -> (hr: Int, rr: Int, events: Int, battery: Int,
@@ -81,7 +81,7 @@ final class BackfillerHexDumpBudgetTests: XCTestCase {
     /// would permit 24 x 24 frames and flood the rolling log exactly as before, which is the shape the
     /// reporter hit. Same reasoning as `lastAckedTrim`, which is likewise not reset in `begin()`.
     @MainActor func testBeginDoesNotRefillTheBudget() {
-        let backfiller = Backfiller(store: NoopStore(), deviceId: "test", ackTrim: { _, _ in }, log: { _ in })
+        let backfiller = Backfiller(store: ZoopStore(), deviceId: "test", ackTrim: { _, _ in }, log: { _ in })
         XCTAssertEqual(backfiller.rejectHexBudget, Backfiller.rejectHexDumpBudget)
 
         backfiller.begin(family: .whoop4)

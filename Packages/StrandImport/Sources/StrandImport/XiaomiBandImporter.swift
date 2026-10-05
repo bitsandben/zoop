@@ -71,7 +71,7 @@ public struct XiaomiBandImporter {
 
         // Otherwise treat it as a zip of the sandbox and extract to a temp dir.
         // Inside the app's own bundle-named scratch folder; see the note in AppleHealthImporter and #2446.
-        let scratch = fm.temporaryDirectory.appendingPathComponent((Bundle.main.bundleIdentifier ?? "com.noopapp.noop") + ".scratch",
+        let scratch = fm.temporaryDirectory.appendingPathComponent((Bundle.main.bundleIdentifier ?? "com.zoopapp.zoop") + ".scratch",
                                     isDirectory: true)
         try? fm.createDirectory(at: scratch, withIntermediateDirectories: true)
         let tempDir = scratch.appendingPathComponent("xiaomi-\(UUID().uuidString)")

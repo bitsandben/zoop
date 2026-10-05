@@ -53,7 +53,7 @@ Reader = Callable[[Path], str | None]
 # false positives here just mean noise in the report, not a wrong fix.
 UNIVERSAL = {
     "", "-", "–", "—", "·", "•", "✓", "→", "↔",
-    "NOOP", "bpm", "BPM", "HRV", "SpO2", "SpO₂", "OK", "ID",
+    "NOOP", "Zoop", "bpm", "BPM", "HRV", "SpO2", "SpO₂", "OK", "ID",
     # Training-load acronyms — universal training-science terms, identical in every language (like HRV).
     "CTL", "ATL", "TSB",
 }
@@ -663,12 +663,12 @@ CATALOGS = [
         ROOT / "Packages/StrandDesign/Sources/StrandDesign/Resources/Localizable.xcstrings",
     ),
     (
-        [ROOT / "NOOPWatch"],
-        ROOT / "NOOPWatch/Localizable.xcstrings",
+        [ROOT / "ZoopWatch"],
+        ROOT / "ZoopWatch/Localizable.xcstrings",
     ),
     (
-        [ROOT / "NOOPWatchComplications"],
-        ROOT / "NOOPWatchComplications/Localizable.xcstrings",
+        [ROOT / "ZoopWatchComplications"],
+        ROOT / "ZoopWatchComplications/Localizable.xcstrings",
     ),
     (
         [ROOT / "Strand", ROOT / "StrandiOS", ROOT / "StrandiOSShared", ROOT / "StrandiOSWidgets"],

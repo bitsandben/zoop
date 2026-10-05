@@ -107,7 +107,7 @@ final class IbiChannelTests: XCTestCase {
         XCTAssertEqual(Set(channels(fromAmp).compactMap { $0 }), [.ibiAmplitude])
     }
 
-    /// The raw values are a DURABLE storage format (`rrInterval.srcChannel`, and the `.noopbak` that
+    /// The raw values are a DURABLE storage format (`rrInterval.srcChannel`, and the `.zoopbak` that
     /// carries it between platforms), so renumbering a case would silently relabel stored history.
     /// Pinned here rather than trusted to declaration order.
     func testChannelRawValuesAreTheDurableStorageCodes() {

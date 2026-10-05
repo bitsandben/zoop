@@ -8,7 +8,7 @@ import WhoopStore
 /// data Apple Health can hand a Shortcut directly: the reporter builds a Siri Shortcut that reads
 /// their daily Health totals + workouts and opens
 ///
-///   noop://import-health?v=1&payload=<base64(text)>
+///   zoop://import-health?v=1&payload=<base64(text)>
 ///
 /// where the decoded text is line-oriented, en_US_POSIX, NO header, one record per line. Two record
 /// kinds, discriminated by the first field:
@@ -42,9 +42,9 @@ enum ShortcutHealthImport {
 
     /// The strap source ids the import must never write to — writing here is what would close the
     /// export→import loop. Used only by the guard + its test.
-    static let forbiddenSources: Set<String> = ["my-whoop", "my-whoop-noop"]
+    static let forbiddenSources: Set<String> = ["my-whoop", "my-whoop-zoop"]
 
-    static let scheme = "noop"
+    static let scheme = "zoop"
     static let host = "import-health"
     static let payloadParam = "payload"
     static let versionParam = "v"
@@ -102,14 +102,14 @@ enum ShortcutHealthImport {
 
     // MARK: - URL → outcome
 
-    /// Validate + decode the `noop://import-health` URL into the raw text payload. Returns nil with a
+    /// Validate + decode the `zoop://import-health` URL into the raw text payload. Returns nil with a
     /// `.rejected` reason on any malformed/foreign URL so a stray deep link can't reach the store.
     static func decodePayload(from url: URL) -> Result<String, Outcome> {
         guard url.scheme?.lowercased() == scheme else {
-            return .failure(.rejected("Not a noop:// link."))
+            return .failure(.rejected("Not a zoop:// link."))
         }
         guard url.host?.lowercased() == host else {
-            return .failure(.rejected("Unsupported noop:// action."))
+            return .failure(.rejected("Unsupported zoop:// action."))
         }
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         let params = Dictionary(items.map { ($0.name, $0.value ?? "") }, uniquingKeysWith: { a, _ in a })

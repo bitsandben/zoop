@@ -93,7 +93,7 @@ android/
         ├── main/
         │   ├── AndroidManifest.xml
         │   ├── java/com/noop/
-        │   │   ├── NoopApplication.kt
+        │   │   ├── ZoopApplication.kt
         │   │   ├── protocol/    # Crc.kt, Framing.kt, ParseFrame.kt, Schema.kt, DeviceFamily.kt, Commands.kt
         │   │   ├── data/        # Entities.kt, *Dao.kt, NoopDatabase.kt, importers (CSV + Apple Health)
         │   │   ├── analytics/   # Analytics.kt + StrandAnalytics scorers
@@ -152,7 +152,7 @@ This section maps the surface so contributors know where each piece lives.
 - `analytics/Analytics.kt` — `Hrv.rmssd`, `Zones.zone` / `Zones.hrMaxTanaka`, `IllnessWatch.evaluate`
   (ported from `Strand/App/AppModel.swift`), alongside the heavier scorers ported from
   `StrandAnalytics`.
-- `ui/*` — `MainActivity` plus the Compose (Material 3) screens; `NoopApplication` as the
+- `ui/*` — `MainActivity` plus the Compose (Material 3) screens; `ZoopApplication` as the
   `Application` subclass.
 - `test/java/com/noop/analytics/AnalyticsTest.kt` — JUnit unit tests for the analytics
   (RMSSD known-vector, zone ladder/boundaries, Tanaka rounding, illness-watch flag logic).
@@ -491,7 +491,7 @@ log on:
    #   D WhoopBleClient: Backfill: session ended — reason=HISTORY_COMPLETE
    ```
 
-The toggle drives `WhoopBleClient.debugLogcat` (persisted as `NoopPrefs.KEY_DEBUG_LOGGING`); it
+The toggle drives `WhoopBleClient.debugLogcat` (persisted as `ZoopPrefs.KEY_DEBUG_LOGGING`); it
 gates only the `Log.d` call. Whether or not it is on, **Settings → Strap → "Share strap log"**
 exports the same in-app buffer to a file (the path for users with no adb). What the log does and
 does not contain — and why logcat is opt-in — is covered in `PRIVACY_SECURITY.md` §2.4.
@@ -674,7 +674,7 @@ should be re-verified against a real build, a real device, and a real strap befo
 **Build & static**
 
 - [x] Gradle wrapper committed (`gradlew`, `gradlew.bat`, `gradle/wrapper/gradle-wrapper.{jar,properties}`).
-- [x] Entry points present: `com/noop/NoopApplication.kt`, `com/noop/ui/MainActivity.kt`,
+- [x] Entry points present: `com/noop/ZoopApplication.kt`, `com/noop/ui/MainActivity.kt`,
       `app/proguard-rules.pro`.
 - [x] `./gradlew :app:testDebugUnitTest` is green (analytics vectors).
 - [x] `./gradlew assembleDebug` produces `app-debug.apk`.

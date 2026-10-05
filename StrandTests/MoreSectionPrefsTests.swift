@@ -15,7 +15,7 @@ final class MoreSectionPrefsTests: XCTestCase {
     }
 
     func testKeyMatchesAndroidSuffix() {
-        // iOS @AppStorage("more.expandedSections"); Android persists "noop.more.expandedSections".
+        // iOS @AppStorage("more.expandedSections"); Android persists "zoop.more.expandedSections".
         XCTAssertEqual(MoreSectionPrefs.storageKey, "more.expandedSections")
     }
 

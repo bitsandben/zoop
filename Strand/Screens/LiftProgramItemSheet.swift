@@ -74,7 +74,7 @@ struct LiftProgramItemSheet: View {
             title: item == nil ? "Add exercise" : "Edit exercise",
             subtitle: "Type any name you like. NOOP remembers it, with the muscles you give it."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 exerciseSection
                 LiftMusclePicker(primary: $primary, secondaries: $secondaries)
                 targetsSection
@@ -123,10 +123,10 @@ struct LiftProgramItemSheet: View {
     // MARK: - Exercise name + suggestions
 
     private var exerciseSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Exercise", overline: "Movement")
-            NoopCard {
-                VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            ZoopCard {
+                VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     TextField("Incline dumbbell press", text: $exercise)
                         .textFieldStyle(.plain)
                         .font(StrandFont.body)
@@ -169,11 +169,11 @@ struct LiftProgramItemSheet: View {
     // MARK: - Targets
 
     private var targetsSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Targets", overline: "What you're aiming for")
-            NoopCard {
+            ZoopCard {
                 VStack(alignment: .leading, spacing: 14) {
-                    HStack(spacing: NoopMetrics.gap) {
+                    HStack(spacing: ZoopMetrics.gap) {
                         field("Working sets") {
                             numberInput("4", text: $setsText, field: .sets)
                         }
@@ -181,7 +181,7 @@ struct LiftProgramItemSheet: View {
                             numberInput("8", text: $repsText, field: .reps)
                         }
                     }
-                    HStack(spacing: NoopMetrics.gap) {
+                    HStack(spacing: ZoopMetrics.gap) {
                         field(weightLabel) {
                             numberInput("60", text: $weightText, field: .weight)
                         }
@@ -193,7 +193,7 @@ struct LiftProgramItemSheet: View {
                     // hardest a set should feel, so a lifter knows where to hold back. It is shown grey in
                     // the session and, like every other grey number, a set left unrated saves it
                     // (Utku, 16 Sep 2026; RULES 34) — typing a rating always wins.
-                    HStack(spacing: NoopMetrics.gap) {
+                    HStack(spacing: ZoopMetrics.gap) {
                         field("Max RPE (1–10)") {
                             numberInput("8", text: $maxRpeText, field: .maxRpe)
                         }
@@ -218,9 +218,9 @@ struct LiftProgramItemSheet: View {
     }
 
     private var noteSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Technique note", overline: "In your words")
-            NoopCard {
+            ZoopCard {
                 TextField("Slow eccentric, pause at the bottom", text: $note, axis: .vertical)
                     // A cue read between sets, and it renders directly above the set rows — every
                     // line pushes them down the screen.
@@ -251,7 +251,7 @@ struct LiftProgramItemSheet: View {
                 .buttonStyle(.noopPrimary)
                 .frame(maxWidth: 160)
                 .disabled(!canSave)
-                .opacity(canSave ? 1 : NoopButtonMetrics.disabledOpacity)
+                .opacity(canSave ? 1 : ZoopButtonMetrics.disabledOpacity)
                 .accessibilityLabel("Save exercise")
         }
     }

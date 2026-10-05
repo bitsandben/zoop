@@ -48,11 +48,11 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
             #if os(iOS)
             // Unified side margins matching the floating navigation bar so every page's cards + header line up
             // to the same edges (2026-07-02); macOS keeps the classic 28 in the #else branch.
-            .padding(.horizontal, NoopMetrics.screenHPadding)
+            .padding(.horizontal, ZoopMetrics.screenHPadding)
             .padding(.top, 24)
             // The tab bar floats over the scroll content, so the last card sat hidden behind it.
             // Reserve extra bottom scroll room so every screen's final card clears the floating bar.
-            .padding(.bottom, NoopMetrics.tabBarClearance)
+            .padding(.bottom, ZoopMetrics.tabBarClearance)
             // iPad: cap the readable column, then centre it in the full-width scroll viewport.
             // iPhone (.compact): the inner frame is .infinity/.leading, identical to before.
             .frame(maxWidth: hSizeClass == .regular ? 700 : .infinity,

@@ -5,7 +5,7 @@ import WhoopProtocol
 // sleepbench — replay the sleep stagers over real recorded nights and score them against every
 // independent reference the database carries.
 //
-// USAGE:  sleepbench --db /path/to/whoop.sqlite [--device my-whoop-noop] [--pad 3600] [--csv out.csv]
+// USAGE:  sleepbench --db /path/to/whoop.sqlite [--device my-whoop-zoop] [--pad 3600] [--csv out.csv]
 //                     [--exclude <startTs,…>]
 //
 // The database is never written to and never lives in this repository. Pass a COPY; never point this at
@@ -14,7 +14,7 @@ import WhoopProtocol
 struct Args {
     var db = ""
     /// The `sleepSession.deviceId` whose nights are scored.
-    var device = "my-whoop-noop"
+    var device = "my-whoop-zoop"
     /// The `deviceId` the raw streams are stored under. These genuinely differ in a real database — the
     /// session rows carry the app's own device identity while the decoded streams carry the strap's — so
     /// the two are separate arguments rather than one assumed-shared value.

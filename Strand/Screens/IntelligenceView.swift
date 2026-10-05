@@ -37,16 +37,16 @@ struct IntelligenceView: View {
             if let f = forecast { forecastCard(f) }
             explainerCard
             if intelligence.computing {
-                NoopCard(padding: 20, tint: StrandPalette.chargeColor) {
-                    HStack(spacing: NoopMetrics.rowSpacing) {
+                ZoopCard(padding: 20, tint: StrandPalette.chargeColor) {
+                    HStack(spacing: ZoopMetrics.rowSpacing) {
                         ProgressView().controlSize(.small)
                         Text("Crunching your raw streams…").font(StrandFont.subhead)
                             .foregroundStyle(StrandPalette.textSecondary)
                     }
                 }
             } else if let note = intelligence.note {
-                NoopCard(padding: 20, tint: StrandPalette.chargeColor) {
-                    HStack(alignment: .top, spacing: NoopMetrics.rowSpacing) {
+                ZoopCard(padding: 20, tint: StrandPalette.chargeColor) {
+                    HStack(alignment: .top, spacing: ZoopMetrics.rowSpacing) {
                         Image(systemName: "moon.zzz.fill").foregroundStyle(StrandPalette.chargeColor)
                             .accessibilityHidden(true)
                         Text(note).font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
@@ -79,7 +79,7 @@ struct IntelligenceView: View {
                     .font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 if filtered.isEmpty {
-                    NoopCard(padding: 18, tint: StrandPalette.chargeColor) {
+                    ZoopCard(padding: 18, tint: StrandPalette.chargeColor) {
                         Text("No scored days in this window. Widen the range or import more history.")
                             .font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -144,9 +144,9 @@ struct IntelligenceView: View {
     /// so it earns a liquid gauge. The number, ± band and copy are unchanged.
     private func forecastCard(_ f: RecoveryForecast) -> some View {
         let frac = min(max(f.charge / 100.0, 0), 1)
-        return VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        return VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Tomorrow's Charge", overline: "Evening forecast", trailing: String(localized: "Estimate"))
-            NoopCard(padding: 20, tint: StrandPalette.chargeColor) {
+            ZoopCard(padding: 20, tint: StrandPalette.chargeColor) {
                 VStack(spacing: 14) {
                     // The signature liquid gauge: a filling vessel tinted to the forecast Charge, with the
                     // 0–100 estimate counting up over it and the ± band + state word beneath (Sleep's
@@ -196,9 +196,9 @@ struct IntelligenceView: View {
     }
 
     private var explainerCard: some View {
-        NoopCard(padding: 20, tint: StrandPalette.chargeColor) {
-            VStack(alignment: .leading, spacing: NoopMetrics.space4) {
-                HStack(spacing: NoopMetrics.rowSpacing) {
+        ZoopCard(padding: 20, tint: StrandPalette.chargeColor) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
+                HStack(spacing: ZoopMetrics.rowSpacing) {
                     Image(systemName: "brain.head.profile").foregroundStyle(StrandPalette.chargeColor)
                         .accessibilityHidden(true)
                     Text("How this works").font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
@@ -207,7 +207,7 @@ struct IntelligenceView: View {
                     .font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                 // The Charge model made concrete — the five weighted inputs, each its own metric accent.
-                VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                     Text("Charge model").strandOverline()
                     weightRow(String(localized: "Heart-rate variability"), "~55%", fraction: 0.55, color: StrandPalette.metricPurple)
                     weightRow(String(localized: "Resting heart rate"), "~20%", fraction: 0.20, color: StrandPalette.metricRose)
@@ -230,7 +230,7 @@ struct IntelligenceView: View {
     /// One weighted-input row: label + percent + a thin proportional meter on the inset well, tinted
     /// to the input's own metric accent. Presentation of the Charge model — no per-day data.
     private func weightRow(_ label: String, _ percent: String, fraction: Double, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
             HStack {
                 Text(label).font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
                 Spacer()
@@ -246,8 +246,8 @@ struct IntelligenceView: View {
     }
 
     private func dayCard(_ d: IntelligenceEngine.Computed) -> some View {
-        NoopCard(padding: 18, tint: StrandPalette.chargeColor) {
-            VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
+        ZoopCard(padding: 18, tint: StrandPalette.chargeColor) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                 HStack {
                     // A small liquid vessel filled to the day's Charge (a real 0–100 metric, so it earns a
                     // gauge) leads the row — the same leading-gauge idiom Today + Insights use. Static
@@ -301,7 +301,7 @@ struct IntelligenceView: View {
                     ChargeBreakdownSection(drivers: d.drivers,
                                            confidence: d.confidence,
                                            skinTempRel: d.skinTempRel)
-                        .padding(.top, NoopMetrics.space1)
+                        .padding(.top, ZoopMetrics.space1)
                 }
             }
         }

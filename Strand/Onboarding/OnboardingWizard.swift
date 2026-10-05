@@ -49,7 +49,7 @@ public struct OnboardingWizard: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Low Power Mode / "Reduce motion in NOOP" pose these looping glows still too. Onboarding is
     /// first-run only, but a `repeatForever` is a `repeatForever` wherever it lives.
-    @ObservedObject private var motion = NoopMotionState.shared
+    @ObservedObject private var motion = ZoopMotionState.shared
     private var poseStill: Bool { motion.poseStill(reduceMotion) }
 
     public var body: some View {
@@ -399,7 +399,7 @@ private struct ExpectationsStep: View {
                     }
                     .padding(14)
                     .frame(maxWidth: 520, alignment: .leading)
-                    .background(NoopPanelSurface(cornerRadius: 14))
+                    .background(ZoopPanelSurface(cornerRadius: 14))
                     .opacity(shown ? 1 : 0)
                     .offset(y: shown ? 0 : 8)
                     .animation(StrandMotion.gentle.delay(Double(index) * 0.08), value: shown)
@@ -442,7 +442,7 @@ private struct ExpectationsStep: View {
         }
         .padding(14)
         .frame(maxWidth: 520, alignment: .leading)
-        .background(NoopPanelSurface(cornerRadius: 14))
+        .background(ZoopPanelSurface(cornerRadius: 14))
     }
 }
 
@@ -453,7 +453,7 @@ private struct BluetoothStep: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Low Power Mode / "Reduce motion in NOOP" pose these looping glows still too. Onboarding is
     /// first-run only, but a `repeatForever` is a `repeatForever` wherever it lives.
-    @ObservedObject private var motion = NoopMotionState.shared
+    @ObservedObject private var motion = ZoopMotionState.shared
     private var poseStill: Bool { motion.poseStill(reduceMotion) }
     var body: some View {
         StepShell(title: String(localized: "A quick word before we connect"),
@@ -966,7 +966,7 @@ private struct NotificationsStep: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Low Power Mode / "Reduce motion in NOOP" pose these looping glows still too. Onboarding is
     /// first-run only, but a `repeatForever` is a `repeatForever` wherever it lives.
-    @ObservedObject private var motion = NoopMotionState.shared
+    @ObservedObject private var motion = ZoopMotionState.shared
     private var poseStill: Bool { motion.poseStill(reduceMotion) }
     var body: some View {
         StepShell(title: String(localized: "Stay in the loop"),
@@ -1148,7 +1148,7 @@ private struct RadarSweep: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Low Power Mode / "Reduce motion in NOOP" pose these looping glows still too. Onboarding is
     /// first-run only, but a `repeatForever` is a `repeatForever` wherever it lives.
-    @ObservedObject private var motion = NoopMotionState.shared
+    @ObservedObject private var motion = ZoopMotionState.shared
     private var poseStill: Bool { motion.poseStill(reduceMotion) }
 
     var body: some View {
@@ -1409,7 +1409,7 @@ private struct SecondaryButtonStyle: ButtonStyle {
             .foregroundStyle(StrandPalette.textPrimary)
             .padding(.vertical, 11)
             .padding(.horizontal, 18)
-            .background(NoopPanelSurface(cornerRadius: 12))
+            .background(ZoopPanelSurface(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(configuration.isPressed ? StrandPalette.hairlineStrong : StrandPalette.hairline, lineWidth: 1)

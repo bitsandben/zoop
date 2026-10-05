@@ -100,11 +100,11 @@ final class SleepSessionDedupTests: XCTestCase {
 
     func testHealWitnessIsHandedOnlyToTheComputedId() {
         let kept: Set<Int> = [midnight - 2 * 3600, midnight + 15 * 3600]
-        XCTAssertEqual(SleepSessionDedup.healWitness(for: "my-whoop-noop", computedId: "my-whoop-noop",
+        XCTAssertEqual(SleepSessionDedup.healWitness(for: "my-whoop-zoop", computedId: "my-whoop-zoop",
                                                      keptStarts: kept), kept)
-        XCTAssertEqual(SleepSessionDedup.healWitness(for: "oura-Y12", computedId: "my-whoop-noop",
+        XCTAssertEqual(SleepSessionDedup.healWitness(for: "oura-Y12", computedId: "my-whoop-zoop",
                                                      keptStarts: kept), [])
-        XCTAssertEqual(SleepSessionDedup.healWitness(for: "oura-Y12", computedId: "my-whoop-noop",
+        XCTAssertEqual(SleepSessionDedup.healWitness(for: "oura-Y12", computedId: "my-whoop-zoop",
                                                      keptStarts: []), [])
     }
 
@@ -117,7 +117,7 @@ final class SleepSessionDedupTests: XCTestCase {
         let read = session(start: midnight - 2 * 3600 + 53, end: midnight + 3 * 3600 + 57 * 60)   // 337 min
         let full = session(start: midnight - 2 * 3600 + 231, end: midnight + 8 * 3600 + 21 * 60)  // 598 min
         let keptStarts: Set<Int> = [read.startTs]
-        let ringWitness = SleepSessionDedup.healWitness(for: "oura-Y12", computedId: "my-whoop-noop",
+        let ringWitness = SleepSessionDedup.healWitness(for: "oura-Y12", computedId: "my-whoop-zoop",
                                                         keptStarts: keptStarts)
         let healed = SleepSessionDedup.dedupe([read, full], freshStarts: ringWitness)
         XCTAssertEqual(healed.kept.map(\.startTs), [full.startTs], "the fuller re-serve survives the heal")

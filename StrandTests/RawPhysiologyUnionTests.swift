@@ -149,8 +149,8 @@ final class RawPhysiologyUnionTests: XCTestCase {
         let session = CachedSleepSession(startTs: 1_000, endTs: 5_000, efficiency: 0.9,
                                          restingHr: 52, avgHrv: 60, stagesJSON: nil)
         _ = try await store.upsertSleepSessions([session], deviceId: "my-whoop")
-        _ = try await store.upsertSleepSessions([session], deviceId: "my-whoop-noop")
-        _ = try await store.persistSessionMotion(deviceId: "my-whoop-noop", sessionStart: 1_000,
+        _ = try await store.upsertSleepSessions([session], deviceId: "my-whoop-zoop")
+        _ = try await store.persistSessionMotion(deviceId: "my-whoop-zoop", sessionStart: 1_000,
                                                  motionEpochs: [0.1, 0.2])
         _ = try await store.upsertSleepSessions([session], deviceId: "whoop-new-noop")
         _ = try await store.persistSessionMotion(deviceId: "whoop-new-noop", sessionStart: 1_000,
@@ -177,9 +177,9 @@ final class RawPhysiologyUnionTests: XCTestCase {
                                restingHr: 52, avgHrv: 60, stagesJSON: nil)
         }
         _ = try await store.upsertSleepSessions(sessions, deviceId: "my-whoop")
-        _ = try await store.upsertSleepSessions(sessions, deviceId: "my-whoop-noop")
+        _ = try await store.upsertSleepSessions(sessions, deviceId: "my-whoop-zoop")
         for (i, start) in starts.enumerated() {
-            _ = try await store.persistSessionMotion(deviceId: "my-whoop-noop", sessionStart: start,
+            _ = try await store.persistSessionMotion(deviceId: "my-whoop-zoop", sessionStart: start,
                                                      motionEpochs: [Double(i) + 0.5])
         }
         let repo = Repository(deviceId: "my-whoop")
@@ -204,8 +204,8 @@ final class RawPhysiologyUnionTests: XCTestCase {
         let session = CachedSleepSession(startTs: 1_000, endTs: 5_000, efficiency: 0.9,
                                          restingHr: 52, avgHrv: 60, stagesJSON: nil)
         _ = try await store.upsertSleepSessions([session], deviceId: "my-whoop")
-        _ = try await store.upsertSleepSessions([session], deviceId: "my-whoop-noop")
-        _ = try await store.persistSessionMotion(deviceId: "my-whoop-noop", sessionStart: 1_000,
+        _ = try await store.upsertSleepSessions([session], deviceId: "my-whoop-zoop")
+        _ = try await store.persistSessionMotion(deviceId: "my-whoop-zoop", sessionStart: 1_000,
                                                  motionEpochs: [0.3, 0.4])
         let repo = Repository(deviceId: "my-whoop")
         repo.setStoreForTesting(store)

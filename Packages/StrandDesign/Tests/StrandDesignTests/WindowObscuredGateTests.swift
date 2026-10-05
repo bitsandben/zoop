@@ -21,29 +21,29 @@ import XCTest
 /// census in `QuietMotionCoverageTests` could not provide and the reason this file exists.
 final class WindowObscuredGateTests: XCTestCase {
 
-    private func window(onScreen: Bool) -> NoopMotionState.WindowVisibility {
-        NoopMotionState.WindowVisibility(onScreen: onScreen)
+    private func window(onScreen: Bool) -> ZoopMotionState.WindowVisibility {
+        ZoopMotionState.WindowVisibility(onScreen: onScreen)
     }
 
     func testAWindowOnScreenIsNotObscured() {
-        XCTAssertFalse(NoopMotionState.obscured([window(onScreen: true)]))
+        XCTAssertFalse(ZoopMotionState.obscured([window(onScreen: true)]))
     }
 
     /// Cmd+H. The window is still in the list (that is what `.titled` buys) and simply not on screen.
     func testAHiddenAppIsObscured() {
-        XCTAssertTrue(NoopMotionState.obscured([window(onScreen: false)]))
+        XCTAssertTrue(ZoopMotionState.obscured([window(onScreen: false)]))
     }
 
     /// Sent to the Dock. Indistinguishable from hidden at this layer, and should be.
     func testAMiniaturisedWindowIsObscured() {
-        XCTAssertTrue(NoopMotionState.obscured([window(onScreen: false)]))
+        XCTAssertTrue(ZoopMotionState.obscured([window(onScreen: false)]))
     }
 
     /// The reporter's `titled=2` counts, both states. A second titled window (a sheet, or Settings)
     /// must not hold the gate open on its own, and must not close it while the main window is up.
     func testASecondTitledWindowFollowsTheSameRule() {
-        XCTAssertFalse(NoopMotionState.obscured([window(onScreen: true), window(onScreen: false)]))
-        XCTAssertTrue(NoopMotionState.obscured([window(onScreen: false), window(onScreen: false)]))
+        XCTAssertFalse(ZoopMotionState.obscured([window(onScreen: true), window(onScreen: false)]))
+        XCTAssertTrue(ZoopMotionState.obscured([window(onScreen: false), window(onScreen: false)]))
     }
 
     /// The case that decides the empty-list rule rather than following from it.
@@ -56,13 +56,13 @@ final class WindowObscuredGateTests: XCTestCase {
     /// This rule is only safe while the filter is state-INDEPENDENT, which is precisely what #2397 broke:
     /// under `canBecomeMain` a hidden window emptied the list and this clause answered the live question.
     func testNoWindowsIsNotObscured() {
-        XCTAssertFalse(NoopMotionState.obscured([]))
+        XCTAssertFalse(ZoopMotionState.obscured([]))
     }
 
     /// The status-item window never reaches here (the caller filters on `.titled`), but if the filter is
     /// ever loosened, an always-on-screen window would hold the gate open forever, which is the other way
     /// this fix can be made inert. Pinned as the shape that must not appear.
     func testAnAlwaysOnScreenWindowWouldHoldTheGateOpen() {
-        XCTAssertFalse(NoopMotionState.obscured([window(onScreen: false), window(onScreen: true)]))
+        XCTAssertFalse(ZoopMotionState.obscured([window(onScreen: false), window(onScreen: true)]))
     }
 }

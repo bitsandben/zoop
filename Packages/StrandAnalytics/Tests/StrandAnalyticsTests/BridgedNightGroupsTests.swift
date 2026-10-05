@@ -102,7 +102,7 @@ final class BridgedNightGroupsTests: XCTestCase {
     }
 
     /// REAL NIGHT (2026-07-14, PDT): a 12:16 first-sleep fragment (67 min) then a ~6-min walk then the
-    /// main 1:29 → 7:32 sleep, stored as two rows on `my-whoop-noop` with the main's onset user-edited
+    /// main 1:29 → 7:32 sleep, stored as two rows on `my-whoop-zoop` with the main's onset user-edited
     /// later via `startTsAdjusted` (so its EFFECTIVE start is 1:29). The 6-min effective gap is far under
     /// `gapBridgeMaxMin`, so the two fragments MUST bridge into ONE group — proving the fragment is NOT
     /// filtered out of grouping. The bug lives downstream (the display onset walk), not here: the group

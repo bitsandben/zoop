@@ -163,7 +163,7 @@ struct TestCentreView: View {
     var body: some View {
         ScreenScaffold(title: "Test Centre",
                        subtitle: "Turn on a test for the thing that's wrong, wear the strap, then tap Report. All on \(Platform.deviceNounPhrase).") {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                 domainModesCard.staggeredAppear(index: 0)
                 diagnosticToolsCard.staggeredAppear(index: 1)
                 if is5MG { rawDataCollectorCard.staggeredAppear(index: 2) }
@@ -205,8 +205,8 @@ struct TestCentreView: View {
     // MARK: - Section 1: Domain test modes (rendered from the registry projection)
 
     @ViewBuilder private var domainModesCard: some View {
-        NoopCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+        ZoopCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 Text("TEST MODES")
                     .font(StrandFont.overline).tracking(StrandFont.overlineTracking)
                     .foregroundStyle(StrandPalette.textSecondary)
@@ -225,8 +225,8 @@ struct TestCentreView: View {
     // MARK: - Section 2: Diagnostic tools (strap log + recalibrate + env dump)
 
     @ViewBuilder private var rawDataCollectorCard: some View {
-        NoopCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+        ZoopCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 Text("5/MG RAW DATA COLLECTOR")
                     .font(StrandFont.overline).tracking(StrandFont.overlineTracking)
                     .foregroundStyle(StrandPalette.textSecondary)
@@ -238,7 +238,7 @@ struct TestCentreView: View {
                 } label: {
                     Label("Open raw-data collector", systemImage: "waveform.path.ecg")
                 }
-                .buttonStyle(NoopButtonStyle(.primary, fullWidth: true))
+                .buttonStyle(ZoopButtonStyle(.primary, fullWidth: true))
                 Text(live.connected ? "WHOOP 5/MG connected." : "Connect your WHOOP 5/MG to start a raw-data session.")
                     .font(StrandFont.caption)
                     .foregroundStyle(live.connected ? StrandPalette.textSecondary : StrandPalette.statusWarning)
@@ -247,8 +247,8 @@ struct TestCentreView: View {
     }
 
     @ViewBuilder private var fiveMGProtocolDiagnosticsCard: some View {
-        NoopCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+        ZoopCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 Text("5/MG PROTOCOL DIAGNOSTICS")
                     .font(StrandFont.overline).tracking(StrandFont.overlineTracking)
                     .foregroundStyle(StrandPalette.textSecondary)
@@ -274,12 +274,12 @@ struct TestCentreView: View {
                 Text("The strap accepts these writes, but NOOP has not observed them enabling a separate live stream. This is not the Raw Data Collector.")
                     .font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
                 if deepDataEnabled {
-                    NoopButton("Send legacy R22 enable sequence", systemImage: "bolt.badge.automatic", kind: .secondary) {
+                    ZoopButton("Send legacy R22 enable sequence", systemImage: "bolt.badge.automatic", kind: .secondary) {
                         model.ble.enableWhoop5DeepData()
                     }
                     .disabled(!live.encryptedBond || !live.worn)
                 }
-                NoopButton("Clear legacy R22 flags on strap", systemImage: "bolt.slash", kind: .secondary) {
+                ZoopButton("Clear legacy R22 flags on strap", systemImage: "bolt.slash", kind: .secondary) {
                     model.ble.disableWhoop5DeepData()
                 }
                 .disabled(!live.encryptedBond || live.r22DisableReport == BLEManager.deviceConfigProbeWaiting)
@@ -294,11 +294,11 @@ struct TestCentreView: View {
                 Text("MG-only protocol instrumentation, not a medical ECG feature.")
                     .font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
                 if ecgRawDataEnabled {
-                    HStack(spacing: NoopMetrics.space3) {
-                        NoopButton("Gate on", systemImage: "waveform.path.ecg", kind: .secondary) {
+                    HStack(spacing: ZoopMetrics.space3) {
+                        ZoopButton("Gate on", systemImage: "waveform.path.ecg", kind: .secondary) {
                             model.ble.setEcgRawDataGate(true)
                         }
-                        NoopButton("Gate off", systemImage: "arrow.uturn.backward", kind: .secondary) {
+                        ZoopButton("Gate off", systemImage: "arrow.uturn.backward", kind: .secondary) {
                             model.ble.setEcgRawDataGate(false)
                         }
                     }
@@ -319,8 +319,8 @@ struct TestCentreView: View {
     }
 
     @ViewBuilder private var diagnosticToolsCard: some View {
-        NoopCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+        ZoopCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 Text("DIAGNOSTIC TOOLS")
                     .font(StrandFont.overline).tracking(StrandFont.overlineTracking)
                     .foregroundStyle(StrandPalette.textSecondary)
@@ -349,7 +349,7 @@ struct TestCentreView: View {
 
                 // Recalibrate Charge baseline: the same Baselines.recalibrateRecoveryBaselines call the
                 // Settings Recovery card uses.
-                NoopButton("Recalibrate Charge baseline", systemImage: "arrow.triangle.2.circlepath", kind: .secondary) {
+                ZoopButton("Recalibrate Charge baseline", systemImage: "arrow.triangle.2.circlepath", kind: .secondary) {
                     showRecalibrateConfirm = true
                 }
                 Text("Re-anchors every baseline that feeds Charge to your recent nights. No stored day is deleted.")
@@ -361,7 +361,7 @@ struct TestCentreView: View {
                 // #1853: skin-temp absolute backfill (on-demand, diagnostic-first). Fills `skinTempC`
                 // for nights outside the 21-night rescore window that never got an absolute. Fill-only:
                 // it can only fill a NULL, never overwrite a measured value or touch the deviation.
-                NoopButton("Backfill skin-temp absolutes", systemImage: "thermometer.medium",
+                ZoopButton("Backfill skin-temp absolutes", systemImage: "thermometer.medium",
                            kind: .secondary) {
                     runSkinTempBackfill()
                 }
@@ -379,7 +379,7 @@ struct TestCentreView: View {
 
                 // Environment dump: the IOSDiagnostics-backed block exportableLogText already carries,
                 // surfaced as a copyable readout (spec section 3.4).
-                NoopButton("Copy environment dump", systemImage: "info.circle", kind: .secondary) {
+                ZoopButton("Copy environment dump", systemImage: "info.circle", kind: .secondary) {
                     PlatformPasteboard.copy(live.exportableLogText())
                 }
 
@@ -404,8 +404,8 @@ struct TestCentreView: View {
     // MARK: - Section 2b: Oura (consolidated; only when an Oura ring is paired)
 
     @ViewBuilder private var ouraCard: some View {
-        NoopCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+        ZoopCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 Text("OURA")
                     .font(StrandFont.overline).tracking(StrandFont.overlineTracking)
                     .foregroundStyle(StrandPalette.textSecondary)
@@ -615,13 +615,13 @@ struct TestCentreView: View {
     // MARK: - Section 3: Export and auto-export (manual Report + scheduled export)
 
     @ViewBuilder private var exportCard: some View {
-        NoopCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+        ZoopCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 Text("EXPORT")
                     .font(StrandFont.overline).tracking(StrandFont.overlineTracking)
                     .foregroundStyle(StrandPalette.textSecondary)
 
-                NoopButton("Report a bug with my log", systemImage: "paperplane", kind: .primary) {
+                ZoopButton("Report a bug with my log", systemImage: "paperplane", kind: .primary) {
                     // A generic "whole app" report: the master profile so the deep-link self-applies the
                     // test:all label. master is not in the registry (it is not a wear-and-capture mode), so
                     // build the lightweight mode inline.
@@ -684,7 +684,7 @@ struct TestCentreView: View {
                     Text("Older scheduled exports beyond this many are pruned automatically, oldest first.")
                         .font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
                         .fixedSize(horizontal: false, vertical: true)
-                    NoopButton("Run now", systemImage: "square.and.arrow.down.on.square", kind: .secondary) {
+                    ZoopButton("Run now", systemImage: "square.and.arrow.down.on.square", kind: .secondary) {
                         runScheduledExportNow()
                     }
                     Text("On iPhone this is best-effort (iOS decides when background tasks run). Everything stays on \(Platform.deviceNounPhrase).")
@@ -693,7 +693,7 @@ struct TestCentreView: View {
                 }
                 // Manual clear (#650): always available, even with the toggle off, since files written
                 // while it was on can outlive that toggle flip.
-                NoopButton("Clear scheduled exports", systemImage: "trash", kind: .destructive) {
+                ZoopButton("Clear scheduled exports", systemImage: "trash", kind: .destructive) {
                     showClearExportsConfirm = true
                 }
             }
@@ -707,8 +707,8 @@ struct TestCentreView: View {
     /// Android twin reads. Hosts the HR-from-PPG sub-lag interpolation variant. Twin of the Android
     /// ExperimentalAlgorithmsCard.
     @ViewBuilder private var experimentalAlgorithmsCard: some View {
-        NoopCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+        ZoopCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 Text("EXPERIMENTAL ALGORITHMS")
                     .font(StrandFont.overline).tracking(StrandFont.overlineTracking)
                     .foregroundStyle(StrandPalette.textSecondary)
@@ -1239,7 +1239,7 @@ private struct ReportReviewSheet: View {
         let preview = report.pending?.gate.previewText ?? ""
         return ScreenScaffold(title: "Review before sharing",
                               subtitle: "This is exactly what your report will contain. Nothing leaves \(Platform.deviceNounPhrase) until you tap Share.") {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                 if report.pending?.modeInactive == true {
                     // #1002: the selected profile's test mode is not on, so this bundle carries no capture
                     // for the very thing being reported (the #812 capture_check only grades ACTIVE modes,
@@ -1250,7 +1250,7 @@ private struct ReportReviewSheet: View {
                         .foregroundStyle(StrandPalette.statusWarning)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                NoopCard {
+                ZoopCard {
                     ScrollView {
                         Text(preview.isEmpty ? String(localized: "(nothing to share yet)") : preview)
                             .font(StrandFont.mono)
@@ -1263,11 +1263,11 @@ private struct ReportReviewSheet: View {
                     #endif
                     .frame(maxHeight: 360)
                 }
-                HStack(spacing: NoopMetrics.space3) {
-                    NoopButton("Cancel", systemImage: "xmark", kind: .secondary) {
+                HStack(spacing: ZoopMetrics.space3) {
+                    ZoopButton("Cancel", systemImage: "xmark", kind: .secondary) {
                         report.cancel(); dismiss()
                     }
-                    NoopButton("Share", systemImage: "square.and.arrow.up", kind: .primary) {
+                    ZoopButton("Share", systemImage: "square.and.arrow.up", kind: .primary) {
                         report.confirm(); dismiss()
                     }
                 }

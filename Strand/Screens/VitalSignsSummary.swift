@@ -97,7 +97,7 @@ struct BodyVitalReading: Identifiable {
         switch source {
         case .whoopImport:
             return String(localized: "WHOOP import")
-        case .noopComputed:
+        case .zoopComputed:
             // Live pipeline stores ±°C vs personal baseline (#622) — not absolute wrist °C.
             if key == "skin" { return String(localized: "vs baseline") }
             return String(localized: "NOOP computed")
@@ -184,7 +184,7 @@ enum BodyVitalSigns {
         let spo2CandidateOn = PuffinExperiment.spo2CandidateDisplayEnabled && !spo2CandidateByDay.isEmpty
         let spo2CandidatePoints: [VitalPoint] = spo2CandidateOn
             ? spo2CandidateByDay.map { (day, value) in
-                VitalPoint(day: day, value: value, source: .noopComputed)
+                VitalPoint(day: day, value: value, source: .zoopComputed)
             }.sorted { $0.day < $1.day }
             : []
         // WHOOP 4.0 raw SpO₂: the (red + IR) / 2 ADC mean per night, present only when both channels
@@ -512,9 +512,9 @@ private extension DailyMetricSource {
     static func vitalPrecedence(for key: String) -> [DailyMetricSource] {
         switch key {
         case "skin":
-            return [.whoopImport, .noopComputed, .localCache]
+            return [.whoopImport, .zoopComputed, .localCache]
         default:
-            return [.whoopImport, .noopComputed, .appleHealth, .localCache]
+            return [.whoopImport, .zoopComputed, .appleHealth, .localCache]
         }
     }
 }

@@ -71,14 +71,14 @@ struct ScoreInputProvider: Equatable, Sendable {
 /// where a vital came from without changing the stored data.
 enum DailyMetricSource: Equatable {
     case whoopImport
-    case noopComputed
+    case zoopComputed
     case appleHealth
     case localCache
 
     var vitalPriority: Int {
         switch self {
         case .whoopImport:  return 0
-        case .noopComputed: return 1
+        case .zoopComputed: return 1
         case .appleHealth:  return 2
         case .localCache:   return 3
         }
@@ -139,9 +139,9 @@ final class Repository: ObservableObject {
     /// Source id for on-device computed scores (recovery/strain/sleep derived from the raw strap
     /// streams by IntelligenceEngine). Merged UNDER the imported `deviceId` rows at read time, so a
     /// real WHOOP import always wins and the strap-only user still gets a populated dashboard.
-    private var computedDeviceId: String { deviceId + "-noop" }
+    private var computedDeviceId: String { deviceId + "-zoop" }
 
-    /// The CANONICAL imported/computed id ("my-whoop" + its "-noop" sibling). The WHOOP-IMPORT and the
+    /// The CANONICAL imported/computed id ("my-whoop" + its "-zoop" sibling). The WHOOP-IMPORT and the
     /// engine's computed write target stay STABLE here forever (they never follow the active strap), so a
     /// remove+re-add never orphans the history a prior import/score banked. `deviceId` follows the active
     /// strap so today's LIVE raw under a re-added strap's "whoop-<uuid>" id still surfaces (#814); reads
@@ -149,7 +149,7 @@ final class Repository: ObservableObject {
     /// When the active strap IS the canonical id (single-device install) the union collapses to one id and
     /// is byte-identical to the pre-union behaviour.
     private var canonicalDeviceId: String { Self.whoopSource }
-    private var canonicalComputedId: String { Self.whoopSource + "-noop" }
+    private var canonicalComputedId: String { Self.whoopSource + "-zoop" }
 
     /// The distinct IMPORTED/MEASURED source ids to union for a dashboard read: the active strap (live raw,
     /// #814) and the canonical imported id. Active strap FIRST so per-day dedup lets the measured/live row
@@ -157,7 +157,7 @@ final class Repository: ObservableObject {
     var importedReadIds: [String] {
         deviceId == canonicalDeviceId ? [deviceId] : [deviceId, canonicalDeviceId]
     }
-    /// The distinct COMPUTED ("-noop") source ids to union: the active strap's computed sibling and the
+    /// The distinct COMPUTED ("-zoop") source ids to union: the active strap's computed sibling and the
     /// canonical computed sibling. Same dedup rule as `importedReadIds`.
     var computedReadIds: [String] {
         computedDeviceId == canonicalComputedId ? [computedDeviceId] : [computedDeviceId, canonicalComputedId]
@@ -176,7 +176,7 @@ final class Repository: ObservableObject {
     /// mints every non-WHOOP id as "<idPrefix>-<uuid>", so the stored id's prefix IS its brand key. Read/UI
     /// side only — it lets the sleep surfaces name an Oura night's provenance "Oura" (a ring-PROVIDED
     /// hypnogram) instead of the generic "On-device", and flag the split as the ring's RAW on-device stages.
-    /// Not a stored value and never crosses `.noopbak`, so no Android twin is required.
+    /// Not a stored value and never crosses `.zoopbak`, so no Android twin is required.
     var activeDeviceIsOura: Bool { DeviceBrandCatalog.isOura(deviceId) }
     private var store: WhoopStore?
 
@@ -314,7 +314,7 @@ final class Repository: ObservableObject {
     /// A `.manual` row, the only class the delete button is offered for, is written under a strap id, so
     /// this set is what a delete actually needs.
     nonisolated static func deletableWorkoutNamespaces(rawIds: [String]) -> [String] {
-        (rawIds + rawIds.map { $0.hasSuffix("-noop") ? $0 : $0 + "-noop" })
+        (rawIds + rawIds.map { $0.hasSuffix("-zoop") ? $0 : $0 + "-zoop" })
             .reduce(into: [String]()) { acc, id in
                 if !acc.contains(id) { acc.append(id) }
             }
@@ -332,7 +332,7 @@ final class Repository: ObservableObject {
     }
 
     private func rawComputedReadIds(store: WhoopStore) -> [String] {
-        rawPhysiologyReadIds(store: store).map { $0.hasSuffix("-noop") ? $0 : $0 + "-noop" }
+        rawPhysiologyReadIds(store: store).map { $0.hasSuffix("-zoop") ? $0 : $0 + "-zoop" }
     }
 
     // Each helper reads the SAME store query across `importedReadIds` (active strap + canonical "my-whoop")
@@ -478,7 +478,7 @@ final class Repository: ObservableObject {
         Self.dedupBlocks(await unionRawSleepBlocks(store: store, ids: rawPhysiologyReadIds(store: store), from: from, to: to, limit: limit))
     }
 
-    /// Computed ("-noop") daily-metric rows across the computed union, DEDUPED per day (active strap's
+    /// Computed ("-zoop") daily-metric rows across the computed union, DEDUPED per day (active strap's
     /// computed sibling wins over the canonical computed sibling).
     private func unionComputedDailyMetrics(store: WhoopStore, from: String, to: String) async -> [DailyMetric] {
         var byDay: [String: DailyMetric] = [:]
@@ -490,7 +490,7 @@ final class Repository: ObservableObject {
         return byDay.values.sorted { $0.day < $1.day }
     }
 
-    /// Computed ("-noop") sleep sessions across every registered WHOOP source, keeping ALL sessions per day
+    /// Computed ("-zoop") sleep sessions across every registered WHOOP source, keeping ALL sessions per day
     /// and collapsing near-identical nights recorded under different computed siblings.
     private func unionComputedSleepSessions(store: WhoopStore, from: Int, to: Int, limit: Int = 4000) async -> [CachedSleepSession] {
         Self.dedupBlocks(await unionRawSleepBlocks(store: store, ids: rawComputedReadIds(store: store), from: from, to: to, limit: limit))
@@ -712,7 +712,7 @@ final class Repository: ObservableObject {
     }
 
     /// Canonical source ids the resolver knows how to cross-reference. The strap's actual id is
-    /// `deviceId` (and its computed sibling `deviceId + "-noop"`); these are the FIXED ids.
+    /// `deviceId` (and its computed sibling `deviceId + "-zoop"`); these are the FIXED ids.
     static let whoopSource = "my-whoop"
     static let appleHealthSource = "apple-health"
     static let healthConnectSource = "health-connect"
@@ -985,7 +985,7 @@ final class Repository: ObservableObject {
             for p in need { fig[p.day, default: ImportedSleepFigures()].needMin = p.value }
             for p in debt { fig[p.day, default: ImportedSleepFigures()].debtMin = p.value }
             // H5 (#509): a night the user hand-edited (userEdited) must keep its corrected sleep figures even
-            // when a WHOOP/Apple import also covers that day. The computed ("-noop") session carries the edit,
+            // when a WHOOP/Apple import also covers that day. The computed ("-zoop") session carries the edit,
             // and IntelligenceEngine re-keys the computed DAILY row from it; collect those edited days so the
             // merge lets the computed row's SLEEP fields win there (imports still win on every un-edited day).
             let editedDays = Self.userEditedDays(compSleep)
@@ -1149,7 +1149,7 @@ final class Repository: ObservableObject {
     nonisolated private static func sourceRows(imported: [DailyMetric], computed: [DailyMetric],
                                    apple: [DailyMetric]) -> [SourcedDailyMetric] {
         (imported.map { SourcedDailyMetric(metric: $0, source: .whoopImport) }
-            + computed.map { SourcedDailyMetric(metric: $0, source: .noopComputed) }
+            + computed.map { SourcedDailyMetric(metric: $0, source: .zoopComputed) }
             + apple.map { SourcedDailyMetric(metric: $0, source: .appleHealth) })
             .sorted { lhs, rhs in
                 if lhs.metric.day == rhs.metric.day {
@@ -1380,7 +1380,7 @@ final class Repository: ObservableObject {
         return await unionSleepSessions(store: store, from: from, to: to, limit: limit)
     }
 
-    /// Computed ("-noop") sleep sessions for a ts range, oldest→newest by onset — the funnel/diagnostic
+    /// Computed ("-zoop") sleep sessions for a ts range, oldest→newest by onset — the funnel/diagnostic
     /// FALLBACK (#1150). A Bluetooth-only strap (no WHOOP/Apple-Health import) banks every night under the
     /// COMPUTED source, so the imported-only `sleepSessions(from:to:)` returns nothing and the funnel
     /// reported "no sleep session in the last 14 days to analyze" for a 4.0 user whose nights are all
@@ -1426,7 +1426,7 @@ final class Repository: ObservableObject {
     }
 
     /// The persisted per-epoch MOTION series for each of `starts` (detected session start keys), keyed by
-    /// start (#407). Motion is written ONLY under the computed ("-noop") source by the engine, so we read
+    /// start (#407). Motion is written ONLY under the computed ("-zoop") source by the engine, so we read
     /// there , and an imported-only night (no computed twin) simply has no motion (absent stays absent, an
     /// honest empty state, never a fabricated zero array). This does NOT resolve the night: the caller has
     /// already chosen the main-night GROUP (the 6.1.1 bridged group) and passes those blocks' starts; we
@@ -1479,7 +1479,7 @@ final class Repository: ObservableObject {
                     }
                 }
             }
-            let ownerComputed = owner.map { $0.hasSuffix("-noop") ? $0 : $0 + "-noop" }
+            let ownerComputed = owner.map { $0.hasSuffix("-zoop") ? $0 : $0 + "-zoop" }
             sourcesByStart[session.startTs] = ([ownerComputed].compactMap { $0 } + computedIds)
                 .reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
         }
@@ -1515,7 +1515,7 @@ final class Repository: ObservableObject {
 
     /// The user's learned habitual midsleep (local time-of-day seconds), or nil under
     /// `SleepStageTotals.habitualMinDays` of history (cold-start). Computed EXACTLY as
-    /// `IntelligenceEngine.computeHabitualSleep` does , the SAME raw imported + computed ("-noop")
+    /// `IntelligenceEngine.computeHabitualSleep` does , the SAME raw imported + computed ("-zoop")
     /// sleep-session union, one `HistoryBlock` per session (effective bounds, dayKey = the LOCAL calendar
     /// day of the midpoint), deferring to the SAME shared `SleepStageTotals.habitualMidsleepSec` pure
     /// function , so the Sleep tab's main-night pick aligns to the same value the analytics rollup used.
@@ -2317,7 +2317,7 @@ final class Repository: ObservableObject {
         guard let store = await ensureStore() else { return nil }
         let registry = DeviceRegistryStore(dbQueue: store.registryWriter)
         let sourceId: String
-        if resolvedSource.hasSuffix("-noop") {
+        if resolvedSource.hasSuffix("-zoop") {
             guard let cached = try? await store.scoreInputSource(
                 deviceId: resolvedSource,
                 day: day,
@@ -2335,7 +2335,7 @@ final class Repository: ObservableObject {
     /// not interpret the value as a device id; `vo2max_est` uses it for its `nes` / `uth` estimator id.
     /// Missing metadata is an honest legacy-unknown result, never reconstructed from the current profile.
     func scoreProvenanceTag(resolvedSource: String, day: String, metricKey: String) async -> String? {
-        guard resolvedSource.hasSuffix("-noop"), let store = await ensureStore() else { return nil }
+        guard resolvedSource.hasSuffix("-zoop"), let store = await ensureStore() else { return nil }
         return try? await store.scoreInputSource(deviceId: resolvedSource, day: day, key: metricKey)
     }
 
@@ -2366,7 +2366,7 @@ final class Repository: ObservableObject {
 
     /// The candidate (source, key) pairs to try for `key`, in precedence order, given the user's
     /// `preferredSource`. The strap's real id is `actualWhoopSource` (`deviceId`), so the computed
-    /// sibling is `actualWhoopSource + "-noop"`.
+    /// sibling is `actualWhoopSource + "-zoop"`.
     ///  • strap-preferred → [imported strap, computed strap, compatible Apple] (Apple only for vitals
     ///    that have a declared 1:1 mapping);
     ///  • Apple-preferred → [Apple] (+ computed strap ONLY for steps/active_kcal, which the strap
@@ -2374,7 +2374,7 @@ final class Repository: ObservableObject {
     ///  • any other source → itself only (nutrition/mood are single-source by design).
     static func sourceCandidates(forKey key: String, preferredSource: String,
                                  actualWhoopSource: String) -> [MetricSourceCandidate] {
-        let computedSource = actualWhoopSource + "-noop"
+        let computedSource = actualWhoopSource + "-zoop"
         func uniqued(_ cs: [MetricSourceCandidate]) -> [MetricSourceCandidate] {
             var seen = Set<MetricSourceCandidate>(); var out: [MetricSourceCandidate] = []
             for c in cs where !seen.contains(c) { seen.insert(c); out.append(c) }
@@ -2395,7 +2395,7 @@ final class Repository: ObservableObject {
                 MetricSourceCandidate(source: actualWhoopSource, key: key),
                 MetricSourceCandidate(source: whoopSource, key: key),
                 MetricSourceCandidate(source: computedSource, key: key),
-                MetricSourceCandidate(source: whoopSource + "-noop", key: key),
+                MetricSourceCandidate(source: whoopSource + "-zoop", key: key),
             ]
             if let appleKey = appleCompatibleKey(forWhoopKey: key) {
                 candidates.append(MetricSourceCandidate(source: appleHealthSource, key: appleKey))
@@ -2409,7 +2409,7 @@ final class Repository: ObservableObject {
             // byte-identical to Android's, where it makes a Health-Connect-only weight history resolve in
             // Compare (#443). A real Apple export still wins per day; HC fills the rest.
             candidates.append(MetricSourceCandidate(source: healthConnectSource, key: key))
-            if noopComputedCanFillAppleMetric(key) {
+            if zoopComputedCanFillAppleMetric(key) {
                 candidates.append(MetricSourceCandidate(source: computedSource, key: key))
             }
             return uniqued(candidates)
@@ -2434,7 +2434,7 @@ final class Repository: ObservableObject {
 
     /// Whether the NOOP-computed strap source may fill an Apple-preferred metric. Only the two daily
     /// totals the strap genuinely estimates (steps, calories) , never a derived WHOOP score.
-    private static func noopComputedCanFillAppleMetric(_ key: String) -> Bool {
+    private static func zoopComputedCanFillAppleMetric(_ key: String) -> Bool {
         switch key {
         case "steps", "active_kcal": return true
         default:                     return false
@@ -2978,7 +2978,7 @@ final class Repository: ObservableObject {
     nonisolated static func workoutHrDeviceIds(source: String, activeStrapId: String,
                                                importedIds: [String]) -> [String] {
         guard WorkoutSource.classify(source) == .detected else { return importedIds }
-        return [source.hasSuffix("-noop") ? String(source.dropLast(5)) : source]
+        return [source.hasSuffix("-zoop") ? String(source.dropLast(5)) : source]
     }
 
     // MARK: - Workout editing (manual add/edit · relabel · dismiss · delete)

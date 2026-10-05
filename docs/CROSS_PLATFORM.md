@@ -80,7 +80,7 @@ is in [`IOS.md` → "Lessons from the fold-in"](IOS.md).
 3. **Mirror to Kotlin.** Reimplement the pure helper in `android/.../analytics` (or the matching pkg),
    matching formulas/constants exactly, with the **same** unit-test cases.
 4. **UI per client.** SwiftUI screen (shared macOS+iOS, guarded where frameworks differ) + a Compose
-   screen on Android, each built from its design system (`StrandDesign` / `NoopType`+`Palette`).
+   screen on Android, each built from its design system (`StrandDesign` / `ZoopType`+`Palette`).
 5. **Mirror the changelog** in all three surfaces; **bump all version surfaces** in lockstep (see
    [`BUILD.md`](BUILD.md) / the release process). Verify: `swift test` (packages) + the macOS/iOS
    `app-build` CI + `:app:testFullDebugUnitTest` (Android).

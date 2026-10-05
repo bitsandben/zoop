@@ -139,9 +139,9 @@ public struct AppleHealthImporter {
         // the temporary directory is shared with every other process of the user, so the launch sweep
         // that reclaims an interrupted import (#590) used to match siblings by a `noop-` prefix and
         // deleted files it did not write (#2446). The folder name is spelled here rather than shared
-        // from the app target, which this package cannot see; `NoopScratch` in Strand/System owns it.
+        // from the app target, which this package cannot see; `ZoopScratch` in Strand/System owns it.
         let scratch = FileManager.default.temporaryDirectory
-            .appendingPathComponent((Bundle.main.bundleIdentifier ?? "com.noopapp.noop") + ".scratch",
+            .appendingPathComponent((Bundle.main.bundleIdentifier ?? "com.zoopapp.zoop") + ".scratch",
                                     isDirectory: true)
         try? FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
         let tmp = scratch.appendingPathComponent("health-\(UUID().uuidString).xml")

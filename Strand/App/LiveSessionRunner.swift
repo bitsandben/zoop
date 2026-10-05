@@ -26,7 +26,7 @@ import WhoopStore
 enum LiveSessionPrefs {
     /// Master switch for the whole entry. Default ON — the feature is BETA-labelled in-UI instead of
     /// hidden; turning it off removes the Start-session control from the Liquid Today entirely.
-    static let betaKey = "noop.liveSessionsBeta"
+    static let betaKey = "zoop.liveSessionsBeta"
 }
 
 @MainActor

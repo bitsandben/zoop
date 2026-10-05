@@ -204,7 +204,7 @@ final class DeepCaptureChannelsTests: XCTestCase {
     /// derived, and asserted VERBATIM by the Kotlin twin
     /// (`DeepCaptureChannelsTest.fixtureRowPacksToTheExactCrossPlatformBytes`), so a one-sided edit to
     /// either codec's layout fails HERE instead of silently writing blobs the other platform cannot read
-    /// out of a `.noopbak`.
+    /// out of a `.zoopbak`.
     func testFixtureRowPacksToTheExactCrossPlatformBytes() {
         let a = V18AuxSample(ts: 1_780_916_150, recordIndex: 25_443_699, rrCount: 2, cardiacFlags: 0,
                              hrQualityFlags: 141, heartRateAlt: 101, rrPacked: 25_444,

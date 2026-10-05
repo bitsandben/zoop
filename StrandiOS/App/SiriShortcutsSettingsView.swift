@@ -3,7 +3,7 @@ import SwiftUI
 import AppIntents
 import StrandDesign
 
-/// Surfaces NOOP's already-registered App Intents (see StrandiOS/System/NOOPAppIntents.swift) in the
+/// Surfaces NOOP's already-registered App Intents (see StrandiOS/System/ZoopAppIntents.swift) in the
 /// UI so users discover them. `NOOPShortcuts` auto-registers "Sync Strap", "Buzz Strap" and "Mark a Moment" with
 /// Siri/Spotlight/Shortcuts, but nothing in-app advertised them — this is the iOS analogue of the
 /// Mac's strap-double-tap-runs-a-Shortcut feature. Apple's `SiriTipView`/`ShortcutsLink` (iOS 16+)

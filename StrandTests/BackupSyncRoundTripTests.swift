@@ -7,7 +7,7 @@ import ZIPFoundation
 ///
 /// These exercise the SAME hardened core the picker import uses, via the injectable
 /// `DataBackup.restore(from:toDatabaseAt:)` seam (a throwaway DB path, never the user's live store):
-///  - a `.noopbak` ZIP backup round-trips: `writeBackupForTesting` then `restore` returns the same rows;
+///  - a `.zoopbak` ZIP backup round-trips: `writeBackupForTesting` then `restore` returns the same rows;
 ///  - a foreign-but-valid SQLite (Room / no `grdb_migrations`) is REJECTED and the live DB is intact;
 ///  - a corrupt (non-SQLite) file is REJECTED and the live DB is intact;
 ///  - a folder prune actually deletes the oldest files past keep-N (pure selection, applied to real files).
@@ -44,10 +44,10 @@ final class BackupSyncRoundTripTests: XCTestCase {
         let sourceDB = tmp.appendingPathComponent("source.sqlite")
         try makeNoopDatabase(at: sourceDB, deviceRows: ["my-whoop", "watch"])
 
-        // Write it into a `.noopbak` ZIP exactly as the folder/auto path does.
+        // Write it into a `.zoopbak` ZIP exactly as the folder/auto path does.
         let backup = tmp.appendingPathComponent(BackupSync.snapshotName(1_782_000_000_000))
         try DataBackup.writeBackupForTesting(databaseAt: sourceDB, to: backup)
-        XCTAssertTrue(isZip(backup), "Backup should be a ZIP container (.noopbak)")
+        XCTAssertTrue(isZip(backup), "Backup should be a ZIP container (.zoopbak)")
 
         // Restore into a DIFFERENT, throwaway live-DB path (so the user's real store is never touched).
         let liveDB = tmp.appendingPathComponent("live.sqlite")
@@ -67,7 +67,7 @@ final class BackupSyncRoundTripTests: XCTestCase {
         try makeNoopDatabase(at: sourceDB, deviceRows: ["my-whoop"])
 
         // Export with the whitelisted settings payload (what a real device writes from its defaults).
-        let backup = tmp.appendingPathComponent("with-settings.noopbak")
+        let backup = tmp.appendingPathComponent("with-settings.zoopbak")
         try DataBackup.writeBackupForTesting(databaseAt: sourceDB, to: backup, settings: [
             "profile.age": 34,
             "profile.sex": "female",
@@ -101,7 +101,7 @@ final class BackupSyncRoundTripTests: XCTestCase {
         // A pre-#1000 backup: DB entry only (writeBackupForTesting with settings nil).
         let sourceDB = tmp.appendingPathComponent("source.sqlite")
         try makeNoopDatabase(at: sourceDB, deviceRows: ["legacy-strap"])
-        let backup = tmp.appendingPathComponent("legacy.noopbak")
+        let backup = tmp.appendingPathComponent("legacy.zoopbak")
         try DataBackup.writeBackupForTesting(databaseAt: sourceDB, to: backup)
 
         let defaults = try freshDefaults()
@@ -121,7 +121,7 @@ final class BackupSyncRoundTripTests: XCTestCase {
         // restore, so the settings must not leak through either ("apply AFTER the DB swap succeeds").
         let foreign = tmp.appendingPathComponent("foreign.sqlite")
         try makeForeignDatabase(at: foreign)
-        let backup = tmp.appendingPathComponent("foreign.noopbak")
+        let backup = tmp.appendingPathComponent("foreign.zoopbak")
         try DataBackup.writeBackupForTesting(databaseAt: foreign, to: backup,
                                              settings: ["profile.age": 99, "profile.weightKg": 40.0])
 
@@ -163,7 +163,7 @@ final class BackupSyncRoundTripTests: XCTestCase {
     // MARK: - Corrupt file is rejected, live DB untouched
 
     func testCorruptFileIsRejectedAndLiveDbIntact() throws {
-        let corrupt = tmp.appendingPathComponent("corrupt.noopbak")
+        let corrupt = tmp.appendingPathComponent("corrupt.zoopbak")
         try Data("this is not a database or a zip".utf8).write(to: corrupt)
 
         let liveDB = tmp.appendingPathComponent("live.sqlite")
@@ -179,7 +179,7 @@ final class BackupSyncRoundTripTests: XCTestCase {
     }
 
     func testZipWithNonCanonicalSqliteEntryIsRejectedAndLiveDbIntact() throws {
-        let wrong = tmp.appendingPathComponent("wrong-entry.noopbak")
+        let wrong = tmp.appendingPathComponent("wrong-entry.zoopbak")
         let fake = tmp.appendingPathComponent("evil.sqlite")
         var bytes = Data("SQLite format 3".utf8)
         bytes.append(0)
@@ -194,7 +194,7 @@ final class BackupSyncRoundTripTests: XCTestCase {
 
         let result = DataBackup.restore(from: wrong, toDatabaseAt: liveDB.path)
         guard case .failure = result else {
-            return XCTFail("A zip without noop-backup.sqlite must be rejected, got \(result)")
+            return XCTFail("A zip without zoop-backup.sqlite must be rejected, got \(result)")
         }
         XCTAssertEqual(try Data(contentsOf: liveDB), before,
                        "The live DB must be unchanged after a rejected restore")
@@ -203,7 +203,7 @@ final class BackupSyncRoundTripTests: XCTestCase {
     // MARK: - #1014: damaged-but-plausible backups are refused by the quick_check gate
 
     func testGarbageBehindSqliteMagicInsideZipIsRejectedAndLiveDbIntact() throws {
-        // 16 valid magic bytes + junk, zipped as a real `.noopbak`: passes the container check AND
+        // 16 valid magic bytes + junk, zipped as a real `.zoopbak`: passes the container check AND
         // the magic check AND the origin gate (no readable sqlite_master → `.unknown`, holds no
         // data) — before #1014 this sailed all the way through to the swap. Only SQLite's own
         // `PRAGMA quick_check` sees it for what it is.
@@ -212,7 +212,7 @@ final class BackupSyncRoundTripTests: XCTestCase {
         bytes.append(0x00)
         bytes.append(Data(repeating: 0x5A, count: 8192))
         try bytes.write(to: fake)
-        let backup = tmp.appendingPathComponent("damaged.noopbak")
+        let backup = tmp.appendingPathComponent("damaged.zoopbak")
         try DataBackup.writeBackupForTesting(databaseAt: fake, to: backup)
         XCTAssertTrue(isZip(backup), "precondition: the damaged payload rides in a real ZIP")
 

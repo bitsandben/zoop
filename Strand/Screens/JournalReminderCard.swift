@@ -13,7 +13,7 @@ import StrandDesign
 // Opt-out via `PuffinExperiment.journalReminderKey` (default ON — the same key also gates the Android
 // morning sleep sheet twin). Read-only: it never writes a journal entry. Twin of Android
 // `JournalReminderCard` (android/.../ui/JournalReminder.kt). Design-Reset compliant — a flat accent-tinted
-// NoopCard, NoopMetrics / StrandPalette / StrandFont tokens, matching the other Today cards.
+// ZoopCard, ZoopMetrics / StrandPalette / StrandFont tokens, matching the other Today cards.
 
 struct JournalReminderCard: View {
 
@@ -56,9 +56,9 @@ struct JournalReminderCard: View {
         // and nested SwiftUI buttons don't work — so header + subtitle carry their own onTapGesture (→
         // today) and the bars carry theirs. The regions are non-overlapping in the VStack, so a tap lands
         // on exactly one. Tapping a bar does NOT set today, so a bar's day always wins.
-        return NoopCard(tint: StrandPalette.accent) {
-            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
-                HStack(spacing: NoopMetrics.space2) {
+        return ZoopCard(tint: StrandPalette.accent) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
+                HStack(spacing: ZoopMetrics.space2) {
                     Image(systemName: "book.closed")
                         .font(.system(size: 18))
                         .foregroundStyle(StrandPalette.accent)

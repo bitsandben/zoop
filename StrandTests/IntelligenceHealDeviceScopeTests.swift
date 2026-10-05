@@ -13,17 +13,17 @@ final class IntelligenceHealDeviceScopeTests: XCTestCase {
     private typealias IE = IntelligenceEngine
 
     func testRingIdIsInScope_theBug() {
-        // The exact #1248 shape: a WHOOP is primary (computed under "my-whoop-noop") and an Oura ring
+        // The exact #1248 shape: a WHOOP is primary (computed under "my-whoop-zoop") and an Oura ring
         // banks its own hypnogram under "oura-2H3B". The ring id MUST be swept, or its drift-duped
         // hypnograms survive forever.
-        let ids = IE.healDeviceIds(computedId: "my-whoop-noop", registeredIds: ["my-whoop", "oura-2H3B"])
-        XCTAssertEqual(ids, ["my-whoop", "my-whoop-noop", "oura-2H3B"])
+        let ids = IE.healDeviceIds(computedId: "my-whoop-zoop", registeredIds: ["my-whoop", "oura-2H3B"])
+        XCTAssertEqual(ids, ["my-whoop", "my-whoop-zoop", "oura-2H3B"])
         XCTAssertTrue(ids.contains("oura-2H3B"), "the ring id the computedId-only heal missed")
     }
 
     func testComputedIdAlwaysPresent_evenWithNoRegisteredDevices() {
         // A BLE-only install with an empty registry still heals its computed rows (the prior behaviour).
-        XCTAssertEqual(IE.healDeviceIds(computedId: "my-whoop-noop", registeredIds: []), ["my-whoop-noop"])
+        XCTAssertEqual(IE.healDeviceIds(computedId: "my-whoop-zoop", registeredIds: []), ["my-whoop-zoop"])
     }
 
     func testDeDuplicatesAndSortsDeterministically() {

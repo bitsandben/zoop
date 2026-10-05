@@ -581,7 +581,7 @@ extension WhoopStore {
 
     /// Delete a source's cached daily rows whose day-key is in [from, to] (inclusive, yyyy-MM-dd
     /// lexicographic = chronological). The #277 local-day re-bucketing migration uses this to drop
-    /// the computed ("-noop") UTC-keyed rows across the recompute window before re-upserting the
+    /// the computed ("-zoop") UTC-keyed rows across the recompute window before re-upserting the
     /// LOCAL-keyed rows, so a UTC/local duplicate day can't linger. Source-scoped, so imported
     /// "my-whoop" rows are never touched. Returns rows deleted. Mirrors Android
     /// WhoopDao.deleteComputedDailyInRange.

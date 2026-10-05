@@ -18,7 +18,7 @@ import WhoopStore
 struct NightDetailCard: View {
     let model: SleepModel
 
-    private let tileColumns = [GridItem(.adaptive(minimum: 168), spacing: NoopMetrics.gap)]
+    private let tileColumns = [GridItem(.adaptive(minimum: 168), spacing: ZoopMetrics.gap)]
 
     var body: some View {
         // Per-tile latest value + history series (for the sparkline) + typical mean.
@@ -32,7 +32,7 @@ struct NightDetailCard: View {
         let resp  = model.respiratory
         let debt  = model.sleepDebt
 
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Night detail", overline: "Metrics")
 
             #if os(iOS)
@@ -48,7 +48,7 @@ struct NightDetailCard: View {
                 .frame(maxWidth: .infinity)
             #endif
 
-            LazyVGrid(columns: tileColumns, alignment: .leading, spacing: NoopMetrics.gap) {
+            LazyVGrid(columns: tileColumns, alignment: .leading, spacing: ZoopMetrics.gap) {
 
                 StatTile(
                     label: "Rest",
