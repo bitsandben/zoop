@@ -42,7 +42,7 @@ the strip does today; totals/percentages stay on the raw `Stages` numbers — sm
 
 ```bash
 # Run one test class (from repo root):
-cd android && ./gradlew :app:testFullDebugUnitTest --tests "com.noop.ui.StageDisplaySmoothingTest"
+cd android && ./gradlew :app:testFullDebugUnitTest --tests "com.zoop.ui.StageDisplaySmoothingTest"
 # Compile check (UI tasks):
 cd android && ./gradlew :app:compileFullDebugKotlin
 # Full unit suite:
@@ -137,7 +137,7 @@ class StageTimelineIntervalsTest {
 ### Step 2: Run it — confirm it fails
 
 ```bash
-cd android && ./gradlew :app:testFullDebugUnitTest --tests "com.noop.ui.StageTimelineIntervalsTest"
+cd android && ./gradlew :app:testFullDebugUnitTest --tests "com.zoop.ui.StageTimelineIntervalsTest"
 ```
 
 Expected: **compilation failure** (`stageIntervalsFromWeights` / `StageInterval` unresolved). That is
@@ -334,7 +334,7 @@ class StageDisplaySmoothingTest {
 ### Step 2: Run it — confirm it fails
 
 ```bash
-cd android && ./gradlew :app:testFullDebugUnitTest --tests "com.noop.ui.StageDisplaySmoothingTest"
+cd android && ./gradlew :app:testFullDebugUnitTest --tests "com.zoop.ui.StageDisplaySmoothingTest"
 ```
 
 Expected: compile failure (`displaySmoothed` unresolved).
@@ -482,7 +482,7 @@ class StageRowSpansTest {
 ### Step 2: Run it — confirm it fails
 
 ```bash
-cd android && ./gradlew :app:testFullDebugUnitTest --tests "com.noop.ui.StageRowSpansTest"
+cd android && ./gradlew :app:testFullDebugUnitTest --tests "com.zoop.ui.StageRowSpansTest"
 ```
 
 ### Step 3: Implement
@@ -519,7 +519,7 @@ internal fun stageRowSpans(
 Same command; then run all three new classes together:
 
 ```bash
-cd android && ./gradlew :app:testFullDebugUnitTest --tests "com.noop.ui.Stage*"
+cd android && ./gradlew :app:testFullDebugUnitTest --tests "com.zoop.ui.Stage*"
 ```
 
 ### Step 5: Commit
@@ -612,7 +612,7 @@ private fun ClockLabelRow(onsetTs: Long, wakeTs: Long) {
     Row(modifier = Modifier.fillMaxWidth()) {
         Text(
             onset,
-            style = NoopType.footnote,
+            style = ZoopType.footnote,
             color = Palette.textTertiary,
             textAlign = TextAlign.Start,
             maxLines = 1,
@@ -620,7 +620,7 @@ private fun ClockLabelRow(onsetTs: Long, wakeTs: Long) {
         )
         Text(
             mid,
-            style = NoopType.footnote,
+            style = ZoopType.footnote,
             color = Palette.textTertiary,
             textAlign = TextAlign.Center,
             overflow = TextOverflow.Ellipsis,
@@ -629,7 +629,7 @@ private fun ClockLabelRow(onsetTs: Long, wakeTs: Long) {
         )
         Text(
             wake,
-            style = NoopType.footnote,
+            style = ZoopType.footnote,
             color = Palette.textTertiary,
             textAlign = TextAlign.End,
             maxLines = 1,
@@ -745,16 +745,16 @@ private fun StageTimelineRow(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 label.uppercase(Locale.getDefault()),
-                style = NoopType.overline,
+                style = ZoopType.overline,
                 color = Palette.textPrimary,
                 maxLines = 1,
             )
             Spacer(modifier = Modifier.width(Metrics.space8))
-            Text("$percent%", style = NoopType.captionNumber, color = pctColor, maxLines = 1)
+            Text("$percent%", style = ZoopType.captionNumber, color = pctColor, maxLines = 1)
             Spacer(modifier = Modifier.weight(1f))
             Text(
                 durationText(minutes),
-                style = NoopType.captionNumber,
+                style = ZoopType.captionNumber,
                 color = Palette.textPrimary,
                 maxLines = 1,
             )
@@ -828,7 +828,7 @@ private fun StageInsight(selectedStage: String?, s: Stages) {
         modifier = Modifier.fillMaxWidth().height(Metrics.stageInsightHeight),
         contentAlignment = Alignment.CenterStart,
     ) {
-        Text(text, style = NoopType.footnote, color = Palette.textTertiary, maxLines = 2)
+        Text(text, style = ZoopType.footnote, color = Palette.textTertiary, maxLines = 2)
     }
 }
 
@@ -844,9 +844,9 @@ private fun stageInsightLine(label: String, minutes: Double, total: Double): Str
 cd android && ./gradlew :app:compileFullDebugKotlin
 ```
 
-Fix only mechanical issues (missing import, typo). If `NoopType.overline` needs the tracking
+Fix only mechanical issues (missing import, typo). If `ZoopType.overline` needs the tracking
 applied separately, copy exactly what `StageBreakdownRow` (line ~1180) does — it uses
-`NoopType.overline` directly.
+`ZoopType.overline` directly.
 
 ### Step 5: Commit
 
@@ -911,7 +911,7 @@ In `SleepScreen.kt`, inside `Hero` (line ~772), find the block starting at
                 } else {
                     Text(
                         "No stage breakdown for this night.",
-                        style = NoopType.subhead,
+                        style = ZoopType.subhead,
                         color = Palette.textTertiary,
                     )
                 }
@@ -969,7 +969,7 @@ Replace it with:
                     } else {
                         Text(
                             "No stage breakdown for this night.",
-                            style = NoopType.subhead,
+                            style = ZoopType.subhead,
                             color = Palette.textTertiary,
                         )
                     }

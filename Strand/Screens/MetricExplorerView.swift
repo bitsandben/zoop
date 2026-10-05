@@ -9,7 +9,7 @@ import WhoopStore
 // The catalog-driven "Explore" surface. The root is a grouped list — one
 // SectionHeader per MetricCatalog.category, then a row per metric — pushing a
 // MetricDetailView. The detail is a uniform analytic dossier built ONLY from the
-// locked StrandDesign components (NoopCard / ChartCard / StatTile / InsightCard /
+// locked StrandDesign components (ZoopCard / ChartCard / StatTile / InsightCard /
 // SegmentedPillControl). No custom card heights, paddings, or surfaces anywhere.
 //
 // Sparse-metric rule (owner saw "no data" on metrics that HAVE data): a series may
@@ -301,7 +301,7 @@ enum ExploreRangeGating {
 // MARK: - Readings table projection (task #8)
 
 /// One windowed reading behind a vital's detail chart: its day ("YYYY-MM-DD"), the value, and the RAW
-/// source id it came from (a strap id, the "-noop" computed sibling, "apple-health", or "health-connect").
+/// source id it came from (a strap id, the "-zoop" computed sibling, "apple-health", or "health-connect").
 /// The readings TABLE and the "N readings" caption both derive from this ONE windowed list, so they can
 /// never disagree; the raw source maps to a human label via `TodayView.provenanceDisplayLabel` — the SAME
 /// resolver Today uses, so no source vocabulary is invented. Swift twin of Android's `VitalReading`.
@@ -316,7 +316,7 @@ struct VitalReading: Equatable {
 /// latter's source has higher row priority. Within one column, imported wins over computed.
 func skinTempSourceByDay(_ rows: [SourcedDailyMetric], leadsAbsolute: Bool) -> [String: String] {
     var sources: [String: String] = [:]
-    let priority: [DailyMetricSource] = [.whoopImport, .noopComputed, .localCache]
+    let priority: [DailyMetricSource] = [.whoopImport, .zoopComputed, .localCache]
     let columns = leadsAbsolute ? [0, 1] : [1]
     for column in columns {
         for source in priority {
@@ -332,7 +332,7 @@ func skinTempSourceByDay(_ rows: [SourcedDailyMetric], leadsAbsolute: Bool) -> [
                 guard value != nil else { continue }
                 switch source {
                 case .whoopImport:  sources[row.metric.day] = FusionSource.whoopImport.rawValue
-                case .noopComputed: sources[row.metric.day] = FusionSource.noopComputed.rawValue
+                case .zoopComputed: sources[row.metric.day] = FusionSource.zoopComputed.rawValue
                 case .localCache:   sources[row.metric.day] = FusionSource.localCache.rawValue
                 case .appleHealth:  break // Skin-temperature series never includes Apple Health.
                 }
@@ -407,7 +407,7 @@ struct VitalReadingRow: Equatable {
 /// (these vital series carry one aggregated reading per night, so a row's "time" is its localized calendar
 /// date; the date always shows since a charted window spans 2+ days) with the model's own `format`ted
 /// value + `unit` and the source label from `TodayView.provenanceDisplayLabel` (a strap id → "Whoop", its
-/// "-noop" sibling → "On-device", "apple-health" → "Apple Health", "health-connect" → "Health Connect").
+/// "-zoop" sibling → "On-device", "apple-health" → "Apple Health", "health-connect" → "Health Connect").
 /// `strapDeviceId` is the active strap id the resolver needs. Byte-identical projection to Android's
 /// `vitalReadingRows`.
 func vitalReadingRows(readings: [VitalReading], unit: String, strapDeviceId: String,
@@ -531,17 +531,17 @@ struct MetricExplorerView: View {
             #if os(iOS)
             .simultaneousGesture(TapGesture().onEnded { StrandHaptic.selection.play() })
             #endif
-            .padding(.bottom, NoopMetrics.sectionGap - 20)
+            .padding(.bottom, ZoopMetrics.sectionGap - 20)
 
             ForEach(MetricCatalog.categories, id: \.self) { category in
                 let metrics = MetricCatalog.inCategory(category)
                 if !metrics.isEmpty {
-                    VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                         // Localized at the render site only; `category` itself stays the raw
                         // English identifier that `inCategory` filters on.
                         SectionHeader("\(MetricCatalog.categoryDisplayName(category))", overline: "Category",
                                       trailing: "\(metrics.count)")
-                        NoopCard(padding: 0) {
+                        ZoopCard(padding: 0) {
                             VStack(spacing: 0) {
                                 ForEach(Array(metrics.enumerated()), id: \.element.id) { idx, metric in
                                     // Push the detail directly (closure-based), like every other More-tab
@@ -573,7 +573,7 @@ struct MetricExplorerView: View {
                             }
                         }
                     }
-                    .padding(.bottom, NoopMetrics.sectionGap - 20)
+                    .padding(.bottom, ZoopMetrics.sectionGap - 20)
                 }
             }
         }
@@ -584,7 +584,7 @@ struct MetricExplorerView: View {
     /// The hero entry that opens the Deep Timeline (#575). A full-bleed card, not a list row, so it reads
     /// as the headline above the per-metric catalog.
     private var deepTimelineRow: some View {
-        NoopCard {
+        ZoopCard {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 11, style: .continuous)
@@ -713,7 +713,7 @@ private struct MetricRow: View {
 
 /// The full analytic dossier for one metric, built ONLY from locked components:
 /// a SegmentedPillControl range, a hero ChartCard (line + latest "as of"), a uniform
-/// StatTile row (Average / Min / Max / Latest / Δ), and a "What correlates" NoopCard.
+/// StatTile row (Average / Min / Max / Latest / Δ), and a "What correlates" ZoopCard.
 struct MetricDetailView: View {
     let metric: MetricDescriptor
     @EnvironmentObject var repo: Repository
@@ -963,7 +963,7 @@ struct MetricDetailView: View {
         let win = presentedSeries(for: effRange)
         let fellBack = effRange != range
         return ScrollView {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 if loaded && win.isEmpty {
                     // No data in the entire history — keep the range bar for context, then the
                     // honest empty state (no scenic hero floating over nothing). Deliberately
@@ -978,7 +978,7 @@ struct MetricDetailView: View {
                         // engine + `fitnessReadyLeadCopy` (parity with Android's VitalDetailScreen fix).
                         // `what` is a LocalizedStringKey; the lead is an already-resolved String, so wrap
                         // it in an interpolation (renders verbatim) rather than passing it as a lookup key.
-                        VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
                             ComingSoon(what: "\(fitnessReadyLeadCopy(rhrDays: repo.days.suffix(7).compactMap { $0.restingHr }.count, hasAge: profile.age > 0, hasSex: !profile.sex.isEmpty))", symbol: "figure.run")
                             // Force the weekly recompute NOW from stored data (works offline), then re-read.
                             if refreshing {
@@ -1016,7 +1016,7 @@ struct MetricDetailView: View {
                     // for a skin-temp screen that needs no explanation). Sits between the chart and the
                     // stats so it reads as context for the series just plotted, not as a generic banner.
                     if let note = skinTempNote {
-                        NoopCard {
+                        ZoopCard {
                             HStack(alignment: .top, spacing: 10) {
                                 Image(systemName: "info.circle")
                                     .font(.system(size: 14, weight: .medium))
@@ -1036,7 +1036,7 @@ struct MetricDetailView: View {
                     correlationCard
                 }
             }
-            .padding(NoopMetrics.screenPadding)
+            .padding(ZoopMetrics.screenPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         // #697 parity: this screen builds its OWN ScrollView rather than going through
@@ -1290,7 +1290,7 @@ struct MetricDetailView: View {
         // stretching ZStack sibling — an unconstrained ScenicHeroBackground inside a ScrollView filled
         // the whole viewport and left a huge blank band above the chart. As a .background it sizes to
         // the hero content, so the number/ring sits directly under the range pill.
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 // Category + title on their OWN full-width row so a long title ("Heart Rate Variability")
                 // is never crushed into a letter-per-line column by the range pill (2026-07-02).
                 if !isStepsDetail { VStack(alignment: .leading, spacing: 2) {
@@ -1385,10 +1385,10 @@ struct MetricDetailView: View {
                         .foregroundStyle(StrandPalette.textTertiary)
                 }
             }
-        .padding(NoopMetrics.cardPadding)
+        .padding(ZoopMetrics.cardPadding)
         .background {
-            NoopPanelSurface(tint: domain.color,
-                             cornerRadius: NoopMetrics.cardRadius,
+            ZoopPanelSurface(tint: domain.color,
+                             cornerRadius: ZoopMetrics.cardRadius,
                              elevated: true)
         }
         // The hero shows the LATEST available point (range-independent), so the vessel fills once on
@@ -1488,7 +1488,7 @@ struct MetricDetailView: View {
             title: isStepsDetail ? LocalizedStringKey("Historical trend") : LocalizedStringKey("\(metric.title)"),
             subtitle: subtitle,
             trailing: "\(heroValue) · \(asOf)",
-            height: NoopMetrics.chartHeight + (isStepsDetail ? 70 : 0),
+            height: ZoopMetrics.chartHeight + (isStepsDetail ? 70 : 0),
             tint: metricDomain(metric).color
         ) {
             TrendChart(
@@ -1503,7 +1503,7 @@ struct MetricDetailView: View {
                 showsBars: MetricDetailSteps.showsBars(metricKey: metric.key,
                                                        preferredStyleRaw: trendChartStyleRaw),
                 baselineValue: personalBaseline,
-                height: NoopMetrics.chartHeight,
+                height: ZoopMetrics.chartHeight,
                 valueFormat: { value in
                     isStepsDetail
                         ? MetricDetailSteps.valueLabel(value, resolution: stepsResolution)
@@ -1575,7 +1575,7 @@ struct MetricDetailView: View {
             : (effectiveRange == .all ? String(localized: "all history") : String(localized: "no prior \(effectiveRange.name)"))
 
         #if os(iOS)
-        return VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        return VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             // On iOS, Average summarizes the selected range, so it leads at the full
             // two-column width.
             StatTile(label: "Average", value: fmt(s.mean),
@@ -1586,9 +1586,9 @@ struct MetricDetailView: View {
                 .frame(maxWidth: .infinity)
 
             LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 168), spacing: NoopMetrics.gap)],
+                columns: [GridItem(.adaptive(minimum: 168), spacing: ZoopMetrics.gap)],
                 alignment: .leading,
-                spacing: NoopMetrics.gap
+                spacing: ZoopMetrics.gap
             ) {
                 StatTile(label: "Min", value: fmt(s.min),
                          accent: StrandPalette.textPrimary)
@@ -1607,9 +1607,9 @@ struct MetricDetailView: View {
         // unbounded screen width would turn a phone-specific hierarchy into an oversized
         // desktop card and could leave the remaining adaptive row uneven.
         return LazyVGrid(
-            columns: [GridItem(.adaptive(minimum: 168), spacing: NoopMetrics.gap)],
+            columns: [GridItem(.adaptive(minimum: 168), spacing: ZoopMetrics.gap)],
             alignment: .leading,
-            spacing: NoopMetrics.gap
+            spacing: ZoopMetrics.gap
         ) {
             StatTile(label: "Average", value: fmt(s.mean),
                      caption: statisticCountCaption(count: s.n, effectiveRange: effectiveRange),
@@ -1683,8 +1683,8 @@ struct MetricDetailView: View {
         let rows = vitalReadingRows(readings: readings, unit: "",
                                     strapDeviceId: repo.deviceId, format: fmt)
         if !rows.isEmpty {
-            NoopCard {
-                VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            ZoopCard {
+                VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     Text("Readings").strandOverline()
                     // Slim column header naming the three columns — SAME frames as the data rows below so
                     // each label sits over its column. Android twin (VitalReadingsTable) mirrors this.
@@ -1781,8 +1781,8 @@ struct MetricDetailView: View {
 
     private var correlationCard: some View {
         let rows = correlationCache
-        return NoopCard(tint: metricDomain(metric).color) {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        return ZoopCard(tint: metricDomain(metric).color) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("What correlates").strandOverline()
                     Text("Pearson r over the visible window · |r| ≥ 0.30, n ≥ 10")

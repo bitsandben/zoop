@@ -42,7 +42,7 @@ enum FirmwareAttribution {
     /// key that belongs to no device.
     static func prefKey(peripheralId: String?) -> String? {
         guard let p = peripheralId?.trimmingCharacters(in: .whitespaces), !p.isEmpty else { return nil }
-        return "noop.lastFirmware.\(p.lowercased())"
+        return "zoop.lastFirmware.\(p.lowercased())"
     }
 }
 

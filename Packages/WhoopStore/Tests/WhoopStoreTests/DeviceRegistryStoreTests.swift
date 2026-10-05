@@ -244,8 +244,8 @@ final class DeviceRegistryStoreTests: XCTestCase {
 
         XCTAssertEqual(try hrCount(dbq, serial), 1)
         XCTAssertEqual(try hrCount(dbq, cbuuid), 0)
-        XCTAssertEqual(try hrCount(dbq, serial + "-noop"), 1, "computed rows must follow the pairing")
-        XCTAssertEqual(try hrCount(dbq, cbuuid + "-noop"), 0, "and must not be left behind")
+        XCTAssertEqual(try hrCount(dbq, serial + "-zoop"), 1, "computed rows must follow the pairing")
+        XCTAssertEqual(try hrCount(dbq, cbuuid + "-zoop"), 0, "and must not be left behind")
     }
 
     /// A PK clash on the COMPUTED side resolves the same way as on the real id: canonical wins, source is
@@ -264,8 +264,8 @@ final class DeviceRegistryStoreTests: XCTestCase {
 
         try store.adoptSerialIdentity(from: cbuuid, to: serial)
 
-        XCTAssertEqual(try hrCount(dbq, serial + "-noop"), 2)
-        XCTAssertEqual(try hrCount(dbq, cbuuid + "-noop"), 0)
+        XCTAssertEqual(try hrCount(dbq, serial + "-zoop"), 2)
+        XCTAssertEqual(try hrCount(dbq, cbuuid + "-zoop"), 0)
     }
 
     func testAdoptSerialMergesWhenSerialAlreadyExists() throws {

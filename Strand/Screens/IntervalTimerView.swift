@@ -93,7 +93,7 @@ struct IntervalTimerView: View {
     var body: some View {
         ScreenScaffold(title: "Interval Timer",
                        subtitle: "Silent haptic HIIT: the strap buzzes the transitions") {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                 let cards: [AnyView] = [
                     AnyView(statusRow),
                     AnyView(stageCard),
@@ -256,15 +256,15 @@ struct IntervalTimerView: View {
     }
 
     private var controls: some View {
-        HStack(spacing: NoopMetrics.space3) {
-            NoopButton(running ? "Pause" : (isFinished ? "Restart" : "Start"),
+        HStack(spacing: ZoopMetrics.space3) {
+            ZoopButton(running ? "Pause" : (isFinished ? "Restart" : "Start"),
                        systemImage: running ? "pause.fill" : "play.fill",
                        kind: .primary, fullWidth: true) {
                 if isFinished { resetToStart() }
                 toggleRunning()
             }
 
-            NoopButton("Reset", systemImage: "arrow.counterclockwise",
+            ZoopButton("Reset", systemImage: "arrow.counterclockwise",
                        kind: .secondary, fullWidth: true) {
                 stopAndReset()
             }

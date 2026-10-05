@@ -72,7 +72,7 @@ public struct SceneHeroBackground: View {
     /// Overall image opacity ceiling — atmospheric wash, never a literal photo.
     private let imageOpacityCap: Double = 0.42
     /// The hero's rounded-rect corner radius (matches the card the scene sits behind).
-    private let corner: CGFloat = NoopMetrics.cardRadius
+    private let corner: CGFloat = ZoopMetrics.cardRadius
 
     public var body: some View {
         GeometryReader { geo in

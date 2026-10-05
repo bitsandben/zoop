@@ -25,7 +25,7 @@ final class Vo2maxFallbackTests: XCTestCase {
     private func vo2maxEst(waistCm: Double) -> Double? {
         IntelligenceEngine.fitnessAgeRows(
             gateDays: gate(60), age: 40, sex: "male", waistCm: waistCm, heightCm: 175, weightKg: 80,
-            computedId: "my-whoop-noop", satKey: "2026-08-15"
+            computedId: "my-whoop-zoop", satKey: "2026-08-15"
         ).first { $0.key == "vo2max_est" }?.value
     }
 
@@ -50,10 +50,10 @@ final class Vo2maxFallbackTests: XCTestCase {
     func testNewlyComputedPointRecordsTheEstimatorUsedAtComputeTime() {
         let uthRows = IntelligenceEngine.fitnessAgeRows(
             gateDays: gate(60), age: 40, sex: "male", waistCm: 0, heightCm: 175, weightKg: 80,
-            computedId: "my-whoop-noop", satKey: "2026-08-15")
+            computedId: "my-whoop-zoop", satKey: "2026-08-15")
         let nesRows = IntelligenceEngine.fitnessAgeRows(
             gateDays: gate(60), age: 40, sex: "male", waistCm: 90, heightCm: 175, weightKg: 80,
-            computedId: "my-whoop-noop", satKey: "2026-08-22")
+            computedId: "my-whoop-zoop", satKey: "2026-08-22")
 
         let uth = IntelligenceEngine.vo2MaxProvenance(points: uthRows, waistCm: 0).first
         let nes = IntelligenceEngine.vo2MaxProvenance(points: nesRows, waistCm: 90).first

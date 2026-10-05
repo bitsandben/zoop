@@ -2,7 +2,7 @@ import XCTest
 
 final class WidgetSnapshotTests: XCTestCase {
     func testAltStoreProvisionedGroupWinsOverBuildTimeIdentifier() {
-        let configured = "group.com.noopapp.noop.staging"
+        let configured = "group.com.zoopapp.zoop.staging"
         let remapped = configured + ".TEAM123456"
 
         XCTAssertEqual(

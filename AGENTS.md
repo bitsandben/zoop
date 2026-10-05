@@ -1,6 +1,7 @@
 # AGENTS.md — working on NOOP
 
-> **Zoop fork overlay:** this checkout is branded **Zoop** and currently develops **iOS only**.
+> **Zoop fork overlay:** this checkout is branded **Zoop**, develops **iOS only**, and has
+> Apple-side identifiers renamed (`ZoopiOS`, `com.zoopapp.zoop`, `zoop://`, `.zoopbak`, …).
 > Read [CLAUDE.md](CLAUDE.md) first — it overrides this file on fork identity, branding, and
 > platform scope (skip Android unless explicitly asked).
 
@@ -48,8 +49,8 @@ build-from-source target** folded into the same repo.
 | Analytics (pure) | `Packages/StrandAnalytics` | HRV / recovery / strain / sleep / correlation math. Database-free. |
 | Import | `Packages/StrandImport` | WHOOP CSV + Apple Health importers. |
 | Design system | `Packages/StrandDesign` | SwiftUI palette / components / charts. |
-| macOS + shared app | `Strand/` (scheme **Strand**, product `NOOP`, macOS 13+) | `BLE/` (CoreBluetooth), `Collect/`, `Data/` (Repository), `Screens/`, `App/` (`RootView`/`ContentView` = sidebar shell). Shared with iOS where a file isn't macOS-only. |
-| iOS-only app | `StrandiOS/` (scheme **NOOPiOS**, iOS 17+), `StrandiOSShared/`, `StrandiOSWidgets/`, `NOOPWatch*` | `StrandiOSApp` (@main), `RootTabView` (the iOS tab shell — no macOS analogue), iOS widgets, watch app. |
+| macOS + shared app | `Strand/` (scheme **Strand**, product `Zoop`, macOS 13+) | `BLE/` (CoreBluetooth), `Collect/`, `Data/` (Repository), `Screens/`, `App/` (`RootView`/`ContentView` = sidebar shell). Shared with iOS where a file isn't macOS-only. |
+| iOS-only app | `StrandiOS/` (scheme **ZoopiOS**, iOS 17+), `StrandiOSShared/`, `StrandiOSWidgets/`, `ZoopWatch*` | `StrandiOSApp` (@main), `RootTabView` (the iOS tab shell — no macOS analogue), iOS widgets, watch app. |
 | Android app | `android/` (Kotlin, Compose, Room; flavors `Full`/`Demo`) | `com.noop.{ble,collect,data,ingest,analytics,protocol,ui,widget,…}` — mirrors the Swift layering with its own reimplementations. |
 
 `project.yml` is the **XcodeGen source of truth**; `Strand.xcodeproj/` is generated — never hand-edit
@@ -80,8 +81,8 @@ Swift. So:
   differ; the *behavior* and the *data* must not.
 - **Cross-platform hashes/dedup keys must use a platform-neutral algorithm** (e.g. FNV-1a over UTF-16
   code units) — never `hashValue` (Swift randomizes it) or Kotlin `hashCode` if the value crosses the
-  `.noopbak` boundary.
-- **The `.noopbak` backup whitelist is a byte-identical contract.** `BackupSettings.swift`
+  `.zoopbak` boundary.
+- **The `.zoopbak` backup whitelist is a byte-identical contract.** `BackupSettings.swift`
   (`Packages/WhoopStore`) and `BackupSettingsCodec` (`android/…/data/BackupSettings.kt`) must carry
   the same canonical keys + JSON kinds. Only Int/Double/String cross the wire — no dates/objects.
 - **Room (Android) and GRDB (iOS) migrations must agree** on the resulting schema. Column order in a
@@ -115,7 +116,7 @@ Versions are pinned by the repo — install these before the loops below:
 # Swift packages (fastest; no Xcode, no strap):
 cd Packages/WhoopProtocol && swift build && swift test     # also OuraProtocol
 # Android JVM unit tests (run on Linux/macOS, no device):
-cd android && ./gradlew testFullDebugUnitTest              # add --tests "com.noop.…" to filter
+cd android && ./gradlew testFullDebugUnitTest              # add --tests "com.zoop.…" to filter
 # After a branch switch, ALWAYS: --no-build-cache --rerun-tasks. Gradle can otherwise serve
 # generated sources (Room/KSP) from the previous branch and fail classes you never touched.
 cd android && ./gradlew compileFullDebugKotlin             # compile the whole app module
@@ -127,8 +128,8 @@ xcodegen generate && xcodebuild -project Strand.xcodeproj -scheme Strand \
 ### What each CI job covers — and the gaps
 | Workflow | Covers | Runner | Default state |
 |---|---|---|---|
-| `swift-packages.yml` | TWO jobs. `test`: `swift test` over **`Packages/**`** (WhoopProtocol, WhoopStore, StrandAnalytics, StrandImport, StrandDesign, NoopLocalAccess). `tools`: `swift build` + `swift test` over **`Tools/SleepBench`, `Tools/SleepPSG`, `Tools/Backfill`** — Backfill has no test target, so it is build-only. Path-filtered to those directories. | macos-15 | **active** |
-| `app-build.yml` | Builds the **app targets** (`Strand` macOS + `NOOPiOS` iOS) **and runs `StrandTests`** on the macOS/`Strand` leg only — the iOS leg is compile-only. iOS leg needs **macos-26** (iOS 26 SDK / `glassEffect`). | macos-15 / macos-26 | **active** — auto-runs on PRs touching its paths (`Strand/**`, `StrandTests/**`, `StrandiOS*/**`, `NOOPWatch*/**`, `Packages/**`, `project.yml`). NO push trigger, so a direct commit to `main` needs a manual dispatch. |
+| `swift-packages.yml` | TWO jobs. `test`: `swift test` over **`Packages/**`** (WhoopProtocol, WhoopStore, StrandAnalytics, StrandImport, StrandDesign, ZoopLocalAccess). `tools`: `swift build` + `swift test` over **`Tools/SleepBench`, `Tools/SleepPSG`, `Tools/Backfill`** — Backfill has no test target, so it is build-only. Path-filtered to those directories. | macos-15 | **active** |
+| `app-build.yml` | Builds the **app targets** (`Strand` macOS + `ZoopiOS` iOS) **and runs `StrandTests`** on the macOS/`Strand` leg only — the iOS leg is compile-only. iOS leg needs **macos-26** (iOS 26 SDK / `glassEffect`). | macos-15 / macos-26 | **active** — auto-runs on PRs touching its paths (`Strand/**`, `StrandTests/**`, `StrandiOS*/**`, `ZoopWatch*/**`, `Packages/**`, `project.yml`). NO push trigger, so a direct commit to `main` needs a manual dispatch. |
 | `android.yml` | `assembleFullDebug` + `testFullDebugUnitTest` | ubuntu | **active**, path-filtered to `android/**` |
 | `source-hygiene.yml` | Doc comments that bind to nothing (`Tools/doc_comment_lint.py`) | ubuntu | **active** |
 | `i18n-coverage.yml` | Diff-scoped translation gate (`Tools/i18n_audit.py --ci`) | ubuntu | **active** |
@@ -148,11 +149,11 @@ The workflow has no push trigger; a direct non-release commit to `main` needs an
 - **On Linux:** `WhoopProtocol` / `OuraProtocol` (pure) build & test with a bare toolchain. The
   GRDB-linked packages need the snapshot-enabled SQLite build in [`docs/BUILD.md`](docs/BUILD.md) — with
   it, all four build AND test: `StrandAnalytics` (1523), `WhoopStore` (439), `StrandImport` (249) and
-  `NoopLocalAccess` (9). Without those flags they fail with `sqlite3.h not found` (GRDB's CSQLite). `StrandDesign`
+  `ZoopLocalAccess` (9). Without those flags they fail with `sqlite3.h not found` (GRDB's CSQLite). `StrandDesign`
   needs SwiftUI and is macOS-only. Android JVM unit tests **do** run on Linux.
   **None of this is CI-enforced** — `swift-packages.yml` is macOS-only, so Linux support is honour-system
   and a change can break it silently.
-- **App targets** (`Strand`, `NOOPiOS`) need **Xcode on macOS**; `StrandTests` runs only under
+- **App targets** (`Strand`, `ZoopiOS`) need **Xcode on macOS**; `StrandTests` runs only under
   `xcodebuild … test` on macOS — locally, or via `app-build.yml`, which does run it on the `Strand` leg.
   The workflow runs automatically on relevant PRs; verify its macOS test step passed on the current
   head. Writing app-target tests is not the same as having run them.
@@ -259,7 +260,7 @@ The workflow has no push trigger; a direct non-release commit to `main` needs an
 
 ## iOS / Android specifics worth knowing
 
-- **iOS is `NOOPiOS`**, not `Strand`. `ContentView`/`RootView` (the macOS sidebar) are excluded from
+- **iOS is `ZoopiOS`**, not `Strand`. `ContentView`/`RootView` (the macOS sidebar) are excluded from
   iOS; the iOS shell is `RootTabView`. A file shared with macOS (`TodayView`, `Repository`, analytics)
   must keep compiling for **both** — check the `Strand` (macOS) build too when you edit shared files.
 - **Android** is Compose + Room, flavors `Full` (real) and `Demo`. Profile/prefs live in

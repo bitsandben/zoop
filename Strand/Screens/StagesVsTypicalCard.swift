@@ -20,10 +20,10 @@ struct StagesVsTypicalCard: View {
         let s = model.night.stages
         // Per-stage typical means are computed ONCE in the model build (each a full pass
         // over repo.days) and read here.
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Stages vs typical", overline: "Last night")
-            NoopCard(tint: StrandPalette.restColor) {
-                VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+            ZoopCard(tint: StrandPalette.restColor) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                     stageRow(stage: String(localized: "Deep"),  last: s.deep,  typical: model.typicalDeepMin,  nightTotal: s.total, color: StrandPalette.sleepDeep)
                     Divider().overlay(StrandPalette.hairline)
                     stageRow(stage: String(localized: "REM"),   last: s.rem,   typical: model.typicalRemMin,   nightTotal: s.total, color: StrandPalette.sleepREM)

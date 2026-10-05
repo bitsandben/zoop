@@ -104,8 +104,8 @@ struct SettingsView: View {
     /// The Coach master switch, under the same `noop.` key Android writes. Default ON, so nothing changes
     /// for an install that never opens this row. Read by `RootTabView` (the tab), Today (the launcher card)
     /// and `CoachBriefScheduler` (the daily background brief).
-    @AppStorage("noop.coachEnabled") private var coachEnabled = true
-    @AppStorage("noop.bottomBarAutoHide") private var bottomBarAutoHide = false
+    @AppStorage("zoop.coachEnabled") private var coachEnabled = true
+    @AppStorage("zoop.bottomBarAutoHide") private var bottomBarAutoHide = false
     @AppStorage(ClockFormatPreference.defaultsKey)
     private var clockFormatRaw = ClockFormatPreference.system.rawValue
     @AppStorage(UnitPrefs.systemKey) private var unitSystemRaw = UnitSystem.metric.rawValue
@@ -142,7 +142,7 @@ struct SettingsView: View {
     // canvas. TodayView reads the same key to gate its SceneScreenBackground.
     @AppStorage(SceneBackgroundPrefs.enabledKey) private var showDayCycleBackground = true
     // "Sky behind cards" (default ON): extend the day-cycle sky behind the whole Today scroll so
-    // Card transparency reveals it under every card. User-toggleable below. Mirrors Kotlin NoopPrefs.skyBehindCards.
+    // Card transparency reveals it under every card. User-toggleable below. Mirrors Kotlin ZoopPrefs.skyBehindCards.
     @AppStorage(SkyBehindCardsPrefs.enabledKey) private var skyBehindCards = true
     // Card-surface opacity percent (100 = solid). Reactive — moving the slider live-updates every card.
     @AppStorage(CardAppearancePrefs.opacityKey) private var cardOpacityPercent = CardAppearancePrefs.defaultPercent
@@ -156,11 +156,11 @@ struct SettingsView: View {
 
     /// Opt-in "Auto-detect workouts" (default OFF). When ON, Today scans the last day or two of HR for a
     /// sustained-elevated window and offers — via a single dismissible card — to save it as a workout.
-    /// Nothing is ever created automatically. Mirrors the Android `NoopPrefs.KEY_AUTO_DETECT_WORKOUTS`.
+    /// Nothing is ever created automatically. Mirrors the Android `ZoopPrefs.KEY_AUTO_DETECT_WORKOUTS`.
     @AppStorage(PuffinExperiment.autoDetectWorkoutsKey) private var autoDetectWorkoutsEnabled = false
 
     /// "Journal reminder" (#627, default ON). When ON, Today shows the persistent journal widget
-    /// (last-7-days strip + tap-through). Mirrors the Android `NoopPrefs.KEY_JOURNAL_REMINDER_ENABLED`.
+    /// (last-7-days strip + tap-through). Mirrors the Android `ZoopPrefs.KEY_JOURNAL_REMINDER_ENABLED`.
     @AppStorage(PuffinExperiment.journalReminderKey) private var journalReminderEnabled = true
 
     /// Opt-in "Keep screen on during a workout" (default OFF, #703). When ON, the live-workout view
@@ -222,7 +222,7 @@ struct SettingsView: View {
     /// "How NOOP works" primer sheet (the four-section explainability primer), reachable any
     /// time from About — covers how sleep is sorted, how scores + calibration work, what
     /// recording means, and where the provenance badges come from.
-    @State private var showHowNoopWorks = false
+    @State private var showHowZoopWorks = false
 
     /// "Set up Apple Watch" sheet: the honest watch onboarding flow (what it's great at, where
     /// it's lighter, then the Health permission request). Presented from the About page's primary
@@ -259,7 +259,7 @@ struct SettingsView: View {
                        // a fixed, full-bleed time-of-day sky behind the scroll content (it does not scroll).
                        // Settings' own frosted cards sit on the dark canvas below the sky band, unchanged.
                        topBackground: liquidScaffoldSky()) {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                 // Everyday sections stay expanded (S3): the ones a first-run user actually needs.
                 profileCard.staggeredAppear(index: 0)
                 unitsCard.staggeredAppear(index: 1)
@@ -341,8 +341,8 @@ struct SettingsView: View {
         .sheet(isPresented: $showScoringGuide) {
             ScoringGuideView(onClose: { showScoringGuide = false })
         }
-        .sheet(isPresented: $showHowNoopWorks) {
-            HowNoopWorksView(onClose: { showHowNoopWorks = false })
+        .sheet(isPresented: $showHowZoopWorks) {
+            HowZoopWorksView(onClose: { showHowZoopWorks = false })
         }
         .sheet(isPresented: $showAppleWatchSetup) {
             AppleWatchSetupView(onClose: { showAppleWatchSetup = false })
@@ -557,18 +557,18 @@ struct SettingsView: View {
     /// consume a second top-level settings section. PhotosUI works on both supported platforms.
     private var profilePhotoRow: some View {
         let hasAvatar = profile.hasAvatar
-        return VStack(alignment: .leading, spacing: NoopMetrics.space2) {
-            HStack(spacing: NoopMetrics.space3) {
+        return VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
+            HStack(spacing: ZoopMetrics.space3) {
                 ProfileAvatarView(
                     imageData: profile.avatarImageData,
-                    size: NoopMetrics.profileAvatarDiameter
+                    size: ZoopMetrics.profileAvatarDiameter
                 )
                     .accessibilityLabel(hasAvatar ? "Your profile photo" : "No profile photo set")
 
                 PhotosPicker(selection: $avatarPickerItem, matching: .images) {
                     Text(hasAvatar ? "Change photo" : "Choose photo")
                 }
-                .buttonStyle(NoopButtonStyle(.secondary, fullWidth: true))
+                .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
 
                 if hasAvatar {
                     Button {
@@ -576,7 +576,7 @@ struct SettingsView: View {
                     } label: {
                         Image(systemName: "trash")
                     }
-                    .buttonStyle(NoopButtonStyle(.tertiary))
+                    .buttonStyle(ZoopButtonStyle(.tertiary))
                     .accessibilityLabel("Remove photo")
                     .accessibilityHint("Reverts to the default profile icon")
                 }
@@ -626,25 +626,25 @@ struct SettingsView: View {
 
     /// Custom background image controls (#custom-background): pick from Photos or Browse the files,
     /// choose the fill mode, and (once set) enable / remove. The store downscales + persists a
-    /// device-local file — nothing here is uploaded (NOOP is offline), and it is left out of `.noopbak`.
+    /// device-local file — nothing here is uploaded (NOOP is offline), and it is left out of `.zoopbak`.
     /// Wrapped in a layout-transparent `Group` so the picker `onChange` + the file importer can hang off
     /// the whole cluster while it still flows inside the appearance VStack.
     @ViewBuilder
     private var backgroundImageControls: some View {
         let hasImage = backgroundStore.hasImage
         Group {
-            HStack(spacing: NoopMetrics.space2) {
+            HStack(spacing: ZoopMetrics.space2) {
                 PhotosPicker(selection: $backgroundPickerItem, matching: .images) {
                     Text(hasImage ? "Replace from Photos" : "Choose from Photos")
                 }
-                .buttonStyle(NoopButtonStyle(.secondary, fullWidth: true))
+                .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
 
                 Button {
                     showBackgroundFileImporter = true
                 } label: {
                     Text("Browse files")
                 }
-                .buttonStyle(NoopButtonStyle(.secondary, fullWidth: true))
+                .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
             }
 
             if hasImage {
@@ -695,7 +695,7 @@ struct SettingsView: View {
                 } label: {
                     Text("Remove image")
                 }
-                .buttonStyle(NoopButtonStyle(.tertiary))
+                .buttonStyle(ZoopButtonStyle(.tertiary))
                 .accessibilityHint("Removes the custom background and restores the day-cycle sky")
             }
 
@@ -741,12 +741,12 @@ struct SettingsView: View {
     private func measureField(value: Binding<Double>, unit: String,
                               range: ClosedRange<Double>, step: Double,
                               format: String, accessibility: String) -> some View {
-        HStack(spacing: NoopMetrics.space2) {
-            HStack(alignment: .firstTextBaseline, spacing: NoopMetrics.space1) {
+        HStack(spacing: ZoopMetrics.space2) {
+            HStack(alignment: .firstTextBaseline, spacing: ZoopMetrics.space1) {
                 Text(String(format: format, value.wrappedValue))
                     .font(StrandFont.bodyNumber)
                     .foregroundStyle(StrandPalette.textPrimary)
-                    .frame(width: NoopMetrics.formValueColumnWidth, alignment: .center)
+                    .frame(width: ZoopMetrics.formValueColumnWidth, alignment: .center)
                 Text(unit)
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
@@ -767,12 +767,12 @@ struct SettingsView: View {
             get: { UnitFormatter.kgToPounds(weightKg.wrappedValue) },
             set: { weightKg.wrappedValue = $0 / UnitFormatter.poundsPerKilogram }
         )
-        return HStack(spacing: NoopMetrics.space2) {
-            HStack(alignment: .firstTextBaseline, spacing: NoopMetrics.space1) {
+        return HStack(spacing: ZoopMetrics.space2) {
+            HStack(alignment: .firstTextBaseline, spacing: ZoopMetrics.space1) {
                 Text(String(format: "%.0f", lb.wrappedValue))
                     .font(StrandFont.bodyNumber)
                     .foregroundStyle(StrandPalette.textPrimary)
-                    .frame(width: NoopMetrics.formValueColumnWidth, alignment: .center)
+                    .frame(width: ZoopMetrics.formValueColumnWidth, alignment: .center)
                 Text("lb")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
@@ -794,11 +794,11 @@ struct SettingsView: View {
             set: { heightCm.wrappedValue = $0 * UnitFormatter.centimetersPerInch }
         )
         let parts = UnitFormatter.cmToFeetInches(heightCm.wrappedValue)
-        return HStack(spacing: NoopMetrics.space2) {
+        return HStack(spacing: ZoopMetrics.space2) {
             Text("\(parts.feet)′ \(parts.inches)″")
                 .font(StrandFont.bodyNumber)
                 .foregroundStyle(StrandPalette.textPrimary)
-                .frame(width: NoopMetrics.formWideValueColumnWidth, alignment: .center)
+                .frame(width: ZoopMetrics.formWideValueColumnWidth, alignment: .center)
             Stepper("Height in inches", value: inches, in: 47...91, step: 1)
                 .labelsHidden()
                 .accessibilityLabel("Height, \(parts.feet) feet \(parts.inches) inches")
@@ -811,12 +811,12 @@ struct SettingsView: View {
     /// crawl up from the range floor. Mirrors `measureField` but tolerant of the optional empty state.
     private func waistCentimetresField(waistCm: Binding<Double>) -> some View {
         let set = waistCm.wrappedValue > 0
-        return HStack(spacing: NoopMetrics.space2) {
-            HStack(alignment: .firstTextBaseline, spacing: NoopMetrics.space1) {
+        return HStack(spacing: ZoopMetrics.space2) {
+            HStack(alignment: .firstTextBaseline, spacing: ZoopMetrics.space1) {
                 Text(set ? String(format: "%.0f", waistCm.wrappedValue) : String(localized: "Not set"))
                     .font(StrandFont.bodyNumber)
                     .foregroundStyle(set ? StrandPalette.textPrimary : StrandPalette.textTertiary)
-                    .frame(minWidth: NoopMetrics.formValueColumnWidth, alignment: .center)
+                    .frame(minWidth: ZoopMetrics.formValueColumnWidth, alignment: .center)
                 if set {
                     Text("cm")
                         .font(StrandFont.caption)
@@ -844,12 +844,12 @@ struct SettingsView: View {
     private func waistInchesField(waistCm: Binding<Double>) -> some View {
         let set = waistCm.wrappedValue > 0
         let inches = set ? UnitFormatter.cmToInches(waistCm.wrappedValue).rounded() : 0
-        return HStack(spacing: NoopMetrics.space2) {
-            HStack(alignment: .firstTextBaseline, spacing: NoopMetrics.space1) {
+        return HStack(spacing: ZoopMetrics.space2) {
+            HStack(alignment: .firstTextBaseline, spacing: ZoopMetrics.space1) {
                 Text(set ? "\(Int(inches))" : "Not set")
                     .font(StrandFont.bodyNumber)
                     .foregroundStyle(set ? StrandPalette.textPrimary : StrandPalette.textTertiary)
-                    .frame(minWidth: NoopMetrics.formValueColumnWidth, alignment: .center)
+                    .frame(minWidth: ZoopMetrics.formValueColumnWidth, alignment: .center)
                 if set {
                     Text("in")
                         .font(StrandFont.caption)
@@ -874,14 +874,14 @@ struct SettingsView: View {
 
     /// HR-max override: 0 = auto. Shown as a compact tabular value with a stepper.
     private var hrMaxField: some View {
-        HStack(spacing: NoopMetrics.space2) {
-            HStack(alignment: .firstTextBaseline, spacing: NoopMetrics.space1) {
+        HStack(spacing: ZoopMetrics.space2) {
+            HStack(alignment: .firstTextBaseline, spacing: ZoopMetrics.space1) {
                 Text(profile.hrMaxOverride > 0 ? "\(profile.hrMaxOverride)" : "Auto")
                     .font(StrandFont.bodyNumber)
                     .foregroundStyle(profile.hrMaxOverride > 0
                                      ? StrandPalette.textPrimary
                                      : StrandPalette.textTertiary)
-                    .frame(width: NoopMetrics.formValueColumnWidth, alignment: .center)
+                    .frame(width: ZoopMetrics.formValueColumnWidth, alignment: .center)
                 Text("bpm")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
@@ -900,12 +900,12 @@ struct SettingsView: View {
     /// so the five bounds stay strictly increasing. Mirrors `hrMaxField`'s compact value + stepper layout.
     private func hrZoneThresholdField(index: Int) -> some View {
         let value = profile.hrZoneThresholds.indices.contains(index) ? profile.hrZoneThresholds[index] : 0
-        return HStack(spacing: NoopMetrics.space2) {
-            HStack(alignment: .firstTextBaseline, spacing: NoopMetrics.space1) {
+        return HStack(spacing: ZoopMetrics.space2) {
+            HStack(alignment: .firstTextBaseline, spacing: ZoopMetrics.space1) {
                 Text("\(value)")
                     .font(StrandFont.bodyNumber)
                     .foregroundStyle(StrandPalette.textPrimary)
-                    .frame(width: NoopMetrics.formValueColumnWidth, alignment: .center)
+                    .frame(width: ZoopMetrics.formValueColumnWidth, alignment: .center)
                 Text("bpm")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
@@ -1040,7 +1040,7 @@ struct SettingsView: View {
         let s = StreakCalculator.streaks(dayKeys: days.map { $0.day },
                                          qualified: days.map { $0.recovery != nil },
                                          today: today)
-        return NoopCard(tint: StrandPalette.accent) {
+        return ZoopCard(tint: StrandPalette.accent) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Streak").strandOverline()
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -1114,7 +1114,7 @@ struct SettingsView: View {
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, NoopMetrics.space1)
+                    .padding(.top, ZoopMetrics.space1)
                 rowDivider
                 // #1821: sits with Language rather than in Units because it is an app-owned display
                 // CONVENTION, not a unit of measurement — and like Language it offers "System default",
@@ -1422,12 +1422,12 @@ struct SettingsView: View {
                 Text(strapStatusDetail)
                     .font(StrandFont.subhead)
                     .foregroundStyle(StrandPalette.textSecondary)
-                HStack(spacing: NoopMetrics.space3) {
-                    NoopButton("Re-scan", systemImage: "arrow.clockwise", kind: .primary) {
+                HStack(spacing: ZoopMetrics.space3) {
+                    ZoopButton("Re-scan", systemImage: "arrow.clockwise", kind: .primary) {
                         model.scan()
                     }
 
-                    NoopButton("Disconnect", systemImage: "xmark.circle", kind: .secondary) {
+                    ZoopButton("Disconnect", systemImage: "xmark.circle", kind: .secondary) {
                         model.disconnect()
                     }
                     .disabled(!live.connected && !live.bonded)
@@ -1480,19 +1480,19 @@ struct SettingsView: View {
             Text("Current: \(live.advertisingName ?? "—")")
                 .font(StrandFont.subhead)
                 .foregroundStyle(StrandPalette.textSecondary)
-            HStack(spacing: NoopMetrics.space3) {
+            HStack(spacing: ZoopMetrics.space3) {
                 TextField("New strap name", text: $strapNameDraft)
                     .textFieldStyle(.plain)
                     .font(StrandFont.body)
                     .foregroundStyle(StrandPalette.textPrimary)
-                    .padding(.horizontal, NoopMetrics.space3)
+                    .padding(.horizontal, ZoopMetrics.space3)
                     .padding(.vertical, 9)
                     .background(StrandPalette.surfaceInset, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .strokeBorder(StrandPalette.hairline, lineWidth: 1))
                     .disableAutocorrection(true)
                     .accessibilityLabel("New strap name")
-                NoopButton("Rename", systemImage: "pencil", kind: .primary) {
+                ZoopButton("Rename", systemImage: "pencil", kind: .primary) {
                     model.ble.renameStrap(strapNameDraft)
                 }
                 .disabled(strapNameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -1569,7 +1569,7 @@ struct SettingsView: View {
             title: "Live notifications",
             blurb: "Shown on the Lock Screen and in the Dynamic Island. A switch only hides one: NOOP still measures and records everything."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.rowSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
                 liveNotificationSwitch("Live heart rate", isOn: $liveActivityEnabled,
                                        detail: "While the strap is connected.")
                 rowDivider
@@ -1584,7 +1584,7 @@ struct SettingsView: View {
 
     private func liveNotificationSwitch(_ title: LocalizedStringKey, isOn: Binding<Bool>,
                                         detail: LocalizedStringKey) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
             Toggle(isOn: isOn) {
                 Text(title)
                     .font(StrandFont.subhead)
@@ -1606,8 +1606,8 @@ struct SettingsView: View {
             title: "Recovery",
             blurb: "Your Charge score learns a personal baseline from your heart-rate variability, resting heart rate and more over time. If a bad first week set it off, you can re-learn it from tonight. Your history stays."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.rowSpacing) {
-                NoopButton("Recalibrate Charge baseline", systemImage: "arrow.triangle.2.circlepath", kind: .secondary) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
+                ZoopButton("Recalibrate Charge baseline", systemImage: "arrow.triangle.2.circlepath", kind: .secondary) {
                     showRecalibrateConfirm = true
                 }
 
@@ -1674,7 +1674,7 @@ struct SettingsView: View {
             title: "Features",
             blurb: "Optional trackers, off by default. Turn them on to add their cards. Everything stays on \(Platform.deviceNounPhrase)."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.space2 + 2) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space2 + 2) {
                 Toggle(isOn: $hydrationEnabled) {
                     Text("Hydration tracking")
                         .font(StrandFont.subhead)
@@ -1763,7 +1763,7 @@ struct SettingsView: View {
             title: "Sync",
             blurb: "How NOOP behaves while it pulls stored history from your strap."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.space2 + 2) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space2 + 2) {
                 Toggle(isOn: $syncKeepScreenOn) {
                     Text("Keep screen on while syncing")
                         .font(StrandFont.subhead)
@@ -1794,7 +1794,7 @@ struct SettingsView: View {
             title: "HRV",
             blurb: "Tune how NOOP captures and windows your heart-rate-variability reading."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.rowSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
                 // MARK: Continuous HRV capture — keep the dense beat-to-beat (R-R) stream armed 24/7.
                 Toggle(isOn: $continuousHrvEnabled) {
                     Text("Continuous HRV capture")
@@ -1873,14 +1873,14 @@ struct SettingsView: View {
 
     /// Opt-in liquid Today redesign (default ON in this build). Off falls back to the
     /// classic dashboard immediately, no rebuild. Same data either way.
-    @AppStorage("noop.liquidTodayEnabled") private var liquidTodayEnabled = true
+    @AppStorage("zoop.liquidTodayEnabled") private var liquidTodayEnabled = true
     private var liquidTodayCard: some View {
         SettingsSection(
             icon: "drop.fill",
             title: "Experimental · Liquid Today",
             blurb: "A redesigned Today screen in the new liquid language: the scores as living liquid, a time-of-day sky, and a calmer layout. Same numbers, new look."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.rowSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
                 Toggle(isOn: $liquidTodayEnabled) {
                     Text("Liquid Today (prototype)")
                         .font(StrandFont.subhead)
@@ -1906,7 +1906,7 @@ struct SettingsView: View {
             title: "Experimental · Live Sessions",
             blurb: "A one-tap guarded workout: the strap watches your heart rate against a band gated on today's Charge, and only ever buzzes to correct course. Silence means you're on track."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.rowSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
                 Toggle(isOn: $liveSessionsBeta) {
                     Text("Live Sessions (beta)")
                         .font(StrandFont.subhead)
@@ -1932,7 +1932,7 @@ struct SettingsView: View {
             title: "Sleep staging",
             blurb: "How NOOP splits a night into light / deep / REM. The V2 recipe is the default; turn it off to fall back to the older V1 staging."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.rowSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
                 Toggle(isOn: $experimentalSleepV2Enabled) {
                     Text("Sleep staging (V2)")
                         .font(StrandFont.subhead)
@@ -1978,7 +1978,7 @@ struct SettingsView: View {
             title: "Experimental · Blood Oxygen",
             blurb: "Surfaces a device-conditional, unverified SpO₂ estimate in the Blood Oxygen tile when no calibrated reading exists."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.rowSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
                 Toggle(isOn: $spo2CandidateDisplayEnabled) {
                     Text("Blood Oxygen: strap estimate (WHOOP 5/MG, Oura)")
                         .font(StrandFont.subhead)
@@ -2011,7 +2011,7 @@ struct SettingsView: View {
             title: "Experimental · Oura ring all-day heart rate",
             blurb: "Oura ring only. Keeps your ring measuring heart rate through the day, standing it down only for your night. A WHOOP strap is not affected."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.rowSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
                 Toggle(isOn: $ouraAllDayLiveHREnabled) {
                     Text("Oura ring: all-day heart rate & HRV")
                         .font(StrandFont.subhead)
@@ -2038,14 +2038,14 @@ struct SettingsView: View {
             title: "Diagnostics",
             blurb: "A read-only export of the decoded sensor streams NOOP already stores. Works on any strap. Nothing is written to your device, and nothing is uploaded."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.rowSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
                 // MARK: Export raw sensor data (CSV) — a read-only diagnostic over the decoded streams
                 // NOOP already stores (HR, R-R, motion, steps, PPG-HR, SpO₂, skin temp, resp, events).
                 Button {
                     exportRawSensorCSV()
                 } label: {
                     if rawCsvBusy {
-                        HStack(spacing: NoopMetrics.space1 + 2) {
+                        HStack(spacing: ZoopMetrics.space1 + 2) {
                             ProgressView().controlSize(.small)
                             Text("Exporting…")
                         }
@@ -2053,12 +2053,12 @@ struct SettingsView: View {
                         Label("Export raw sensor data (CSV)", systemImage: "square.and.arrow.up")
                     }
                 }
-                .buttonStyle(NoopButtonStyle(.secondary))
+                .buttonStyle(ZoopButtonStyle(.secondary))
                 .disabled(rawCsvBusy)
 
                 #if os(macOS)
                 if let url = lastRawCsvURL {
-                    NoopButton("Reveal in Finder", systemImage: "folder", kind: .secondary) {
+                    ZoopButton("Reveal in Finder", systemImage: "folder", kind: .secondary) {
                         NSWorkspace.shared.activateFileViewerSelecting([url])
                     }
                 }
@@ -2151,20 +2151,20 @@ struct SettingsView: View {
             title: "Backup & restore",
             blurb: "Move all your NOOP data to another machine. Export saves everything (history, sleeps, workouts, settings) to a single file you can copy across; import replaces \(Platform.deviceNounPhrase)'s data with a backup."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                 // Three labelled buttons must share a narrow iPhone row without wrapping mid-word
                 // (the labels otherwise broke to one character per line). Equal width + shrink-to-fit
                 // keeps each on a single line. On iPhone the SF Symbol icons were the main space-thief
                 // (~90pt/button) and there's no room for them in a 3-up row, so we drop to icon-less
                 // text there; macOS is wide enough to keep the icons. No trailing Spacer/ProgressView
                 // inside this HStack — either would steal a share of the equal-width row. (#188)
-                HStack(spacing: NoopMetrics.space3) {
+                HStack(spacing: ZoopMetrics.space3) {
                     Button {
                         runExport()
                     } label: {
                         backupButtonLabel(String(localized: "Export…"), systemImage: "square.and.arrow.up")
                     }
-                    .buttonStyle(NoopButtonStyle(.primary, fullWidth: true))
+                    .buttonStyle(ZoopButtonStyle(.primary, fullWidth: true))
                     .disabled(backupBusy)
 
                     Button {
@@ -2172,7 +2172,7 @@ struct SettingsView: View {
                     } label: {
                         backupButtonLabel(String(localized: "Import…"), systemImage: "square.and.arrow.down")
                     }
-                    .buttonStyle(NoopButtonStyle(.secondary, fullWidth: true))
+                    .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
                     .disabled(backupBusy)
 
                     Button {
@@ -2180,12 +2180,12 @@ struct SettingsView: View {
                     } label: {
                         backupButtonLabel(String(localized: "Export CSV…"), systemImage: "tablecells")
                     }
-                    .buttonStyle(NoopButtonStyle(.secondary, fullWidth: true))
+                    .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
                     .disabled(backupBusy)
                 }
 
                 if backupBusy {
-                    HStack(spacing: NoopMetrics.space2) {
+                    HStack(spacing: ZoopMetrics.space2) {
                         ProgressView().controlSize(.small)
                         Text("Working…")
                             .font(StrandFont.footnote)
@@ -2204,7 +2204,7 @@ struct SettingsView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                // #644: .noopbak is a plain ZIP, not an encrypted container — anyone who gets the file
+                // #644: .zoopbak is a plain ZIP, not an encrypted container — anyone who gets the file
                 // can open it in any archive tool. Say so plainly next to the Export button, rather than
                 // let people assume the file itself is protected once it leaves the device (e.g. dropped
                 // into a cloud-synced folder).
@@ -2247,7 +2247,7 @@ struct SettingsView: View {
     // an icon + text three-up, so it goes icon-less there; macOS keeps the SF Symbol. (#188)
     @ViewBuilder
     private func backupButtonLabel(_ title: String, systemImage: String) -> some View {
-        // The NoopButtonStyle (fullWidth) owns the width + padding; the label just supplies the
+        // The ZoopButtonStyle (fullWidth) owns the width + padding; the label just supplies the
         // content and the single-line shrink-to-fit so the 3-up iPhone row never wraps mid-word (#188).
         #if os(macOS)
         Label(title, systemImage: systemImage)
@@ -2349,7 +2349,7 @@ struct SettingsView: View {
                         .foregroundStyle(StrandPalette.textPrimary)
                     StatePill("v\(bundleVersionString)", tone: .neutral, showsDot: false)
                     Spacer()
-                    NoopButton("What's new", systemImage: "sparkles", kind: .secondary) {
+                    ZoopButton("What's new", systemImage: "sparkles", kind: .secondary) {
                         showWhatsNew = true
                     }
                 }
@@ -2358,7 +2358,7 @@ struct SettingsView: View {
                 // calibration work, what recording means, and where the provenance badges come
                 // from. The "?" entry point to the four-section explainability primer.
                 Button {
-                    showHowNoopWorks = true
+                    showHowZoopWorks = true
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "questionmark.circle")
@@ -2485,8 +2485,8 @@ struct SettingsView: View {
 
                 // Check for updates — a single, user-initiated read of GitHub's public releases API.
                 // No background polling, no auto-update; sends nothing about you, just reads the version.
-                VStack(alignment: .leading, spacing: NoopMetrics.space2) {
-                    HStack(spacing: NoopMetrics.space2 + 2) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
+                    HStack(spacing: ZoopMetrics.space2 + 2) {
                         Button {
                             // Compare the ACTUAL installed bundle version against GitHub's latest, not the
                             // hand-maintained AppChangelog.currentVersion (which drifts stale and told v7
@@ -2494,7 +2494,7 @@ struct SettingsView: View {
                             updateChecker.check(currentVersion: bundleVersionString)
                         } label: {
                             if updateChecker.state == .checking {
-                                HStack(spacing: NoopMetrics.space1 + 2) {
+                                HStack(spacing: ZoopMetrics.space1 + 2) {
                                     ProgressView().controlSize(.small)
                                     Text("Checking…")
                                 }
@@ -2502,7 +2502,7 @@ struct SettingsView: View {
                                 Label("Check for updates", systemImage: "arrow.triangle.2.circlepath")
                             }
                         }
-                        .buttonStyle(NoopButtonStyle(.secondary))
+                        .buttonStyle(ZoopButtonStyle(.secondary))
                         .disabled(updateChecker.state == .checking)
 
                         if case .upToDate(let v) = updateChecker.state {
@@ -2542,7 +2542,7 @@ struct SettingsView: View {
                                     .font(StrandFont.subhead)
                                     .foregroundStyle(StrandPalette.textPrimary)
                                 Spacer()
-                                NoopButton("Download", systemImage: "arrow.down.circle.fill", kind: .primary) {
+                                ZoopButton("Download", systemImage: "arrow.down.circle.fill", kind: .primary) {
                                     openURL(url)
                                 }
                             }
@@ -2795,11 +2795,11 @@ private struct SettingsDisclosureGroup<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
             Button {
                 withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
             } label: {
-                HStack(alignment: .center, spacing: NoopMetrics.space3) {
+                HStack(alignment: .center, spacing: ZoopMetrics.space3) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(title)
                             .font(StrandFont.title2)
@@ -2810,7 +2810,7 @@ private struct SettingsDisclosureGroup<Content: View>: View {
                             .fixedSize(horizontal: false, vertical: true)
                             .multilineTextAlignment(.leading)
                     }
-                    Spacer(minLength: NoopMetrics.space2)
+                    Spacer(minLength: ZoopMetrics.space2)
                     Image(systemName: "chevron.down")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(StrandPalette.textTertiary)
@@ -2843,11 +2843,11 @@ private struct SettingsSection<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        StrandCard(padding: NoopMetrics.space5) {
-            VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+        StrandCard(padding: ZoopMetrics.space5) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Settings").strandOverline()
-                    HStack(spacing: NoopMetrics.space2 + 2) {
+                    HStack(spacing: ZoopMetrics.space2 + 2) {
                         Image(systemName: icon)
                             .foregroundStyle(StrandPalette.accent)
                             .accessibilityHidden(true)
@@ -2937,7 +2937,7 @@ private struct DiagnosticsSheet: View {
                     Label("Copy", systemImage: "doc.on.doc")
                         .frame(minWidth: 120)
                 }
-                .buttonStyle(NoopButtonStyle(.primary))
+                .buttonStyle(ZoopButtonStyle(.primary))
                 .disabled(lines.isEmpty)
             }
             .padding(16)
@@ -3023,7 +3023,7 @@ struct StepsCalibrationSheet: View {
             header
             Divider().overlay(StrandPalette.hairline)
             ScrollView {
-                VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                     explainerCard
                     if strapHasNoMotion { noMotionNote }
                     currentFitCard
@@ -3080,17 +3080,17 @@ struct StepsCalibrationSheet: View {
             Button(action: onClose) {
                 Text("Done").frame(minWidth: 120)
             }
-            .buttonStyle(NoopButtonStyle(.primary))
+            .buttonStyle(ZoopButtonStyle(.primary))
             .keyboardShortcut(.defaultAction)
         }
-        .padding(NoopMetrics.space4)
+        .padding(ZoopMetrics.space4)
     }
 
     // MARK: Cards
 
     /// The honest "it's an estimate, not a step counter" framing — reused verbatim from the engine doc.
     private var explainerCard: some View {
-        NoopCard {
+        ZoopCard {
             VStack(alignment: .leading, spacing: 10) {
                 Label("How this works", systemImage: "figure.walk.motion")
                     .font(StrandFont.headline)
@@ -3117,7 +3117,7 @@ struct StepsCalibrationSheet: View {
     /// motion once the experimental deep-data unlock is ON — so on a 5/MG the honest advice is "turn that on
     /// and reconnect", not "wait for a sync" (which never comes). Imports don't supply strap motion either.
     private var noMotionNote: some View {
-        NoopCard(tint: StrandPalette.metricAmber) {
+        ZoopCard(tint: StrandPalette.metricAmber) {
             VStack(alignment: .leading, spacing: 10) {
                 Label("No motion synced yet", systemImage: "antenna.radiowaves.left.and.right.slash")
                     .font(StrandFont.headline)
@@ -3156,7 +3156,7 @@ struct StepsCalibrationSheet: View {
     /// The current calibration read-out: coefficient, sample days, and a Low/Medium/High confidence —
     /// or, if nothing's fit yet and no manual value is set, an honest "what we still need" prompt.
     private var currentFitCard: some View {
-        NoopCard(tint: StrandPalette.accent) {
+        ZoopCard(tint: StrandPalette.accent) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Current calibration").strandOverline()
                 if profile.stepsCalibrationCoefficient > 0 || profile.stepsManualCoefficient > 0 {
@@ -3221,7 +3221,7 @@ struct StepsCalibrationSheet: View {
     /// The accuracy table: recent days that have BOTH an estimate and a phone count, side by side, so the
     /// user can SEE how close the estimate runs. Empty until enough both-have days exist.
     private var comparisonCard: some View {
-        NoopCard {
+        ZoopCard {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Estimated vs your phone").strandOverline()
                 if comparison.isEmpty {
@@ -3274,7 +3274,7 @@ struct StepsCalibrationSheet: View {
     /// Manual override: a slider bound to a draft, committed on release, with a live preview of what a
     /// typical recent day would estimate at the chosen coefficient. 0 returns to auto-fit.
     private var manualAdjustCard: some View {
-        NoopCard {
+        ZoopCard {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Adjust manually").strandOverline()
                 Text("Override the automatic fit with your own steps-per-motion value. Useful if your phone has no step history to learn from, or the estimate runs consistently high or low. Set it back to auto by dragging to the far left.")
@@ -3423,7 +3423,7 @@ private struct FormRow<Control: View>: View {
     @ViewBuilder var control: () -> Control
 
     var body: some View {
-        HStack(alignment: .center, spacing: NoopMetrics.space4) {
+        HStack(alignment: .center, spacing: ZoopMetrics.space4) {
             Text(label)
                 .font(StrandFont.body)
                 .foregroundStyle(StrandPalette.textPrimary)

@@ -389,7 +389,7 @@ final class SourceCoordinator: ObservableObject {
             },
             persistSleepSession: { [storeHandle, straplog] session in
                 // The ring-PROVIDED hypnogram night, upserted under the ring's OWN id (the imported/measured
-                // side, NOT the "-noop" computed sibling) so SleepMerge's imported-over-computed rule makes
+                // side, NOT the "-zoop" computed sibling) so SleepMerge's imported-over-computed rule makes
                 // Oura's SleepNet staging win over NOOP's sparse-motion computed night (#325).
                 Task {
                     guard let store = await storeHandle() else { return }

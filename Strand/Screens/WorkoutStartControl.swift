@@ -28,7 +28,7 @@ struct WorkoutStartControl: View {
                     showLiveWorkout = true
                 }
             } else {
-                NoopButton(model.activeWorkout == nil ? "Start workout" : "View active workout",
+                ZoopButton(model.activeWorkout == nil ? "Start workout" : "View active workout",
                            systemImage: model.activeWorkout == nil ? "figure.run" : "timer",
                            kind: .primary,
                            fullWidth: true) {

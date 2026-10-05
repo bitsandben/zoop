@@ -11,14 +11,14 @@ import Foundation
 // android/.../analytics/FusionTypes.kt.
 
 /// Where a fused number came from — a superset of the legacy `DailyMetricSource` (whoopImport /
-/// noopComputed / appleHealth / localCache), extended to every source the importers already write.
+/// zoopComputed / appleHealth / localCache), extended to every source the importers already write.
 /// The rawValue is the canonical source id (`Repository.whoopSource` etc.) so a `FusionSource` round-
 /// trips to/from the stored `deviceId` / source string without a lookup table.
 public enum FusionSource: String, Equatable, Sendable, CaseIterable, Codable {
     /// Imported WHOOP record (CSV/zip export under the strap's `deviceId`, e.g. "my-whoop").
     case whoopImport = "my-whoop"
-    /// NOOP-computed score derived on-device from the raw strap streams (the "$deviceId-noop" sibling).
-    case noopComputed = "my-whoop-noop"
+    /// NOOP-computed score derived on-device from the raw strap streams (the "$deviceId-zoop" sibling).
+    case zoopComputed = "my-whoop-zoop"
     /// Apple Health aggregate of a declared-compatible quantity.
     case appleHealth = "apple-health"
     /// Health Connect aggregate (Android's Apple-equivalent body-metric source).
@@ -34,7 +34,7 @@ public enum FusionSource: String, Equatable, Sendable, CaseIterable, Codable {
     public var displayName: String {
         switch self {
         case .whoopImport:   return "WHOOP"
-        case .noopComputed:  return "Zoop"
+        case .zoopComputed:  return "Zoop"
         case .appleHealth:   return "Apple Health"
         case .healthConnect: return "Health Connect"
         case .xiaomiBand:    return "Mi Band"

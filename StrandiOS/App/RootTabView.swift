@@ -20,8 +20,8 @@ struct RootTabView: View {
     /// Not tab chrome: with this off the AI is off. The tab goes, the Today launcher card goes, and the
     /// daily brief is cancelled, because the brief calls a provider from the BACKGROUND with no UI
     /// attached and would otherwise keep posting AI notifications for a feature the wearer switched off.
-    @AppStorage("noop.coachEnabled") private var coachEnabled = true
-    @AppStorage("noop.bottomBarAutoHide") private var bottomBarAutoHide = false
+    @AppStorage("zoop.coachEnabled") private var coachEnabled = true
+    @AppStorage("zoop.bottomBarAutoHide") private var bottomBarAutoHide = false
 
     /// The live gym session, owned at the app root — see `LiftSessionController`.
     @EnvironmentObject private var liftSession: LiftSessionController
@@ -67,7 +67,7 @@ struct RootTabView: View {
 
     /// V8 liquid redesign is the default Today; the Settings toggle lets a user fall back to the classic
     /// Today if they prefer it (keyed identically to the SettingsView toggle). Default ON.
-    @AppStorage("noop.liquidTodayEnabled") private var liquidTodayEnabled = true
+    @AppStorage("zoop.liquidTodayEnabled") private var liquidTodayEnabled = true
 
     /// The Today tab root, honouring the liquid/classic preference.
     @ViewBuilder private var todayTabRoot: some View {
@@ -276,7 +276,7 @@ struct RootTabView: View {
                     .padding(.horizontal, 14)
                     // Clear the floating tab bar with the same constant every screen uses, or the
                     // session bar sits on top of the tab labels.
-                    .padding(.bottom, NoopMetrics.tabBarClearance)
+                    .padding(.bottom, ZoopMetrics.tabBarClearance)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
@@ -457,7 +457,7 @@ struct RootTabView: View {
     // + system title-case section headers, so it didn't match any other page (which all use ScreenScaffold
     // + SectionHeader's UPPERCASE overline + the 28pt section rhythm). Rebuilt on the shared page chrome:
     // ScreenScaffold for the title1 "More" + subtitle, a `SectionHeader` overline per group, and the group's
-    // rows in a single grouped NoopCard with hairline dividers — the same row idiom Settings/Health use.
+    // rows in a single grouped ZoopCard with hairline dividers — the same row idiom Settings/Health use.
     private func moreTab(path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
         NavigationStack(path: path) {
             ScreenScaffold(title: "More", subtitle: "Everything else, one tap away",
@@ -541,7 +541,7 @@ struct RootTabView: View {
     /// tappable header with a disclosure chevron; tapping it expands/collapses the grouped rows card.
     /// Insights + Body default open, Data + App default collapsed (the `expandedMoreSections` seed) so the
     /// list is shorter at rest without dropping a single row. The grouped card is unchanged: a single
-    /// `NoopCard` holding a `VStack(spacing: 0)` whose `MoreRow`s draw their own hairlines, clipped to the
+    /// `ZoopCard` holding a `VStack(spacing: 0)` whose `MoreRow`s draw their own hairlines, clipped to the
     /// card's rounded shape so the last divider is trimmed inside the corners. Same idiom Settings/Health use.
     @ViewBuilder
     private func moreSection<Rows: View>(_ title: String,
@@ -580,12 +580,12 @@ struct RootTabView: View {
                 // Zero internal padding so each MoreRow owns its own comfortable insets + height; the rows
                 // supply their own hairline separators (drawn at the bottom of every row but the last via the
                 // divider overlay) so the group reads as one continuous grouped list, matching Settings/Health.
-                NoopCard(padding: 0) {
+                ZoopCard(padding: 0) {
                     VStack(spacing: 0) { rows() }
                         // Clip the rows column to the card's rounded shape so the last row's bottom hairline is
                         // trimmed inside the corners (the card draws its surface in the BACKGROUND and doesn't
                         // clip content itself, so without this the final divider would run past the rounded edge).
-                        .clipShape(RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
                 }
             }
         }
@@ -623,7 +623,7 @@ private enum MoreDestination: Hashable {
         case .appleHealth:     AppleHealthView()
         case .miBand:          XiaomiBandView()
         case .dataSources:     DataSourcesView()
-        case .noopLimitations: NoopLimitationsView()
+        case .noopLimitations: ZoopLimitationsView()
         case .backupSync:      BackupSyncView()
         case .shortcutsExport: ShortcutExportSettingsView()
         case .alarms:          SmartAlarmView()
@@ -729,7 +729,7 @@ private struct QuickActionSheet: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(
-            NoopChromeSurface()
+            ZoopChromeSurface()
                 .overlay(alignment: .top) {
                     // Gold hairline top edge per the bottom-sheet spec.
                     Rectangle()
@@ -759,7 +759,7 @@ private struct QuickActionSheet: View {
             }
             .padding(.vertical, 10)
             .padding(.horizontal, 12)
-            .background(NoopPanelSurface(cornerRadius: 14))
+            .background(ZoopPanelSurface(cornerRadius: 14))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

@@ -54,7 +54,7 @@ jobs:
           - StrandAnalytics
           - StrandImport
           - StrandDesign
-          - NoopLocalAccess
+          - ZoopLocalAccess
     steps:
       - name: Checkout
         uses: actions/checkout@v5

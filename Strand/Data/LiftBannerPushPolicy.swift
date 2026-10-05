@@ -18,7 +18,7 @@ import Foundation
 ///
 /// Pure and platform-free so `StrandTests` covers it: `StrandTests` runs on macOS and cannot exercise
 /// ActivityKit, so the rule has to live outside the controller to be unit tested at all. (The controller
-/// itself IS compiled in CI, by `app-build.yml`'s `NOOPiOS` leg.)
+/// itself IS compiled in CI, by `app-build.yml`'s `ZoopiOS` leg.)
 enum LiftBannerPushPolicy {
 
     /// The shortest time between two pushes caused by the heart rate alone. A glance at the Lock Screen

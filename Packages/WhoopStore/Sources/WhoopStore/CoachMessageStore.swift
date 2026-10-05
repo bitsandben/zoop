@@ -9,7 +9,7 @@ import GRDB
 //
 // Stores only the coach's text replies + the user's questions — no raw biometric readings were ever
 // in the chat (only the derived summary text sent with the request), so this carries the same
-// no-raw-egress posture as the network call itself. NOT part of the `.noopbak` backup whitelist.
+// no-raw-egress posture as the network call itself. NOT part of the `.zoopbak` backup whitelist.
 
 /// One persisted turn in the Coach conversation.
 public struct CoachMessageRow: Equatable, Codable, Sendable {

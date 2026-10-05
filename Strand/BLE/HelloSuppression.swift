@@ -113,7 +113,7 @@ func helloSuppressionPrefKey(_ peripheralId: String?) -> String? {
     guard let raw = peripheralId?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
         return nil
     }
-    return "noop.helloUnanswered.\(raw.lowercased())"
+    return "zoop.helloUnanswered.\(raw.lowercased())"
 }
 
 /// Read/write the per-strap hello-suppression latch. Kept beside the key helper so no caller hand-rolls

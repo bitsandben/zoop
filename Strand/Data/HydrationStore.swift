@@ -25,18 +25,18 @@ enum HydrationStore {
     static let key = "hydration"
 
     /// Settings opt-in key (default OFF). The dashboard card + detail are hidden while this is false.
-    /// MUST match the Android `NoopPrefs.KEY_HYDRATION_TRACKING` so the toggle reads the same on both.
-    static let enabledKey = "noop.hydrationTracking"
+    /// MUST match the Android `ZoopPrefs.KEY_HYDRATION_TRACKING` so the toggle reads the same on both.
+    static let enabledKey = "zoop.hydrationTracking"
 
     /// UserDefaults prefix for the per-day entry list (#798). One JSON array per local day, keyed
     /// `noop.hydrationEntries.<yyyy-MM-dd>`. Local-only, on-device, never synced - the same privacy posture
     /// as the day total. The day total in `metricSeries` stays the canonical figure the rest of the app
     /// reads (Today card, ring, 7-day history); the entry list is the editable detail behind it, kept in
     /// sync so deleting/editing an entry re-derives and re-banks the total.
-    static let entriesKeyPrefix = "noop.hydrationEntries."
+    static let entriesKeyPrefix = "zoop.hydrationEntries."
 
     /// AppStorage key for the user's custom container size (ml) (#798). Default `cupML` until set.
-    static let customSizeKey = "noop.hydrationCustomSizeML"
+    static let customSizeKey = "zoop.hydrationCustomSizeML"
 
     /// metricSeries key for water IMPORTED from the platform health store — Apple Health on iOS,
     /// Health Connect on Android (#949). MUST match the Android `KEY_IMPORTED`.

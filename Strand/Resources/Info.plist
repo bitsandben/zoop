@@ -23,7 +23,7 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>noop</string>
+				<string>zoop</string>
 			</array>
 		</dict>
 	</array>

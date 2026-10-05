@@ -201,9 +201,9 @@ struct RootView: View {
     /// switch the sidebar selection without owning it — see `NavRouter`.
     @EnvironmentObject var router: NavRouter
     /// The liquid Today (default) vs the classic Today, same flag the iOS shell + Settings toggle read.
-    @AppStorage("noop.liquidTodayEnabled") private var liquidTodayEnabled = true
+    @AppStorage("zoop.liquidTodayEnabled") private var liquidTodayEnabled = true
     /// The Coach master switch (`noop.coachEnabled`, shared by name with Android and iOS). Default ON.
-    @AppStorage("noop.coachEnabled") private var coachEnabled = true
+    @AppStorage("zoop.coachEnabled") private var coachEnabled = true
 
     @State private var selection: NavItem? = .today
     /// Which sidebar groups are expanded (S1, #805). Default = the group owning the launch selection
@@ -455,7 +455,7 @@ struct RootView: View {
         case .backupSync: BackupSyncView()
         case .fusedRecord: FusedRecordHost()
         case .devices: DevicesView()
-        case .noopLimitations: NoopLimitationsView()
+        case .noopLimitations: ZoopLimitationsView()
         case .notifications: NotificationSettingsView()
         case .automation: AutomationsView()
         case .smartAlarm: SmartAlarmView()
@@ -568,7 +568,7 @@ private struct SidebarStatus: View {
             Spacer()
         }
         .padding(10)
-        .background(NoopPanelSurface(cornerRadius: 10))
+        .background(ZoopPanelSurface(cornerRadius: 10))
     }
 
     // Shares LiveState.connectionStatus* with the Settings strap card so the two never disagree (#266):

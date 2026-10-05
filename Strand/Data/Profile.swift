@@ -12,7 +12,7 @@ final class ProfileStore: ObservableObject {
     @Published var dateOfBirth: Date {
         didSet {
             d.set(dateOfBirth, forKey: K.dateOfBirth)
-            // Mirror the DERIVED age under the legacy `profile.age` key so the `.noopbak` backup
+            // Mirror the DERIVED age under the legacy `profile.age` key so the `.zoopbak` backup
             // whitelist (which carries an Int age, not a Date) keeps exporting a correct value with no
             // change to the cross-platform backup contract. `BackupSettings.apply` clears
             // `profile.dateOfBirth` on restore so a restored Int age re-derives the DOB here.
@@ -83,7 +83,7 @@ final class ProfileStore: ObservableObject {
     private enum K {
         static let dateOfBirth = "profile.dateOfBirth"
         /// Pre-#146 age key. No longer the source of truth; kept mirrored from `dateOfBirth` so the
-        /// cross-platform `.noopbak` whitelist keeps round-tripping an Int age unchanged.
+        /// cross-platform `.zoopbak` whitelist keeps round-tripping an Int age unchanged.
         static let legacyAge = "profile.age"
         static let sex = "profile.sex", weight = "profile.weightKg"
         static let height = "profile.heightCm", hrMax = "profile.hrMaxOverride"
@@ -101,7 +101,7 @@ final class ProfileStore: ObservableObject {
 
     init() {
         // #146 age migration. `dateOfBirth` is authoritative whenever it exists, so age advances on
-        // its own. A pre-#146 install — or a `.noopbak` restore, which writes only the legacy Int age
+        // its own. A pre-#146 install — or a `.zoopbak` restore, which writes only the legacy Int age
         // and clears any stale DOB (see `BackupSettings.apply`) — has no DOB yet, so derive one from
         // the stored age. Nothing stored → the age-30 default. Deliberately NO equality heuristic: a
         // present DOB is never second-guessed against the mirrored age (doing so would re-freeze age

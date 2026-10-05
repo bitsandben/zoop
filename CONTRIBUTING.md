@@ -91,7 +91,7 @@ names. That column is why this table exists:
 | `windows-capture` | **Tools Python CI (Windows)** (`tools-python-windows.yml`) | `Tools/linux-capture/**` |
 | `build-and-test` | **Android CI** (`android.yml`) | `android/**`, the protocol/store test resources, `Strand/Resources/Localizable.xcstrings` |
 | `test (…)`, `tools (…)` | **Swift Packages CI** (`swift-packages.yml`) | `Packages/**`, the `Tools/SleepBench`, `Tools/SleepPSG` and `Tools/Backfill` packages, `android/app/src/test/resources/**`, `Strand/Liquid/LiquidCore.swift` |
-| `build (Strand, …)`, `build (NOOPiOS, …)` | **App build** (`app-build.yml`) | `Strand/**`, `StrandTests/**`, `StrandiOS/**`, `StrandiOSShared/**`, `StrandiOSWidgets/**`, `NOOPWatch/**`, `NOOPWatchComplications/**`, `Packages/**`, `project.yml`, its own workflow file |
+| `build (Strand, …)`, `build (ZoopiOS, …)` | **App build** (`app-build.yml`) | `Strand/**`, `StrandTests/**`, `StrandiOS/**`, `StrandiOSShared/**`, `StrandiOSWidgets/**`, `ZoopWatch/**`, `ZoopWatchComplications/**`, `Packages/**`, `project.yml`, its own workflow file |
 
 Read that as a worked example: an Android-only PR runs Android CI plus the three that always
 run, so a short list of checks does not mean little was checked.

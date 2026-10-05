@@ -106,7 +106,7 @@ struct LiftSessionView: View {
     private func sheet(_ engine: LiftSessionEngine) -> some View {
         ScrollViewReader { proxy in
             ScrollView {
-                VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                     header(engine)
                     ForEach(Array(engine.plan.enumerated()), id: \.offset) { index, item in
                         exerciseCard(engine, index: index, item: item)
@@ -114,7 +114,7 @@ struct LiftSessionView: View {
                     addExerciseRow(engine)
                     Color.clear.frame(height: 8)
                 }
-                .padding(.horizontal, NoopMetrics.screenPadding)
+                .padding(.horizontal, ZoopMetrics.screenPadding)
                 .padding(.top, 18)
             }
             .onChange(of: engine.currentSlot) { slot in
@@ -156,7 +156,7 @@ struct LiftSessionView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .background(
-                RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous)
+                RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous)
                     .strokeBorder(StrandPalette.textTertiary.opacity(0.35),
                                   style: StrokeStyle(lineWidth: 1, dash: [5, 4])))
             .contentShape(Rectangle())
@@ -180,8 +180,8 @@ struct LiftSessionView: View {
     // MARK: - One exercise, with all its sets
 
     private func exerciseCard(_ engine: LiftSessionEngine, index: Int, item: LiftPlanItem) -> some View {
-        NoopCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.rowSpacing) {
+        ZoopCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.exercise)
                         .font(StrandFont.headline)
@@ -533,7 +533,7 @@ struct LiftSessionView: View {
     // MARK: - The control bar
 
     private func controlBar(_ engine: LiftSessionEngine) -> some View {
-        VStack(spacing: NoopMetrics.rowSpacing) {
+        VStack(spacing: ZoopMetrics.rowSpacing) {
             HStack(spacing: 14) {
                 clock(String(localized: "Session"), tint: StrandPalette.textPrimary) { $0 - engine.startTs }
                 stageClock(engine)
@@ -549,7 +549,7 @@ struct LiftSessionView: View {
                 .accessibilityLabel("Undo")
             }
 
-            HStack(spacing: NoopMetrics.rowSpacing) {
+            HStack(spacing: ZoopMetrics.rowSpacing) {
                 Button { session.advance() } label: {
                     Text(actionLabel(engine)).frame(maxWidth: .infinity)
                 }
@@ -563,10 +563,10 @@ struct LiftSessionView: View {
                 } label: {
                     Text("Finish")
                 }
-                .buttonStyle(NoopButtonStyle(.secondary))
+                .buttonStyle(ZoopButtonStyle(.secondary))
             }
         }
-        .padding(.horizontal, NoopMetrics.screenPadding)
+        .padding(.horizontal, ZoopMetrics.screenPadding)
         .padding(.top, 10)
         .padding(.bottom, 14)
         .background(.ultraThinMaterial)
@@ -641,9 +641,9 @@ struct LiftSessionView: View {
             && (!asksAboutProgram || programChoice != nil)
         return ScreenScaffold(title: "Finish session",
                               subtitle: "One number for the whole session, so a leg day can be compared with a run.") {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
-                NoopCard {
-                    VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
+                ZoopCard {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                         Text("How hard was the whole session? (1–10)").strandOverline()
                         TextField("7", text: $sessionRpeText)
                             .textFieldStyle(.plain)
@@ -665,7 +665,7 @@ struct LiftSessionView: View {
                 Button("Save session") { Task { await save() } }
                     .buttonStyle(.noopPrimary)
                     .disabled(saving || !answered)
-                    .opacity(saving || !answered ? NoopButtonMetrics.disabledOpacity : 1)
+                    .opacity(saving || !answered ? ZoopButtonMetrics.disabledOpacity : 1)
                 if !answered {
                     Text("Choose an option above to save.")
                         .font(StrandFont.footnote)
@@ -713,8 +713,8 @@ struct LiftSessionView: View {
     /// to zeros that every figure leaves out and Edit sets can still fill in. A set that was done is never
     /// asked about — it is complete (`LiftSessionController.setsToSave`).
     private func unfinishedCard(count: Int) -> some View {
-        NoopCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        ZoopCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 Text("Unfinished sets").strandOverline()
                 Text("Sets not started: \(count)")
                     .font(StrandFont.body)
@@ -751,8 +751,8 @@ struct LiftSessionView: View {
     /// if asked to — one answer for all of them, listed so the lifter sees what "update" would write.
     private var programCard: some View {
         let added = addedExercises
-        return NoopCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        return ZoopCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 Text("Program").strandOverline()
                 Text(programQuestion(countsChanged: !setCountChanges.isEmpty, exercisesAdded: !added.isEmpty))
                     .font(StrandFont.body)

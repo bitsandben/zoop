@@ -82,11 +82,11 @@ struct ScoringGuideView: View {
             header
                 // Design Reset: a FLAT opaque WHOOP-grey title surface — no scenic hero, no bloom, no
                 // domain tint. The header reads as a clean raised card edge, matching the Today look.
-                .background(NoopChromeSurface())
+                .background(ZoopChromeSurface())
             Divider().overlay(StrandPalette.hairline)
             ScrollViewReader { proxy in
                 ScrollView {
-                    VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                         introCard
                         scoreCard(.charge,
                                   headline: String(localized: "Charge: how recovered are you?"),
@@ -167,7 +167,7 @@ struct ScoringGuideView: View {
     // MARK: - Cards
 
     private var introCard: some View {
-        NoopCard {
+        ZoopCard {
             VStack(alignment: .leading, spacing: 14) {
                 Text("THE THREE SCORES").font(StrandFont.overline)
                     .tracking(StrandFont.overlineTracking)
@@ -204,7 +204,7 @@ struct ScoringGuideView: View {
     /// Design Reset: a flat GlowRing (no bloom) replaces the old BevelGauge; the accent is a Reset score
     /// token, never gold / strain / sleep-purple.
     private func scoreCard(_ section: ScoreSection, headline: String, body: String, vsWhoop: String) -> some View {
-        NoopCard(tint: section.accent) {
+        ZoopCard(tint: section.accent) {
             VStack(alignment: .leading, spacing: 14) {
                 // Header row — the flat sample ring sits beside the accent icon + headline.
                 HStack(alignment: .center, spacing: 14) {
@@ -250,7 +250,7 @@ struct ScoringGuideView: View {
         }
         // Deep-link highlight: a brief accent-tinted ring when arrived at via an ⓘ.
         .overlay(
-            RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous)
+            RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous)
                 .strokeBorder(section.accent, lineWidth: 2)
                 .opacity(highlighted == section ? 1 : 0)
         )
@@ -281,7 +281,7 @@ struct ScoringGuideView: View {
     }
 
     private var confidenceCard: some View {
-        NoopCard {
+        ZoopCard {
             VStack(alignment: .leading, spacing: 12) {
                 Text("How sure is NOOP?  ·  Solid · Building · Calibrating")
                     .font(StrandFont.headline)

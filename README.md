@@ -394,7 +394,7 @@ Packages/
   StrandAnalytics/       HRV / recovery / strain / sleep / correlation math
   StrandImport/          WHOOP CSV + Apple Health importers
   StrandDesign/          SwiftUI design system (palette, components, charts)
-  NoopLocalAccess/       local read-only data-access layer (on-device, no network)
+  ZoopLocalAccess/       local read-only data-access layer (on-device, no network)
 Tools/Backfill/          CLI tool for backfilling decoded data
 Fixtures/                sample WHOOP export for tests
 ```
@@ -497,7 +497,7 @@ open Strand.xcodeproj
 
 Notes:
 
-- Bundle id `com.noopapp.noop`, product name **NOOP**, sandboxed with the
+- Bundle id `com.zoopapp.zoop`, product name **NOOP**, sandboxed with the
   Bluetooth and user-selected-files entitlements.
 - Swift Package Manager resolves the only third-party dependencies automatically:
   **GRDB.swift** (SQLite) and **ZIPFoundation** (export unzip).
@@ -605,7 +605,7 @@ NOOP is public and built to be hard to erase. **Clone it freely** — `git clone
 
 Two simple asks:
 
-- **Keep it non-commercial** and keep the [`LICENSE`](LICENSE) + `Copyright 2026 NoopApp` notice intact (PolyForm Noncommercial — mirror and use freely, just don't sell it or ship it in a paid product).
+- **Keep it non-commercial** and keep the [`LICENSE`](LICENSE) + `Copyright 2026 ZoopApp` notice intact (PolyForm Noncommercial — mirror and use freely, just don't sell it or ship it in a paid product).
 - **Point people back to the canonical home, [github.com/ryanbr/noop](https://github.com/ryanbr/noop)**, so everyone lands on the current code and releases rather than a stale fork.
 
 That's it — copy away.

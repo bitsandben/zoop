@@ -100,7 +100,7 @@ public struct WidgetSnapshot: Codable, Equatable {
     public static let suiteName: String = {
         resolveSuiteName(infoDictionary: Bundle.main.infoDictionary ?? [:])
     }()
-    public static let storageKey = "noop.widget.snapshot"
+    public static let storageKey = "zoop.widget.snapshot"
 
     /// Resolve the App Group the current signature actually grants.
     ///
@@ -130,7 +130,7 @@ public struct WidgetSnapshot: Codable, Equatable {
         if let configured, !configured.isEmpty {
             return configured
         }
-        return "group.com.noopapp.noop"
+        return "group.com.zoopapp.zoop"
     }
 
     /// Debug-only canary: trips on the first run after a misprovisioning so the silent no-op gets

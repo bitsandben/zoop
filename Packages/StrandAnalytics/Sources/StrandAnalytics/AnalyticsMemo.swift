@@ -103,7 +103,7 @@ struct StreamFingerprint: Hashable {
     /// 64-bit one — the project's constant is a digit short of it, and `of` and
     /// `ReadinessEngine.rowsFingerprint` have always used it. Consistency beats correcting it: the value
     /// only ever keys an in-process `AnalyticsMemoCache`, never persists, and never crosses the
-    /// `.noopbak` boundary, so no external spec depends on the seed. For the same reason it need NOT
+    /// `.zoopbak` boundary, so no external spec depends on the seed. For the same reason it need NOT
     /// equal the Kotlin twin, which mixes multiply-add — a fingerprint that differs across platforms can
     /// only cost one of them a recompute, never change a value.
     static func gravityQuant(x: Double, y: Double, z: Double) -> Int {

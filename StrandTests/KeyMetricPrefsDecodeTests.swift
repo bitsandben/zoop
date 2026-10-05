@@ -10,7 +10,7 @@ import XCTest
 /// decoder of the three that could lose an enabled tile.
 ///
 /// Latent rather than live: `encode` joins rawValues with no spaces and this key is not carried in
-/// `.noopbak`, so nothing in the app writes a spaced value today. These pin the contract anyway, because
+/// `.zoopbak`, so nothing in the app writes a spaced value today. These pin the contract anyway, because
 /// the cost of the assumption is silent and the fix is a single call.
 final class KeyMetricPrefsDecodeTests: XCTestCase {
 

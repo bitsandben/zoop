@@ -49,8 +49,8 @@ struct StressCheckInCard: View {
     var body: some View {
         if let nudge = center.pending {
             StrandCard(tint: StrandPalette.restColor) {
-                VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
-                    HStack(spacing: NoopMetrics.space2) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
+                    HStack(spacing: ZoopMetrics.space2) {
                         Image(systemName: "wind")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(StrandPalette.restBright)
@@ -72,15 +72,15 @@ struct StressCheckInCard: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    HStack(spacing: NoopMetrics.rowSpacing) {
-                        NoopButton("Breathe now", systemImage: "wind", kind: .primary) {
+                    HStack(spacing: ZoopMetrics.rowSpacing) {
+                        ZoopButton("Breathe now", systemImage: "wind", kind: .primary) {
                             center.dismiss()
                             onBreatheNow()
                         }
 
-                        NoopButton("Not now", kind: .secondary) { center.dismiss() }
+                        ZoopButton("Not now", kind: .secondary) { center.dismiss() }
 
-                        NoopButton("Turn off", kind: .tertiary) {
+                        ZoopButton("Turn off", kind: .tertiary) {
                             BiofeedbackPrefs.checkInEnabled = false
                             center.dismiss()
                         }

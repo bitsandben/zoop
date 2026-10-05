@@ -1121,7 +1121,7 @@ public final class LiveState: ObservableObject {
         // a letter. Keeps three characters, matching `WhoopSerialIdentity.logSafe`, so two straps stay
         // distinguishable; PRESERVES the `-noop` computed-sibling suffix, which is not identifying and is
         // what lets a reader tell derived rows from measured ones. Six-character minimum matches
-        // `minSerialLength`, so `my-whoop` and `my-whoop-noop` are untouched. Kotlin twin in
+        // `minSerialLength`, so `my-whoop` and `my-whoop-zoop` are untouched. Kotlin twin in
         // `redactStrapLogPii`.
         out = out.replacingOccurrences(
             of: "whoop-([A-Za-z0-9]{3})[A-Za-z0-9-]{3,}(-noop)",

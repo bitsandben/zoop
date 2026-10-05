@@ -104,7 +104,7 @@ final class WatchScoreSnapshotTests: XCTestCase {
         // the running bundle's AppGroupIdentifier Info.plist key — see WatchScoreSnapshot.swift); this
         // test process carries no such key (StrandTests hosts inside the macOS Strand target, which
         // has none), so this only pins the canonical UPSTREAM fallback, not the real cross-target value.
-        XCTAssertEqual(WatchScoreSnapshot.appGroupId, "group.com.noopapp.noop")
+        XCTAssertEqual(WatchScoreSnapshot.appGroupId, "group.com.zoopapp.zoop")
         XCTAssertEqual(WatchScoreSnapshot.storageKey, "latestWatchSnapshot")
     }
 }

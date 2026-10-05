@@ -37,7 +37,7 @@ final class FirmwareAttributionTests: XCTestCase {
 
     func testThePrefKeyIsPerDeviceAndCaseInsensitiveOnTheAddress() {
         XCTAssertEqual(FirmwareAttribution.prefKey(peripheralId: "F1:D4:F7:24:53:DE"),
-                       "noop.lastFirmware.f1:d4:f7:24:53:de")
+                       "zoop.lastFirmware.f1:d4:f7:24:53:de")
         XCTAssertEqual(FirmwareAttribution.prefKey(peripheralId: "f1:d4:f7:24:53:de"),
                        FirmwareAttribution.prefKey(peripheralId: "F1:D4:F7:24:53:DE"))
     }

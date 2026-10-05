@@ -21,10 +21,10 @@ import StrandAnalytics
 enum ShortcutHealthExport {
 
     /// Opt-in gate (default OFF — every automation in NOOP is optional).
-    static let enabledKey = "noop.shortcutSync.enabled"
+    static let enabledKey = "zoop.shortcutSync.enabled"
     /// Exclusive end of the last successfully written coverage, unix seconds. Advances ONLY after
     /// a successful file write, so a failed export retries the same span next time.
-    static let watermarkKey = "noop.shortcutSync.lastExportTs"
+    static let watermarkKey = "zoop.shortcutSync.lastExportTs"
     static let fileName = "noop_sync.txt"
     /// Aggregation window: 15 minutes, epoch-aligned — the same boundaries hrBuckets(900) groups by.
     static let windowSeconds = 900

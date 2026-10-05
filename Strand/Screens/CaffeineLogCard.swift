@@ -4,7 +4,7 @@ import StrandDesign
 /// Caffeine window (#526) — log a caffeine intake (time + OPTIONAL mg) and see a plain on-device
 /// "still active" hint. OPT-IN, manual-first: nothing shows until the user logs an intake, and the
 /// estimate is clearly framed as a rough guide from a ~5–6 h half-life decay, never a measurement or a
-/// health claim. Reuses the journal logging patterns (UserDefaults-backed store, pill controls, NoopCard).
+/// health claim. Reuses the journal logging patterns (UserDefaults-backed store, pill controls, ZoopCard).
 ///
 /// Honesty is enforced in the model (`CaffeineDecay` / `CaffeineLogStore`): an unknown amount stays
 /// unknown (we never invent mg), the active hint covers the dose-unknown case in words, and the copy
@@ -28,13 +28,13 @@ struct CaffeineLogCard: View {
     // (KEY_CAFFEINE_CUTOFF / KEY_CAFFEINE_BEDTIME_MIN, default 23:00) so a layout reads the same on both.
     @AppStorage(Self.cutoffEnabledKey) private var cutoffEnabled = false
     @AppStorage(Self.bedtimeMinutesKey) private var bedtimeMinutes = 23 * 60
-    static let cutoffEnabledKey = "noop.caffeine.cutoffNudge"
-    static let bedtimeMinutesKey = "noop.caffeine.bedtimeMinutes"
+    static let cutoffEnabledKey = "zoop.caffeine.cutoffNudge"
+    static let bedtimeMinutesKey = "zoop.caffeine.bedtimeMinutes"
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Caffeine", overline: "Log")
-            NoopCard(tint: StrandPalette.accent) {
+            ZoopCard(tint: StrandPalette.accent) {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Log a coffee, tea, or energy drink and NOOP shows a rough estimate of how much may still be active. It's a guide based on a typical 5 to 6 hour half-life, not a measurement.")
                         .font(StrandFont.footnote)

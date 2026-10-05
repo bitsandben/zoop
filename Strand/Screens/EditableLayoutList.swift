@@ -176,10 +176,10 @@ private struct EditableLayoutRow: View {
     let onVisibilityChange: () -> Void
 
     var body: some View {
-        HStack(spacing: NoopMetrics.space3) {
-            RoundedRectangle(cornerRadius: NoopMetrics.space2, style: .continuous)
+        HStack(spacing: ZoopMetrics.space3) {
+            RoundedRectangle(cornerRadius: ZoopMetrics.space2, style: .continuous)
                 .fill(StrandPalette.surfaceInset)
-                .frame(width: NoopMetrics.space8, height: NoopMetrics.space8)
+                .frame(width: ZoopMetrics.space8, height: ZoopMetrics.space8)
                 .overlay {
                     Image(systemName: icon)
                         .font(StrandFont.subhead.weight(.semibold))
@@ -187,7 +187,7 @@ private struct EditableLayoutRow: View {
                 }
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
                 Text(title)
                     .font(StrandFont.body)
                     .foregroundStyle(isVisible ? StrandPalette.textPrimary : StrandPalette.textTertiary)
@@ -199,7 +199,7 @@ private struct EditableLayoutRow: View {
                 }
             }
 
-            Spacer(minLength: NoopMetrics.space2)
+            Spacer(minLength: ZoopMetrics.space2)
 
             if let configurationLabel {
                 Button(configurationLabel, action: onConfigure)
@@ -219,7 +219,7 @@ private struct EditableLayoutRow: View {
             .accessibilityLabel(visibilityLabel)
         }
         .contentShape(Rectangle())
-        .listRowBackground(NoopChromeSurface())
+        .listRowBackground(ZoopChromeSurface())
     }
 
     private var visibilityLabel: String {

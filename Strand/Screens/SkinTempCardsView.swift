@@ -19,7 +19,7 @@ import StrandAnalytics
 //   • HeadsUpCard          — IllnessSignalEngine.Result. The confounder-suppressed illness
 //                            "heads-up". On-device estimate — not a diagnosis.
 //
-// DESIGN-SYSTEM ONLY: NoopCard + DomainTheme/StrandPalette tokens, StrandFont, NoopMetrics,
+// DESIGN-SYSTEM ONLY: ZoopCard + DomainTheme/StrandPalette tokens, StrandFont, ZoopMetrics,
 // ScoreStatePill, the house buttons. No raw hex, no ad-hoc cards. Privacy-forward copy:
 // there is no upload or sync path, and every sensitive surface names the user-exported
 // backup exception.
@@ -78,8 +78,8 @@ struct CycleAwarenessCard: View {
     private var hue: Color { StrandPalette.restColor }
 
     var body: some View {
-        NoopCard(tint: hue) {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        ZoopCard(tint: hue) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 header
 
                 // The headline phase line + cycle-day range.
@@ -175,7 +175,7 @@ struct CycleAwarenessCard: View {
     }
 
     @ViewBuilder private var actions: some View {
-        HStack(spacing: NoopMetrics.gap) {
+        HStack(spacing: ZoopMetrics.gap) {
             if let onLogPeriod {
                 Button("Log period start", action: onLogPeriod)
                     .buttonStyle(.noopSecondary)
@@ -245,8 +245,8 @@ struct CycleAwarenessOptInCard: View {
     var onEnable: () -> Void
 
     var body: some View {
-        NoopCard(tint: StrandPalette.restColor) {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        ZoopCard(tint: StrandPalette.restColor) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 HStack(spacing: 8) {
                     Image(systemName: "drop.degreesign")
                         .font(.system(size: 16, weight: .semibold))
@@ -296,9 +296,9 @@ struct MenstrualCycleHomeCard: View {
     var body: some View {
         Group {
             if shouldShow {
-                NoopCard(tint: StrandPalette.restColor) {
-                    VStack(alignment: .leading, spacing: NoopMetrics.gap) {
-                        HStack(spacing: NoopMetrics.space2) {
+                ZoopCard(tint: StrandPalette.restColor) {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
+                        HStack(spacing: ZoopMetrics.space2) {
                             Image(systemName: "drop.degreesign")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundStyle(StrandPalette.restColor)
@@ -350,7 +350,7 @@ struct MenstrualCycleHomeCard: View {
                                 .multilineTextAlignment(.trailing)
                         }
 
-                        HStack(spacing: NoopMetrics.space2) {
+                        HStack(spacing: ZoopMetrics.space2) {
                     Button(cycleEnabled
                            ? String(localized: "Open tracker")
                            : String(localized: "Set up cycle tracking")) {
@@ -386,7 +386,7 @@ struct MenstrualCycleHomeCard: View {
                 } else {
                     ProgressView("Preparing cycle tracker…")
                         .task { await model.refreshV5Signals() }
-                        .padding(NoopMetrics.screenPadding)
+                        .padding(ZoopMetrics.screenPadding)
                 }
             }
         }
@@ -453,19 +453,19 @@ struct CycleTrackerView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                     SectionHeader("Cycle tracker", overline: "Period-start history")
                     statusCard
                     logCard
                     historyCard
-                    VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                         Text(String(localized: "For awareness only. Not a medical device, not contraception, not a substitute for professional care."))
                             .font(StrandFont.footnote)
                             .foregroundStyle(StrandPalette.textTertiary)
                         PrivacyNote()
                     }
                 }
-                .padding(NoopMetrics.screenPadding)
+                .padding(ZoopMetrics.screenPadding)
             }
             #if os(iOS)
             // #697/#horizontal-swipe parity, see ScreenScaffold.
@@ -494,14 +494,14 @@ struct CycleTrackerView: View {
             }
         }
         #if os(macOS)
-        .frame(minWidth: NoopMetrics.detailSheetMinWidth,
-               minHeight: NoopMetrics.detailSheetMinHeight)
+        .frame(minWidth: ZoopMetrics.detailSheetMinWidth,
+               minHeight: ZoopMetrics.detailSheetMinHeight)
         #endif
     }
 
     private var statusCard: some View {
-        NoopCard(tint: StrandPalette.restColor) {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        ZoopCard(tint: StrandPalette.restColor) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 Text("Current estimate").strandOverline()
                 HStack(alignment: .firstTextBaseline) {
                     Text(phaseTitle)
@@ -521,7 +521,7 @@ struct CycleTrackerView: View {
                               gradient: Gradient(colors: [StrandPalette.restColor.opacity(0.4),
                                                           StrandPalette.restBright]),
                               showsHover: false)
-                        .frame(height: NoopMetrics.space10)
+                        .frame(height: ZoopMetrics.space10)
                         .accessibilityHidden(true)
                 }
                 Text(localizedCycleStatus(result))
@@ -537,8 +537,8 @@ struct CycleTrackerView: View {
     }
 
     private var logCard: some View {
-        NoopCard(tint: StrandPalette.restColor) {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        ZoopCard(tint: StrandPalette.restColor) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 Text("Log a period start").strandOverline()
                 DatePicker("Period started on", selection: $selectedDate, in: ...Date(),
                            displayedComponents: .date)
@@ -561,8 +561,8 @@ struct CycleTrackerView: View {
     }
 
     private var historyCard: some View {
-        NoopCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        ZoopCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 HStack {
                     Text("Logged starts").strandOverline()
                     Spacer()
@@ -632,8 +632,8 @@ struct BodyClockCard: View {
     private var hue: Color { StrandPalette.restColor }
 
     var body: some View {
-        NoopCard(tint: hue) {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        ZoopCard(tint: hue) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 header
 
                 offsetHeadline
@@ -777,8 +777,8 @@ struct HeadsUpCard: View {
     var distance: IllnessDistance.Result? = nil
 
     var body: some View {
-        NoopCard(padding: 14, tint: hue) {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        ZoopCard(padding: 14, tint: hue) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 HStack(alignment: .top, spacing: 12) {
                     Image(systemName: glyph)
                         .font(.system(size: 15, weight: .semibold))
@@ -1041,7 +1041,7 @@ private func localizedList(_ values: [String]) -> String {
 #if DEBUG
 #Preview("Skin-temp cards") {
     ScrollView {
-        VStack(spacing: NoopMetrics.sectionGap) {
+        VStack(spacing: ZoopMetrics.sectionGap) {
             CycleAwarenessCard(
                 result: CyclePhaseEngine.Result(
                     phase: .luteal, confidence: .solid,
@@ -1077,7 +1077,7 @@ private func localizedList(_ values: [String]) -> String {
                 suppressedBy: ["alcohol"], signalCount: 2,
                 copy: "Some signals are up (RHR +5, skin temp +0.6 °C), but you logged alcohol — likely that, not illness. On-device estimate — not a diagnosis."))
         }
-        .padding(NoopMetrics.screenPadding)
+        .padding(ZoopMetrics.screenPadding)
     }
     .background(StrandPalette.surfaceBase)
     .preferredColorScheme(.dark)

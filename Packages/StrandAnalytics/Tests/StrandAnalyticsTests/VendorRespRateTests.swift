@@ -177,7 +177,7 @@ final class VendorRespRateTests: XCTestCase {
     /// existing user's baseline folds exactly as it did before.
     func testASingleBrandHistoryIsUnscoped() {
         let days = (1...30).map { (day: String(format: "2026-07-%02d", $0),
-                                   sourceId: $0 % 2 == 0 ? "my-whoop" : "my-whoop-noop") }
+                                   sourceId: $0 % 2 == 0 ? "my-whoop" : "my-whoop-zoop") }
         XCTAssertEqual(Baselines.deviceEraEpoch(days), 0.0, accuracy: 0.0)
     }
 }

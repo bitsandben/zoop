@@ -131,7 +131,7 @@ All three are deterministic, DB-free pure functions in the shared engine, scored
 - Reuse the **metric-series tall table** under the `-noop` computed source (cycle/circadian outputs) and a dedicated `noop-cycle` source for *user-logged* period-start days (mirrors `MoodStore.moodDeviceId` — an import can never clobber it). **No schema change needed** beyond the optional temp-minimum field; everything else is `(deviceId, day, key)` rows.
 
 ### UI (per platform)
-- macOS SwiftUI screens under `Strand/Screens/`, iOS under `StrandiOS/`, Android Compose under the existing screen package. Reuse `StrandDesign` (`NoopCard`, `StrandPalette`, `StrandFont`), the existing `HealthAlertBanner`, and the v3 Titanium & Gold tokens. **No hardcoded colors.**
+- macOS SwiftUI screens under `Strand/Screens/`, iOS under `StrandiOS/`, Android Compose under the existing screen package. Reuse `StrandDesign` (`ZoopCard`, `StrandPalette`, `StrandFont`), the existing `HealthAlertBanner`, and the v3 Titanium & Gold tokens. **No hardcoded colors.**
 
 ---
 
@@ -148,7 +148,7 @@ Per the cross-platform-parity rule, every feature must reach **all three clients
 
 ## UX (screens/flows on each platform — honest + skimmable)
 
-**Design language:** v3 Titanium & Gold — navy + gold + titanium, frosted `NoopCard`s, no greens. Every screen leads with a calm headline number/label and a one-line "why," with detail on tap. ARIA/labels on all platforms; `loading="lazy"` n/a (native). All copy avoids medical verbs.
+**Design language:** v3 Titanium & Gold — navy + gold + titanium, frosted `ZoopCard`s, no greens. Every screen leads with a calm headline number/label and a one-line "why," with detail on tap. ARIA/labels on all platforms; `loading="lazy"` n/a (native). All copy avoids medical verbs.
 
 ### Cycle Phases
 - **Today card (opt-in surface):** "Phase: Luteal · ~day 22" with a small thermal sparkline and a confidence chip ("Solid" / "Building" / "Learning your pattern"). Tap → detail.
@@ -162,7 +162,7 @@ Per the cross-platform-parity rule, every feature must reach **all three clients
 - **Honest band:** wide-confidence states say so; irregular schedules get "your rhythm is hard to read right now."
 
 ### Heads-Up (illness)
-- **Surface = the existing `HealthAlertBanner`** (frosted amber `NoopCard`) + the `IllnessNotifier` system notification, unchanged plumbing. New body:
+- **Surface = the existing `HealthAlertBanner`** (frosted amber `ZoopCard`) + the `IllnessNotifier` system notification, unchanged plumbing. New body:
   - **Raised:** "Heads-up — your body looks strained. RHR +6, HRV −22%, skin temp +0.7 °C. No alcohol or travel logged. Consider taking it easy." + "On-device estimate — not a diagnosis."
   - **Suppressed/downgraded:** "Some signals are up, but you logged a few drinks — likely that, not illness." (Quietly informative, not alarming.)
   - **Already-sick:** "Rest up — you logged feeling unwell. Your numbers agree."

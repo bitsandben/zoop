@@ -663,12 +663,12 @@ CATALOGS = [
         ROOT / "Packages/StrandDesign/Sources/StrandDesign/Resources/Localizable.xcstrings",
     ),
     (
-        [ROOT / "NOOPWatch"],
-        ROOT / "NOOPWatch/Localizable.xcstrings",
+        [ROOT / "ZoopWatch"],
+        ROOT / "ZoopWatch/Localizable.xcstrings",
     ),
     (
-        [ROOT / "NOOPWatchComplications"],
-        ROOT / "NOOPWatchComplications/Localizable.xcstrings",
+        [ROOT / "ZoopWatchComplications"],
+        ROOT / "ZoopWatchComplications/Localizable.xcstrings",
     ),
     (
         [ROOT / "Strand", ROOT / "StrandiOS", ROOT / "StrandiOSShared", ROOT / "StrandiOSWidgets"],

@@ -101,7 +101,7 @@ final class DailyMetricLastVitalsDayTests: XCTestCase {
 
     // MARK: lastSpo2Day / lastSkinTempDay — the PER-FIELD carries for the two fields lastVitalsDay's
     // predicate does NOT check. The on-device engine writes spo2Pct = nil (only raw spo2Red/spo2Ir), so
-    // every computed "-noop" row lacks a percentage; only imported rows carry one. A whole-row carry lands
+    // every computed "-zoop" row lacks a percentage; only imported rows carry one. A whole-row carry lands
     // on a row with null spo2Pct/skinTempDevC and the Blood Oxygen / Skin Temp cards read "No Data" even
     // though an imported row holds a real reading. Byte-twins of the Android lastSpo2Row / lastSkinTempRow.
 

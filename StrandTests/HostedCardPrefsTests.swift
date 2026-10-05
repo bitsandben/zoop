@@ -7,11 +7,11 @@ import XCTest
 /// case-for-case; a drift on either side fails one of the twins.
 final class HostedCardPrefsTests: XCTestCase {
 
-    /// The rawValues are persisted + cross the .noopbak wire, so they are frozen. Origin-namespaced.
+    /// The rawValues are persisted + cross the .zoopbak wire, so they are frozen. Origin-namespaced.
     func testRawValuesAreTheFrozenNamespacedContract() {
         XCTAssertEqual(HostedCard.sleepMarks.rawValue, "sleep.sleepMarks")
         XCTAssertEqual(HostedCard.asleepDuration.rawValue, "sleep.asleepDuration")
-        // Byte-identical to the Kotlin `HostedCard.STRESS_TODAY`. This id rides .noopbak, so a
+        // Byte-identical to the Kotlin `HostedCard.STRESS_TODAY`. This id rides .zoopbak, so a
         // difference of one character means an Android backup restored here silently drops the card.
         XCTAssertEqual(HostedCard.stressToday.rawValue, "stress.today")
         XCTAssertEqual(HostedCard.trendHRV.rawValue, "trends.hrv")

@@ -46,7 +46,7 @@ Plain English, no jargon, no em-dashes. Swift and Kotlin must say the *same word
 ## Cross-platform + file lanes
 
 - Foundation (reason enum, state/recording models) in shared analytics where possible; wording mirrored exactly Swift/Kotlin.
-- Swift lanes: `TodayView.swift`, `SleepView.swift`, new `HowNoopWorks` primer.
+- Swift lanes: `TodayView.swift`, `SleepView.swift`, new `HowZoopWorks` primer.
 - Kotlin lanes: `TodayScreen.kt`, `SleepScreen.kt`, new primer composable.
 
 ## Testing

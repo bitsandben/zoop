@@ -21,7 +21,7 @@ final class SkinTempAbsoluteDisplayTests: XCTestCase {
             key: "skin", label: "Skin Temp", unit: "°C", value: 34.6,
             format: { String(format: "%.1f", $0) },
             banding: VitalBands.Result(band: .inRange, basis: .population, nights: 24),
-            metricColor: .orange, day: "2026-08-25", source: .noopComputed,
+            metricColor: .orange, day: "2026-08-25", source: .zoopComputed,
             missingCaption: "none", caveat: caveat, secondary: secondary)
     }
 

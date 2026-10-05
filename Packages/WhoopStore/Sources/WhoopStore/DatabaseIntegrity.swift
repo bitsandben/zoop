@@ -3,7 +3,7 @@ import GRDB
 
 /// SQLite-level integrity verification for the backup/restore pipeline (#1014 defence-in-depth).
 ///
-/// The `.noopbak` import already gates on the 16-byte SQLite magic and on the migrator's
+/// The `.zoopbak` import already gates on the 16-byte SQLite magic and on the migrator's
 /// bookkeeping table (`grdb_migrations` / `room_master_table`), but BOTH of those live in the first
 /// pages of the file: a backup that was truncated mid-upload, torn by a dying SD card, or clipped by
 /// a cloud-sync client still passes them — and then "restores" into a store that silently shows no

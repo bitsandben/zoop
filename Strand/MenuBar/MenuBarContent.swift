@@ -144,7 +144,7 @@ public struct MenuBarContent: View {
         }
         .padding(16)
         .frame(width: 268)
-        .background(NoopChromeSurface())
+        .background(ZoopChromeSurface())
         .preferredColorScheme(AppearanceMode.resolve(appearanceRaw).colorScheme)
     }
 

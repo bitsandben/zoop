@@ -25,7 +25,7 @@ import Foundation
 /// It stays a DERIVED cache and nothing else reads it, so the whole failure surface is one re-fold: a
 /// payload that is missing, unreadable, or written by an older fold is discarded rather than repaired.
 ///
-/// It still does NOT cross the `.noopbak` boundary, and must not start: the key is deliberately absent from
+/// It still does NOT cross the `.zoopbak` boundary, and must not start: the key is deliberately absent from
 /// both `BackupSettings` whitelists. A restore carries the settings and the record store, and this describes
 /// neither — it describes gravity rows AS THEY WERE ON ONE DEVICE. Shipping it to another device would be
 /// the one way to serve a fold whose key no longer witnesses anything, which is the failure every other

@@ -332,7 +332,7 @@ final class TodayExplainabilityTests: XCTestCase {
     // MARK: - Component 4 — provenance label (the real per-day merge winner)
 
     func testProvenance_computedStrapSibling_isOnDevice() {
-        XCTAssertEqual(TodayView.provenanceDisplayLabel(rawSource: "my-whoop-noop", deviceId: "my-whoop"),
+        XCTAssertEqual(TodayView.provenanceDisplayLabel(rawSource: "my-whoop-zoop", deviceId: "my-whoop"),
                        "On-device")
     }
 
@@ -355,12 +355,12 @@ final class TodayExplainabilityTests: XCTestCase {
     }
 
     func testProvenance_crossStrapComputedSibling_stillOnDevice() {
-        // A "-noop" sibling banked under a DIFFERENT strap id (the user re-paired straps) is still a
-        // score NOOP computed on-device. The resolver matches the "-noop" suffix, not the exact
-        // "\(deviceId)-noop" — otherwise these rows would fall through to the raw id verbatim.
+        // A "-zoop" sibling banked under a DIFFERENT strap id (the user re-paired straps) is still a
+        // score NOOP computed on-device. The resolver matches the "-zoop" suffix, not the exact
+        // "\(deviceId)-zoop" — otherwise these rows would fall through to the raw id verbatim.
         XCTAssertEqual(TodayView.provenanceDisplayLabel(rawSource: "whoop5-C0FF-noop", deviceId: "my-whoop"),
                        "On-device")
-        XCTAssertEqual(TodayView.provenanceDisplayLabel(rawSource: "my-whoop-noop", deviceId: "strap-42"),
+        XCTAssertEqual(TodayView.provenanceDisplayLabel(rawSource: "my-whoop-zoop", deviceId: "strap-42"),
                        "On-device")
     }
 
@@ -398,7 +398,7 @@ final class TodayExplainabilityTests: XCTestCase {
                                                appleHealthSource: "apple-health"),
             "WHOOP")
         XCTAssertEqual(
-            TodayView.todayProvenanceChipLabel(rawSource: "my-whoop-noop", deviceId: "my-whoop",
+            TodayView.todayProvenanceChipLabel(rawSource: "my-whoop-zoop", deviceId: "my-whoop",
                                                appleHealthSource: "apple-health"),
             "On-device")
         XCTAssertEqual(

@@ -17,7 +17,7 @@ works only with **your own data**.
 
 The codebase is split into reusable, cross-platform Swift packages plus a thin platform-specific
 app layer. The **macOS app is the reference implementation**; **Android ships as a full app** under
-`android/`, and **iOS ships as a build-from-source target (`NOOPiOS`)** folded into main in v1.94 —
+`android/`, and **iOS ships as a build-from-source target (`ZoopiOS`)** folded into main in v1.94 —
 built in Xcode, not distributed (no App Store / TestFlight, to stay anonymous). All reuse the same
 packages where they can.
 
@@ -35,7 +35,7 @@ Strand/
 │   ├── System/                 # MacActions (lock screen, run Shortcut), ProjectInfo
 │   └── Resources/              # Info.plist, Strand.entitlements, Assets.xcassets (AppIcon)
 ├── StrandTests/                # macOS app unit tests
-├── StrandiOS/                  # iOS SwiftUI app shell (product name: NOOPiOS)
+├── StrandiOS/                  # iOS SwiftUI app shell (product name: ZoopiOS)
 ├── StrandiOSShared/            # shared iOS-only app code (BLE/scene wiring)
 ├── StrandiOSWidgets/           # iOS WidgetKit + Live Activity extension
 ├── Packages/
@@ -115,7 +115,7 @@ The same two flags work for the other GRDB-linked packages — swap the `cd` and
 | `StrandAnalytics` | builds + tests (1,523, one skip) |
 | `WhoopStore` | builds + tests (439) |
 | `StrandImport` | builds + tests (249, one skip) |
-| `NoopLocalAccess` | builds + tests (9) |
+| `ZoopLocalAccess` | builds + tests (9) |
 | `StrandDesign` | macOS only (SwiftUI) |
 
 The Compression-backed raw outbox is Darwin-only, so the tests that drive it (`RawOutboxTests`,
@@ -154,7 +154,7 @@ Notes on the build:
 
 - The Xcode **scheme is `Strand`** (the target is still named `Strand` internally), but the built
   product is **`NOOP.app`** — `project.yml` sets `PRODUCT_NAME: NOOP` and bundle id
-  `com.noopapp.noop`, with display name `NOOP`.
+  `com.zoopapp.zoop`, with display name `NOOP`.
 - `CODE_SIGNING_ALLOWED=NO` skips signing for a fast local compile-and-verify loop. To produce a
   runnable `.app` you instead want an **ad-hoc-signed** build (see below).
 - SPM resolves `GRDB.swift` and `ZIPFoundation` on first build into `build/SourcePackages/`.
@@ -191,7 +191,7 @@ The product lands at `build/Build/Products/Debug/NOOP.app`. You can confirm it i
 ```bash
 codesign -dvv build/Build/Products/Debug/NOOP.app
 # Signature=adhoc
-# Identifier=com.noopapp.noop
+# Identifier=com.zoopapp.zoop
 # CodeDirectory ... flags=0x2(adhoc)
 # TeamIdentifier=not set
 ```
@@ -241,7 +241,7 @@ open Strand.xcodeproj
 The on-device SQLite database lives inside the app sandbox container:
 
 ```
-~/Library/Containers/com.noopapp.noop/Data/.../whoop.sqlite
+~/Library/Containers/com.zoopapp.zoop/Data/.../whoop.sqlite
 ```
 
 `Tools/Backfill` is a small executable that re-runs the WHOOP CSV / Apple Health import mapping
@@ -263,7 +263,7 @@ The iOS app is **newer and less battle-tested** than macOS and Android: live BLE
 isn't yet fully validated. It shares the same analytics packages, so once data is in, results match
 macOS.
 
-The `NOOPiOS` app target (plus the `NOOPiOSWidgets` WidgetKit / Live Activity extension) already
+The `ZoopiOS` app target (plus the `ZoopiOSWidgets` WidgetKit / Live Activity extension) already
 exists in `project.yml` — you don't need to add it. All five packages target `.iOS(.v16)`, so the
 protocol, storage, analytics, import, and design cores compile for iOS unmodified; the iOS app
 shell lives in `StrandiOS/` with shared iOS code in `StrandiOSShared/`.
@@ -277,12 +277,12 @@ xcodegen generate
 # build for a connected iPhone (real device — BLE doesn't work in the simulator):
 xcodebuild \
   -project Strand.xcodeproj \
-  -scheme NOOPiOS \
+  -scheme ZoopiOS \
   -destination 'generic/platform=iOS' \
   build
 ```
 
-Or open the generated project and run the `NOOPiOS` scheme from Xcode:
+Or open the generated project and run the `ZoopiOS` scheme from Xcode:
 
 ```bash
 open Strand.xcodeproj
@@ -290,7 +290,7 @@ open Strand.xcodeproj
 
 Notes:
 
-- The `NOOPiOS` and `NOOPiOSWidgets` targets deploy to **iOS 17.0**. (The shared packages still
+- The `ZoopiOS` and `ZoopiOSWidgets` targets deploy to **iOS 17.0**. (The shared packages still
   declare a floor of iOS 16 — `.iOS(.v16)` — but the app targets require iOS 17.)
 - Running on a physical iPhone needs a signing identity selected in Xcode (a free personal Apple ID
   works for on-device builds). Set `DEVELOPMENT_TEAM` in `Config/BundleIdSecrets.xcconfig` (see

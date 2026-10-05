@@ -39,7 +39,7 @@ final class LiveActivityController {
     /// its list neither asks again nor logs it twice.
     private var removing: Set<String> = []
     /// How long after the last push iOS treats the banner as fresh; after that the banner draws the dash
-    /// (`NOOPLiveActivity.shownBpm`). A WHOOP 5.0 taken off the wrist goes quiet, and with nothing arriving iOS
+    /// (`ZoopLiveActivity.shownBpm`). A WHOOP 5.0 taken off the wrist goes quiet, and with nothing arriving iOS
     /// suspends NOOP, so no timer of NOOP's can clear the number: iOS's own stale date is what does it, in at most
     /// this long (a tester's log, 23 Sep 2026). A steady number is re-pushed once half of this has passed
     /// (`LiveHRBannerPushPolicy`), so a banner fed by a worn strap never goes stale.

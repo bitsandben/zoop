@@ -45,7 +45,7 @@ final class LastSyncAttributionTests: XCTestCase {
 
     func testThePrefKeyIsPerDeviceAndCaseInsensitive() {
         XCTAssertEqual(LastSyncAttribution.prefKey(peripheralId: "F1:D4:F7:24:53:DE"),
-                       "noop.lastSyncAt.f1:d4:f7:24:53:de")
+                       "zoop.lastSyncAt.f1:d4:f7:24:53:de")
         XCTAssertEqual(LastSyncAttribution.prefKey(peripheralId: "f1:d4:f7:24:53:de"),
                        LastSyncAttribution.prefKey(peripheralId: "F1:D4:F7:24:53:DE"))
         XCTAssertNil(LastSyncAttribution.prefKey(peripheralId: nil))

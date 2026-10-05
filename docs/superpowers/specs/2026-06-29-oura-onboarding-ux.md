@@ -37,9 +37,9 @@ Every fact above is read-for-protocol-only; the NOOP driver, key install, decode
 | Metric tiles + charts on the device's own screen | `StatTile`, `ChartCard`, `TrendChart`, `Hypnogram`, `SegmentedPillControl` | `Components.swift`, `XiaomiBandView.swift` (the template to copy) |
 | Per-device page template | `XiaomiBandView` (range control, tile grid, chart cards, hypnogram) | `XiaomiBandView.swift` |
 | Empty/pending states | `ComingSoon`, `DataPendingNote`, `SyncingHistoryNote` | `ScreenScaffold.swift` |
-| Primary buttons | `NoopButton` / `.buttonStyle(.borderedProminent).tint(StrandPalette.accent)` | `NoopButton.swift` |
+| Primary buttons | `ZoopButton` / `.buttonStyle(.borderedProminent).tint(StrandPalette.accent)` | `ZoopButton.swift` |
 
-Design tokens used (no hardcoded values): `StrandPalette.accent` (#60A0E0 dark / #234F9E light), `.statusWarning` (amber heads-up), `.statusCritical` (the irreversible warning), `.statusPositive` (Active/Live), `.metricRose/.metricPurple/.metricCyan/.metricAmber` (chart worlds), `NoopMetrics.gap/sectionSpacing/cardRadius/tileHeight/chartHeight`.
+Design tokens used (no hardcoded values): `StrandPalette.accent` (#60A0E0 dark / #234F9E light), `.statusWarning` (amber heads-up), `.statusCritical` (the irreversible warning), `.statusPositive` (Active/Live), `.metricRose/.metricPurple/.metricCyan/.metricAmber` (chart worlds), `ZoopMetrics.gap/sectionSpacing/cardRadius/tileHeight/chartHeight`.
 
 A new **`oura` family** is added to the registry alongside `.huami/.ftms/.liveBLE`: `sourceKind == .ouraOwned`. The card icon is `circle.circle` (already the wizard's Oura glyph), tinted accent when active.
 

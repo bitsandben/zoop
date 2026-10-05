@@ -69,8 +69,8 @@ enum PuffinExperiment {
     /// gate.
     ///
     /// Display-only: writes nothing to the strap. The engine writes the resolved mean to metricSeries as
-    /// "spo2_candidate" under the "-noop" computed device ID; the UI reads it only while this toggle is
-    /// ON. Mirrors the Android `NoopPrefs.KEY_SPO2_CANDIDATE_DISPLAY`.
+    /// "spo2_candidate" under the "-zoop" computed device ID; the UI reads it only while this toggle is
+    /// ON. Mirrors the Android `ZoopPrefs.KEY_SPO2_CANDIDATE_DISPLAY`.
     static let spo2CandidateDisplayKey = "noopSpo2CandidateDisplay"
 
     static var spo2CandidateDisplayEnabled: Bool { UserDefaults.standard.bool(forKey: spo2CandidateDisplayKey) }
@@ -81,7 +81,7 @@ enum PuffinExperiment {
     /// SINGLE-SUBJECT (see `DaytimeStress.baselineRelativeHighMarginBPM`), so this stays a chooseable lens,
     /// not a silent default, until it is validated on more subjects. When OFF, `StressView` /
     /// `StressScreen` pass no mode and the read is byte-identical to before. Mirrors the Android
-    /// `NoopPrefs.KEY_STRESS_PERSONAL_BASELINE`.
+    /// `ZoopPrefs.KEY_STRESS_PERSONAL_BASELINE`.
     static let stressPersonalBaselineKey = "noopStressPersonalBaseline"
 
     static var stressPersonalBaselineEnabled: Bool { UserDefaults.standard.bool(forKey: stressPersonalBaselineKey) }
@@ -99,7 +99,7 @@ enum PuffinExperiment {
     /// the window against a different recipe, so flipping it silently would move a headline metric's
     /// whole history. Each method maps a theoretical maximum day to exactly 100 via its own log
     /// denominator (`StrainScorer.logMapDenominator`), so the two are on the same axis and switching does
-    /// not rescale the axis under the user. Mirrors the Android `NoopPrefs.KEY_BANISTER_EFFORT`.
+    /// not rescale the axis under the user. Mirrors the Android `ZoopPrefs.KEY_BANISTER_EFFORT`.
     static let banisterEffortKey = "noopBanisterEffort"
 
     static var banisterEffortEnabled: Bool { UserDefaults.standard.bool(forKey: banisterEffortKey) }
@@ -111,7 +111,7 @@ enum PuffinExperiment {
     /// open, so the strap banks beat-to-beat R-R intervals 24/7 for far better overnight HRV/recovery/
     /// sleep (vs the sparse history offload). Uses more battery (continuous HR streaming). Default OFF;
     /// applied on launch + each (re)bond and driven by `BLEManager.setKeepRealtimeForData(_:)`. Mirrors
-    /// the Android `NoopPrefs.KEY_CONTINUOUS_HRV`. Works on WHOOP 4 and 5/MG (both emit 0x2A37 R-R).
+    /// the Android `ZoopPrefs.KEY_CONTINUOUS_HRV`. Works on WHOOP 4 and 5/MG (both emit 0x2A37 R-R).
     static let keepRealtimeForDataKey = "noopContinuousHrv"
 
     static var keepRealtimeForDataEnabled: Bool { UserDefaults.standard.bool(forKey: keepRealtimeForDataKey) }
@@ -123,7 +123,7 @@ enum PuffinExperiment {
     /// ALWAYS (the pre-#927 behaviour). Defaults ON for fresh installs, OFF once Continuous HRV has been
     /// used (#1008) — see below. Read by BLEManager at EVERY arm site (re-derived at
     /// arm time, never precomputed; see ContinuousHrvSchedule). Mirrors the Android
-    /// `NoopPrefs.KEY_CONTINUOUS_HRV_OVERNIGHT`.
+    /// `ZoopPrefs.KEY_CONTINUOUS_HRV_OVERNIGHT`.
     static let continuousHrvOvernightOnlyKey = "noopContinuousHrvOvernightOnly"
 
     /// Defaults to ON for anyone who has never touched Continuous HRV, and to OFF for anyone who has
@@ -136,7 +136,7 @@ enum PuffinExperiment {
     /// which is indistinguishable from an explicit off. The unset case is therefore resolved from whether
     /// `keepRealtimeForDataKey` exists, rather than by writing a migration — the only thing that must not
     /// happen is silently narrowing capture for someone already relying on it. Twin of the Android
-    /// `NoopPrefs.continuousHrvOvernight`.
+    /// `ZoopPrefs.continuousHrvOvernight`.
     static var continuousHrvOvernightOnlyEnabled: Bool {
         UserDefaults.standard.object(forKey: continuousHrvOvernightOnlyKey) as? Bool ?? true
     }
@@ -158,7 +158,7 @@ enum PuffinExperiment {
     /// BEFORE the handler runs, so by then a first-ever toggle is indistinguishable from any other.
     ///
     /// Idempotent: writes only when the overnight key is absent and the base key is present.
-    /// Twin of the Android `NoopPrefs.migrateContinuousHrvOvernightDefault`.
+    /// Twin of the Android `ZoopPrefs.migrateContinuousHrvOvernightDefault`.
     static func migrateContinuousHrvOvernightDefault() {
         let defaults = UserDefaults.standard
         guard shouldPinLegacyOvernightDefault(
@@ -168,7 +168,7 @@ enum PuffinExperiment {
     }
 
     /// The migration's decision, lifted out so it is testable without touching `UserDefaults`. Twin of
-    /// the Android `NoopPrefs.shouldPinLegacyOvernightDefault`.
+    /// the Android `ZoopPrefs.shouldPinLegacyOvernightDefault`.
     ///
     /// Pin the OLD default only for an install that has used Continuous HRV and never chose an overnight
     /// setting. Everything else is left alone.
@@ -182,7 +182,7 @@ enum PuffinExperiment {
         !hasOvernightChoice && hasUsedContinuousHrv
     }
 
-    // MARK: - Power saving (#477), parity with Android NoopPrefs
+    // MARK: - Power saving (#477), parity with Android ZoopPrefs
 
     /// "Power saving" master: battery-adaptive strap-sync cadence. Default off. */
     static let powerSavingKey = "noopPowerSaving"
@@ -246,7 +246,7 @@ enum PuffinExperiment {
     /// SUSTAINED-ELEVATED window (resting HR + 30 bpm held ≥ 12 min) that doesn't overlap a saved workout,
     /// and surface ONE dismissible Today card offering to save it as a manual-style workout. Pure read +
     /// suggestion: nothing is ever created without the user tapping Save, and turning this OFF stops all
-    /// detection and hides the card. Default OFF. Mirrors the Android `NoopPrefs.KEY_AUTO_DETECT_WORKOUTS`.
+    /// detection and hides the card. Default OFF. Mirrors the Android `ZoopPrefs.KEY_AUTO_DETECT_WORKOUTS`.
     static let autoDetectWorkoutsKey = "noopAutoDetectWorkouts"
 
     static var autoDetectWorkoutsEnabled: Bool { UserDefaults.standard.bool(forKey: autoDetectWorkoutsKey) }
@@ -254,7 +254,7 @@ enum PuffinExperiment {
     /// "Journal reminder" (#627). When ON, Today shows a persistent journal widget (a last-7-days
     /// completion strip that taps through to the journal) and nudges when today isn't logged yet.
     /// Default ON — gates both the widget and (on Android) the morning sleep sheet. Mirrors the Android
-    /// `NoopPrefs.KEY_JOURNAL_REMINDER_ENABLED`. Default-true, so a bare `bool(forKey:)` can't be used to
+    /// `ZoopPrefs.KEY_JOURNAL_REMINDER_ENABLED`. Default-true, so a bare `bool(forKey:)` can't be used to
     /// read it (that defaults false); read it through @AppStorage(...) = true or `object(forKey:)`.
     static let journalReminderKey = "noopJournalReminder"
 

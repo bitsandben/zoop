@@ -6,7 +6,7 @@ import XCTest
 
 final class OuraOAuthTests: XCTestCase {
     private let creds = OuraCredentials(clientId: "cid", clientSecret: "sec",
-                                        redirectURI: "noop://oura/callback")
+                                        redirectURI: "zoop://oura/callback")
 
     func testAuthorizeURLHasRequiredParams() throws {
         let url = OuraOAuth.authorizeURL(credentials: creds, state: "xyz")
@@ -16,7 +16,7 @@ final class OuraOAuthTests: XCTestCase {
         let q = Dictionary(uniqueKeysWithValues: (comps.queryItems ?? []).map { ($0.name, $0.value) })
         XCTAssertEqual(q["response_type"], "code")
         XCTAssertEqual(q["client_id"], "cid")
-        XCTAssertEqual(q["redirect_uri"], "noop://oura/callback")
+        XCTAssertEqual(q["redirect_uri"], "zoop://oura/callback")
         XCTAssertEqual(q["state"], "xyz")
         XCTAssertEqual(q["scope"], OuraOAuth.scopes.joined(separator: " "))
         XCTAssertTrue(OuraOAuth.scopes.contains("daily"))
@@ -61,7 +61,7 @@ final class OuraOAuthTests: XCTestCase {
     }
 
     func testTokenExchangeRequestEscapesReservedCharsInSecret() {
-        let c = OuraCredentials(clientId: "cid", clientSecret: "aB+cd/eF12==", redirectURI: "noop://oura/callback")
+        let c = OuraCredentials(clientId: "cid", clientSecret: "aB+cd/eF12==", redirectURI: "zoop://oura/callback")
         let req = OuraOAuth.tokenExchangeRequest(credentials: c, code: "x+y")
         let body = String(data: req.httpBody ?? Data(), encoding: .utf8) ?? ""
         XCTAssertTrue(body.contains("client_secret=aB%2Bcd%2FeF12%3D%3D"))   // + -> %2B, / -> %2F, = -> %3D

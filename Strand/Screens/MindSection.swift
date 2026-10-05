@@ -42,7 +42,7 @@ struct MindSection: View {
     private static let minAbsR = 0.3
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Mind", overline: "Mood, alongside your body's signals")
 
             checkInCard
@@ -64,7 +64,7 @@ struct MindSection: View {
 
     @ViewBuilder
     private var checkInCard: some View {
-        NoopCard(tint: StrandPalette.restColor) {
+        ZoopCard(tint: StrandPalette.restColor) {
             if let mood = todayMood, !editing {
                 answeredRow(mood)
             } else {
@@ -75,11 +75,11 @@ struct MindSection: View {
 
     /// The full five-face prompt (also shown while editing an existing answer).
     private var askRow: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             Text("How's your mood today?")
                 .font(StrandFont.headline)
                 .foregroundStyle(StrandPalette.textPrimary)
-            HStack(spacing: NoopMetrics.gap) {
+            HStack(spacing: ZoopMetrics.gap) {
                 ForEach(MoodStore.scale, id: \.self) { value in
                     faceButton(value)
                 }
@@ -114,7 +114,7 @@ struct MindSection: View {
 
     /// The collapsed state: chosen face + label + "Edit".
     private func answeredRow(_ mood: Int) -> some View {
-        HStack(spacing: NoopMetrics.gap) {
+        HStack(spacing: ZoopMetrics.gap) {
             Text(MoodStore.face(for: mood))
                 .font(StrandFont.number(24))
                 .accessibilityHidden(true)
@@ -150,13 +150,13 @@ struct MindSection: View {
     // MARK: - Insights card
 
     private var insightsCard: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             Text("What tracks your mood (\(moodDayCount) check-ins)")
                 .strandOverline()
             // Each correlation as its own frosted Rest-tinted insight card. The indigo wash is
             // calm and carries no valence — a link is just a link, never framed as good or bad.
             ForEach(lines) { line in
-                NoopCard(tint: StrandPalette.restColor) {
+                ZoopCard(tint: StrandPalette.restColor) {
                     HStack(alignment: .top, spacing: 12) {
                         // A small liquid vessel filled to the link's strength (|r|) marks the row and reads
                         // its magnitude at a glance — the leading-gauge idiom Insights' effect cards use.

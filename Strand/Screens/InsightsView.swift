@@ -141,11 +141,11 @@ struct InsightsView: View {
     //
     // A running n-of-1 plan: one behaviour, one outcome, a short window. All five
     // keys mirror the Android SharedPreferences keys (InsightsScreen.kt) for parity.
-    @AppStorage("noop.experiment.behaviour")    private var experimentBehaviour = ""
-    @AppStorage("noop.experiment.outcome")      private var experimentOutcomeRaw = Outcome.recovery.rawValue
-    @AppStorage("noop.experiment.startedDay")   private var experimentStartedDay = ""
-    @AppStorage("noop.experiment.durationDays") private var experimentDurationDays = ExperimentLength.twoWeeks.rawValue
-    @AppStorage("noop.experiment.baselineDays") private var experimentBaselineDays = ExperimentLength.twoWeeks.rawValue
+    @AppStorage("zoop.experiment.behaviour")    private var experimentBehaviour = ""
+    @AppStorage("zoop.experiment.outcome")      private var experimentOutcomeRaw = Outcome.recovery.rawValue
+    @AppStorage("zoop.experiment.startedDay")   private var experimentStartedDay = ""
+    @AppStorage("zoop.experiment.durationDays") private var experimentDurationDays = ExperimentLength.twoWeeks.rawValue
+    @AppStorage("zoop.experiment.baselineDays") private var experimentBaselineDays = ExperimentLength.twoWeeks.rawValue
 
     /// The journal catalog, read for `hiddenQuestions` so a behaviour the user has
     /// hidden never resurfaces as an eligible experiment candidate (triage fix b).
@@ -221,7 +221,7 @@ struct InsightsView: View {
             if !loaded {
                 ComingSoon(what: "Reading your journal and outcomes…")
             } else {
-                VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                     // v5: a single row into the "What moves you" hub, the lag-aware ranked-effect feed
                     // + alcohol/caffeine dose-response. Reachable as its own destination too; this is the
                     // honest in-Insights entry point.
@@ -244,7 +244,7 @@ struct InsightsView: View {
                     experimentSection
                     if behaviours.isEmpty {
                         // No journal yet, explain, without dead-ending on a paid export.
-                        NoopCard {
+                        ZoopCard {
                             Text("Log behaviours above. After a few days of answers, NOOP ranks how each one moves your charge, HRV and rest. Importing a WHOOP export (which includes its journal) backfills history instantly.")
                                 .font(StrandFont.subhead)
                                 .foregroundStyle(StrandPalette.textSecondary)
@@ -295,7 +295,7 @@ struct InsightsView: View {
     /// The deep-link row into the v5 "What moves you" hub.
     private var whatMovesYouLink: some View {
         Button { router.openInsightsHub() } label: {
-            NoopCard(tint: StrandPalette.chargeColor) {
+            ZoopCard(tint: StrandPalette.chargeColor) {
                 HStack(spacing: 12) {
                     Image(systemName: "wand.and.sparkles")
                         .font(.system(size: 16, weight: .semibold))
@@ -551,11 +551,11 @@ struct InsightsView: View {
     // device: state is @AppStorage and "Mark done" writes a normal journal answer.
 
     private var experimentSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Personal Experiment",
                           overline: "N-of-1 protocol",
                           trailing: activeExperimentSnapshot?.phaseLabel ?? String(localized: "Setup"))
-            NoopCard {
+            ZoopCard {
                 if let snapshot = activeExperimentSnapshot {
                     activeExperimentCard(snapshot)
                 } else {
@@ -567,7 +567,7 @@ struct InsightsView: View {
 
     @ViewBuilder private var experimentSetupCard: some View {
         let candidates = experimentCandidates
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Run a clean personal test")
@@ -589,9 +589,9 @@ struct InsightsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 LazyVGrid(
-                    columns: [GridItem(.adaptive(minimum: 220), spacing: NoopMetrics.gap)],
+                    columns: [GridItem(.adaptive(minimum: 220), spacing: ZoopMetrics.gap)],
                     alignment: .leading,
-                    spacing: NoopMetrics.gap
+                    spacing: ZoopMetrics.gap
                 ) {
                     experimentField("Behaviour") {
                         Picker("Behaviour", selection: experimentBehaviourBinding) {
@@ -614,7 +614,7 @@ struct InsightsView: View {
                     }
                 }
 
-                NoopButton("Start experiment", systemImage: "flask.fill",
+                ZoopButton("Start experiment", systemImage: "flask.fill",
                            kind: .primary, fullWidth: true) { startExperiment() }
                     .disabled(resolvedExperimentBehaviour == nil)
                     .help("Start a local experiment using today's date as day one.")
@@ -623,7 +623,7 @@ struct InsightsView: View {
     }
 
     private func activeExperimentCard(_ snapshot: ExperimentSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(verbatim: snapshot.behavior)
@@ -645,9 +645,9 @@ struct InsightsView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 154), spacing: NoopMetrics.gap)],
+                columns: [GridItem(.adaptive(minimum: 154), spacing: ZoopMetrics.gap)],
                 alignment: .leading,
-                spacing: NoopMetrics.gap
+                spacing: ZoopMetrics.gap
             ) {
                 experimentMeasure("Baseline",
                                   value: snapshot.baselineMean.map { formatOutcome($0, as: snapshot.outcome) } ?? "—",
@@ -685,24 +685,24 @@ struct InsightsView: View {
                 .foregroundStyle(StrandPalette.textTertiary)
             }
 
-            HStack(spacing: NoopMetrics.rowSpacing) {
+            HStack(spacing: ZoopMetrics.rowSpacing) {
                 Button { Task { await markExperimentToday(true) } } label: {
                     Label("Mark done today", systemImage: "checkmark.circle.fill")
                 }
-                .buttonStyle(NoopButtonStyle(.primary))
+                .buttonStyle(ZoopButtonStyle(.primary))
                 .disabled(snapshot.loggedToday)
 
                 Button { Task { await markExperimentToday(false) } } label: {
                     Label("Skip today", systemImage: "xmark.circle")
                 }
-                .buttonStyle(NoopButtonStyle(.secondary))
+                .buttonStyle(ZoopButtonStyle(.secondary))
 
                 Spacer(minLength: 8)
 
                 Button(role: .destructive) { endExperiment() } label: {
                     Label("End", systemImage: "stop.circle")
                 }
-                .buttonStyle(NoopButtonStyle(.destructive))
+                .buttonStyle(ZoopButtonStyle(.destructive))
                 .help("End the experiment plan. Journal and metric history stay untouched.")
             }
         }
@@ -710,7 +710,7 @@ struct InsightsView: View {
 
     private func experimentField<Content: View>(_ title: LocalizedStringKey,
                                                 @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
             Text(title)
                 .font(StrandFont.overline)
                 .tracking(StrandFont.overlineTracking)
@@ -718,16 +718,16 @@ struct InsightsView: View {
             content()
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(NoopMetrics.space3)
+        .padding(ZoopMetrics.space3)
         .frame(maxWidth: .infinity, minHeight: 82, alignment: .topLeading)
-        .background(NoopPanelSurface(cornerRadius: 8))
+        .background(ZoopPanelSurface(cornerRadius: 8))
     }
 
     private func experimentMeasure(_ label: LocalizedStringKey,
                                    value: String,
                                    caption: String,
                                    tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
             Text(label)
                 .font(StrandFont.caption)
                 .foregroundStyle(StrandPalette.textTertiary)
@@ -743,9 +743,9 @@ struct InsightsView: View {
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(NoopMetrics.space3)
+        .padding(ZoopMetrics.space3)
         .frame(maxWidth: .infinity, minHeight: 92, alignment: .topLeading)
-        .background(NoopPanelSurface(tint: tint, cornerRadius: 8))
+        .background(ZoopPanelSurface(tint: tint, cornerRadius: 8))
     }
 
     /// Behaviours the user actually has data for: distinct logged journal questions
@@ -996,19 +996,19 @@ struct InsightsView: View {
     private var behaviourSection: some View {
         // `ranked` is memoized in @State (see recomputeRanked()); reading it
         // here does no expensive work per render.
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             // Keep the outcome labels intrinsic while they fit beside the header. When either
             // localization or Dynamic Type needs more room, move the control to its own row.
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .center) {
                     SectionHeader("Behaviour Effects",
                                   overline: "What moves your \(outcome.outcomeName.lowercased())")
-                    Spacer(minLength: NoopMetrics.space2)
+                    Spacer(minLength: ZoopMetrics.space2)
                     behaviourOutcomeControl
                         .fixedSize(horizontal: true, vertical: false)
                 }
 
-                VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
                     SectionHeader("Behaviour Effects",
                                   overline: "What moves your \(outcome.outcomeName.lowercased())")
                     behaviourOutcomeControl
@@ -1034,7 +1034,7 @@ struct InsightsView: View {
     }
 
     private var noEffects: some View {
-        NoopCard {
+        ZoopCard {
             Text(String(localized: "Not enough overlap between your journal answers and \(outcome.outcomeName.lowercased()) to measure an effect yet. Keep logging. Effects need days both with and without each behaviour."))
                 .font(StrandFont.subhead)
                 .foregroundStyle(StrandPalette.textTertiary)
@@ -1071,8 +1071,8 @@ struct InsightsView: View {
         // The card wash reads as the OUTCOME's colour world (so the whole Behaviour
         // Effects section sits in one world), while the dot / StatTile accents stay
         // sign-aware to flag the good/bad direction.
-        return NoopCard(tint: outcome.domain.color) {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        return ZoopCard(tint: outcome.domain.color) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
 
                 // Header: behaviour name + significance pill. The old direction dot becomes a small liquid
                 // vessel filled to the effect magnitude (|Cohen's d|, capped where large is about 0.8+) in
@@ -1100,9 +1100,9 @@ struct InsightsView: View {
 
                 // With / without means as uniform StatTiles.
                 LazyVGrid(
-                    columns: [GridItem(.adaptive(minimum: 168), spacing: NoopMetrics.gap)],
+                    columns: [GridItem(.adaptive(minimum: 168), spacing: ZoopMetrics.gap)],
                     alignment: .leading,
-                    spacing: NoopMetrics.gap
+                    spacing: ZoopMetrics.gap
                 ) {
                     StatTile(label: "With",
                              value: formatOutcome(e.meanWith),
@@ -1144,15 +1144,15 @@ struct InsightsView: View {
 
     // MARK: - Activity Cost section (#439)
 
-    /// "What each activity costs your recovery": one ranked NoopCard per sport that cleared the
+    /// "What each activity costs your recovery": one ranked ZoopCard per sport that cleared the
     /// engine's minSessions gate, each carrying next-morning Charge vs rest baseline, days-to-baseline,
     /// the sample count + confidence pill, and the engine's plain-English sentence. Sign-aware tint:
     /// a positive cost (recovery dipped) reads warmer/critical, a recovery-POSITIVE delta reads green.
     @ViewBuilder private var activityCostSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Activity Cost", overline: "What each activity costs your recovery")
             if activityCosts.isEmpty {
-                NoopCard {
+                ZoopCard {
                     Text("Tag a few sessions of the same activity and NOOP will learn its personal recovery cost.")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textSecondary)
@@ -1179,8 +1179,8 @@ struct InsightsView: View {
         let scoreState: ScoreState = cost.confidence == .solid ? .solid : .building
         let pointsLabel = String(format: "%@%.0f", cost.delta >= 0 ? "−" : "+", abs(cost.delta))
 
-        return NoopCard(tint: accent) {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        return ZoopCard(tint: accent) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 HStack(alignment: .center, spacing: 8) {
                     Image(systemName: sportSymbol(cost.sport))
                         .font(.system(size: 14, weight: .semibold))
@@ -1197,8 +1197,8 @@ struct InsightsView: View {
                     .font(StrandFont.subhead)
                     .foregroundStyle(StrandPalette.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: NoopMetrics.gap)],
-                          alignment: .leading, spacing: NoopMetrics.gap) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: ZoopMetrics.gap)],
+                          alignment: .leading, spacing: ZoopMetrics.gap) {
                     StatTile(label: "Next morning",
                              value: "\(Int(cost.meanNextMorning.rounded()))",
                              caption: String(localized: "Charge · \(pointsLabel) pts"),
@@ -1224,11 +1224,11 @@ struct InsightsView: View {
         // `relationships` is memoized in @State (see recomputeRelationships());
         // the four Pearson correlations no longer run per render.
         let rels = relationships
-        return VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        return VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Metric Relationships", overline: "Pearson r")
 
             if rels.isEmpty {
-                NoopCard {
+                ZoopCard {
                     Text("Not enough overlapping history to correlate your metrics yet.")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
@@ -1237,7 +1237,7 @@ struct InsightsView: View {
             } else {
                 // Every curated relationship terminates in Charge, so the card sits in
                 // the Charge (green) colour world via a faint wash.
-                NoopCard(tint: DomainTheme.charge.color) {
+                ZoopCard(tint: DomainTheme.charge.color) {
                     VStack(spacing: 0) {
                         ForEach(Array(rels.enumerated()), id: \.element.id) { idx, rel in
                             relationshipRow(rel)

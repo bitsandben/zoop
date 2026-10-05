@@ -164,7 +164,7 @@ enum MetricCatalog {
         // (`.metricSourced` / `todayStepsMetric`), which is what actually needs it.
         d("steps", String(localized: "Steps"), "Effort", "steps", "my-whoop", "figure.walk", 0, true),
         // On-device steps ESTIMATE for a WHOOP 4.0 (no real step count over BLE): the strap's daily
-        // motion volume scaled by a personal calibration. Stored under the computed "-noop" source, so
+        // motion volume scaled by a personal calibration. Stored under the computed "-zoop" source, so
         // it reads through the same exploreSeries fallback fitness_age/vitality use. Distinct from the
         // real "steps" above — labelled "(estimated)" so it's never mistaken for a measured count.
         d("steps_est", String(localized: "Steps (estimated)"), "Effort", "steps", "my-whoop", "figure.walk.motion", 0, true,

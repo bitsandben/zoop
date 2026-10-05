@@ -44,7 +44,7 @@ import WhoopStore
         fileprivate var cycles: [String: CachedCycle] = [:]
         fileprivate var loads: [String: CachedLoad] = [:]
     }
-    private static func computedId(_ owner: String) -> String { owner + "-noop" }
+    private static func computedId(_ owner: String) -> String { owner + "-zoop" }
 
     static func recover(candidates: [(owner: String, priority: Int)], reader: BoundaryRecoveryReader,
                                 claimedDays: Set<String>, windowStart: Int, now: Int,

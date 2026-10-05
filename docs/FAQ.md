@@ -57,7 +57,7 @@ Oura history importer is inbound-only.
 
 These exports can carry your data off-device **when you choose to use them**:
 
-- a `.noopbak` backup, which is a copy of the whole local database
+- a `.zoopbak` backup, which is a copy of the whole local database
 - the CSV/JSON export
 - the default-off Experimental self-hosted push on Android, to an endpoint you own
 

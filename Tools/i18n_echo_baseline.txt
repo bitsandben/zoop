@@ -1,9 +1,9 @@
 # Echo baseline: localizations whose value is still the English source verbatim (i18n_audit.py
 # `echoed_translation_counts`). Ratchets DOWN — lower a number as echoes get real translations;
 # a NEW echo that pushes a count above its line fails CI. Format: <catalog-or-strings.xml> <lang> <count>.
-NOOPWatch/Localizable.xcstrings pl 1
-NOOPWatch/Localizable.xcstrings pt-PT 1
-NOOPWatchComplications/Localizable.xcstrings es 1
+ZoopWatch/Localizable.xcstrings pl 1
+ZoopWatch/Localizable.xcstrings pt-PT 1
+ZoopWatchComplications/Localizable.xcstrings es 1
 Packages/StrandDesign/Sources/StrandDesign/Resources/Localizable.xcstrings de 2
 Packages/StrandDesign/Sources/StrandDesign/Resources/Localizable.xcstrings es 4
 Packages/StrandDesign/Sources/StrandDesign/Resources/Localizable.xcstrings fr 1

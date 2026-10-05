@@ -86,7 +86,7 @@ enum DebugDataDiagnostics {
         // Devices block further down IS resolved per device, so a multi-strap export carries the correct
         // per-device value there; this line is superseded by it and wants the same follow-up as the Apple
         // write site, which has no peripheral identity to key on today.
-        lines.append("Firmware:    \(d.string(forKey: "noop.lastFirmware") ?? "unknown (connect to record)")")
+        lines.append("Firmware:    \(d.string(forKey: "zoop.lastFirmware") ?? "unknown (connect to record)")")
         // NOTE: still the legacy GLOBAL key, for the same reason the firmware line above is — strapStateLines
         // is sync and prefs-only by contract, and the per-device rule needs a registry read for pairedCount.
         // The BLE layer therefore keeps writing the global alongside the per-device one; without that this
@@ -232,7 +232,7 @@ enum DebugDataDiagnostics {
                                  live: nil,
                                  perDevice: FirmwareAttribution.prefKey(peripheralId: $0.peripheralId)
                                      .flatMap { UserDefaults.standard.string(forKey: $0) },
-                                 legacyGlobal: UserDefaults.standard.string(forKey: "noop.lastFirmware"),
+                                 legacyGlobal: UserDefaults.standard.string(forKey: "zoop.lastFirmware"),
                                  pairedCount: invDevices.count))
             }
             let invActive = (try? invRegistry.activeDeviceId()) ?? nil
@@ -265,7 +265,7 @@ enum DebugDataDiagnostics {
         var recent = await repo.sleepSessions(from: nowSec - 14 * 86400, to: nowSec, limit: 200)
         if recent.isEmpty {
             // #1150: a Bluetooth-only strap (no WHOOP/Apple import) banks every night under the COMPUTED
-            // "-noop" source, so the imported union above is empty and the funnel reported "no session in
+            // "-zoop" source, so the imported union above is empty and the funnel reported "no session in
             // 14 days" for a 4.0 user whose nights are all computed — even though computed session rows
             // exist. Fall back to the computed sessions so a real night is analysed. Only on an empty
             // imported read ⇒ a mixed/imported install's funnel is byte-unchanged. Mirrors Android funnelLines.
@@ -396,7 +396,7 @@ enum DebugDataDiagnostics {
         }
         let nowSec = Int(Date().timeIntervalSince1970)
         var seen = Set<String>()
-        let ids = [did, "my-whoop", "\(did)-noop", "my-whoop-noop",
+        let ids = [did, "my-whoop", "\(did)-zoop", "my-whoop-zoop",
                    "activity-file", "lifting", "apple-health", "health-connect"].filter { seen.insert($0).inserted }
         var parts: [String] = []
         var latestTs = -1
@@ -427,7 +427,7 @@ enum DebugDataDiagnostics {
             return lines
         }
         var seen = Set<String>()
-        let ids = [did, "my-whoop", "\(did)-noop", "my-whoop-noop",
+        let ids = [did, "my-whoop", "\(did)-zoop", "my-whoop-zoop",
                    "apple-health", "health-connect"].filter { seen.insert($0).inserted }
         var parts: [String] = []
         var spine: [DailyMetric] = []
@@ -439,8 +439,8 @@ enum DebugDataDiagnostics {
             parts.append("\(id)=\(rows.count)")
             if id == "my-whoop" { spine = rows }
             if id == did { activeRows = rows }
-            if id == "\(did)-noop" { computedActive = rows }
-            if id == "my-whoop-noop" { computedSpine = rows }
+            if id == "\(did)-zoop" { computedActive = rows }
+            if id == "my-whoop-zoop" { computedSpine = rows }
         }
         lines.append("Days: " + parts.joined(separator: "  "))
         // #731: this line used to read ONLY "my-whoop" and label it "Recent 7d". For a live-BLE user whose
@@ -463,11 +463,11 @@ enum DebugDataDiagnostics {
         var emitted = false
         if let l = recentLine(activeRows, id: did) { lines.append(l); emitted = true }
         if did != "my-whoop", let l = recentLine(spine, id: "my-whoop") { lines.append(l); emitted = true }
-        // The COMPUTED "-noop" spine, where steps/activeKcalEst are actually written — compare with the raw
+        // The COMPUTED "-zoop" spine, where steps/activeKcalEst are actually written — compare with the raw
         // lines above: kcal/steps populated here but 0 there ⇒ the raw merge/view drops them (cosmetic); 0 on
         // BOTH ⇒ genuinely not computed (a real gap). Mirrors the Android twin.
-        if let l = recentLine(computedActive, id: "\(did)-noop") { lines.append(l); emitted = true }
-        if did != "my-whoop", let l = recentLine(computedSpine, id: "my-whoop-noop") { lines.append(l); emitted = true }
+        if let l = recentLine(computedActive, id: "\(did)-zoop") { lines.append(l); emitted = true }
+        if did != "my-whoop", let l = recentLine(computedSpine, id: "my-whoop-zoop") { lines.append(l); emitted = true }
         if !emitted {
             lines.append("Recent: no day rows")
         }
@@ -665,7 +665,7 @@ enum DebugDataDiagnostics {
     /// right; non-empty names the id that has them so the split is visible rather than inferred.
     ///
     /// Pure so the wording is unit-tested without a database, a strap, or a registry. Kotlin twin:
-    /// `com.noop.testcentre.orphanedSamplesLine`.
+    /// `com.zoop.testcentre.orphanedSamplesLine`.
     /// `otherLiveStrapIds` is the registered, non-archived device ids OTHER than the active one. It exists
     /// because the "not being read" wording was itself an over-assertion — the mirror image of the one it
     /// replaced. A wearer with TWO straps has nights owned by the other one, and `DayOwnerResolver` hands

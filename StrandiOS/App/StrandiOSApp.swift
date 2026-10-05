@@ -315,7 +315,7 @@ struct StrandiOSApp: App {
                 .onChange(of: health.auth) { _, auth in
                     HealthWritebackBackgroundScheduler.updateSchedule(isAuthorized: auth == .authorized)
                 }
-                // #581: the `noop://import-health` deep link the iOS Shortcut opens after building the
+                // #581: the `zoop://import-health` deep link the iOS Shortcut opens after building the
                 // HealthKit-free payload. Filter on the host so other future schemes don't trip the
                 // importer; macOS never registers the scheme so this stays iOS-only.
                 .onOpenURL { url in
@@ -452,9 +452,9 @@ struct StrandiOSApp: App {
 /// excluded `RootView()` sidebar for `RootTabView()`. The shared `OnboardingWizard`, `TermsGateView`,
 /// `WhatsNewView`, `AppChangelog`, and `Terms` symbols all compile into the iOS target unchanged.
 private struct iOSRootView: View {
-    @AppStorage("noop.onboarded") private var onboarded = false
-    @AppStorage("noop.lastSeenChangelogVersion") private var lastSeenChangelog = ""
-    @AppStorage("noop.acceptedTermsVersion") private var acceptedTerms = ""
+    @AppStorage("zoop.onboarded") private var onboarded = false
+    @AppStorage("zoop.lastSeenChangelogVersion") private var lastSeenChangelog = ""
+    @AppStorage("zoop.acceptedTermsVersion") private var acceptedTerms = ""
     @State private var showWhatsNew = false
     /// Starts false so a cold-launch external action can't race this view's onAppear decision about the
     /// automatic What's New sheet. It becomes true only when no sheet is due or its dismissal completes.

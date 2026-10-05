@@ -119,7 +119,7 @@ final class VitalSourceResolutionTests: XCTestCase {
     func testComputedSkinTemperatureShowsComputedCaption() {
         let readings = BodyVitalSigns.readings(
             sourceRows: [
-                SourcedDailyMetric(metric: daily(day: "2026-06-12", skinTempDevC: 0.2), source: .noopComputed)
+                SourcedDailyMetric(metric: daily(day: "2026-06-12", skinTempDevC: 0.2), source: .zoopComputed)
             ],
             temperatureUnit: .celsius,
             // Pin the clock: these fixtures are dated 2026-06-12, and the carry is staleness-bounded
@@ -132,7 +132,7 @@ final class VitalSourceResolutionTests: XCTestCase {
 
         let skin = readings.first { $0.key == "skin" }
         XCTAssertEqual(skin?.value, 0.2)
-        XCTAssertEqual(skin?.source, .noopComputed)
+        XCTAssertEqual(skin?.source, .zoopComputed)
         // #622/#1224: computed skin temp is a ±°C deviation from the personal baseline, so its caption
         // reads "vs baseline" rather than the generic "NOOP computed" other computed vitals get.
         XCTAssertTrue(skin?.stateCaption.contains("vs baseline") == true)
@@ -142,7 +142,7 @@ final class VitalSourceResolutionTests: XCTestCase {
         let readings = BodyVitalSigns.readings(
             sourceRows: [
                 SourcedDailyMetric(metric: daily(day: "2026-06-11", respRateBpm: 15.2), source: .whoopImport),
-                SourcedDailyMetric(metric: daily(day: "2026-06-12", respRateBpm: 16.1), source: .noopComputed)
+                SourcedDailyMetric(metric: daily(day: "2026-06-12", respRateBpm: 16.1), source: .zoopComputed)
             ],
             temperatureUnit: .celsius,
             now: localNoon(day: "2026-06-13")
@@ -151,7 +151,7 @@ final class VitalSourceResolutionTests: XCTestCase {
         let resp = readings.first { $0.key == "resp" }
         XCTAssertEqual(resp?.day, "2026-06-12")
         XCTAssertEqual(resp?.value, 16.1)
-        XCTAssertEqual(resp?.source, .noopComputed)
+        XCTAssertEqual(resp?.source, .zoopComputed)
         XCTAssertEqual(BodyVitalSigns.latestDayLabel(readings), BodyVitalReading.dayLabel("2026-06-12"))
     }
 
@@ -165,7 +165,7 @@ final class VitalSourceResolutionTests: XCTestCase {
 
         let readings = BodyVitalSigns.readings(
             sourceRows: [
-                SourcedDailyMetric(metric: daily(day: "2026-06-12", spo2Pct: nil), source: .noopComputed)
+                SourcedDailyMetric(metric: daily(day: "2026-06-12", spo2Pct: nil), source: .zoopComputed)
             ],
             temperatureUnit: .celsius,
             now: localNoon(day: "2026-06-13"),
@@ -174,7 +174,7 @@ final class VitalSourceResolutionTests: XCTestCase {
 
         let spo2 = readings.first { $0.key == "spo2" }
         XCTAssertEqual(spo2?.value, 96.0)
-        XCTAssertEqual(spo2?.source, .noopComputed)
+        XCTAssertEqual(spo2?.source, .zoopComputed)
         XCTAssertTrue(spo2?.missingCaption.contains("strap estimate") == true)
     }
 
@@ -184,7 +184,7 @@ final class VitalSourceResolutionTests: XCTestCase {
 
         let readings = BodyVitalSigns.readings(
             sourceRows: [
-                SourcedDailyMetric(metric: daily(day: "2026-06-12", spo2Pct: nil), source: .noopComputed)
+                SourcedDailyMetric(metric: daily(day: "2026-06-12", spo2Pct: nil), source: .zoopComputed)
             ],
             temperatureUnit: .celsius,
             now: localNoon(day: "2026-06-13"),
@@ -249,7 +249,7 @@ final class VitalSourceResolutionTests: XCTestCase {
     func testRecentRespiratoryRateStillCarries() {
         let readings = BodyVitalSigns.readings(
             sourceRows: [
-                SourcedDailyMetric(metric: daily(day: "2026-08-12", respRateBpm: 14.1), source: .noopComputed)
+                SourcedDailyMetric(metric: daily(day: "2026-08-12", respRateBpm: 14.1), source: .zoopComputed)
             ],
             temperatureUnit: .celsius,
             now: localNoon(day: "2026-08-13")

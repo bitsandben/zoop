@@ -7,7 +7,7 @@
 //  one shared tilt source. Colours come from StrandDesign tokens at the call site.
 
 import SwiftUI
-import StrandDesign   // NoopMotionState — the shared quiet-motion gate
+import StrandDesign   // ZoopMotionState — the shared quiet-motion gate
 
 // MARK: - Renderers (pure GraphicsContext drawing)
 
@@ -34,8 +34,8 @@ enum LiquidRender {
         // No separate inset circle / hard ring line.
         ctx.fill(Path(ellipseIn: rect), with: .linearGradient(
             Gradient(colors: [
-                NoopVisualStyle.surfaceTop,
-                NoopVisualStyle.surfaceBottom
+                ZoopVisualStyle.surfaceTop,
+                ZoopVisualStyle.surfaceBottom
             ]),
             startPoint: CGPoint(x: rect.midX, y: rect.minY),
             endPoint: CGPoint(x: rect.midX, y: rect.maxY)
@@ -69,14 +69,14 @@ enum LiquidRender {
         ctx.stroke(track, with: .linearGradient(
             Gradient(colors: [
                 Color.white.opacity(0.08),
-                NoopVisualStyle.border.opacity(0.18),
-                NoopVisualStyle.border.opacity(0.50)
+                ZoopVisualStyle.border.opacity(0.18),
+                ZoopVisualStyle.border.opacity(0.50)
             ]),
             startPoint: CGPoint(x: rect.midX, y: rect.minY),
             endPoint: CGPoint(x: rect.midX, y: rect.maxY)
         ), style: StrokeStyle(lineWidth: lineWidth + 1.6, lineCap: .round))
 
-        ctx.stroke(track, with: .color(NoopVisualStyle.border.opacity(0.72)), style: cap)
+        ctx.stroke(track, with: .color(ZoopVisualStyle.border.opacity(0.72)), style: cap)
 
         let level = max(0, min(1, sim.level))
         if level > 0.004 {
@@ -96,7 +96,7 @@ enum LiquidRender {
 
         // Outer instrument rim (unchanged placement).
         ctx.stroke(Path(ellipseIn: rect.insetBy(dx: 0.5, dy: 0.5)),
-                   with: .color(NoopVisualStyle.borderHighlight.opacity(0.55)), lineWidth: 1)
+                   with: .color(ZoopVisualStyle.borderHighlight.opacity(0.55)), lineWidth: 1)
     }
 
     /// Full-span track arc — geometry unchanged from the original vessel.
@@ -132,11 +132,11 @@ enum LiquidRender {
         let w = size.width, h = size.height, r = h / 2
         let outline = Path(roundedRect: CGRect(x: 0.5, y: 0.5, width: w - 1, height: h - 1), cornerRadius: r)
         var ctx = base
-        ctx.fill(outline, with: .color(NoopVisualStyle.inset))
+        ctx.fill(outline, with: .color(ZoopVisualStyle.inset))
         ctx.stroke(
             outline,
-            with: .color(NoopVisualStyle.border.opacity(0.72)),
-            lineWidth: NoopMetrics.hairlineWidth
+            with: .color(ZoopVisualStyle.border.opacity(0.72)),
+            lineWidth: ZoopMetrics.hairlineWidth
         )
 
         var clip = ctx
@@ -322,7 +322,7 @@ struct LiquidVessel: View {
     var tapPassesThrough: Bool = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @ObservedObject private var motion = NoopMotionState.shared
+    @ObservedObject private var motion = ZoopMotionState.shared
     @State private var sim: LiquidSim
     @State private var splashes = 0
     /// Whether the fill is still easing toward `value`: the only time the ring changes (see `gauge`).
@@ -420,7 +420,7 @@ struct LiquidTube: View {
     var usesCleanFill: Bool = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @ObservedObject private var motion = NoopMotionState.shared
+    @ObservedObject private var motion = ZoopMotionState.shared
     @State private var sim = LiquidSim(target: 0)
 
     var body: some View {
@@ -464,7 +464,7 @@ struct LiquidThread: View {
     var animated: Bool = true
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @ObservedObject private var motion = NoopMotionState.shared
+    @ObservedObject private var motion = ZoopMotionState.shared
 
     var body: some View {
         if animated && !motion.poseStill(reduceMotion) { liveThread } else { staticThread }

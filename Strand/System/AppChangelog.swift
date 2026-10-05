@@ -166,7 +166,7 @@ enum AppChangelog {
             title: "Personalized heart-rate zones, compare and switch between straps, and more honest HRV, sleep and Oura reads",
             date: "August 2026",
             items: [
-                "**Personalized heart-rate zones (#531).** Set your own BPM thresholds in a Settings editor; every zone read-out, and your .noopbak backup, uses them.",
+                "**Personalized heart-rate zones (#531).** Set your own BPM thresholds in a Settings editor; every zone read-out, and your .zoopbak backup, uses them.",
                 "**Compare and switch between straps (#1300).** A two-strap comparison card correlates two straps you own, and a switcher flips which one is active — without ever mixing their data.",
                 "**More honest HRV and sleep.** An over-counted night's HRV reading is now captioned \"unverified\" (#1118); sleep debt is measured against your personalized need (#1348); and duplicate/​phantom Oura sleep nights are collapsed (#1284).",
                 "**More of your Oura ring decoded (#1384, #1359, thanks @pipiche38).** The ring's own breath rate and step features are decoded and shown as instrumentation — read off the ring, never scored.",
@@ -747,7 +747,7 @@ enum AppChangelog {
             title: "Updates check GitHub again",
             date: "June 2026",
             items: [
-                "**NOOP is back on GitHub** - and so is **Check for updates**. The in-app update check and the **Settings → About** \"project home\" link now point at github.com/NoopApp/noop again, where releases live (noop.fans stays as a mirror). It's still on-device and only runs when you tap - nothing about you is ever sent.",
+                "**NOOP is back on GitHub** - and so is **Check for updates**. The in-app update check and the **Settings → About** \"project home\" link now point at github.com/ZoopApp/noop again, where releases live (noop.fans stays as a mirror). It's still on-device and only runs when you tap - nothing about you is ever sent.",
             ]),
         Release(
             version: "5.2.5",
@@ -1203,7 +1203,7 @@ enum AppChangelog {
             date: "June 2026",
             items: [
                 "**Sleep (iPhone/Mac):** auto-detection sometimes reads the wrong bed or wake time - now you can fix it. Tap the **pencil** on the Sleep tab to correct a night's **Asleep / Woke** times, and NOOP re-stages the night from the raw sensor data over your corrected window. The correction **sticks** - a later strap sync won't quietly revert it. (For an imported WHOOP-export night, the displayed times update but its recovery/performance stay as WHOOP recorded them.) Thanks @claypilat (#395).",
-                "**Smaller, shareable backups:** exporting your data now produces a compressed **`.noopbak`** file - typically **80-90% smaller** (a 100 MB+ backup becomes ~10-20 MB), small enough to AirDrop, message or email. iPhone, Mac and Android all read each other's, and your older uncompressed backups still import fine. Thanks @ujix (#396).",
+                "**Smaller, shareable backups:** exporting your data now produces a compressed **`.zoopbak`** file - typically **80-90% smaller** (a 100 MB+ backup becomes ~10-20 MB), small enough to AirDrop, message or email. iPhone, Mac and Android all read each other's, and your older uncompressed backups still import fine. Thanks @ujix (#396).",
             ]),
         Release(
             version: "3.4.0",

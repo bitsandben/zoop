@@ -23,8 +23,8 @@ struct PowerSavingView: View {
     var body: some View {
         ScreenScaffold(title: "Power saving",
                        subtitle: "Ease the load on your strap when its battery is running low.") {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
-                NoopCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
+                ZoopCard {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Power saving").strandOverline()
                         Text("The strap keeps banking data on its own, so nothing is lost — NOOP just talks to it less often to help it last until you can charge it.")

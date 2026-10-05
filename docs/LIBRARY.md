@@ -553,7 +553,7 @@ targets: [
 | `Hypnogram` | sleep-stage timeline |
 | `TrendChart`, `Sparkline`, `ChartHover` | line/area charts + hover read-out |
 | `YearHeatStrip` | year-at-a-glance heat strip |
-| `StrandCard`, `NoopCard`, `ChartCard`, `InsightCard` | card containers |
+| `StrandCard`, `ZoopCard`, `ChartCard`, `InsightCard` | card containers |
 | `StatePill`, `ConnectionDot`, `SourceBadge` | status chips / source labels |
 | `SectionHeader`, `StatTile`, `ChartFooter`, `SegmentedPillControl` | layout primitives |
 

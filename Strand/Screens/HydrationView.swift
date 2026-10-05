@@ -7,7 +7,7 @@ import StrandAnalytics
 // Liquid finish: water in a vessel is the literal metaphor, so the hero is the canonical `LiquidVessel`
 // tinted the action blue, filling to today's fraction of goal with the litre figure counting up over it.
 // The day total sits in a filling `LiquidTube` (the same horizontal vessel Today's grid uses), the three
-// quick-log buttons (Sip / Cup / Bottle) stay in the secondary NoopButton style, and the 7-day mini bars
+// quick-log buttons (Sip / Cup / Bottle) stay in the secondary ZoopButton style, and the 7-day mini bars
 // remain. Frosted `card {}` surfaces (rounded 22 + resting hairline), the day-of-sky backdrop, and
 // `LiquidPressStyle` on the tappable drink rows line the screen up with the liquid Today + batch-1 tabs.
 // BYTE-PARITY twin of the Android `HydrationScreen`: the day total + history come from the local-only
@@ -38,7 +38,7 @@ struct HydrationView: View {
     @State private var showCustomSizeSheet = false
 
     /// "Card transparency" (0–100, default 100): fades the hydration cards in lockstep with the frosted
-    /// cards; content stays readable. Mirrors Kotlin `NoopPrefs.cardOpacityPercent`.
+    /// cards; content stays readable. Mirrors Kotlin `ZoopPrefs.cardOpacityPercent`.
     @AppStorage(CardAppearancePrefs.opacityKey) private var cardOpacityPercent = CardAppearancePrefs.defaultPercent
     private var cardOpacity: Double { max(0, min(1, Double(cardOpacityPercent) / 100)) }
 
@@ -53,7 +53,7 @@ struct HydrationView: View {
                        // Liquid finish: the same full-bleed day-of-sky backdrop Today + the other liquid
                        // tabs carry, so Hydration sits in one atmosphere.
                        topBackground: liquidScaffoldSky()) {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 ringSection
                 logSection
                 entriesSection
@@ -94,7 +94,7 @@ struct HydrationView: View {
 
     private var ringSection: some View {
         card {
-            VStack(spacing: NoopMetrics.cardInnerSpacing) {
+            VStack(spacing: ZoopMetrics.cardInnerSpacing) {
                 // The signature liquid gauge, filling the "of goal" fraction in the action blue. Water in
                 // a vessel is the literal metaphor here, so it replaces the old flat progress ring. The
                 // litre figure counts up over it; the vessel fills to the SAME animated `heroFraction`
@@ -132,22 +132,22 @@ struct HydrationView: View {
         content()
             .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(NoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
+            .background(ZoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
     }
 
     // MARK: - Quick log (Sip / Cup / Bottle, secondary style)
 
     private var logSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
-            HStack(spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
+            HStack(spacing: ZoopMetrics.gap) {
                 logButton("Sip", systemImage: "drop", ml: HydrationGoal.sipML)
                 logButton("Cup", systemImage: "cup.and.saucer.fill", ml: HydrationGoal.cupML)
                 logButton("Bottle", systemImage: "drop.fill", ml: HydrationGoal.bottleML)
             }
             // #798 - a custom container the user sizes themselves. Tapping logs it; the pencil opens the
             // size editor so a one-off mug / flask / glass can be set once and reused.
-            HStack(spacing: NoopMetrics.gap) {
-                NoopButton("Custom \(customSizeML) ml", systemImage: "drop.circle", kind: .secondary, fullWidth: true) {
+            HStack(spacing: ZoopMetrics.gap) {
+                ZoopButton("Custom \(customSizeML) ml", systemImage: "drop.circle", kind: .secondary, fullWidth: true) {
                     Task { await add(ml: customSizeML) }
                 }
                 .accessibilityLabel("Log custom \(customSizeML) millilitres")
@@ -156,7 +156,7 @@ struct HydrationView: View {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(StrandPalette.accent)
                         .frame(width: 44, height: 44)
-                        .background(RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous)
+                        .background(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous)
                             .fill(StrandPalette.surfaceInset))
                         .contentShape(Rectangle())
                 }
@@ -169,9 +169,9 @@ struct HydrationView: View {
         }
     }
 
-    /// One quick-add button using the secondary (no-gold) NoopButton style. Logs the amount and refreshes.
+    /// One quick-add button using the secondary (no-gold) ZoopButton style. Logs the amount and refreshes.
     private func logButton(_ title: LocalizedStringKey, systemImage: String, ml: Int) -> some View {
-        NoopButton(title, systemImage: systemImage, kind: .secondary, fullWidth: true) {
+        ZoopButton(title, systemImage: systemImage, kind: .secondary, fullWidth: true) {
             Task { await add(ml: ml) }
         }
         .accessibilityLabel("Log \(title)")
@@ -184,7 +184,7 @@ struct HydrationView: View {
         // count drinks the screen never accounts for, and the day would look like it appeared from nowhere.
         if !entries.isEmpty || importedML > 0 {
             card(padding: 18) {
-                VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     Text("Today's drinks").strandOverline()
                     if importedML > 0 { importedRow }
                     // #842 — render rows in a plain VStack inside the page ScrollView. The previous nested,
@@ -282,7 +282,7 @@ struct HydrationView: View {
 
     private var historySection: some View {
         card(padding: 18) {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 Text("Last 7 days").strandOverline()
                 historyBars
             }
@@ -329,7 +329,7 @@ struct HydrationView: View {
 
     private var todayTotalSection: some View {
         card(padding: 18) {
-            VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
                 Text("Today").strandOverline()
                 if totalML <= 0 {
                     Text("No drinks logged yet. Tap Sip, Cup or Bottle to start.")
@@ -418,7 +418,7 @@ struct HydrationView: View {
 // MARK: - Amount sheet (#798) - edit a drink / set the custom size
 
 /// A small stepper sheet for an ml amount. Reused by the edit-entry and custom-size flows. Tokens only,
-/// NoopButton actions, ARIA labels. Clamps to a sane range so the value stays a real container size.
+/// ZoopButton actions, ARIA labels. Clamps to a sane range so the value stays a real container size.
 private struct HydrationAmountSheet: View {
     let title: LocalizedStringKey
     let initialML: Int
@@ -444,7 +444,7 @@ private struct HydrationAmountSheet: View {
     static func clamp(_ value: Int) -> Int { min(maxML, max(minML, value)) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
             Text(title)
                 .font(StrandFont.title2)
                 .foregroundStyle(StrandPalette.textPrimary)
@@ -465,12 +465,12 @@ private struct HydrationAmountSheet: View {
             }
             .accessibilityLabel("Amount in millilitres")
             .accessibilityValue("\(ml) millilitres")
-            HStack(spacing: NoopMetrics.gap) {
-                NoopButton("Cancel", kind: .secondary, fullWidth: true) { onCancel() }
-                NoopButton("Save", kind: .primary, fullWidth: true) { onSave(Self.clamp(ml)) }
+            HStack(spacing: ZoopMetrics.gap) {
+                ZoopButton("Cancel", kind: .secondary, fullWidth: true) { onCancel() }
+                ZoopButton("Save", kind: .primary, fullWidth: true) { onSave(Self.clamp(ml)) }
             }
         }
-        .padding(NoopMetrics.space5)
+        .padding(ZoopMetrics.space5)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(StrandPalette.surfaceBase.ignoresSafeArea())
         // iOS-only sheet sizing - macOS sheets are free-floating windows and reject detents (see the

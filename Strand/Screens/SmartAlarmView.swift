@@ -47,7 +47,7 @@ struct SmartAlarmView: View {
         // evening wind-down reminder, so naming it "Wind-Down" undersold it. One surface, clearly labelled.
         ScreenScaffold(title: "Alarms",
                        subtitle: "Your strap wake-alarm and the evening wind-down reminder, in one place.") {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 windowHero
                 strapAlarmCard
                 strapRejectedCard   // #34: only shows when the strap keeps refusing the alarm
@@ -83,7 +83,7 @@ struct SmartAlarmView: View {
     private var windowHero: some View {
         ZStack {
             ScenicHeroBackground(domain: .rest)
-                .clipShape(RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
             VStack(alignment: .leading, spacing: 12) {
                 Text("Tonight").strandOverline()
                 HStack(alignment: .firstTextBaseline, spacing: 14) {
@@ -312,7 +312,7 @@ struct SmartAlarmView: View {
                         } label: {
                             Text("Check what the strap has stored")
                         }
-                        .buttonStyle(NoopButtonStyle(.secondary, fullWidth: true))
+                        .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
                         Text("The answer from the strap appears in your strap log and debug export, with the raw bytes it replied with.")
                             .font(StrandFont.footnote)
                             .foregroundStyle(StrandPalette.textTertiary)

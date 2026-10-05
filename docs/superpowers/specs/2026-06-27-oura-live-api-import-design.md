@@ -147,7 +147,7 @@ not new architecture.
 
 ### 5.1 Flow
 1. The user registers a **free OAuth application** on Oura's developer portal once (redirect URI =
-   NOOP's custom scheme, e.g. `noop://oura/callback`), then provides its `client_id` + `client_secret`.
+   NOOP's custom scheme, e.g. `zoop://oura/callback`), then provides its `client_id` + `client_secret`.
    For the personal/one-time case these go into an **untracked xcconfig** (no in-app credential screen to
    build); see §5.3. (A paste-credentials screen is a noted alternative — §12 Q2.)
 2. Tapping **Connect** runs `ASWebAuthenticationSession` against

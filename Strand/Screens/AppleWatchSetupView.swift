@@ -37,10 +37,10 @@ struct AppleWatchSetupView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-                .background(NoopChromeSurface())
+                .background(ZoopChromeSurface())
             Divider().overlay(StrandPalette.hairline)
             ScrollView {
-                VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                     switch step {
                     case .intro:      introBody
                     case .permission: permissionBody
@@ -142,8 +142,8 @@ struct AppleWatchSetupView: View {
     // MARK: - Step 1: what to expect
 
     private var introBody: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
-            NoopCard(tint: StrandPalette.accent) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
+            ZoopCard(tint: StrandPalette.accent) {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(spacing: 10) {
                         Image(systemName: "applewatch")
@@ -178,7 +178,7 @@ struct AppleWatchSetupView: View {
     }
 
     private var goodAtCard: some View {
-        NoopCard(tint: StrandPalette.statusPositive) {
+        ZoopCard(tint: StrandPalette.statusPositive) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("WHAT IT'S GREAT AT").font(StrandFont.overline)
                     .tracking(StrandFont.overlineTracking)
@@ -195,7 +195,7 @@ struct AppleWatchSetupView: View {
     }
 
     private var lighterCard: some View {
-        NoopCard(tint: StrandPalette.statusWarning) {
+        ZoopCard(tint: StrandPalette.statusWarning) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("WHERE IT'S LIGHTER THAN A STRAP").font(StrandFont.overline)
                     .tracking(StrandFont.overlineTracking)
@@ -235,7 +235,7 @@ struct AppleWatchSetupView: View {
 
     @ViewBuilder private var permissionBody: some View {
         #if os(iOS)
-        NoopCard(tint: StrandPalette.metricCyan) {
+        ZoopCard(tint: StrandPalette.metricCyan) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 10) {
                     Image(systemName: "heart.text.square.fill")
@@ -288,7 +288,7 @@ struct AppleWatchSetupView: View {
                     } label: {
                         Label("Allow Apple Health access", systemImage: "heart.fill")
                     }
-                    .buttonStyle(NoopButtonStyle(.primary, fullWidth: true))
+                    .buttonStyle(ZoopButtonStyle(.primary, fullWidth: true))
                     .accessibilityHint("Shows the Apple Health permission sheet")
                     if health.auth == .denied {
                         Text("If you don't see the prompt, turn NOOP on under Settings › Health › Data Access & Devices.")
@@ -319,7 +319,7 @@ struct AppleWatchSetupView: View {
         }
         #else
         // macOS has no HealthKit at all. Be honest: the watch path is an iPhone feature.
-        NoopCard(tint: StrandPalette.metricCyan) {
+        ZoopCard(tint: StrandPalette.metricCyan) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image(systemName: "iphone")

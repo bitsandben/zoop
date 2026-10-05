@@ -78,7 +78,7 @@ struct JournalLogCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             HStack(alignment: .center) {
                 SectionHeader("Journal", overline: "Log")
                 Spacer()
@@ -110,7 +110,7 @@ struct JournalLogCard: View {
                     .onChangeCompat(of: dayOffset) { _ in proxy.scrollTo(dayOffset, anchor: .center) }
                 }
             }
-            NoopCard(tint: StrandPalette.restColor) {
+            ZoopCard(tint: StrandPalette.restColor) {
                 VStack(alignment: .leading, spacing: 10) {
                     Text(editing
                          ? "Rename, regroup, or remove an item to tidy your list. Renaming keeps the original question behind the scenes, so a WHOOP import still lines up. Custom items are deleted; built-in ones are hidden and can be restored below."
@@ -290,7 +290,7 @@ struct JournalLogCard: View {
     }
 
     private func renameSheet(_ item: JournalCatalogItem) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             Text("Rename item").font(StrandFont.headline)
             TextField("Display name", text: $renameDraft)
                 .textFieldStyle(.roundedBorder)
@@ -309,7 +309,7 @@ struct JournalLogCard: View {
                 .buttonStyle(.borderedProminent)
             }
         }
-        .padding(NoopMetrics.space4)
+        .padding(ZoopMetrics.space4)
         .frame(minWidth: 320)
     }
 

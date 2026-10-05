@@ -11,7 +11,7 @@
 ## Global Constraints
 
 Every task implicitly includes these:
-- **Networking only in the app target.** These files live in `Strand/Oura/`. No package gains a `URLSession`/`URLRequest`/`ASWebAuthenticationSession` import. `Strand/` sources are auto-globbed into both the `Strand` (macOS) and `NOOPiOS` targets by `project.yml` — no manifest edit needed for new `.swift` files (but the project must be regenerated: `xcodegen generate`).
+- **Networking only in the app target.** These files live in `Strand/Oura/`. No package gains a `URLSession`/`URLRequest`/`ASWebAuthenticationSession` import. `Strand/` sources are auto-globbed into both the `Strand` (macOS) and `ZoopiOS` targets by `project.yml` — no manifest edit needed for new `.swift` files (but the project must be regenerated: `xcodegen generate`).
 - **Second opt-in network lane.** This is off-by-default and user-initiated (the AI Coach is the first exception). Data flow is inbound (Oura → device, under the user's own OAuth grant). No NOOP server. Tokens live only in the Keychain, never UserDefaults/plist/logs.
 - **BYO Oura app, no PKCE.** OAuth2 authorization-code against Oura: authorize `https://cloud.ouraring.com/oauth/authorize`, token `https://api.ouraring.com/oauth/token`, bearer header `Authorization: Bearer <token>`. `client_id`+`client_secret` come from an untracked xcconfig via Info.plist (Task 5). Scopes (all 8): `email personal daily heartrate workout tag session spo2Daily`.
 - **Testability seam.** Every networked type takes `session: URLSession = .shared` in its initializer (mirroring `AICoachEngine`), so tests inject a `URLSession` backed by a `URLProtocol` stub. Pure builders/parsers are `static` and separately unit-tested (mirroring `AnthropicClient.parseModels`).
@@ -142,7 +142,7 @@ struct OuraTokens: Equatable, Codable {
 /// under a fixed service, so tokens never land in UserDefaults, a plist, or on disk in the clear.
 /// Mirrors AIKeyStore exactly (delete-then-add, kSecAttrAccessibleAfterFirstUnlock).
 enum OuraTokenStore {
-    private static let service = "com.noop.oura"
+    private static let service = "com.zoop.oura"
     private static let account = "oauth-tokens"
 
     private static var baseQuery: [String: Any] {
@@ -227,17 +227,17 @@ final class OuraCredentialsTests: XCTestCase {
     func testParsesCompleteInfoDict() {
         let info: [String: Any] = [
             "OURA_CLIENT_ID": "cid", "OURA_CLIENT_SECRET": "secret",
-            "OURA_REDIRECT_URI": "noop://oura/callback",
+            "OURA_REDIRECT_URI": "zoop://oura/callback",
         ]
         let c = OuraCredentials.from(info)
         XCTAssertEqual(c, OuraCredentials(clientId: "cid", clientSecret: "secret",
-                                          redirectURI: "noop://oura/callback"))
+                                          redirectURI: "zoop://oura/callback"))
     }
 
     func testNilWhenAnyKeyMissingOrBlank() {
         XCTAssertNil(OuraCredentials.from(["OURA_CLIENT_ID": "cid", "OURA_CLIENT_SECRET": "s"]))  // no redirect
         XCTAssertNil(OuraCredentials.from([
-            "OURA_CLIENT_ID": "", "OURA_CLIENT_SECRET": "s", "OURA_REDIRECT_URI": "noop://x",
+            "OURA_CLIENT_ID": "", "OURA_CLIENT_SECRET": "s", "OURA_REDIRECT_URI": "zoop://x",
         ]))  // blank id
     }
 }
@@ -342,7 +342,7 @@ import XCTest
 
 final class OuraOAuthTests: XCTestCase {
     private let creds = OuraCredentials(clientId: "cid", clientSecret: "sec",
-                                        redirectURI: "noop://oura/callback")
+                                        redirectURI: "zoop://oura/callback")
 
     func testAuthorizeURLHasRequiredParams() throws {
         let url = OuraOAuth.authorizeURL(credentials: creds, state: "xyz")
@@ -352,7 +352,7 @@ final class OuraOAuthTests: XCTestCase {
         let q = Dictionary(uniqueKeysWithValues: (comps.queryItems ?? []).map { ($0.name, $0.value) })
         XCTAssertEqual(q["response_type"], "code")
         XCTAssertEqual(q["client_id"], "cid")
-        XCTAssertEqual(q["redirect_uri"], "noop://oura/callback")
+        XCTAssertEqual(q["redirect_uri"], "zoop://oura/callback")
         XCTAssertEqual(q["state"], "xyz")
         XCTAssertEqual(q["scope"], OuraOAuth.scopes.joined(separator: " "))
     }
@@ -817,7 +817,7 @@ git commit -m "feat(oura): OuraAPIClient — next_token paging, 429 backoff, 401
 Register the OAuth redirect URL scheme and wire the untracked credentials xcconfig. No unit test (build config); verify the app still generates + builds.
 
 **Files:**
-- Modify: `project.yml` (add `CFBundleURLTypes` to the `Strand` and `NOOPiOS` targets' Info settings + reference the xcconfig)
+- Modify: `project.yml` (add `CFBundleURLTypes` to the `Strand` and `ZoopiOS` targets' Info settings + reference the xcconfig)
 - Create: `Strand/Oura/OuraSecrets.example.xcconfig` (committed template)
 - Modify: `.gitignore` (ignore `Strand/Oura/OuraSecrets.xcconfig`)
 
@@ -829,10 +829,10 @@ Create `Strand/Oura/OuraSecrets.example.xcconfig`:
 
 ```
 // Copy to OuraSecrets.xcconfig (gitignored) and fill in your own Oura OAuth app's values.
-// Register a free app at the Oura developer portal; set the redirect URI to noop://oura/callback.
+// Register a free app at the Oura developer portal; set the redirect URI to zoop://oura/callback.
 OURA_CLIENT_ID = your_client_id_here
 OURA_CLIENT_SECRET = your_client_secret_here
-OURA_REDIRECT_URI = noop://oura/callback
+OURA_REDIRECT_URI = zoop://oura/callback
 ```
 
 - [ ] **Step 2: Ignore the real xcconfig**
@@ -846,7 +846,7 @@ Strand/Oura/OuraSecrets.xcconfig
 
 - [ ] **Step 3: Wire the xcconfig + URL scheme in `project.yml`**
 
-Under the `Strand` target (and the same under `NOOPiOS`), reference the xcconfig via `configFiles` and add the Info.plist keys. Add to the target's `settings` / `info` block:
+Under the `Strand` target (and the same under `ZoopiOS`), reference the xcconfig via `configFiles` and add the Info.plist keys. Add to the target's `settings` / `info` block:
 
 ```yaml
     # (within target: Strand)
@@ -860,7 +860,7 @@ Under the `Strand` target (and the same under `NOOPiOS`), reference the xcconfig
         OURA_CLIENT_SECRET: $(OURA_CLIENT_SECRET)
         OURA_REDIRECT_URI: $(OURA_REDIRECT_URI)
         CFBundleURLTypes:
-          - CFBundleURLSchemes: [noop]
+          - CFBundleURLSchemes: [zoop]
 ```
 
 (If `configFiles` already exists on the target, merge these keys in. The exact YAML location must match the existing `project.yml` structure — read it first.)

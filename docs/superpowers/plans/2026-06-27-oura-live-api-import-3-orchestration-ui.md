@@ -682,4 +682,4 @@ git commit -m "chore(oura): score cloud-import days + document the second opt-in
 
 ## After Plan 3
 
-The feature is complete and tappable. To use it live, the user registers a free Oura OAuth app (redirect `noop://oura/callback`), drops `client_id`/`secret` into `Strand/Oura/OuraSecrets.xcconfig`, builds, and taps **Connect Oura & Import Everything**. Remaining deferred Minors (from the Plan-1/2 final reviews) — exponential backoff/jitter/pacer in the coordinator, `maxPages` logging, `spo2Daily` scope verification via the sandbox, richer normalization of the 8 raw-only endpoints — are follow-ups, not blockers.
+The feature is complete and tappable. To use it live, the user registers a free Oura OAuth app (redirect `zoop://oura/callback`), drops `client_id`/`secret` into `Strand/Oura/OuraSecrets.xcconfig`, builds, and taps **Connect Oura & Import Everything**. Remaining deferred Minors (from the Plan-1/2 final reviews) — exponential backoff/jitter/pacer in the coordinator, `maxPages` logging, `spo2Daily` scope verification via the sandbox, richer normalization of the 8 raw-only endpoints — are follow-ups, not blockers.

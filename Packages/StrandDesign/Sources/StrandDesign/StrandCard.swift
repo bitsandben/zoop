@@ -7,7 +7,7 @@ import SwiftUI
 // + tint, not a drop shadow). The TINTED variant deepens into a navy bevel
 // (150° #15243C → #0B1424) under a faint per-domain hue wash + a hue-biased border.
 // `.frostedCardSurface(tint:…)` is the one place the look lives so StrandCard /
-// NoopCard / ad-hoc surfaces all share it. Pass a domain tint (or nil for the neutral
+// ZoopCard / ad-hoc surfaces all share it. Pass a domain tint (or nil for the neutral
 // flat raised surface).
 
 public extension View {
@@ -41,7 +41,7 @@ public struct FrostedCardSurface: View {
 
     public var body: some View {
         let op = max(0.0, min(1.0, Double(cardOpacityPercent) / 100.0))
-        NoopPanelSurface(
+        ZoopPanelSurface(
             tint: tint?.opacity(washStrength),
             cornerRadius: cornerRadius,
             elevated: false,
@@ -149,7 +149,7 @@ public struct StrandPressableButtonStyle: ButtonStyle {
     public var scale: CGFloat
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init(cornerRadius: CGFloat = NoopMetrics.cardRadius, scale: CGFloat = 0.985) {
+    public init(cornerRadius: CGFloat = ZoopMetrics.cardRadius, scale: CGFloat = 0.985) {
         self.cornerRadius = cornerRadius
         self.scale = scale
     }
@@ -178,7 +178,7 @@ public struct StrandPressableModifier: ViewModifier {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @GestureState private var pressed = false
 
-    public init(cornerRadius: CGFloat = NoopMetrics.cardRadius, scale: CGFloat = 0.985) {
+    public init(cornerRadius: CGFloat = ZoopMetrics.cardRadius, scale: CGFloat = 0.985) {
         self.cornerRadius = cornerRadius
         self.scale = scale
     }
@@ -203,7 +203,7 @@ public struct StrandPressableModifier: ViewModifier {
 public extension View {
     /// Subtle touch press-down feedback for a tappable card/row that uses `.onTapGesture`
     /// (not a Button). For Buttons/NavigationLinks, use `StrandPressableButtonStyle` instead.
-    func strandPressable(cornerRadius: CGFloat = NoopMetrics.cardRadius, scale: CGFloat = 0.985) -> some View {
+    func strandPressable(cornerRadius: CGFloat = ZoopMetrics.cardRadius, scale: CGFloat = 0.985) -> some View {
         modifier(StrandPressableModifier(cornerRadius: cornerRadius, scale: scale))
     }
 }

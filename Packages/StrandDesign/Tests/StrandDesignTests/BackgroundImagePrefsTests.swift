@@ -2,16 +2,16 @@ import XCTest
 @testable import StrandDesign
 
 /// Pins the custom-background pref contract (#custom-background): the three pref-key strings and the
-/// four `BackgroundFillMode` rawValues must stay byte-identical to the Kotlin `NoopPrefs` /
+/// four `BackgroundFillMode` rawValues must stay byte-identical to the Kotlin `ZoopPrefs` /
 /// `BackgroundFillMode` twins (`BackgroundImagePrefsParityTest`) — a drift on either platform would
 /// read a different value out of the same UserDefaults/SharedPreferences key.
 final class BackgroundImagePrefsTests: XCTestCase {
 
     func testKeyLiteralsMatchTheKotlinContract() {
-        XCTAssertEqual(BackgroundImagePrefs.enabledKey, "noop.backgroundImageEnabled")
-        XCTAssertEqual(BackgroundImagePrefs.fillModeKey, "noop.backgroundFillMode")
-        XCTAssertEqual(BackgroundImagePrefs.presentKey, "noop.backgroundImagePresent")
-        XCTAssertEqual(BackgroundImagePrefs.recentsKey, "noop.backgroundRecents")
+        XCTAssertEqual(BackgroundImagePrefs.enabledKey, "zoop.backgroundImageEnabled")
+        XCTAssertEqual(BackgroundImagePrefs.fillModeKey, "zoop.backgroundFillMode")
+        XCTAssertEqual(BackgroundImagePrefs.presentKey, "zoop.backgroundImagePresent")
+        XCTAssertEqual(BackgroundImagePrefs.recentsKey, "zoop.backgroundRecents")
     }
 
     func testFillModeRawValuesMatchTheKotlinContract() {

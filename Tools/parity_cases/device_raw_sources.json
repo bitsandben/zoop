@@ -5,21 +5,21 @@
       "activeDeviceId": "whoop-new",
       "registeredWhoopIds": ["whoop-archived", "my-whoop", "whoop-paired", "whoop-new"],
       "imported": ["whoop-new", "whoop-archived", "whoop-paired", "my-whoop"],
-      "computed": ["whoop-new-noop", "whoop-archived-noop", "whoop-paired-noop", "my-whoop-noop"]
+      "computed": ["whoop-new-noop", "whoop-archived-noop", "whoop-paired-noop", "my-whoop-zoop"]
     },
     {
       "name": "legacy source collapses without duplicate reads",
       "activeDeviceId": "my-whoop",
       "registeredWhoopIds": ["my-whoop"],
       "imported": ["my-whoop"],
-      "computed": ["my-whoop-noop"]
+      "computed": ["my-whoop-zoop"]
     },
     {
       "name": "explicit non-WHOOP active stays first before archived and paired WHOOP history",
       "activeDeviceId": "polar-h10-live",
       "registeredWhoopIds": ["whoop-archived", "my-whoop", "whoop-paired", "my-whoop"],
       "imported": ["polar-h10-live", "whoop-archived", "whoop-paired", "my-whoop"],
-      "computed": ["polar-h10-live-noop", "whoop-archived-noop", "whoop-paired-noop", "my-whoop-noop"]
+      "computed": ["polar-h10-live-noop", "whoop-archived-noop", "whoop-paired-noop", "my-whoop-zoop"]
     }
   ],
   "rrCases": [

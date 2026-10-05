@@ -11,7 +11,7 @@ import StrandDesign
 // The rawValues are ORIGIN-NAMESPACED (`sleep.*` / `trends.*`) so a hosted id is self-describing on the
 // wire and routes to the right provider, and can never collide with a Today `DashboardCard` id. Keep them
 // byte-identical to the Android `HostedCard` enum so a backup/restore reads the same Today composition on
-// either OS — the selection rides `.noopbak` under the `today.hostedCards` key.
+// either OS — the selection rides `.zoopbak` under the `today.hostedCards` key.
 
 /// One card that can be hosted in Today from another tab. The rawValue is the stable persisted identifier
 /// (origin-namespaced); keep it byte-identical to the Android `HostedCard`.
@@ -52,14 +52,14 @@ enum HostedCard: String, CaseIterable, Identifiable {
     /// first card hosted from a tab other than Sleep. Read-only like `stages`: the Stress tab keeps the
     /// interactive timeline, and the Today host mirrors only the display.
     ///
-    /// The rawValue rides `.noopbak` under `today.hostedCards`, so it is byte-identical to the Android
+    /// The rawValue rides `.zoopbak` under `today.hostedCards`, so it is byte-identical to the Android
     /// `HostedCard.STRESS_TODAY`.
     case stressToday = "stress.today"
     /// Trends tab · "HRV" — the trailing-month HRV trend (#today-hosted-cards). The three Trends-origin
     /// cards render the SAME `ChartCard` + `TrendChart` pair the tab draws, from the SAME resolved
     /// points, parameterised by which `DailyMetric` field they read.
     ///
-    /// These rawValues ride `.noopbak` and are byte-identical to the Android `HostedCard` ids.
+    /// These rawValues ride `.zoopbak` and are byte-identical to the Android `HostedCard` ids.
     case trendHRV = "trends.hrv"
     /// Trends tab · "Resting heart rate" — the trailing-month resting-HR trend.
     case trendRestingHR = "trends.restingHr"
@@ -160,11 +160,11 @@ enum HostedCard: String, CaseIterable, Identifiable {
 
 /// Display-only persistence for the Today-hosted card selection. Holds an ORDERED list of the enabled
 /// hosted cards as a JSON-encoded [String] of ids; a card not in the list is not hosted. Stored in
-/// @AppStorage("today.hostedCards") and whitelisted into `.noopbak`. Mirrors `DashboardCardPrefs`
+/// @AppStorage("today.hostedCards") and whitelisted into `.zoopbak`. Mirrors `DashboardCardPrefs`
 /// byte-for-byte EXCEPT the default is EMPTY — hosting is purely additive/opt-in, so a fresh install
 /// (and every existing user) hosts nothing until they add a card in Customise.
 enum HostedCardPrefs {
-    /// UserDefaults key — a JSON array of `HostedCard` ids in display order. In the `.noopbak` whitelist.
+    /// UserDefaults key — a JSON array of `HostedCard` ids in display order. In the `.zoopbak` whitelist.
     static let selectionKey = "today.hostedCards"
 
     /// Encode an ordered list of hosted cards into the stored JSON string. Falls back to a comma-joined

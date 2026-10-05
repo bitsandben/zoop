@@ -382,7 +382,7 @@ secret payload). The one mild identifier is the strap's advertised name (e.g.
 (`Log.d`/logcat). A user has no reason to emit the connection log to the device-wide
 log, so they don't. Developers who want to watch a session live over
 `adb logcat -s WhoopBleClient` turn on **Settings → Strap → "Debug logging"**
-(persisted as `NoopPrefs.KEY_DEBUG_LOGGING`, default `false`); the flag drives
+(persisted as `ZoopPrefs.KEY_DEBUG_LOGGING`, default `false`); the flag drives
 `WhoopBleClient.debugLogcat`, which gates the single `Log.d` call. The in-app buffer
 and the "Share strap log" export work the same whether or not debug logging is on, so
 the diagnostic path is always available without ever defaulting users into logcat.
@@ -623,7 +623,7 @@ dedicated source id `nutrition-csv`, alongside your other metrics and entirely o
 | CSV import | Zip bomb / oversized entries | 256 MB per-entry cap (declared + running budget); CRC32 verify | `StrandImport/WhoopExportImporter.swift` |
 | CSV import | Arbitrary archive members | Filename allow-list; tolerant optional-column parsing | `StrandImport/WhoopExportImporter.swift` |
 | Data at rest | Disk theft / offline access | Relies on FileVault + sandbox container; SQLCipher available as an option | `WhoopStore/WhoopStore.swift` |
-| Diagnostics log | Leaking the strap log to the device-wide system log | In-app ring buffer only; logcat mirroring is **opt-in** (Settings → Strap → "Debug logging", default off); no biometric values / tokens logged (§2.4) | `android/.../ble/WhoopBleClient.kt` (`debugLogcat`), `android/.../ui/MainActivity.kt` (`NoopPrefs`) |
+| Diagnostics log | Leaking the strap log to the device-wide system log | In-app ring buffer only; logcat mirroring is **opt-in** (Settings → Strap → "Debug logging", default off); no biometric values / tokens logged (§2.4) | `android/.../ble/WhoopBleClient.kt` (`debugLogcat`), `android/.../ui/MainActivity.kt` (`ZoopPrefs`) |
 
 ---
 

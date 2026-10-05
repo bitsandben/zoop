@@ -13,7 +13,7 @@ final class SourceCandidatesOrderTests: XCTestCase {
         let cs = Repository.sourceCandidates(forKey: "rhr", preferredSource: "my-whoop",
                                              actualWhoopSource: "whoop-4A0B")
         XCTAssertEqual(cs.map(\.source),
-                       ["whoop-4A0B", "my-whoop", "whoop-4A0B-noop", "my-whoop-noop", "apple-health"],
+                       ["whoop-4A0B", "my-whoop", "whoop-4A0B-noop", "my-whoop-zoop", "apple-health"],
                        "canonical import must be tried before ANY computed sibling")
     }
 
@@ -27,7 +27,7 @@ final class SourceCandidatesOrderTests: XCTestCase {
         // active == canonical: `uniqued` collapses the pairs; path stays byte-identical to pre-fix.
         let cs = Repository.sourceCandidates(forKey: "rhr", preferredSource: "my-whoop",
                                              actualWhoopSource: "my-whoop")
-        XCTAssertEqual(cs.map(\.source), ["my-whoop", "my-whoop-noop", "apple-health"])
+        XCTAssertEqual(cs.map(\.source), ["my-whoop", "my-whoop-zoop", "apple-health"])
     }
 
     func testAppleFallbackKeepsCompatibleKeyMapping() {

@@ -18,7 +18,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     case polish = "pl"
     case chinese = "zh"
 
-    static let storageKey = "noop.appLanguage"
+    static let storageKey = "zoop.appLanguage"
 
     var id: String { rawValue }
 

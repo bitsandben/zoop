@@ -146,7 +146,7 @@ public final class FrameRouter {
                state.strapFirmware != fw {
                 state.strapFirmware = fw
                 // Persist so the debug export can name the firmware offline (state clears on disconnect).
-                UserDefaults.standard.set(fw, forKey: "noop.lastFirmware")
+                UserDefaults.standard.set(fw, forKey: "zoop.lastFirmware")
             }
 
             // #1634: the 5/MG hello decoded no firmware. The guards fail closed by design, so this is the

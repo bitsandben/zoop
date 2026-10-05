@@ -14,13 +14,13 @@ final class WorkoutNamespaceTests: XCTestCase {
         XCTAssertTrue(ids.contains("strap-a"))
         XCTAssertTrue(ids.contains("my-whoop"))
         XCTAssertTrue(ids.contains("strap-a-noop"), "the computed sibling holds detected bouts")
-        XCTAssertTrue(ids.contains("my-whoop-noop"))
+        XCTAssertTrue(ids.contains("my-whoop-zoop"))
     }
 
     func testAnIdThatIsAlreadyComputedIsNotDoubleSuffixed() {
-        let ids = Repository.workoutNamespaces(rawIds: ["my-whoop-noop"])
-        XCTAssertTrue(ids.contains("my-whoop-noop"))
-        XCTAssertFalse(ids.contains("my-whoop-noop-noop"), "suffixing must be idempotent")
+        let ids = Repository.workoutNamespaces(rawIds: ["my-whoop-zoop"])
+        XCTAssertTrue(ids.contains("my-whoop-zoop"))
+        XCTAssertFalse(ids.contains("my-whoop-zoop-noop"), "suffixing must be idempotent")
     }
 
     func testTheReadIncludesImportNamespaces() {
@@ -51,7 +51,7 @@ final class WorkoutNamespaceTests: XCTestCase {
     func testTheDeletableSetIsASubsetOfWhatTheListReads() {
         // If a delete could target a namespace the list never reads, it would be deleting something the
         // wearer cannot see. Pin the containment rather than the two lists separately.
-        let raw = ["active", "retained", "my-whoop-noop"]
+        let raw = ["active", "retained", "my-whoop-zoop"]
         let readable = Set(Repository.workoutNamespaces(rawIds: raw))
         for id in Repository.deletableWorkoutNamespaces(rawIds: raw) {
             XCTAssertTrue(readable.contains(id), "\(id) is deletable but never read")

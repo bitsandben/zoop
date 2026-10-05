@@ -15,8 +15,8 @@ final class SleepWearHistoryRepairTests: XCTestCase {
             "profile.stepsCalibrationConfidence", "profile.stepsCalibrationManual",
             "profile.stepsManualCoefficient", "profile.stepsHasBankedMotion",
             IntelligenceEngine.effortRescoreFlagKey, IntelligenceEngine.sleepWearRescoreFlagKey,
-            "noop.analyzeWatermark", "analyzeRecent.stepsMotionCache.v1",
-            "noop.hrvBaselineEpoch", "noop.recoveryBaselineEpoch", UnitPrefs.hrvWindowKey,
+            "zoop.analyzeWatermark", "analyzeRecent.stepsMotionCache.v1",
+            "zoop.hrvBaselineEpoch", "zoop.recoveryBaselineEpoch", UnitPrefs.hrvWindowKey,
             RescoreBackgroundScheduler.owedKey, RescoreBackgroundScheduler.owedTokenKey,
             RescoreBackgroundScheduler.lastPassSecondsKey, DayCycleMode.storageKey,
             PuffinExperiment.experimentalSleepV2Key, PuffinExperiment.motionAwareWakeKey,
@@ -70,7 +70,7 @@ final class SleepWearHistoryRepairTests: XCTestCase {
             let cached = DailyMetric(day: cachedDay, totalSleepMin: 456, efficiency: 0.9,
                 deepMin: 100, remMin: 100, lightMin: 256, disturbances: 1, restingHr: 55,
                 avgHrv: 35, recovery: 70, strain: 10, exerciseCount: 0)
-            _ = try await store.upsertDailyMetrics([cached], deviceId: source + "-noop")
+            _ = try await store.upsertDailyMetrics([cached], deviceId: source + "-zoop")
             // Hand-edited bounds overlapping a second night's raw data remain authoritative.
             let editedStart = start + 86400, editedEnd = end + 86400
             let secondHR = hr.map { HRSample(ts: $0.ts + 86400, bpm: $0.bpm) }
@@ -79,7 +79,7 @@ final class SleepWearHistoryRepairTests: XCTestCase {
             let edited = CachedSleepSession(startTs: editedStart, endTs: editedEnd - 300,
                 efficiency: 0.9, restingHr: 50, avgHrv: nil, stagesJSON: "[]", userEdited: true,
                 startTsAdjusted: editedStart + 300)
-            _ = try await store.upsertSleepSessions([edited], deviceId: source + "-noop")
+            _ = try await store.upsertSleepSessions([edited], deviceId: source + "-zoop")
             let repo = Repository(deviceId: source)
             repo.setStoreForTesting(store)
             let engine = IntelligenceEngine(repo: repo, profile: ProfileStore(), deviceId: source)
@@ -106,7 +106,7 @@ final class SleepWearHistoryRepairTests: XCTestCase {
             }
             // The normal recent pass cannot repair this older night.
             await engine.analyzeRecent(maxDays: 21)
-            let before = try await store.sleepSessions(deviceId: source + "-noop", from: dayStart, to: dayStart + 86400, limit: 100)
+            let before = try await store.sleepSessions(deviceId: source + "-zoop", from: dayStart, to: dayStart + 86400, limit: 100)
             XCTAssertTrue(before.isEmpty)
             await engine.runSleepWearRescoreIfNeeded(historyDays: 40)
             // Assert before yielding to the queued pass: only the repair itself may mark its flags.
@@ -119,15 +119,15 @@ final class SleepWearHistoryRepairTests: XCTestCase {
                 XCTAssertFalse(engine.results.contains { $0.day == AnalyticsEngine.dayString(dayStart, offsetSec: tz) },
                     "The queued recent pass must not repeat the older-than-21-day repair")
             }
-            let after = try await store.sleepSessions(deviceId: source + "-noop", from: dayStart, to: dayStart + 86400, limit: 100)
+            let after = try await store.sleepSessions(deviceId: source + "-zoop", from: dayStart, to: dayStart + 86400, limit: 100)
             XCTAssertEqual(after.count, 1)
             let day = AnalyticsEngine.dayString(dayStart, offsetSec: tz)
-            let dailies = try await store.dailyMetrics(deviceId: source + "-noop", from: day, to: day)
+            let dailies = try await store.dailyMetrics(deviceId: source + "-zoop", from: day, to: day)
             XCTAssertGreaterThan(try XCTUnwrap(dailies.first?.totalSleepMin), 60)
-            let cachedAfter = try await store.dailyMetrics(deviceId: source + "-noop", from: cachedDay, to: cachedDay)
+            let cachedAfter = try await store.dailyMetrics(deviceId: source + "-zoop", from: cachedDay, to: cachedDay)
             XCTAssertEqual(cachedAfter.first?.totalSleepMin, cached.totalSleepMin)
             XCTAssertEqual(cachedAfter.first?.recovery, cached.recovery)
-            let editedAfter = try await store.sleepSessions(deviceId: source + "-noop", from: editedStart, to: editedEnd, limit: 100)
+            let editedAfter = try await store.sleepSessions(deviceId: source + "-zoop", from: editedStart, to: editedEnd, limit: 100)
             XCTAssertEqual(editedAfter.count, 1)
             XCTAssertEqual(editedAfter.first?.effectiveStartTs, edited.effectiveStartTs)
             XCTAssertEqual(editedAfter.first?.endTs, edited.endTs)

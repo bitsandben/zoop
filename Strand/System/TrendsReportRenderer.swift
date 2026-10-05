@@ -44,7 +44,7 @@ enum TrendsReportRenderer {
         // print-grade sheet and keeps the file small.
         renderer.scale = 2.0
 
-        let url = NoopScratch.file(fileName)
+        let url = ZoopScratch.file(fileName)
         var didRender = false
 
         renderer.render { size, renderInContext in
@@ -92,7 +92,7 @@ enum TrendsReportRenderer {
         #else
         return nil
         #endif
-        let url = NoopScratch.file(fileName)
+        let url = ZoopScratch.file(fileName)
         do { try data.write(to: url) } catch { return nil }
         return url
     }

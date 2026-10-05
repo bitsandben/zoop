@@ -43,7 +43,7 @@ public extension Color {
         // A cache would also have removed the cost, and a cache is the wrong shape for it: it needs a
         // key, a lock (a dynamic provider can resolve off the main thread) and an eviction story, to
         // re-derive per frame a value that cannot change after this line. The tokens are `static let`
-        // (`NoopVisualStyle`, `StrandPalette`), so this runs once per token for the life of the process.
+        // (`ZoopVisualStyle`, `StrandPalette`), so this runs once per token for the life of the process.
         // One declaration rather than two `let`s: watchOS resolves straight to the dark hex, so a separate
         // `lightComponents` would be unused on that platform and warn. A pair that is always read as a
         // whole has no such half.
@@ -87,17 +87,17 @@ public enum StrandPalette {
 
     // MARK: Surfaces — deep navy canvas, tinted frosted cards
     // Background is a near-black navy (NOT pure black); cards float just above it.
-    public static let surfaceBase    = NoopVisualStyle.canvas
-    public static let surfaceRaised  = NoopVisualStyle.surface
-    public static let surfaceOverlay = NoopVisualStyle.surfaceTop
-    public static let surfaceInset   = NoopVisualStyle.inset
-    public static let hairline       = NoopVisualStyle.border
-    public static let hairlineStrong = NoopVisualStyle.borderHighlight
+    public static let surfaceBase    = ZoopVisualStyle.canvas
+    public static let surfaceRaised  = ZoopVisualStyle.surface
+    public static let surfaceOverlay = ZoopVisualStyle.surfaceTop
+    public static let surfaceInset   = ZoopVisualStyle.inset
+    public static let hairline       = ZoopVisualStyle.border
+    public static let hairlineStrong = ZoopVisualStyle.borderHighlight
 
     // MARK: Text — deep navy-ink on paper / cool off-white on navy
-    public static let textPrimary    = NoopVisualStyle.primaryText
-    public static let textSecondary  = NoopVisualStyle.secondaryText
-    public static let textTertiary   = NoopVisualStyle.tertiaryText
+    public static let textPrimary    = ZoopVisualStyle.primaryText
+    public static let textSecondary  = ZoopVisualStyle.secondaryText
+    public static let textTertiary   = ZoopVisualStyle.tertiaryText
 
     // MARK: Text ON a permanently-dark surface (scheme-invariant)
     // Use these — NOT textPrimary/Secondary/Tertiary — for labels/pills drawn over a fill that is pinned
@@ -120,7 +120,7 @@ public enum StrandPalette {
     public static let heroBorder = Color(light: "0000001A", dark: "FFFFFF1C")
 
     // MARK: Glow — ambient bloom behind heroes / charts (additive on dark; faint warm on light)
-    public static let glowAmbient    = NoopVisualStyle.mintGlow.opacity(0.28)
+    public static let glowAmbient    = ZoopVisualStyle.mintGlow.opacity(0.28)
 
     // MARK: Accent — chrome anchor (links, selection, focus, generic accent). USER-SELECTABLE (mint /
     // WHOOP blue / custom) via `accentChoice` below, default mint (#1068). Only the chrome accent is
@@ -413,7 +413,7 @@ public enum StrandPalette {
     // keeps `sleepStageColor`. (#sleep-chart-style)
     //
     // WHY THERE IS A LIGHT VARIANT. Both source apps are dark-tuned, so the ramps shipped flat — the same
-    // hex in both schemes. On the light card those bands are drawn on near-white (`NoopVisualStyle.surface`
+    // hex in both schemes. On the light card those bands are drawn on near-white (`ZoopVisualStyle.surface`
     // = #FFFFFF; a real Sleep-screen capture samples #FEFEFF), and measured there the Oura ramp collapses:
     // three of its four bands fall under the 3:1 non-text minimum and `awake` #EAE3D3 sits at **1.28:1**,
     // i.e. not drawn. That is not a rare band — on one real ring night awake was 64% of the chart.

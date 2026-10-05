@@ -32,9 +32,9 @@ enum RescoreBackgroundScheduler {
     /// killed), or a trigger deferred one to a background task. Survives process death, which is the
     /// entire point — the process being killed is the event we are trying to observe, and it is not an
     /// event the killed process gets any chance to write down.
-    static let owedKey = "noop.rescoreOwed"
+    static let owedKey = "zoop.rescoreOwed"
     /// Seconds the last COMPLETED pass took. Only ever written by a pass that reached the end.
-    static let lastPassSecondsKey = "noop.rescoreLastPassSeconds"
+    static let lastPassSecondsKey = "zoop.rescoreLastPassSeconds"
 
     /// Identifies the MOST RECENT debt, so a pass can tell its own from someone else's (#1681).
     ///
@@ -42,7 +42,7 @@ enum RescoreBackgroundScheduler {
     /// marking a debt at the same moment could both read N and both write N+1 — losing an increment, and
     /// with it exactly the debt this is meant to protect. A fresh token is a single write: concurrent
     /// marks each produce a distinct one, the last wins, and it cannot equal any pass's captured token.
-    static let owedTokenKey = "noop.rescoreOwedToken"
+    static let owedTokenKey = "zoop.rescoreOwedToken"
 
     /// Whether the outstanding debt was left by a pass that COMPLETED but could not settle, as opposed to
     /// one that was killed partway.
@@ -55,7 +55,7 @@ enum RescoreBackgroundScheduler {
     /// Forcing both is what lets an Oura ring draining every 5 minutes re-score 21 nights back to back for
     /// as long as the app is awake: each pass outlives its own debt, the resume forces a fresh one, and the
     /// chain never reaches a quiet interval it can stop at.
-    static let owedAfterCompletedPassKey = "noop.rescoreOwedAfterCompletedPass"
+    static let owedAfterCompletedPassKey = "zoop.rescoreOwedAfterCompletedPass"
 
     static var isRescoreOwed: Bool { UserDefaults.standard.bool(forKey: owedKey) }
 
@@ -75,7 +75,7 @@ enum RescoreBackgroundScheduler {
 
     /// When the last pass started (unix seconds), written only by a pass that is about to work, never by
     /// the deferral path, so repeated deferrals cannot keep a stale debt looking fresh.
-    static let lastAttemptStartedAtKey = "noop.rescoreLastAttemptStartedAt"
+    static let lastAttemptStartedAtKey = "zoop.rescoreLastAttemptStartedAt"
 
     /// Seconds since the last pass started, nil if none was ever recorded.
     static var secondsSinceLastAttempt: Double? {
@@ -260,7 +260,7 @@ enum RescoreBackgroundScheduler {
     private static func withAssertion(log: @escaping (String) -> Void, work: () async -> Void) async {
         #if os(iOS)
         let assertion = BackgroundAssertion()
-        let taskID = UIApplication.shared.beginBackgroundTask(withName: "noop.rescore") {
+        let taskID = UIApplication.shared.beginBackgroundTask(withName: "zoop.rescore") {
             // iOS invokes this on the main thread when it is about to reclaim the assertion. The pass
             // itself cannot be cancelled from here — its heavy loop runs in a detached task, which does
             // not inherit cancellation — so do not pretend to stop it. Record the fact and escalate:
@@ -286,7 +286,7 @@ enum RescoreBackgroundScheduler {
     // MARK: - iOS background-processing plumbing
 
     #if os(iOS)
-    static let taskIdentifier = (Bundle.main.bundleIdentifier ?? "com.noopapp.noop") + ".rescore"
+    static let taskIdentifier = (Bundle.main.bundleIdentifier ?? "com.zoopapp.zoop") + ".rescore"
 
     /// Register the handler. MUST be called from `StrandiOSApp.init()` before launch finishes, and the
     /// identifier MUST be listed in `BGTaskSchedulerPermittedIdentifiers`, or iOS never delivers the task.

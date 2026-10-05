@@ -56,7 +56,7 @@ public struct TimeOfDayBackground: View {
     /// Low Power Mode and the in-app "Reduce motion in NOOP" toggle, neither of which has a SwiftUI
     /// environment key. The Android twin (`TimeOfDayBackground.kt`) has consulted battery saver since
     /// #911; this side was left reading Reduce Motion alone.
-    @ObservedObject private var motion = NoopMotionState.shared
+    @ObservedObject private var motion = ZoopMotionState.shared
 
     public init(dayPart: DayPart, animated: Bool = true) {
         self.dayPart = dayPart
