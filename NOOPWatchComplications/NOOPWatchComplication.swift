@@ -320,7 +320,7 @@ struct NOOPChargeView: View {
         VStack(alignment: .leading, spacing: 3) {
             // Header: the wordmark + the snapshot age (or a sync hint when empty).
             HStack(spacing: 4) {
-                Text("NOOP")
+                Text("Zoop")
                     .font(StrandFont.rounded(11, weight: .bold))
                     .tracking(0.5)
                     .foregroundStyle(StrandPalette.textSecondary)

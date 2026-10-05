@@ -35,6 +35,8 @@ DE: dict[str, str] = {
     "v%@": "v%@",
     "NOOP": "NOOP",
     "NOOP %@": "NOOP %@",
+    "Zoop": "Zoop",
+    "Zoop %@": "Zoop %@",
 
     # Units / short tokens.
     "% Max": "% Max",

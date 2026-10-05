@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="docs/assets/logo-v3.png" alt="NOOP" width="72">
+  <img src="docs/assets/logo-v3.png" alt="Zoop" width="72">
 </p>
 
-<h1 align="center">NOOP</h1>
+<h1 align="center">Zoop</h1>
 
-<p align="center"><b>Your strap. Your data. Your machine. Offline, on-device, no cloud.</b></p>
+<p align="center"><b>Private NOOP fork (2oop → Zoop). Your strap. Your data. Offline, on-device.</b></p>
 
-<p align="center"><sub>Now in the all-new <b>Liquid Metal</b> design: one living look across iPhone, Android and Mac.</sub></p>
+<p align="center"><sub><b>This fork develops iOS only</b> — see <code>CLAUDE.md</code>. Upstream NOOP also ships Android and Mac.</sub></p>
 
 <p align="center">
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-macOS%20%C2%B7%20Android%20%C2%B7%20iOS-E8B84B?style=flat-square">

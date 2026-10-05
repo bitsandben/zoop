@@ -1,5 +1,9 @@
 # AGENTS.md — working on NOOP
 
+> **Zoop fork overlay:** this checkout is branded **Zoop** and currently develops **iOS only**.
+> Read [CLAUDE.md](CLAUDE.md) first — it overrides this file on fork identity, branding, and
+> platform scope (skip Android unless explicitly asked).
+
 Guidance for anyone (human or AI agent) submitting a pull request. This is the high-signal map;
 [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) is the full guide (BLE safety contract, design-system
 rules, add-a-metric/screen/command recipes), [`docs/BUILD.md`](docs/BUILD.md) covers signing/pairing,
