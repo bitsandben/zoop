@@ -1492,6 +1492,11 @@ fun SettingsScreen(
                     },
                 )
             }
+            Text(
+                uiString(R.string.settings_language_detail),
+                style = NoopType.caption,
+                color = Palette.textTertiary,
+            )
             SettingsRowDivider()
             // #1821: Clock format. Sits with Language because it is an app-owned display CONVENTION, and
             // like Language it offers "System default" - which here means the device's own 12/24h switch,

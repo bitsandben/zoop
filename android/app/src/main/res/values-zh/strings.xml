@@ -46,6 +46,10 @@
     <string name="nav_settings">设置</string>
     <string name="nav_test_centre">测试中心</string>
     <string name="nav_more">更多</string>
+    <string name="nav_bar_home">首页</string>
+    <string name="nav_bar_health">健康</string>
+    <string name="nav_bar_coach">AI 教练</string>
+    <string name="nav_bar_more">更多</string>
     <string name="more_group_insights">洞察</string>
     <string name="more_group_body">身体状态</string>
     <string name="more_group_data">数据管理</string>
@@ -1918,6 +1922,7 @@
     <string name="settings_language">语言</string>
     <string name="settings_choose_language">选择语言</string>
     <string name="settings_language_system">跟随系统</string>
+    <string name="settings_language_detail">NOOP 仅提供英语和德语。系统在德语手机上使用德语，否则使用英语。重新打开 NOOP 以应用更改。</string>
     <string name="settings_appearance_detail">选择浅色、深色，或跟随系统。深色是标志性的近黑色；浅色在明亮画布上保持同样简洁的外观。</string>
     <string name="settings_theme_light">浅色</string>
     <string name="settings_theme_dark">深色</string>

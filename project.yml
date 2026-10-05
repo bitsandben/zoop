@@ -241,6 +241,11 @@ targets:
       properties:
         CFBundleName: Zoop
         CFBundleDisplayName: Zoop
+        # The app offers English and German only. Other catalog translations stay in the tree but are
+        # not advertised, and AppLanguage forces the bundle to en or de at launch.
+        CFBundleLocalizations:
+          - en
+          - de
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         # Surfaces APP_GROUP_ID to runtime (WidgetSnapshot.suiteName) so the App Group id isn't

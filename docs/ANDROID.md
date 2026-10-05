@@ -234,9 +234,10 @@ Nothing is wrong with the file; it's just missing a Play signature. To get it on
 3. **If Play Protect still refuses**, it's your call for an unsigned app you trust: **Play Store →
    profile icon → Play Protect → ⚙ Settings → "Scan apps with Play Protect" off**, install NOOP,
    then switch it **back on**.
-4. **Reinstalling is safe.** The app sets `android:allowBackup="false"` and keeps everything in
-   private on-device storage, so uninstalling and reinstalling simply starts fresh — there's no cloud
-   copy to lose, and nothing leaves the device either way.
+4. **An update keeps your data.** Installing a newer APK over the copy already on the phone leaves
+   the on-device database and settings in place. Uninstalling is different: `android:allowBackup="false"`
+   keeps that data off Google's backup, so a remove-and-reinstall starts fresh. Nothing is uploaded
+   either way.
 
 A sample-data **demo** flavour still exists for exploring every screen with no strap, but it's
 **build-from-source only** (`./gradlew assembleDemoDebug`) and is no longer published as a release

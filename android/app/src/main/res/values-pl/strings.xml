@@ -46,6 +46,10 @@
     <string name="nav_settings">Ustawienia</string>
     <string name="nav_test_centre">Centrum Testowe</string>
     <string name="nav_more">Więcej</string>
+    <string name="nav_bar_home">Start</string>
+    <string name="nav_bar_health">Zdrowie</string>
+    <string name="nav_bar_coach">Trener AI</string>
+    <string name="nav_bar_more">Więcej</string>
     <string name="more_group_insights">Spostrzeżenia</string>
     <string name="more_group_body">Ciało</string>
     <string name="more_group_data">Dane</string>
@@ -1990,6 +1994,7 @@
     <string name="settings_language">Język</string>
     <string name="settings_choose_language">Wybierz język</string>
     <string name="settings_language_system">Domyślne systemowe</string>
+    <string name="settings_language_detail">NOOP jest dostępny po angielsku i niemiecku. System używa niemieckiego na niemieckim telefonie, a w pozostałych przypadkach angielskiego. Otwórz NOOP ponownie, aby zastosować zmianę.</string>
     <string name="settings_appearance_detail">Wybierz Jasny, Ciemny lub podążaj za swoim systemem. Ciemność jest charakterystyczna prawie czarna; Światło utrzymuje ten sam czysty wygląd na jasnym płótnie.</string>
     <string name="settings_theme_light">Jasny</string>
     <string name="settings_theme_dark">Ciemny</string>
