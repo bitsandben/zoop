@@ -59,6 +59,19 @@ struct HealthView: View {
 private struct HealthSectionsStack: View {
     var body: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
+            #if os(iOS)
+            // iOS follows the redesign's health monitor: the vitals lead, then live heart rate, what
+            // drives recovery, and the longer-range ages. Syncing runs on its own, so its status card
+            // closes the page rather than opening it.
+            VitalsSection()
+            HeartRateSection()
+            RecoveryContributorsSection()
+            VitalitySection()
+            FitnessAgeSection()
+            SkinTempSection()
+            HealthHubLinksSection()
+            SyncStatusSection()
+            #else
             // Manual "Sync now" + honest sync status (#364). Its own view so the ~1Hz HR stream
             // doesn't re-render it; depends on `live` (connection/backfill state) + `model`.
             SyncStatusSection()
@@ -87,6 +100,7 @@ private struct HealthSectionsStack: View {
             // v5 deep-links: the records logbook + the multi-device fused record, reachable
             // from their honest Health home as drill-in rows (not their own destinations).
             HealthHubLinksSection()
+            #endif
         }
     }
 }

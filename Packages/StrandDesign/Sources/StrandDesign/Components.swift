@@ -230,7 +230,11 @@ public struct StatTile<Accessory: View>: View {
                 }
                 Spacer(minLength: 4)
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    #if os(iOS)
+                    Text(value).font(.system(size: 24, weight: .bold)).foregroundStyle(accent).lineLimit(1).minimumScaleFactor(0.6)
+                    #else
                     Text(value).font(StrandFont.number(26)).foregroundStyle(accent).lineLimit(1).minimumScaleFactor(0.6)
+                    #endif
                     Spacer(minLength: 0)
                     // Trend chip — the delta as a tinted pill with a direction arrow.
                     if let delta { TrendChip(text: delta, color: deltaColor) }
