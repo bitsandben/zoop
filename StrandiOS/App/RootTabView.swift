@@ -133,13 +133,13 @@ struct RootTabView: View {
                 Tab("More", systemImage: "line.3.horizontal", value: IOSTab.more) {
                     moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more])
                 }
-                // The search role is what places Coach in its own round button at the trailing end of
-                // the bar on iOS 26, apart from the four destinations.
-                if coachEnabled {
-                    Tab("Coach", systemImage: "sparkles", value: IOSTab.coach, role: .search) {
-                        tabStack(CoachView(), path: $tabPaths[IOSTab.coach], scrollSignal: scrollTop[IOSTab.coach])
-                    }
+                // A role is what moves Coach into its own round button at the trailing end of the bar,
+                // apart from the four destinations. Hidden rather than left out when Coach is off, so
+                // the tab keeps its tag and path.
+                Tab("Coach", systemImage: "sparkles", value: IOSTab.coach, role: Self.coachTabRole) {
+                    tabStack(CoachView(), path: $tabPaths[IOSTab.coach], scrollSignal: scrollTop[IOSTab.coach])
                 }
+                .hidden(!coachEnabled)
             }
         } else {
             TabView(selection: nativeTabSelection) {
@@ -154,6 +154,14 @@ struct RootTabView: View {
                 }
             }
         }
+    }
+
+    /// iOS 27's prominent role draws a separate accented button; earlier releases separate the
+    /// search role instead.
+    @available(iOS 18.0, *)
+    private static var coachTabRole: TabRole {
+        if #available(iOS 27.0, *) { return .prominent }
+        return .search
     }
 
     var body: some View {

@@ -368,7 +368,14 @@ struct LiquidTodayView: View {
                     // here as the SAME leaf the classic TodayView renders (and Android's WorkoutInProgressCard),
                     // pinned above the reorderable block so an active manual workout is immediately visible
                     // and opens the existing workout flow. Today also offers Start when no workout is active.
+                    #if os(iOS)
+                    // iOS draws it under "My Day" in the hero section; with the hero hidden it stays here.
+                    if !sectionOrder.contains(.hero) {
+                        ActiveWorkoutIndicatorSection(showStart: selectedDayOffset == 0)
+                    }
+                    #else
                     ActiveWorkoutIndicatorSection(showStart: selectedDayOffset == 0)
+                    #endif
                     // #today-layout (parity with Android): every Today section — the Charge/Effort/Rest hero
                     // and Start-session included — renders in the user's saved order. Reorder via the Arrange
                     // sheet (the header's up/down button; native drag rows); the order persists under the
@@ -382,6 +389,8 @@ struct LiquidTodayView: View {
                             #if os(iOS)
                             monitorTilesRow
                             HomeSectionTitle(title: "My Day") { myDayAddButton }
+                            // iOS: the workout card sits with the rest of the day's activity.
+                            ActiveWorkoutIndicatorSection(showStart: selectedDayOffset == 0)
                             #endif
                         case .liveSession: if liveSessionsBeta { liveSessionStartRow }
                         case .synthesis:
@@ -855,16 +864,17 @@ struct LiquidTodayView: View {
                           decimals: effortScale == .whoop ? 1 : 0,
                           detailRoute: .metric(HeroRingMetric.effort))
         }
-        .overlay(alignment: .topLeading) {
+        .padding(.vertical, ZoopMetrics.space3)
+        .overlay(alignment: .bottom) {
             if let sourceLabel = heroSourceLabel {
                 SourceBadge("\(sourceLabel)", tint: StrandPalette.textSecondary)
                     .fixedSize()
-                    .offset(y: -ZoopMetrics.sourceBadgeHeight)
+                    .offset(y: ZoopMetrics.sourceBadgeHeight / 2 + 2)
                     .allowsHitTesting(false)
                     .accessibilityLabel(Text("Source: \(sourceLabel)"))
             }
         }
-        .padding(.vertical, ZoopMetrics.space3)
+        .padding(.bottom, heroSourceLabel == nil ? 0 : ZoopMetrics.sourceBadgeHeight + ZoopMetrics.space2)
     }
     #else
     private var heroCard: some View {

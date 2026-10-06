@@ -252,14 +252,20 @@ struct EffortChargeWeekCard: View {
                     line(points: days.enumerated().compactMap { i, d in d.effort.map { CGPoint(x: x(i), y: yEffort($0)) } },
                          color: StrandPalette.effortColor)
                     ForEach(Array(days.enumerated()), id: \.element.id) { i, d in
+                        // The higher of the two points labels above, the lower below, so the two
+                        // numbers never sit on top of each other.
+                        let chargeHigher: Bool = {
+                            guard let c = d.charge, let e = d.effort else { return true }
+                            return yCharge(c) <= yEffort(e)
+                        }()
                         if let c = d.charge {
                             dot(color: StrandPalette.recoveryColor(c), label: "\(Int(c.rounded()))%",
-                                at: CGPoint(x: x(i), y: yCharge(c)), labelAbove: true)
+                                at: CGPoint(x: x(i), y: yCharge(c)), labelAbove: chargeHigher)
                         }
                         if let e = d.effort {
                             dot(color: StrandPalette.effortColor,
                                 label: e.formatted(.number.precision(.fractionLength(effortDecimals))),
-                                at: CGPoint(x: x(i), y: yEffort(e)), labelAbove: false)
+                                at: CGPoint(x: x(i), y: yEffort(e)), labelAbove: d.charge == nil || !chargeHigher)
                         }
                     }
                 }
