@@ -7,6 +7,8 @@ enum AIProvider: String, CaseIterable, Identifiable {
     case openAI
     case anthropic
     case gemini
+    /// OpenRouter's OpenAI-compatible API, offered with its free (`:free`) models.
+    case openRouter
     case custom
 
     var id: String { rawValue }
@@ -16,6 +18,7 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .openAI:    return "OpenAI"
         case .anthropic: return "Anthropic"
         case .gemini:    return "Google Gemini"
+        case .openRouter: return "OpenRouter (free models)"
         case .custom:    return "Custom (OpenAI-compatible)"
         }
     }
@@ -25,6 +28,7 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .openAI:    return "gpt-5-mini"
         case .anthropic: return "claude-sonnet-4-6"
         case .gemini:    return "gemini-flash-latest"   // stable alias → current Flash, no version churn (#400)
+        case .openRouter: return "meta-llama/llama-3.3-70b-instruct:free"
         case .custom:    return ""   // the user picks the model their server serves
         }
     }
@@ -74,6 +78,16 @@ enum AIProvider: String, CaseIterable, Identifiable {
                 "gemini-flash-latest",
                 "gemini-flash-lite-latest"
             ]
+        case .openRouter:
+            // A starting set of free models. OpenRouter rotates which models are free, so
+            // `refreshModels()` replaces this with the live list of `:free` ids once a key is set.
+            return [
+                "meta-llama/llama-3.3-70b-instruct:free",
+                "deepseek/deepseek-chat-v3-0324:free",
+                "google/gemma-3-27b-it:free",
+                "mistralai/mistral-small-3.2-24b-instruct:free",
+                "qwen/qwen3-235b-a22b:free"
+            ]
         case .custom:
             return []   // populated from the server's /models (refreshModels) or typed in
         }
@@ -84,6 +98,7 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .openAI:    return URL(string: "https://api.openai.com/v1/chat/completions")!
         case .anthropic: return URL(string: "https://api.anthropic.com/v1/messages")!
         case .gemini:    return URL(string: "https://generativelanguage.googleapis.com/v1beta/models")!
+        case .openRouter: return URL(string: "https://openrouter.ai/api/v1/chat/completions")!
         case .custom:    return AIProvider.customURL(path: "/chat/completions")
         }
     }
@@ -93,6 +108,7 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .openAI:    return URL(string: "https://api.openai.com/v1/models")!
         case .anthropic: return URL(string: "https://api.anthropic.com/v1/models")!
         case .gemini:    return URL(string: "https://generativelanguage.googleapis.com/v1beta/models")!
+        case .openRouter: return URL(string: "https://openrouter.ai/api/v1/models")!
         case .custom:    return AIProvider.customURL(path: "/models")
         }
     }
@@ -102,6 +118,7 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .openAI:    return OpenAIClient()
         case .anthropic: return AnthropicClient()
         case .gemini:    return GeminiClient()
+        case .openRouter: return OpenAIClient(provider: .openRouter)
         case .custom:    return CustomClient()
         }
     }

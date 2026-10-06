@@ -284,6 +284,12 @@ struct CoachView: View {
                             .strokeBorder(StrandPalette.hairline, lineWidth: 1))
                         .onSubmit { coach.provider == .custom ? connectCustom() : saveKey() }
                         .accessibilityLabel("API key")
+                    if coach.provider == .openRouter {
+                        Text("A free key from openrouter.ai/keys is enough. Only models ending in :free are listed, so nothing is billed.")
+                            .font(StrandFont.footnote)
+                            .foregroundStyle(StrandPalette.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
 
                 HStack {

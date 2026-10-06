@@ -1,6 +1,7 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "A free key from openrouter.ai/keys is enough. Only models ending in :free are listed, so nothing is billed." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Ein kostenloser Schlüssel von openrouter.ai/keys reicht. Es werden nur Modelle mit :free angezeigt, es fällt also nichts an."}}}},
     "Cycle day %lld": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Zyklustag %lld"}}}},
     "Still learning your cycle. Predictions sharpen with each period you log.": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Zoop lernt deinen Zyklus noch. Die Vorhersage wird mit jeder eingetragenen Periode genauer."}}}},
     "Log the first day of your period to start. Zoop learns your cycle from what you log.": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Trag den ersten Tag deiner Periode ein. Zoop lernt deinen Zyklus aus deinen Einträgen."}}}},
