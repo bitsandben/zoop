@@ -19,7 +19,7 @@ import UserNotifications
 //  6 Bonding           — celebration when live.bonded (a RecoveryRing blooms in)
 //  7 Profile           — age / sex / weight / height bound to ProfileStore
 //  8 Import (optional)  — WHOOP / Apple Health import from the wizard
-//  9 Done              — "Your thread starts here." → onFinished()
+//  9 Done              — "You're all set" → onFinished()
 //
 // Presentation is wired centrally; this view only calls onFinished() when complete.
 
@@ -262,11 +262,11 @@ private struct WelcomeStep: View {
                     Text(verbatim: "Zoop")
                         .font(StrandFont.display(64))
                         .foregroundStyle(StrandPalette.textPrimary)
-                    Text("All your data, none of the cloud")
+                    Text("Your strap data, on your phone")
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(StrandPalette.textPrimary)
                         .multilineTextAlignment(.center)
-                    Text("A private window into your recovery, sleep and strain. Read straight from your strap, kept only on \(Platform.deviceNounPhrase).")
+                    Text("Recovery, sleep and strain, read directly from your strap. Nothing leaves \(Platform.deviceNounPhrase).")
                         .font(StrandFont.body)
                         .foregroundStyle(StrandPalette.textSecondary)
                         .multilineTextAlignment(.center)
@@ -346,20 +346,20 @@ private struct WhatItDoesStep: View {
     private let slides: [Slide] = [
         .init(icon: "circle.dashed.inset.filled",
               tint: StrandPalette.accent,
-              title: String(localized: "See recovery, beautifully"),
-              body: String(localized: "A signature ring distils HRV, resting heart rate and sleep into one calm read on whether to push or rest.")),
+              title: String(localized: "Daily scores"),
+              body: String(localized: "Recovery, strain and sleep, calculated from your HRV, resting heart rate and sleep.")),
         .init(icon: "waveform.path.ecg",
               tint: StrandPalette.accent,
-              title: String(localized: "Watch your heart, live"),
+              title: String(localized: "Live heart rate"),
               body: String(localized: "Connect a WHOOP, a heart-rate strap or a gym machine and watch each beat in real time: heart rate, variability and zones as they happen. Already have history elsewhere? Import it from WHOOP, Apple Health, Oura, Fitbit or Garmin.")),
         .init(icon: "lock.shield",
               tint: StrandPalette.statusPositive,
-              title: String(localized: "Own your data, offline"),
-              body: String(localized: "Everything lives on \(Platform.deviceNounPhrase). No account, no sync, no cloud. Your thread is yours alone.")),
+              title: String(localized: "Offline"),
+              body: String(localized: "No account and no cloud. Your data stays on \(Platform.deviceNounPhrase).")),
     ]
 
     var body: some View {
-        StepShell(title: String(localized: "What Zoop does"), subtitle: String(localized: "Three quiet promises.")) {
+        StepShell(title: String(localized: "What Zoop does")) {
             VStack(spacing: 14) {
                 ForEach(Array(slides.enumerated()), id: \.element.id) { index, slide in
                     SlideRow(slide: slide, index: index)
@@ -388,8 +388,7 @@ private struct WhatItDoesStep: View {
 private struct ExpectationsStep: View {
     @State private var shown = false
     var body: some View {
-        StepShell(title: String(localized: "What to expect"),
-                  subtitle: String(localized: "A few honest words, so nothing's a surprise.")) {
+        StepShell(title: String(localized: "Good to know")) {
             VStack(spacing: 12) {
                 ForEach(Array(AppChangelog.expectations.enumerated()), id: \.element.id) { index, e in
                     OnboardingRow(icon: e.icon, tint: StrandPalette.accent, title: e.title, message: e.body)
@@ -432,8 +431,8 @@ private struct BluetoothStep: View {
     @ObservedObject private var motion = ZoopMotionState.shared
     private var poseStill: Bool { motion.poseStill(reduceMotion) }
     var body: some View {
-        StepShell(title: String(localized: "A quick word before we connect"),
-                  subtitle: String(localized: "\(Platform.deviceNoun) will ask for Bluetooth in a moment.")) {
+        StepShell(title: String(localized: "Bluetooth access"),
+                  subtitle: String(localized: "\(Platform.deviceNoun) asks for permission next.")) {
             VStack(spacing: 24) {
                 ZStack {
                     SquircleShape()
@@ -453,10 +452,10 @@ private struct BluetoothStep: View {
                     icon: "lock.fill",
                     tint: StrandPalette.statusPositive,
                     title: String(localized: "Nothing leaves your \(Platform.deviceNoun)"),
-                    message: String(localized: "Zoop talks to your strap directly over Bluetooth Low Energy. There's no server in the middle. The connection is local, and so is every reading it pulls in.")
+                    message: String(localized: "Zoop connects to your strap directly over Bluetooth. No server is involved.")
                 )
 
-                Text("When the system prompt appears, choose Allow so Zoop can find your strap.")
+                Text("Tap Allow when asked.")
                     .font(StrandFont.subhead)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .multilineTextAlignment(.center)
@@ -818,7 +817,7 @@ private struct ImportStep: View {
                 InfoCard(
                     icon: "clock.arrow.circlepath",
                     tint: StrandPalette.accent,
-                    title: String(localized: "History fills the dashboard immediately"),
+                    title: String(localized: "Import past data"),
                     message: String(localized: "A WHOOP export backfills recovery, strain, sleep and workouts. Apple Health can add HR, HRV, sleep, SpO₂, steps, workouts and weight.")
                 )
 
@@ -935,8 +934,8 @@ private struct NotificationsStep: View {
     @ObservedObject private var motion = ZoopMotionState.shared
     private var poseStill: Bool { motion.poseStill(reduceMotion) }
     var body: some View {
-        StepShell(title: String(localized: "Stay in the loop"),
-                  subtitle: String(localized: "Zoop can tap your wrist when your \(Platform.deviceNoun) needs you. No glance at the screen required.")) {
+        StepShell(title: String(localized: "Notifications"),
+                  subtitle: String(localized: "Alerts can vibrate on your strap instead of your \(Platform.deviceNoun).")) {
             VStack(spacing: 24) {
                 ZStack {
                     Circle()
@@ -961,8 +960,8 @@ private struct NotificationsStep: View {
                 InfoCard(
                     icon: "applewatch.radiowaves.left.and.right",
                     tint: StrandPalette.statusPositive,
-                    title: String(localized: "A buzz, not a banner"),
-                    message: String(localized: "Zoop taps your strap so an alert lands on your wrist instead of your screen. No need to reach for it. Everything stays on \(Platform.deviceNounPhrase).")
+                    title: String(localized: "On your wrist"),
+                    message: String(localized: "Strain alerts and the smart alarm vibrate on your strap.")
                 )
 
                 VStack(spacing: 12) {
@@ -974,7 +973,7 @@ private struct NotificationsStep: View {
                 InfoCard(
                     icon: "applewatch.radiowaves.left.and.right",
                     tint: StrandPalette.statusPositive,
-                    title: String(localized: "A buzz, not a banner"),
+                    title: String(localized: "On your wrist"),
                     message: String(localized: "When the \(Platform.deviceNoun) apps you choose send a notification, Zoop taps your strap: Slack, Calendar, Messages, whatever matters. Everything stays on \(Platform.deviceNounPhrase).")
                 )
 
@@ -1010,10 +1009,10 @@ private struct DoneStep: View {
                 .frame(height: 140)
 
                 VStack(spacing: 10) {
-                    Text("Your thread starts here.")
+                    Text("You're all set")
                         .font(StrandFont.title1)
                         .foregroundStyle(StrandPalette.textPrimary)
-                    Text("Every beat, every night, every day, woven into one quiet picture of you. Welcome to Zoop.")
+                    Text("Live heart rate works now. Your first scores appear after a night of wear.")
                         .font(StrandFont.body)
                         .foregroundStyle(StrandPalette.textSecondary)
                         .multilineTextAlignment(.center)

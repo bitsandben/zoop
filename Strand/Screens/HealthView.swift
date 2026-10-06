@@ -1346,6 +1346,14 @@ private struct VitalitySection: View {
 private struct VitalsSection: View {
     @EnvironmentObject var repo: Repository
 
+    private static var rangeFootnote: LocalizedStringKey {
+        #if os(iOS)
+        "After 14 nights, ranges are your own. Before that, typical adult ranges. Not medical advice."
+        #else
+        "Once Zoop has 14 nights of history, in-range compares each vital to your own baseline (approximate, not medical advice); until then, typical adult ranges apply."
+        #endif
+    }
+
     // Temperature display preference (D#103). Skin temp is stored in °C (absolute or a ±deviation); the
     // toggle re-labels it to °F. Display-only — banding still runs on the stored °C value.
     @AppStorage(UnitPrefs.systemKey) private var unitSystemRaw = UnitSystem.metric.rawValue
@@ -1377,7 +1385,14 @@ private struct VitalsSection: View {
                 alignment: .leading,
                 spacing: ZoopMetrics.gap
             ) {
-                ForEach(Array(readings.enumerated()), id: \.element.id) { idx, v in
+                // iOS hides the experimental raw SpO₂ tile until it has a value to show.
+                ForEach(Array(readings.filter { r in
+                    #if os(iOS)
+                    return r.key != "spo2raw" || r.value != nil
+                    #else
+                    return true
+                    #endif
+                }.enumerated()), id: \.element.id) { idx, v in
                     // Each headline vital is now a liquid tile: the signature LiquidVessel gauge tinted
                     // to the metric's colour world (rose RHR, purple HRV, cyan SpO₂, amber skin temp),
                     // filled to the metric's fraction, with the value counting up beside it and the same
@@ -1387,7 +1402,7 @@ private struct VitalsSection: View {
                         .staggeredAppear(index: idx)
                 }
             }
-            Text("Once Zoop has 14 nights of history, in-range compares each vital to your own baseline (approximate, not medical advice); until then, typical adult ranges apply.")
+            Text(Self.rangeFootnote)
                 .font(StrandFont.footnote)
                 .foregroundStyle(StrandPalette.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1456,14 +1471,29 @@ private struct LiquidVitalTile: View {
                         .accessibilityHidden(true)
                 }
                 #endif
+                #if os(iOS)
+                // Just the state. Day and source stay in the VoiceOver text and the detail screen.
+                Text(stateWord)
+                    .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary).lineLimit(1)
+                    .padding(.top, 4)
+                #else
                 Text(reading.stateCaption)
                     .font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary).lineLimit(1)
                     .padding(.top, 4)
+                #endif
             }
         }
         .frame(minHeight: ZoopMetrics.tileHeight, maxHeight: .infinity)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(reading.accessibilityText)
+    }
+
+    private var stateWord: LocalizedStringKey {
+        switch reading.banding.band {
+        case .inRange: return "Normal"
+        case .outOfRange: return "Out of range"
+        case .noData: return "No data"
+        }
     }
 
     /// The vessel's fill (0…1): the vital's value mapped onto its physiological span, matching Today's
