@@ -252,7 +252,112 @@ struct SettingsView: View {
     /// Persisted so it remembers the user's choice; mirrors the Android `noop.settingsAdvancedOpen` key.
     @AppStorage(SettingsDisclosureDefaults.advancedOpenKey) private var advancedOpen = SettingsDisclosureDefaults.advancedOpenDefault
 
-    var body: some View {
+    #if os(iOS)
+    /// iOS groups the cards into pages, the often-used ones first, so the root is one short list.
+    enum SettingsPage: String, Hashable, CaseIterable, Identifiable {
+        case profile, strap, appearance, features, scoring, backup, advanced, about
+        var id: String { rawValue }
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .profile: return "Profile & units"
+            case .strap: return "Strap & sync"
+            case .appearance: return "Appearance"
+            case .features: return "Features"
+            case .scoring: return "Scores & HRV"
+            case .backup: return "Backup & restore"
+            case .advanced: return "Advanced"
+            case .about: return "About Zoop"
+            }
+        }
+
+        var subtitle: LocalizedStringKey {
+            switch self {
+            case .profile: return "Age, body, heart-rate zones, units"
+            case .strap: return "Connection, battery, live notifications"
+            case .appearance: return "Language, theme, icon"
+            case .features: return "Workout detection, hydration, journal"
+            case .scoring: return "Charge baseline, HRV capture"
+            case .backup: return "Export, import, automatic backups"
+            case .advanced: return "Experimental features, Test Centre"
+            case .about: return "Version, updates, how scores work"
+            }
+        }
+
+        var icon: String {
+            switch self {
+            case .profile: return "person.fill"
+            case .strap: return "dot.radiowaves.left.and.right"
+            case .appearance: return "paintbrush.fill"
+            case .features: return "square.grid.2x2.fill"
+            case .scoring: return "waveform.path.ecg"
+            case .backup: return "externaldrive.fill"
+            case .advanced: return "slider.horizontal.3"
+            case .about: return "info.circle.fill"
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func settingsPage(_ page: SettingsPage) -> some View {
+        ScreenScaffold(title: page.title, lazy: true) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
+                switch page {
+                case .profile: profileCard; unitsCard
+                case .strap: strapCard; syncCard; liveNotificationsCard
+                case .appearance: appearanceCard
+                case .features: featuresCard; streakCard
+                case .scoring: recoveryCard; hrvCard
+                case .backup: backupCard
+                case .advanced: experimentalCard; testCentreCard
+                case .about: aboutCard
+                }
+            }
+        }
+    }
+
+    private func settingsGroup(_ title: LocalizedStringKey, _ pages: [SettingsPage]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(StrandPalette.textSecondary)
+                .padding(.horizontal, 4)
+            VStack(spacing: 0) {
+                ForEach(pages) { page in
+                    NavigationLink(value: page) {
+                        ZoopIconRow(page.title, subtitle: page.subtitle, icon: page.icon)
+                            .overlay(alignment: .bottom) {
+                                if page != pages.last {
+                                    Rectangle().fill(StrandPalette.hairline).frame(height: 1).padding(.leading, 68)
+                                }
+                            }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .background(ZoopPanelSurface())
+            .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
+        }
+    }
+    #endif
+
+    @ViewBuilder
+    private var settingsContent: some View {
+        #if os(iOS)
+        ScreenScaffold(title: "Settings") {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
+                settingsGroup("Everyday", [.profile, .strap, .appearance, .features])
+                settingsGroup("Data", [.scoring, .backup])
+                settingsGroup("More", [.advanced, .about])
+            }
+        }
+        .navigationDestination(for: SettingsPage.self) { page in
+            settingsPage(page)
+                .background(StrandPalette.surfaceBase.ignoresSafeArea())
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(.hidden, for: .navigationBar)
+        }
+        #else
         ScreenScaffold(title: "Settings",
                        subtitle: "Your numbers, your strap, and how Zoop works. All on \(Platform.deviceNounPhrase).",
                        quietSubtitle: true,
@@ -296,6 +401,11 @@ struct SettingsView: View {
                 aboutCard.staggeredAppear(index: 7)
             }
         }
+        #endif
+    }
+
+    var body: some View {
+        settingsContent
         .alert(backupAlertTitle, isPresented: $showBackupAlert) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -2343,7 +2453,7 @@ struct SettingsView: View {
         SettingsSection(
             icon: "info.circle.fill",
             title: "About",
-            blurb: "NOOP: all your data, none of the cloud."
+            blurb: "Your strap data, on your phone."
         ) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 10) {
