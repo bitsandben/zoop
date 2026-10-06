@@ -19,7 +19,7 @@ struct StorageView: View {
 
     var body: some View {
         ScreenScaffold(title: "Storage",
-                       subtitle: "Where NOOP's on-device space is going, and a one-tap clean-up.",
+                       subtitle: "Where Zoop's on-device space is going, and a one-tap clean-up.",
                        quietSubtitle: true) {
             VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                 if loading && report == nil {
@@ -107,7 +107,7 @@ struct StorageView: View {
     private var explainerCard: some View {
         DataPendingNote(
             title: "Why does this grow?",
-            message: "When you import an Apple Health or WHOOP export, iOS hands NOOP a private copy of the file. NOOP reads it, saves your data into the health database, then deletes the copy. Older builds didn't delete every copy. This screen reclaims any that were left behind.",
+            message: "When you import an Apple Health or WHOOP export, iOS hands Zoop a private copy of the file. Zoop reads it, saves your data into the health database, then deletes the copy. Older builds didn't delete every copy. This screen reclaims any that were left behind.",
             symbol: "questionmark.circle")
     }
 

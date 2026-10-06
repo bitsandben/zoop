@@ -72,7 +72,7 @@ struct LiftProgramItemSheet: View {
     var body: some View {
         ScreenScaffold(
             title: item == nil ? "Add exercise" : "Edit exercise",
-            subtitle: "Type any name you like. NOOP remembers it, with the muscles you give it."
+            subtitle: "Type any name you like. Zoop remembers it, with the muscles you give it."
         ) {
             VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 exerciseSection

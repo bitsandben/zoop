@@ -106,7 +106,7 @@ enum NavItem: String, CaseIterable, Identifiable, Hashable {
         case .backupSync: return String(localized: "Backup & Sync")
         case .fusedRecord: return String(localized: "Your Data, Fused")
         case .devices: return String(localized: "Devices")
-        case .noopLimitations: return String(localized: "NOOP Limitations")
+        case .noopLimitations: return String(localized: "Zoop Limitations")
         case .notifications: return String(localized: "Notifications")
         case .automation: return String(localized: "Automations")
         // Mirrors the `titleKey` remap above (#766): the row reads "Alarms", not the raw "Smart Alarm".
