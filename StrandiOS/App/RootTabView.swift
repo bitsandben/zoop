@@ -2,14 +2,16 @@
 import SwiftUI
 import StrandDesign
 
-/// Tab tags for the iPhone bar: Home, Health, AI Coach, More. Coach keeps its own tag when the
-/// master switch hides it, so More does not inherit Coach's navigation path.
+/// Tab tags for the iPhone bar: Home, Health, Trends, More, and Coach as the separate round button.
+/// Coach keeps its own tag when the master switch hides it, so More does not inherit Coach's
+/// navigation path.
 private enum IOSTab {
     static let home = 0
     static let health = 1
     static let coach = 2
     static let more = 3
-    static let count = 4
+    static let trends = 4
+    static let count = 5
 }
 
 /// iOS navigation shell. macOS uses a `NavigationSplitView` sidebar (`RootView`); on iPhone the
@@ -109,23 +111,55 @@ struct RootTabView: View {
         }
     }
 
-    var body: some View {
-        // The platform tab bar is intentionally left fully native. iOS 26 supplies Liquid Glass and
-        // its dynamic interaction with scrolling content automatically; older supported releases use
-        // the corresponding system material and safe-area behaviour from the same TabView.
-        TabView(selection: nativeTabSelection) {
-            tab(todayTabRoot, "Home", "house.fill", path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home]).tag(IOSTab.home)
-            tab(HealthView(), "Health", "heart.text.square.fill", path: $tabPaths[IOSTab.health], scrollSignal: scrollTop[IOSTab.health]).tag(IOSTab.health)
-            // Conditional on the master switch. The tags stay LITERAL rather than being renumbered when
-            // Coach is absent: `tabPaths` and `scrollTop` are indexed by tag, and More stays on its own
-            // tag in both shapes, so a wearer's More tab keeps its identity, its navigation path and its
-            // scroll position across a flip instead of inheriting Coach's.
-            if coachEnabled {
-                tab(CoachView(), "AI Coach", "sparkles", path: $tabPaths[IOSTab.coach], scrollSignal: scrollTop[IOSTab.coach]).tag(IOSTab.coach)
+    /// The platform tab bar is intentionally left native. iOS 26 supplies Liquid Glass and its
+    /// interaction with scrolling content; older releases use the system material from the same
+    /// TabView.
+    ///
+    /// The tags stay LITERAL rather than being renumbered when Coach is absent: `tabPaths` and
+    /// `scrollTop` are indexed by tag, so a wearer's More tab keeps its identity, navigation path and
+    /// scroll position across a Coach flip instead of inheriting Coach's.
+    @ViewBuilder private var tabShell: some View {
+        if #available(iOS 18.0, *) {
+            TabView(selection: nativeTabSelection) {
+                Tab("Home", systemImage: "house", value: IOSTab.home) {
+                    tabStack(todayTabRoot, path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home])
+                }
+                Tab("Health", systemImage: "heart", value: IOSTab.health) {
+                    tabStack(HealthView(), path: $tabPaths[IOSTab.health], scrollSignal: scrollTop[IOSTab.health])
+                }
+                Tab("Trends", systemImage: "chart.xyaxis.line", value: IOSTab.trends) {
+                    tabStack(TrendsView(), path: $tabPaths[IOSTab.trends], scrollSignal: scrollTop[IOSTab.trends])
+                }
+                Tab("More", systemImage: "line.3.horizontal", value: IOSTab.more) {
+                    moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more])
+                }
+                // The search role is what places Coach in its own round button at the trailing end of
+                // the bar on iOS 26, apart from the four destinations.
+                if coachEnabled {
+                    Tab("Coach", systemImage: "sparkles", value: IOSTab.coach, role: .search) {
+                        tabStack(CoachView(), path: $tabPaths[IOSTab.coach], scrollSignal: scrollTop[IOSTab.coach])
+                    }
+                }
             }
-            moreTab(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more]).tag(IOSTab.more)
+        } else {
+            TabView(selection: nativeTabSelection) {
+                tab(todayTabRoot, "Home", "house", path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home]).tag(IOSTab.home)
+                tab(HealthView(), "Health", "heart", path: $tabPaths[IOSTab.health], scrollSignal: scrollTop[IOSTab.health]).tag(IOSTab.health)
+                tab(TrendsView(), "Trends", "chart.xyaxis.line", path: $tabPaths[IOSTab.trends], scrollSignal: scrollTop[IOSTab.trends]).tag(IOSTab.trends)
+                moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more])
+                    .tabItem { Label("More", systemImage: "line.3.horizontal") }
+                    .tag(IOSTab.more)
+                if coachEnabled {
+                    tab(CoachView(), "Coach", "sparkles", path: $tabPaths[IOSTab.coach], scrollSignal: scrollTop[IOSTab.coach]).tag(IOSTab.coach)
+                }
+            }
         }
-        .tint(StrandPalette.accent)
+    }
+
+    var body: some View {
+        tabShell
+        // The selected tab reads white, as in the reference; colour is kept for the data.
+        .tint(StrandPalette.textPrimary)
         // Switching Coach off while STANDING on it leaves `selectedTab` pointing at a tag no tab claims
         // any more, which renders as an empty tab rather than as an error. Send that wearer to Today, and
         // only in that case, so a flip made from anywhere else does not move them.
@@ -193,11 +227,8 @@ struct RootTabView: View {
                 withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = IOSTab.coach }
                 router.requestedDestination = nil
             case .trends:
-                // Trends left the bar for the More list. Open More and push Trends so the deep link
-                // still lands on the chart, not on the Health tab that now occupies the old slot.
-                withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = IOSTab.more }
-                tabPaths[IOSTab.more] = NavigationPath()
-                tabPaths[IOSTab.more].append(MoreDestination.trends)
+                withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = IOSTab.trends }
+                tabPaths[IOSTab.trends] = NavigationPath()
                 router.requestedDestination = nil
             case .activeWorkout:
                 // The Today active-workout indicator opens Live through the quick-action Live sheet; once
@@ -403,6 +434,11 @@ struct RootTabView: View {
 
     private func tab<V: View>(_ view: V, _ title: LocalizedStringKey, _ icon: String,
                               path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
+        tabStack(view, path: path, scrollSignal: scrollSignal)
+            .tabItem { Label(title, systemImage: icon) }
+    }
+
+    private func tabStack<V: View>(_ view: V, path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
         // Each primary tab gets its OWN NavigationStack so the in-content NavigationLinks (e.g. the Today
         // dashboard card rows) both navigate AND render opaque. An ORPHANED NavigationLink (no
         // NavigationStack ancestor) renders its whole label in a disabled/translucent state — that was
@@ -420,7 +456,6 @@ struct RootTabView: View {
         // Drive this tab's root scroll-to-top on an at-root re-tap (#198 follow-up); read by ScreenScaffold
         // / LiquidTodayView inside. Only THIS tab's token changes on its reselect, so the others don't scroll.
         .environment(\.scrollToTopSignal, scrollSignal)
-        .tabItem { Label(title, systemImage: icon) }
     }
 
     // The "More" tab is the app's catch-all index. It was a plain SwiftUI `List` with system large-title
@@ -428,7 +463,7 @@ struct RootTabView: View {
     // + SectionHeader's UPPERCASE overline + the 28pt section rhythm). Rebuilt on the shared page chrome:
     // ScreenScaffold for the title1 "More" + subtitle, a `SectionHeader` overline per group, and the group's
     // rows in a single grouped ZoopCard with hairline dividers — the same row idiom Settings/Health use.
-    private func moreTab(path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
+    private func moreStack(path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
         NavigationStack(path: path) {
             ScreenScaffold(title: "More", subtitle: "Everything else, one tap away",
                            quietSubtitle: true,
@@ -443,10 +478,8 @@ struct RootTabView: View {
                     MoreRow("Compare", "rectangle.split.2x1.fill", .compare)
                 }
                 moreSection("Body") {
-                    // Sleep and Trends left the bottom bar when Health took that slot. They stay one
-                    // tap down in More so neither screen disappears.
+                    // Sleep left the bottom bar when Health took that slot; Trends has its own tab.
                     MoreRow("Sleep", "bed.double", .sleep)
-                    MoreRow("Trends", "chart.line.uptrend.xyaxis", .trends)
                     MoreRow("Live", "waveform.path.ecg", .live)
                     MoreRow("Workouts", "figure.run", .workouts)
                     MoreRow("Lift Log", "dumbbell.fill", .liftLog)
@@ -508,7 +541,6 @@ struct RootTabView: View {
         }
         // Scroll the More index to the top on an at-root re-tap (#198 follow-up); read by its ScreenScaffold.
         .environment(\.scrollToTopSignal, scrollSignal)
-        .tabItem { Label("More", systemImage: "ellipsis") }
     }
 
     /// One titled, COLLAPSIBLE group in the More index (S2): the app's overline (UPPERCASE) becomes a

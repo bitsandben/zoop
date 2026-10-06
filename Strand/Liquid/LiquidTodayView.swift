@@ -379,6 +379,10 @@ struct LiquidTodayView: View {
                         case .hero:
                             heroCard
                             if chargeLegacyRRGap { ChargeLegacyRRGapNote() }
+                            #if os(iOS)
+                            monitorTilesRow
+                            HomeSectionTitle(title: "My Day") { myDayAddButton }
+                            #endif
                         case .liveSession: if liveSessionsBeta { liveSessionStartRow }
                         case .synthesis:
                             #if os(iOS)
@@ -388,7 +392,11 @@ struct LiquidTodayView: View {
                             #else
                             synthesisSection
                             #endif
-                        case .keyMetrics: keyMetricsSection
+                        case .keyMetrics:
+                            #if os(iOS)
+                            HomeSectionTitle(title: "My Dashboard") { personalizeButton }
+                            #endif
+                            keyMetricsSection
                         case .workouts: lastWorkoutsSection
                         case .heartRate: heartRateSection
                         case .recoveryVitals: recoveryVitalsSection
@@ -414,6 +422,9 @@ struct LiquidTodayView: View {
                     // Self-gates on the toggle AND on the detector finding an unsaved, un-dismissed window,
                     // so it renders nothing by default.
                     AutoWorkoutCard()
+                    #if os(iOS)
+                    effortChargeWeek
+                    #endif
                     dataSourcesSection
                     Color.clear.frame(height: 90) // floating tab-bar clearance
                 }
@@ -587,22 +598,93 @@ struct LiquidTodayView: View {
     #if os(iOS)
     /// Profile, glass controls, and the shared day navigator. Chevrons step the day; the title
     /// opens the calendar. No wordmark — the scores are the header.
+    /// One row, as in the reference: profile on the left, the day capsule in the centre, the strap
+    /// battery on the right. Quick actions and Customize live with the sections they act on.
     private var iosDayHeader: some View {
-        VStack(spacing: ZoopMetrics.space2) {
+        ZStack {
             HStack(spacing: headerClusterSpacing) {
                 settingsAvatarButton
                 Spacer(minLength: 0)
-                LiquidAddButton()
                 LiquidBatteryButton()
-                customizeTodayButton
             }
             DayNavBar(selectedOffset: selectedDayOffset,
-                      today: Repository.logicalDay(Date())) { offset in
+                      today: Repository.logicalDay(Date()),
+                      style: .pill) { offset in
                 let next = min(max(0, offset), earliestDayOffset)
                 guard next != selectedDayOffset else { return }
                 withAnimation(StrandMotion.interactive) { selectedDayOffset = next }
             }
         }
+        .padding(.bottom, ZoopMetrics.space3)
+    }
+
+    /// The Health and Stress monitor tiles under the score rings.
+    private var monitorTilesRow: some View {
+        HStack(alignment: .top, spacing: ZoopMetrics.space3) {
+            NavigationLink(value: TabRoute.health) {
+                HomeHealthMonitorTile(temperatureUnit: temperatureUnit)
+            }
+            .buttonStyle(LiquidPressStyle())
+            NavigationLink(value: TabRoute.stress) {
+                HomeStressMonitorTile(score: stress)
+            }
+            .buttonStyle(LiquidPressStyle())
+        }
+    }
+
+    /// The seven days ending at the selected day, for the Effort & Charge chart. Empty days still take
+    /// a column so the week keeps its shape.
+    private var effortChargeWeek: some View {
+        let cal = Calendar.current
+        let anchor = cal.date(byAdding: .day, value: -selectedDayOffset, to: Repository.logicalDay(Date())) ?? Date()
+        let byDay = Dictionary(repo.days.map { ($0.day, $0) }, uniquingKeysWith: { _, last in last })
+        let week: [EffortChargeDay] = (0..<7).reversed().compactMap { back in
+            guard let date = cal.date(byAdding: .day, value: -back, to: anchor) else { return nil }
+            let key = Repository.localDayKey(date)
+            let row = back == 0 ? displayDay : byDay[key]
+            let effort = (back == 0 ? effortStrain(row) : row?.strain).map { UnitFormatter.effortValue($0, scale: effortScale) }
+            return EffortChargeDay(day: key, charge: row?.recovery, effort: effort)
+        }
+        return EffortChargeWeekCard(days: week,
+                                    effortMax: effortScale == .whoop ? 21 : 100,
+                                    effortDecimals: effortScale == .whoop ? 1 : 0)
+    }
+
+    /// The white rounded-square "+" beside "My Day", opening the quick-action menu.
+    private var myDayAddButton: some View {
+        Button { router.requestQuickActions() } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(Color.black)
+                .frame(width: 44, height: 44)
+                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.white))
+        }
+        .buttonStyle(LiquidPressStyle())
+        .accessibilityLabel("Quick actions")
+    }
+
+    /// The gradient "Personalize" pill beside "My Dashboard", opening the Today customization sheet.
+    private var personalizeButton: some View {
+        Button { customizationDestination = .today } label: {
+            HStack(spacing: ZoopMetrics.space2) {
+                Text("Personalize")
+                    .font(StrandFont.overlineScaled(13))
+                    .tracking(1.5)
+                    .textCase(.uppercase)
+                Image(systemName: "pencil")
+                    .font(.system(size: 14, weight: .bold))
+            }
+            .foregroundStyle(Color.white)
+            .padding(.horizontal, 14)
+            .frame(height: 32)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(LinearGradient(colors: [StrandPalette.metricRose, StrandPalette.sleepREM],
+                                         startPoint: .leading, endPoint: .trailing))
+            )
+        }
+        .buttonStyle(LiquidPressStyle())
+        .accessibilityLabel("Customize Today")
     }
     #endif
 
@@ -749,6 +831,42 @@ struct LiquidTodayView: View {
         .accessibilityLabel("Start a live session. Beta. Silent strap coaching against today's Charge.")
     }
 
+    #if os(iOS)
+    /// The three score rings in the reference's order (Rest, Charge, Effort), drawn straight on the
+    /// canvas with no card behind them.
+    private var heroCard: some View {
+        HStack(alignment: .top, spacing: 4) {
+            HeroScoreCell(label: String(localized: "Rest"), score: restScore, tint: StrandPalette.restColor,
+                          animated: dataLoaded, onGuide: { guideSection = .rest },
+                          unit: "%",
+                          detailRoute: .metric(HeroRingMetric.rest))
+            // #543 carry: an unscored today shows the last scored night's Charge; Effort does not carry.
+            HeroScoreCell(label: String(localized: "Charge"), score: chargeDisplay.pct,
+                          tint: chargeDisplay.pct.map { StrandPalette.recoveryColor($0) } ?? StrandPalette.chargeColor,
+                          animated: dataLoaded, onGuide: { guideSection = .charge },
+                          unit: "%",
+                          detailRoute: .metric(HeroRingMetric.charge))
+            // #45: the hero Effort honours the user's Effort scale (0–100 or 0–21).
+            HeroScoreCell(label: String(localized: "Effort"),
+                          score: effortStrain(displayDay).map { UnitFormatter.effortValue($0, scale: effortScale) },
+                          tint: StrandPalette.effortColor, animated: dataLoaded,
+                          onGuide: { guideSection = .effort },
+                          maxValue: effortScale == .whoop ? 21 : 100,
+                          decimals: effortScale == .whoop ? 1 : 0,
+                          detailRoute: .metric(HeroRingMetric.effort))
+        }
+        .overlay(alignment: .topLeading) {
+            if let sourceLabel = heroSourceLabel {
+                SourceBadge("\(sourceLabel)", tint: StrandPalette.textSecondary)
+                    .fixedSize()
+                    .offset(y: -ZoopMetrics.sourceBadgeHeight)
+                    .allowsHitTesting(false)
+                    .accessibilityLabel(Text("Source: \(sourceLabel)"))
+            }
+        }
+        .padding(.vertical, ZoopMetrics.space3)
+    }
+    #else
     private var heroCard: some View {
         HStack(alignment: .top, spacing: 4) {
             // #543 carry: an unscored today shows the last scored night's REAL Charge (labelled as prior by
@@ -789,6 +907,7 @@ struct LiquidTodayView: View {
         .padding(.horizontal, ZoopMetrics.space3)
         .background(ZoopPanelSurface(cornerRadius: 26, elevated: true, surfaceOpacity: cardOpacity))
     }
+    #endif
 
     // MARK: - Heart rate
 
@@ -1708,7 +1827,12 @@ struct LiquidTodayView: View {
     /// Matches the Android twin, whose `SectionHeader` already takes `trailing: String? = null`.
     private func sectionHead(_ title: String, trailing: String? = nil) -> some View {
         HStack(alignment: .firstTextBaseline) {
+            #if os(iOS)
+            Text(LocalizedStringKey(title)).font(StrandFont.overlineScaled(14)).tracking(1.6)
+                .foregroundStyle(StrandPalette.textPrimary)
+            #else
             Text(LocalizedStringKey(title)).font(StrandFont.overline).tracking(1.6).foregroundStyle(StrandPalette.textTertiary)
+            #endif
             Spacer()
             if let trailing {
                 Text(LocalizedStringKey(trailing)).font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
@@ -2337,7 +2461,11 @@ private struct LiquidWordmark: View {
 /// COUNTS UP to the value when data lands; tapping the gauge itself splashes (the number is
 /// hit-transparent so the tap reaches the vessel). The label row taps through to the scoring guide.
 private struct HeroScoreCell: View {
+    #if os(iOS)
+    static let vesselDiameter: CGFloat = 100
+    #else
     static let vesselDiameter: CGFloat = 96
+    #endif
 
     let label: String
     let score: Double?            // on whatever scale the caller passes (nil = no data yet)
@@ -2350,6 +2478,8 @@ private struct HeroScoreCell: View {
     // Decimal places for the displayed number. 0 keeps the whole-number scores; the WHOOP 0–21 Effort
     // scale passes 1 to match the app-wide one-decimal `effortDisplay` convention (#45).
     var decimals: Int = 0
+    /// A suffix drawn small beside the number on iOS ("%" for the percentage scores).
+    var unit: String? = nil
     /// Where the GAUGE taps through to, or nil to keep the ring inert (#1995).
     ///
     /// Same `TabRoute.metric(key)` the Recovery Vitals rows use, so a ring and the Key-Metrics tile for
@@ -2367,7 +2497,7 @@ private struct HeroScoreCell: View {
         // A flat ring. The liquid vessel redraws on a timeline while it fills; the home trio
         // does not need that clock once the number is on screen.
         let gauge = FlatScoreRing(score: score, tint: tint, diameter: Self.vesselDiameter,
-                                  maxValue: maxValue, decimals: decimals, animated: animated)
+                                  maxValue: maxValue, decimals: decimals, unit: unit, animated: animated)
         #else
         let gauge = LiquidScoreGauge(
             score: score,
@@ -2401,15 +2531,19 @@ private struct HeroScoreCell: View {
     }
 
     var body: some View {
-        VStack(spacing: 7) {
+        VStack(spacing: 12) {
             gaugeView
             Button(action: onGuide) {
                 #if os(iOS)
-                Text(label)
-                    .font(StrandFont.subhead)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .foregroundStyle(StrandPalette.textSecondary)
+                HStack(spacing: 4) {
+                    Text(label.uppercased())
+                        .font(StrandFont.overlineScaled(14))
+                        .tracking(1.6)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Image(systemName: "chevron.right").font(.system(size: 11, weight: .bold))
+                }
+                .foregroundStyle(StrandPalette.textPrimary)
                 #else
                 HStack(spacing: 3) {
                     // #74: one line, shrink-to-fit rather than wrap under large Dynamic Type (mirrors the
@@ -2438,6 +2572,7 @@ private struct FlatScoreRing: View {
     let diameter: CGFloat
     var maxValue: Double = 100
     var decimals: Int = 0
+    var unit: String? = nil
     var animated: Bool = true
 
     @State private var shown: Double = 0
@@ -2447,7 +2582,8 @@ private struct FlatScoreRing: View {
         return CGFloat(max(0, min(1, shown / maxValue)))
     }
 
-    private var lineWidth: CGFloat { max(6, diameter * 0.085) }
+    private var lineWidth: CGFloat { max(6, diameter * 0.08) }
+    private var numberSize: CGFloat { diameter * 0.34 }
 
     var body: some View {
         ZStack {
@@ -2457,16 +2593,24 @@ private struct FlatScoreRing: View {
                 .trim(from: 0, to: fraction)
                 .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-            if score != nil {
-                CountUpNumber(value: shown,
-                              font: StrandFont.rounded(diameter * 26 / HeroScoreCell.vesselDiameter),
-                              decimals: decimals)
-                    .foregroundStyle(StrandPalette.textPrimary)
-            } else {
-                Text("–")
-                    .font(StrandFont.rounded(diameter * 26 / HeroScoreCell.vesselDiameter))
-                    .foregroundStyle(StrandPalette.textTertiary)
+            HStack(alignment: .firstTextBaseline, spacing: 1) {
+                if score != nil {
+                    CountUpNumber(value: shown, font: StrandFont.display(numberSize), decimals: decimals)
+                        .foregroundStyle(StrandPalette.textPrimary)
+                } else {
+                    Text("--")
+                        .font(StrandFont.display(numberSize))
+                        .foregroundStyle(StrandPalette.textTertiary)
+                }
+                if let unit {
+                    Text(unit)
+                        .font(StrandFont.display(numberSize * 0.6))
+                        .foregroundStyle(score != nil ? StrandPalette.textPrimary : StrandPalette.textTertiary)
+                }
             }
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .padding(.horizontal, lineWidth + 4)
         }
         .frame(width: diameter, height: diameter)
         .onAppear { roll(score) }

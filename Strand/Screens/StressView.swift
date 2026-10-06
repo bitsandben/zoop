@@ -781,9 +781,9 @@ enum StressRamp {
     /// Band anchors, lifted from the shared palette (no hard-coded hex). These are the
     /// blue / green / amber the totals legend and band dots use, kept in lock-step with
     /// the gauge gradient below.
-    static let calm    = StrandPalette.accent         // #60A0E0 — calm WHOOP blue
-    static let steady  = StrandPalette.statusPositive // #03E095 — balanced WHOOP green
-    static let tense   = StrandPalette.statusWarning  // #F0A020 — high WHOOP amber
+    static let calm    = StrandPalette.stressLow     // low — WHOOP blue
+    static let steady  = StrandPalette.stressMedium  // medium — WHOOP green
+    static let tense   = StrandPalette.stressHigh    // high — WHOOP orange
 
     /// The 3-stop gauge ramp, evenly spaced (blue → green → amber).
     static let stops: [Gradient.Stop] = [

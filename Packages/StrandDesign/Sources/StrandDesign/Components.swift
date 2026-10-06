@@ -548,7 +548,7 @@ public struct SourceBadge: View {
         // `.frame(height:)` centres its content by default, so the label sits mid-capsule for free. Noted
         // because the Android twin pinned the same 18 with `heightIn` applied to the label itself, which
         // top-aligns — same number, different render. That one is matched to this, not the reverse.
-        Text(text).textCase(.uppercase).font(.system(size: 10, weight: .semibold, design: .rounded)).tracking(0.5)
+        Text(text).textCase(.uppercase).font(.system(size: 10, weight: .semibold, design: .default)).tracking(0.5)
             .padding(.horizontal, 9).frame(height: ZoopMetrics.sourceBadgeHeight)
             .background(tint.opacity(0.16), in: Capsule(style: .continuous))
             .foregroundStyle(tint)
