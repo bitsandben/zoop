@@ -58,21 +58,15 @@ extension CycleCalendar.Phase {
 struct HomeCycleCard: View {
     @EnvironmentObject private var repo: Repository
     @State private var starts: [String] = []
-    @State private var showLog = false
 
     private var estimate: CycleCalendar.Estimate? {
         CycleCalendar.estimate(periodStarts: starts.compactMap(CycleDays.number), today: CycleDays.today())
     }
 
     var body: some View {
-        Button { showLog = true } label: { content }
+        NavigationLink(value: TabRoute.cycle) { content }
             .buttonStyle(LiquidPressStyle())
             .task(id: repo.cycleTrackingSeq) { starts = await repo.periodStarts() }
-            .sheet(isPresented: $showLog) {
-                CycleLogSheet()
-                    .environmentObject(repo)
-                    .noopSheetPresentation(largeFirst: true)
-            }
     }
 
     private var content: some View {

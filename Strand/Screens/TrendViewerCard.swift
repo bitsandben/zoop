@@ -90,6 +90,8 @@ struct TrendViewerCard: View {
     }
 
     @AppStorage("zoop.trendViewer.metric") private var metricRaw = Metric.hrv.rawValue
+    /// The date under the finger while scrubbing the chart.
+    @State private var scrubDate: Date?
     @AppStorage("zoop.trendViewer.window") private var windowRaw = Window.month.rawValue
     private var metric: Metric { Metric(rawValue: metricRaw) ?? .hrv }
     private var window: Window { Window(rawValue: windowRaw) ?? .month }
@@ -257,6 +259,10 @@ struct TrendViewerCard: View {
             : String(localized: "Your average for this period (\(a)) was below the previous period's (\(p)).")
     }
 
+    private func nearest(_ p: [Point], to date: Date) -> Point? {
+        p.min { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) }
+    }
+
     /// Bars start at zero; lines zoom to their own range (and the band) so a vital's movement shows.
     private func yDomain(_ p: [Point], band: (lo: Double, hi: Double)?) -> ClosedRange<Double> {
         let values = p.map(\.value) + (band.map { [$0.lo, $0.hi] } ?? [])
@@ -315,7 +321,27 @@ struct TrendViewerCard: View {
                         .foregroundStyle(StrandPalette.textSecondary)
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                 }
+                if let scrubDate, let p = nearest(current, to: scrubDate) {
+                    // The reading under the finger: a rule at that day with its value and date.
+                    RuleMark(x: .value("Selected", p.date))
+                        .foregroundStyle(StrandPalette.textPrimary.opacity(0.6))
+                        .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
+                            VStack(spacing: 2) {
+                                Text(format(p.value) + (metric.unit.isEmpty ? "" : " \(metric.unit)"))
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundStyle(StrandPalette.textPrimary)
+                                Text(p.date.formatted(window == .halfYear
+                                                      ? .dateTime.day().month(.abbreviated)
+                                                      : .dateTime.weekday(.abbreviated).day().month(.abbreviated)))
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(StrandPalette.textSecondary)
+                            }
+                            .padding(.horizontal, 8).padding(.vertical, 5)
+                            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(StrandPalette.surfaceOverlay))
+                        }
+                }
             }
+            .chartXSelection(value: $scrubDate)
             .chartYScale(domain: yDomain(current, band: band))
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 5)) { _ in

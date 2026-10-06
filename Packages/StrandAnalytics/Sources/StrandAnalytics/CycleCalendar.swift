@@ -61,6 +61,68 @@ public enum CycleCalendar {
                         ovulationDay: ovulation)
     }
 
+    /// How a calendar day relates to the logged cycles, for the month view.
+    public struct DayInfo: Equatable, Sendable {
+        public let phase: Phase
+        /// True when the day is after today, so it is a projection rather than a record.
+        public let predicted: Bool
+        /// True on a period day that follows a logged start (not a projected one).
+        public let loggedPeriod: Bool
+    }
+
+    /// The phase of any calendar day: inside a logged cycle it uses that cycle's real length (the gap to
+    /// the next logged start), after the last start it projects cycles of the estimated length forward.
+    /// nil before the first logged start.
+    public static func dayInfo(_ day: Int, periodStarts: [Int], today: Int,
+                               periodLength: Int = defaultPeriodLength) -> DayInfo? {
+        let starts = Array(Set(periodStarts.filter { $0 <= today })).sorted()
+        guard let first = starts.first, day >= first,
+              let est = estimate(periodStarts: starts, today: today, periodLength: periodLength) else { return nil }
+        var start: Int
+        var length: Int
+        var logged: Bool
+        if let idx = starts.lastIndex(where: { $0 <= day }), idx < starts.count - 1 {
+            start = starts[idx]
+            length = starts[idx + 1] - start
+            logged = true
+        } else {
+            let last = starts[starts.count - 1]
+            let k = max(0, (day - last) / est.cycleLength)
+            start = last + k * est.cycleLength
+            length = est.cycleLength
+            logged = k == 0
+        }
+        let cycleDay = day - start + 1
+        let ovulation = length - lutealLength
+        let phase: Phase
+        if cycleDay <= periodLength {
+            phase = .menstrual
+        } else if cycleDay < ovulation - 2 {
+            phase = .follicular
+        } else if cycleDay <= ovulation + 1 {
+            phase = .ovulatory
+        } else {
+            phase = .luteal
+        }
+        return DayInfo(phase: phase, predicted: day > today,
+                       loggedPeriod: logged && phase == .menstrual && day <= today)
+    }
+
+    /// The window the next period is expected in: the estimate ± half the spread of the logged cycle
+    /// lengths (1–4 days), or ± 2 days while there are fewer than two logged cycles.
+    public static func nextPeriodWindow(periodStarts: [Int], today: Int) -> ClosedRange<Int>? {
+        guard let e = estimate(periodStarts: periodStarts, today: today) else { return nil }
+        let starts = Array(Set(periodStarts.filter { $0 <= today })).sorted()
+        let gaps = zip(starts, starts.dropFirst()).map { $1 - $0 }.filter { acceptedGaps.contains($0) }
+        let half: Int
+        if gaps.count >= 2, let lo = gaps.min(), let hi = gaps.max() {
+            half = min(4, max(1, Int((Double(hi - lo) / 2).rounded())))
+        } else {
+            half = 2
+        }
+        return (e.daysUntilNextPeriod - half)...(e.daysUntilNextPeriod + half)
+    }
+
     static func median(_ values: [Int]) -> Int {
         let v = values.sorted()
         if v.count % 2 == 1 { return v[v.count / 2] }

@@ -329,10 +329,51 @@ private struct WeeklyCard<Content: View>: View {
     }
 }
 
+/// Tracks which column of a week chart the finger is over while dragging sideways, so a tap still
+/// reaches the card's link and only a horizontal drag scrubs.
+private struct WeekScrub: ViewModifier {
+    let count: Int
+    @Binding var selected: Int?
+
+    func body(content: Content) -> some View {
+        content.overlay {
+            GeometryReader { geo in
+                Color.clear
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 8)
+                            .onChanged { v in
+                                let col = geo.size.width / CGFloat(max(count, 1))
+                                selected = min(count - 1, max(0, Int(v.location.x / col)))
+                            }
+                            .onEnded { _ in selected = nil }
+                    )
+            }
+        }
+    }
+}
+
+/// The value bubble shown above a scrubbed week column.
+private struct ScrubBubble: View {
+    let value: String
+    let day: WeeklyTrendDay
+    var body: some View {
+        VStack(spacing: 1) {
+            Text(value).font(.system(size: 14, weight: .bold)).foregroundStyle(StrandPalette.textPrimary)
+            Text(day.date.map { $0.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)) } ?? "")
+                .font(.system(size: 11, weight: .medium)).foregroundStyle(StrandPalette.textSecondary)
+        }
+        .padding(.horizontal, 8).padding(.vertical, 5)
+        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(StrandPalette.surfaceOverlay))
+        .fixedSize()
+    }
+}
+
 /// Recovery for the week as rounded bars in each day's band colour, the value above each bar.
 struct WeeklyRecoveryCard: View {
     let days: [WeeklyTrendDay]
     private let plotHeight: CGFloat = 170
+    @State private var scrub: Int?
 
     var body: some View {
         WeeklyCard(title: "Recovery") {
@@ -359,6 +400,16 @@ struct WeeklyRecoveryCard: View {
                     }
                 }
                 .frame(height: plotHeight)
+                .modifier(WeekScrub(count: days.count, selected: $scrub))
+                .overlay(alignment: .top) {
+                    GeometryReader { geo in
+                        if let i = scrub, days.indices.contains(i), let r = days[i].recovery {
+                            let col = geo.size.width / CGFloat(days.count)
+                            ScrubBubble(value: "\(Int(r.rounded()))%", day: days[i])
+                                .position(x: min(max(col * (CGFloat(i) + 0.5), 50), geo.size.width - 50), y: -6)
+                        }
+                    }
+                }
                 WeekAxis(days: days)
             }
         }
@@ -372,6 +423,7 @@ struct WeeklyRecoveryCard: View {
 struct WeeklyHRVCard: View {
     let days: [WeeklyTrendDay]
     private let plotHeight: CGFloat = 150
+    @State private var scrub: Int?
 
     var body: some View {
         WeeklyCard(title: "Heart Rate Variability") {
@@ -423,6 +475,16 @@ struct WeeklyHRVCard: View {
                 }
                 .frame(height: plotHeight)
                 .padding(.top, 18)
+                .modifier(WeekScrub(count: days.count, selected: $scrub))
+                .overlay(alignment: .top) {
+                    GeometryReader { geo in
+                        if let i = scrub, days.indices.contains(i), let v = days[i].hrv {
+                            let col = geo.size.width / CGFloat(days.count)
+                            ScrubBubble(value: "\(Int(v.rounded())) ms", day: days[i])
+                                .position(x: min(max(col * (CGFloat(i) + 0.5), 50), geo.size.width - 50), y: -6)
+                        }
+                    }
+                }
                 WeekAxis(days: days)
             }
         }

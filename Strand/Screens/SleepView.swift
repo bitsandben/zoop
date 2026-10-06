@@ -477,7 +477,11 @@ struct SleepView: View {
     @ViewBuilder
     private func sleepSectionView(_ section: SleepSection, _ model: SleepModel) -> some View {
         switch section {
-        case .sleepMarks:      SleepMarkCard()
+        case .sleepMarks:
+            // iOS leaves wake detection to the strap's heart rate and motion; marks never fed it.
+            #if !os(iOS)
+            SleepMarkCard()
+            #endif
         case .stages:          hero(model)
         case .bodyClock:       bodyClockDial(model)
         case .nightDetail:     NightDetailCard(model: model)
