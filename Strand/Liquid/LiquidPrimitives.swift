@@ -339,8 +339,34 @@ struct LiquidVessel: View {
     }
 
     var body: some View {
+        #if os(iOS)
+        // iOS draws every vessel as the redesign's squircle ring, eased in once; macOS keeps the liquid.
+        GeometryReader { geo in
+            let side = min(geo.size.width, geo.size.height)
+            SquircleRing(fraction: shownFraction, tint: tint, lineWidth: max(3, side * 0.09))
+                .frame(width: side, height: side)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .onAppear { easeFraction() }
+        .onChangeCompat(of: value) { _ in easeFraction() }
+        #else
         if animated && !motion.poseStill(reduceMotion) { gauge } else { staticGauge }
+        #endif
     }
+
+    #if os(iOS)
+    @State private var shownFraction: Double = 0
+
+    private func easeFraction() {
+        let target = max(0, min(1, value ?? 0))
+        if animated && !motion.poseStill(reduceMotion) {
+            withAnimation(.easeOut(duration: 0.8)) { shownFraction = target }
+        } else {
+            shownFraction = target
+        }
+    }
+    #endif
 
     /// The live gauge: the fill eases in from empty and to each new value, then the ring holds still.
     ///
@@ -424,7 +450,20 @@ struct LiquidTube: View {
     @State private var sim = LiquidSim(target: 0)
 
     var body: some View {
+        #if os(iOS)
+        // iOS draws a flat rounded bar on a dim track, as in the redesign; macOS keeps the liquid tube.
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(ZoopVisualStyle.ringTrack)
+                Capsule().fill(tint)
+                    .frame(width: max(min(height, 8), geo.size.width * CGFloat(max(0, min(1, frac)))))
+                    .opacity(frac > 0 ? 1 : 0)
+            }
+        }
+        .frame(height: min(height, 8))
+        #else
         if animated && !motion.poseStill(reduceMotion) { liveTube } else { staticTube }
+        #endif
     }
 
     private var liveTube: some View {

@@ -246,10 +246,13 @@ enum PuffinExperiment {
     /// SUSTAINED-ELEVATED window (resting HR + 30 bpm held ≥ 12 min) that doesn't overlap a saved workout,
     /// and surface ONE dismissible Today card offering to save it as a manual-style workout. Pure read +
     /// suggestion: nothing is ever created without the user tapping Save, and turning this OFF stops all
-    /// detection and hides the card. Default OFF. Mirrors the Android `ZoopPrefs.KEY_AUTO_DETECT_WORKOUTS`.
+    /// detection and hides the card. Default ON in the Zoop fork (upstream and Android default OFF).
+    /// Default-true, so it is read through `object(forKey:)`, never a bare `bool(forKey:)`.
     static let autoDetectWorkoutsKey = "noopAutoDetectWorkouts"
 
-    static var autoDetectWorkoutsEnabled: Bool { UserDefaults.standard.bool(forKey: autoDetectWorkoutsKey) }
+    static var autoDetectWorkoutsEnabled: Bool {
+        UserDefaults.standard.object(forKey: autoDetectWorkoutsKey) as? Bool ?? true
+    }
 
     /// "Journal reminder" (#627). When ON, Today shows a persistent journal widget (a last-7-days
     /// completion strip that taps through to the journal) and nudges when today isn't logged yet.

@@ -392,6 +392,8 @@ struct LiquidTodayView: View {
                             // iOS: an active workout shows with the rest of the day's activity. Starting one
                             // is in the "+" menu, so the separate Start button is not drawn here.
                             ActiveWorkoutIndicatorSection(showStart: false)
+                            // A detected workout waiting to be saved belongs with the day's activity.
+                            AutoWorkoutCard()
                             #endif
                         case .liveSession: if liveSessionsBeta { liveSessionStartRow }
                         case .synthesis:
@@ -431,9 +433,11 @@ struct LiquidTodayView: View {
                     // (after the cards block, before Data Sources) and the same leaf Android renders.
                     // Self-gates on the toggle AND on the detector finding an unsaved, un-dismissed window,
                     // so it renders nothing by default.
-                    AutoWorkoutCard()
                     #if os(iOS)
+                    if !sectionOrder.contains(.hero) { AutoWorkoutCard() }
                     weeklyTrends
+                    #else
+                    AutoWorkoutCard()
                     #endif
                     dataSourcesSection
                     Color.clear.frame(height: 90) // floating tab-bar clearance

@@ -768,6 +768,10 @@ final class AppModel: ObservableObject {
             await intelligence.analyzeRecent(skipIfUnchanged: true)
         }
         await refreshV5Signals()
+        // A workout found in the fresh data is announced now rather than waiting for Today to be opened.
+        if PuffinExperiment.autoDetectWorkoutsEnabled {
+            WorkoutDetectedNotifier.onSyncCompleted(candidate: await repo.autoDetectCandidate(), enabled: true)
+        }
         #if os(iOS)
         // #980: a strap backfill routinely completes while the app is BACKGROUNDED (it runs as a
         // bluetooth-central, so it stays alive to receive the offload). The only other widget-publish

@@ -121,10 +121,10 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 if let title {
-                    // iOS uses a quieter title so the numbers below the header lead. macOS keeps the
-                    // 28pt face the cohesion pass locked to the liquid home.
+                    // iOS uses the redesign's large sentence-case title, matching Home's section titles.
+                    // macOS keeps the 28pt face the cohesion pass locked to the liquid home.
                     #if os(iOS)
-                    Text(title).font(StrandFont.rounded(22)).foregroundStyle(StrandPalette.textPrimary)
+                    Text(title).font(.system(size: 30, weight: .bold)).foregroundStyle(StrandPalette.textPrimary)
                     #else
                     Text(title).font(StrandFont.rounded(28)).foregroundStyle(StrandPalette.textPrimary)
                     #endif

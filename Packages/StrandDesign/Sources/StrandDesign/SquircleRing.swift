@@ -99,3 +99,65 @@ public struct SquircleRing: View {
         .padding(lineWidth / 2)
     }
 }
+
+// MARK: - Icon row
+
+/// The redesign's list row: the glyph in a black circular well, a title with an optional grey line
+/// under it, an optional trailing value, and a chevron. Used for navigation lists such as More and
+/// Settings so every list in the app reads the same way.
+public struct ZoopIconRow: View {
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey?
+    let icon: String
+    var iconTint: Color
+    var value: String?
+    var showsChevron: Bool
+
+    public init(_ title: LocalizedStringKey, subtitle: LocalizedStringKey? = nil, icon: String,
+                iconTint: Color = StrandPalette.textPrimary, value: String? = nil, showsChevron: Bool = true) {
+        self.title = title
+        self.subtitle = subtitle
+        self.icon = icon
+        self.iconTint = iconTint
+        self.value = value
+        self.showsChevron = showsChevron
+    }
+
+    public var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(iconTint)
+                .frame(width: 40, height: 40)
+                .background(Circle().fill(StrandPalette.surfaceBase))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                if let subtitle {
+                    Text(subtitle)
+                        .font(StrandFont.footnote)
+                        .foregroundStyle(StrandPalette.textSecondary)
+                        .lineLimit(1)
+                }
+            }
+            Spacer(minLength: 8)
+            if let value {
+                Text(value)
+                    .font(.system(size: 15, weight: .semibold).monospacedDigit())
+                    .foregroundStyle(StrandPalette.textSecondary)
+            }
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textTertiary)
+                    .accessibilityHidden(true)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(minHeight: 60)
+        .contentShape(Rectangle())
+    }
+}
