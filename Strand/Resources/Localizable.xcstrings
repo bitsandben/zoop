@@ -1,6 +1,15 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "All workouts": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Alle Workouts"}}}},
+    "Filter workouts": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Workouts filtern"}}}},
+    "Clear filters": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Filter zurücksetzen"}}}},
+    "Hours of Sleep": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Geschlafene Stunden"}}}},
+    "%@%% vs previous": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "%@ %% ggü. Vorzeitraum"}}}},
+    "No readings in this period": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Keine Messwerte in diesem Zeitraum"}}}},
+    "Your average for this period (%@) matches the previous period's (%@).": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Dein Durchschnitt in diesem Zeitraum (%@) entspricht dem des Vorzeitraums (%@)."}}}},
+    "Your average for this period (%@) was above the previous period's (%@).": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Dein Durchschnitt in diesem Zeitraum (%@) lag über dem des Vorzeitraums (%@)."}}}},
+    "Your average for this period (%@) was below the previous period's (%@).": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Dein Durchschnitt in diesem Zeitraum (%@) lag unter dem des Vorzeitraums (%@)."}}}},
     "Stages, debt and consistency": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Phasen, Schlafschuld und Regelmäßigkeit"}}}},
     "Sessions, zones and routes": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Einheiten, Zonen und Routen"}}}},
     "Load across your day": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Belastung über den Tag"}}}},
