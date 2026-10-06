@@ -56,6 +56,8 @@ struct LiquidTodayView: View {
     /// Input providers for the three scores, keyed by recovery / strain / sleep_performance.
     @State private var heroProviderByMetric: [String: ScoreInputProvider] = [:]
     @State private var stress: Double?             // StressModel(...).score, 0–3
+    /// The "not for me" choice that hides cycle features (shared with AppModel).
+    @AppStorage(AppModel.cycleAwarenessHiddenKey) private var cycleCardHidden = false
     /// The recent workout whose detail sheet is open (iOS).
     @State private var workoutDetail: HomeWorkoutTarget?
     @State private var fitnessAge: Double?         // exploreSeries("fitness_age").last
@@ -392,6 +394,8 @@ struct LiquidTodayView: View {
                             monitorTilesRow
                             HomeSectionTitle(title: "My Day") { myDayAddButton }
                             todaysActivitiesCard
+                            // The cycle follows the day for anyone it applies to, unless they hid it.
+                            if profile.cycleAwarenessApplies && !cycleCardHidden { HomeCycleCard() }
                             // iOS: an active workout shows with the rest of the day's activity. Starting one
                             // is in the "+" menu, so the separate Start button is not drawn here.
                             ActiveWorkoutIndicatorSection(showStart: false)
@@ -415,7 +419,11 @@ struct LiquidTodayView: View {
                             HomeSectionTitle(title: "My Dashboard") { personalizeButton }
                             #endif
                             keyMetricsSection
-                        case .workouts: lastWorkoutsSection
+                        case .workouts:
+                            #if !os(iOS)
+                            // iOS lists today's workouts under My Day instead.
+                            lastWorkoutsSection
+                            #endif
                         case .heartRate: heartRateSection
                         case .recoveryVitals: recoveryVitalsSection
                         case .yourCards: yourCardsSection
@@ -441,6 +449,7 @@ struct LiquidTodayView: View {
                     // so it renders nothing by default.
                     #if os(iOS)
                     if !sectionOrder.contains(.hero) { AutoWorkoutCard() }
+                    stressCurveCard
                     weeklyTrends
                     #else
                     AutoWorkoutCard()
@@ -649,16 +658,24 @@ struct LiquidTodayView: View {
 
     /// The Health and Stress monitor tiles under the score rings.
     private var monitorTilesRow: some View {
-        VStack(spacing: ZoopMetrics.space3) {
+        HStack(alignment: .top, spacing: ZoopMetrics.space3) {
             NavigationLink(value: TabRoute.health) {
-                HomeHealthMonitorRow(temperatureUnit: temperatureUnit)
+                HomeHealthMonitorTile(temperatureUnit: temperatureUnit)
             }
             .buttonStyle(LiquidPressStyle())
             NavigationLink(value: TabRoute.stress) {
-                HomeStressMonitorCard(score: stress, hours: hostedStressHours)
+                HomeStressMonitorTile(score: stress)
             }
             .buttonStyle(LiquidPressStyle())
         }
+    }
+
+    /// The day's stress line as its own card further down Home.
+    private var stressCurveCard: some View {
+        NavigationLink(value: TabRoute.stress) {
+            HomeStressMonitorCard(score: stress, hours: hostedStressHours)
+        }
+        .buttonStyle(LiquidPressStyle())
     }
 
     /// Today's activities under "My Day": the sleeps that ended on the selected day (the night and any

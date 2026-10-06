@@ -117,6 +117,15 @@ struct MetricDescriptor: Identifiable, Hashable {
 enum MetricCatalog {
     static let categories = ["Heart", "Charge", "Rest", "Effort", "Health", "Nutrition", "Mind"]
 
+    /// The three scores' names: iOS uses Recovery, Strain and Sleep, as Home labels the rings.
+    private static func scoreName(_ mac: String.LocalizationValue, ios: String.LocalizationValue) -> String {
+        #if os(iOS)
+        String(localized: ios)
+        #else
+        String(localized: mac)
+        #endif
+    }
+
     static let all: [MetricDescriptor] = [
         // ── Heart
         d("avg_hr", String(localized: "Average Heart Rate"), "Heart", "bpm", "my-whoop", "heart", 0, nil),
@@ -129,7 +138,7 @@ enum MetricCatalog {
         d("body_age", String(localized: "Body Age"), "Heart", "yrs", "my-whoop", "figure.stand", 0, false),
 
         // ── Charge (was Recovery)
-        d("recovery", String(localized: "Charge"), "Charge", "%", "my-whoop", "heart.circle", 0, true,
+        d("recovery", Self.scoreName("Charge", ios: "Recovery"), "Charge", "%", "my-whoop", "heart.circle", 0, true,
           String(localized: "How recovered you are, led by HRV versus your personal baseline.")),
         d("hrv", String(localized: "Heart Rate Variability"), "Charge", "ms", "my-whoop", "waveform.path.ecg", 0, true),
         d("rhr", String(localized: "Resting Heart Rate"), "Charge", "bpm", "my-whoop", "heart", 0, false),
@@ -138,7 +147,7 @@ enum MetricCatalog {
         d("skin_temp", String(localized: "Skin Temperature"), "Charge", "°C", "my-whoop", "thermometer", 1, nil),
 
         // ── Rest (was Sleep)
-        d("sleep_performance", String(localized: "Rest"), "Rest", "%", "my-whoop", "moon.stars", 0, true,
+        d("sleep_performance", Self.scoreName("Rest", ios: "Sleep"), "Rest", "%", "my-whoop", "moon.stars", 0, true,
           String(localized: "How restorative your sleep was: duration, efficiency, deep+REM, timing.")),
         d("in_bed_min", String(localized: "Time in Bed"), "Rest", "min", "my-whoop", "bed.double", 0, nil),
         d("sleep_total_min", String(localized: "Asleep Time"), "Rest", "min", "my-whoop", "moon.zzz", 0, true),
@@ -154,7 +163,7 @@ enum MetricCatalog {
         d("sleep_debt_min", String(localized: "Sleep Debt"), "Rest", "min", "my-whoop", "exclamationmark.circle", 0, false),
 
         // ── Effort (was Strain)
-        d("strain", String(localized: "Effort"), "Effort", "/100", "my-whoop", "flame", 1, nil,
+        d("strain", Self.scoreName("Effort", ios: "Strain"), "Effort", "/100", "my-whoop", "flame", 1, nil,
           String(localized: "Cardiovascular load for the day, on a 0-100 scale (was 0-21).")),
         d("steps", String(localized: "Steps"), "Effort", "", "apple-health", "figure.walk", 0, true),
         // WHOOP 5.0 / MG exposes a measured daily step count. Declared AFTER apple-health on purpose:

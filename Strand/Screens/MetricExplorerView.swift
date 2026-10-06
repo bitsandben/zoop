@@ -1320,12 +1320,15 @@ struct MetricDetailView: View {
                             ZStack {
                                 // The big hero vessel stays live (animated) — the one sloshing gauge on the
                                 // screen, exactly like the hero gauges on Today.
-                                LiquidVessel(value: heroAnimatedFraction, tint: domain.bright, animated: true)
+                                // Recovery takes its band colour (red, orange, lime), as on Home.
+                                LiquidVessel(value: heroAnimatedFraction,
+                                             tint: metric.key == HeroRingMetric.charge ? StrandPalette.recoveryColor(v) : domain.bright,
+                                             animated: true)
                                     .frame(width: 188, height: 188)
                                     .accessibilityHidden(true)
                                 VStack(spacing: 2) {
-                                    CountUpNumber(value: v, font: StrandFont.rounded(48))
-                                        .foregroundStyle(.white)
+                                    CountUpNumber(value: v, font: StrandFont.display(54))
+                                        .foregroundStyle(StrandPalette.textPrimary)
                                         .shadow(color: .black.opacity(0.5), radius: 6, y: 1)
                                     if !metric.unit.isEmpty {
                                         Text(metric.unit)
