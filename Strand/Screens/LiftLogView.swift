@@ -42,8 +42,8 @@ struct LiftLogView: View {
         ScreenScaffold(
             title: "Lift Log",
             subtitle: "Build a program once, then tap through it at the gym. Kept on \(Platform.deviceNounPhrase).",
-            onRefresh: { await load() },
-            quietSubtitle: true
+            quietSubtitle: true,
+            onRefresh: { await load() }
         ) {
             VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 headerCard

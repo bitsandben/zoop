@@ -291,13 +291,13 @@ struct TrendsView: View {
 
     private var scaffold: some View {
         ScreenScaffold(title: "Trends", subtitle: "The thread of you over time.",
+                       quietSubtitle: true,
                        // PERF (scroll): lazy column — byte-identical layout (LazyVStack == eager VStack
                        // alignment/spacing/header). The content is one inner eager VStack, so the staggered
                        // section reveal is unchanged; this only defers building that stack until it scrolls in.
                        onRefresh: { await repo.refresh() },
                        lazy: true,
-                       topBackground: liquidScaffoldSky(),
-                       quietSubtitle: true) {
+                       topBackground: liquidScaffoldSky()) {
             if repo.days.isEmpty {
                 ComingSoon(what: repo.loaded
                     ? "Trends need history to draw. Import your WHOOP export in Data Sources to see weeks, months and years instantly."

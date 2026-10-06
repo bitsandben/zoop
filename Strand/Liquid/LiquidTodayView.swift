@@ -1573,14 +1573,16 @@ struct LiquidTodayView: View {
                 Text(label)
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
                 #else
                 Text(label.uppercased())
                     .font(StrandFont.overlineScaled(10))
                     .tracking(1.0)
                     .foregroundStyle(StrandPalette.textTertiary)
-                #endif
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)
+                #endif
             }
             Text(verbatim: displayValue)
                 .font(StrandFont.number(24))

@@ -7,6 +7,9 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
     /// own custom header in `content` (iOS Today's compact top bar).
     let title: LocalizedStringKey?
     var subtitle: LocalizedStringKey? = nil
+    /// iOS hides this screen's subtitle when set. The string stays in the call for macOS, where the
+    /// second line still renders. Used for taglines that restated the title.
+    var quietSubtitle: Bool = false
     /// Optional pull-to-refresh hook. When set, the scroll view becomes `.refreshable`
     /// (the standard iPhone gesture for a data dashboard). Defaults to nil so callers that
     /// don't opt in are unaffected — and on macOS `.refreshable` surfaces no affordance.
@@ -20,9 +23,6 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
     /// Optional full-bleed view drawn behind the scroll content at the TOP of the screen (e.g. Today's
     /// day-cycle scene). Defaults to nil so other screens stay on the flat canvas; nil renders nothing.
     var topBackground: AnyView? = nil
-    /// iOS hides this screen's subtitle when set. The string stays in the call for macOS, where the
-    /// second line still renders. Used for taglines that restated the title.
-    var quietSubtitle: Bool = false
     /// Optional element pinned to the header's trailing edge (e.g. the strap-battery badge on Today).
     /// Defaults to `EmptyView` via the convenience init below, so other screens are unaffected.
     @ViewBuilder var trailing: () -> Trailing
@@ -152,12 +152,11 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
 extension ScreenScaffold where Trailing == EmptyView {
     /// Convenience init for the common case with no header trailing element — keeps every existing
     /// call site (which never passed `trailing`) source-compatible.
-    init(title: LocalizedStringKey?, subtitle: LocalizedStringKey? = nil,
+    init(title: LocalizedStringKey?, subtitle: LocalizedStringKey? = nil, quietSubtitle: Bool = false,
          onRefresh: (() async -> Void)? = nil, lazy: Bool = false, topBackground: AnyView? = nil,
-         quietSubtitle: Bool = false,
          @ViewBuilder content: @escaping () -> Content) {
-        self.init(title: title, subtitle: subtitle, onRefresh: onRefresh, lazy: lazy,
-                  topBackground: topBackground, quietSubtitle: quietSubtitle,
+        self.init(title: title, subtitle: subtitle, quietSubtitle: quietSubtitle, onRefresh: onRefresh,
+                  lazy: lazy, topBackground: topBackground,
                   trailing: { EmptyView() }, content: content)
     }
 }
