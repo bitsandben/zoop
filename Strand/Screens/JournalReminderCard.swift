@@ -61,7 +61,7 @@ struct JournalReminderCard: View {
                 HStack(spacing: ZoopMetrics.space2) {
                     Image(systemName: "book.closed")
                         .font(.system(size: 18))
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text(String(localized: "Journal"))
                         .font(StrandFont.headline)

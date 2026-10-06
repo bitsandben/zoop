@@ -114,7 +114,7 @@ struct LabBookView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "books.vertical.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(StrandPalette.metricCyan)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.metricCyan.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                         .accessibilityHidden(true)
@@ -173,7 +173,7 @@ struct LabBookView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "tray.and.arrow.down.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(StrandPalette.metricAmber)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.metricAmber))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.metricAmber.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                         .accessibilityHidden(true)
@@ -320,7 +320,7 @@ struct LabBookView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Image(systemName: "square.and.pencil")
                     .font(StrandFont.headline)
-                    .foregroundStyle(StrandPalette.metricCyan)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                     .accessibilityHidden(true)
                 Text("Keep your own numbers here")
                     .font(StrandFont.headline)

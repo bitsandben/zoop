@@ -343,7 +343,7 @@ struct LiquidVessel: View {
         // iOS draws every vessel as the redesign's squircle ring, eased in once; macOS keeps the liquid.
         GeometryReader { geo in
             let side = min(geo.size.width, geo.size.height)
-            SquircleRing(fraction: shownFraction, tint: tint, lineWidth: max(3, side * 0.09))
+            SquircleRing(fraction: shownFraction, tint: tint, lineWidth: max(3, side * 0.06))
                 .frame(width: side, height: side)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -619,8 +619,14 @@ struct LiquidScoreGauge: View {
     @State private var shown: Double = 0
 
     private var frac: Double? { score.map { max(0, min(1, $0 / maxValue)) } }
+    #if os(iOS)
+    // The redesign's tall condensed numeral and a plain caption, matching Home's rings.
+    private var centerFont: Font { StrandFont.display(diameter * 0.3) }
+    private var captionFont: Font { .system(size: diameter * 0.085, weight: .semibold) }
+    #else
     private var centerFont: Font { StrandFont.rounded(diameter * 26 / Self.homeHeroDiameter) }
     private var captionFont: Font { StrandFont.rounded(diameter * 0.085, weight: .medium) }
+    #endif
 
     var body: some View {
         ZStack {

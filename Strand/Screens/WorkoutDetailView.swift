@@ -218,7 +218,7 @@ struct WorkoutDetailView: View {
             HStack(alignment: .center, spacing: 14) {
                 Image(systemName: sportSymbol(row.sport))
                     .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(StrandPalette.effortColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.effortColor))
                     .frame(width: 44, height: 44)
                     .background(StrandPalette.effortColor.opacity(0.14),
                                 in: RoundedRectangle(cornerRadius: 12, style: .continuous))

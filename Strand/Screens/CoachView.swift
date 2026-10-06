@@ -202,7 +202,7 @@ struct CoachView: View {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 10) {
                     Image(systemName: "sparkles")
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text("Connect a provider")
                         .font(StrandFont.headline)

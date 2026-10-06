@@ -2365,7 +2365,7 @@ struct SettingsView: View {
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "questionmark.circle")
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("How NOOP works")
@@ -2394,7 +2394,7 @@ struct SettingsView: View {
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "questionmark.circle")
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("How your scores work")
@@ -2426,7 +2426,7 @@ struct SettingsView: View {
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "applewatch")
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("About Apple Watch data")
@@ -2456,7 +2456,7 @@ struct SettingsView: View {
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "internaldrive")
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("Storage")
@@ -2582,7 +2582,7 @@ struct SettingsView: View {
                 Link(destination: URL(string: "https://github.com/ryanbr/noop")!) {
                     HStack(spacing: 10) {
                         Image(systemName: "chevron.left.forwardslash.chevron.right")
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("Project home & source")
@@ -2647,7 +2647,7 @@ struct SettingsView: View {
         HStack(spacing: 8) {
             Image(systemName: "chevron.right")
                 .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(StrandPalette.accent)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                 .accessibilityHidden(true)
             Text(repo)
                 .font(StrandFont.mono(12))
@@ -2669,7 +2669,7 @@ struct SettingsView: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "stethoscope")
-                    .foregroundStyle(StrandPalette.accent)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Diagnostics")
@@ -2701,7 +2701,7 @@ struct SettingsView: View {
         return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "iphone.gen3")
-                    .foregroundStyle(StrandPalette.accent)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                     .accessibilityHidden(true)
                 Text("Using NOOP on iPhone")
                     .font(StrandFont.subhead.weight(.semibold))

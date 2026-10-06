@@ -165,7 +165,7 @@ struct FullDayChartView: View {
                 Image(systemName: "chevron.left").font(StrandFont.headline.weight(.semibold))
             }
             .buttonStyle(.plain)
-            .foregroundStyle(StrandPalette.accent)
+            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
             .accessibilityLabel("Previous day")
 
             Spacer()

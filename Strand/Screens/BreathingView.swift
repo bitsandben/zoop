@@ -548,7 +548,7 @@ private struct BreathingContent: View {
             HStack(spacing: 10) {
                 Image(systemName: "wind")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(StrandPalette.restBright)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.restBright))
                     .accessibilityHidden(true)
                 Text(line)
                     .font(StrandFont.footnote)

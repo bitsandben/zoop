@@ -48,7 +48,7 @@ struct IntelligenceView: View {
             } else if let note = intelligence.note {
                 ZoopCard(padding: 20, tint: StrandPalette.chargeColor) {
                     HStack(alignment: .top, spacing: ZoopMetrics.rowSpacing) {
-                        Image(systemName: "moon.zzz.fill").foregroundStyle(StrandPalette.chargeColor)
+                        Image(systemName: "moon.zzz.fill").foregroundStyle(StrandPalette.icon(StrandPalette.chargeColor))
                             .accessibilityHidden(true)
                         Text(note).font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -200,7 +200,7 @@ struct IntelligenceView: View {
         ZoopCard(padding: 20, tint: StrandPalette.chargeColor) {
             VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                 HStack(spacing: ZoopMetrics.rowSpacing) {
-                    Image(systemName: "brain.head.profile").foregroundStyle(StrandPalette.chargeColor)
+                    Image(systemName: "brain.head.profile").foregroundStyle(StrandPalette.icon(StrandPalette.chargeColor))
                         .accessibilityHidden(true)
                     Text("How this works").font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
                 }

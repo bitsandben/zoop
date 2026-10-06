@@ -323,7 +323,7 @@ struct ManualWorkoutSheet: View {
             // A small Effort-world glyph so the sheet reads as part of the workouts (amber) world.
             Image(systemName: "figure.run")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(StrandPalette.effortColor)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.effortColor))
                 .frame(width: 30, height: 30)
                 .background(StrandPalette.effortColor.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                 .accessibilityHidden(true)

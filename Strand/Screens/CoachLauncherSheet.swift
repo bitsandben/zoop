@@ -88,7 +88,7 @@ struct CoachLauncherSheet: View {
             } label: {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.system(size: 26, weight: .semibold))
-                    .foregroundStyle(StrandPalette.accent)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
             }
             .buttonStyle(.plain)
             .disabled(trimmedDraft.isEmpty)

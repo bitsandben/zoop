@@ -148,7 +148,7 @@ struct AppleWatchSetupView: View {
                     HStack(spacing: 10) {
                         Image(systemName: "applewatch")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .frame(width: 34, height: 34)
                             .background(StrandPalette.accent.opacity(0.14),
                                         in: RoundedRectangle(cornerRadius: 10, style: .continuous))
@@ -240,7 +240,7 @@ struct AppleWatchSetupView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "heart.text.square.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(StrandPalette.metricCyan)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.metricCyan.opacity(0.14),
                                     in: RoundedRectangle(cornerRadius: 9, style: .continuous))
@@ -324,7 +324,7 @@ struct AppleWatchSetupView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "iphone")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(StrandPalette.metricCyan)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                         .accessibilityHidden(true)
                     Text("Set this up on your iPhone")
                         .font(StrandFont.headline)

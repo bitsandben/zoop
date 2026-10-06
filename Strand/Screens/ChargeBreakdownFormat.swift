@@ -228,7 +228,7 @@ struct ChargeLegacyRRGapNote: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "waveform.path.ecg")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(StrandPalette.chargeColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.chargeColor))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(ChargeBreakdownFormat.chargeLegacyRRGapTitle)
@@ -390,7 +390,7 @@ struct SkinTempDeviationRow: View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Image(systemName: "thermometer.medium")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(StrandPalette.metricAmber)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.metricAmber))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 8) {

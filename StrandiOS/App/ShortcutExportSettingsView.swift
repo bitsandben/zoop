@@ -21,7 +21,7 @@ struct ShortcutExportSettingsView: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 10) {
                     Image(systemName: "square.and.arrow.up.on.square.fill")
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text("Shortcuts file export")
                         .font(StrandFont.headline)

@@ -184,7 +184,7 @@ struct ComingSoon: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: symbol)
                 .font(StrandFont.headline)
-                .foregroundStyle(StrandPalette.accent)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 8) {
                 #if !os(iOS)
@@ -248,7 +248,7 @@ struct DataPendingNote: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: symbol)
                     .font(StrandFont.headline)
-                    .foregroundStyle(StrandPalette.accent)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 6) {
                     Text(title)

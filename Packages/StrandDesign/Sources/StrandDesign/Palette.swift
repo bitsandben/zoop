@@ -138,7 +138,7 @@ public enum StrandPalette {
     /// Opacity for dimmed/disabled sections (shared so screens don't invent their own value).
     public static let disabledOpacity: Double = 0.45
     /// Liquid-scene activity tint shared by heart-rate feedback and transient sync chrome.
-    public static let liquidHeart = Color(light: "#D94C64", dark: "#FF6B81")
+    public static let liquidHeart = Color(light: "#B86A2A", dark: "#D9823E")
 
     // MARK: - Chart style (data-viz colour mode) — Titanium (brand) or Classic (throwback)
     //
@@ -241,17 +241,20 @@ public enum StrandPalette {
     // Awake white-grey #CAC8CB, Light periwinkle #A7A4F4, SWS/Deep orchid-pink #FD96FD, REM purple
     // #AE5BEF — because the previous three near-identical blues made a fragmented on-device
     // hypnogram unreadable. Light-mode variants are the same hues darkened for contrast on white.
-    public static var sleepAwake: Color { isClassic ? cSleepAwake : Color(light: "#8E949E", dark: "#CAC8CB") }
-    public static var sleepLight: Color { isClassic ? cSleepLight : Color(light: "#7B78E0", dark: "#A7A4F4") }
-    public static var sleepDeep:  Color { isClassic ? cSleepDeep  : Color(light: "#C13EC1", dark: "#FD96FD") }
-    public static var sleepREM:   Color { isClassic ? cSleepREM   : Color(light: "#8E3BD6", dark: "#AE5BEF") }
+    // The redesign's cool set: four distinct hues drawn only from the concept palette (grey awake,
+    // blue-grey light, strain blue deep, teal REM), replacing the earlier periwinkle/orchid/purple.
+    public static var sleepAwake: Color { isClassic ? cSleepAwake : Color(light: "#8E949E", dark: "#9A9A9A") }
+    public static var sleepLight: Color { isClassic ? cSleepLight : Color(light: "#5C8FB0", dark: "#6E9CBC") }
+    public static var sleepDeep:  Color { isClassic ? cSleepDeep  : Color(light: "#2860B4", dark: "#2D6CC8") }
+    public static var sleepREM:   Color { isClassic ? cSleepREM   : Color(light: "#0E9B7C", dark: "#13BD9A") }
 
     // MARK: HR zones — Titanium cool→warm (no green), or the Classic grey→green→yellow→orange→red.
-    public static var zone1: Color { isClassic ? cZone1 : Color(light: "#3A80D6", dark: "#4A90E2") }
-    public static var zone2: Color { isClassic ? cZone2 : Color(light: "#2E92B4", dark: "#3FA9C9") }
-    public static var zone3: Color { isClassic ? cZone3 : Color(light: "#C28E26", dark: "#E8B84B") }
-    public static var zone4: Color { isClassic ? cZone4 : Color(light: "#C2792E", dark: "#D98A3D") }
-    public static var zone5: Color { isClassic ? cZone5 : Color(light: "#C84E1E", dark: "#E0662F") }
+    // Zones climb through the redesign's palette: blue-grey, teal, gold, orange, red.
+    public static var zone1: Color { isClassic ? cZone1 : Color(light: "#5C8FB0", dark: "#6E9CBC") }
+    public static var zone2: Color { isClassic ? cZone2 : Color(light: "#0E9B7C", dark: "#19B595") }
+    public static var zone3: Color { isClassic ? cZone3 : Color(light: "#B8962A", dark: "#D9B23E") }
+    public static var zone4: Color { isClassic ? cZone4 : Color(light: "#B86A2A", dark: "#D9823E") }
+    public static var zone5: Color { isClassic ? cZone5 : Color(light: "#C23B3B", dark: "#D64545") }
 
     /// HR zones indexed 1...5; index 0 mirrors zone1 for convenience.
     public static var hrZones: [Color] { [zone1, zone1, zone2, zone3, zone4, zone5] }
@@ -260,6 +263,16 @@ public enum StrandPalette {
     public static var statusPositive: Color { isClassic ? Color(light: "#2E9E4F", dark: "#46B45A") : Color(light: "#0E9B7C", dark: "#19B595") }
     public static var statusWarning:  Color { isClassic ? Color(light: "#CFA528", dark: "#F2C53D") : Color(light: "#B86A2A", dark: "#D9823E") }
     public static var statusCritical: Color { isClassic ? Color(light: "#CB3A2F", dark: "#E5483B") : Color(light: "#C23B3B", dark: "#D64545") }
+
+    /// A decorative glyph's colour. The iOS redesign draws icons white and keeps colour for data and
+    /// status, so this returns the primary text colour there and `color` elsewhere.
+    public static func icon(_ color: Color) -> Color {
+        #if os(iOS)
+        textPrimary
+        #else
+        color
+        #endif
+    }
 
     // Stress bands as the concept's stress chart draws them: deep teal when calm, teal in the middle,
     // orange when high. The `Muted` variants are the darker "typical day" comparison bars.
@@ -271,10 +284,11 @@ public enum StrandPalette {
     public static let stressHighMuted   = Color(light: "#DDB592", dark: "#7A4C27")
 
     // MARK: Per-metric accents — HRV / SpO₂ / energy / risk. Classic leans the traditional hues (purple HRV, red risk).
-    public static var metricCyan:   Color { isClassic ? Color(light: "#2E92B4", dark: "#3FA9C9") : Color(light: "#2E92B4", dark: "#3FA9C9") }
-    public static var metricPurple: Color { isClassic ? Color(light: "#6A4FC0", dark: "#8E6FD6") : Color(light: "#3A80D6", dark: "#4A90E2") }
-    public static var metricAmber:  Color { isClassic ? Color(light: "#CFA528", dark: "#F2C53D") : Color(light: "#C2792E", dark: "#D98A3D") }
-    public static var metricRose:   Color { isClassic ? Color(light: "#CB3A2F", dark: "#E5483B") : Color(light: "#C84E1E", dark: "#E0662F") }
+    // Metric identities drawn from the redesign palette only.
+    public static var metricCyan:   Color { isClassic ? Color(light: "#2E92B4", dark: "#3FA9C9") : Color(light: "#0E9B7C", dark: "#13BD9A") }
+    public static var metricPurple: Color { isClassic ? Color(light: "#6A4FC0", dark: "#8E6FD6") : Color(light: "#2860B4", dark: "#2D6CC8") }
+    public static var metricAmber:  Color { isClassic ? Color(light: "#CFA528", dark: "#F2C53D") : Color(light: "#B25C2E", dark: "#C26A38") }
+    public static var metricRose:   Color { isClassic ? Color(light: "#CB3A2F", dark: "#E5483B") : Color(light: "#B86A2A", dark: "#D9823E") }
 
     // MARK: - Titanium & Gold domain "colour worlds" (NEW)
     //
@@ -288,10 +302,10 @@ public enum StrandPalette {
     // full red→green / blue / green→red in Classic regardless of these.
 
     /// Charge (recovery) — gold world / Classic green.
-    public static var chargeColor: Color  { isClassic ? Color(light: "#2E9E4F", dark: "#46B45A") : Color(light: "#0F9D62", dark: "#03E095") }
-    public static var chargeDeep: Color    { isClassic ? Color(light: "#207A3C", dark: "#2E9E4F") : Color(light: "#0B7A4A", dark: "#0B9D62") }
-    public static var chargeBright: Color  { isClassic ? Color(light: "#5FBE6E", dark: "#86D98E") : Color(light: "#5FD89A", dark: "#6BF0B4") }
-    public static var chargeGlow: Color    { isClassic ? Color(light: "#2E9E4F", dark: "#46B45A") : Color(light: "#0F9D62", dark: "#03E095") }
+    public static var chargeColor: Color  { isClassic ? Color(light: "#2E9E4F", dark: "#46B45A") : Color(light: "#0E9B7C", dark: "#19B595") }
+    public static var chargeDeep: Color    { isClassic ? Color(light: "#207A3C", dark: "#2E9E4F") : Color(light: "#0B7A62", dark: "#0E8F74") }
+    public static var chargeBright: Color  { isClassic ? Color(light: "#5FBE6E", dark: "#86D98E") : Color(light: "#10AE8C", dark: "#3FD2B0") }
+    public static var chargeGlow: Color    { isClassic ? Color(light: "#2E9E4F", dark: "#46B45A") : Color(light: "#0E9B7C", dark: "#19B595") }
     /// Diagonal accent pair for the Charge card wash + gauge stroke (deep → bright).
     public static var chargeGradient: Gradient { Gradient(colors: [chargeDeep, chargeBright]) }
 
@@ -304,9 +318,9 @@ public enum StrandPalette {
 
     /// Rest (sleep) — blue world / Classic indigo.
     public static var restColor: Color     { isClassic ? Color(light: "#3A80D6", dark: "#6FA8E8") : Color(light: "#B25C2E", dark: "#C26A38") }
-    public static var restDeep: Color      { isClassic ? Color(light: "#203E73", dark: "#2A4C8F") : Color(light: "#234F9E", dark: "#2F6FCB") }
-    public static var restBright: Color    { isClassic ? Color(light: "#6A4FC0", dark: "#8E6FD6") : Color(light: "#5790DA", dark: "#6FA8E8") }
-    public static var restGlow: Color      { isClassic ? Color(light: "#3A80D6", dark: "#6FA8E8") : Color(light: "#3A80D6", dark: "#4A90E2") }
+    public static var restDeep: Color      { isClassic ? Color(light: "#203E73", dark: "#2A4C8F") : Color(light: "#8E4420", dark: "#A9542A") }
+    public static var restBright: Color    { isClassic ? Color(light: "#6A4FC0", dark: "#8E6FD6") : Color(light: "#C9783F", dark: "#E08A55") }
+    public static var restGlow: Color      { isClassic ? Color(light: "#3A80D6", dark: "#6FA8E8") : Color(light: "#B25C2E", dark: "#C26A38") }
     /// The Rest family's most legible LINE colour — for strokes that must read on a busy or translucent
     /// surface, such as the body-clock dial's arcs over a custom background image.
     ///

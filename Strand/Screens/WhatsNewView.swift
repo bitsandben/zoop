@@ -86,7 +86,7 @@ struct WhatsNewView: View {
                 ForEach(AppChangelog.expectations) { e in
                     HStack(alignment: .top, spacing: 12) {
                         Image(systemName: e.icon)
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .frame(width: 22)
                             .padding(.top, 2)
                         VStack(alignment: .leading, spacing: 3) {

@@ -76,7 +76,7 @@ struct LiftLogView: View {
                 HStack(spacing: ZoopMetrics.rowSpacing) {
                     Image(systemName: "dumbbell.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(StrandPalette.effortColor)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.effortColor))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.effortColor.opacity(0.14),
                                     in: RoundedRectangle(cornerRadius: 9, style: .continuous))

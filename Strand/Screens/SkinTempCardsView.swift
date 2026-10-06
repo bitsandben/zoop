@@ -250,7 +250,7 @@ struct CycleAwarenessOptInCard: View {
                 HStack(spacing: 8) {
                     Image(systemName: "drop.degreesign")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(StrandPalette.restColor)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                         .accessibilityHidden(true)
                     Text("Cycle awareness")
                         .font(StrandFont.headline)
@@ -301,7 +301,7 @@ struct MenstrualCycleHomeCard: View {
                         HStack(spacing: ZoopMetrics.space2) {
                             Image(systemName: "drop.degreesign")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(StrandPalette.restColor)
+                                .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                                 .accessibilityHidden(true)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Menstrual Cycle")
@@ -580,7 +580,7 @@ struct CycleTrackerView: View {
                     ForEach(starts.reversed(), id: \.self) { day in
                         HStack {
                             Image(systemName: "drop.fill")
-                                .foregroundStyle(StrandPalette.restColor)
+                                .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                                 .accessibilityHidden(true)
                             Text(prettyDay(day))
                                 .font(StrandFont.bodyNumber)

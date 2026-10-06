@@ -427,7 +427,7 @@ struct WorkoutsView: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(StrandPalette.effortColor)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.effortColor))
                 .accessibilityHidden(true)
             Text(text)
                 .font(StrandFont.footnote)
@@ -1067,7 +1067,7 @@ struct WorkoutsView: View {
                 HStack(spacing: 10) {
                     Image(systemName: sportIcon(g.sport))
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(StrandPalette.effortColor)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.effortColor))
                         .frame(width: 22, alignment: .center)
                     Text(WorkoutSource.displaySport(g.sport))
                         .font(StrandFont.headline)

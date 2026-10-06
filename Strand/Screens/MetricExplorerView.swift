@@ -592,7 +592,7 @@ struct MetricExplorerView: View {
                         .fill(StrandPalette.metricRose.opacity(0.16))
                     Image(systemName: "waveform.path.ecg")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(StrandPalette.metricRose)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.metricRose))
                 }
                 .frame(width: 42, height: 42)
 

@@ -75,7 +75,7 @@ struct NotificationSettingsView: View {
     private var deliveryNote: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "info.circle.fill")
-                .foregroundStyle(StrandPalette.accent)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                 .font(.system(size: 13))
                 .accessibilityHidden(true)
             Text("Wrist delivery isn't live yet. It needs a small on-device watcher (coming in an update) to read macOS notifications. Everything stays on this Mac. Your choices are saved now and will apply automatically once delivery ships.")
@@ -309,7 +309,7 @@ private struct AlertSection<Content: View>: View {
                     Text("\(overline)").strandOverline()
                     HStack(spacing: ZoopMetrics.space2 + 2) {
                         Image(systemName: icon)
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         Text(title)
                             .font(StrandFont.title2)

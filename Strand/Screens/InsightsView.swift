@@ -300,7 +300,7 @@ struct InsightsView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "wand.and.sparkles")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                         .accessibilityHidden(true)
@@ -317,7 +317,7 @@ struct InsightsView: View {
                     Spacer(minLength: 8)
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                 }
             }

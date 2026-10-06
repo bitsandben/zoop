@@ -164,7 +164,7 @@ struct SleepView: View {
                        // re-evaluates this heavy body.
                        onRefresh: { await repo.refresh() },
                        lazy: true,
-                       topBackground: resolved == nil ? nil : AnyView(sleepNightTopBackground)) {
+                       topBackground: resolved == nil ? nil : sleepTopBackground) {
             Group {
                 if let resolved {
                     // Each top-level section fades + rises in sequence on first appear (Reduce-Motion safe).
@@ -322,7 +322,7 @@ struct SleepView: View {
             ZoopCard(tint: StrandPalette.restColor) {
                 HStack(spacing: ZoopMetrics.gap) {
                     Image(systemName: "alarm.fill")
-                        .foregroundStyle(StrandPalette.restColor)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                         .accessibilityHidden(true)
                     Text("Alarms")
                         .font(StrandFont.headline)
@@ -397,7 +397,7 @@ struct SleepView: View {
         HStack(alignment: .center, spacing: 10) {
             Image(systemName: "moon.zzz")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(StrandPalette.restColor)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                 .accessibilityHidden(true)
             Text(message)
                 .font(StrandFont.footnote)
@@ -410,7 +410,7 @@ struct SleepView: View {
                 Text("Undo").font(StrandFont.footnote.weight(.semibold))
             }
             .buttonStyle(LiquidPressStyle())
-            .foregroundStyle(StrandPalette.restColor)
+            .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
             .accessibilityLabel("Undo sleep deletion")
         }
         .padding(ZoopMetrics.space3)
@@ -533,9 +533,8 @@ struct SleepView: View {
         let score = performanceScore(for: night)
         VStack(spacing: 0) {
             Text("Sleep")
-                .font(StrandFont.rounded(24, weight: .semibold))
-                .foregroundStyle(Color.white.opacity(0.96))
-                .shadow(color: .black.opacity(0.35), radius: 5, y: 1)
+                .font(.system(size: 30, weight: .bold))
+                .foregroundStyle(StrandPalette.textPrimary)
                 .padding(.top, 6)
                 .accessibilityAddTraits(.isHeader)
 
@@ -548,13 +547,12 @@ struct SleepView: View {
                         diameter: 184,
                         animated: true,
                         captionText: String(localized: "of 100"),
-                        numberColor: Color.white.opacity(0.98),
-                        captionColor: Color.white.opacity(0.52)
+                        numberColor: StrandPalette.textPrimary,
+                        captionColor: StrandPalette.textSecondary
                     )
                     Text(sleepScoreWord(score))
                         .font(StrandFont.subhead.weight(.semibold))
-                        .foregroundStyle(Color.white.opacity(0.90))
-                        .shadow(color: .black.opacity(0.30), radius: 2, y: 1)
+                        .foregroundStyle(StrandPalette.textPrimary)
                 }
                 .padding(.top, 8)
                 .accessibilityElement(children: .ignore)
@@ -565,11 +563,11 @@ struct SleepView: View {
                         value: night.stages.asleep,
                         format: { durationText($0) },
                         font: StrandFont.number(42),
-                        color: Color.white.opacity(0.96)
+                        color: StrandPalette.textPrimary
                     )
                     Text("asleep last night")
                         .font(StrandFont.subhead)
-                        .foregroundStyle(Color.white.opacity(0.72))
+                        .foregroundStyle(StrandPalette.textSecondary)
                 }
                 .padding(.top, 14)
                 .padding(.bottom, 4)
@@ -593,6 +591,15 @@ struct SleepView: View {
 
     /// Fixed night-scene band behind Sleep scroll content — same ScreenScaffold.topBackground pattern
     /// as Home's sky. Tall enough for safe-area + hero; fades to surfaceBase before the first card.
+    /// iOS keeps the redesign's flat canvas; macOS keeps the night scene.
+    private var sleepTopBackground: AnyView? {
+        #if os(iOS)
+        nil
+        #else
+        AnyView(sleepNightTopBackground)
+        #endif
+    }
+
     private var sleepNightTopBackground: some View {
         SleepPerformanceNightScene()
             .frame(maxWidth: .infinity)
@@ -718,7 +725,7 @@ struct SleepView: View {
                     Button { addNap = AddNapSeed(forNight: night) } label: {
                         Label("Add nap", systemImage: "plus.circle.fill")
                             .font(StrandFont.subhead)
-                            .foregroundStyle(StrandPalette.restColor)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                     }
                     .buttonStyle(LiquidPressStyle())
                     .accessibilityLabel("Add a nap")
@@ -777,7 +784,7 @@ struct SleepView: View {
         HStack(spacing: 10) {
             Image(systemName: "powersleep")
                 .font(StrandFont.headline)
-                .foregroundStyle(StrandPalette.restColor)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(napWindowText(nap)).font(StrandFont.body).foregroundStyle(StrandPalette.textPrimary)
@@ -791,7 +798,7 @@ struct SleepView: View {
             Button { napWhyStartTs = (napWhyStartTs == nap.startTs) ? nil : nap.startTs } label: {
                 Image(systemName: "info.circle")
                     .font(StrandFont.headline)
-                    .foregroundStyle(StrandPalette.restColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                     .frame(minWidth: 44, minHeight: 44)
                     .contentShape(Rectangle())
             }
@@ -812,7 +819,7 @@ struct SleepView: View {
             } label: {
                 Image(systemName: isEdited ? "pencil.circle.fill" : "pencil.circle")
                     .font(StrandFont.headline)
-                    .foregroundStyle(StrandPalette.restColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                     .frame(minWidth: 44, minHeight: 44)
                     .contentShape(Rectangle())
             }
@@ -1224,7 +1231,7 @@ struct SleepView: View {
                         Text("Why this sleep?")
                     }
                     .font(StrandFont.footnote)
-                    .foregroundStyle(StrandPalette.restColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                     // This is a compact metadata footer inside an already surfaced card. A forced
                     // 44-point label made the WHOOP / Why row look vertically padded despite having
                     // only one line of content.
@@ -1249,7 +1256,7 @@ struct SleepView: View {
         VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
             HStack(spacing: ZoopMetrics.space2) {
                 Image(systemName: "moon.stars.fill")
-                    .foregroundStyle(StrandPalette.restColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                     .accessibilityHidden(true)
                 Text(napSuffix ? "About this nap" : "About your main sleep")
                     .font(StrandFont.subhead.weight(.semibold))
@@ -1278,7 +1285,7 @@ struct SleepView: View {
         HStack(spacing: 10) {
             Image(systemName: icon)
                 .font(StrandFont.headline)
-                .foregroundStyle(StrandPalette.restColor)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(label).strandOverline()
@@ -1312,7 +1319,7 @@ struct SleepView: View {
             } label: {
                 Image(systemName: isEdited ? "pencil.circle.fill" : "pencil.circle")
                     .font(StrandFont.headline)
-                    .foregroundStyle(StrandPalette.restColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
             }
             .buttonStyle(LiquidPressStyle())
             .help("Edit sleep times")
@@ -2653,7 +2660,7 @@ struct SleepMarkCard: View {
                     if let lastMark {
                         Text(lastMark.confirmation)
                             .font(StrandFont.footnote)
-                            .foregroundStyle(StrandPalette.restColor)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                             .transition(.opacity)
                             .accessibilityLabel(lastMark.confirmation)
                     }

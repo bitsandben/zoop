@@ -894,7 +894,7 @@ private struct FitnessAgeSection: View {
             HStack(spacing: 8) {
                 Image(systemName: "lungs.fill")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(StrandPalette.metricCyan)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                 Text("Add your waist for a more accurate VO₂max")
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textSecondary)
@@ -993,7 +993,7 @@ private struct FitnessAgeSection: View {
             } label: {
                 HStack(spacing: ZoopMetrics.space2) {
                     Image(systemName: "info.circle")
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text("How accurate is this?")
                         .font(StrandFont.subhead)
@@ -1096,7 +1096,7 @@ private struct ReadinessChecklistCard: View {
                             Button(action: onRefresh) {
                                 Image(systemName: "arrow.clockwise")
                                     .font(StrandFont.subhead)
-                                    .foregroundStyle(StrandPalette.accent)
+                                    .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel("Refresh Fitness Age now")

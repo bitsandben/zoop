@@ -810,7 +810,7 @@ struct LiquidTodayView: View {
             HStack(spacing: 10) {
                 Image(systemName: "shield.lefthalf.filled")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(StrandPalette.metricCyan)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                 // Theme-aware session-start chrome (#1160 parity): ZoopPanelSurface + normal text
                 // tokens — light ink on Dark, dark ink on Light. (Was pinned-dark + on-dark tokens.)
                 Text("Start session")
@@ -1442,7 +1442,7 @@ struct LiquidTodayView: View {
                             HStack(alignment: .top, spacing: 6) {
                                 Image(systemName: "info.circle")
                                     .font(StrandFont.footnote)
-                                    .foregroundStyle(StrandPalette.effortColor)
+                                    .foregroundStyle(StrandPalette.icon(StrandPalette.effortColor))
                                     .accessibilityHidden(true)
                                 Text(note)
                                     .font(StrandFont.footnote)

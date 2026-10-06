@@ -219,7 +219,7 @@ struct SmartAlarmView: View {
                     Text("Morning").strandOverline()
                     HStack(spacing: 10) {
                         Image(systemName: "alarm.fill")
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         Text("Strap wake-alarm")
                             .font(StrandFont.title2)
@@ -335,7 +335,7 @@ struct SmartAlarmView: View {
                     Text("Evening").strandOverline()
                     HStack(spacing: 10) {
                         Image(systemName: "moon.zzz.fill")
-                            .foregroundStyle(StrandPalette.restColor)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                             .accessibilityHidden(true)
                         Text("Wind-down nudge")
                             .font(StrandFont.title2)

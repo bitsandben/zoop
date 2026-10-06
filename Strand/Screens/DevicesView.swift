@@ -910,7 +910,7 @@ private struct DeviceCard: View {
                             .font(StrandFont.overlineScaled(10)).tracking(1.0)
                             .foregroundStyle(StrandPalette.accent)
                         Image(systemName: "chevron.right").font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                     }
                     Spacer(minLength: 44)   // leave room for the ⋮ menu overlay at the bottom-trailing

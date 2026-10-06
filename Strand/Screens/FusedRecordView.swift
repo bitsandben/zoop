@@ -149,7 +149,7 @@ struct FusedRecordView: View {
         HStack(spacing: 8) {
             Image(systemName: "checkmark.seal")
                 .font(StrandFont.footnote)
-                .foregroundStyle(StrandPalette.accent)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                 .accessibilityHidden(true)
             if let owner = record.dayOwner {
                 Text("Today's scores owned by \(owner.displayName)")
@@ -353,7 +353,7 @@ private struct ConflictCompareSheet: View {
                     HStack(alignment: .top, spacing: 10) {
                         Image(systemName: "info.circle")
                             .font(StrandFont.subhead)
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         Text("NOOP shows the \(winner.source.displayName) reading because it \(winner.reason) for this metric: a higher-trust source here, not a verdict that the others are wrong.")
                             .font(StrandFont.subhead)

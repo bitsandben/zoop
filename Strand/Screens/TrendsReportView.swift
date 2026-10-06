@@ -261,7 +261,7 @@ struct TrendsReportPage: View {
                     HStack(alignment: .top, spacing: ZoopMetrics.space2) {
                         Image(systemName: "sparkles")
                             .font(StrandFont.footnote)
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         Text(line)
                             .font(StrandFont.subhead)
                             .foregroundStyle(StrandPalette.textPrimary)
@@ -355,7 +355,7 @@ struct TrendsReportPage: View {
             HStack(alignment: .top, spacing: ZoopMetrics.space3) {
                 Image(systemName: "calendar.badge.exclamationmark")
                     .font(StrandFont.headline)
-                    .foregroundStyle(StrandPalette.accent)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                 VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
                     Text("Not enough data in this range yet")
                         .font(StrandFont.headline)

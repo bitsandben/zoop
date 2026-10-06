@@ -785,7 +785,7 @@ private struct ProfileStep: View {
 
                 HStack(spacing: 8) {
                     Image(systemName: "bolt.heart")
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                     Text("Estimated max heart rate · \(profile.hrMax) bpm")
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textTertiary)
@@ -812,7 +812,7 @@ private struct ImportStep: View {
                         .frame(width: 96, height: 96)
                     Image(systemName: "square.and.arrow.down")
                         .font(.system(size: 40, weight: .regular))
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                 }
 
                 InfoCard(
@@ -949,7 +949,7 @@ private struct NotificationsStep: View {
                         .frame(width: 86, height: 86)
                     Image(systemName: "bell.badge")
                         .font(.system(size: 32, weight: .semibold))
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                 }
                 .frame(height: 130)
 
@@ -1045,7 +1045,7 @@ private struct AppearanceStep: View {
             VStack(spacing: 28) {
                 Image(systemName: "circle.lefthalf.filled")
                     .font(.system(size: 56, weight: .light))
-                    .foregroundStyle(StrandPalette.accent)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                     .frame(height: 96)
                 SegmentedPillControl(AppearanceMode.allCases, selection: binding) { $0.label }
                     .frame(maxWidth: 320)

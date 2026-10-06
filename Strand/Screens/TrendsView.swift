@@ -310,7 +310,9 @@ struct TrendsView: View {
                     // The main card list ripples in once on appear (Reduce-Motion safe).
                     Group {
                         #if os(iOS)
-                        weeklyChargeBars
+                        // The metric trend viewer leads: pick a metric and a window, read the average
+                        // and its change, then the week-in-review and longer charts follow.
+                        TrendViewerCard(days: repo.days, effortScale: effortScale)
                         #endif
                         // Week-in-review digest (#208) with prev/next week browsing (#710) — self-hides
                         // only when NO week in history has data. Past weeks render in the same format.
@@ -352,57 +354,6 @@ struct TrendsView: View {
             sleepPerfRevision += 1
         }
     }
-
-    // MARK: Week bars (iOS)
-
-    // Last seven stored days of Charge, drawn as value-tinted bars. Days without a score keep
-    // their tick so a gap stays visible. Hidden until two scores exist — one bar is not a week.
-    #if os(iOS)
-    @ViewBuilder
-    private var weeklyChargeBars: some View {
-        let recent = Array(repo.days.suffix(7))
-        let scored = recent.compactMap(\.recovery)
-        if scored.count >= 2 {
-            ZoopCard {
-                VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
-                    Text("Charge").strandOverline()
-                    HStack(alignment: .bottom, spacing: ZoopMetrics.space2) {
-                        ForEach(recent, id: \.day) { day in
-                            chargeBar(day)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private func chargeBar(_ day: DailyMetric) -> some View {
-        let value = day.recovery
-        let height = CGFloat(value.map { max(0.08, min(1, $0 / 100)) } ?? 0.08) * (ZoopMetrics.space8 * 2)
-        return VStack(spacing: ZoopMetrics.space1) {
-            Text(value.map { "\(Int($0.rounded()))" } ?? " ")
-                .font(StrandFont.captionNumber)
-                .foregroundStyle(StrandPalette.textSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-            RoundedRectangle(cornerRadius: ZoopMetrics.space1, style: .continuous)
-                .fill(value.map { StrandPalette.recoveryColor($0) } ?? StrandPalette.hairline)
-                .frame(maxWidth: .infinity)
-                .frame(height: height)
-            Text(weekdayTick(day.day))
-                .font(StrandFont.caption)
-                .foregroundStyle(StrandPalette.textTertiary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private func weekdayTick(_ key: String) -> String {
-        guard let d = date(key) else { return "" }
-        return d.formatted(.dateTime.weekday(.narrow).locale(locale))
-    }
-    #endif
 
     // MARK: Week-in-review digest with prev/next week browsing (#710)
 
@@ -618,7 +569,7 @@ struct TrendsView: View {
             HStack(spacing: ZoopMetrics.space3) {
                 Image(systemName: "doc.richtext")
                     .font(StrandFont.title2)
-                    .foregroundStyle(StrandPalette.accent)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
                     Text("Export trends report").strandOverline()

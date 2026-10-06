@@ -61,7 +61,7 @@ struct RollingStepsAverageCard: View {
         NavigationLink(value: TabRoute.metricSourced(key: "steps", source: MetricCatalog.combinedStepsSource)) {
             HStack(spacing: 12) {
                 Image(systemName: DashboardCard.stepsAverage30.icon)
-                    .foregroundStyle(StrandPalette.metricCyan)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                 VStack(alignment: .leading, spacing: 4) {
                     Text(DashboardCard.stepsAverage30.title)
                         .font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)

@@ -380,7 +380,7 @@ struct AddDeviceWizard: View {
             HStack(spacing: 14) {
                 Image(systemName: icon)
                     .font(StrandFont.title2)
-                    .foregroundStyle(StrandPalette.accent)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                     .frame(width: 30)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
@@ -411,7 +411,7 @@ struct AddDeviceWizard: View {
                 HStack(spacing: 14) {
                     Image(systemName: typeIcon(type))
                         .font(.system(size: 30))
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text(typeTitle(type)).font(StrandFont.title2)
                         .foregroundStyle(StrandPalette.textPrimary)
@@ -437,7 +437,7 @@ struct AddDeviceWizard: View {
                         HStack(alignment: .top, spacing: 10) {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(StrandFont.subhead)
-                                .foregroundStyle(StrandPalette.accent)
+                                .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                                 .accessibilityHidden(true)
                             Text(line)
                                 .font(StrandFont.body)
@@ -538,7 +538,7 @@ struct AddDeviceWizard: View {
                 HStack(spacing: 14) {
                     Image(systemName: "circle.circle")
                         .font(.system(size: 30))
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text("Oura ring").font(StrandFont.title2)
                         .foregroundStyle(StrandPalette.textPrimary)
@@ -676,7 +676,7 @@ struct AddDeviceWizard: View {
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(StrandFont.subhead)
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text(line)
                         .font(StrandFont.body)
@@ -806,7 +806,7 @@ struct AddDeviceWizard: View {
                 HStack(spacing: 10) {
                     Image(systemName: "circle.circle")
                         .font(.system(size: 22))
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text(gen.displayName).font(StrandFont.headline)
                         .foregroundStyle(StrandPalette.textPrimary)
