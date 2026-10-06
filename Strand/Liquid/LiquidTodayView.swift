@@ -56,6 +56,8 @@ struct LiquidTodayView: View {
     /// Input providers for the three scores, keyed by recovery / strain / sleep_performance.
     @State private var heroProviderByMetric: [String: ScoreInputProvider] = [:]
     @State private var stress: Double?             // StressModel(...).score, 0–3
+    /// The recent workout whose detail sheet is open (iOS).
+    @State private var workoutDetail: HomeWorkoutTarget?
     @State private var fitnessAge: Double?         // exploreSeries("fitness_age").last
     @State private var vo2max: Double?             // exploreSeries("vo2max_est").last (#1391)
     @State private var vitality: Double?           // exploreSeries("vitality").last
@@ -395,7 +397,10 @@ struct LiquidTodayView: View {
                             // A detected workout waiting to be saved belongs with the day's activity.
                             AutoWorkoutCard()
                             #endif
-                        case .liveSession: if liveSessionsBeta { liveSessionStartRow }
+                        case .liveSession:
+                            #if !os(iOS)
+                            if liveSessionsBeta { liveSessionStartRow }
+                            #endif
                         case .synthesis:
                             #if os(iOS)
                             // The greeting and the generated paragraph are mac-only. iOS keeps the
@@ -528,6 +533,15 @@ struct LiquidTodayView: View {
                 hostedCardsRaw: $hostedCardsRaw
             )
         }
+        #if os(iOS)
+        .sheet(item: $workoutDetail) { target in
+            NavigationStack {
+                WorkoutDetailView(row: target.row)
+                    .environmentObject(repo)
+            }
+            .noopSheetPresentation(largeFirst: true)
+        }
+        #endif
         .sheet(isPresented: $showCoachLauncher) {
             CoachLauncherSheet()
         }
@@ -845,7 +859,7 @@ struct LiquidTodayView: View {
             HeroScoreCell(label: String(localized: "Sleep"), score: restScore, tint: StrandPalette.restColor,
                           animated: dataLoaded, onGuide: { guideSection = .rest },
                           unit: "%",
-                          detailRoute: .metric(HeroRingMetric.rest))
+                          detailRoute: .sleep)
             // #543 carry: an unscored today shows the last scored night's Charge; Effort does not carry.
             HeroScoreCell(label: String(localized: "Recovery"), score: chargeDisplay.pct,
                           tint: chargeDisplay.pct.map { StrandPalette.recoveryColor($0) } ?? StrandPalette.chargeColor,
@@ -862,16 +876,6 @@ struct LiquidTodayView: View {
                           detailRoute: .metric(HeroRingMetric.effort))
         }
         .padding(.vertical, ZoopMetrics.space3)
-        .overlay(alignment: .bottom) {
-            if let sourceLabel = heroSourceLabel {
-                SourceBadge("\(sourceLabel)", tint: StrandPalette.textSecondary)
-                    .fixedSize()
-                    .offset(y: ZoopMetrics.sourceBadgeHeight / 2 + 2)
-                    .allowsHitTesting(false)
-                    .accessibilityLabel(Text("Source: \(sourceLabel)"))
-            }
-        }
-        .padding(.bottom, heroSourceLabel == nil ? 0 : ZoopMetrics.sourceBadgeHeight + ZoopMetrics.space2)
     }
     #else
     private var heroCard: some View {
@@ -1829,6 +1833,35 @@ struct LiquidTodayView: View {
     private var lastWorkoutsSection: some View {
         VStack(spacing: 8) {
             sectionHead("LAST WORKOUTS", trailing: "\(workouts.count) total")
+            #if os(iOS)
+            // Each recent workout opens its own detail (route map included when the phone recorded one);
+            // the full list stays one tap away.
+            if !workouts.isEmpty {
+                ForEach(Array(workouts.prefix(3).enumerated()), id: \.offset) { _, w in
+                    Button { workoutDetail = HomeWorkoutTarget(row: w) } label: { workoutCard(w) }
+                        .buttonStyle(LiquidPressStyle())
+                }
+                NavigationLink(value: TabRoute.workouts) {
+                    HStack {
+                        Text("All workouts").font(.system(size: 15, weight: .medium))
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundStyle(StrandPalette.textPrimary)
+                    .padding(.horizontal, 16)
+                    .frame(height: 48)
+                    .background(ZoopPanelSurface())
+                }
+                .buttonStyle(LiquidPressStyle())
+            } else {
+                card {
+                    Text("No workouts yet")
+                        .font(StrandFont.subhead)
+                        .foregroundStyle(StrandPalette.textTertiary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            #else
             if let w = workouts.first {
                 NavigationLink(value: TabRoute.workouts) { workoutCard(w) }
                     .buttonStyle(LiquidPressStyle())
@@ -1840,12 +1873,30 @@ struct LiquidTodayView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
+            #endif
         }
+    }
+
+    /// The decoded route of a phone-recorded workout, when it has at least two points.
+    private func routePoints(_ w: WorkoutRow) -> [RouteMath.LatLng] {
+        guard let r = RouteStore.load(startTs: w.startTs, sport: w.sport) else { return [] }
+        let pts = RouteMath.decode(r.polyline)
+        return pts.count >= 2 ? pts : []
     }
 
     private func workoutCard(_ w: WorkoutRow) -> some View {
         card {
             VStack(alignment: .leading, spacing: 10) {
+                #if os(iOS) && canImport(MapKit)
+                let route = routePoints(w)
+                if !route.isEmpty {
+                    WorkoutRouteMap(points: route)
+                        .frame(height: 140)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                }
+                #endif
                 HStack(alignment: .firstTextBaseline) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(WorkoutSource.displaySport(w.sport)).font(StrandFont.number(15))
@@ -2599,6 +2650,41 @@ private struct HeroScoreCell: View {
     }
 
     var body: some View {
+        #if os(iOS)
+        // The ring and its name are one control that opens the score's own screen.
+        if let detailRoute {
+            NavigationLink(value: detailRoute) { iosCell }
+                .buttonStyle(LiquidPressStyle())
+                .accessibilityLabel(Text("\(label), \(spokenScore)"))
+                .accessibilityHint(Text("Opens the details"))
+        } else {
+            iosCell
+        }
+        #else
+        macCell
+        #endif
+    }
+
+    #if os(iOS)
+    private var iosCell: some View {
+        VStack(spacing: 12) {
+            FlatScoreRing(score: score, tint: tint, diameter: Self.vesselDiameter,
+                          maxValue: maxValue, decimals: decimals, unit: unit, animated: animated)
+            HStack(spacing: 5) {
+                Text(label)
+                    .font(.system(size: 16, weight: .semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold))
+            }
+            .foregroundStyle(StrandPalette.textPrimary)
+        }
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+    }
+    #endif
+
+    private var macCell: some View {
         VStack(spacing: 12) {
             gaugeView
             Button(action: onGuide) {
@@ -3599,4 +3685,10 @@ private extension View {
         }
         #endif
     }
+}
+
+/// Wraps a tapped Home workout so `.sheet(item:)` can present its detail.
+private struct HomeWorkoutTarget: Identifiable {
+    let row: WorkoutRow
+    let id = UUID()
 }
