@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Today's activities": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Heutige Aktivitäten"}}}},
+    "Nothing recorded yet today": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Heute noch nichts aufgezeichnet"}}}},
+    "Builds up through the day": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Baut sich über den Tag auf"}}}},
+    "Nap": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Nickerchen"}}}},
+    "Scores": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Werte"}}}},
+    "Dashboard": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Dashboard"}}}},
+    "Vitals": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Vitalwerte"}}}},
+    "Tracking": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Tracking"}}}},
+    "Recovery & sleep": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Erholung & Schlaf"}}}},
+    "Longevity": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Langlebigkeit"}}}},
     "Your strap data, on your phone.": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Deine Strap-Daten auf deinem Handy."}}}},
     "Profile & units": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Profil & Einheiten"}}}},
     "Strap & sync": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Strap & Sync"}}}},

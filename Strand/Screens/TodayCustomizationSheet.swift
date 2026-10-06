@@ -269,7 +269,8 @@ private struct TodaySectionsCustomizationPage: View {
             tint: \.customizationTint,
             configurationLabel: configurationLabel,
             onConfigure: onConfigure,
-            onReset: onReset
+            onReset: onReset,
+            group: \.customizationCategory
         ) {
             EmptyView()
         }
@@ -318,12 +319,13 @@ private struct KeyMetricsCustomizationPage: View {
             shownTitle: String(localized: "Shown"),
             hiddenTitle: String(localized: "Hidden"),
             title: \.title,
-            subtitle: { _ in nil },
+            subtitle: { $0.customizationCategory },
             icon: \.customizationIcon,
             tint: \.customizationTint,
             configurationLabel: { _ in nil },
             onConfigure: { _ in },
-            onReset: onReset
+            onReset: onReset,
+            group: \.customizationCategory
         ) {
             Section("Display") {
                 Picker("Key Metrics", selection: $detailed) {
@@ -364,7 +366,8 @@ private struct DashboardCardsCustomizationPage: View {
             tint: \.customizationTint,
             configurationLabel: { _ in nil },
             onConfigure: { _ in },
-            onReset: onReset
+            onReset: onReset,
+            group: \.customizationCategory
         ) {
             EmptyView()
         }

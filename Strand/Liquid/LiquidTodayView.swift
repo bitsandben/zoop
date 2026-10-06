@@ -391,6 +391,7 @@ struct LiquidTodayView: View {
                             #if os(iOS)
                             monitorTilesRow
                             HomeSectionTitle(title: "My Day") { myDayAddButton }
+                            todaysActivitiesCard
                             // iOS: an active workout shows with the rest of the day's activity. Starting one
                             // is in the "+" menu, so the separate Start button is not drawn here.
                             ActiveWorkoutIndicatorSection(showStart: false)
@@ -648,16 +649,60 @@ struct LiquidTodayView: View {
 
     /// The Health and Stress monitor tiles under the score rings.
     private var monitorTilesRow: some View {
-        HStack(alignment: .top, spacing: ZoopMetrics.space3) {
+        VStack(spacing: ZoopMetrics.space3) {
             NavigationLink(value: TabRoute.health) {
-                HomeHealthMonitorTile(temperatureUnit: temperatureUnit)
+                HomeHealthMonitorRow(temperatureUnit: temperatureUnit)
             }
             .buttonStyle(LiquidPressStyle())
             NavigationLink(value: TabRoute.stress) {
-                HomeStressMonitorTile(score: stress)
+                HomeStressMonitorCard(score: stress, hours: hostedStressHours)
             }
             .buttonStyle(LiquidPressStyle())
         }
+    }
+
+    /// Today's activities under "My Day": the sleeps that ended on the selected day (the night and any
+    /// naps) and that day's workouts, newest last, each with its times and duration.
+    private var todaysActivities: [HomeActivity] {
+        let key = selectedDayKey
+        let dayOf: (Int) -> String = { Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval($0))) }
+        let sleeps = repo.sleeps.filter { dayOf($0.endTs) == key }.map { s in
+            HomeActivity(kind: (s.endTs - s.effectiveStartTs) >= 3 * 3600 ? .sleep : .nap,
+                         title: (s.endTs - s.effectiveStartTs) >= 3 * 3600 ? String(localized: "Sleep") : String(localized: "Nap"),
+                         start: s.effectiveStartTs, end: s.endTs, workout: nil)
+        }
+        let workouts = workouts.filter { dayOf($0.startTs) == key }.map { w in
+            HomeActivity(kind: .workout, title: WorkoutSource.displaySport(w.sport),
+                         start: w.startTs, end: w.endTs, workout: w)
+        }
+        return (sleeps + workouts).sorted { $0.start < $1.start }
+    }
+
+    @ViewBuilder
+    private var todaysActivitiesCard: some View {
+        let items = todaysActivities
+        VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
+            Text("Today's activities")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(StrandPalette.textPrimary)
+            if items.isEmpty {
+                Text("Nothing recorded yet today")
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(StrandPalette.textSecondary)
+            }
+            ForEach(items) { item in
+                if let w = item.workout {
+                    Button { workoutDetail = HomeWorkoutTarget(row: w) } label: { HomeActivityRow(item: item) }
+                        .buttonStyle(LiquidPressStyle())
+                } else {
+                    NavigationLink(value: TabRoute.sleep) { HomeActivityRow(item: item) }
+                        .buttonStyle(LiquidPressStyle())
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ZoopPanelSurface())
     }
 
     /// The concept's "Weekly Trends": Recovery bars and an HRV line over the seven days ending at the
@@ -1560,6 +1605,15 @@ struct LiquidTodayView: View {
         return (kSparks[key] ?? []).filter { $0.0 >= cutoff }.map { $0.1 }
     }
 
+    #if os(iOS)
+    /// iOS lists the dashboard metrics one per row, compact, rather than as large tiles.
+    static let keyMetricColumns = 1
+    static let keyMetricRowSpacing: CGFloat = 8
+    #else
+    static let keyMetricColumns = 2
+    static let keyMetricRowSpacing: CGFloat = ZoopMetrics.gap
+    #endif
+
     /// The grey line under a Home tile's value: the metric's average over the chosen trend window, in
     /// the value's own precision and unit. Nil when there are fewer than two readings to average.
     private func tileAverageLine(_ key: String, displayValue: String, unit: String) -> String? {
@@ -1618,9 +1672,9 @@ struct LiquidTodayView: View {
             LazyVGrid(
                 columns: Array(
                     repeating: GridItem(.flexible(), spacing: ZoopMetrics.gap),
-                    count: 2
+                    count: Self.keyMetricColumns
                 ),
-                spacing: ZoopMetrics.gap
+                spacing: Self.keyMetricRowSpacing
             ) {
                 ForEach(enabledKeyMetrics) { metric in
                     ktileFor(metric, hrv: hrv, rhr: rhr)
@@ -1724,43 +1778,40 @@ struct LiquidTodayView: View {
                        key: String? = nil, detailMetric: MetricDescriptor? = nil, caption: String? = nil) -> some View {
         let displayValue = Self.tileDisplayValue(value, unit: unit)
         #if os(iOS)
-        // The concept's tile: the value with a chevron, a grey comparison line under it, and the
-        // metric's icon in a black well beside its name at the bottom.
-        let tile = VStack(alignment: .leading, spacing: 3) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(verbatim: displayValue)
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(StrandPalette.textPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Spacer(minLength: 4)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textPrimary)
-            }
-            Text(verbatim: caption ?? key.flatMap { tileAverageLine($0, displayValue: displayValue, unit: unit) } ?? " ")
-                .font(StrandFont.subhead)
-                .foregroundStyle(StrandPalette.textSecondary)
+        // A compact dashboard row: the icon in a black well, the name, then the value with the window's
+        // average under it and a chevron.
+        let tile = HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(StrandPalette.textPrimary)
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(StrandPalette.surfaceBase))
+            Text(label)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(StrandPalette.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-            Spacer(minLength: ZoopMetrics.space4)
-            HStack(spacing: 10) {
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textPrimary)
-                    .frame(width: 40, height: 40)
-                    .background(Circle().fill(StrandPalette.surfaceBase))
-                Text(label)
-                    .font(.system(size: 15, weight: .medium))
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 1) {
+                Text(verbatim: displayValue)
+                    .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(StrandPalette.textPrimary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+                if let line = caption ?? key.flatMap({ tileAverageLine($0, displayValue: displayValue, unit: unit) }) {
+                    Text(verbatim: line)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(StrandPalette.textSecondary)
+                        .lineLimit(1)
+                }
             }
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(StrandPalette.textTertiary)
         }
-        .padding(16)
+        .padding(.horizontal, 14)
+        .frame(minHeight: 64)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(minHeight: 150, alignment: .topLeading)
-        .background(ZoopPanelSurface(cornerRadius: 20, surfaceOpacity: cardOpacity))
+        .background(ZoopPanelSurface(cornerRadius: 18, surfaceOpacity: cardOpacity))
         #else
         let tile = VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
@@ -2240,7 +2291,12 @@ struct LiquidTodayView: View {
         }
 
         // #2040: and today's stress, on the same "only when hosted" rule.
-        if HostedCardPrefs.decodeEnabled(hostedCardsRaw).contains(.stressToday) {
+        #if os(iOS)
+        let wantsStressCurve = true   // the Home stress monitor always draws the day
+        #else
+        let wantsStressCurve = HostedCardPrefs.decodeEnabled(hostedCardsRaw).contains(.stressToday)
+        #endif
+        if wantsStressCurve {
             let result = await StressDayCurve.today(
                 repo: repo,
                 personalBaseline: PuffinExperiment.stressPersonalBaselineEnabled
@@ -2769,8 +2825,8 @@ private struct FlatScoreRing: View {
                 // Today's target, grey on the track beneath the filled arc.
                 SquircleShape()
                     .trim(from: CGFloat(targetBand.lowerBound), to: CGFloat(targetBand.upperBound))
-                    .stroke(StrandPalette.textSecondary.opacity(0.45),
-                            style: StrokeStyle(lineWidth: lineWidth * 2, lineCap: .round))
+                    .stroke(StrandPalette.textSecondary.opacity(0.55),
+                            style: StrokeStyle(lineWidth: lineWidth, lineCap: .butt))
                     .padding(lineWidth / 2)
                 SquircleShape()
                     .trim(from: 0, to: fraction)

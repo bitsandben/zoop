@@ -82,3 +82,43 @@ extension DashboardCard {
         }
     }
 }
+
+// MARK: - Categories
+//
+// Each customizable item belongs to one category, so the editor lists hidden items by category and
+// labels shown ones with theirs instead of presenting one mixed list.
+
+extension TodaySection {
+    var customizationCategory: String {
+        switch self {
+        case .hero, .synthesis: return String(localized: "Scores")
+        case .keyMetrics, .yourCards, .addedCards: return String(localized: "Dashboard")
+        case .workouts, .heartRate, .liveSession: return String(localized: "Activity")
+        case .recoveryVitals: return String(localized: "Vitals")
+        case .menstrualCycle, .journal: return String(localized: "Tracking")
+        }
+    }
+}
+
+extension KeyMetric {
+    var customizationCategory: String {
+        switch self {
+        case .charge, .effort, .rest: return String(localized: "Scores")
+        case .hrv, .restingHr, .bloodOxygen, .respiratory, .skinTemp: return String(localized: "Vitals")
+        case .steps, .calories: return String(localized: "Activity")
+        case .weight: return String(localized: "Body")
+        }
+    }
+}
+
+extension DashboardCard {
+    var customizationCategory: String {
+        switch self {
+        case .hrv, .restingHr, .respiratory, .bloodOxygen, .skinTemp: return String(localized: "Vitals")
+        case .steps, .stepsAverage30, .calories, .hydration: return String(localized: "Activity")
+        case .stress, .sleep: return String(localized: "Recovery & sleep")
+        case .fitnessAge, .vo2max, .vitality: return String(localized: "Longevity")
+        case .coupled, .coach: return String(localized: "Insights")
+        }
+    }
+}

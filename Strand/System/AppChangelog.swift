@@ -7,7 +7,7 @@ enum AppChangelog {
 
     /// Bump this when you add a release below. The "What's New" sheet shows automatically when the
     /// stored last-seen version is behind this. (Decoupled from the bundle version on purpose.)
-    static let currentVersion = "12.0.0"
+    static let currentVersion = "1.0.0"
 
     struct Release: Identifiable {
         let version: String
@@ -19,6 +19,18 @@ enum AppChangelog {
 
     /// Newest first.
     static let releases: [Release] = [
+        // Zoop numbers its own releases from 1.0.0; the entries below it are the upstream NOOP history.
+        Release(
+            version: "1.0.0",
+            title: "Zoop",
+            date: "October 2026",
+            items: [
+                "**A new look.** Flat black, rounded-square score rings, and one colour for each kind of data.",
+                "**Home.** Sleep, Recovery and Strain at the top with today's strain target, then the health and stress monitors, your day and your dashboard.",
+                "**Health and Trends.** Vitals first, a trend viewer for any metric, and what your Fitness Age is made of.",
+                "**Workouts.** Detected workouts are announced after each sync, and a phone-tracked workout shows its route.",
+            ]
+        ),
         Release(
             version: "12.0.0",
             title: "Today your way, heart rate any app can read, and Italian",

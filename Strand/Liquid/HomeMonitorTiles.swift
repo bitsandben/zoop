@@ -126,6 +126,147 @@ struct HomeStressMonitorTile: View {
     }
 }
 
+/// The health monitor as one slim row: status headline, the in-range count, and a chevron.
+struct HomeHealthMonitorRow: View {
+    @EnvironmentObject private var repo: Repository
+    let temperatureUnit: TemperatureUnit
+
+    var body: some View {
+        let readings = BodyVitalSigns.readings(sourceRows: repo.vitalMetricRows, temperatureUnit: temperatureUnit)
+        let scored = readings.filter { $0.banding.band != .noData }
+        let inRange = scored.filter { $0.banding.band == .inRange }.count
+        let allIn = !scored.isEmpty && inRange == scored.count
+        HStack(spacing: 12) {
+            Image(systemName: scored.isEmpty ? "minus" : (allIn ? "checkmark" : "exclamationmark"))
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(scored.isEmpty ? StrandPalette.textSecondary
+                                 : (allIn ? StrandPalette.textPrimary : StrandPalette.statusWarning))
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(StrandPalette.surfaceBase))
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Health monitor")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                Text(scored.isEmpty ? String(localized: "No readings yet")
+                     : (allIn ? String(localized: "Within range") : String(localized: "Outside range")))
+                    .font(StrandFont.footnote)
+                    .foregroundStyle(StrandPalette.textSecondary)
+            }
+            Spacer(minLength: 8)
+            if !scored.isEmpty {
+                Text(String(localized: "\(inRange)/\(scored.count) metrics"))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textSecondary)
+            }
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(StrandPalette.textTertiary)
+        }
+        .padding(.horizontal, 14)
+        .frame(minHeight: 64)
+        .background(ZoopPanelSurface(cornerRadius: 18))
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// The stress monitor on Home: today's level and band in the header and the day's stress line, the
+/// same line the Stress screen draws.
+struct HomeStressMonitorCard: View {
+    let score: Double?
+    let hours: [DaytimeStress.HourPoint]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Stress monitor")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                Spacer()
+                if let score {
+                    let band = StressBand(score: score)
+                    Text(HomeStressMonitorTile.bandName(band))
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(HomeStressMonitorTile.tint(band))
+                    Text(score, format: .number.precision(.fractionLength(1)))
+                        .font(StrandFont.display(24))
+                        .foregroundStyle(StrandPalette.textPrimary)
+                }
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textTertiary)
+            }
+            if hours.contains(where: { $0.level != nil }) {
+                DaytimeLoadLine(hours: hours)
+            } else {
+                Text("Builds up through the day")
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(StrandPalette.textSecondary)
+                    .frame(maxWidth: .infinity, minHeight: 60)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ZoopPanelSurface())
+    }
+}
+
+/// One entry in "Today's activities".
+struct HomeActivity: Identifiable {
+    enum Kind { case sleep, nap, workout }
+    let kind: Kind
+    let title: String
+    let start: Int
+    let end: Int
+    let workout: WorkoutRow?
+    var id: String { "\(kind)-\(start)" }
+}
+
+/// A row in "Today's activities": a tinted badge, the title, and the time span with its duration.
+struct HomeActivityRow: View {
+    let item: HomeActivity
+
+    private var tint: Color {
+        switch item.kind {
+        case .sleep, .nap: return StrandPalette.restColor
+        case .workout: return StrandPalette.effortColor
+        }
+    }
+    private var icon: String {
+        switch item.kind {
+        case .sleep: return "moon.fill"
+        case .nap: return "bed.double.fill"
+        case .workout: return "figure.run"
+        }
+    }
+
+    var body: some View {
+        let start = Date(timeIntervalSince1970: TimeInterval(item.start))
+        let end = Date(timeIntervalSince1970: TimeInterval(item.end))
+        let minutes = max(0, (item.end - item.start) / 60)
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(StrandPalette.surfaceBase)
+                .frame(width: 44, height: 36)
+                .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(tint))
+            Text(item.title)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(StrandPalette.textPrimary)
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 1) {
+                Text("\(start.formatted(date: .omitted, time: .shortened))–\(end.formatted(date: .omitted, time: .shortened))")
+                    .font(.system(size: 13, weight: .medium).monospacedDigit())
+                    .foregroundStyle(StrandPalette.textSecondary)
+                Text("\(minutes / 60):\(String(format: "%02d", minutes % 60))")
+                    .font(.system(size: 15, weight: .bold).monospacedDigit())
+                    .foregroundStyle(StrandPalette.textPrimary)
+            }
+        }
+        .padding(10)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(StrandPalette.surfaceOverlay))
+    }
+}
+
 // MARK: - Weekly trends
 
 /// One day of the weekly trend cards.
