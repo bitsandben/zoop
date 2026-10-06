@@ -3,7 +3,7 @@ import StrandDesign
 
 /// Backup & Sync (folder destination). The Apple mirror of the Android `BackupSyncScreen`: pick a
 /// folder, turn on daily auto-backup (an on-launch catch-up), back up now, or restore from a snapshot
-/// already in that folder. Snapshots are the existing `.noopbak` whole-DB format. Point the folder at
+/// already in that folder. Snapshots are the existing `.zoopbak` whole-DB format. Point the folder at
 /// Google Drive / iCloud / Dropbox for off-device sync with no in-app cloud account.
 struct BackupSyncView: View {
     @EnvironmentObject var model: AppModel
@@ -31,7 +31,7 @@ struct BackupSyncView: View {
             title: "Backup & Sync",
             subtitle: "Save a full backup to a folder you choose - point it at Google Drive, iCloud or Dropbox for off-device sync."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 folderCard
                 autoCard
                 restoreCard
@@ -75,7 +75,7 @@ struct BackupSyncView: View {
                 Text("Tip: choose a folder in iCloud Drive and your backups sync to all your Apple devices automatically, no account setup needed.")
                     .font(StrandFont.caption).foregroundStyle(StrandPalette.accent)
                     .fixedSize(horizontal: false, vertical: true)
-                // #644: these .noopbak snapshots are a plain, unencrypted ZIP — pointing this folder at
+                // #644: these .zoopbak snapshots are a plain, unencrypted ZIP — pointing this folder at
                 // a cloud sync app (per the tip above) also uploads that readable file there. Say so
                 // plainly next to the folder picker, before anyone turns auto-backup on.
                 HStack(alignment: .top, spacing: 8) {
@@ -87,14 +87,14 @@ struct BackupSyncView: View {
                         .font(StrandFont.caption).foregroundStyle(StrandPalette.statusWarning)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                NoopButton(folderLabel == nil ? "Choose folder" : "Change folder",
+                ZoopButton(folderLabel == nil ? "Choose folder" : "Change folder",
                            systemImage: "folder", kind: .secondary) { chooseFolder() }
                     .disabled(busy)
                 #if os(iOS)
                 // #52: some iOS 26 users can't select a folder in the system picker (its "Open" button
                 // never fires). This backs up inside NOOP's own Files-visible folder instead — no picker.
                 if !FolderBackup.useInternalFolder {
-                    NoopButton("Use NOOP's own folder (browse in Files)",
+                    ZoopButton("Use NOOP's own folder (browse in Files)",
                                systemImage: "iphone", kind: .tertiary) { useNoopFolder() }
                         .disabled(busy)
                 }
@@ -157,7 +157,7 @@ struct BackupSyncView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                NoopButton(busy ? "Working…" : "Back up now",
+                ZoopButton(busy ? "Working…" : "Back up now",
                            systemImage: "icloud.and.arrow.up", kind: .primary, fullWidth: true) { backupNow() }
                     .disabled(folderLabel == nil || busy)
             }
@@ -172,7 +172,7 @@ struct BackupSyncView: View {
                 Text("Replace this device's data with one of the backups in your folder. This overwrites current data, so back up first if you're unsure.")
                     .font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
-                NoopButton("Restore from a backup…", systemImage: "arrow.uturn.backward", kind: .secondary) {
+                ZoopButton("Restore from a backup…", systemImage: "arrow.uturn.backward", kind: .secondary) {
                     openRestorePicker()
                 }
                 .disabled(folderLabel == nil || busy)

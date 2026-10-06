@@ -57,7 +57,6 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.WaterDrop
-import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -122,8 +121,8 @@ import com.noop.push.SelfHostedPushScreen
 // MARK: - Navigation model
 //
 // The macOS app's sidebar holds many sections; on Android (mirroring the iOS RootTabView) we surface
-// them through a unified floating "glass" bottom bar (Today · Trends · Sleep · More) for the everyday
-// screens, with a "More" sheet that lists the full grouped set — so every destination is one tap away
+// them through a unified floating "glass" bottom bar (Home · Health · AI Coach · More) for the everyday
+// screens, with a "More" page that lists the full grouped set — so every destination is one tap away
 // without a global hamburger/drawer. Destinations are grouped exactly as the sidebar groups them.
 // Routes whose screens belong to later waves point at a ComingSoon placeholder so the app compiles today.
 
@@ -229,20 +228,20 @@ internal data class DrawerGroup(
     val defaultExpanded: Boolean,
 )
 
-// Mirrors the iOS RootTabView `moreTab` grouping + order one-for-one. Today / Trends / Sleep / Coach
-// are NOT listed (they're bottom-bar tabs, exactly as on iOS). Android-only screens (Vital Signs, Wake
-// Window, Notifications, Devices) are slotted into the matching iOS group.
+// Mirrors the iOS RootTabView `moreTab` grouping + order one-for-one. Home / Health / Coach
+// are NOT listed (they're bottom-bar tabs, exactly as on iOS). Sleep and Trends moved here when
+// Health took their bar slots. Android-only screens (Vital Signs, Wake Window, Notifications,
+// Devices) are slotted into the matching iOS group.
 internal val drawerGroups: List<DrawerGroup> = listOf(
     DrawerGroup("Insights", R.string.more_group_insights, listOf(
-        // Coach is a bottom-bar tab now and is deliberately absent here, matching iOS: "K3: Coach
-        // promoted to a top-level tab — no longer listed under More." Leaving it would have put the
-        // same destination in two places at once, which is the duplication the note above says this
-        // list exists to avoid. (#2218)
+        // Coach is a bottom-bar tab now and is deliberately absent here, matching iOS. Leaving it
+        // would have put the same destination in two places at once. (#2218)
         Destination.InsightsHub, Destination.Intelligence,
         Destination.Insights, Destination.Explore, Destination.Compare,
     ), defaultExpanded = true),
     DrawerGroup("Body", R.string.more_group_body, listOf(
-        Destination.Live, Destination.Workouts, Destination.Health, Destination.VitalSigns,
+        Destination.Sleep, Destination.Trends,
+        Destination.Live, Destination.Workouts, Destination.VitalSigns,
         Destination.LabBook, Destination.Stress, Destination.Breathe, Destination.Intervals,
         Destination.Rhythm,
     ), defaultExpanded = true),
@@ -499,7 +498,7 @@ object BottomBarStyleStore {
 }
 
 /**
- * App shell: a single [Scaffold] with a floating [GlassBottomBar] (Today · Trends · Sleep · Coach · More)
+ * App shell: a single [Scaffold] with a floating [GlassBottomBar] (Home · Health · AI Coach · More)
  * driving one [NavHost], mirroring the iOS RootTabView. There is NO global toolbar and no nav drawer
  * — every screen self-titles via [ScreenScaffold], and the "More" sheet (opened from the bar) reaches
  * every destination in [drawerGroups], so nothing is lost. A single [AppViewModel] is created here and
@@ -574,8 +573,8 @@ fun AppRoot(viewModel: AppViewModel = viewModel()) {
         Scaffold(
             containerColor = Palette.surfaceBase,
             bottomBar = {
-                // One unified "glass" bar: four evenly-spaced tabs — Today · Trends · Sleep · More
-                // (matches the iOS FloatingTabBar). The quick-action "+" lives in the Today header's
+                // One unified "glass" bar: Home · Health · AI Coach · More (matches the iOS tab bar).
+                // The quick-action "+" lives in the Today header's
                 // top-right (balancing the avatar), so the bar is clean tabs only. "More" navigates to
                 // its own page (mirroring the iOS More tab) that reaches every grouped destination, so no
                 // destination is lost without the drawer.
@@ -642,10 +641,9 @@ fun AppRoot(viewModel: AppViewModel = viewModel()) {
                         // The opt-in Hydration card (only shown when Hydration tracking is on) pushes its
                         // detail. A normal push so the back-stack returns to Today.
                         onOpenHydration = { nav.navigate(Destination.Hydration.route) },
-                        // #706/#684: the dashboard cards draw a tappable chevron; wire each to its detail,
-                        // matching iOS. Stress + the vitals are pushes; Sleep is a top-level tab switch.
+                        // Stress + the vitals are pushes. Health is a bottom-bar tab, so this switches to it.
                         onOpenStress = { nav.navigate(Destination.Stress.route) },
-                        onOpenHealth = { nav.navigate(Destination.Health.route) },
+                        onOpenHealth = { nav.navigateTopLevel(Destination.Health.route) },
                         // Every metric/vital card opens its OWN focused detail trend (vital_detail/<key>),
                         // not the shared Health hub (2026-07-03). Mirrors the iOS liquidCard metricDetail.
                         onOpenMetric = { key -> nav.navigate("vital_detail/$key") },
@@ -1094,46 +1092,31 @@ private fun MoreRow(dest: Destination, onClick: () -> Unit) {
 
 // MARK: - Glass bottom bar
 //
-// The signature bar, ported from iOS's FloatingTabBar: ONE rounded "glass" island holding four
-// evenly-spaced inline slots — Today · Trends · Sleep · More. The quick-action "+" now lives in the
-// Today header's top-right (it left the bar to balance the avatar), so the bar is clean tabs only.
-// The "glass" feel is a translucent raised surface with a low elevation and a subtle hairline border
-// — frosted, not a hard opaque slab and not a glow. Each nav slot is an icon over a small label;
-// active = gold accent, inactive = textSecondary. All routing is unchanged: the four tabs switch the
-// same destinations.
+// The signature bar, ported from iOS: ONE rounded "glass" island holding Home · Health · AI Coach ·
+// More. The quick-action "+" now lives in the Today header's top-right (it left the bar to balance
+// the avatar), so the bar is clean tabs only. The "glass" feel is a translucent raised surface with a
+// low elevation and a subtle hairline border — frosted, not a hard opaque slab and not a glow. Each
+// nav slot is an icon over a small label; active = gold accent, inactive = textSecondary.
 
 /** A single bottom-bar nav slot: the destination it switches to, plus the bar-specific icon/label. */
 internal data class BarTab(val dest: Destination, val icon: ImageVector, @StringRes val labelRes: Int)
 
-/** The nav slots in iOS order: Today · Trends · Sleep · Coach · More.
- *  More is special-cased (it opens the sheet rather than a route), so it is appended at the call site. */
-internal val barLeadingTabs = listOf(
-    BarTab(Destination.Today, Icons.Outlined.GridView, R.string.nav_today),
-    // chart.line.uptrend.xyaxis on iOS — the rising-trend glyph, not a flat bar chart.
-    BarTab(Destination.Trends, Icons.AutoMirrored.Filled.TrendingUp, R.string.nav_trends),
-)
-/**
- * The trailing tabs, as shipped. [barTrailingTabsFor] is what the bar actually draws: Coach is
- * conditional, so this list is the full set rather than the visible one.
- */
-internal val barTrailingTabs = listOf(
-    BarTab(Destination.Sleep, Icons.Filled.Bedtime, R.string.nav_sleep),
-    // #2218: Coach was promoted to a top-level tab on iOS and this side did not follow, so it sat in
-    // the More list while the comment above claimed the two bars matched. AutoAwesome is the sparkles
-    // glyph iOS uses, and the same one the More row already shows, so the entry a wearer has learned
-    // keeps its face when it moves up.
-    BarTab(Destination.Coach, Icons.Filled.AutoAwesome, R.string.nav_coach),
+/** The nav slots in iOS order: Home · Health · AI Coach. More is appended at the call site. */
+internal val primaryBarTabs = listOf(
+    BarTab(Destination.Today, Icons.Filled.Home, R.string.nav_bar_home),
+    BarTab(Destination.Health, Icons.Filled.MonitorHeart, R.string.nav_bar_health),
+    BarTab(Destination.Coach, Icons.Filled.AutoAwesome, R.string.nav_bar_coach),
 )
 
 /**
- * The trailing tabs to draw for a given Coach setting.
+ * The tabs to draw for a given Coach setting.
  *
  * A function rather than a filter written inline at the bar so the Kotlin unit tests can assert the
  * two shapes directly, and so every surface that needs "which tabs are there" agrees by construction
  * instead of by two copies of the same predicate.
  */
-internal fun barTrailingTabsFor(coachEnabled: Boolean): List<BarTab> =
-    if (coachEnabled) barTrailingTabs else barTrailingTabs.filterNot { it.dest == Destination.Coach }
+internal fun visiblePrimaryBarTabs(coachEnabled: Boolean): List<BarTab> =
+    if (coachEnabled) primaryBarTabs else primaryBarTabs.filterNot { it.dest == Destination.Coach }
 
 @Composable
 private fun GlassBottomBar(
@@ -1144,7 +1127,7 @@ private fun GlassBottomBar(
     // One binding, used by BOTH the slots and the More-lit predicate below. #2218's note applies here
     // twice over: a second copy of "which tabs exist" is what let Coach light two slots at once, and a
     // conditional tab makes that failure available again to anyone who filters in one place only.
-    val visibleTrailing = barTrailingTabsFor(BottomBarStyleStore.coachEnabled)
+    val visibleTabs = visiblePrimaryBarTabs(BottomBarStyleStore.coachEnabled)
     val barShape = RoundedCornerShape(50)
     Box(
         modifier = modifier
@@ -1184,16 +1167,7 @@ private fun GlassBottomBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                barLeadingTabs.forEach { tab ->
-                    BarSlot(
-                        icon = tab.icon,
-                        label = stringResource(tab.labelRes),
-                        active = current == tab.dest,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onTabSelected(tab.dest) },
-                    )
-                }
-                visibleTrailing.forEach { tab ->
+                visibleTabs.forEach { tab ->
                     BarSlot(
                         icon = tab.icon,
                         label = stringResource(tab.labelRes),
@@ -1204,7 +1178,7 @@ private fun GlassBottomBar(
                 }
                 BarSlot(
                     icon = Icons.Filled.MoreHoriz,
-                    label = stringResource(R.string.nav_more),
+                    label = stringResource(R.string.nav_bar_more),
                     // Selected on the More page itself, and also kept lit whenever the current screen is
                     // one reached THROUGH More (i.e. not one of the bar's own tabs) — so drilling into
                     // any grouped destination still reads as "you're in More", never "nowhere".
@@ -1212,8 +1186,7 @@ private fun GlassBottomBar(
                     // Derived from the bar's own lists rather than restated. Spelling the tabs out here
                     // is what made adding Coach a two-part change: the slot alone would have lit Coach
                     // AND More together, because this predicate had never heard of it. (#2218)
-                    active = barLeadingTabs.none { it.dest == current } &&
-                        visibleTrailing.none { it.dest == current },
+                    active = visibleTabs.none { it.dest == current },
                     modifier = Modifier.weight(1f),
                     onClick = { onTabSelected(Destination.More) },
                 )

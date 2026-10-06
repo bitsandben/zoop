@@ -143,7 +143,7 @@ one app. These are **enforced**, not suggestions.
 - **Type:** only `StrandFont.*` (`display/title1/title2/headline/body/subhead/caption/footnote/overline`
   + `number()/bodyNumber/captionNumber`). Helvetica + rounded numerics; no ad-hoc `.font(.system(size:))`
   except inside locked components.
-- **Spacing:** only `NoopMetrics.*` — `cardPadding 16 · gap 12 · sectionGap 28 · screenPadding 24 ·
+- **Spacing:** only `ZoopMetrics.*` — `cardPadding 16 · gap 12 · sectionGap 28 · screenPadding 24 ·
   tileHeight 108 · chartHeight 220 · tabBarClearance 76`. No magic numbers between cards/sections.
 - **Motion:** only `StrandMotion.*` — `interactive` (taps), `gentle`, `hero`, `breathe`, the calm global
   easing `cubic-bezier(0.22,1,0.36,1)` for tab/section crossfades (~240 ms). Honour Reduce Motion (the
@@ -156,7 +156,7 @@ one app. These are **enforced**, not suggestions.
 Every pillar composes from the **locked component set** in `Packages/StrandDesign` and its Kotlin twin —
 do **not** invent a card:
 
-- `NoopCard` / `StrandCard` (the one surface, optional domain `tint`)
+- `ZoopCard` / `StrandCard` (the one surface, optional domain `tint`)
 - `StatTile` (uniform `tileHeight` metric tile, optional sparkline + `TrendChip`)
 - `ChartCard` + `ChartFooter` (header + fixed chart body + footer)
 - `InsightCard` (coaching/synthesis card, hue wash + border)
@@ -169,7 +169,7 @@ do **not** invent a card:
 
 ### 3.3 Honesty & accessibility (non-negotiable, design-level)
 
-- **Equal-height tiles.** All tiles in a grid are `NoopMetrics.tileHeight` (108) — never ragged. (This is
+- **Equal-height tiles.** All tiles in a grid are `ZoopMetrics.tileHeight` (108) — never ragged. (This is
   the Strand analogue of the workspace "equal-height cards" rule.)
 - **Nil-honest.** A score that can't compute shows **Calibrating / Building** via `ScoreStatePill`, never a
   faked number. A 5/MG-thin day reads truthfully. No empty card where data exists — fall back to all-history.
@@ -203,7 +203,7 @@ most pillars), so resolving it proves the IA holds.
 │                                              │  ← sectionGap (28)
 │  MIND                          Log today's →  │  ← Mind pillar, section 2
 │  ┌─────────────────────────────────────────┐│
-│  │ NoopCard: 5-face mood row (tap to log)  ││  ← single card; history is a drill-in (push),
+│  │ ZoopCard: 5-face mood row (tap to log)  ││  ← single card; history is a drill-in (push),
 │  │ last 7 days as faint dots underneath    ││     NOT a second section. Non-clinical framing
 │  └─────────────────────────────────────────┘│     line: "a personal journal, not an assessment"
 │                                              │
@@ -216,13 +216,13 @@ most pillars), so resolving it proves the IA holds.
 │                                              │
 │  COACH                              Optional  │  ← single entry, opt-in
 │  ┌─────────────────────────────────────────┐│
-│  │ NoopCard: "Ask the Coach about your week"││  ← bring-your-own-key; if no key, a ghost CTA
+│  │ ZoopCard: "Ask the Coach about your week"││  ← bring-your-own-key; if no key, a ghost CTA
 │  │ [ Set up Coach ]  ·  brings your own key ││     "Set up Coach". No LLM named. No auto-run.
 │  └─────────────────────────────────────────┘│
 │                                              │
 │  BROWSE METRICS                           →   │  ← Explore demoted to a row, not a tab
 │  ┌─────────────────────────────────────────┐│
-│  │ NoopCard row → MetricExplorerView (push) ││
+│  │ ZoopCard row → MetricExplorerView (push) ││
 │  └─────────────────────────────────────────┘│
 │         (last card clears tabBarClearance 76) │
 ├─────────────────────────────────────────────┤
@@ -232,10 +232,10 @@ most pillars), so resolving it proves the IA holds.
 
 **Resolved details (the bar every pillar meets):** five sections exactly (Rule of 5); each is
 `SectionHeader` + one card or one equal-height grid; ranges use `SegmentedPillControl`; coaching/patterns
-use `InsightCard` tinted by `DomainTheme`; the mood row and coach CTA use `NoopCard` + `.noopGhost`;
+use `InsightCard` tinted by `DomainTheme`; the mood row and coach CTA use `ZoopCard` + `.noopGhost`;
 synthesis carries a `ScoreStatePill`; copy is plain, USD, non-diagnostic, no LLM named; spacing is
 `sectionGap` between sections and `gap` within; the macOS twin renders the same five sections in the detail
-pane, the Android twin the same five as Compose `NoopCard`s.
+pane, the Android twin the same five as Compose `ZoopCard`s.
 
 ---
 
@@ -364,8 +364,8 @@ Each fast-follow must satisfy **Rule of 5 / 5 / 2** and drop a `DisclaimerNote` 
 
 This umbrella is **mostly composition**, not new engine code — but it adds two shared primitives.
 
-**Reuse (no change):** `StrandPalette`/`Palette`, `StrandFont`, `StrandMotion`, `NoopMetrics`,
-`DomainTheme`, and the whole locked component set (`NoopCard`, `StatTile`, `ChartCard`, `InsightCard`,
+**Reuse (no change):** `StrandPalette`/`Palette`, `StrandFont`, `StrandMotion`, `ZoopMetrics`,
+`DomainTheme`, and the whole locked component set (`ZoopCard`, `StatTile`, `ChartCard`, `InsightCard`,
 `SectionHeader`, `SegmentedPillControl`, `SourceBadge`, `ScoreStatePill`, the three button styles, all
 gauges/charts). All seven pillars compose from these.
 

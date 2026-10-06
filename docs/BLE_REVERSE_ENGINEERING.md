@@ -49,7 +49,7 @@ The reverse-engineering logic is split between a platform-pure Swift package and
 The `WhoopProtocol` package never imports CoreBluetooth — it exposes UUIDs as plain strings so the
 protocol code runs unchanged in tests and CLI tools. Only `BLEManager` turns those strings into
 `CBUUID`s. The `Strand/` tree (including `Strand/BLE/`) compiles into **both** Apple targets — the
-macOS app and the `NOOPiOS` iOS target (`project.yml`) — so this CoreBluetooth layer is shared across
+macOS app and the `ZoopiOS` iOS target (`project.yml`) — so this CoreBluetooth layer is shared across
 macOS and iOS, not macOS-only.
 
 ---

@@ -179,7 +179,7 @@ enum CsvExport {
                 // stays on main (it needs the panel/picker result).
                 // Inside NOOP's own scratch folder, which also gives this one a sweep: staged flat
                 // under a bare UUID it matched no `noop-` prefix, so an interrupted export leaked it.
-                let out = NoopScratch.file(UUID().uuidString + ".zip")
+                let out = ZoopScratch.file(UUID().uuidString + ".zip")
                 try WhoopCsvExporter.writeArchive(entries: entries, to: out)
                 return out
             }.value
@@ -209,7 +209,7 @@ enum CsvExport {
             // iOS: move the staged zip to its user-facing name, then hand it to the system document picker
             // so the user can save it into Files / iCloud Drive (DataBackup.runExport precedent). Clear any
             // stale staged copy first.
-            let staged = NoopScratch.file(name)
+            let staged = ZoopScratch.file(name)
             if FileManager.default.fileExists(atPath: staged.path) {
                 try FileManager.default.removeItem(at: staged)
             }

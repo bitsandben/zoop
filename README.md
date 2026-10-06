@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="docs/assets/logo-v3.png" alt="NOOP" width="72">
+  <img src="docs/assets/logo-v3.png" alt="Zoop" width="72">
 </p>
 
-<h1 align="center">NOOP</h1>
+<h1 align="center">Zoop</h1>
 
-<p align="center"><b>Your strap. Your data. Your machine. Offline, on-device, no cloud.</b></p>
+<p align="center"><b>Private NOOP fork (2oop → Zoop). Your strap. Your data. Offline, on-device.</b></p>
 
-<p align="center"><sub>Now in the all-new <b>Liquid Metal</b> design: one living look across iPhone, Android and Mac.</sub></p>
+<p align="center"><sub><b>This fork develops iOS only</b> — see <code>CLAUDE.md</code>. Upstream NOOP also ships Android and Mac.</sub></p>
 
 <p align="center">
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-macOS%20%C2%B7%20Android%20%C2%B7%20iOS-E8B84B?style=flat-square">
@@ -90,9 +90,10 @@ Pre-built apps you can run right now:
 > - **Still blocked by Play Protect?** It's your call to make for an unsigned app you trust: open the
 >   **Play Store → your profile icon → Play Protect → ⚙ Settings**, toggle **"Scan apps with Play
 >   Protect" off**, install NOOP, then switch it **back on**.
-> - **Reinstalling is safe.** Uninstalling and installing again won't hurt anything — NOOP keeps all
->   data on-device with `allowBackup=false`, so a reinstall simply starts fresh. There's no cloud copy
->   to lose either way.
+> - **An update keeps your data.** Installing a newer build over the app that is already on the phone
+>   leaves the on-device database and settings in place, including after the app itself is updated.
+>   Uninstalling is different: `allowBackup=false` means Android does not upload that data, so a
+>   remove-and-reinstall starts fresh. There is no cloud copy either way.
 
 Prefer to build it yourself? See [`docs/BUILD.md`](docs/BUILD.md).
 
@@ -394,7 +395,7 @@ Packages/
   StrandAnalytics/       HRV / recovery / strain / sleep / correlation math
   StrandImport/          WHOOP CSV + Apple Health importers
   StrandDesign/          SwiftUI design system (palette, components, charts)
-  NoopLocalAccess/       local read-only data-access layer (on-device, no network)
+  ZoopLocalAccess/       local read-only data-access layer (on-device, no network)
 Tools/Backfill/          CLI tool for backfilling decoded data
 Fixtures/                sample WHOOP export for tests
 ```
@@ -497,7 +498,7 @@ open Strand.xcodeproj
 
 Notes:
 
-- Bundle id `com.noopapp.noop`, product name **NOOP**, sandboxed with the
+- Bundle id `com.zoopapp.zoop`, product name **NOOP**, sandboxed with the
   Bluetooth and user-selected-files entitlements.
 - Swift Package Manager resolves the only third-party dependencies automatically:
   **GRDB.swift** (SQLite) and **ZIPFoundation** (export unzip).
@@ -605,7 +606,7 @@ NOOP is public and built to be hard to erase. **Clone it freely** — `git clone
 
 Two simple asks:
 
-- **Keep it non-commercial** and keep the [`LICENSE`](LICENSE) + `Copyright 2026 NoopApp` notice intact (PolyForm Noncommercial — mirror and use freely, just don't sell it or ship it in a paid product).
+- **Keep it non-commercial** and keep the [`LICENSE`](LICENSE) + `Copyright 2026 ZoopApp` notice intact (PolyForm Noncommercial — mirror and use freely, just don't sell it or ship it in a paid product).
 - **Point people back to the canonical home, [github.com/ryanbr/noop](https://github.com/ryanbr/noop)**, so everyone lands on the current code and releases rather than a stale fork.
 
 That's it — copy away.

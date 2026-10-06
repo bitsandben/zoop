@@ -185,9 +185,9 @@ final class ChargeSyncIndicatorMathTests: XCTestCase {
     /// The capsule hugs its label instead of using one constant for every language, so a short label is
     /// not left with lopsided padding and a long one is not clipped. Both ends of that need pinning.
     func testExpandedWidthHugsTheLabelBetweenItsFloorAndCap() {
-        let floor = NoopMetrics.compactControlSize
-        let cap = NoopMetrics.syncIndicatorExpandedWidth
-        let gap = NoopMetrics.syncIndicatorLabelSpacing
+        let floor = ZoopMetrics.compactControlSize
+        let cap = ZoopMetrics.syncIndicatorExpandedWidth
+        let gap = ZoopMetrics.syncIndicatorLabelSpacing
 
         // No measurement yet (first layout pass) must not collapse the control below its circle.
         XCTAssertEqual(ChargeSyncIndicator.expandedWidth(labelWidth: 0), floor + 2 * gap)

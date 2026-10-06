@@ -125,7 +125,7 @@ public struct DeviceRegistryStore: Sendable {
     /// Suffix of the COMPUTED sibling every device id owns — the engine writes its derived days, detected
     /// workouts and metric series under `<deviceId>-noop`. Spelled here so the adoption can carry it with
     /// the pairing; the Kotlin twin is `WhoopRepository.computedDeviceId`.
-    public static let computedSuffix = "-noop"
+    public static let computedSuffix = "-zoop"
 
     /// Every table whose rows are keyed by `deviceId` (the per-device sample/derived tables). This is
     /// the authoritative list `deleteAllData` clears — kept in sync with the `deviceId`-keyed tables in

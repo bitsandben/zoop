@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Deutsch. Muttersprache hier bearbeiten. Die name=-Schlüssel nicht umbenennen;
+  sie müssen zu values/strings.xml passen. Die App bietet nur Englisch und Deutsch an.
+-->
 <resources>
     <!-- German (de). App name stays untranslated (brand). Nav terms mirror the iOS German pass where
          one exists, so the two platforms read the same. -->
@@ -48,6 +52,10 @@
     <string name="nav_settings">Einstellungen</string>
     <string name="nav_test_centre">Testcenter</string>
     <string name="nav_more">Mehr</string>
+    <string name="nav_bar_home">Startseite</string>
+    <string name="nav_bar_health">Gesundheit</string>
+    <string name="nav_bar_coach">KI-Coach</string>
+    <string name="nav_bar_more">Mehr</string>
 
     <string name="more_group_insights">Einblicke</string>
     <string name="more_group_body">Körper</string>
@@ -2029,6 +2037,7 @@
     <string name="settings_language">Sprache</string>
     <string name="settings_choose_language">Sprache auswählen</string>
     <string name="settings_language_system">Systemstandard</string>
+    <string name="settings_language_detail">NOOP gibt es auf Englisch und Deutsch. System folgt einem deutschen Handy und nutzt sonst Englisch. Öffne NOOP neu, damit die Änderung gilt.</string>
     <string name="settings_appearance_detail">Wähle Hell, Dunkel oder folge deinem System. Dunkel ist das charakteristische Fast-Schwarz; Hell behält denselben klaren Look auf heller Fläche.</string>
     <string name="settings_theme_light">Hell</string>
     <string name="settings_theme_dark">Dunkel</string>

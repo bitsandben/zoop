@@ -57,7 +57,7 @@ app structurally won't read the other bands. NOOP sits in the gap.
   > NOOP-computed > declared-compatible Apple Health / Health Connect. **v5 generalises this from a
   hardcoded waterfall into a capability-driven policy** (below).
 - **`DailyMetricSource` + `vitalPriority` + `SourcedDailyMetric`** (Repository.swift L61–82) — per-row
-  provenance tags (`whoopImport / noopComputed / appleHealth / localCache`) already drive the source-aware
+  provenance tags (`whoopImport / zoopComputed / appleHealth / localCache`) already drive the source-aware
   vital cards. v5 extends the enum to cover every source and surfaces it in the new fused view.
 - **`DayOwnerResolver`** (`Packages/StrandAnalytics/.../DayOwnerResolver.swift`) — already picks the single
   device that *owns* a day's scored metrics (invariant: scores never mix sources). v5 reuses this verbatim
@@ -101,7 +101,7 @@ Trust tiers (lower = more trusted), grounded in what each device actually measur
 
 The rule mirrors the metric-specific intuition already baked into the current code:
 - **Steps** → the device that *actually counts them* wins (a wrist band's pedometer over the strap's
-  estimate; today `noopComputedCanFillAppleMetric` already encodes "strap step estimate is a last resort").
+  estimate; today `zoopComputedCanFillAppleMetric` already encodes "strap step estimate is a last resort").
 - **HR (avg/max/resting)** → a chest strap or PPG wins; cross-validate against phone.
 - **Skin temp** → redundancy: prefer the source with the finer scale; today's `skin_temp` daily column
   already exists.

@@ -52,6 +52,10 @@
     <string name="nav_test_centre">Centro test</string>
     <string name="nav_self_hosted_push">Push self-hosted</string>
     <string name="nav_more">Altro</string>
+    <string name="nav_bar_home">Inizio</string>
+    <string name="nav_bar_health">Salute</string>
+    <string name="nav_bar_coach">Coach IA</string>
+    <string name="nav_bar_more">Altro</string>
     <string name="push_title">Push self-hosted</string>
     <string name="push_subtitle">Sperimentale · Android</string>
     <string name="push_destination_title">Il tuo endpoint</string>
@@ -2084,6 +2088,7 @@
     <string name="settings_language">Lingua</string>
     <string name="settings_choose_language">Scegli la lingua</string>
     <string name="settings_language_system">Predefinita di sistema</string>
+    <string name="settings_language_detail">NOOP è disponibile in inglese e in tedesco. Sistema segue un telefono in tedesco, altrimenti usa l\'inglese. Riapri NOOP per applicare la modifica.</string>
     <string name="settings_appearance_detail">Scegli Chiaro, Scuro o segui il sistema. Lo scuro è il caratteristico quasi-nero; il chiaro mantiene lo stesso aspetto pulito su uno sfondo luminoso.</string>
     <string name="settings_theme_light">Chiaro</string>
     <string name="settings_theme_dark">Scuro</string>

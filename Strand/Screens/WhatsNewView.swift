@@ -21,7 +21,7 @@ struct WhatsNewView: View {
                 // LazyVStack (byte-identical layout to VStack inside a ScrollView — same leading
                 // alignment + sectionGap spacing) builds the off-screen release cards on demand instead
                 // of constructing the entire history up-front each time the sheet opens.
-                LazyVStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+                LazyVStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                     expectationsCard
                     ForEach(Array(AppChangelog.releases.enumerated()), id: \.element.id) { index, release in
                         // The newest release is the headline — give it the brand-green wash; the
@@ -78,7 +78,7 @@ struct WhatsNewView: View {
     }
 
     private var expectationsCard: some View {
-        NoopCard(tint: StrandPalette.accent) {
+        ZoopCard(tint: StrandPalette.accent) {
             VStack(alignment: .leading, spacing: 14) {
                 Text("WHAT TO EXPECT").font(StrandFont.overline)
                     .tracking(StrandFont.overlineTracking)
@@ -104,7 +104,7 @@ struct WhatsNewView: View {
     }
 
     private func releaseCard(_ release: AppChangelog.Release, isLatest: Bool = false) -> some View {
-        NoopCard(tint: isLatest ? StrandPalette.accent : nil) {
+        ZoopCard(tint: isLatest ? StrandPalette.accent : nil) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 8) {
                     SourceBadge("v\(release.version)")

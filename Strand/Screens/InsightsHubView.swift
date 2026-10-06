@@ -48,7 +48,7 @@ struct InsightsHubView: View {
             if !model.loaded {
                 ComingSoon(what: "Reading your journal and outcomes…")
             } else {
-                VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                     moversSection
                     doseSection
                     methodNote
@@ -62,7 +62,7 @@ struct InsightsHubView: View {
     // MARK: - What moves your Charge (ranked, lag-aware)
 
     private var moversSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             // Header and the 4-segment outcome control each get their own row — one HStack
             // crushed the pill control on narrow widths and truncated the segment labels.
             SectionHeader("What moves your \(outcome.outcomeName.lowercased())",
@@ -72,7 +72,7 @@ struct InsightsHubView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             if model.ranked.isEmpty {
-                NoopCard {
+                ZoopCard {
                     Text(String(localized: "Not enough overlap between your journal answers and \(outcome.outcomeName.lowercased()) yet. Keep logging. Each behaviour needs days both with and without it before NOOP can read its effect."))
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
@@ -106,8 +106,8 @@ struct InsightsHubView: View {
             return "\(arrow) \(String(format: "%.1f", abs(e.delta)))"
         }()
 
-        return NoopCard(tint: outcome.domain.color) {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        return ZoopCard(tint: outcome.domain.color) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 // Header: behaviour name + lead/lag chip + confidence pill.
                 HStack(alignment: .firstTextBaseline) {
                     HStack(spacing: 8) {
@@ -129,8 +129,8 @@ struct InsightsHubView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 // With / without means as uniform StatTiles.
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 168), spacing: NoopMetrics.gap)],
-                          alignment: .leading, spacing: NoopMetrics.gap) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 168), spacing: ZoopMetrics.gap)],
+                          alignment: .leading, spacing: ZoopMetrics.gap) {
                     StatTile(label: "With",
                              value: outcome.format(e.meanWith),
                              caption: "n = \(e.nWith)",
@@ -168,10 +168,10 @@ struct InsightsHubView: View {
     // MARK: - Alcohol / caffeine dose-response
 
     private var doseSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Dose-response", overline: "Personal curve · prior-shrunk")
             if model.doseCards.isEmpty {
-                NoopCard {
+                ZoopCard {
                     Text(String(localized: "Log alcohol or late caffeine with an amount and NOOP fits a personal dose curve: how much each extra unit tends to move your numbers. Until then it shows typical patterns, clearly labelled as not yet yours."))
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textSecondary)
@@ -190,7 +190,7 @@ struct InsightsHubView: View {
     // MARK: - Method / honesty note
 
     private var methodNote: some View {
-        NoopCard {
+        ZoopCard {
             VStack(alignment: .leading, spacing: 6) {
                 Text("How to read this").strandOverline()
                 Text(String(localized: "Everything here is a pattern in your own logged days: an association with an effect size and confidence, never a cause or a diagnosis. Population patterns are shown as \u{201C}typical\u{201D} and are always overridden by your own data once you have enough of it. Approximations, not WHOOP\u{2019}s scores; not a medical device."))
@@ -264,8 +264,8 @@ private struct DoseResponseCardView: View {
 
     var body: some View {
         let r = card.response
-        NoopCard(tint: domain.color) {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        ZoopCard(tint: domain.color) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 header(r)
 
                 // The engine's honest read sentence (prior / yours / contradicts-prior).
@@ -330,7 +330,7 @@ private struct DoseResponseCardView: View {
         let projected = card.latestOutcome.map { max(0, min(card.outcomeCeiling, $0 + delta)) }
         let stepLabel = previewDose <= 1 ? String(localized: "no extra") : card.stepLabel(previewDose)
 
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             // Overline and the dose stepper each get their own row — sharing one HStack
             // compressed the 0/1/2/3+ stepper and truncated its segments on narrow widths.
             Text(card.forecastOverline).strandOverline()
@@ -344,8 +344,8 @@ private struct DoseResponseCardView: View {
                 .foregroundStyle(StrandPalette.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: NoopMetrics.gap)],
-                      alignment: .leading, spacing: NoopMetrics.gap) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: ZoopMetrics.gap)],
+                      alignment: .leading, spacing: ZoopMetrics.gap) {
                 StatTile(label: "Per extra \(card.unitNoun)",
                          value: signed(r.perUnit, suffix: card.outcomeSuffix),
                          caption: r.priorDominated ? String(localized: "typical") : String(localized: "your data"),
@@ -379,7 +379,7 @@ private struct DoseResponseCardView: View {
     // MARK: Bits
 
     private func honestyBanner(_ text: String, tone: StrandTone) -> some View {
-        HStack(alignment: .top, spacing: NoopMetrics.space2) {
+        HStack(alignment: .top, spacing: ZoopMetrics.space2) {
             Image(systemName: "info.circle.fill")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(tone == .neutral ? StrandPalette.textTertiary : StrandPalette.statusPositive)
@@ -388,9 +388,9 @@ private struct DoseResponseCardView: View {
                 .foregroundStyle(StrandPalette.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(NoopMetrics.space3)
+        .padding(ZoopMetrics.space3)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(NoopPanelSurface(cornerRadius: 8))
+        .background(ZoopPanelSurface(cornerRadius: 8))
     }
 
     private func signed(_ v: Double, suffix: String) -> String {

@@ -21,7 +21,7 @@ struct StorageView: View {
         ScreenScaffold(title: "Storage",
                        subtitle: "Where NOOP's on-device space is going, and a one-tap clean-up.",
                        quietSubtitle: true) {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                 if loading && report == nil {
                     StatePill("Measuring…", tone: .accent, pulsing: true)
                         .staggeredAppear(index: 0)
@@ -44,7 +44,7 @@ struct StorageView: View {
 
     private func breakdownCard(_ r: AppModel.StorageReport) -> some View {
         StrandCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                 Text("On-device footprint")
                     .font(StrandFont.headline)
                     .foregroundStyle(StrandPalette.textPrimary)
@@ -72,7 +72,7 @@ struct StorageView: View {
     private func cleanUpCard(_ r: AppModel.StorageReport) -> some View {
         let reclaimable = r.inbox + r.importTemp
         return StrandCard {
-            VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                 Text("Clean up")
                     .font(StrandFont.headline)
                     .foregroundStyle(StrandPalette.textPrimary)
@@ -92,12 +92,12 @@ struct StorageView: View {
                 Button {
                     Task { await cleanUp() }
                 } label: {
-                    HStack(spacing: NoopMetrics.space2) {
+                    HStack(spacing: ZoopMetrics.space2) {
                         if cleaning { ProgressView().controlSize(.small) }
                         Text(cleaning ? "Cleaning up…" : "Clean up now")
                     }
                 }
-                .buttonStyle(NoopButtonStyle(.primary, fullWidth: true))
+                .buttonStyle(ZoopButtonStyle(.primary, fullWidth: true))
                 .disabled(cleaning || reclaimable == 0)
                 .accessibilityLabel("Clean up leftover import files")
             }
@@ -115,7 +115,7 @@ struct StorageView: View {
 
     private func row(icon: String, label: LocalizedStringKey, bytes: Int64?,
                      tint: Color, note: LocalizedStringKey? = nil) -> some View {
-        HStack(spacing: NoopMetrics.space3) {
+        HStack(spacing: ZoopMetrics.space3) {
             Image(systemName: icon)
                 .font(StrandFont.headline)
                 .foregroundStyle(tint)

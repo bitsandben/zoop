@@ -1635,6 +1635,10 @@
     <string name="nav_settings">Paramètres</string>
     <string name="nav_test_centre">Centre de test</string>
     <string name="nav_more">Plus</string>
+    <string name="nav_bar_home">Accueil</string>
+    <string name="nav_bar_health">Santé</string>
+    <string name="nav_bar_coach">Coach IA</string>
+    <string name="nav_bar_more">Plus</string>
     <string name="more_group_insights">Perspectives</string>
     <string name="more_group_body">Corps</string>
     <string name="more_group_data">Données</string>
@@ -2015,6 +2019,7 @@
     <string name="settings_language">Langue</string>
     <string name="settings_choose_language">Choisir la langue</string>
     <string name="settings_language_system">Réglage système</string>
+    <string name="settings_language_detail">NOOP est disponible en anglais et en allemand. Le réglage Système suit un téléphone en allemand, sinon il utilise l\'anglais. Rouvrez NOOP pour appliquer le changement.</string>
     <string name="settings_appearance_detail">Choisissez Clair, Sombre, ou suivez votre système. Sombre est le noir profond caractéristique ; Clair conserve le même look épuré sur un fond clair.</string>
     <string name="settings_theme_light">Clair</string>
     <string name="settings_theme_dark">Sombre</string>

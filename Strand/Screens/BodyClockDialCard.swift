@@ -47,8 +47,8 @@ struct BodyClockDialCard: View {
         // circle with no ideal arc beside it would state something false about the night, so the card
         // stands down instead. Twin of the Kotlin guard.
         if ideal != nil {
-            NoopCard(tint: hue) {
-                VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            ZoopCard(tint: hue) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     header
                     dial
                         .frame(maxWidth: .infinity)

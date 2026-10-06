@@ -11,7 +11,7 @@ import StrandDesign
 // BackgroundFillMode). Cloned from the avatar pipeline (ProfileAvatarView.AvatarImage.downscaledJPEG),
 // but the bytes live in a FILE under Application Support rather than a UserDefaults blob — a full-screen
 // photo is far larger than a 256px avatar. Like the avatar, the file + its toggles are device-local and
-// deliberately NOT in the `.noopbak` whitelist.
+// deliberately NOT in the `.zoopbak` whitelist.
 //
 // A single shared, @MainActor ObservableObject: the decoded `Image` is cached once and every scaffold's
 // backdrop (LiquidScaffoldSky) + Today's inline sky observe THE SAME instance, so the identical picture

@@ -41,7 +41,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-GLOBS = ("android/**/*.kt", "Strand/**/*.swift", "Packages/**/*.swift", "NOOPWatch/**/*.swift")
+GLOBS = ("android/**/*.kt", "Strand/**/*.swift", "Packages/**/*.swift", "ZoopWatch/**/*.swift")
 
 # A doc block sitting above these is a FILE header, not a declaration doc — the blank line
 # after it is conventional and correct, so it must not be reported.

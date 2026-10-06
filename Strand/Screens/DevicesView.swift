@@ -130,8 +130,8 @@ private struct DevicesContent: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(NoopMetrics.space3)
-        .background(NoopPanelSurface(cornerRadius: 18))
+        .padding(ZoopMetrics.space3)
+        .background(ZoopPanelSurface(cornerRadius: 18))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
             .strokeBorder(StrandPalette.statusWarning.opacity(0.5), lineWidth: 1))
         .accessibilityElement(children: .combine)
@@ -139,7 +139,7 @@ private struct DevicesContent: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
             // #802: the re-pair guide belongs HERE too, not only on Live. A strap that connects but never
             // finishes bonding leaves the user on this screen — it is where you go to fix a device — while
             // the four steps that resolve it were rendered one tab away. The reporter in #802 filed an issue
@@ -205,7 +205,7 @@ private struct DevicesContent: View {
                     // persisted firmware (written on connect in FrameRouter) when the live value is momentarily
                     // nil — mid-handshake, or a connection that hasn't re-read GET_HELLO/REPORT_VERSION_INFO
                     // yet this session. Without this the "· FW x" blanks out while actively connected. The
-                    // persisted fallback is WHOOP-only: "noop.lastFirmware" is written solely from a WHOOP
+                    // persisted fallback is WHOOP-only: "zoop.lastFirmware" is written solely from a WHOOP
                     // handshake, so a non-WHOOP active device (Oura) must NOT inherit it. Single last-connected-
                     // strap key, so a not-yet-connected active strap can briefly show the other strap's build on
                     // a multi-WHOOP install until it republishes. Twin of Android.
@@ -219,7 +219,7 @@ private struct DevicesContent: View {
                             ? FirmwareAttribution.prefKey(peripheralId: device.peripheralId)
                                 .flatMap { UserDefaults.standard.string(forKey: $0) } : nil,
                         legacyGlobal: SourceCoordinator.isWhoop(device)
-                            ? UserDefaults.standard.string(forKey: "noop.lastFirmware") : nil,
+                            ? UserDefaults.standard.string(forKey: "zoop.lastFirmware") : nil,
                         pairedCount: registry.devices.count),
                     // Historical record layout (v24/v25 on WHOOP 4.0) observed from this connection's
                     // backfill. Distinct from the strap firmware build shown as FW.
@@ -323,7 +323,7 @@ private struct DevicesContent: View {
             Button("Cancel", role: .cancel) { removeTarget = nil }
             Button("Remove", role: .destructive) { confirmRemove(device) }
         } message: { device in
-            Text("Remove \(device.displayName)? NOOP will stop connecting to it. Its recorded data is kept and you can re-add it any time.")
+            Text("Remove \(device.displayName)? Zoop will stop connecting to it. Its recorded data is kept and you can re-add it any time.")
         }
         // Restart strap confirm (#166)
         .alert("Restart this strap?",
@@ -423,14 +423,14 @@ private struct DevicesContent: View {
     // MARK: Pieces
 
     private var addButton: some View {
-        NoopButton("Add a device", systemImage: "plus", kind: .primary, fullWidth: true) {
+        ZoopButton("Add a device", systemImage: "plus", kind: .primary, fullWidth: true) {
             showAddWizard = true
         }
         .accessibilityLabel("Add a device")
     }
 
     private var removedSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
             sectionHead("REMOVED", trailing: String(localized: "Data kept"))
             ForEach(removedDevices) { device in
                 DeviceCard(
@@ -676,14 +676,14 @@ private struct DeviceSyncStatusCard: View {
         tint: Color,
         accessibility: String
     ) -> some View {
-        NoopCard(tint: tint) {
-            HStack(alignment: .center, spacing: NoopMetrics.space3) {
+        ZoopCard(tint: tint) {
+            HStack(alignment: .center, spacing: ZoopMetrics.space3) {
                 Image(systemName: systemImage)
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(tint)
                     .frame(width: 24)
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
                     Text("Strap history")
                         .font(StrandFont.headline)
                         .foregroundStyle(StrandPalette.textPrimary)
@@ -794,8 +794,8 @@ private struct DeviceCard: View {
     /// the ⋮ menu overlay.
     private var cardContent: some View {
         StrandCard(padding: 18, tint: isActive ? StrandPalette.accent : nil) {
-            VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
-                HStack(alignment: .top, spacing: NoopMetrics.space3) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
+                HStack(alignment: .top, spacing: ZoopMetrics.space3) {
                     Image(systemName: icon)
                         .font(StrandFont.title2)
                         .foregroundStyle(isActive ? StrandPalette.accent : StrandPalette.textSecondary)
@@ -1334,7 +1334,7 @@ private struct ExtendedBatteryProbeResultView: View {
         }
         .padding(20)
         .frame(minWidth: 340, minHeight: 260)
-        .background(NoopChromeSurface())
+        .background(ZoopChromeSurface())
     }
 }
 
@@ -1439,7 +1439,7 @@ private struct BodyLocationProbeResultView: View {
         }
         .padding(20)
         .frame(minWidth: 340, minHeight: 260)
-        .background(NoopChromeSurface())
+        .background(ZoopChromeSurface())
     }
 }
 
@@ -1561,7 +1561,7 @@ private struct FeatureFlagProbeResultView: View {
         }
         .padding(20)
         .frame(minWidth: 340, minHeight: 260)
-        .background(NoopChromeSurface())
+        .background(ZoopChromeSurface())
     }
 }
 
@@ -1586,7 +1586,7 @@ private struct EcgWristSheet: View {
                 .font(StrandFont.caption)
                 .foregroundStyle(StrandPalette.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: NoopMetrics.space3) {
+            HStack(spacing: ZoopMetrics.space3) {
                 Button("Left wrist") { onPick(.left) }
                 Button("Right wrist") { onPick(.right) }
                 Spacer()
@@ -1595,7 +1595,7 @@ private struct EcgWristSheet: View {
         }
         .padding(20)
         .frame(minWidth: 340, minHeight: 220)
-        .background(NoopChromeSurface())
+        .background(ZoopChromeSurface())
     }
 }
 
@@ -1642,7 +1642,7 @@ private struct EcgProbeResultView: View {
         }
         .padding(20)
         .frame(minWidth: 340, minHeight: 260)
-        .background(NoopChromeSurface())
+        .background(ZoopChromeSurface())
     }
 }
 
@@ -1716,7 +1716,7 @@ private struct DeviceConfigProbeResultView: View {
         }
         .padding(20)
         .frame(minWidth: 340, minHeight: 260)
-        .background(NoopChromeSurface())
+        .background(ZoopChromeSurface())
     }
 }
 
@@ -1755,7 +1755,7 @@ struct DeviceCardCatalog: View {
         ScreenScaffold(title: "Devices",
                        subtitle: "What each band captures (and what NOOP uses it for).",
                        topBackground: liquidScaffoldSky()) {
-            VStack(spacing: NoopMetrics.gap) {
+            VStack(spacing: ZoopMetrics.gap) {
                 DeviceCard(device: Self.dev("whoop-4d", "WHOOP", "4.0", Self.whoopCaps),
                            isActive: true, isLiveConnected: true,
                            onMakeActive: {}, onRename: {}, onRemove: nil)
@@ -1798,7 +1798,7 @@ struct OuraDeviceDemoScreen: View {
         ScreenScaffold(title: "Devices",
                        subtitle: "A locally-adopted Oura ring, in beta.",
                        topBackground: liquidScaffoldSky()) {
-            VStack(spacing: NoopMetrics.gap) {
+            VStack(spacing: ZoopMetrics.gap) {
                 // Active + connected so the card shows "Active · Live" + a live battery readout.
                 DeviceCard(device: DeviceCardCatalog.oura("Oura Ring 3"),
                            isActive: true, isLiveConnected: true, liveBatteryPct: 71,

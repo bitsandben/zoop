@@ -599,7 +599,7 @@ usable records.
 
 > **This is the capture tooling's database, not the app's.** Neither shipped app has a `frames`
 > table — Android uses Room, iOS/macOS uses GRDB — so this cannot be pointed at a phone's store or a
-> `.noopbak`. Validating a strap still requires a capture.
+> `.zoopbak`. Validating a strap still requires a capture.
 
 ```bash
 # One strap from a capture (summary stays aggregate-only unless you pass --show-nights):

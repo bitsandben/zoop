@@ -113,9 +113,9 @@ struct ManualWorkoutSheet: View {
     var body: some View {
         #if os(macOS)
         formContent
-            .padding(NoopMetrics.space6)
+            .padding(ZoopMetrics.space6)
             .frame(width: 420)
-            .background(NoopChromeSurface())
+            .background(ZoopChromeSurface())
             // Lets the user dismiss the decimal pad (which has no return key) and reach Cancel/Add.
             .keyboardDoneToolbar($focusedField)
         #else
@@ -130,7 +130,7 @@ struct ManualWorkoutSheet: View {
         // content, so nothing needs to leave its own bounds to stay clear of the keyboard.
         ScrollView {
             formContent
-                .padding(NoopMetrics.space6)
+                .padding(ZoopMetrics.space6)
         }
         // #697/#horizontal-swipe parity, see ScreenScaffold.
         .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
@@ -141,16 +141,16 @@ struct ManualWorkoutSheet: View {
         // sheet's width and sizes to content height instead.
         .frame(maxWidth: .infinity)
         .noopSheetPresentation(largeFirst: true)
-        .background(NoopChromeSurface())
+        .background(ZoopChromeSurface())
         // Lets the user dismiss the decimal pad (which has no return key) and reach Cancel/Add.
         .keyboardDoneToolbar($focusedField)
         #endif
     }
 
     private var formContent: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space5) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space5) {
             header
-            VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                 field(String(localized: "Sport")) {
                     sportPicker
                 }
@@ -342,10 +342,10 @@ struct ManualWorkoutSheet: View {
     }
 
     private var footer: some View {
-        HStack(spacing: NoopMetrics.space3) {
-            NoopButton("Cancel", kind: .tertiary) { dismiss() }
+        HStack(spacing: ZoopMetrics.space3) {
+            ZoopButton("Cancel", kind: .tertiary) { dismiss() }
             Spacer()
-            NoopButton(editing == nil ? "Add" : "Save", systemImage: "checkmark", kind: .primary) {
+            ZoopButton(editing == nil ? "Add" : "Save", systemImage: "checkmark", kind: .primary) {
                 save()
             }
             .disabled(builtRow == nil)

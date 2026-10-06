@@ -86,7 +86,7 @@ enum KeyMetricPrefs {
             // only decoder that could lose a tile the user had enabled.
             //
             // Latent rather than live: `encode` joins rawValues with no spaces, and this key is not in the
-            // `.noopbak` whitelist, so nothing in the app writes a spaced value today. It is fixed because
+            // `.zoopbak` whitelist, so nothing in the app writes a spaced value today. It is fixed because
             // a decoder that silently drops what it cannot parse should not also be picky about a space —
             // the capabilities decoder in this same change was exactly that, and there it WAS reachable.
             let raw = token.trimmingCharacters(in: .whitespaces)

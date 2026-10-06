@@ -322,7 +322,7 @@ class LoadFrameRecordsTest(unittest.TestCase):
     `whoop_sync.py export --only-type 47` to be analysed by a tool sitting in the same directory.
 
     This is the CAPTURE TOOLING's database, not the app's: neither shipped app has a `frames` table
-    (Android is Room, iOS/macOS is GRDB), so this path cannot reach a phone store or a .noopbak."""
+    (Android is Room, iOS/macOS is GRDB), so this path cannot reach a phone store or a .zoopbak."""
 
     def _store(self, rows, *, device_id=2, inner_type=47):
         path = tempfile.mktemp(suffix=".db")
@@ -870,7 +870,7 @@ def _pack_v18_aux(values: dict) -> bytes:
     return bytes([vs.V18_AUX_FORMAT_VERSION]) + bitmap.to_bytes(4, "little") + body
 
 
-def _write_app_db(folder: str, rows, *, device: str = "strap-a", name: str = "noop.sqlite") -> str:
+def _write_app_db(folder: str, rows, *, device: str = "strap-a", name: str = "zoop.sqlite") -> str:
     """A minimal NOOP app store: just the two tables this reader touches, same columns as the
     GRDB migration (`Database.swift` v23)."""
     path = os.path.join(folder, name)

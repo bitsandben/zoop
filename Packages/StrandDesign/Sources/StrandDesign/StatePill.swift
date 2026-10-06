@@ -80,7 +80,7 @@ public struct ConnectionDot: View {
     /// Low Power Mode / "Reduce motion in NOOP". This halo is a `repeatForever` loop that never
     /// settles and is on screen for long stretches — a connected strap in Settings, a backfill on
     /// every scaffolded screen — so it belongs behind the same gate as the liquid surfaces.
-    @ObservedObject private var motion = NoopMotionState.shared
+    @ObservedObject private var motion = ZoopMotionState.shared
     private var poseStill: Bool { motion.poseStill(reduceMotion) }
     @Environment(\.colorScheme) private var scheme
 
@@ -149,7 +149,7 @@ public struct ConnectionDot: View {
             ConnectionDot(tone: .positive, pulsing: true)
         }
         .padding(12)
-        .background(NoopPanelSurface(cornerRadius: 12))
+        .background(ZoopPanelSurface(cornerRadius: 12))
         .frame(width: 300)
     }
     .padding(28)

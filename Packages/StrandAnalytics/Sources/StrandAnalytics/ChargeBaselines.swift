@@ -144,7 +144,7 @@ public enum ChargeBaselines {
     }
 
     /// Resolve HRV, resting-HR and respiration baselines from stored rows: `imported` are the imported
-    /// vendor rows, `own` the NOOP-computed ("-noop") rows. HRV folds on `hrvEpoch`, resting HR and
+    /// vendor rows, `own` the NOOP-computed ("-zoop") rows. HRV folds on `hrvEpoch`, resting HR and
     /// respiration on `recoveryEpoch`, exactly as the engine does. The engine additionally cuts respiration
     /// at a device-era boundary (#459), which needs a per-night source the stored rows do not carry; the
     /// two agree for every single-brand history. Kotlin twin: `ChargeBaselines.resolve`.

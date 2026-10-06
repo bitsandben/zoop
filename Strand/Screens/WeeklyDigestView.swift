@@ -71,7 +71,7 @@ struct WeeklyDigestCard: View {
             EmptyView()
         } else {
             // Content owns its own frosted cards (the domain score row + the signals
-            // card), so it's no longer wrapped in an outer NoopCard — that would double
+            // card), so it's no longer wrapped in an outer ZoopCard — that would double
             // the frost. The compact flag trims it to the three headline scores.
             WeeklyDigestContent(digest: digest, compact: true)
         }
@@ -105,7 +105,7 @@ struct WeeklyDigestView: View {
                         title: "No readings this week yet",
                         message: "Once this week has a day or two of data, your week-in-review appears here.")
                 } else {
-                    VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                         WeeklyDigestContent(digest: digest, compact: false)
                     }
                 }
@@ -163,7 +163,7 @@ struct WeeklyDigestContent: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             // Headline over a subtle scenic backdrop (Charge-tinted starfield).
             if showsHeader {
                 header
@@ -181,10 +181,10 @@ struct WeeklyDigestContent: View {
 
     private var header: some View {
         ZStack(alignment: .leading) {
-            NoopPanelSurface(cornerRadius: NoopMetrics.cardRadius,
+            ZoopPanelSurface(cornerRadius: ZoopMetrics.cardRadius,
                              elevated: true)
             HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: NoopMetrics.spaceHalf) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.spaceHalf) {
                     Text("Week in review").strandOverline()
                     Text(weekRangeLabel)
                         .font(StrandFont.title2)
@@ -196,7 +196,7 @@ struct WeeklyDigestContent: View {
                     .foregroundStyle(StrandPalette.textSecondary)
                     .accessibilityLabel("\(digest.daysWithData) of 7 days had data this week")
             }
-            .padding(NoopMetrics.cardPadding)
+            .padding(ZoopMetrics.cardPadding)
         }
     }
 
@@ -222,7 +222,7 @@ struct WeeklyDigestContent: View {
     private var compactScoreRow: some View {
         let summaries = Self.scoreOrder.compactMap { digest.summary($0) }
         if !summaries.isEmpty {
-            NoopCard(padding: NoopMetrics.space2) {
+            ZoopCard(padding: ZoopMetrics.space2) {
                 if dynamicTypeSize.isAccessibilitySize {
                     // At accessibility text sizes, three narrow columns would either truncate
                     // localized labels/chips or force gauge text below a readable size.
@@ -232,8 +232,8 @@ struct WeeklyDigestContent: View {
                             if index < summaries.count - 1 {
                                 Divider()
                                     .overlay(StrandPalette.hairline)
-                                    .padding(.horizontal, NoopMetrics.space3)
-                                    .padding(.vertical, NoopMetrics.space3)
+                                    .padding(.horizontal, ZoopMetrics.space3)
+                                    .padding(.vertical, ZoopMetrics.space3)
                             }
                         }
                     }
@@ -246,7 +246,7 @@ struct WeeklyDigestContent: View {
                             if index < summaries.count - 1 {
                                 Divider()
                                     .overlay(StrandPalette.hairline)
-                                    .padding(.vertical, NoopMetrics.space3)
+                                    .padding(.vertical, ZoopMetrics.space3)
                             }
                         }
                     }
@@ -258,8 +258,8 @@ struct WeeklyDigestContent: View {
 
     private var scoreGrid: some View {
         LazyVGrid(
-            columns: [GridItem(.adaptive(minimum: compact ? 140 : 168), spacing: NoopMetrics.gap)],
-            spacing: NoopMetrics.gap
+            columns: [GridItem(.adaptive(minimum: compact ? 140 : 168), spacing: ZoopMetrics.gap)],
+            spacing: ZoopMetrics.gap
         ) {
             ForEach(Self.scoreOrder, id: \.rawValue) { metric in
                 if let summary = digest.summary(metric) {
@@ -287,7 +287,7 @@ struct WeeklyDigestContent: View {
         let signals = secondarySignals
         let hasFocal = !digest.focalPoints.isEmpty
         if hasFocal || !signals.isEmpty || !compact {
-            NoopCard {
+            ZoopCard {
                 VStack(alignment: .leading, spacing: 14) {
                     if hasFocal {
                         VStack(alignment: .leading, spacing: 8) {
@@ -541,9 +541,9 @@ private struct DigestScoreCard: View {
         Group {
             if isEmbedded {
                 content
-                    .padding(.horizontal, NoopMetrics.space1)
+                    .padding(.horizontal, ZoopMetrics.space1)
             } else {
-                NoopCard(padding: 14, tint: domain.color) {
+                ZoopCard(padding: 14, tint: domain.color) {
                     content
                 }
             }
@@ -558,7 +558,7 @@ private struct DigestScoreCard: View {
     }
 
     private var content: some View {
-        VStack(spacing: NoopMetrics.space2) {
+        VStack(spacing: ZoopMetrics.space2) {
             if isEmbedded {
                 Text(summary.metric.label)
                     .font(StrandFont.overline)
@@ -588,7 +588,7 @@ private struct DigestScoreCard: View {
                 stateText: nil,
                 supporting: nil,
                 diameter: gaugeDiameter,
-                lineWidth: isEmbedded && !dynamicTypeSize.isAccessibilitySize ? NoopMetrics.space2 : 11,
+                lineWidth: isEmbedded && !dynamicTypeSize.isAccessibilitySize ? ZoopMetrics.space2 : 11,
                 showsLabel: summary.thisWeek.n > 0,
                 animatedFraction: animatedFraction
             )
@@ -596,7 +596,7 @@ private struct DigestScoreCard: View {
             .contentShape(Circle())
             .onTapGesture { showScaleGuide = true }
             .popover(isPresented: $showScaleGuide, arrowEdge: .bottom) {
-                VStack(spacing: NoopMetrics.space1) {
+                VStack(spacing: ZoopMetrics.space1) {
                     Text(summary.metric.label)
                         .font(StrandFont.subhead.weight(.semibold))
                         .foregroundStyle(domain.color)
@@ -604,9 +604,9 @@ private struct DigestScoreCard: View {
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textSecondary)
                 }
-                .padding(NoopMetrics.cardInnerPadding)
+                .padding(ZoopMetrics.cardInnerPadding)
                 .frame(minWidth: 120)
-                .background(NoopPanelSurface(cornerRadius: NoopVisualStyle.compactRadius, elevated: true))
+                .background(ZoopPanelSurface(cornerRadius: ZoopVisualStyle.compactRadius, elevated: true))
                 .accessibilityElement(children: .combine)
                 .digestScalePopoverAdaptation()
             }

@@ -144,7 +144,7 @@ public struct MenuBarContent: View {
         }
         .padding(16)
         .frame(width: 268)
-        .background(NoopChromeSurface())
+        .background(ZoopChromeSurface())
         .preferredColorScheme(AppearanceMode.resolve(appearanceRaw).colorScheme)
     }
 
@@ -153,7 +153,7 @@ public struct MenuBarContent: View {
     private var header: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("NOOP")
+                Text("Zoop")
                     .font(StrandFont.headline)
                     .foregroundStyle(StrandPalette.textPrimary)
                 Text("ALL YOUR DATA · NONE OF THE CLOUD")

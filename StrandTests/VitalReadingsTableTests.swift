@@ -6,7 +6,7 @@ import XCTest
 /// renders: rows and the "N readings" caption derive from the SAME windowed list (so their counts can't
 /// disagree), rows are NEWEST-FIRST, each raw source id resolves through the shared
 /// `TodayView.provenanceDisplayLabel` (strap → "WHOOP", Health Connect → "Health Connect", Apple Health →
-/// "Apple Health", the "-noop" sibling → "On-device"), and each value reuses the model's own formatter +
+/// "Apple Health", the "-zoop" sibling → "On-device"), and each value reuses the model's own formatter +
 /// unit. Blood Oxygen (SpO2) is the acceptance case.
 final class VitalReadingsTableTests: XCTestCase {
 
@@ -60,7 +60,7 @@ final class VitalReadingsTableTests: XCTestCase {
 
     func testComputedStrapSiblingReadsOnDevice() {
         let rows = vitalReadingRows(
-            readings: [VitalReading(day: "2026-01-04", value: 55, source: strap + "-noop")],
+            readings: [VitalReading(day: "2026-01-04", value: 55, source: strap + "-zoop")],
             unit: "yrs", strapDeviceId: strap, now: now, format: { String(format: "%.0f", $0) }
         )
         XCTAssertEqual(rows.first?.source, "On-device")
@@ -91,7 +91,7 @@ final class VitalReadingsTableTests: XCTestCase {
     func testUnitlessMetricLeavesNoTrailingSpace() {
         // Vitality has an empty unit; the value must not carry a dangling space.
         let rows = vitalReadingRows(
-            readings: [VitalReading(day: "2026-01-01", value: 72, source: strap + "-noop")],
+            readings: [VitalReading(day: "2026-01-01", value: 72, source: strap + "-zoop")],
             unit: "", strapDeviceId: strap, now: now, format: { String(format: "%.0f", $0) }
         )
         XCTAssertEqual(rows.first?.value, "72")

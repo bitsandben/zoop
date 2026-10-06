@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  English is the source language. The only other language the app offers is German
+  (values-de/strings.xml). Native speakers edit those two files; keep the name= keys unchanged.
+-->
 <resources>
-    <string name="app_name">NOOP</string>
+    <string name="app_name">Zoop</string>
     <string name="widget_description">Today\'s Rest, Charge and Effort, with live heart rate and strap battery at a glance.</string>
-    <string name="widget_hr_name">NOOP Heart Rate</string>
+    <string name="widget_hr_name">Zoop Heart Rate</string>
     <string name="widget_hr_description">Live heart rate with the last three hours as a trace.</string>
-    <string name="widget_stress_name">NOOP Stress</string>
+    <string name="widget_stress_name">Zoop Stress</string>
     <string name="hosted_card_stress_title">Stress through the day</string>
     <string name="widget_stress_description">Today\'s stress as an hour-by-hour curve.</string>
-    <string name="widget_compact_name">NOOP Compact</string>
+    <string name="widget_compact_name">Zoop Compact</string>
     <string name="widget_compact_description">Compact Rest, Charge and Effort widget, with live heart rate and strap battery.</string>
     <string name="widget_error">NOOP widget couldn\'t draw — it will recover on the next update.</string>
 
@@ -56,6 +60,10 @@
     <string name="nav_test_centre">Test Centre</string>
     <string name="nav_self_hosted_push">Self-hosted push</string>
     <string name="nav_more">More</string>
+    <string name="nav_bar_home">Home</string>
+    <string name="nav_bar_health">Health</string>
+    <string name="nav_bar_coach">AI Coach</string>
+    <string name="nav_bar_more">More</string>
 
     <string name="push_title">Self-hosted push</string>
     <string name="push_subtitle">Experimental · Android</string>
@@ -2136,6 +2144,7 @@
     <string name="settings_language">Language</string>
     <string name="settings_choose_language">Choose language</string>
     <string name="settings_language_system">System default</string>
+    <string name="settings_language_detail">NOOP is available in English and German. System follows a German phone, and uses English otherwise. Reopen NOOP to apply a change.</string>
     <string name="settings_appearance_detail">Choose Light, Dark, or follow your system. Dark is the signature near-black; Light keeps the same clean look on a bright canvas.</string>
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>

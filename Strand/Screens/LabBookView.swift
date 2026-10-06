@@ -63,7 +63,7 @@ struct LabBookView: View {
             // Today and the other analysis screens.
             topBackground: liquidScaffoldSky()
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 headerCard
                 importCard
                 if !loaded {
@@ -109,7 +109,7 @@ struct LabBookView: View {
     // MARK: - Header (count + scope + actions)
 
     private var headerCard: some View {
-        NoopCard(tint: StrandPalette.metricCyan) {
+        ZoopCard(tint: StrandPalette.metricCyan) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image(systemName: "books.vertical.fill")
@@ -168,7 +168,7 @@ struct LabBookView: View {
     // .fileImporter on macOS).
 
     private var importCard: some View {
-        NoopCard(padding: 18, tint: StrandPalette.metricAmber) {
+        ZoopCard(padding: 18, tint: StrandPalette.metricAmber) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 10) {
                     Image(systemName: "tray.and.arrow.down.fill")
@@ -316,7 +316,7 @@ struct LabBookView: View {
     // MARK: - Empty state (honest)
 
     private var emptyState: some View {
-        NoopCard {
+        ZoopCard {
             VStack(alignment: .leading, spacing: 10) {
                 Image(systemName: "square.and.pencil")
                     .font(StrandFont.headline)
@@ -348,7 +348,7 @@ struct LabBookView: View {
     @ViewBuilder
     private func categorySection(_ category: LabMarkerCategory) -> some View {
         let keys = markerKeys(in: category)
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader(LocalizedStringKey(category.displayName),
                           overline: keys.count == 1 ? "1 marker" : "\(keys.count) markers")
             ForEach(keys, id: \.self) { key in
@@ -371,7 +371,7 @@ struct LabBookView: View {
         return Button {
             detailKey = key
         } label: {
-            NoopCard {
+            ZoopCard {
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(displayName(for: key))
@@ -628,7 +628,7 @@ private struct MarkerDetailView: View {
                        // rows on demand — byte-identical layout — so a marker with many readings doesn't
                        // materialise its whole list before the trend chart is on screen.
                        lazy: true) {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 trendSection
                 if !numericReadings.isEmpty { compareSection }
                 historySection
@@ -651,9 +651,9 @@ private struct MarkerDetailView: View {
     // MARK: - Trend (descriptive arithmetic, never interpretation)
 
     private var trendSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Trend", overline: "your readings over time")
-            NoopCard(tint: StrandPalette.metricCyan) {
+            ZoopCard(tint: StrandPalette.metricCyan) {
                 VStack(alignment: .leading, spacing: 10) {
                     let nums = numericReadings.compactMap { $0.value }
                     if nums.count > 1 {
@@ -708,9 +708,9 @@ private struct MarkerDetailView: View {
     // MARK: - Compare with a signal (reuses the Pearson idiom + restrained copy)
 
     private var compareSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Compare with a signal", overline: "side by side · \(window.phrase) before each reading")
-            NoopCard {
+            ZoopCard {
                 VStack(alignment: .leading, spacing: 12) {
                     // Signal picker + window control.
                     ViewThatFits(in: .horizontal) {
@@ -720,7 +720,7 @@ private struct MarkerDetailView: View {
                             SegmentedPillControl(LabWindow.allCases, selection: $window) { $0.label }
                                 .accessibilityLabel("Trailing window")
                         }
-                        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                             signalMenu
                             SegmentedPillControl(LabWindow.allCases, selection: $window) { $0.label }
                                 .accessibilityLabel("Trailing window")
@@ -839,9 +839,9 @@ private struct MarkerDetailView: View {
     // MARK: - History table
 
     private var historySection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("History", overline: "every reading you've entered")
-            NoopCard {
+            ZoopCard {
                 VStack(spacing: 0) {
                     ForEach(Array(readings.reversed().enumerated()), id: \.element.id) { idx, row in
                         historyRow(row)
@@ -1009,7 +1009,7 @@ private struct LabBookDisclaimerView: View {
 
     var body: some View {
         ScreenScaffold(title: "About Lab Book", subtitle: "A private notebook, not a medical service.") {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 bullet(String(localized: "NOOP stores and lines up the numbers you enter yourself. It does not test you, read your results, give medical advice, or diagnose anything."))
                 bullet(String(localized: "Anything you see here (including any side-by-side trend) is your own information shown back to you. It's an association, never a cause, and never a medical finding."))
                 bullet(String(localized: "NOOP never decides whether a value is \"normal,\" \"high,\" or \"low.\" Any reference range shown is exactly what you typed from your own report."))

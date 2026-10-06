@@ -35,7 +35,7 @@ struct LiftSessionExerciseSheet: View {
     var body: some View {
         ScreenScaffold(title: "Add exercise",
                        subtitle: "Pick one you have done before, or type a new name.") {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 exerciseSection
                 LiftMusclePicker(primary: $primary, secondaries: $secondaries)
                 Text("It joins this session with one set, its weight and reps at 0 until you type what you lift. Finishing asks whether the program keeps it.")
@@ -73,10 +73,10 @@ struct LiftSessionExerciseSheet: View {
 
     private var exerciseSection: some View {
         let suggestions = LiftExerciseVocabulary.suggestions(vocabulary, matching: exercise, limit: 8)
-        return VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        return VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Exercise", overline: "Movement")
-            NoopCard {
-                VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            ZoopCard {
+                VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     TextField("Incline dumbbell press", text: $exercise)
                         .textFieldStyle(.plain)
                         .font(StrandFont.body)
@@ -107,7 +107,7 @@ struct LiftSessionExerciseSheet: View {
                 .buttonStyle(.noopPrimary)
                 .frame(maxWidth: 200)
                 .disabled(!canAdd)
-                .opacity(canAdd ? 1 : NoopButtonMetrics.disabledOpacity)
+                .opacity(canAdd ? 1 : ZoopButtonMetrics.disabledOpacity)
         }
     }
 

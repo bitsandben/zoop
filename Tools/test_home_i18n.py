@@ -125,7 +125,7 @@ ANDROID_HELPER_NON_UI_LITERALS = {
     "9999-12-31", "d MMM", "24h", "12h", "6h", "3h", "1h",
     "<1m", "${secs / 60}m", "${secs / 3600}h", "${secs / 86_400}d",
     # TodayProvenance source ids and metric dictionary keys.
-    "-noop", "recovery", "strain", "sleep_performance", "oura-import", "oura-api",
+    "-zoop", "recovery", "strain", "sleep_performance", "oura-import", "oura-api",
     "fitbit-import", "garmin-import", "xiaomi-band",
 }
 
@@ -265,7 +265,7 @@ class HomeLocalizationTest(unittest.TestCase):
         source = (ROOT / "android/app/src/main/java/com/noop/ui/Components.kt").read_text(encoding="utf-8")
         section_header = source.split("fun SectionHeader(", 1)[1].split("// MARK: - StrandTone", 1)[0]
         self.assertIn("if (overline != null || trailing != null)", section_header)
-        self.assertIn("Text(title, style = NoopType.title2", section_header)
+        self.assertIn("Text(title, style = ZoopType.title2", section_header)
         self.assertLess(section_header.index("if (trailing != null)"), section_header.index("Text(title"))
 
     def test_android_today_source_counts_use_two_plural_resources(self) -> None:
@@ -277,7 +277,7 @@ class HomeLocalizationTest(unittest.TestCase):
 
     def test_android_analytics_stays_free_of_ui_resources(self) -> None:
         source = (ROOT / "android/app/src/main/java/com/noop/analytics/ReadinessEngine.kt").read_text(encoding="utf-8")
-        self.assertNotIn("com.noop.R", source)
+        self.assertNotIn("com.zoop.R", source)
         self.assertNotIn("androidx.annotation.StringRes", source)
         self.assertIn("enum class Copy", source)
 

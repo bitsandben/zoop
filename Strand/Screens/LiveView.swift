@@ -33,7 +33,7 @@ struct LiveView: View {
     private var selectedModel: WhoopModel { WhoopModel(rawValue: selectedModelRaw) ?? .whoop4 }
 
     /// "Card transparency" (0–100, default 100): fades the live console cards in lockstep with the frosted
-    /// cards; content stays readable. Mirrors Kotlin `NoopPrefs.cardOpacityPercent`.
+    /// cards; content stays readable. Mirrors Kotlin `ZoopPrefs.cardOpacityPercent`.
     @AppStorage(CardAppearancePrefs.opacityKey) private var cardOpacityPercent = CardAppearancePrefs.defaultPercent
     private var cardOpacity: Double { max(0, min(1, Double(cardOpacityPercent) / 100)) }
 
@@ -112,7 +112,7 @@ struct LiveView: View {
                        subtitle: "Current physiology, strap trust, and session controls in one working view.",
                        quietSubtitle: true,
                        topBackground: liquidScaffoldSky()) {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 consoleHeader
                 // Can't-connect-at-all guidance: the strap wiped its bond (firmware update / WHOOP app
                 // re-bond), so connects loop on "Peer removed pairing information". Show the re-pair steps
@@ -207,7 +207,7 @@ struct LiveView: View {
         content()
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(NoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
+            .background(ZoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
     }
 
     // MARK: - Console header
@@ -302,7 +302,7 @@ struct LiveView: View {
     private var bodyConsole: some View {
         card {
             ViewThatFits(in: .horizontal) {
-                HStack(alignment: .center, spacing: NoopMetrics.space6) {
+                HStack(alignment: .center, spacing: ZoopMetrics.space6) {
                     LiveHeartReadout(activeIsWhoop: activeIsWhoop, activeIsOura: activeIsOura, hrMax: model.profile.hrMax)
                         .frame(minWidth: 260, maxWidth: 340)
                     Divider().overlay(StrandPalette.hairline)
@@ -324,7 +324,7 @@ struct LiveView: View {
     /// trustworthy (HR, R-R, connection, history sync, battery, wear). The whole rail is a leaf that
     /// owns LiveState so its 1 Hz value refresh doesn't re-render the parent screen.
     private var signalTrustRail: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Signal Trust", overline: "Proof that the console is current")
             LiveSignalTrustRail(activeConnection: activeConnection, activeIsWhoop: activeIsWhoop)
         }
@@ -333,7 +333,7 @@ struct LiveView: View {
     // MARK: - Session console (record / inspect the current stream)
 
     @ViewBuilder private var sessionConsole: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Session", overline: "Record or inspect the current stream")
             if let w = model.activeWorkout {
                 activeWorkoutCard(w)
@@ -373,16 +373,16 @@ struct LiveView: View {
     }
 
     private var sessionActions: some View {
-        HStack(spacing: NoopMetrics.rowSpacing) {
+        HStack(spacing: ZoopMetrics.rowSpacing) {
             // All three routed through the unified button system: a filled primary for the lead
             // action, secondary surfaces for the supporting two — sentence-case, single line, 48pt.
-            NoopButton("Start workout", systemImage: "figure.run", kind: .primary) {
+            ZoopButton("Start workout", systemImage: "figure.run", kind: .primary) {
                 showStartSport = true
             }
             .disabled(!activeConnection)
             .help("Track a workout manually. Records heart rate and effort until you end it.")
 
-            NoopButton("Refresh", systemImage: "arrow.clockwise", kind: .secondary) {
+            ZoopButton("Refresh", systemImage: "arrow.clockwise", kind: .secondary) {
                 model.getBattery()
             }
             .disabled(!activeConnection)
@@ -390,7 +390,7 @@ struct LiveView: View {
 
             // Manual HRV snapshot (#127) — a still, seated 60s R-R reading. Needs the live R-R
             // stream, so it's gated on a bonded connection just like the workout/refresh actions.
-            NoopButton("HRV reading", systemImage: "waveform.path.ecg", kind: .secondary) {
+            ZoopButton("HRV reading", systemImage: "waveform.path.ecg", kind: .secondary) {
                 showHRVSnapshot = true
             }
             .disabled(!activeConnection)
@@ -428,19 +428,19 @@ struct LiveView: View {
                 // one reachable without opening the live view, while Pause — the reversible one — was
                 // not. Pause/Resume is one toggle (a paused session has exactly one sensible action), and
                 // End moves to its own row so a destructive tap is not adjacent to a routine one.
-                HStack(spacing: NoopMetrics.rowSpacing) {
-                    NoopButton(w.isPaused ? "Resume" : "Pause",
+                HStack(spacing: ZoopMetrics.rowSpacing) {
+                    ZoopButton(w.isPaused ? "Resume" : "Pause",
                                systemImage: w.isPaused ? "play.fill" : "pause.fill",
                                kind: .secondary, fullWidth: true) {
                         model.toggleWorkoutPause()
                     }
                     // Re-open the full live workout screen (#238) after it's been dismissed.
-                    NoopButton("Open live view", systemImage: "rectangle.expand.vertical",
+                    ZoopButton("Open live view", systemImage: "rectangle.expand.vertical",
                                kind: .secondary, fullWidth: true) {
                         showLiveWorkout = true
                     }
                 }
-                NoopButton("End workout", systemImage: "stop.circle.fill",
+                ZoopButton("End workout", systemImage: "stop.circle.fill",
                            kind: .destructive, fullWidth: true) {
                     confirmingEndWorkout = true
                 }
@@ -475,8 +475,8 @@ struct LiveView: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(NoopMetrics.space3)
-        .background(NoopPanelSurface(cornerRadius: 18))
+        .padding(ZoopMetrics.space3)
+        .background(ZoopPanelSurface(cornerRadius: 18))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
             .strokeBorder(StrandPalette.statusWarning.opacity(0.5), lineWidth: 1))
         .accessibilityElement(children: .combine)
@@ -497,8 +497,8 @@ struct LiveView: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(NoopMetrics.space3)
-        .background(NoopPanelSurface(cornerRadius: 18))
+        .padding(ZoopMetrics.space3)
+        .background(ZoopPanelSurface(cornerRadius: 18))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
             .strokeBorder(StrandPalette.statusWarning.opacity(0.5), lineWidth: 1))
         .accessibilityElement(children: .combine)
@@ -534,8 +534,8 @@ struct LiveView: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(NoopMetrics.space3)
-        .background(NoopPanelSurface(tint: StrandPalette.accent, cornerRadius: 18))
+        .padding(ZoopMetrics.space3)
+        .background(ZoopPanelSurface(tint: StrandPalette.accent, cornerRadius: 18))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
             .strokeBorder(StrandPalette.accent.opacity(0.4), lineWidth: 1))
         .accessibilityElement(children: .combine)
@@ -646,8 +646,8 @@ struct LiveView: View {
                     .foregroundStyle(StrandPalette.textTertiary)
                     .accessibilityHidden(true)
             }
-            .padding(NoopMetrics.space3)
-            .background(NoopPanelSurface(cornerRadius: 18))
+            .padding(ZoopMetrics.space3)
+            .background(ZoopPanelSurface(cornerRadius: 18))
             .contentShape(Rectangle())
         }
         .buttonStyle(LiquidPressStyle())
@@ -671,15 +671,15 @@ struct LiveView: View {
         // primary action takes a full-width row and the two secondary actions share the row beneath;
         // macOS keeps the single three-up row, where the window is always wide enough. (#175)
         #if os(iOS)
-        VStack(spacing: NoopMetrics.rowSpacing) {
+        VStack(spacing: ZoopMetrics.rowSpacing) {
             scanButton
-            HStack(spacing: NoopMetrics.rowSpacing) {
+            HStack(spacing: ZoopMetrics.rowSpacing) {
                 buzzButton
                 disconnectButton
             }
         }
         #else
-        HStack(spacing: NoopMetrics.rowSpacing) {
+        HStack(spacing: ZoopMetrics.rowSpacing) {
             scanButton
             buzzButton
             disconnectButton
@@ -720,7 +720,7 @@ struct LiveView: View {
     /// Disconnect (a stopped ring source would not reconnect for the night; Devices is where a ring is
     /// deactivated).
     private var ringControls: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.rowSpacing) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
             Text(LiveRingCopy.status(ringPhase, streaming: ringStreaming))
                 .font(StrandFont.footnote)
                 .foregroundStyle(StrandPalette.textSecondary)
@@ -733,7 +733,7 @@ struct LiveView: View {
     /// coordinator, so it can only reach the ring that is the live source. Enabled in every phase: a ring
     /// parked in `.authenticating` (#2303) is exactly the case this exists for.
     private var ringReconnectButton: some View {
-        NoopButton("Reconnect ring", systemImage: "arrow.clockwise",
+        ZoopButton("Reconnect ring", systemImage: "arrow.clockwise",
                    kind: .primary, fullWidth: true) {
             model.reconnectOuraRing()
         }
@@ -743,7 +743,7 @@ struct LiveView: View {
     // a filled primary for the lead Scan action, a secondary surface for Buzz, and the destructive
     // role for Disconnect — sentence-case, single line, optical-centred at controlHeight.
     private var scanButton: some View {
-        NoopButton(live.connected ? "Re-scan" : "Scan & connect",
+        ZoopButton(live.connected ? "Re-scan" : "Scan & connect",
                    systemImage: "antenna.radiowaves.left.and.right",
                    kind: .primary, fullWidth: true) {
             model.scan(model: selectedModel)
@@ -751,7 +751,7 @@ struct LiveView: View {
     }
 
     private var buzzButton: some View {
-        NoopButton("Buzz strap", systemImage: "waveform.path",
+        ZoopButton("Buzz strap", systemImage: "waveform.path",
                    kind: .secondary, fullWidth: true) {
             // #921: the confirmed one-shot sequence (pattern + RUN_ALARM, acked). A bare pattern
             // write here was the same silent no-buzz path the Siri shortcut hit on a WHOOP 4.0.
@@ -762,7 +762,7 @@ struct LiveView: View {
     }
 
     private var disconnectButton: some View {
-        NoopButton("Disconnect", systemImage: "xmark.circle",
+        ZoopButton("Disconnect", systemImage: "xmark.circle",
                    kind: .destructive, fullWidth: true) {
             model.disconnect()
         }
@@ -899,7 +899,7 @@ private struct LiveHeartReadout: View {
 
     var body: some View {
         let tint = hrTint
-        return VStack(alignment: .center, spacing: NoopMetrics.space2) {
+        return VStack(alignment: .center, spacing: ZoopMetrics.space2) {
             Text("HEART RATE")
                 .font(StrandFont.overline)
                 .tracking(StrandFont.overlineTracking)
@@ -928,7 +928,7 @@ private struct LiveHeartReadout: View {
                             .font(StrandFont.overline)
                             .tracking(StrandFont.overlineTracking)
                             .foregroundStyle(tint)
-                            .padding(.top, NoopMetrics.space1)
+                            .padding(.top, ZoopMetrics.space1)
                     }
                 }
                 .allowsHitTesting(false)   // taps fall through to the vessel → splash
@@ -981,7 +981,7 @@ private struct LivePhysiology: View {
     private var ringStreaming: Bool { live.connected && live.streamingLiveHR }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("LIVE PHYSIOLOGY")
@@ -1007,7 +1007,7 @@ private struct LivePhysiology: View {
                 }
             }
             rrTrace
-            HStack(spacing: NoopMetrics.gap) {
+            HStack(spacing: ZoopMetrics.gap) {
                 // Offline: show a muted "Offline" word (dimmed to textTertiary) instead of three bare
                 // accent-coloured em-dashes that read as broken live readouts. Once there's an active
                 // stream the real values (and their cyan/green/amber accents) return.
@@ -1060,8 +1060,8 @@ private struct LivePhysiology: View {
                 .minimumScaleFactor(0.6)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(NoopMetrics.rowSpacing)
-        .background(NoopPanelSurface(cornerRadius: 14))
+        .padding(ZoopMetrics.rowSpacing)
+        .background(ZoopPanelSurface(cornerRadius: 14))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
     }
@@ -1123,8 +1123,8 @@ private struct LiveSignalTrustRail: View {
     }
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 168), spacing: NoopMetrics.gap)],
-                  spacing: NoopMetrics.gap) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 168), spacing: ZoopMetrics.gap)],
+                  spacing: ZoopMetrics.gap) {
             ForEach(Array(signalTiles.enumerated()), id: \.element.id) { idx, tile in
                 SignalTrustTile(tile: tile)
                     .staggeredAppear(index: idx)
@@ -1220,7 +1220,7 @@ private struct ActiveWorkoutLive: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: NoopMetrics.gap) {
+            HStack(spacing: ZoopMetrics.gap) {
                 stat("HR", model.bpm.map { "\($0)" } ?? "—",
                      tint: model.bpm == nil ? StrandPalette.textPrimary : StrandPalette.metricRose)
                 stat(String(localized: "Avg"), workout.avgHr > 0 ? "\(workout.avgHr)" : "—")
@@ -1318,7 +1318,7 @@ private struct LiveLogCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(NoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
+        .background(ZoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
     }
 
     /// The tail of the log, lazily.
@@ -1445,7 +1445,7 @@ private struct SignalTrustTile: View {
         .padding(14)
         .frame(minHeight: 112, alignment: .top)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(NoopPanelSurface(cornerRadius: 20, surfaceOpacity: cardOpacity))
+        .background(ZoopPanelSurface(cornerRadius: 20, surfaceOpacity: cardOpacity))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(tile.title): \(tile.value). \(tile.detail)")
     }

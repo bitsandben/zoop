@@ -649,7 +649,7 @@ private struct MarkerLabel: View {
             .foregroundStyle(color)
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
-            .background(NoopPanelSurface(cornerRadius: 6, elevated: true, surfaceOpacity: 0.92))
+            .background(ZoopPanelSurface(cornerRadius: 6, elevated: true, surfaceOpacity: 0.92))
             .fixedSize()
             .allowsHitTesting(false)
     }
@@ -666,7 +666,7 @@ private struct SleepBandLabel: View {
         .foregroundStyle(StrandPalette.sleepLight)
         .padding(.horizontal, 6)
         .padding(.vertical, 3)
-        .background(NoopPanelSurface(cornerRadius: 6, elevated: true, surfaceOpacity: 0.92))
+        .background(ZoopPanelSurface(cornerRadius: 6, elevated: true, surfaceOpacity: 0.92))
         .fixedSize()
         .allowsHitTesting(false)
     }
@@ -702,7 +702,7 @@ private struct ZoomPanModifier: ViewModifier {
     /// Reset the window, snapping when Reduce Motion is on and easing otherwise.
     private func resetZoom() {
         guard isZoomed() else { return }
-        withAnimation(NoopMotion.gated(StrandMotion.interactive, reduced: reduceMotion)) { reset() }
+        withAnimation(ZoopMotion.gated(StrandMotion.interactive, reduced: reduceMotion)) { reset() }
     }
 
     func body(content: Content) -> some View {

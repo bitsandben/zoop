@@ -14,13 +14,13 @@ private struct WorkoutRecoveryTrendPoint: Identifiable, Equatable {
 // MARK: - Workouts
 //
 // The activity log, instrument-grade and uniform. Built ONLY from the locked Noop
-// component system (NoopMetrics / NoopCard / StatTile / SectionHeader /
+// component system (ZoopMetrics / ZoopCard / StatTile / SectionHeader /
 // SegmentedPillControl / SourceBadge) so every card, tile and row lines up:
 //
 //  • a range pill (7D / 30D / 90D / 1Y / All) that filters the loaded sessions,
 //  • a LazyVGrid of summary StatTiles (count / time / calories / distance / most-active),
-//  • an "ACTIVITY BREAKDOWN" LazyVGrid of per-sport NoopCards — identical internal layout,
-//  • an "ALL SESSIONS" NoopCard containing fixed-height rows (date · sport · dur · HR · kcal · dist · source).
+//  • an "ACTIVITY BREAKDOWN" LazyVGrid of per-sport ZoopCards — identical internal layout,
+//  • an "ALL SESSIONS" ZoopCard containing fixed-height rows (date · sport · dur · HR · kcal · dist · source).
 //
 // No custom card heights, paddings, colours or surfaces — uniformity is the bar.
 
@@ -189,7 +189,7 @@ struct WorkoutsView: View {
                        // full-bleed time-of-day sky behind the scroll content (it does not scroll).
                        topBackground: liquidScaffoldSky()) {
             if allRows.isEmpty {
-                VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                     ComingSoon(what: loaded
                         ? "No workouts yet. They come from your WHOOP and Apple Health history. Import in Data Sources to bring them in, or add one you tracked elsewhere."
                         : "Loading your sessions…")
@@ -357,15 +357,15 @@ struct WorkoutsView: View {
 
     @ViewBuilder private var recoveryTrendSection: some View {
         if !recoveryTrend.isEmpty {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 SectionHeader("Recovery Trend", overline: "Heart-rate recovery · \(recoveryTrendCaption)",
                               trailing: recoveryTrend.count == 1
                                 ? String(localized: "1 workout")
                                 : String(localized: "\(recoveryTrend.count) workouts"))
-                NoopCard(tint: StrandPalette.metricRose) {
+                ZoopCard(tint: StrandPalette.metricRose) {
                     VStack(alignment: .leading, spacing: 12) {
                         WorkoutRecoveryTrendChart(points: recoveryTrend)
-                            .frame(height: NoopMetrics.chartHeight)
+                            .frame(height: ZoopMetrics.chartHeight)
                         HStack(spacing: 16) {
                             recoveryLegend("1 min", color: StrandPalette.metricRose)
                             recoveryLegend("2 min", color: StrandPalette.metricCyan)
@@ -435,10 +435,10 @@ struct WorkoutsView: View {
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
-        .padding(NoopMetrics.space3)
+        .padding(ZoopMetrics.space3)
         .background(StrandPalette.effortColor.opacity(0.10),
-                    in: RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous)
+                    in: RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous)
             .strokeBorder(StrandPalette.effortColor.opacity(0.22), lineWidth: 1))
         .transition(.opacity)
         .accessibilityElement(children: .combine)
@@ -542,8 +542,8 @@ struct WorkoutsView: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            HStack(alignment: .center, spacing: NoopMetrics.space2) {
-                NoopLiquidGlassSearchField(text: $searchText,
+            HStack(alignment: .center, spacing: ZoopMetrics.space2) {
+                ZoopLiquidGlassSearchField(text: $searchText,
                                            prompt: String(localized: "Search sport"))
                 if filter.isActive {
                     Button {
@@ -610,7 +610,7 @@ struct WorkoutsView: View {
     /// Opens the add sheet (editing == nil). Present on the populated screen and the empty state so a
     /// user with no imports can still log a session.
     private var addWorkoutButton: some View {
-        NoopButton("Add workout", systemImage: "plus", kind: .secondary, fullWidth: true) {
+        ZoopButton("Add workout", systemImage: "plus", kind: .secondary, fullWidth: true) {
             sheet = WorkoutSheetTarget(editing: nil)
         }
         .accessibilityLabel("Add a workout")
@@ -620,7 +620,7 @@ struct WorkoutsView: View {
     /// #459 / PERF: the live-workout button is `WorkoutStartControl`, a leaf that owns `AppModel` itself
     /// so this screen doesn't have to — see the comment on `profile`/`intelligence` above.
     private var workoutActionRow: some View {
-        HStack(spacing: NoopMetrics.rowSpacing) {
+        HStack(spacing: ZoopMetrics.rowSpacing) {
             WorkoutStartControl()
                 .frame(maxWidth: .infinity)
             addWorkoutButton
@@ -754,7 +754,7 @@ struct WorkoutsView: View {
         let strains = rows.compactMap(\.strain)
         let avgStrain = strains.isEmpty ? 0 : strains.reduce(0, +) / Double(strains.count)
         let totalTimeH = rows.compactMap(\.durationS).reduce(0, +) / 3600.0
-        NoopCard(padding: 20, tint: StrandPalette.effortColor) {
+        ZoopCard(padding: 20, tint: StrandPalette.effortColor) {
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .center, spacing: 24) {
                     effortHeroGauge(avgStrain: avgStrain, hasData: !strains.isEmpty)
@@ -839,7 +839,7 @@ struct WorkoutsView: View {
             Text("Effort this \(effectiveRange.heroWord)")
                 .font(StrandFont.headline)
                 .foregroundStyle(StrandPalette.textPrimary)
-            HStack(spacing: NoopMetrics.gap) {
+            HStack(spacing: ZoopMetrics.gap) {
                 heroCountStat(String(localized: "Sessions"), value: Double(rows.count),
                               format: { "\(Int($0.rounded()))" }, tint: StrandPalette.effortColor)
                 heroStat(String(localized: "Active"), String(localized: "\(oneDecimal(totalTimeH))h"), tint: StrandPalette.textPrimary)
@@ -892,9 +892,9 @@ struct WorkoutsView: View {
     private func heatmapSection() -> some View {
         let grid = ActivityHeatmap.build(values: dailyKcal, today: todayDayString())
         if !grid.isEmpty {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 SectionHeader("Active calories", overline: "Last 13 weeks")
-                NoopCard(tint: StrandPalette.effortColor) {
+                ZoopCard(tint: StrandPalette.effortColor) {
                     VStack(alignment: .leading, spacing: 12) {
                         // Quarter total + current streak. Both come from the pure builder; the streak
                         // reuses the same "day(s) in a row" copy as the Settings streak (no new string).
@@ -1014,7 +1014,7 @@ struct WorkoutsView: View {
         let totalKmRaw = distancesM.reduce(0, +) / 1000.0
         let modal = modalSport(from: groups)
 
-        return LazyVGrid(columns: tileColumns, alignment: .leading, spacing: NoopMetrics.gap) {
+        return LazyVGrid(columns: tileColumns, alignment: .leading, spacing: ZoopMetrics.gap) {
             StatTile(label: "Total Workouts",
                      value: "\(totalCount)",
                      caption: effectiveRange.caption,
@@ -1040,16 +1040,16 @@ struct WorkoutsView: View {
         }
     }
 
-    // MARK: - Activity breakdown (per-sport NoopCards, identical layout)
+    // MARK: - Activity breakdown (per-sport ZoopCards, identical layout)
 
     private func breakdownSection(groups: [SportGroup], rows: [WorkoutRow]) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Activity Breakdown",
                           overline: "By sport",
                           trailing: groups.count == 1
                               ? String(localized: "1 sport")
                               : String(localized: "\(groups.count) sports"))
-            LazyVGrid(columns: breakdownColumns, alignment: .leading, spacing: NoopMetrics.gap) {
+            LazyVGrid(columns: breakdownColumns, alignment: .leading, spacing: ZoopMetrics.gap) {
                 ForEach(groups) { g in
                     // This sport's own sessions, so the card can carry an HR-zone mini-bar.
                     sportCard(g, zones: WorkoutZones.summary(from: rows.filter { $0.sport == g.sport }))
@@ -1061,7 +1061,7 @@ struct WorkoutsView: View {
     private func sportCard(_ g: SportGroup, zones: WorkoutZones.Summary?) -> some View {
         // Frosted Effort-tinted card with the sport glyph in the Effort world, an HR-zone mini-bar when
         // the sessions carry imported zones, and the bright "now" end-cap on its busiest zone.
-        NoopCard(tint: StrandPalette.effortColor) {
+        ZoopCard(tint: StrandPalette.effortColor) {
             VStack(alignment: .leading, spacing: 12) {
                 // Identical header for every card.
                 HStack(spacing: 10) {
@@ -1131,13 +1131,13 @@ struct WorkoutsView: View {
     // MARK: - HR zones (imported per-workout zone split, one card)
 
     private func zonesSection(_ z: WorkoutZones.Summary, totalSessions: Int) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("HR Zones",
                           overline: "Whoop import",
                           trailing: totalSessions == 1
                               ? String(localized: "\(z.sessionsWithZones) of 1 session")
                               : String(localized: "\(z.sessionsWithZones) of \(totalSessions) sessions"))
-            NoopCard(tint: StrandPalette.effortColor) {
+            ZoopCard(tint: StrandPalette.effortColor) {
                 VStack(alignment: .leading, spacing: 12) {
                     // Proportional stacked bar — same construction as SleepView's stage bar, with the
                     // busiest zone carrying a crisp bright end-cap stroke so it reads as a chart. No glow.
@@ -1194,7 +1194,7 @@ struct WorkoutsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - All sessions (one NoopCard, uniform fixed-height rows)
+    // MARK: - All sessions (one ZoopCard, uniform fixed-height rows)
 
     /// Whether the compact-native session list is used. iPhone (.compact) gets full-width rows; macOS and
     /// iPad regular width keep the fixed-column table byte-identical (#64).
@@ -1207,7 +1207,7 @@ struct WorkoutsView: View {
     }
 
     private func sessionsSection(rows: [WorkoutRow]) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             HStack(alignment: .firstTextBaseline) {
                 SectionHeader("All Sessions",
                               overline: "Log",
@@ -1215,7 +1215,7 @@ struct WorkoutsView: View {
                 selectPill(rows: rows)
             }
             if selectionMode { selectionToolbar(rows: rows) }
-            NoopCard(padding: 0) {
+            ZoopCard(padding: 0) {
                 if usesCompactSessions {
                     // #64: full-width native rows, no horizontal scroll — the iPhone list reads like the
                     // rest of the app (Apple-Fitness x WHOOP), and the Android weight-column list. The
@@ -1301,10 +1301,10 @@ struct WorkoutsView: View {
             .font(StrandFont.subhead)
             .foregroundStyle(StrandPalette.textSecondary)
         }
-        .padding(.horizontal, NoopMetrics.space3)
-        .padding(.vertical, NoopMetrics.space3)
+        .padding(.horizontal, ZoopMetrics.space3)
+        .padding(.vertical, ZoopMetrics.space3)
         .background(StrandPalette.effortColor.opacity(0.08),
-                    in: RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous))
+                    in: RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
         .accessibilityElement(children: .contain)
     }
 
@@ -1331,7 +1331,7 @@ struct WorkoutsView: View {
         }
     }
 
-    /// #64: the compact-native list — full-width NoopCard rows, alternating zebra, tap-to-detail, the
+    /// #64: the compact-native list — full-width ZoopCard rows, alternating zebra, tap-to-detail, the
     /// existing ••• menu, and (in selection mode) a leading checkmark / lock glyph.
     @ViewBuilder
     private func compactSessionsList(rows: [WorkoutRow]) -> some View {
@@ -1382,7 +1382,7 @@ struct WorkoutsView: View {
             // Empty header over the per-row "•••" actions menu column (keeps SOURCE aligned).
             Color.clear.frame(width: ColWidth.action)
         }
-        .padding(.horizontal, NoopMetrics.cardPadding)
+        .padding(.horizontal, ZoopMetrics.cardPadding)
         .frame(height: RowMetrics.headerHeight)
     }
 
@@ -1459,7 +1459,7 @@ struct WorkoutsView: View {
             // its own taps rather than being swallowed by the row button (the DevicesView #318 idiom).
             Color.clear.frame(width: ColWidth.action)
           }
-          .padding(.horizontal, NoopMetrics.cardPadding)
+          .padding(.horizontal, ZoopMetrics.cardPadding)
           .frame(height: RowMetrics.rowHeight)
           .contentShape(Rectangle())
         }
@@ -1471,7 +1471,7 @@ struct WorkoutsView: View {
             if !selectionMode {
                 rowActionsMenu(row)
                     .frame(width: ColWidth.action, alignment: .trailing)
-                    .padding(.trailing, NoopMetrics.cardPadding)
+                    .padding(.trailing, ZoopMetrics.cardPadding)
             }
         }
         .contextMenu { if !selectionMode { rowMenu(row) } }
@@ -1533,7 +1533,7 @@ struct WorkoutsView: View {
                     Color.clear.frame(width: ColWidth.action)
                 }
             }
-            .padding(.horizontal, NoopMetrics.cardPadding)
+            .padding(.horizontal, ZoopMetrics.cardPadding)
             .frame(minHeight: 56)
             .contentShape(Rectangle())
         }
@@ -1543,7 +1543,7 @@ struct WorkoutsView: View {
             if !selectionMode {
                 rowActionsMenu(row)
                     .frame(width: ColWidth.action, alignment: .trailing)
-                    .padding(.trailing, NoopMetrics.cardPadding)
+                    .padding(.trailing, ZoopMetrics.cardPadding)
             }
         }
         .contextMenu { if !selectionMode { rowMenu(row) } }
@@ -1688,10 +1688,10 @@ struct WorkoutsView: View {
     // MARK: - Grid columns
 
     private var tileColumns: [GridItem] {
-        [GridItem(.adaptive(minimum: 168), spacing: NoopMetrics.gap)]
+        [GridItem(.adaptive(minimum: 168), spacing: ZoopMetrics.gap)]
     }
     private var breakdownColumns: [GridItem] {
-        [GridItem(.adaptive(minimum: 260), spacing: NoopMetrics.gap, alignment: .top)]
+        [GridItem(.adaptive(minimum: 260), spacing: ZoopMetrics.gap, alignment: .top)]
     }
 
     // MARK: - Aggregation

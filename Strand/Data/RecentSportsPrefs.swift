@@ -10,7 +10,7 @@ import Foundation
 // three, deduplicated case-insensitively — the same mechanism as the other display prefs
 // (KeyMetricPrefs / MoreSectionPrefs). The Android side mirrors this exactly in RecentSportsPrefs.kt
 // (SharedPreferences "workout.recentSports"). Display-only: no WorkoutRow, analytics value or
-// migration changes, so like the other layout prefs it stays OUT of the .noopbak settings whitelist.
+// migration changes, so like the other layout prefs it stays OUT of the .zoopbak settings whitelist.
 
 /// Persistence for the "Recent" section of the sport pickers. The stored value is an ordered,
 /// comma-joined list of sport-name strings exactly as selected — free-typed, off-catalogue sports

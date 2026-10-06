@@ -4,7 +4,7 @@ import WhoopStore
 @testable import Strand
 
 /// #1150: a Bluetooth-only strap (no WHOOP/Apple-Health import) banks every night under the COMPUTED
-/// ("-noop") source, so the imported-only session read the analytics funnel used returned nothing and the
+/// ("-zoop") source, so the imported-only session read the analytics funnel used returned nothing and the
 /// funnel reported "no sleep session in the last 14 days to analyze" even though computed session rows
 /// existed. `Repository.computedSleepSessions` is the fallback the funnel now consults when the imported
 /// read is empty (see `DebugDataDiagnostics.funnelLines` / Android `AndroidDiagnostics.funnelLines`). These
@@ -21,7 +21,7 @@ final class FunnelComputedSleepFallbackTests: XCTestCase {
                            avgHrv: 70, stagesJSON: nil, stagingSparse: true)
     }
 
-    /// The core regression: computed-only nights (all under "-noop") are invisible to the imported read, but
+    /// The core regression: computed-only nights (all under "-zoop") are invisible to the imported read, but
     /// the computed fallback surfaces them, sorted so `.last` is the newest — what the funnel's newest-night
     /// walk relies on.
     @MainActor
@@ -36,7 +36,7 @@ final class FunnelComputedSleepFallbackTests: XCTestCase {
         _ = try await store.upsertSleepSessions([
             session(startTs: newer, endTs: newer + 7 * 3_600),
             session(startTs: older, endTs: older + 7 * 3_600),
-        ], deviceId: canonicalId + "-noop")
+        ], deviceId: canonicalId + "-zoop")
 
         let repo = Repository(deviceId: canonicalId)
         repo.setStoreForTesting(store)
@@ -63,7 +63,7 @@ final class FunnelComputedSleepFallbackTests: XCTestCase {
         let now = Int(Date().timeIntervalSince1970)
         let night = now - 2 * 86_400
         _ = try await store.upsertSleepSessions([session(startTs: night, endTs: night + 7 * 3_600)],
-                                                deviceId: newId + "-noop")
+                                                deviceId: newId + "-zoop")
 
         let repo = Repository(deviceId: canonicalId)
         repo.setStoreForTesting(store)

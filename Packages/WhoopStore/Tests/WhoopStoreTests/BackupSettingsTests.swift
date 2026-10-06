@@ -63,7 +63,7 @@ final class BackupSettingsTests: XCTestCase {
         let dirty: [String: Any] = [
             "profile.age": 30,
             "device.peripheralId": "AA:BB:CC:DD:EE:FF",
-            "noop.acceptedTermsVersion": "3",
+            "zoop.acceptedTermsVersion": "3",
             "sync.cursor": 12345,
             "profile.avatarImageData": "base64…",
         ]

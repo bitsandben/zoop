@@ -12,7 +12,7 @@ import StrandAnalytics
 // (`ChargeDriver`, `ScoreConfidence`, `SkinTempRelative`) and are surfaced verbatim.
 //
 // No fabricated numbers, no em-dashes. Design-system tokens only (StrandPalette / StrandFont /
-// NoopMetrics); the +N/-N chip uses the recovery ramp endpoints (green peak / red depleted) so a
+// ZoopMetrics); the +N/-N chip uses the recovery ramp endpoints (green peak / red depleted) so a
 // supporting term reads green and a limiting term reads red, matching the Charge colour world.
 
 enum ChargeBreakdownFormat {
@@ -224,7 +224,7 @@ enum ChargeBreakdownFormat {
 /// The same legacy R-R explanation on classic and Liquid Today.
 struct ChargeLegacyRRGapNote: View {
     var body: some View {
-        NoopCard(padding: 14, tint: StrandPalette.chargeColor) {
+        ZoopCard(padding: 14, tint: StrandPalette.chargeColor) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "waveform.path.ecg")
                     .font(.system(size: 16, weight: .semibold))
@@ -300,14 +300,14 @@ struct ChargeBreakdownSection: View {
     var skinTempRel: SkinTempRelative? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
             Divider().overlay(StrandPalette.hairline)
             HStack(alignment: .firstTextBaseline) {
                 Text("What shaped it").strandOverline()
                 Spacer()
                 ConfidenceTierChip(confidence: confidence)
             }
-            VStack(spacing: NoopMetrics.rowSpacing) {
+            VStack(spacing: ZoopMetrics.rowSpacing) {
                 let maxMag = drivers.map { abs($0.deltaPoints) }.max() ?? 1
                 ForEach(Array(drivers.enumerated()), id: \.offset) { _, driver in
                     ChargeDriverRow(driver: driver, maxMagnitude: maxMag)
@@ -317,7 +317,7 @@ struct ChargeBreakdownSection: View {
             // personal normal rather than a fake clinical absolute. Only when the night carries one.
             if let rel = skinTempRel {
                 SkinTempDeviationRow(rel: rel)
-                    .padding(.top, NoopMetrics.space1)
+                    .padding(.top, ZoopMetrics.space1)
             }
         }
     }
@@ -338,7 +338,7 @@ struct ChargeDriverRow: View {
     private var barMax: Double { Double(max(1, maxMagnitude ?? abs(driver.deltaPoints))) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(LocalizedStringKey(driver.label))
                     .font(StrandFont.subhead)
@@ -417,13 +417,13 @@ struct SkinTempDeviationRow: View {
 #if DEBUG
 #Preview("Charge breakdown") {
     ScrollView {
-        VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
             HStack(spacing: 10) {
                 ConfidenceTierChip(confidence: .calibrating)
                 ConfidenceTierChip(confidence: .building)
                 ConfidenceTierChip(confidence: .solid)
             }
-            NoopCard(padding: 18, tint: StrandPalette.chargeColor) {
+            ZoopCard(padding: 18, tint: StrandPalette.chargeColor) {
                 ChargeBreakdownSection(
                     drivers: [
                         ChargeDriver(label: "Heart rate variability", deltaPoints: 7,
@@ -440,7 +440,7 @@ struct SkinTempDeviationRow: View {
                     skinTempRel: SkinTempRelative(deviationC: 0.3, tier: .warmer))
             }
         }
-        .padding(NoopMetrics.screenPadding)
+        .padding(ZoopMetrics.screenPadding)
     }
     .background(StrandPalette.surfaceBase)
     .preferredColorScheme(.dark)
@@ -454,8 +454,8 @@ struct ChargeBreakdownDemoHost: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: NoopMetrics.gap) {
-                    NoopCard(padding: 18, tint: StrandPalette.chargeColor) {
+                VStack(spacing: ZoopMetrics.gap) {
+                    ZoopCard(padding: 18, tint: StrandPalette.chargeColor) {
                         ChargeBreakdownSection(
                             drivers: [
                                 ChargeDriver(label: "Heart rate variability", deltaPoints: 9,
@@ -478,7 +478,7 @@ struct ChargeBreakdownDemoHost: View {
                             skinTempRel: SkinTempRelative(deviationC: 0.4, tier: .warmer))
                     }
                 }
-                .padding(NoopMetrics.screenPadding)
+                .padding(ZoopMetrics.screenPadding)
             }
             .background(StrandPalette.surfaceBase)
             .navigationTitle("What shaped your Charge")

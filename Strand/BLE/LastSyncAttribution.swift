@@ -50,7 +50,7 @@ enum LastSyncAttribution {
     /// to no device.
     static func prefKey(peripheralId: String?) -> String? {
         guard let p = peripheralId?.trimmingCharacters(in: .whitespaces), !p.isEmpty else { return nil }
-        return "noop.lastSyncAt.\(p.lowercased())"
+        return "zoop.lastSyncAt.\(p.lowercased())"
     }
 
     /// The per-device defaults key for the #57 write-health stamps ("rows last landed", "offload stalled").

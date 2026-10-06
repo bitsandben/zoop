@@ -29,7 +29,7 @@ struct CoupledView: View {
     @EnvironmentObject var repo: Repository
 
     /// "Card transparency" (0–100, default 100): fades the coupled glance cards in lockstep with the
-    /// frosted cards; content stays readable. Mirrors Kotlin `NoopPrefs.cardOpacityPercent`.
+    /// frosted cards; content stays readable. Mirrors Kotlin `ZoopPrefs.cardOpacityPercent`.
     @AppStorage(CardAppearancePrefs.opacityKey) private var cardOpacityPercent = CardAppearancePrefs.defaultPercent
     private var cardOpacity: Double { max(0, min(1, Double(cardOpacityPercent) / 100)) }
 
@@ -134,17 +134,17 @@ struct CoupledView: View {
                        topBackground: liquidScaffoldSky()) {
             ViewThatFits(in: .horizontal) {
                 // Regular width (macOS / iPad): hero left, strain + sleep stacked right in a 2-column grid.
-                HStack(alignment: .top, spacing: NoopMetrics.gap) {
+                HStack(alignment: .top, spacing: ZoopMetrics.gap) {
                     heroCard
                         .frame(maxWidth: .infinity)
-                    VStack(spacing: NoopMetrics.gap) {
+                    VStack(spacing: ZoopMetrics.gap) {
                         strainCard
                         sleepCard
                     }
                     .frame(maxWidth: .infinity)
                 }
                 // Compact (iPhone): the three cards stack full-width.
-                VStack(spacing: NoopMetrics.gap) {
+                VStack(spacing: ZoopMetrics.gap) {
                     heroCard
                     strainCard
                     sleepCard
@@ -543,12 +543,12 @@ struct CoupledView: View {
     private var chargeBreakdownSheet: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                     // One chargeBreakdown() call per sheet body eval: drivers + confidence share the same
                     // baseline folds (see chargeBreakdown's PERF note).
                     let breakdown = chargeBreakdown()
                     if let breakdown, !breakdown.drivers.isEmpty {
-                        NoopCard(padding: 18, tint: StrandPalette.chargeColor) {
+                        ZoopCard(padding: 18, tint: StrandPalette.chargeColor) {
                             ChargeBreakdownSection(
                                 drivers: breakdown.drivers,
                                 confidence: breakdown.confidence,
@@ -558,8 +558,8 @@ struct CoupledView: View {
                         if let banked = calibrationNights {
                             calibrationCard(banked: banked)
                         } else {
-                            NoopCard(padding: 18, tint: StrandPalette.chargeColor) {
-                                VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                            ZoopCard(padding: 18, tint: StrandPalette.chargeColor) {
+                                VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
                                     Text("No Charge breakdown yet")
                                         .font(StrandFont.headline)
                                         .foregroundStyle(StrandPalette.textPrimary)
@@ -593,13 +593,13 @@ struct CoupledView: View {
                                 .foregroundStyle(StrandPalette.textTertiary)
                         }
                         .padding(14)
-                        .background(NoopPanelSurface(cornerRadius: 14))
+                        .background(ZoopPanelSurface(cornerRadius: 14))
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("How Charge is calculated. The method behind the score.")
                 }
-                .padding(NoopMetrics.screenPadding)
+                .padding(ZoopMetrics.screenPadding)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             #if os(iOS)
@@ -634,7 +634,7 @@ struct CoupledView: View {
         let countdown = ChargeBreakdownFormat.calibrationCountdown(nightsRemaining: remaining)
         let unlock = ChargeBreakdownFormat.calibrationUnlockCopy(scoreName: String(localized: "Charge"))
         let progress = ChargeBreakdownFormat.calibrationProgress(banked: banked, seed: Baselines.minNightsSeed)
-        return NoopCard(padding: 14, tint: StrandPalette.chargeColor) {
+        return ZoopCard(padding: 14, tint: StrandPalette.chargeColor) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "gauge.with.dots.needle.bottom.50percent")
                     .font(.system(size: 16, weight: .semibold))
@@ -680,7 +680,7 @@ struct CoupledView: View {
         content()
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(NoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
+            .background(ZoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
     }
 
     private func clockString(_ ts: Int) -> String {

@@ -1,17 +1,17 @@
 import Foundation
 
 /// Build provenance for exports (#1410): a `manifest.json` entry recording which build produced a
-/// `.noopbak`, and an `APP_VERSION_CHANGED` event marking each in-app version transition so a SINGLE
+/// `.zoopbak`, and an `APP_VERSION_CHANGED` event marking each in-app version transition so a SINGLE
 /// export answers "what ran when" across the whole retention window. Pure JSON only — the ZIP container
 /// and the event write live in the app layer; these are the byte-parity contract with Android.
 ///
 /// Neither is telemetry: both are LOCAL metadata inside the user's own backup, nothing leaves the device.
 
-/// The `manifest.json` entry inside a `.noopbak` — "which build produced this file" (#1410 tier 1).
+/// The `manifest.json` entry inside a `.zoopbak` — "which build produced this file" (#1410 tier 1).
 /// Sibling to `BackupSettings`; not restored, read only to classify a file (helps #746 route by what a
 /// file SAYS it is rather than probing tables).
 public enum BackupManifest {
-    /// Canonical entry name inside the `.noopbak` ZIP. Matches the Android exporter byte-for-byte.
+    /// Canonical entry name inside the `.zoopbak` ZIP. Matches the Android exporter byte-for-byte.
     public static let entryName = "manifest.json"
 
     /// Deterministic (`.sortedKeys`) JSON: `appBuild`, `appVersion`, `exportedAt` (unix ms), `platform`

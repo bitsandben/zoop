@@ -7,13 +7,13 @@ import UniformTypeIdentifiers
 #endif
 
 /// Backup & Sync (folder destination) - the Apple twin of the Android `BackupSync`. Writes the full
-/// `.noopbak` snapshot (the existing `DataBackup` format) into a user-chosen folder, on demand and as
+/// `.zoopbak` snapshot (the existing `DataBackup` format) into a user-chosen folder, on demand and as
 /// an on-launch daily catch-up. Point that folder at a Google Drive / iCloud / Dropbox client and you
 /// get automatic off-device backup with no in-app cloud account - NOOP only writes a local file; the
 /// sync client does the upload.
 ///
 /// `BackupSync` holds only the PURE, unit-tested filename / selection logic (no I/O, no state) so it is
-/// byte-for-byte equivalent to the Android twin: same `noop-backup-YYYYMMDD-HHMMSS.noopbak` scheme,
+/// byte-for-byte equivalent to the Android twin: same `zoop-backup-YYYYMMDD-HHMMSS.zoopbak` scheme,
 /// same newest-first selection, same keep-N prune. The stateful folder I/O lives in `FolderBackup`.
 enum BackupSync {
 
@@ -21,8 +21,8 @@ enum BackupSync {
     /// in behind the same UI/logic without changing the snapshot scheme.
     enum Destination { case folder /* , googleDrive */ }
 
-    static let prefix = "noop-backup-"
-    static let suffix = ".noopbak"
+    static let prefix = "zoop-backup-"
+    static let suffix = ".zoopbak"
 
     // MARK: - Pure helpers (unit-tested; mirror Android BackupSync)
 
@@ -51,7 +51,7 @@ enum BackupSync {
         return f
     }
 
-    /// Canonical snapshot filename for an instant (ms since epoch): `noop-backup-YYYYMMDD-HHMMSS.noopbak` (UTC).
+    /// Canonical snapshot filename for an instant (ms since epoch): `zoop-backup-YYYYMMDD-HHMMSS.zoopbak` (UTC).
     static func snapshotName(_ epochMs: Int) -> String {
         prefix + stampFormatter().string(from: Date(timeIntervalSince1970: Double(epochMs) / 1000.0)) + suffix
     }
@@ -66,17 +66,17 @@ enum BackupSync {
 
     static func isSnapshot(_ name: String) -> Bool { snapshotTimeMs(name) != nil }
 
-    /// Any `.noopbak` file, whatever it's named. The RESTORE list uses this (not `isSnapshot`) so a
-    /// hand-named backup like `noop-backup-2026-06-30.noopbak` still shows (#852). Case-insensitive on
+    /// Any `.zoopbak` file, whatever it's named. The RESTORE list uses this (not `isSnapshot`) so a
+    /// hand-named backup like `zoop-backup-2026-06-30.zoopbak` still shows (#852). Case-insensitive on
     /// the extension so `.NOOPBAK` copied off another device still counts. Prune/latest stay strict on
     /// `isSnapshot`, so a non-canonical name is listed for restore but never auto-deleted.
     static func isBackupFile(_ name: String) -> Bool {
         name.lowercased().hasSuffix(suffix)
     }
 
-    /// A `.noopbak` sitting in an iCloud Drive folder that hasn't been downloaded to THIS Mac/iPhone
+    /// A `.zoopbak` sitting in an iCloud Drive folder that hasn't been downloaded to THIS Mac/iPhone
     /// yet is listed by the filesystem under a placeholder name - a leading dot plus an `.icloud`
-    /// suffix, e.g. `noop-backup-....noopbak` becomes `.noop-backup-....noopbak.icloud` - instead of
+    /// suffix, e.g. `zoop-backup-....zoopbak` becomes `.zoop-backup-....zoopbak.icloud` - instead of
     /// its real name. Unresolved, that placeholder silently fails `isBackupFile` and the restore list
     /// shows nothing even though Finder shows the file (#278: cross-device restore via iCloud Drive,
     /// the workflow the folder-picker screen itself recommends). Returns the real name, or nil if
@@ -99,14 +99,14 @@ enum BackupSync {
     }
 
     /// Snapshots to DELETE to keep only the `keep` newest (oldest-first). Empty when within budget.
-    /// Strict on purpose: only canonical snapshots are prune candidates, so a hand-named `.noopbak`
+    /// Strict on purpose: only canonical snapshots are prune candidates, so a hand-named `.zoopbak`
     /// in the folder is never auto-deleted.
     static func snapshotsToPrune(_ names: [String], keep: Int) -> [String] {
         let snaps = snapshotsNewestFirst(names)
         return snaps.count <= keep ? [] : Array(snaps.dropFirst(keep))
     }
 
-    /// One restorable `.noopbak` for the folder picker: its filename and the ms used to order/label it.
+    /// One restorable `.zoopbak` for the folder picker: its filename and the ms used to order/label it.
     struct Restorable: Equatable {
         let name: String
         /// The instant we sort and display by: the canonical filename stamp when present, else the
@@ -114,9 +114,9 @@ enum BackupSync {
         let timeMs: Int
     }
 
-    /// ALL `.noopbak` files (any name) ordered newest-first for the restore picker (#852). Canonical
+    /// ALL `.zoopbak` files (any name) ordered newest-first for the restore picker (#852). Canonical
     /// names use their embedded UTC stamp; the rest fall back to the file date `fileDateMs` gives for
-    /// that name (0 when unknown). Non-`.noopbak` files are dropped. Pure, so it's unit-tested; the I/O
+    /// that name (0 when unknown). Non-`.zoopbak` files are dropped. Pure, so it's unit-tested; the I/O
     /// layer supplies `fileDateMs` from the filesystem.
     static func restorablesNewestFirst(_ names: [String],
                                        fileDateMs: (String) -> Int) -> [Restorable] {
@@ -351,7 +351,7 @@ enum FolderBackup {
     }
 
     /// Diagnostic-only snapshot of the restore list's health: the chosen folder's name, its raw entry
-    /// count, and how many of those resolve into recognized `.noopbak` snapshots. Nil when no folder is
+    /// count, and how many of those resolve into recognized `.zoopbak` snapshots. Nil when no folder is
     /// chosen. Lets a "restore shows no files" report (#278) distinguish a genuinely empty folder from a
     /// resolution problem (e.g. undownloaded iCloud placeholders, see `iCloudPlaceholderRealName`)
     /// without needing a live repro. Used by `DebugDataDiagnostics`.
@@ -378,9 +378,9 @@ enum FolderBackup {
     }
 
     /// List the backups in the user's chosen folder, NEWEST FIRST - the source for the restore picker
-    /// (must-fix #1: restore from the configured folder, never a generic re-prompt). Lists ANY `.noopbak`
+    /// (must-fix #1: restore from the configured folder, never a generic re-prompt). Lists ANY `.zoopbak`
     /// file, not just canonically-named ones (#852): a hand-named backup like
-    /// `noop-backup-2026-06-30.noopbak` still shows. Canonical names sort/label by their embedded stamp;
+    /// `zoop-backup-2026-06-30.zoopbak` still shows. Canonical names sort/label by their embedded stamp;
     /// the rest by the file's own modification date. Content is validated on restore, so a bad file here
     /// is caught then. Returns an empty list if no folder is chosen or the folder can't be read.
     static func listSnapshots() -> [Snapshot] {
@@ -388,7 +388,7 @@ enum FolderBackup {
         let scoped = folder.startAccessingSecurityScopedResource()
         defer { if scoped { folder.stopAccessingSecurityScopedResource() } }
         let rawNames = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
-        // #278: a `.noopbak` iCloud hasn't downloaded to this Mac/iPhone yet is listed under a
+        // #278: a `.zoopbak` iCloud hasn't downloaded to this Mac/iPhone yet is listed under a
         // placeholder name; resolve it back to its real name so it still shows in the restore list
         // (see `BackupSync.iCloudPlaceholderRealName`). `restore(snapshotNamed:)` resolves the same
         // way and kicks off the download if the user picks one that's still a placeholder on disk.

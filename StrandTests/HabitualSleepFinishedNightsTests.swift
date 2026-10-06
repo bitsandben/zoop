@@ -13,10 +13,10 @@ final class HabitualSleepFinishedNightsTests: XCTestCase {
             CachedSleepSession(startTs: midnight - back * 86_400 + 3_600, endTs: midnight - back * 86_400 + 30_600,
                                efficiency: 0.9, restingHr: 55, avgHrv: 80, stagesJSON: nil)
         }
-        _ = try await store.upsertSleepSessions(nights, deviceId: "my-whoop-noop")
+        _ = try await store.upsertSleepSessions(nights, deviceId: "my-whoop-zoop")
         func learn() async -> (Int?, [Double]) {
             await IntelligenceEngine.computeHabitualSleep(
-                store: store, importedId: "my-whoop", computedId: "my-whoop-noop",
+                store: store, importedId: "my-whoop", computedId: "my-whoop-zoop",
                 windowStart: midnight - 30 * 86_400, windowEnd: midnight + 86_400,
                 finishedBefore: midnight, offsetSec: 0)
         }
@@ -26,7 +26,7 @@ final class HabitualSleepFinishedNightsTests: XCTestCase {
         for end in [midnight + 14_400, midnight + 34_200] {
             _ = try await store.upsertSleepSessions(
                 [CachedSleepSession(startTs: midnight + 1_800, endTs: end, efficiency: 0.95, restingHr: 54,
-                                    avgHrv: 85, stagesJSON: nil)], deviceId: "my-whoop-noop")
+                                    avgHrv: 85, stagesJSON: nil)], deviceId: "my-whoop-zoop")
             let now = await learn()
             XCTAssertEqual(now.0, before.0)
             XCTAssertEqual(now.1, before.1)

@@ -111,9 +111,9 @@ struct TrainingLoadCard: View {
                     title: "Training Load",
                     subtitle: subtitle(for: tl),
                     trailing: latest.map { signed($0.balance) },
-                    height: NoopMetrics.chartHeight,
+                    height: ZoopMetrics.chartHeight,
                     chart: {
-                        VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
                             legend
                             TrainingLoadChart(rows: rows)
                         }
@@ -137,7 +137,7 @@ struct TrainingLoadCard: View {
     }
 
     private var legend: some View {
-        HStack(spacing: NoopMetrics.space2 * 2) {
+        HStack(spacing: ZoopMetrics.space2 * 2) {
             legendDot(color: StrandPalette.gold, label: "CTL · Fitness")
             legendDot(color: StrandPalette.strain100, label: "ATL · Fatigue")
             Spacer()
@@ -145,7 +145,7 @@ struct TrainingLoadCard: View {
     }
 
     private func legendDot(color: Color, label: LocalizedStringKey) -> some View {
-        HStack(spacing: NoopMetrics.space2) {
+        HStack(spacing: ZoopMetrics.space2) {
             Circle().fill(color).frame(width: 8, height: 8)
             Text(label).font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary)
         }
@@ -168,7 +168,7 @@ struct TrainingLoadCard: View {
             title: "Training Load",
             subtitle: String(localized: "Chronic vs acute load"),
             chart: {
-                VStack(spacing: NoopMetrics.space2) {
+                VStack(spacing: ZoopMetrics.space2) {
                     Text("Needs \(Self.minimum)+ consecutive days of Effort to begin. \(contiguousDays) so far.")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)

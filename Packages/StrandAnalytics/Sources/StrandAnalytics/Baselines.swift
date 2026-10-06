@@ -182,7 +182,7 @@ public enum Baselines {
 
     /// UserDefaults key for the manual HRV-baseline recalibration epoch (epoch SECONDS).
     /// 0 / absent = no recalibration. Written by the Settings "Recalibrate HRV baseline" button.
-    public static let hrvBaselineEpochKey: String = "noop.hrvBaselineEpoch"
+    public static let hrvBaselineEpochKey: String = "zoop.hrvBaselineEpoch"
 
     /// UserDefaults key for the manual RECOVERY-baseline recalibration epoch (epoch SECONDS).
     /// 0 / absent = no recalibration. This is the Charge-wide sibling of `hrvBaselineEpochKey`: HRV is
@@ -190,7 +190,7 @@ public enum Baselines {
     /// respiration / skin-temp baselines that also feed Charge re-anchor on THIS epoch. The Settings
     /// "Recalibrate Charge baseline" button writes BOTH keys to now (see `recalibrateRecoveryBaselines`)
     /// so the whole Charge build-up restarts cleanly. Same string on iOS UserDefaults + Android prefs.
-    public static let recoveryBaselineEpochKey: String = "noop.recoveryBaselineEpoch"
+    public static let recoveryBaselineEpochKey: String = "zoop.recoveryBaselineEpoch"
 
     /// Default per-metric configurations (HRV, resting HR, respiration, skin temp, daily
     /// Effort/strain).
@@ -550,7 +550,7 @@ public enum Baselines {
     ///
     /// The brand bucket is intentionally coarse and NOT `DeviceFamily` (that only splits WHOOP 4 vs 5,
     /// both the same HRV scale): every WHOOP-origin id (the canonical import, the active strap, the
-    /// "-noop" computed sibling, Health-Connect/Apple rows that ride the strap source) is ONE brand;
+    /// "-zoop" computed sibling, Health-Connect/Apple rows that ride the strap source) is ONE brand;
     /// each wearable-export brand (oura/fitbit/garmin) is its own. Pure + unit-pinned; the caller
     /// assembles `sourceDays` from the ORIGINAL per-source reads (brand is lost once a wearable day is
     /// re-homed under the computed WHOOP id, so detection must precede the merge). Mirrors the Kotlin twin.

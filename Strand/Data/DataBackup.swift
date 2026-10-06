@@ -13,11 +13,11 @@ import ZIPFoundation
 ///
 /// NOOP keeps everything in one SQLite file (`<AppSupport>/OpenWhoop/whoop.sqlite`, plus the
 /// `-wal`/`-shm` WAL sidecars while the store is open). Export checkpoints the WAL (so the
-/// single file is whole), then wraps the SQLite in a ZIP written as `.noopbak`, alongside a
+/// single file is whole), then wraps the SQLite in a ZIP written as `.zoopbak`, alongside a
 /// small `settings.json` entry (#1000) carrying the whitelisted profile/display settings (see
 /// `BackupSettings`) so a restore also brings back weight/height/units, not just the rows.
 /// ZIP deflate typically cuts a 100 MB+ SQLite backup to 10–20 MB. The format is a standard
-/// ZIP — users can rename `.noopbak` → `.zip` and extract the SQLite manually on any OS.
+/// ZIP — users can rename `.zoopbak` → `.zip` and extract the SQLite manually on any OS.
 ///
 /// Import detects the format by magic bytes: ZIP (`PK\x03\x04`) or legacy plain SQLite. ZIP
 /// backups are extracted to a temp dir, validated, then swapped in exactly like a plain import.
@@ -61,7 +61,7 @@ enum DataBackup {
 
     // MARK: - Export
 
-    /// Checkpoint the store and write the live database as a compressed `.noopbak` (single-entry
+    /// Checkpoint the store and write the live database as a compressed `.zoopbak` (single-entry
     /// ZIP) to a user-chosen file.
     ///
     /// - Parameter checkpoint: invoked first to flush the WAL into the main file. Pass
@@ -142,7 +142,7 @@ enum DataBackup {
         }
     }
 
-    /// The freshly-written `.noopbak` failed a post-write structural check — its DB entry is missing or
+    /// The freshly-written `.zoopbak` failed a post-write structural check — its DB entry is missing or
     /// truncated, i.e. a torn write from a full disk / dying filesystem / flaky cloud sync mid-write.
     /// Thrown by `writeVerifiedBackupZip` so a bad backup fails at WRITE time, not silently — the old
     /// behaviour let a truncated file sit as a "successful" snapshot and only surface at restore (#1014).
@@ -163,7 +163,7 @@ enum DataBackup {
     /// The production export path: verify, then archive. GRDB checkpoints the WAL first (the
     /// callers' `checkpoint()` guard), so at this point the single file IS the whole store — run a
     /// read-only `PRAGMA quick_check` over it BEFORE zipping (#1014). Archiving an already-corrupt
-    /// database writes a `.noopbak` that only fails the import-side integrity gate months later,
+    /// database writes a `.zoopbak` that only fails the import-side integrity gate months later,
     /// when the original data may be long gone; failing loudly NOW is the honest move. The read-only
     /// probe sits safely beside the app's open GRDB pool (WAL allows concurrent readers).
     /// `writeBackupForTesting` deliberately bypasses this so tests can build damaged containers.
@@ -182,11 +182,11 @@ enum DataBackup {
     /// anything shorter cannot be a database whatever else it looks like.
     static let minimumBackupEntryBytes: UInt32 = 100
 
-    /// Whether the `.noopbak` at `url` is a COMPLETE archive carrying a plausible database entry.
+    /// Whether the `.zoopbak` at `url` is a COMPLETE archive carrying a plausible database entry.
     ///
     /// #1014 (write-side): the SOURCE is verified before archiving, but the PRODUCED file can still be
     /// torn by a full disk, a dying filesystem, or a cloud client that drops the tail mid-write, and such
-    /// a truncated `.noopbak` otherwise "restores" into an empty store, caught only by the import-side
+    /// a truncated `.zoopbak` otherwise "restores" into an empty store, caught only by the import-side
     /// quick_check much later, when the original may be long gone.
     ///
     /// Opening an `Archive` for reading parses the CENTRAL DIRECTORY, which lives at the end of a ZIP, so
@@ -204,7 +204,7 @@ enum DataBackup {
     /// failure destroy a backup that was perfectly good. Twin of the Android `BackupWriteVerdict`.
     enum BackupWriteVerdict: Equatable { case intact, torn, unverifiable }
 
-    /// Re-read the `.noopbak` just written to `url` and say what it looks like.
+    /// Re-read the `.zoopbak` just written to `url` and say what it looks like.
     ///
     /// Unreadable is its own answer rather than a bad one: it says nothing about the CONTENT, and the
     /// caller's response to `torn` is destructive. Past that gate a file that will not open as an
@@ -242,11 +242,11 @@ enum DataBackup {
     }
 
     /// Write the live SQLite at `dbURL` into a fresh deflate ZIP at `dest`: the DB under the canonical
-    /// entry name `noop-backup.sqlite`, plus (#1000) an optional second entry `settings.json` carrying
+    /// entry name `zoop-backup.sqlite`, plus (#1000) an optional second entry `settings.json` carrying
     /// the whitelisted profile/display settings, so a restore brings back weight/height/units and not
     /// just the rows. Entry names, entry ORDER (DB first — older importers stop at the first `.sqlite`
     /// entry) and deflate compression match the Android exporter byte-for-byte at the container level,
-    /// so a `.noopbak` produced on either platform imports on the other. `settingsJSON == nil` writes
+    /// so a `.zoopbak` produced on either platform imports on the other. `settingsJSON == nil` writes
     /// the legacy single-entry ZIP. Mirrors the `Archive` idiom in `WhoopCsvExporter`.
     /// #1410: this build's provenance manifest (Bundle version/build + GRDB schema + export time) as JSON.
     private static func currentManifestJSON() -> Data {
@@ -266,14 +266,14 @@ enum DataBackup {
         // Stage each JSON through a temp file so it uses the exact same file-URL addEntry idiom as the DB
         // entry (one container code path, no provider-API variant to drift).
         if let settingsJSON {
-            let tmpJSON = NoopScratch.file("settings-\(UUID().uuidString).json")
+            let tmpJSON = ZoopScratch.file("settings-\(UUID().uuidString).json")
             try settingsJSON.write(to: tmpJSON)
             defer { try? fm.removeItem(at: tmpJSON) }
             try archive.addEntry(with: BackupSettings.entryName, fileURL: tmpJSON, compressionMethod: .deflate)
         }
         // #1410: manifest LAST (after the DB + optional settings) and ALWAYS written — even a legacy
         // nil-settings backup states which build produced it.
-        let tmpManifest = NoopScratch.file("manifest-\(UUID().uuidString).json")
+        let tmpManifest = ZoopScratch.file("manifest-\(UUID().uuidString).json")
         try manifestJSON.write(to: tmpManifest)
         defer { try? fm.removeItem(at: tmpManifest) }
         try archive.addEntry(with: BackupManifest.entryName, fileURL: tmpManifest, compressionMethod: .deflate)
@@ -298,7 +298,7 @@ enum DataBackup {
         return BackupSettings.encode(values)
     }
 
-    /// (Backup & Sync) Write a `.noopbak` to a SPECIFIC `dest` URL with NO save panel: the folder /
+    /// (Backup & Sync) Write a `.zoopbak` to a SPECIFIC `dest` URL with NO save panel: the folder /
     /// auto-backup path. Checkpoints the WAL (so the single `.sqlite` is whole) then writes the same
     /// deflate ZIP via the same `writeBackupZip` the interactive export uses, so folder / auto backups
     /// are byte-identical to a manual export. The CALLER owns any security-scoped access to `dest`
@@ -327,7 +327,7 @@ enum DataBackup {
         }
     }
 
-    /// Test seam: write a `.noopbak` for an EXPLICIT source database (no checkpoint, no `StorePaths`),
+    /// Test seam: write a `.zoopbak` for an EXPLICIT source database (no checkpoint, no `StorePaths`),
     /// so a unit test can round-trip a throwaway SQLite through the exact ZIP container the app writes.
     /// `settings` (canonical `BackupSettings` keys) adds the `settings.json` entry; nil writes the
     /// legacy single-entry ZIP — tests cover both shapes. Not used by app code; production goes
@@ -343,7 +343,7 @@ enum DataBackup {
 
     // MARK: - Import
 
-    /// Pick a `.noopbak` (ZIP) or legacy `.sqlite` backup, validate it, snapshot the current DB
+    /// Pick a `.zoopbak` (ZIP) or legacy `.sqlite` backup, validate it, snapshot the current DB
     /// to a side file, then copy the backup over the live database path (removing the `-wal`/`-shm`
     /// siblings). The store stays open, so the swapped-in file only takes effect after a relaunch —
     /// the caller informs the user.
@@ -407,14 +407,14 @@ enum DataBackup {
     static func restore(from pickedSource: URL, toDatabaseAt dbPath: String,
                         settingsDefaults: UserDefaults = .standard,
                         allowOversize: Bool = false) -> BackupResult {
-        // If the picked file is a .noopbak ZIP, extract the SQLite entry to a temp dir first.
+        // If the picked file is a .zoopbak ZIP, extract the SQLite entry to a temp dir first.
         // Legacy plain-SQLite files fall straight through. The extracted dir is cleaned up below.
         let fm = FileManager.default
         let source: URL
         let extractedDir: URL?
 
         if isZipFile(at: pickedSource) {
-            let tmpExtract = NoopScratch.subdirectory("import-\(UUID().uuidString)")
+            let tmpExtract = ZoopScratch.subdirectory("import-\(UUID().uuidString)")
             do {
                 if fm.fileExists(atPath: tmpExtract.path) { try fm.removeItem(at: tmpExtract) }
                 try fm.createDirectory(at: tmpExtract, withIntermediateDirectories: true)
@@ -578,9 +578,9 @@ enum DataBackup {
 
     // MARK: - Helpers
 
-    /// Canonical entry name for the SQLite inside a `.noopbak` ZIP. Matches the Android exporter so
+    /// Canonical entry name for the SQLite inside a `.zoopbak` ZIP. Matches the Android exporter so
     /// a backup produced on either platform restores on the other.
-    private static let backupEntryName = "noop-backup.sqlite"
+    private static let backupEntryName = "zoop-backup.sqlite"
 
     private enum BackupArchiveError: LocalizedError {
         case entryTooLarge(String)
@@ -593,12 +593,12 @@ enum DataBackup {
         }
     }
 
-    /// "NOOP-backup-2026-06-07.noopbak"
+    /// "NOOP-backup-2026-06-07.zoopbak"
     private static func defaultBackupName() -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "yyyy-MM-dd"
-        return "NOOP-backup-\(f.string(from: Date())).noopbak"
+        return "NOOP-backup-\(f.string(from: Date())).zoopbak"
     }
 
     private static func timestamp() -> String {
@@ -608,11 +608,11 @@ enum DataBackup {
         return f.string(from: Date())
     }
 
-    /// Content types accepted by the export/import panels. Includes the new `.noopbak` (ZIP),
+    /// Content types accepted by the export/import panels. Includes the new `.zoopbak` (ZIP),
     /// generic ZIP, and legacy `.sqlite` / `.database` types so older backups keep working.
     private static func backupContentTypes() -> [UTType] {
         var types: [UTType] = []
-        if let noopbak = UTType(filenameExtension: "noopbak") { types.append(noopbak) }
+        if let zoopbak = UTType(filenameExtension: "zoopbak") { types.append(zoopbak) }
         types.append(.zip)
         if let sqlite = UTType(filenameExtension: "sqlite") { types.append(sqlite) }
         types.append(.database)
@@ -671,7 +671,7 @@ enum DataBackup {
         return head[0] == 0x50 && head[1] == 0x4B && head[2] == 0x03 && head[3] == 0x04
     }
 
-    /// Extract only the canonical entries from a `.noopbak` ZIP at `zipURL` into `destDir`.
+    /// Extract only the canonical entries from a `.zoopbak` ZIP at `zipURL` into `destDir`.
     /// Unknown files are ignored, and each accepted entry is streamed through an uncompressed-size cap
     /// before it lands on disk.
     private static func extractBackupZip(at zipURL: URL, into destDir: URL,

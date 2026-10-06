@@ -9,7 +9,7 @@ import WhoopStore
 /// then a uniform LazyVGrid of the body's vital signs (respiratory rate, blood
 /// oxygen, resting HR, HRV, skin temp) as fixed-height StatTiles, each tinted and
 /// captioned with its in-range state. Re-skinned to the locked NOOP component
-/// system: every surface is a NoopCard, every metric is a StatTile, every chart is
+/// system: every surface is a ZoopCard, every metric is a StatTile, every chart is
 /// a ChartCard — no ad-hoc card heights or paddings.
 struct HealthView: View {
     @EnvironmentObject var repo: Repository
@@ -58,7 +58,7 @@ struct HealthView: View {
 /// history-present path and the first-run live path so the stack is defined once.
 private struct HealthSectionsStack: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
             // Manual "Sync now" + honest sync status (#364). Its own view so the ~1Hz HR stream
             // doesn't re-render it; depends on `live` (connection/backfill state) + `model`.
             SyncStatusSection()
@@ -111,7 +111,7 @@ private struct HealthFirstRunContent: View {
 
     var body: some View {
         if !hasLiveHR {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 // Even with no history yet, a freshly-connected strap can be told to sync now (#364) —
                 // so the control is reachable before the screen has any data to show.
                 SyncStatusSection()
@@ -142,12 +142,12 @@ private struct SyncStatusSection: View {
     private var canSync: Bool { live.connected && live.bonded && live.historyReady && !live.backfilling }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Sync", overline: "Strap history",
                           trailing: live.connected ? (live.bonded ? String(localized: "Connected") : String(localized: "Pairing…")) : String(localized: "Offline"))
 
-            NoopCard(tint: StrandPalette.chargeColor) {
-                VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
+            ZoopCard(tint: StrandPalette.chargeColor) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                     statusRow
 
                     // Route the manual offload kick through the unified NOOP button system so the
@@ -155,7 +155,7 @@ private struct SyncStatusSection: View {
                     // the BLE engine's gated entry point directly (same idiom as SettingsView's
                     // `model.ble.enableWhoop5DeepData()`); BLEManager.syncNow() is the honest gate —
                     // a no-op when no strap is connected or a sync is already running.
-                    NoopButton(live.backfilling ? "Syncing…" : "Sync now",
+                    ZoopButton(live.backfilling ? "Syncing…" : "Sync now",
                                systemImage: "arrow.triangle.2.circlepath",
                                kind: .secondary, fullWidth: true) {
                         model.ble.syncNow()
@@ -306,7 +306,7 @@ private struct HeartRateSection: View {
         let zone = hrZone(fraction)
         let series = hrSeries(displayHR)
 
-        return VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        return VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Heart Rate", overline: "Live", trailing: hrIsDerived ? String(localized: "from R-R") : nil)
 
             // The live HR hero is a flat WHOOP card tinted rose — heart-rate's metric accent.
@@ -342,7 +342,7 @@ private struct HeartRateSection: View {
     }
 
     /// The hero chart body: a tall, time-aware HR line tinted to the current zone, with a
-    /// status pill floated top-trailing. Fixed to NoopMetrics.chartHeight via ChartCard.
+    /// status pill floated top-trailing. Fixed to ZoopMetrics.chartHeight via ChartCard.
     private func heroChart(displayHR: Int?, hasLiveHR: Bool,
                            fraction: Double, zone: Int, series: [LiveHRSample]) -> some View {
         ZStack(alignment: .topTrailing) {
@@ -358,7 +358,7 @@ private struct HeartRateSection: View {
                 .accessibilityLabel("Live heart rate over time")
                 .accessibilityValue(hasLiveHR ? "\(displayHR ?? 0) beats per minute, zone \(zone)" : "no data")
             } else {
-                VStack(spacing: NoopMetrics.space2) {
+                VStack(spacing: ZoopMetrics.space2) {
                     // The big fallback numeral ticks up to the live value (the hero number) — under
                     // Reduce Motion it snaps. When there's no HR yet we show a crisp em-dash instead.
                     if let hr = displayHR {
@@ -566,7 +566,7 @@ private struct RecoveryContributorsSection: View {
         let ready = priorCount >= Baselines.minNightsSeed
         let contributors = buildContributors(latest)
 
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 SectionHeader("Contributors", overline: "Recovery", trailing: nil)
                 if ready {
@@ -575,8 +575,8 @@ private struct RecoveryContributorsSection: View {
                     ScoreStatePill(.calibrating, text: "Calibrating (\(priorCount) of \(Baselines.minNightsSeed))")
                 }
             }
-            NoopCard(tint: StrandPalette.chargeColor) {
-                VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+            ZoopCard(tint: StrandPalette.chargeColor) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                     ForEach(Array(contributors.enumerated()), id: \.offset) { idx, c in
                         ContributorBar(label: c.label, strength: ready ? c.strength : nil,
                                        word: ready ? c.word : String(localized: "Calibrating"),
@@ -682,7 +682,7 @@ private struct ContributorBar: View {
     let tint: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
             HStack(alignment: .firstTextBaseline) {
                 Text(label).strandOverline()
                 Text("· \(word)")
@@ -779,7 +779,7 @@ private struct FitnessAgeSection: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Fitness Age", overline: "Weekly",
                           trailing: fitnessAge != nil ? String(localized: "vs age \(profile.age)") : nil)
             content
@@ -901,10 +901,10 @@ private struct FitnessAgeSection: View {
         let delta = Double(profile.age) - age        // +ve = fitness age younger than chronological
         let years = Int(abs(delta).rounded())
         let younger = delta >= 0
-        return VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+        return VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
             // Tap the hero body to open the full "fitness_age" trend.
             Button { fitnessSheet = .trend } label: {
-                HStack(alignment: .center, spacing: NoopMetrics.space5) {
+                HStack(alignment: .center, spacing: ZoopMetrics.space5) {
                     // The signature liquid gauge anchors the hero: a vessel tinted to the Charge world,
                     // filled by how young the fitness age reads (younger = fuller), with the age counting
                     // up over it. Same HeroScoreCell idiom as Today. tapPassesThrough is what actually makes
@@ -918,7 +918,7 @@ private struct FitnessAgeSection: View {
                             .shadow(color: .black.opacity(0.5), radius: 6, y: 1)
                             .allowsHitTesting(false)
                     }
-                    VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
                         Text("Fitness Age").strandOverline()
                         Text(ageDeltaLine(years: years, younger: younger, bound: bound))
                             .font(StrandFont.subhead)
@@ -977,7 +977,7 @@ private struct FitnessAgeSection: View {
             Button {
                 withAnimation(StrandMotion.interactive) { showReadiness.toggle() }
             } label: {
-                HStack(spacing: NoopMetrics.space2) {
+                HStack(spacing: ZoopMetrics.space2) {
                     Image(systemName: "info.circle")
                         .foregroundStyle(StrandPalette.accent)
                         .accessibilityHidden(true)
@@ -998,19 +998,19 @@ private struct FitnessAgeSection: View {
                 ? "How accurate is this? Hide the data behind your Fitness Age"
                 : "How accurate is this? Show the data behind your Fitness Age")
         }
-        .padding(NoopMetrics.space5)
+        .padding(ZoopMetrics.space5)
         .frame(maxWidth: .infinity, alignment: .leading)
         // Apple-flat WHOOP card: a plain frosted surface tinted to the Charge (green) world —
         // no scenic starfield / bloom, no gold border. Fill contrast carries the edge.
         .background {
-            FrostedCardSurface(tint: StrandPalette.chargeColor, cornerRadius: NoopMetrics.cardRadius)
+            FrostedCardSurface(tint: StrandPalette.chargeColor, cornerRadius: ZoopMetrics.cardRadius)
         }
-        .clipShape(RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
     }
 
     /// Load the latest weekly Fitness Age (+ optional VO₂max) from the strap's metricSeries. Uses the
     /// same `exploreSeries(key:source:)` path every other metric on this screen reads, with source
-    /// "my-whoop" (the Repository merges the computed "-noop" rows under any real import). Takes the
+    /// "my-whoop" (the Repository merges the computed "-zoop" rows under any real import). Takes the
     /// freshest point — the weekly value is keyed to the week's Saturday and refines through the week.
     private func load() async {
         let faPts = await repo.exploreSeries(key: "fitness_age", source: "my-whoop")
@@ -1068,9 +1068,9 @@ private struct ReadinessChecklistCard: View {
     private var unlocksVO2: [FitnessReadinessItem] { readiness.items.filter { $0.role == .unlocksVO2max } }
 
     var body: some View {
-        NoopCard(tint: StrandPalette.chargeColor) {
-            VStack(alignment: .leading, spacing: NoopMetrics.space4) {
-                HStack(spacing: NoopMetrics.rowSpacing) {
+        ZoopCard(tint: StrandPalette.chargeColor) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
+                HStack(spacing: ZoopMetrics.rowSpacing) {
                     confidencePill
                     Spacer(minLength: 0)
                     // Force-recompute affordance: NOOP scores Fitness Age weekly, so this applies it NOW
@@ -1117,7 +1117,7 @@ private struct ReadinessChecklistCard: View {
     @ViewBuilder
     private func group(title: LocalizedStringKey, items: [FitnessReadinessItem]) -> some View {
         if !items.isEmpty {
-            VStack(alignment: .leading, spacing: NoopMetrics.rowSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
                 Text(title).strandOverline()
                 ForEach(items, id: \.key) { item in
                     readinessRow(item)
@@ -1228,7 +1228,7 @@ private struct VitalitySection: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Vitality", overline: "Weekly",
                           trailing: bodyAge != nil ? String(localized: "Body Age \(Int((bodyAge ?? 0).rounded()))") : nil)
             if let v = vitality, let ba = bodyAge {
@@ -1249,12 +1249,12 @@ private struct VitalitySection: View {
         let sorted = contributions.sorted { $0.lnHazard < $1.lnHazard }
         let best = sorted.first
         let worst = sorted.last
-        return VStack(alignment: .leading, spacing: NoopMetrics.space4) {
-            HStack(alignment: .center, spacing: NoopMetrics.space5) {
+        return VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
+            HStack(alignment: .center, spacing: ZoopMetrics.space5) {
                 // The weekly Vitality score (0…100) as the signature liquid gauge: a vessel tinted to the
                 // Charge world, filled to the score, with the number counting up over it (Today's
                 // HeroScoreCell idiom). Taps splash the gauge; the number is hit-transparent.
-                VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
                     Text("Vitality").strandOverline()
                     ZStack {
                         LiquidVessel(value: max(0, min(1, v / 100)), tint: StrandPalette.chargeColor, animated: true)
@@ -1271,7 +1271,7 @@ private struct VitalitySection: View {
                     .accessibilityLabel("Vitality \(Int(v.rounded())) out of 100")
                 }
                 Spacer(minLength: 0)
-                VStack(alignment: .trailing, spacing: NoopMetrics.space1) {
+                VStack(alignment: .trailing, spacing: ZoopMetrics.space1) {
                     Text("Body Age").strandOverline()
                     CountUpText(value: ba,
                                 format: { "\(Int($0.rounded()))" },
@@ -1296,14 +1296,14 @@ private struct VitalitySection: View {
             Text("A wellness estimate from your habits, not a clinical biological age.")
                 .font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary)
         }
-        .padding(NoopMetrics.space5)
+        .padding(ZoopMetrics.space5)
         .frame(maxWidth: .infinity, alignment: .leading)
         // Apple-flat WHOOP card: a plain frosted surface tinted to the Charge (green) world —
         // no scenic starfield / bloom, no gold border. Fill contrast carries the edge.
         .background {
-            FrostedCardSurface(tint: StrandPalette.chargeColor, cornerRadius: NoopMetrics.cardRadius)
+            FrostedCardSurface(tint: StrandPalette.chargeColor, cornerRadius: ZoopMetrics.cardRadius)
         }
-        .clipShape(RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
     }
 
     /// The Body Age delta as whole-phrase variants per count and direction, so translators see
@@ -1356,12 +1356,12 @@ private struct VitalsSection: View {
             hrvOverCountByDay: hrvOverCountByDay,
             skinTempPreferred: SkinTempDisplay.Kind(rawValue: skinTempDisplayRaw) ?? .absolute   // #1846
         )
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Vital Signs", overline: "Latest", trailing: BodyVitalSigns.latestDayLabel(readings))
             LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 168), spacing: NoopMetrics.gap)],
+                columns: [GridItem(.adaptive(minimum: 168), spacing: ZoopMetrics.gap)],
                 alignment: .leading,
-                spacing: NoopMetrics.gap
+                spacing: ZoopMetrics.gap
             ) {
                 ForEach(Array(readings.enumerated()), id: \.element.id) { idx, v in
                     // Each headline vital is now a liquid tile: the signature LiquidVessel gauge tinted
@@ -1381,12 +1381,12 @@ private struct VitalsSection: View {
         .task(id: PuffinExperiment.spo2CandidateDisplayEnabled) {
             // #1118: load the per-night HRV over-count flags (always — no toggle) so the HRV tile can
             // caption an over-counted 4.0 night's reading "unverified". The engine writes "hrv_rr_overcount"
-            // (1/0) under the "-noop" computed device ID; `exploreSeries` with source "my-whoop" reads it
+            // (1/0) under the "-zoop" computed device ID; `exploreSeries` with source "my-whoop" reads it
             // from the computed metricSeries. Absent/0 on a clean or imported night → no caveat.
             let ocPts = await repo.exploreSeries(key: "hrv_rr_overcount", source: "my-whoop", days: 14)
             hrvOverCountByDay = Dictionary(ocPts.map { ($0.day, $0.value) }, uniquingKeysWith: { a, _ in a })
             // #103/queue-11a: load the SpO₂ candidate nightly means from metricSeries when the toggle is
-            // ON. The engine writes "spo2_candidate" under the "-noop" computed device ID; `exploreSeries`
+            // ON. The engine writes "spo2_candidate" under the "-zoop" computed device ID; `exploreSeries`
             // with source "my-whoop" reads it from Layer 2 (computed metricSeries) — "my-whoop" is the
             // generic active-strap sentinel, resolved through `computedReadIds`, so this already covers
             // an Oura ring's own computed id. Empty when the toggle is OFF (the engine writes nothing) or
@@ -1405,14 +1405,14 @@ private struct VitalsSection: View {
 
 /// One headline vital sign rendered in the liquid finish: a metric-tinted `LiquidVessel` gauge (filled
 /// to the vital's physiological fraction), the value counting up beside it, the banded state caption, and
-/// the same sparkline trail the classic StatTile drew. A frosted `NoopCard` tinted to the metric's accent,
+/// the same sparkline trail the classic StatTile drew. A frosted `ZoopCard` tinted to the metric's accent,
 /// matching Today's Key-Metrics tiles. Presentation-only: value, banding and source are unchanged — this
 /// just gives each vital a real liquid gauge instead of a flat tile.
 private struct LiquidVitalTile: View {
     let reading: BodyVitalReading
 
     var body: some View {
-        NoopCard(padding: 14, tint: reading.accent) {
+        ZoopCard(padding: 14, tint: reading.accent) {
             VStack(alignment: .leading, spacing: 0) {
                 Text("\(reading.label)").strandOverline()
                 Spacer(minLength: 8)
@@ -1447,7 +1447,7 @@ private struct LiquidVitalTile: View {
                     .padding(.top, 4)
             }
         }
-        .frame(minHeight: NoopMetrics.tileHeight, maxHeight: .infinity)
+        .frame(minHeight: ZoopMetrics.tileHeight, maxHeight: .infinity)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(reading.accessibilityText)
     }
@@ -1498,7 +1498,7 @@ private struct SkinTempSection: View {
     private var cycleOptInApplies: Bool { model.profile.cycleAwarenessApplies && !cycleHidden }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Skin temperature", overline: "From your nightly sensor")
 
             // 1. Illness heads-up — only when the engine returned something worth surfacing.
@@ -1569,7 +1569,7 @@ private struct HealthHubLinksSection: View {
     @EnvironmentObject var router: NavRouter
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Records & sources", overline: "On \(Platform.deviceNounPhrase)")
             linkRow(title: String(localized: "Lab Book"),
                     subtitle: String(localized: "Keep your bloods, BP and body numbers private, on \(Platform.deviceNounPhrase)."),
@@ -1583,7 +1583,7 @@ private struct HealthHubLinksSection: View {
     private func linkRow(title: String, subtitle: String, symbol: String, tint: Color,
                          action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            NoopCard {
+            ZoopCard {
                 HStack(spacing: 12) {
                     Image(systemName: symbol)
                         .font(.system(size: 16, weight: .semibold))

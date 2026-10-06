@@ -45,7 +45,7 @@ struct LiftLogView: View {
             onRefresh: { await load() },
             quietSubtitle: true
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 headerCard
                 programsSection
                 weekSection
@@ -71,9 +71,9 @@ struct LiftLogView: View {
     // MARK: - Header
 
     private var headerCard: some View {
-        NoopCard(tint: StrandPalette.effortColor) {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
-                HStack(spacing: NoopMetrics.rowSpacing) {
+        ZoopCard(tint: StrandPalette.effortColor) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
+                HStack(spacing: ZoopMetrics.rowSpacing) {
                     Image(systemName: "dumbbell.fill")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(StrandPalette.effortColor)
@@ -102,7 +102,7 @@ struct LiftLogView: View {
     // MARK: - Programs
 
     private var programsSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Programs", overline: "Saved")
 
             if !loaded {
@@ -115,13 +115,13 @@ struct LiftLogView: View {
                 }
             }
 
-            HStack(spacing: NoopMetrics.rowSpacing) {
+            HStack(spacing: ZoopMetrics.rowSpacing) {
                 Button {
                     editing = ProgramEditTarget(id: "new", program: nil)
                 } label: {
                     Label("New program", systemImage: "plus")
                 }
-                .buttonStyle(NoopButtonStyle(.secondary))
+                .buttonStyle(ZoopButtonStyle(.secondary))
 
                 // Filling a dozen exercise lines by hand on a phone is the most tedious thing in the
                 // feature; a spreadsheet on a computer does it in a couple of minutes.
@@ -130,13 +130,13 @@ struct LiftLogView: View {
                 } label: {
                     Label("Import", systemImage: "tablecells")
                 }
-                .buttonStyle(NoopButtonStyle(.secondary))
+                .buttonStyle(ZoopButtonStyle(.secondary))
             }
         }
     }
 
     private var emptyState: some View {
-        NoopCard {
+        ZoopCard {
             VStack(alignment: .leading, spacing: 8) {
                 Text("No programs yet")
                     .font(StrandFont.headline)
@@ -150,8 +150,8 @@ struct LiftLogView: View {
     }
 
     private func programRow(_ program: LiftProgramRow) -> some View {
-        NoopCard {
-            HStack(spacing: NoopMetrics.gap) {
+        ZoopCard {
+            HStack(spacing: ZoopMetrics.gap) {
                 Button {
                     editing = ProgramEditTarget(id: program.id, program: program)
                 } label: {
@@ -223,18 +223,18 @@ struct LiftLogView: View {
 
     private var weekSection: some View {
         let ordered = LiftMuscle.ordered.filter { (weekCounts[$0] ?? 0) > 0 }
-        return VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        return VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Sets per muscle", overline: "Last 7 days · estimated")
             if ordered.isEmpty {
-                NoopCard {
+                ZoopCard {
                     Text("Once you've logged a session, this shows how many sets each muscle got this week, against what the research associates with growth.")
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             } else {
-                NoopCard {
-                    VStack(alignment: .leading, spacing: NoopMetrics.rowSpacing) {
+                ZoopCard {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
                         ForEach(ordered, id: \.self) { muscle in
                             muscleBar(muscle, sets: weekCounts[muscle] ?? 0)
                         }
@@ -315,10 +315,10 @@ struct LiftLogView: View {
     // MARK: - History
 
     private var historySection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Sessions", overline: "Recent")
             if history.isEmpty {
-                NoopCard {
+                ZoopCard {
                     Text("Finished sessions land here, with every set you logged.")
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textSecondary)
@@ -337,8 +337,8 @@ struct LiftLogView: View {
     }
 
     private func historyRow(_ session: LiftSessionRow) -> some View {
-        NoopCard {
-            HStack(spacing: NoopMetrics.gap) {
+        ZoopCard {
+            HStack(spacing: ZoopMetrics.gap) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(session.programName ?? String(localized: "Session"))
                         .font(StrandFont.headline)

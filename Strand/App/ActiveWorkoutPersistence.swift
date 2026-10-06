@@ -33,7 +33,7 @@ enum ActiveWorkoutPersistence {
     }
 
     /// The single `UserDefaults` key (JSON-encoded `Snapshot`). Namespaced like `moments`/`sleepMarks`.
-    static let defaultsKey = "noop.activeWorkout"
+    static let defaultsKey = "zoop.activeWorkout"
 
     /// Encode a snapshot to JSON `Data`. Returns nil only if encoding somehow fails (never expected for
     /// this all-value shape) so the caller can no-op rather than write garbage.

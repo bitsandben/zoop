@@ -117,7 +117,7 @@ struct HostedTrendCard: View {
         // a home-screen card has no room for, so without this the number would appear bare.
         let trailing = avg.map { "\(fmt($0)) \(unit)" }
         ChartCard(title: title, subtitle: nil, trailing: trailing,
-                  height: NoopMetrics.chartHeight, tint: colour) {
+                  height: ZoopMetrics.chartHeight, tint: colour) {
             TrendChart(points: pts,
                        gradient: Gradient(colors: [colour.opacity(0.35), colour]),
                        valueRange: HostedTrendData.valueRange(pts, fallback: fallback),

@@ -69,10 +69,10 @@ final class HealthKitBridge: ObservableObject {
     /// NOOP's own strap-derived source id, read back when writing into Health.
     private let noopDeviceId: String
     /// NOOP's on-device COMPUTED daily scores (recovery/HRV/RHR/SpO₂/resp) live under the sibling
-    /// `deviceId + "-noop"` id — mirrors `Repository.computedDeviceId` / `IntelligenceEngine.computedId`.
+    /// `deviceId + "-zoop"` id — mirrors `Repository.computedDeviceId` / `IntelligenceEngine.computedId`.
     /// `writeBack` must read this, not the raw import id: a Bluetooth-only WHOOP user has no imported
     /// `noopDeviceId` daily row, so those metrics exist ONLY here.
-    private var computedDeviceId: String { noopDeviceId + "-noop" }
+    private var computedDeviceId: String { noopDeviceId + "-zoop" }
 
     init(repo: Repository, appleDeviceId: String, noopDeviceId: String) {
         self.repo = repo
@@ -161,7 +161,7 @@ final class HealthKitBridge: ObservableObject {
 
     /// UserDefaults key holding the authorization set the user was last asked about.
     /// Retains the old key so an existing read-only fingerprint triggers one expanded request.
-    private static let readTypeSignatureKey = "noop.health.readTypeSignature"
+    private static let readTypeSignatureKey = "zoop.health.readTypeSignature"
 
     /// UserDefaults key gating the one-time 90-day hourly-step backfill (see the hourly collection
     /// below). Set once the first hourly-step HealthKit query actually returns rows; every later
@@ -840,7 +840,7 @@ final class HealthKitBridge: ObservableObject {
         let nowTs = Int(now.timeIntervalSince1970)
 
         // Sleep sessions drive both the sleep write and the vitals' wake-time stamps: computed
-        // sessions (deviceId + "-noop") first, imported rows override on startTs collision — the
+        // sessions (deviceId + "-zoop") first, imported rows override on startTs collision — the
         // same source precedence as the dailies union below and IntelligenceEngine's sleep reads.
         let computedSleeps = (try? await whoopStore.sleepSessions(deviceId: computedDeviceId, from: fromTs, to: nowTs, limit: 200)) ?? []
         let importedSleeps = (try? await whoopStore.sleepSessions(deviceId: noopDeviceId, from: fromTs, to: nowTs, limit: 200)) ?? []
@@ -965,7 +965,7 @@ final class HealthKitBridge: ObservableObject {
             let wake = Date(timeIntervalSince1970: TimeInterval(s.endTs))
             wakeByDay[HealthKitBridge.dayString(wake)] = wake
         }
-        // Read NOOP's COMPUTED dailies (deviceId + "-noop"), which is the only place a strap-only
+        // Read NOOP's COMPUTED dailies (deviceId + "-zoop"), which is the only place a strap-only
         // user's recovery/HRV/RHR/SpO₂/resp lives, then union with any imported `noopDeviceId` rows so
         // a user who ALSO imported a WHOOP export still gets the imported values. Imported overrides
         // computed per day, matching the dashboard's source precedence.

@@ -431,7 +431,7 @@ def load_frame_records(path: str, *, device_id: int = 2) -> List[dict]:
 
     NOTE: this is the CAPTURE TOOLING's database, not the app's. Neither shipped app has a `frames`
     table — Android uses Room, iOS/macOS uses GRDB — so this cannot be pointed at a phone's store or
-    a `.noopbak`. It exists because `whoop_sync.py` writes `.db` while this tool read only `.json`,
+    a `.zoopbak`. It exists because `whoop_sync.py` writes `.db` while this tool read only `.json`,
     forcing a `whoop_sync.py export --only-type 47` round-trip between two tools in the same
     directory.
     """

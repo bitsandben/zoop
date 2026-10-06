@@ -47,7 +47,7 @@ struct LiftProgramEditorSheet: View {
             title: isNew ? "New program" : "Edit program",
             subtitle: "Your targets for each exercise. What you actually lift is recorded when you run it."
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 detailsSection
                 exercisesSection
                 if !isNew { deleteSection }
@@ -75,9 +75,9 @@ struct LiftProgramEditorSheet: View {
     // MARK: - Name + note
 
     private var detailsSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Program", overline: "Details")
-            NoopCard {
+            ZoopCard {
                 VStack(alignment: .leading, spacing: 14) {
                     field("Name") {
                         TextField("Upper A", text: $name)
@@ -108,11 +108,11 @@ struct LiftProgramEditorSheet: View {
     // MARK: - Exercise lines
 
     private var exercisesSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Exercises", overline: "In order")
 
             if items.isEmpty {
-                NoopCard {
+                ZoopCard {
                     Text("No exercises yet. Add the first one below — you can type any name you like; NOOP remembers it for next time.")
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textSecondary)
@@ -129,13 +129,13 @@ struct LiftProgramEditorSheet: View {
             } label: {
                 Label("Add exercise", systemImage: "plus")
             }
-            .buttonStyle(NoopButtonStyle(.secondary))
+            .buttonStyle(ZoopButtonStyle(.secondary))
         }
     }
 
     private func itemRow(_ item: LiftProgramItemRow, index: Int) -> some View {
-        NoopCard {
-            HStack(alignment: .top, spacing: NoopMetrics.gap) {
+        ZoopCard {
+            HStack(alignment: .top, spacing: ZoopMetrics.gap) {
                 Button {
                     editingItem = ItemEditTarget(id: item.id, item: item)
                 } label: {
@@ -158,7 +158,7 @@ struct LiftProgramEditorSheet: View {
                 }
                 .buttonStyle(.plain)
 
-                VStack(spacing: NoopMetrics.rowSpacing) {
+                VStack(spacing: ZoopMetrics.rowSpacing) {
                     Button {
                         move(from: index, by: -1)
                     } label: {
@@ -220,7 +220,7 @@ struct LiftProgramEditorSheet: View {
             } label: {
                 Label("Delete program", systemImage: "trash")
             }
-            .buttonStyle(NoopButtonStyle(.secondary))
+            .buttonStyle(ZoopButtonStyle(.secondary))
             .confirmationDialog("Delete this program?",
                                 isPresented: $confirmingDelete,
                                 titleVisibility: .visible) {
@@ -245,7 +245,7 @@ struct LiftProgramEditorSheet: View {
                 .buttonStyle(.noopPrimary)
                 .frame(maxWidth: 160)
                 .disabled(!canSave)
-                .opacity(canSave ? 1 : NoopButtonMetrics.disabledOpacity)
+                .opacity(canSave ? 1 : ZoopButtonMetrics.disabledOpacity)
                 .accessibilityLabel("Save program")
         }
     }

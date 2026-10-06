@@ -45,7 +45,7 @@ func disRefusedPrefKey(_ peripheralId: String?) -> String? {
     guard let raw = peripheralId?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
         return nil
     }
-    return "noop.disRefused.\(raw.lowercased())"
+    return "zoop.disRefused.\(raw.lowercased())"
 }
 
 /// The line for a DIS read that came back with a failure status.

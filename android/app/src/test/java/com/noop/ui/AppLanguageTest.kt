@@ -11,21 +11,29 @@ class AppLanguageTest {
     }
 
     @Test
-    fun chineseCatalogTagIsSupported() {
-        assertEquals(AppLanguage.CHINESE, AppLanguage.fromStorage("zh"))
-        assertEquals("中文", AppLanguage.CHINESE.autonym)
+    fun onlyEnglishAndGermanAreExplicitChoices() {
+        assertEquals(
+            listOf(AppLanguage.SYSTEM, AppLanguage.ENGLISH, AppLanguage.GERMAN),
+            AppLanguage.entries,
+        )
     }
 
     @Test
-    fun italianCatalogTagIsSupported() {
-        assertEquals(AppLanguage.ITALIAN, AppLanguage.fromStorage("it"))
-        assertEquals("Italiano", AppLanguage.ITALIAN.autonym)
+    fun legacyTagsFallBackToSystem() {
+        listOf("zh", "it", "pl", "es", "fr", "pt-PT", "ru").forEach { tag ->
+            assertEquals(AppLanguage.SYSTEM, AppLanguage.fromStorage(tag))
+        }
     }
 
     @Test
-    fun polishCatalogTagIsSupported() {
-        assertEquals(AppLanguage.POLISH, AppLanguage.fromStorage("pl"))
-        assertEquals("Polski", AppLanguage.POLISH.autonym)
+    fun resolvedTagIsEnglishOrGermanOnly() {
+        assertEquals("en", AppLanguage.resolvedTag("en", systemLanguage = "de-DE"))
+        assertEquals("de", AppLanguage.resolvedTag("de", systemLanguage = "en"))
+        assertEquals("de", AppLanguage.resolvedTag(null, systemLanguage = "de-DE"))
+        assertEquals("de", AppLanguage.resolvedTag("system", systemLanguage = "de_AT"))
+        assertEquals("en", AppLanguage.resolvedTag(null, systemLanguage = "fr-FR"))
+        assertEquals("de", AppLanguage.resolvedTag("zh", systemLanguage = "de"))
+        assertEquals("en", AppLanguage.resolvedTag("es", systemLanguage = "es"))
     }
 
     @Test

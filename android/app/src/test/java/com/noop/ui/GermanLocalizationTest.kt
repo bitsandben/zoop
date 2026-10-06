@@ -99,6 +99,10 @@ class GermanLocalizationTest {
             "nav_settings" to "Einstellungen",
             "nav_more" to "Mehr",
             "nav_health" to "Gesundheit",
+            "nav_bar_home" to "Startseite",
+            "nav_bar_health" to "Gesundheit",
+            "nav_bar_coach" to "KI-Coach",
+            "nav_bar_more" to "Mehr",
         )
         for ((key, expected) in differs) {
             assertTrue("$key present in en", key in en)

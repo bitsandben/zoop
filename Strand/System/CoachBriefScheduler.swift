@@ -57,8 +57,8 @@ enum CoachBriefScheduler {
     /// would have disabled the Coach for every install that had never opened the toggle, which is exactly
     /// the population whose behaviour must not change.
     static var coachMasterEnabled: Bool {
-        guard UserDefaults.standard.object(forKey: "noop.coachEnabled") != nil else { return true }
-        return UserDefaults.standard.bool(forKey: "noop.coachEnabled")
+        guard UserDefaults.standard.object(forKey: "zoop.coachEnabled") != nil else { return true }
+        return UserDefaults.standard.bool(forKey: "zoop.coachEnabled")
     }
 
     /// Tear down whatever the brief has left lying around when the Coach master switch goes off.
@@ -383,7 +383,7 @@ enum CoachBriefScheduler {
     #if os(iOS)
     /// iOS BGTask identifier, derived from the running bundle id so it tracks `BUNDLE_ID_PREFIX` and
     /// matches the iOS target's `BGTaskSchedulerPermittedIdentifiers` (Info.plist / project.yml).
-    static let bgTaskIdentifier = (Bundle.main.bundleIdentifier ?? "com.noopapp.noop") + ".coachbrief"
+    static let bgTaskIdentifier = (Bundle.main.bundleIdentifier ?? "com.zoopapp.zoop") + ".coachbrief"
     private static var logBackgroundFailure: ((String) -> Void)?
 
     /// Register the BGTask handler. MUST be called from the app's launch (before launch finishes) — call

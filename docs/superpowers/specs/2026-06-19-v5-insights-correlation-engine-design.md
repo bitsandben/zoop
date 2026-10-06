@@ -215,7 +215,7 @@ under `noop-mood`). This means:
   card (alcohol/caffeine curve), and surface the **Damage Forecast** on `Strand/Screens/TodayView.swift` in
   the evening. Disconnect read sits in the Mind/Insights neutral zone.
 - **Kotlin:** mirror in `android/app/src/main/java/com/noop/ui/InsightsScreen.kt` + `TodayScreen` evening card,
-  reusing `NoopCard`/`StatTile`/`SectionHeader`/`JournalChip`.
+  reusing `ZoopCard`/`StatTile`/`SectionHeader`/`JournalChip`.
 - **iOS:** the Swift package + non-excluded `Strand/` SwiftUI files cover iOS automatically (shared package +
   shared screens), per the cross-platform parity rule — no separate iOS port beyond verifying the build.
 

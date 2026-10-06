@@ -79,7 +79,7 @@ final class SleepLayoutPrefsTests: XCTestCase {
     func testSectionRawKeysAreStableAndUnique() {
         let raws = SleepSection.allCases.map(\.rawValue)
         XCTAssertEqual(raws.count, Set(raws).count)
-        // Pin the exact wire strings — they cross the .noopbak boundary and must match Android byte-for-byte.
+        // Pin the exact wire strings — they cross the .zoopbak boundary and must match Android byte-for-byte.
         XCTAssertEqual(raws, [
             "sleepMarks", "stages", "bodyClock", "nightDetail", "sleepDebt", "stagesVsTypical",
             "asleepDuration",

@@ -53,12 +53,12 @@ KOTLIN_GLOBS = (
     "android/app/src/main/java/com/noop/oura/**/*.kt",
 )
 SWIFT_EXCLUDED_GLOBS = (
-    "Packages/NoopLocalAccess/Sources/**/*.swift",
+    "Packages/ZoopLocalAccess/Sources/**/*.swift",
     "Packages/PolarProtocol/Sources/**/*.swift",
     "Packages/StrandDesign/Sources/**/*.swift",
     "Strand/**/*.swift",
     "StrandiOS*/**/*.swift",
-    "NOOPWatch*/**/*.swift",
+    "ZoopWatch*/**/*.swift",
 )
 KOTLIN_EXCLUDED_GLOBS = (
     "android/app/src/main/java/com/noop/*.kt",
@@ -77,7 +77,7 @@ PRODUCTION_GLOBS = (
     "Packages/**/Sources/**/*.swift",
     "Strand/**/*.swift",
     "StrandiOS*/**/*.swift",
-    "NOOPWatch*/**/*.swift",
+    "ZoopWatch*/**/*.swift",
     "android/app/src/main/java/**/*.kt",
 )
 TEST_GLOBS = (
@@ -91,7 +91,7 @@ REFERENCE_GLOBS = (
     "Strand/**/*.swift",
     "StrandTests/**/*.swift",
     "StrandiOS*/**/*.swift",
-    "NOOPWatch*/**/*.swift",
+    "ZoopWatch*/**/*.swift",
     "android/**/*.kt",
 )
 

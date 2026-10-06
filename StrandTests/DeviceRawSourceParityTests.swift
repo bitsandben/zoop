@@ -50,7 +50,7 @@ final class DeviceRawSourceParityTests: XCTestCase {
             let actual = Repository.rawWhoopSourceIds(activeDeviceId: vector.activeDeviceId,
                                                        registeredWhoopIds: vector.registeredWhoopIds)
             XCTAssertEqual(actual, vector.imported, vector.name)
-            XCTAssertEqual(actual.map { $0 + "-noop" }, vector.computed, vector.name)
+            XCTAssertEqual(actual.map { $0 + "-zoop" }, vector.computed, vector.name)
         }
     }
 

@@ -3457,7 +3457,7 @@ extension OuraLiveSource: @preconcurrency CBPeripheralDelegate {
 /// adopt key-install handshake (on an OK `0x25` ack, `OuraLiveSource.handleKeyInstallAck`) and the wizard's
 /// Advanced "I already have my ring's key" path. This accessor only stores/reads/clears it.
 public enum OuraKeyStore {
-    private static let service = "com.noop.oura.installkey"
+    private static let service = "com.zoop.oura.installkey"
     /// The fixed key length per OURA_PROTOCOL.md s3 (16-byte application auth key).
     public static let keyLength = 16
 
@@ -3506,7 +3506,7 @@ public enum OuraKeyStore {
 /// on every single connect. Unlike `OuraKeyStore` this is NOT sensitive - it's an opaque ring-clock tick
 /// counter, not a credential - so plain `UserDefaults` is the right (and simplest) store.
 enum OuraHistoryCursorStore {
-    private static func key(deviceId: String) -> String { "com.noop.oura.historyCursor.\(deviceId)" }
+    private static func key(deviceId: String) -> String { "com.zoop.oura.historyCursor.\(deviceId)" }
 
     /// The persisted cursor for `deviceId`, or 0 (fetch everything) if none is stored yet.
     static func read(deviceId: String) -> UInt32 {
@@ -3530,8 +3530,8 @@ enum OuraHistoryCursorStore {
 /// inputs). Not sensitive — an opaque clock pairing, not a credential — so plain `UserDefaults`, same
 /// reasoning as `OuraHistoryCursorStore`.
 enum OuraSyncAnchorStore {
-    private static func ticksKey(deviceId: String) -> String { "com.noop.oura.syncAnchorTicks.\(deviceId)" }
-    private static func secondsKey(deviceId: String) -> String { "com.noop.oura.syncAnchorSeconds.\(deviceId)" }
+    private static func ticksKey(deviceId: String) -> String { "com.zoop.oura.syncAnchorTicks.\(deviceId)" }
+    private static func secondsKey(deviceId: String) -> String { "com.zoop.oura.syncAnchorSeconds.\(deviceId)" }
 
     /// The persisted anchor for `deviceId`, or nil if none is stored yet (a ring never anchored before,
     /// or an install that predates this feature).

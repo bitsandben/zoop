@@ -27,7 +27,7 @@ struct InventoryRow {
 /// publishing an address. This line carries no data the log did not already carry.
 ///
 /// `nowSec` is passed in rather than read, so the output is a pure function of its inputs. Kotlin twin:
-/// `com.noop.testcentre.deviceInventoryLines`.
+/// `com.zoop.testcentre.deviceInventoryLines`.
 func deviceInventoryLines(rows: [InventoryRow],
                           activeId: String?,
                           nowSec: Int,

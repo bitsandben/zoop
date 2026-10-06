@@ -55,7 +55,7 @@ public struct ChartTooltip: View {
         }
         .padding(.horizontal, 9)
         .padding(.vertical, 6)
-        .background(NoopPanelSurface(cornerRadius: 8, elevated: true))
+        .background(ZoopPanelSurface(cornerRadius: 8, elevated: true))
         .fixedSize()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label != nil ? "\(value), \(label!)" : value)

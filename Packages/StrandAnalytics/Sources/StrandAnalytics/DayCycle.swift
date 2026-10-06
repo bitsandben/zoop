@@ -4,7 +4,7 @@ public enum DayCycleMode: String, CaseIterable, Sendable {
     case sleepOnset = "sleep_onset"
     case midnight = "midnight"
 
-    public static let storageKey = "noop.dayCycleMode"
+    public static let storageKey = "zoop.dayCycleMode"
     /// Kotlin twin: `DayCycleMode.fromPersisted`.
     public static func persisted(_ value: String?) -> DayCycleMode {
         value.flatMap(Self.init(rawValue:)) ?? .sleepOnset

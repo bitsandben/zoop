@@ -1,8 +1,8 @@
 import Foundation
 
-/// The `settings.json` payload inside a `.noopbak` backup (#1000).
+/// The `settings.json` payload inside a `.zoopbak` backup (#1000).
 ///
-/// A `.noopbak` is a ZIP whose first entry is the SQLite database. That round-trips every row, but the
+/// A `.zoopbak` is a ZIP whose first entry is the SQLite database. That round-trips every row, but the
 /// user's profile (age / sex / weight / height / HR-max override) and display preferences live in
 /// UserDefaults (SharedPreferences on Android), so a restore onto a fresh device silently reset them —
 /// the "restore doesn't bring back settings/weight/height" half of #1000. This adds a SECOND, optional
@@ -21,7 +21,7 @@ import Foundation
 /// headlessly (`swift test --filter BackupSettingsTests`).
 public enum BackupSettings {
 
-    /// Canonical entry name inside the `.noopbak` ZIP. Matches the Android exporter byte-for-byte.
+    /// Canonical entry name inside the `.zoopbak` ZIP. Matches the Android exporter byte-for-byte.
     public static let entryName = "settings.json"
 
     /// The JSON kind a whitelisted key must decode to. Anything else (wrong type, JSON bool posing
@@ -84,7 +84,7 @@ public enum BackupSettings {
         "units.distance": "units.distance",
         "units.temperature": "units.temperature",
         "effort.scale": "effort.scale",
-        "dayCycle.mode": "noop.dayCycleMode",
+        "dayCycle.mode": "zoop.dayCycleMode",
         "today.hostedCards": "today.hostedCards",
     ]
 

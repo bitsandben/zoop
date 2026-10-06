@@ -53,7 +53,7 @@ public struct PipBar: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     // Keep the fill sweep on the same gate as count-up text: an in-app Reduce Motion choice
     // or Low Power Mode must suppress the decorative transition even when the OS flag is off.
-    @ObservedObject private var motion = NoopMotionState.shared
+    @ObservedObject private var motion = ZoopMotionState.shared
     private var poseStill: Bool { motion.poseStill(reduceMotion) }
 
     /// The single animated driver: a 0…1 fraction that the whole bar derives from. One eased sweep moves

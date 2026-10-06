@@ -74,7 +74,7 @@ public enum MetricArbitrationPolicy {
             switch source {
             case .whoopImport:   return 0   // direct dedicated sensor (R-R / PPG)
             case .xiaomiBand:    return 0   // dedicated wrist PPG
-            case .noopComputed:  return 1   // derived on-device from raw strap streams
+            case .zoopComputed:  return 1   // derived on-device from raw strap streams
             case .appleHealth:   return 2   // phone aggregate
             case .healthConnect: return 2
             case .nutritionCsv:  return 3
@@ -86,7 +86,7 @@ public enum MetricArbitrationPolicy {
             switch source {
             case .whoopImport:   return 0
             case .xiaomiBand:    return 0
-            case .noopComputed:  return 1
+            case .zoopComputed:  return 1
             case .appleHealth:   return 2
             case .healthConnect: return 2
             case .nutritionCsv:  return 3
@@ -100,7 +100,7 @@ public enum MetricArbitrationPolicy {
             case .appleHealth:   return 0   // phone pedometer — counts directly
             case .healthConnect: return 0
             case .whoopImport:   return 3   // strap step estimate is a last resort
-            case .noopComputed:  return 3   // NOOP step estimate from motion
+            case .zoopComputed:  return 3   // NOOP step estimate from motion
             case .nutritionCsv:  return 3
             case .localCache:    return 3
             }
@@ -109,7 +109,7 @@ public enum MetricArbitrationPolicy {
             // The best STAGER wins: imported WHOOP stages > NOOP-computed stages > phone sleep buckets.
             switch source {
             case .whoopImport:   return 0
-            case .noopComputed:  return 1
+            case .zoopComputed:  return 1
             case .xiaomiBand:    return 1   // a band with its own staging, below WHOOP's
             case .appleHealth:   return 2   // phone sleep buckets
             case .healthConnect: return 2
@@ -123,7 +123,7 @@ public enum MetricArbitrationPolicy {
             case .appleHealth:   return 2
             case .healthConnect: return 2
             case .whoopImport:   return 3
-            case .noopComputed:  return 3
+            case .zoopComputed:  return 3
             case .xiaomiBand:    return 3
             case .nutritionCsv:  return 3
             case .localCache:    return 3
@@ -134,7 +134,7 @@ public enum MetricArbitrationPolicy {
             switch source {
             case .whoopImport:   return 0
             case .xiaomiBand:    return 0
-            case .noopComputed:  return 1
+            case .zoopComputed:  return 1
             case .appleHealth:   return 2
             case .healthConnect: return 2
             case .nutritionCsv:  return 0   // its own single-source metric
@@ -150,7 +150,7 @@ public enum MetricArbitrationPolicy {
     public static func sourcePriority(_ source: FusionSource) -> Int {
         switch source {
         case .whoopImport:   return 0
-        case .noopComputed:  return 1
+        case .zoopComputed:  return 1
         case .appleHealth:   return 2
         case .healthConnect: return 3
         case .xiaomiBand:    return 4
@@ -167,11 +167,11 @@ public enum MetricArbitrationPolicy {
         switch (metric, source) {
         case (.steps, .xiaomiBand), (.steps, .appleHealth), (.steps, .healthConnect):
             return "counts directly"
-        case (.steps, .whoopImport), (.steps, .noopComputed):
+        case (.steps, .whoopImport), (.steps, .zoopComputed):
             return "step estimate"
         case (.sleep, .whoopImport):
             return "best stager"
-        case (.sleep, .noopComputed):
+        case (.sleep, .zoopComputed):
             return "computed stages"
         case (.sleep, .appleHealth), (.sleep, .healthConnect):
             return "phone sleep buckets"

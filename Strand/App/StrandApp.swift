@@ -5,6 +5,8 @@ import UserNotifications
 @main
 struct StrandApp: App {
     init() {
+        LocalSettingsArchive.restoreIfEmpty()
+        AppLanguage.installAtLaunch()
         // #1008: pin the pre-change Overnight-only default for existing installs before
         // anything reads it. Idempotent; a no-op on fresh installs and after the first launch.
         PuffinExperiment.migrateContinuousHrvOvernightDefault()
@@ -26,6 +28,7 @@ struct StrandApp: App {
         let router = NavRouter()
         _router = StateObject(wrappedValue: router)
         NotificationPresenter.shared.onCoachBriefTapped = { [weak router] in router?.openCoach() }
+        LocalSettingsArchive.snapshot()
     }
 
     @StateObject private var model = AppModel()

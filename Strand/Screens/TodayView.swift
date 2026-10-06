@@ -8,8 +8,8 @@ import Foundation
 // MARK: - Control Center (the home dashboard), HomeDensity rewrite
 //
 // The owner's complaint was "cards then random space". This rebuild is a tight,
-// GAPLESS dashboard grid: one column of uniform sections, every gap == NoopMetrics.gap,
-// every section break == NoopMetrics.sectionGap, equal margins from ScreenScaffold.
+// GAPLESS dashboard grid: one column of uniform sections, every gap == ZoopMetrics.gap,
+// every section break == ZoopMetrics.sectionGap, equal margins from ScreenScaffold.
 //
 // Composition (top → bottom):
 //   (a) HERO, full-width HStack that fills the width EQUALLY: RecoveryRing (left card)
@@ -18,7 +18,7 @@ import Foundation
 //               Sleep, HRV, RHR, SpO2, Respiratory, Steps, Weight, Calories) each with
 //               a 14-day sparkline so the grid tiles perfectly with no empty cells.
 //   (c) LAST WORKOUTS, the SAME adaptive grid of fixed-104pt workout StatTiles.
-//   (d) DATA SOURCES, one full-width NoopCard footer of SourceBadges + counts.
+//   (d) DATA SOURCES, one full-width ZoopCard footer of SourceBadges + counts.
 //
 // Sparse series (weight) fall back to ALL history so a tile never shows an empty
 // state when data exists. Only locked StrandDesign components are used.
@@ -100,13 +100,13 @@ struct ActiveWorkoutIndicatorCard: View {
     let onReturn: () -> Void
 
     var body: some View {
-        NoopCard(tint: StrandPalette.metricRose) {
-            VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
-                HStack(alignment: .firstTextBaseline, spacing: NoopMetrics.space2) {
+        ZoopCard(tint: StrandPalette.metricRose) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
+                HStack(alignment: .firstTextBaseline, spacing: ZoopMetrics.space2) {
                     // Decorative "live" dot, hidden from VoiceOver (the card itself reads the full state).
                     Circle()
                         .fill(StrandPalette.metricRose)
-                        .frame(width: NoopMetrics.space2, height: NoopMetrics.space2)
+                        .frame(width: ZoopMetrics.space2, height: ZoopMetrics.space2)
                         .accessibilityHidden(true)
                     Text("WORKOUT IN PROGRESS")
                         .font(StrandFont.overline)
@@ -120,7 +120,7 @@ struct ActiveWorkoutIndicatorCard: View {
                             .tracking(StrandFont.overlineTracking)
                             .foregroundStyle(StrandPalette.textSecondary)
                     }
-                    Spacer(minLength: NoopMetrics.space2)
+                    Spacer(minLength: ZoopMetrics.space2)
                     // A per-second live clock. The TimelineView re-evaluates ONLY this Text every second, so
                     // the tick never re-renders the rest of the card (let alone TodayView.body). bodyNumber
                     // already carries `.monospacedDigit()`, so no extra modifier here.
@@ -134,16 +134,16 @@ struct ActiveWorkoutIndicatorCard: View {
                 }
 
                 ViewThatFits(in: .horizontal) {
-                    HStack(alignment: .center, spacing: NoopMetrics.cardInnerSpacing) {
+                    HStack(alignment: .center, spacing: ZoopMetrics.cardInnerSpacing) {
                         sportLabel
-                        Spacer(minLength: NoopMetrics.space2)
-                        NoopButton("Return to workout", systemImage: "arrow.forward.circle.fill",
+                        Spacer(minLength: ZoopMetrics.space2)
+                        ZoopButton("Return to workout", systemImage: "arrow.forward.circle.fill",
                                    kind: .primary, action: onReturn)
                     }
 
-                    VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                         sportLabel
-                        NoopButton("Return to workout", systemImage: "arrow.forward.circle.fill",
+                        ZoopButton("Return to workout", systemImage: "arrow.forward.circle.fill",
                                    kind: .primary, fullWidth: true, action: onReturn)
                     }
                 }
@@ -283,7 +283,7 @@ struct TodayView: View {
     // user had it in their saved selection, the feature owns its own gate.
     /// The Coach master switch (`noop.coachEnabled`, shared by name with Android). Default ON. Gates the
     /// Today launcher card here; the tab and the daily brief read the same key.
-    @AppStorage("noop.coachEnabled") private var coachEnabled = true
+    @AppStorage("zoop.coachEnabled") private var coachEnabled = true
     @AppStorage(HydrationStore.enabledKey) private var hydrationEnabled = false
     /// Today's hydration total + goal (ml), loaded in loadAll when the feature is on. nil hides the value.
     @State private var hydrationTotalML: Double?
@@ -360,7 +360,7 @@ struct TodayView: View {
     /// omitted rather than guessed; direct imported rows always resolve.
     @State private var providerByMetric: [String: ScoreInputProvider] = [:]
 
-    // On-device steps ESTIMATE per day (key "steps_est", computed "-noop" source). The Steps tile
+    // On-device steps ESTIMATE per day (key "steps_est", computed "-zoop" source). The Steps tile
     // prefers a REAL step count (strap @57 counter / Apple Health); only when a day has neither does it
     // fall back to this estimate, shown with an "est." caption so it's never read as a measured count.
     // Loaded once via exploreSeries (same merged read fitness_age/vitality use), keyed by day. (#150)
@@ -542,7 +542,7 @@ struct TodayView: View {
     // THE single grid definition, every tile group reuses it so margins line up. minimum 150 (not
     // 168) so two tiles reliably fit a phone's ~345pt content width; at 168 the grid sat on the
     // single-vs-two-column boundary and could collapse to one full-width column on a narrow phone.
-    private let grid = [GridItem(.adaptive(minimum: 150), spacing: NoopMetrics.gap)]
+    private let grid = [GridItem(.adaptive(minimum: 150), spacing: ZoopMetrics.gap)]
 
     /// #817 - the furthest-back offset the day-nav (swipe + chevrons + date jump) may reach: today's
     /// logical day back to the earliest banked day across all sources. 0 when there's no data yet, so
@@ -922,9 +922,9 @@ struct TodayView: View {
     }
 
     /// PURE mapper (unit-testable), a raw resolver source id onto the spec's provenance labels, given
-    /// the strap's real `deviceId`. ANY NOOP-computed strap sibling (a "-noop"-suffixed id, not just the
+    /// the strap's real `deviceId`. ANY NOOP-computed strap sibling (a "-zoop"-suffixed id, not just the
     /// active strap's) reads "On-device" — matching by suffix so a computed row from a non-active strap
-    /// can't fall through to `FusionSource.noopComputed`'s raw "NOOP" displayName; the imported strap source
+    /// can't fall through to `FusionSource.zoopComputed`'s raw "NOOP" displayName; the imported strap source
     /// (`deviceId`, normally "my-whoop") reads "Whoop"; the Apple-Health source reads "Apple Health".
     /// Any other real source (Mi Band, Health Connect, nutrition) keeps its `FusionSource.displayName`
     ///, still the genuine merge winner, never a blanket claim. Mirror EXACTLY in Kotlin.
@@ -941,7 +941,7 @@ struct TodayView: View {
         if rawSource == spo2CandidateAttributionSource {
             return String(localized: "strap estimate (unverified)")
         }
-        if rawSource.hasSuffix("-noop") { return String(localized: "On-device") }
+        if rawSource.hasSuffix("-zoop") { return String(localized: "On-device") }
         if rawSource == deviceId || rawSource == Repository.whoopSource { return Self.whoopBrandName }
         if rawSource == Repository.appleHealthSource { return "Apple Health" }
         // Localize the non-brand source names here rather than exposing the analytics layer's
@@ -952,7 +952,7 @@ struct TodayView: View {
         case .nutritionCsv:  return String(localized: "Nutrition")
         case .localCache:    return String(localized: "Cached")
         case .whoopImport:   return Self.whoopBrandName
-        case .noopComputed:  return String(localized: "On-device")
+        case .zoopComputed:  return String(localized: "On-device")
         case .appleHealth:   return "Apple Health"
         case nil:            return rawSource
         }
@@ -963,7 +963,7 @@ struct TodayView: View {
     private func provenanceTint(_ metricKey: String) -> Color {
         guard let provider = providerByMetric[metricKey] else { return StrandPalette.statusPositive }
         let source = provider.sourceId.lowercased()
-        if source.hasSuffix("-noop") { return StrandPalette.statusPositive }
+        if source.hasSuffix("-zoop") { return StrandPalette.statusPositive }
         if source == Repository.appleHealthSource { return StrandPalette.metricCyan }
         if source == Repository.whoopSource
             || provider.brand?.caseInsensitiveCompare("WHOOP") == .orderedSame {
@@ -1472,7 +1472,7 @@ struct TodayView: View {
                        // lag regression; removing the flatten restores native layer caching.
                        topBackground: showDayCycleBackground
                            ? AnyView(SceneScreenBackground(hour: demoSceneHour)) : nil) {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 #if os(iOS)
                 // Compact top bar: profile/settings (left) · ‹ Today › day-nav (centre, bold) · strap
                 // battery (right). Replaces the big title + the full-width day-nav pill (WHOOP-style).
@@ -1727,12 +1727,12 @@ struct TodayView: View {
     private func readinessCard(_ r: ReadinessEngine.Readiness) -> some View {
         let headline = readinessHeadlineText(r.level)
         let summary = readinessSummaryText(r.level)
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             // When Readiness is anchored on the carried last-scored day (#543), the overline stamps its
             // date so the prior read isn't passed off as today's; otherwise the usual prompt.
             SectionHeader("Readiness",
                           overline: lastScoredRecoveryDay.map { "\(carriedCaption($0))" } ?? "Should you push today?")
-            NoopCard {
+            ZoopCard {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(spacing: 10) {
                             Circle().fill(readinessColor(r.level)).frame(width: 10, height: 10)
@@ -1967,23 +1967,23 @@ struct TodayView: View {
 
     private var classicHeroSection: some View {
         heroSection
-            .padding(.vertical, NoopMetrics.space4)
+            .padding(.vertical, ZoopMetrics.space4)
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous)
+                RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous)
                     .fill(StrandPalette.surfaceBase.opacity(0.72))
             )
     }
 
     private var liveSessionStartSection: some View {
         Button { showLiveSession = true } label: {
-            NoopCard(tint: StrandPalette.metricCyan) {
-                HStack(spacing: NoopMetrics.space3) {
+            ZoopCard(tint: StrandPalette.metricCyan) {
+                HStack(spacing: ZoopMetrics.space3) {
                     Image(systemName: "shield.lefthalf.filled")
                         .font(StrandFont.headline)
                         .foregroundStyle(StrandPalette.metricCyan)
                         .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
                         Text("Start session")
                             .font(StrandFont.headline)
                             .foregroundStyle(StrandPalette.textPrimary)
@@ -1991,7 +1991,7 @@ struct TodayView: View {
                             .font(StrandFont.caption)
                             .foregroundStyle(StrandPalette.textSecondary)
                     }
-                    Spacer(minLength: NoopMetrics.space2)
+                    Spacer(minLength: ZoopMetrics.space2)
                     Text("BETA")
                         .strandOverline()
                     Image(systemName: "chevron.right")
@@ -2013,7 +2013,7 @@ struct TodayView: View {
     private var heroSection: some View {
         let d = displayDay
         let score = d?.recovery
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             // Recording status now lives as a colour-coded light in the header icon row, not a full-width
             // banner sandwiched above the rings. The three clean rings lead the screen directly.
             scoreHeroRow(d: d, score: score)
@@ -2090,7 +2090,7 @@ struct TodayView: View {
     /// calibrating/needs-strap states because here the exact cause and fix are known, so it says so, on
     /// today AND a navigated past day alike.
     private var chargeDeepWindowGapNote: some View {
-        NoopCard(padding: 14, tint: StrandPalette.chargeColor) {
+        ZoopCard(padding: 14, tint: StrandPalette.chargeColor) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "moon.zzz")
                     .font(.system(size: 16, weight: .semibold))
@@ -2121,7 +2121,7 @@ struct TodayView: View {
         let countdown = ChargeBreakdownFormat.calibrationCountdown(nightsRemaining: remaining)
         let unlock = ChargeBreakdownFormat.calibrationUnlockCopy(scoreName: String(localized: "Charge"))
         let progress = ChargeBreakdownFormat.calibrationProgress(banked: banked, seed: Baselines.minNightsSeed)
-        NoopCard(padding: 14, tint: StrandPalette.chargeColor) {
+        ZoopCard(padding: 14, tint: StrandPalette.chargeColor) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "gauge.with.dots.needle.bottom.50percent")
                     .font(.system(size: 16, weight: .semibold))
@@ -2169,12 +2169,12 @@ struct TodayView: View {
     private var chargeBreakdownSheet: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                     // One chargeBreakdown() call per sheet body eval: drivers + confidence share the same
                     // baseline folds (see chargeBreakdown's PERF note).
                     let breakdown = chargeBreakdown()
                     if let breakdown, !breakdown.drivers.isEmpty {
-                        NoopCard(padding: 18, tint: StrandPalette.chargeColor) {
+                        ZoopCard(padding: 18, tint: StrandPalette.chargeColor) {
                             ChargeBreakdownSection(drivers: breakdown.drivers,
                                                    confidence: breakdown.confidence,
                                                    skinTempRel: chargeSkinTempRel)
@@ -2222,13 +2222,13 @@ struct TodayView: View {
                                 .foregroundStyle(StrandPalette.textTertiary)
                         }
                         .padding(14)
-                        .background(NoopPanelSurface(cornerRadius: 14))
+                        .background(ZoopPanelSurface(cornerRadius: 14))
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("How Charge is calculated. The method behind the score.")
                 }
-                .padding(NoopMetrics.screenPadding)
+                .padding(ZoopMetrics.screenPadding)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             #if os(iOS)
@@ -2259,8 +2259,8 @@ struct TodayView: View {
     /// The honest fallback when the Charge ring is tapped but there is no value AND no running calibration
     /// (a navigated past day with no score, or a fresh strap with nothing banked), never a blank sheet.
     private var chargeBreakdownEmptyNote: some View {
-        NoopCard(padding: 18, tint: StrandPalette.chargeColor) {
-            VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+        ZoopCard(padding: 18, tint: StrandPalette.chargeColor) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
                 Text("No Charge breakdown yet")
                     .font(StrandFont.headline)
                     .foregroundStyle(StrandPalette.textPrimary)
@@ -2290,7 +2290,7 @@ struct TodayView: View {
     private var synthesisSection: some View {
         let d = displayDay
         let score = d?.recovery
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(greetingWord)
                     .font(StrandFont.subhead)
@@ -2378,7 +2378,7 @@ struct TodayView: View {
             Button {
                 withAnimation(StrandMotion.interactive) { synthesisExpanded = true }
             } label: {
-                NoopCard(tint: StrandPalette.chargeColor) {
+                ZoopCard(tint: StrandPalette.chargeColor) {
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Synthesis").strandOverline()
@@ -2436,7 +2436,7 @@ struct TodayView: View {
     @ViewBuilder
     private var yourCardsSection: some View {
         if selectedDayOffset == 0 && !enabledDashboardCards.isEmpty {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 // Section header: the "Your cards" label + a right-aligned BLUE "CUSTOMISE" action link (the
                 // WHOOP "My Dashboard" ✎ affordance). Opens a local sheet, no new nav destination.
                 HStack(alignment: .firstTextBaseline) {
@@ -2468,7 +2468,7 @@ struct TodayView: View {
     private var hostedCardsSection: some View {
         let cards = HostedCardPrefs.decodeEnabled(hostedCardsRaw)
         if selectedDayOffset == 0 && !cards.isEmpty {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 ForEach(cards) { card in
                     if let route = card.route {
                         NavigationLink(value: route) { hostedCard(for: card) }
@@ -2495,7 +2495,7 @@ struct TodayView: View {
             // READ-ONLY, like `stages`: the Stress tab keeps the interactive timeline and this mirrors
             // only the display. `DaytimeLoadLine` is the tab's OWN line, so the host cannot drift into
             // a second drawing of the same day.
-            NoopCard(tint: StressRamp.calm) {
+            ZoopCard(tint: StressRamp.calm) {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Stress through the day").strandOverline()
                     if hostedStressHours.contains(where: { $0.level != nil }) {
@@ -2524,13 +2524,13 @@ struct TodayView: View {
             if let m = hostedSleepModel {
                 StagesVsTypicalCard(model: m)
             } else {
-                VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     SectionHeader("Stages vs typical", overline: "Last night")
                     Text("Not enough nights yet.")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .frame(maxWidth: .infinity, minHeight: 60, alignment: .center)
-                        .background(NoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
+                        .background(ZoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
                 }
             }
         case .nightDetail:
@@ -2539,13 +2539,13 @@ struct TodayView: View {
             if let m = hostedSleepModel {
                 NightDetailCard(model: m)
             } else {
-                VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     SectionHeader("Night detail", overline: "Metrics")
                     Text("Not enough nights yet.")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .frame(maxWidth: .infinity, minHeight: 60, alignment: .center)
-                        .background(NoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
+                        .background(ZoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
                 }
             }
         case .sleepDebt:
@@ -2554,13 +2554,13 @@ struct TodayView: View {
             if let m = hostedSleepModel {
                 SleepDebtLedgerCard(model: m)
             } else {
-                VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     SectionHeader("Sleep-debt ledger", overline: "Last 14 nights")
                     Text("Not enough nights yet.")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .frame(maxWidth: .infinity, minHeight: 60, alignment: .center)
-                        .background(NoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
+                        .background(ZoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
                 }
             }
         case .stages:
@@ -2570,13 +2570,13 @@ struct TodayView: View {
             if let m = hostedSleepModel {
                 StagesCard(model: m)
             } else {
-                VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     SectionHeader("Stages", overline: "Last night")
                     Text("Not enough nights yet.")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .frame(maxWidth: .infinity, minHeight: 60, alignment: .center)
-                        .background(NoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
+                        .background(ZoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
                 }
             }
         case .hoursVsNeeded:
@@ -2586,13 +2586,13 @@ struct TodayView: View {
             if let m = hostedSleepModel {
                 HoursVsNeededCard(model: m)
             } else {
-                VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     SectionHeader("Hours vs Needed", overline: "Sleep")
                     Text("Not enough nights yet.")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .frame(maxWidth: .infinity, minHeight: 60, alignment: .center)
-                        .background(NoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
+                        .background(ZoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
                 }
             }
         case .consistency:
@@ -2602,13 +2602,13 @@ struct TodayView: View {
             if let m = hostedSleepModel {
                 ConsistencyCard(model: m)
             } else {
-                VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     SectionHeader("Consistency", overline: "Sleep")
                     Text("Not enough nights yet.")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .frame(maxWidth: .infinity, minHeight: 60, alignment: .center)
-                        .background(NoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
+                        .background(ZoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
                 }
             }
         }
@@ -2725,7 +2725,7 @@ struct TodayView: View {
                             ?? lastRespDay?.respRateBpm.map { String(format: "%.1f", locale: AppLanguage.activeLocale, $0) } ?? "—")
         case .bloodOxygen:
             // PER-FIELD carry: today → whole-row vitals carry → the last row that actually HAS a reading
-            // (computed "-noop" rows write spo2Pct = nil), so this card agrees with the Key Metrics tile
+            // (computed "-zoop" rows write spo2Pct = nil), so this card agrees with the Key Metrics tile
             // (`d?.spo2Pct ?? carriedVital(perField: lastSpo2Day)`). Mirrors the Android dashboardCardValue.
             // #103/queue-11a: when no calibrated spo2Pct exists AND the experimental toggle is ON, fall
             // back to the spo2_candidate sparkline tail (WHOOP `spo2_candidate_82` or Oura ceiling@100
@@ -2851,7 +2851,7 @@ struct TodayView: View {
         }
         .padding(.horizontal, 13).padding(.vertical, 11)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(FrostedCardSurface(cornerRadius: NoopMetrics.cardRadius))
+        .background(FrostedCardSurface(cornerRadius: ZoopMetrics.cardRadius))
         .contentShape(Rectangle())
     }
 
@@ -2890,8 +2890,8 @@ struct TodayView: View {
             }
             // Inset to the card's content margin so the "Last night · <date>" clock-icon footnote sits a
             // proper distance from the hero's left edge rather than hugging it (it previously used a bare
-            // 2pt). Matches NoopMetrics.cardPadding, the standard card content inset.
-            .padding(.horizontal, NoopMetrics.cardPadding)
+            // 2pt). Matches ZoopMetrics.cardPadding, the standard card content inset.
+            .padding(.horizontal, ZoopMetrics.cardPadding)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(state.accessibilityText ?? "")
         }
@@ -2966,7 +2966,7 @@ struct TodayView: View {
         let carriedFromResp: DailyMetric? = (d?.respRateBpm == nil && vd?.respRateBpm != nil) ? vd : nil
         let sources: [DailyMetric] = [carriedFromHrv, carriedFromRhr, carriedFromResp].compactMap { $0 }
         let provenance: DailyMetric? = sources.min(by: { $0.day < $1.day })
-        NoopCard(tint: StrandPalette.chargeColor) {
+        ZoopCard(tint: StrandPalette.chargeColor) {
             VStack(spacing: 0) {
                 // DEBUG promo harness: pin HRV / Resting HR to the active frame's values. No-op otherwise.
                 #if DEBUG
@@ -3579,7 +3579,7 @@ struct TodayView: View {
     private var heartRateTrendSection: some View {
         if hrPoints.count > 1 {
             let v = hrPoints.map(\.value)
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 SectionHeader("Heart Rate", overline: "\(selectedDayOverline)")
                 ChartCard(
                     title: "Beats per minute",
@@ -3596,7 +3596,7 @@ struct TodayView: View {
                         gradient: Gradient(colors: [StrandPalette.metricRose.opacity(0.55), StrandPalette.metricRose]),
                         valueRange: hrRange(v),
                         xRange: hrAxis,
-                        height: NoopMetrics.chartHeight,
+                        height: ZoopMetrics.chartHeight,
                         // #829 - pinch/drag zoom over the loaded day. The bound window narrows the visible
                         // x-domain only (no DB re-read); zoomBounds clamps it to the loaded day and keeps the
                         // points at full resolution while zoomed.
@@ -3636,7 +3636,7 @@ struct TodayView: View {
             // on isn't a fault , say so explicitly instead of leaving a blank where the chart was (which read
             // as the graph freezing). We don't silently swap in another day's curve here; the honest empty
             // state is the parity-matched fix. Mirrors the Android HeartRateTrendCard empty branch.
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 SectionHeader("Heart Rate", overline: "\(selectedDayOverline)")
                 ChartCard(
                     title: "Beats per minute",
@@ -3663,7 +3663,7 @@ struct TodayView: View {
     /// VoiceOver; the Reset button stays a real focusable control. Only the wording differs by platform
     /// (macOS has drag-pan + double-tap here, no pinch).
     @ViewBuilder private var hrZoomHint: some View {
-        HStack(spacing: NoopMetrics.space2) {
+        HStack(spacing: ZoopMetrics.space2) {
             Image(systemName: hrZoomDomain == nil
                   ? "arrow.up.left.and.arrow.down.right"
                   : "arrow.down.right.and.arrow.up.left")
@@ -3688,12 +3688,12 @@ struct TodayView: View {
         }
         .font(StrandFont.footnote)
         .foregroundStyle(StrandPalette.textTertiary)
-        .padding(.top, NoopMetrics.space1 / 2)
+        .padding(.top, ZoopMetrics.space1 / 2)
     }
 
     /// Drop the Today HR zoom back to the full day, snapping when Reduce Motion is on (#829).
     private func resetHrZoom() {
-        withAnimation(NoopMotion.gated(StrandMotion.interactive, reduced: reduceMotion)) {
+        withAnimation(ZoopMotion.gated(StrandMotion.interactive, reduced: reduceMotion)) {
             hrZoomDomain = nil
         }
     }
@@ -3788,7 +3788,7 @@ struct TodayView: View {
 
     @ViewBuilder
     private var metricsSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             // The section header keeps its "14-day trend" trailing label; an Edit control sits beside it
             // to open the local layout editor (#251). No new nav destination, a sheet over Today.
             HStack(alignment: .firstTextBaseline) {
@@ -3808,7 +3808,7 @@ struct TodayView: View {
             // S5: cap the grid to the first `metricsCollapsedCap` tiles behind a "Show all metrics" expander.
             // This collapses OVERFLOW ONLY (the visible tiles stay in the user's saved order), and no
             // pinned/selected tile is dropped or reordered (#251); the rest just fold until the expander.
-            LazyVGrid(columns: grid, alignment: .leading, spacing: NoopMetrics.gap) {
+            LazyVGrid(columns: grid, alignment: .leading, spacing: ZoopMetrics.gap) {
                 ForEach(visibleKeyMetrics) { metric in
                     // Pin every tile to one height so the grid reads as an even matrix. A LazyVGrid only
                     // offers a cell its own content height, so maxHeight: .infinity never stretched a
@@ -3817,7 +3817,7 @@ struct TodayView: View {
                     // and holds up as text scales because it clears the tallest tile layout.
                     keyMetricTile(metric)
                         .frame(maxWidth: .infinity)
-                        .frame(height: NoopMetrics.keyMetricTileHeight)
+                        .frame(height: ZoopMetrics.keyMetricTileHeight)
                 }
             }
             if metricsHasOverflow {
@@ -3887,7 +3887,7 @@ struct TodayView: View {
             return (format(v), carriedCaption(p))
         }
         // PER-FIELD carry: the whole-row carry above (`lastScoredRecoveryDay`) can land on a row whose field
-        // is nil (the engine writes spo2Pct = nil on computed "-noop" rows), so fall through to the freshest
+        // is nil (the engine writes spo2Pct = nil on computed "-zoop" rows), so fall through to the freshest
         // strictly-prior row that HAS this field, stamped with its OWN carried date. Tried after the whole-row
         // carry so a genuine last-scored-night reading keeps its caption. Mirrors the Android per-field carry.
         if let pf = perField, let v = prior(pf) {
@@ -4161,12 +4161,12 @@ struct TodayView: View {
         // at the source would silently shrink two unrelated numbers on this same screen.
         let recent = Self.recentWorkoutsFeed(workouts)
         if !recent.isEmpty {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 // "14 days" describes the window, like Android's today_workouts_14_days. The old
                 // "\(count) total" counted every workout ever recorded while showing at most six.
                 SectionHeader("Latest Workouts", overline: "Activity",
                               trailing: String(localized: "14 days"))
-                LazyVGrid(columns: grid, alignment: .leading, spacing: NoopMetrics.gap) {
+                LazyVGrid(columns: grid, alignment: .leading, spacing: ZoopMetrics.gap) {
                     ForEach(Array(recent.prefix(6).enumerated()), id: \.offset) { _, w in
                         Button {
                             workoutDetail = WorkoutDetailTarget(row: w)
@@ -4193,12 +4193,12 @@ struct TodayView: View {
 
     @ViewBuilder
     private var sourcesSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Data Sources", overline: "Provenance")
             // S5: collapsed to a single "Synced from: …" summary line by default; tapping expands the full
             // per-source rows + strap battery/sync inline. Nothing is removed, the detail is one tap away.
             if sourcesExpanded {
-                NoopCard {
+                ZoopCard {
                     VStack(alignment: .leading, spacing: 12) {
                         // A header row to collapse it back, so the expanded card has an obvious "less" cue.
                         Button {
@@ -4275,7 +4275,7 @@ struct TodayView: View {
         Button {
             withAnimation(StrandMotion.interactive) { sourcesExpanded = true }
         } label: {
-            NoopCard {
+            ZoopCard {
                 HStack(spacing: 8) {
                     Text(Self.syncedFromSummary(
                         hasWhoop: !repo.days.isEmpty,
@@ -4651,7 +4651,7 @@ struct TodayView: View {
         async let spo2Spark          = sparkValues("spo2", source: "my-whoop", window: 14)
         // #103/queue-11a: SpO₂ candidate nightly mean — WHOOP `spo2_candidate_82`, or an Oura owner's
         // ceiling@100 `0x6F` mean (device-conditional, see IntelligenceEngine). Read via `exploreSeries`
-        // so the computed "-noop" metricSeries backs the trend; "my-whoop" here is the generic "active
+        // so the computed "-zoop" metricSeries backs the trend; "my-whoop" here is the generic "active
         // strap" sentinel `exploreSeries` resolves through `computedReadIds`, not a WHOOP-only filter, so
         // this already picks up an Oura ring's own computed id with no further change. Empty when the
         // toggle is OFF (the engine writes nothing) or the owner has no in-band reading. Used as a
@@ -4716,7 +4716,7 @@ struct TodayView: View {
         async let vitalitySeriesA    = repo.exploreSeries(key: "vitality", source: "my-whoop")
 
         // Steps ESTIMATE per day (WHOOP 4.0 motion → calibrated steps). exploreSeries reads the computed
-        // "-noop" metricSeries the IntelligenceEngine writes, exactly like the Explore "steps_est" metric.
+        // "-zoop" metricSeries the IntelligenceEngine writes, exactly like the Explore "steps_est" metric.
         // Only consulted when a day has no REAL step count (see the .steps tile), so it never overrides a
         // measured value, it just fills the gap a 4.0 user would otherwise see as ", ".
         let stepsEstSeries = await stepsEstSeriesA
@@ -5541,7 +5541,7 @@ private struct RecordingStatusLight: View {
     /// in #911). It also ran precisely while the strap was offloading history, i.e. while the app was
     /// already busy. Gated on all three quiet signals now.
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @ObservedObject private var motion = NoopMotionState.shared
+    @ObservedObject private var motion = ZoopMotionState.shared
 
     /// Colour for the light: green recording, amber last-synced, red not recording, accent for
     /// experimental history. Mirrors the prior `TodayView.recordingHue` semantics verbatim.

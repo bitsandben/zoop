@@ -18,7 +18,7 @@ import WhoopStore
 /// unreadable.
 final class BackfillMetaForgeryTests: XCTestCase {
 
-    private final class NoopStore: BackfillStoreWriting {
+    private final class ZoopStore: BackfillStoreWriting {
         @discardableResult
         func insert(_ streams: Streams, deviceId: String) async throws
             -> (hr: Int, rr: Int, events: Int, battery: Int,
@@ -42,7 +42,7 @@ final class BackfillMetaForgeryTests: XCTestCase {
 
     /// Collects every trim acknowledgement the Backfiller issues. `@MainActor` because `Backfiller` is.
     @MainActor private func makeBackfiller(_ acks: @escaping (UInt32) -> Void) -> Backfiller {
-        Backfiller(store: NoopStore(), deviceId: "test", ackTrim: { trim, _ in acks(trim) })
+        Backfiller(store: ZoopStore(), deviceId: "test", ackTrim: { trim, _ in acks(trim) })
     }
 
     // MARK: - control: the intact frame does acknowledge

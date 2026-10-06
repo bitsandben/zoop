@@ -332,7 +332,7 @@ private struct BreathingContent: View {
 
                 ZStack {
                     ScenicHeroBackground(domain: .rest, starCount: 56)
-                        .clipShape(RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
                     breathingOrb
                         .padding(.vertical, 6)
                 }
@@ -516,14 +516,14 @@ private struct BreathingContent: View {
     // MARK: - Controls
 
     private var controlRow: some View {
-        HStack(spacing: NoopMetrics.space3) {
-            NoopButton(running ? "Stop session" : "Start session",
+        HStack(spacing: ZoopMetrics.space3) {
+            ZoopButton(running ? "Stop session" : "Start session",
                        systemImage: running ? "stop.fill" : "play.fill",
                        kind: running ? .destructive : .primary, fullWidth: true) {
                 running ? stop() : start()
             }
 
-            NoopButton("Test buzz", systemImage: "waveform.path", kind: .secondary) {
+            ZoopButton("Test buzz", systemImage: "waveform.path", kind: .secondary) {
                 model.buzz(loops: 1)
             }
             .disabled(!live.bonded)
@@ -583,7 +583,7 @@ private struct BreathingContent: View {
     // MARK: - Readouts
 
     private var readoutRow: some View {
-        HStack(spacing: NoopMetrics.gap) {
+        HStack(spacing: ZoopMetrics.gap) {
             readoutTile(label: String(localized: "Heart rate"),
                         value: model.bpm.map { "\($0)" } ?? "—",
                         unit: "bpm",
@@ -642,7 +642,7 @@ private struct BreathingContent: View {
                     .padding(.top, 4)
             }
         }
-        .frame(height: NoopMetrics.tileHeight)
+        .frame(height: ZoopMetrics.tileHeight)
     }
 
     // MARK: - Coherence estimate
@@ -709,9 +709,9 @@ private struct BreathingContent: View {
         }
         .padding(14)
         .background(StrandPalette.statusWarning.opacity(0.08),
-                    in: RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous))
+                    in: RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous)
+            RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous)
                 .strokeBorder(StrandPalette.statusWarning.opacity(0.25), lineWidth: 1)
         )
     }
@@ -1041,7 +1041,7 @@ private struct ResonanceModeView: View {
     }
 
     var body: some View {
-        VStack(spacing: NoopMetrics.gap) {
+        VStack(spacing: ZoopMetrics.gap) {
             explainerCard
             if sweeping { sweepProgressCard } else { startCard }
             if let result = controller.lastSweep { resultCard(result) }
@@ -1073,13 +1073,13 @@ private struct ResonanceModeView: View {
 
     private var startCard: some View {
         StrandCard {
-            VStack(spacing: NoopMetrics.space3) {
-                NoopButton("Full sweep · ~13 min", systemImage: "waveform.path.ecg",
+            VStack(spacing: ZoopMetrics.space3) {
+                ZoopButton("Full sweep · ~13 min", systemImage: "waveform.path.ecg",
                            kind: .primary, fullWidth: true) {
                     controller.startSweep(quick: false)
                 }
 
-                NoopButton("Quick sweep · ~7 min", systemImage: "bolt",
+                ZoopButton("Quick sweep · ~7 min", systemImage: "bolt",
                            kind: .secondary, fullWidth: true) {
                     controller.startSweep(quick: true)
                 }
@@ -1109,7 +1109,7 @@ private struct ResonanceModeView: View {
                     .accessibilityLabel("Sweep progress")
                     .accessibilityValue("\(Int(controller.sweepProgress * 100)) percent")
 
-                NoopButton("Stop sweep", systemImage: "stop.fill", kind: .destructive, fullWidth: true) {
+                ZoopButton("Stop sweep", systemImage: "stop.fill", kind: .destructive, fullWidth: true) {
                     controller.stop()
                 }
             }
@@ -1229,7 +1229,7 @@ private struct ResonanceModeView: View {
         }
         .padding(14)
         .background(StrandPalette.statusWarning.opacity(0.08),
-                    in: RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous))
+                    in: RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
     }
 }
 
@@ -1249,7 +1249,7 @@ private struct CalmModeView: View {
     }
 
     var body: some View {
-        VStack(spacing: NoopMetrics.gap) {
+        VStack(spacing: ZoopMetrics.gap) {
             explainerCard
             if running { liveCard } else { startCard }
             if let outcome = controller.calmOutcome, !running { outcomeCard(outcome) }
@@ -1282,8 +1282,8 @@ private struct CalmModeView: View {
 
     private var startCard: some View {
         StrandCard {
-            VStack(spacing: NoopMetrics.rowSpacing) {
-                NoopButton("Calm me · 3 min", systemImage: "heart.fill",
+            VStack(spacing: ZoopMetrics.rowSpacing) {
+                ZoopButton("Calm me · 3 min", systemImage: "heart.fill",
                            kind: .primary, fullWidth: true) {
                     controller.startCalmMe()
                 }
@@ -1346,7 +1346,7 @@ private struct CalmModeView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                NoopButton("Stop", systemImage: "stop.fill", kind: .destructive, fullWidth: true) {
+                ZoopButton("Stop", systemImage: "stop.fill", kind: .destructive, fullWidth: true) {
                     controller.stop()
                 }
             }

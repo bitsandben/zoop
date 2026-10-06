@@ -24,7 +24,7 @@ final class DeviceEraEpochTests: XCTestCase {
     func testOneWhoopBrandAcrossManyIdsIsZero() {
         let days: [(day: String, sourceId: String)] = [
             (day: "2026-01-01", sourceId: "my-whoop"),
-            (day: "2026-01-02", sourceId: "my-whoop-noop"),
+            (day: "2026-01-02", sourceId: "my-whoop-zoop"),
             (day: "2026-01-03", sourceId: "whoop-EA:DC:0C:67:20:04"),
             (day: "2026-01-04", sourceId: "my-whoop"),
         ]
@@ -100,7 +100,7 @@ final class DeviceEraEpochTests: XCTestCase {
 
     func testBrandBucketCollapsesWhoopIdsAndSeparatesWearables() {
         XCTAssertEqual(Baselines.brandBucket("my-whoop"), "whoop")
-        XCTAssertEqual(Baselines.brandBucket("my-whoop-noop"), "whoop")
+        XCTAssertEqual(Baselines.brandBucket("my-whoop-zoop"), "whoop")
         XCTAssertEqual(Baselines.brandBucket("whoop-AA:BB:CC:DD:EE:FF"), "whoop")
         XCTAssertEqual(Baselines.brandBucket("apple-health"), "whoop")
         XCTAssertEqual(Baselines.brandBucket("oura-import"), "oura")

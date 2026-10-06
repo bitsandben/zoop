@@ -21,7 +21,7 @@ struct UpdatesInboxView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-                .background(NoopChromeSurface())
+                .background(ZoopChromeSurface())
             Divider().overlay(StrandPalette.hairline)
             content
             if !updateStore.items.isEmpty {
@@ -79,7 +79,7 @@ struct UpdatesInboxView: View {
             emptyState
         } else {
             ScrollView {
-                VStack(alignment: .leading, spacing: NoopMetrics.sectionGap) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                     if !unread.isEmpty {
                         section("NEW", items: unread)
                     }
@@ -97,7 +97,7 @@ struct UpdatesInboxView: View {
     }
 
     private func section(_ label: LocalizedStringKey, items: [UpdateItem]) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             Text(label).font(StrandFont.overline)
                 .tracking(StrandFont.overlineTracking)
                 .foregroundStyle(StrandPalette.textTertiary)
@@ -192,7 +192,7 @@ private struct UpdateRow: View {
     let onRestore: () -> Void
 
     var body: some View {
-        NoopCard(tint: item.read ? nil : tint) {
+        ZoopCard(tint: item.read ? nil : tint) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .top, spacing: 12) {
                     Image(systemName: symbol)
@@ -278,5 +278,5 @@ private struct UpdateRow: View {
 // inbox restores a card by clearing that same key, so the key shape lives in ONE place both sides use.
 enum TodayCardDismissal {
     /// The `@AppStorage` bool key for a Today info-card's dismissed flag, by stable card id.
-    static func flagKey(_ cardID: String) -> String { "noop.todayCard.\(cardID).dismissed" }
+    static func flagKey(_ cardID: String) -> String { "zoop.todayCard.\(cardID).dismissed" }
 }

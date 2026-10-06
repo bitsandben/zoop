@@ -91,7 +91,7 @@ struct DataSourcesView: View {
                        // lifecycle binding in onAppear/onDisappear, so a ~1 Hz tick still re-evaluates the
                        // built cards — that observation can't be removed here (see the lane-B2 note).
                        lazy: true) {
-            VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                 whoopCard.staggeredAppear(index: 0)
                 appleHealthCard.staggeredAppear(index: 1)
                 xiaomiCard.staggeredAppear(index: 2)
@@ -142,14 +142,14 @@ struct DataSourcesView: View {
                                tone: hasWhoop ? .accent : .neutral),
              subtitle: String(localized: "Import your full WHOOP history (recovery, strain, sleep, workouts) from a data export (.zip). Works for WHOOP 4.0, 5.0 and MG. Get one at app.whoop.com → Data Management.")) {
             let importingWhoop = model.isImporting(.whoop)
-            HStack(spacing: NoopMetrics.space3) {
+            HStack(spacing: ZoopMetrics.space3) {
                 Button {
                     presentImporter(.whoop)
                 } label: {
                     Label(importingWhoop ? "Importing…" : "Choose export…",
                           systemImage: "tray.and.arrow.down")
                 }
-                .buttonStyle(NoopButtonStyle(.primary))
+                .buttonStyle(ZoopButtonStyle(.primary))
                 .disabled(model.hasActiveImport || nutritionImporting || liftingImporting || activityFileImporting)
                 if importingWhoop { ProgressView().controlSize(.small) }
             }
@@ -167,11 +167,11 @@ struct DataSourcesView: View {
              tint: StrandPalette.metricCyan,
              subtitle: String(localized: "Import an Apple Health export (Health app → profile → Export All Health Data → export.zip). 7 years of HR, HRV, sleep, SpO₂, steps and more, streamed locally. Large exports take a minute or two.")) {
             let importingAppleHealth = model.isImporting(.appleHealth)
-            HStack(spacing: NoopMetrics.space3) {
+            HStack(spacing: ZoopMetrics.space3) {
                 Button { presentImporter(.appleHealth) } label: {
                     Label(importingAppleHealth ? "Working…" : "Choose export.zip…", systemImage: "tray.and.arrow.down")
                 }
-                .buttonStyle(NoopButtonStyle(.primary))
+                .buttonStyle(ZoopButtonStyle(.primary))
                 .disabled(model.hasActiveImport || nutritionImporting || liftingImporting || activityFileImporting || appleHealthDeleting)
                 if importingAppleHealth { ProgressView().controlSize(.small) }
             }
@@ -183,13 +183,13 @@ struct DataSourcesView: View {
             // DeviceRegistryStore.deleteAllData(deviceId: "apple-health"). Always offered (the user may
             // have imported in a prior session, so we don't gate on this run's summary), with a
             // confirmation step since it permanently clears every Apple-Health-sourced row.
-            HStack(spacing: NoopMetrics.space3) {
+            HStack(spacing: ZoopMetrics.space3) {
                 Button(role: .destructive) {
                     confirmDeleteAppleHealth = true
                 } label: {
                     Label(appleHealthDeleting ? "Removing…" : "Remove imported data", systemImage: "trash")
                 }
-                .buttonStyle(NoopButtonStyle(.destructive))
+                .buttonStyle(ZoopButtonStyle(.destructive))
                 .disabled(model.hasActiveImport || appleHealthDeleting)
                 .accessibilityLabel("Remove Apple Health imported data")
                 if appleHealthDeleting { ProgressView().controlSize(.small) }
@@ -206,11 +206,11 @@ struct DataSourcesView: View {
              tint: StrandPalette.metricAmber,
              subtitle: String(localized: "Import your Mi Band history (steps, heart rate, resting HR, sleep stages, SpO₂, stress and sleep score) straight from the Mi Fitness app. On your iPhone: Files → On My iPhone → Mi Fitness, long-press the folder → Compress, then choose the .zip here. Fully offline; no Xiaomi account or Bluetooth needed. Smart Band 8/9/10.")) {
             let importingXiaomi = model.isImporting(.xiaomi)
-            HStack(spacing: NoopMetrics.space3) {
+            HStack(spacing: ZoopMetrics.space3) {
                 Button { presentImporter(.xiaomi) } label: {
                     Label(importingXiaomi ? "Importing…" : "Choose Mi Fitness export…", systemImage: "tray.and.arrow.down")
                 }
-                .buttonStyle(NoopButtonStyle(.primary))
+                .buttonStyle(ZoopButtonStyle(.primary))
                 .disabled(model.hasActiveImport || nutritionImporting || liftingImporting || activityFileImporting)
                 if importingXiaomi { ProgressView().controlSize(.small) }
             }
@@ -225,11 +225,11 @@ struct DataSourcesView: View {
         card(title: String(localized: "Nutrition (.csv)"), icon: "fork.knife",
              tint: StrandPalette.metricAmber,
              subtitle: String(localized: "Import daily nutrition totals from a Cronometer or MacroFactor CSV export: calories in, protein, carbs, fat (and weight if present). Other trackers work too if the file has a date column and daily totals.")) {
-            HStack(spacing: NoopMetrics.space3) {
+            HStack(spacing: ZoopMetrics.space3) {
                 Button { presentImporter(.nutrition) } label: {
                     Label(nutritionImporting ? "Importing…" : "Choose .csv…", systemImage: "tray.and.arrow.down")
                 }
-                .buttonStyle(NoopButtonStyle(.primary))
+                .buttonStyle(ZoopButtonStyle(.primary))
                 .disabled(model.hasActiveImport || nutritionImporting || liftingImporting || activityFileImporting)
                 if nutritionImporting { ProgressView().controlSize(.small) }
             }
@@ -244,11 +244,11 @@ struct DataSourcesView: View {
         card(title: String(localized: "Lifting log (Hevy / Liftosaur)"), icon: "dumbbell.fill",
              tint: DomainTheme.effort.color,
              subtitle: String(localized: "Import your strength-training history from a Hevy CSV export or a Liftosaur JSON export. Each workout becomes a Strength session with a training-volume estimate (weight × reps). It's a volume figure, not a measured strain. It never changes your Effort.")) {
-            HStack(spacing: NoopMetrics.space3) {
+            HStack(spacing: ZoopMetrics.space3) {
                 Button { presentImporter(.lifting) } label: {
                     Label(liftingImporting ? "Importing…" : "Choose export…", systemImage: "tray.and.arrow.down")
                 }
-                .buttonStyle(NoopButtonStyle(.primary))
+                .buttonStyle(ZoopButtonStyle(.primary))
                 .disabled(model.hasActiveImport || nutritionImporting || liftingImporting || activityFileImporting)
                 if liftingImporting { ProgressView().controlSize(.small) }
             }
@@ -263,11 +263,11 @@ struct DataSourcesView: View {
         card(title: String(localized: "Workout file (GPX / TCX / FIT)"), icon: "point.topleft.down.curvedto.point.bottomright.up",
              tint: StrandPalette.metricAmber,
              subtitle: String(localized: "Import a single exported workout file from any brand (Garmin, Coros, Suunto, Wahoo, Polar, Strava, Apple) straight off your device. GPS route, distance, heart rate and calories come in where the file has them. Fully offline; nothing leaves \(Platform.deviceNounPhrase).")) {
-            HStack(spacing: NoopMetrics.space3) {
+            HStack(spacing: ZoopMetrics.space3) {
                 Button { presentImporter(.activityFile) } label: {
                     Label(activityFileImporting ? "Importing…" : "Choose .gpx / .tcx / .fit…", systemImage: "tray.and.arrow.down")
                 }
-                .buttonStyle(NoopButtonStyle(.primary))
+                .buttonStyle(ZoopButtonStyle(.primary))
                 .disabled(model.hasActiveImport || nutritionImporting || liftingImporting || activityFileImporting)
                 if activityFileImporting { ProgressView().controlSize(.small) }
             }
@@ -282,11 +282,11 @@ struct DataSourcesView: View {
         card(title: String(localized: "Oura / Fitbit / Garmin export"), icon: "figure.mind.and.body",
              tint: StrandPalette.metricPurple,
              subtitle: String(localized: "Import your own data export from Oura, Fitbit or Garmin: sleep, resting heart rate, HRV, steps and more, where the export has them. Download it from the brand's app (Oura: Account → Export Data; Fitbit: Google Takeout; Garmin: Export Your Data), then choose the file here. Fully offline; nothing leaves \(Platform.deviceNounPhrase). Each brand's own readiness or sleep score is kept for reference only. Your scores stay yours.")) {
-            HStack(spacing: NoopMetrics.space3) {
+            HStack(spacing: ZoopMetrics.space3) {
                 Button { presentImporter(.wearable) } label: {
                     Label(wearableImporting ? "Importing…" : "Choose export…", systemImage: "tray.and.arrow.down")
                 }
-                .buttonStyle(NoopButtonStyle(.primary))
+                .buttonStyle(ZoopButtonStyle(.primary))
                 .disabled(model.hasActiveImport || nutritionImporting || liftingImporting || activityFileImporting || wearableImporting)
                 if wearableImporting { ProgressView().controlSize(.small) }
             }
@@ -310,15 +310,15 @@ struct DataSourcesView: View {
                 if oura.isConnected {
                     HStack {
                         Button { oura.connectAndImport(repo: repo) } label: { Label("Import again", systemImage: "arrow.clockwise") }
-                            .buttonStyle(NoopButtonStyle(.primary))
+                            .buttonStyle(ZoopButtonStyle(.primary))
                         Button(role: .destructive) { oura.disconnect(repo: repo) } label: { Label("Forget Oura access", systemImage: "xmark.circle") }
-                            .buttonStyle(NoopButtonStyle(.destructive))
+                            .buttonStyle(ZoopButtonStyle(.destructive))
                     }.disabled(oura.busy)
                 } else {
                     Button { oura.connectAndImport(repo: repo) } label: {
                         Label(oura.busy ? "Working…" : "Import your Oura history", systemImage: "square.and.arrow.down")
                     }
-                    .buttonStyle(NoopButtonStyle(.primary))
+                    .buttonStyle(ZoopButtonStyle(.primary))
                     .disabled(oura.busy || !oura.isConfigured)
                     if !oura.isConfigured {
                         Text("Add your Oura app credentials to OuraSecrets.xcconfig to enable this.")
@@ -951,7 +951,7 @@ struct DataSourcesView: View {
         }
     }
 
-    /// One source as a frosted, domain-tinted NoopCard: a tinted source glyph + title, an optional
+    /// One source as a frosted, domain-tinted ZoopCard: a tinted source glyph + title, an optional
     /// status pill on the trailing edge, the explainer line, then the connect/import action(s). The
     /// glyph + accents take the card's `tint` (its colour world); the status pill carries connection
     /// state. Replaces the old flat surfaceRaised rectangle with the shared Bevel card surface.
@@ -961,9 +961,9 @@ struct DataSourcesView: View {
                               status: S = EmptyView(),
                               subtitle: String,
                               @ViewBuilder content: @escaping () -> C) -> some View {
-        NoopCard(padding: 18, tint: tint) {
-            VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
-                HStack(spacing: NoopMetrics.space2 + 2) {
+        ZoopCard(padding: 18, tint: tint) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
+                HStack(spacing: ZoopMetrics.space2 + 2) {
                     Image(systemName: icon)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(tint)

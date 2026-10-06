@@ -131,7 +131,7 @@ The Android coordinator (`android/app/src/main/java/com/noop/ble/…`) mirrors t
 - Kotlin `interface LiveHrSource { fun scan(); fun connect(id: …); fun stop() }`.
 - The Android source-coordinator's per-kind fields/branches collapse to one `activeSource` + a
   `makeSource(kind)` factory, identical control flow to Swift.
-- No stored value, dedup key, or `.noopbak` field changes — this is an **in-memory runtime refactor
+- No stored value, dedup key, or `.zoopbak` field changes — this is an **in-memory runtime refactor
   only**, so there is no migration and no schema/backup-contract surface. (Call this out explicitly in
   the PR: parity here is *behavioural*, and the "numbers" — analytics, stored samples — are untouched by
   construction.)

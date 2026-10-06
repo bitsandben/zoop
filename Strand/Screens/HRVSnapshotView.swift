@@ -134,7 +134,7 @@ struct HRVSnapshotView: View {
             VStack(spacing: 18) {
                 ZStack {
                     ScenicHeroBackground(domain: .rest, starCount: 48)
-                        .clipShape(RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
                     captureDial
                         .padding(.vertical, 6)
                 }
@@ -309,7 +309,7 @@ struct HRVSnapshotView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 } else {
-                    HStack(spacing: NoopMetrics.gap) {
+                    HStack(spacing: ZoopMetrics.gap) {
                         metricTile("RMSSD", Self.format(result.rmssd, "%.0f"), "ms", StrandPalette.metricPurple)
                         metricTile("SDNN", Self.format(result.sdnn, "%.0f"), "ms", StrandPalette.restBright)
                         metricTile(String(localized: "Mean HR"), Self.format(Self.meanHR(meanNN: result.meanNN), "%.0f"), "bpm", StrandPalette.metricRose)
@@ -337,7 +337,7 @@ struct HRVSnapshotView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(NoopPanelSurface(tint: accent, cornerRadius: 10))
+        .background(ZoopPanelSurface(tint: accent, cornerRadius: 10))
     }
 
     // MARK: - Methodology
@@ -377,9 +377,9 @@ struct HRVSnapshotView: View {
         }
         .padding(14)
         .background(StrandPalette.statusWarning.opacity(0.08),
-                    in: RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous))
+                    in: RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous)
+            RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous)
                 .strokeBorder(StrandPalette.statusWarning.opacity(0.25), lineWidth: 1)
         )
     }

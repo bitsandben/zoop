@@ -9,16 +9,16 @@ final class BackupSyncTests: XCTestCase {
     func testNameRoundTripsToUtcSecond() {
         let ms = 1_782_000_000_000 // a whole-second instant (UTC)
         let name = BackupSync.snapshotName(ms)
-        XCTAssertTrue(name.hasPrefix("noop-backup-"))
-        XCTAssertTrue(name.hasSuffix(".noopbak"))
+        XCTAssertTrue(name.hasPrefix("zoop-backup-"))
+        XCTAssertTrue(name.hasSuffix(".zoopbak"))
         XCTAssertEqual(BackupSync.snapshotTimeMs(name), ms) // second-resolution round-trip
     }
 
     func testIsSnapshotRejectsNonBackups() {
         XCTAssertTrue(BackupSync.isSnapshot(BackupSync.snapshotName(1_782_000_000_000)))
         XCTAssertFalse(BackupSync.isSnapshot("photo.jpg"))
-        XCTAssertFalse(BackupSync.isSnapshot("noop-backup-notadate.noopbak"))
-        XCTAssertFalse(BackupSync.isSnapshot("noop-backup-20260627-123456.zip"))
+        XCTAssertFalse(BackupSync.isSnapshot("zoop-backup-notadate.zoopbak"))
+        XCTAssertFalse(BackupSync.isSnapshot("zoop-backup-20260627-123456.zip"))
         XCTAssertNil(BackupSync.snapshotTimeMs("random.txt"))
     }
 
@@ -60,28 +60,28 @@ final class BackupSyncTests: XCTestCase {
         XCTAssertTrue(BackupSync.snapshotsToPrune([BackupSync.snapshotName(1_782_000_000_000)], keep: 10).isEmpty)
     }
 
-    // MARK: - Restore listing accepts ANY .noopbak, including date-only manual names (#852)
+    // MARK: - Restore listing accepts ANY .zoopbak, including date-only manual names (#852)
 
     func testIsBackupFileAcceptsAnyNoopbakExtension() {
-        XCTAssertTrue(BackupSync.isBackupFile("noop-backup-2026-06-30.noopbak"))       // date-only manual name
+        XCTAssertTrue(BackupSync.isBackupFile("zoop-backup-2026-06-30.zoopbak"))       // date-only manual name
         XCTAssertTrue(BackupSync.isBackupFile(BackupSync.snapshotName(1_782_000_000_000)))
-        XCTAssertTrue(BackupSync.isBackupFile("whatever-i-named-it.noopbak"))          // arbitrary name
+        XCTAssertTrue(BackupSync.isBackupFile("whatever-i-named-it.zoopbak"))          // arbitrary name
         XCTAssertTrue(BackupSync.isBackupFile("BACKUP.NOOPBAK"))                        // case-insensitive
-        XCTAssertFalse(BackupSync.isBackupFile("noop-backup-20260630-120000.zip"))     // wrong extension
+        XCTAssertFalse(BackupSync.isBackupFile("zoop-backup-20260630-120000.zip"))     // wrong extension
         XCTAssertFalse(BackupSync.isBackupFile("photo.jpg"))
     }
 
     func testRestorablesIncludeDateOnlyNamesAndOrderNewestFirst() {
         // The reporter's exact folder: a date-only manual export plus a canonical timestamped one (#852).
         let canonical = BackupSync.snapshotName(1_782_000_600_000)   // has an embedded stamp
-        let dateOnly = "noop-backup-2026-06-30.noopbak"             // no parseable stamp
+        let dateOnly = "zoop-backup-2026-06-30.zoopbak"             // no parseable stamp
         // dateOnly's file date is NEWER than the canonical's embedded stamp, so it must sort first.
         let fileDates = [dateOnly: 1_782_000_600_000 + 60_000, canonical: 0, "notes.txt": 999]
         let out = BackupSync.restorablesNewestFirst(
             [canonical, dateOnly, "notes.txt"],
             fileDateMs: { fileDates[$0] ?? 0 }
         )
-        // Both .noopbak files present, .txt dropped, newest-first by resolved time.
+        // Both .zoopbak files present, .txt dropped, newest-first by resolved time.
         XCTAssertEqual(out.map(\.name), [dateOnly, canonical])
         // Canonical keeps its embedded stamp; date-only takes the supplied file date.
         XCTAssertEqual(out.first(where: { $0.name == canonical })?.timeMs, 1_782_000_600_000)
@@ -89,8 +89,8 @@ final class BackupSyncTests: XCTestCase {
     }
 
     func testRestorablesDoNotWidenPrune() {
-        // A hand-named .noopbak is restorable but must NEVER become a prune candidate.
-        let dateOnly = "noop-backup-2026-06-30.noopbak"
+        // A hand-named .zoopbak is restorable but must NEVER become a prune candidate.
+        let dateOnly = "zoop-backup-2026-06-30.zoopbak"
         let canon = (0..<12).map { BackupSync.snapshotName(1_782_000_000_000 + $0 * 60_000) }
         let pruned = BackupSync.snapshotsToPrune(canon + [dateOnly], keep: 10)
         XCTAssertFalse(pruned.contains(dateOnly))   // hand-named backup never auto-deleted
@@ -100,11 +100,11 @@ final class BackupSyncTests: XCTestCase {
 
     func testICloudPlaceholderRealName() {
         XCTAssertEqual(
-            BackupSync.iCloudPlaceholderRealName(".noop-backup-20260710-093000.noopbak.icloud"),
-            "noop-backup-20260710-093000.noopbak")
-        XCTAssertEqual(BackupSync.iCloudPlaceholderRealName(".whatever-i-named-it.noopbak.icloud"),
-                        "whatever-i-named-it.noopbak")
-        XCTAssertNil(BackupSync.iCloudPlaceholderRealName("noop-backup-20260710-093000.noopbak")) // not a placeholder
+            BackupSync.iCloudPlaceholderRealName(".zoop-backup-20260710-093000.zoopbak.icloud"),
+            "zoop-backup-20260710-093000.zoopbak")
+        XCTAssertEqual(BackupSync.iCloudPlaceholderRealName(".whatever-i-named-it.zoopbak.icloud"),
+                        "whatever-i-named-it.zoopbak")
+        XCTAssertNil(BackupSync.iCloudPlaceholderRealName("zoop-backup-20260710-093000.zoopbak")) // not a placeholder
         XCTAssertNil(BackupSync.iCloudPlaceholderRealName(".DS_Store"))                            // dotfile, no .icloud suffix
         XCTAssertNil(BackupSync.iCloudPlaceholderRealName("photo.jpg.icloud"))                     // .icloud suffix, no leading dot
         XCTAssertNil(BackupSync.iCloudPlaceholderRealName(".icloud"))                               // nothing but the marker itself
@@ -114,18 +114,18 @@ final class BackupSyncTests: XCTestCase {
         // The I/O layer (FolderBackup.listSnapshots) maps raw names through iCloudPlaceholderRealName
         // before handing them to this pure function - simulate that here so a not-yet-downloaded
         // backup still appears in the restore list under its real name.
-        let placeholder = ".noop-backup-20260710-093000.noopbak.icloud"
+        let placeholder = ".zoop-backup-20260710-093000.zoopbak.icloud"
         let resolved = BackupSync.iCloudPlaceholderRealName(placeholder) ?? placeholder
         let out = BackupSync.restorablesNewestFirst([resolved], fileDateMs: { _ in 0 })
-        XCTAssertEqual(out.map(\.name), ["noop-backup-20260710-093000.noopbak"])
+        XCTAssertEqual(out.map(\.name), ["zoop-backup-20260710-093000.zoopbak"])
     }
 
     func testRestorablesTieBreakOnNameWhenTimesEqual() {
         // Two hand-named files that resolve to the SAME time (identical file-modification date) must order
         // deterministically by name asc - the same tie-break Kotlin uses - so equal-time rows list
         // identically on both platforms and there's no order flap between listings.
-        let z = "zeta.noopbak"
-        let a = "alpha.noopbak"
+        let z = "zeta.zoopbak"
+        let a = "alpha.zoopbak"
         let sameMs = 1_782_000_000_000
         let out = BackupSync.restorablesNewestFirst([z, a]) { _ in sameMs }
         XCTAssertEqual(out.map(\.name), [a, z])
@@ -162,8 +162,8 @@ final class BackupSyncTests: XCTestCase {
             FolderBackup.folderTrail(path: "/var/mobile/Containers/Data/Application/9F3A-UUID/Documents/Backups"),
             "Documents › Backups")
         XCTAssertEqual(
-            FolderBackup.folderTrail(path: "/private/var/mobile/Containers/Shared/AppGroup/U/Dropbox/NoopBackups"),
-            "Dropbox › NoopBackups")
+            FolderBackup.folderTrail(path: "/private/var/mobile/Containers/Shared/AppGroup/U/Dropbox/ZoopBackups"),
+            "Dropbox › ZoopBackups")
     }
 
     func testICloudPathRuleMatchesTheDiagnosticsSignal() {

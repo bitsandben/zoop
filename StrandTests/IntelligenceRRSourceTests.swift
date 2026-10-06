@@ -18,8 +18,8 @@ final class IntelligenceRRSourceTests: XCTestCase {
             "profile.stepsCalibrationCoefficient", "profile.stepsCalibrationSampleDays",
             "profile.stepsCalibrationConfidence", "profile.stepsCalibrationManual",
             "profile.stepsManualCoefficient", "profile.stepsHasBankedMotion",
-            "noop.analyzeWatermark", "analyzeRecent.stepsMotionCache.v1",
-            "noop.hrvBaselineEpoch", "noop.recoveryBaselineEpoch", UnitPrefs.hrvWindowKey,
+            "zoop.analyzeWatermark", "analyzeRecent.stepsMotionCache.v1",
+            "zoop.hrvBaselineEpoch", "zoop.recoveryBaselineEpoch", UnitPrefs.hrvWindowKey,
             RescoreBackgroundScheduler.owedKey, RescoreBackgroundScheduler.owedTokenKey,
             RescoreBackgroundScheduler.lastPassSecondsKey, DayCycleMode.storageKey,
             PuffinExperiment.experimentalSleepV2Key, PuffinExperiment.motionAwareWakeKey,
@@ -83,7 +83,7 @@ final class IntelligenceRRSourceTests: XCTestCase {
             let engine = IntelligenceEngine(repo: repo, profile: ProfileStore(), deviceId: canonical)
             func score() async throws -> DailyMetric {
                 await engine.analyzeRecent(maxDays: 2, force: true)
-                let rows = try await store.dailyMetrics(deviceId: canonical + "-noop", from: input.day, to: input.day)
+                let rows = try await store.dailyMetrics(deviceId: canonical + "-zoop", from: input.day, to: input.day)
                 return try XCTUnwrap(rows.first)
             }
 
@@ -104,7 +104,7 @@ final class IntelligenceRRSourceTests: XCTestCase {
             try await store.persistComputedScores(
                 dailyMetrics: [legacySnapshot], metricPoints: [],
                 provenance: [ScoreInputProvenanceRow(day: input.day, key: "recovery", sourceId: "legacy-owner")],
-                deviceId: canonical + "-noop", from: input.day, to: input.day)
+                deviceId: canonical + "-zoop", from: input.day, to: input.day)
             _ = try await store.insert(Streams(rr: input.rr), deviceId: active)
             let legacy = try await score()
             XCTAssertEqual(legacy.avgHrv, legacySnapshot.avgHrv, "the restored HRV cell must survive")
@@ -117,7 +117,7 @@ final class IntelligenceRRSourceTests: XCTestCase {
                               "sleep is freshly scored rather than copied from the snapshot")
             XCTAssertNotEqual(legacy.restingHr, legacySnapshot.restingHr,
                               "only the R-R-derived snapshot receives legacy protection")
-            let preservedSource = try await store.scoreInputSource(deviceId: canonical + "-noop",
+            let preservedSource = try await store.scoreInputSource(deviceId: canonical + "-zoop",
                 day: input.day, key: "recovery")
             XCTAssertEqual(preservedSource, "legacy-owner", "snapshot provenance must survive")
             let legacyGap = try await showsLegacyGap(legacy, store: store, owner: active)
@@ -128,7 +128,7 @@ final class IntelligenceRRSourceTests: XCTestCase {
             XCTAssertEqual(stable.recovery, legacySnapshot.recovery)
             XCTAssertEqual(stable.respRateBpm, legacySnapshot.respRateBpm)
             XCTAssertEqual(stable.avgSdnn, legacySnapshot.avgSdnn)
-            let stableSource = try await store.scoreInputSource(deviceId: canonical + "-noop",
+            let stableSource = try await store.scoreInputSource(deviceId: canonical + "-zoop",
                 day: input.day, key: "recovery")
             XCTAssertEqual(stableSource, "legacy-owner")
 
@@ -155,7 +155,7 @@ final class IntelligenceRRSourceTests: XCTestCase {
             try await store.persistComputedScores(
                 dailyMetrics: [legacySnapshot], metricPoints: [],
                 provenance: [ScoreInputProvenanceRow(day: input.day, key: "recovery", sourceId: "legacy-owner")],
-                deviceId: canonical + "-noop", from: input.day, to: input.day)
+                deviceId: canonical + "-zoop", from: input.day, to: input.day)
             let tagged = input.rr.map { RRInterval(ts: $0.ts, rrMs: $0.rrMs, srcChannel: .whoop5Historical) }
             let inserted = try await store.insert(Streams(rr: tagged), deviceId: active)
             XCTAssertEqual(inserted.rr, 0, "re-offload changes only source provenance, not row count")
@@ -165,7 +165,7 @@ final class IntelligenceRRSourceTests: XCTestCase {
             XCTAssertNotNil(restored.recovery)
             XCTAssertNotEqual(restored.respRateBpm, legacySnapshot.respRateBpm)
             XCTAssertNotEqual(restored.avgSdnn, legacySnapshot.avgSdnn)
-            let promotedSource = try await store.scoreInputSource(deviceId: canonical + "-noop",
+            let promotedSource = try await store.scoreInputSource(deviceId: canonical + "-zoop",
                 day: input.day, key: "recovery")
             XCTAssertEqual(promotedSource, active, "freshly scored provenance replaces the snapshot")
             let restoredGap = try await showsLegacyGap(restored, store: store, owner: active)
@@ -212,7 +212,7 @@ final class IntelligenceRRSourceTests: XCTestCase {
             engine.diagnosticSink = { line, _ in log.append(line) }
 
             await engine.analyzeRecent(maxDays: 2, force: true)
-            let before = try await store.dailyMetrics(deviceId: canonical + "-noop",
+            let before = try await store.dailyMetrics(deviceId: canonical + "-zoop",
                 from: input.day, to: input.day)
             let first = try XCTUnwrap(before.first)
             XCTAssertGreaterThan(first.totalSleepMin ?? 0, 0, "the fixture must actually score a night")
@@ -223,14 +223,14 @@ final class IntelligenceRRSourceTests: XCTestCase {
             XCTAssertEqual(inserted.rr, 0, "only provenance changes; the existing interval keys are identical")
             log.removeAll()
             await engine.analyzeRecent(maxDays: 2, force: true)
-            let after = try await store.dailyMetrics(deviceId: canonical + "-noop",
+            let after = try await store.dailyMetrics(deviceId: canonical + "-zoop",
                 from: input.day, to: input.day)
             let promoted = try XCTUnwrap(after.first?.avgHrv)
             XCTAssertGreaterThan(promoted, 0, "the same engine must replace its cached R-R-less result")
 
             log.removeAll()
             await engine.analyzeRecent(maxDays: 2, force: true)
-            let idle = try await store.dailyMetrics(deviceId: canonical + "-noop",
+            let idle = try await store.dailyMetrics(deviceId: canonical + "-zoop",
                 from: input.day, to: input.day)
             XCTAssertEqual(idle.first?.avgHrv, promoted)
             XCTAssertTrue(log.contains { $0.contains("dayCache reused=2/2") },
@@ -250,7 +250,7 @@ final class IntelligenceRRSourceTests: XCTestCase {
             repo.setStoreForTesting(store)
             let engine = IntelligenceEngine(repo: repo, profile: ProfileStore(), deviceId: canonical)
             await engine.analyzeRecent(maxDays: 2, force: true)
-            let emptyRows = try await store.dailyMetrics(deviceId: canonical + "-noop", from: input.day, to: input.day)
+            let emptyRows = try await store.dailyMetrics(deviceId: canonical + "-zoop", from: input.day, to: input.day)
             let empty = try XCTUnwrap(emptyRows.first)
             XCTAssertNil(empty.avgHrv)
             XCTAssertNil(empty.recovery)
@@ -258,7 +258,7 @@ final class IntelligenceRRSourceTests: XCTestCase {
             XCTAssertFalse(emptyGap)
             _ = try await store.insert(Streams(rr: input.rr), deviceId: canonical)
             await engine.analyzeRecent(maxDays: 2, force: true)
-            let rows = try await store.dailyMetrics(deviceId: canonical + "-noop",
+            let rows = try await store.dailyMetrics(deviceId: canonical + "-zoop",
                 from: input.day, to: input.day)
             let scored = try XCTUnwrap(rows.first)
             XCTAssertGreaterThan(try XCTUnwrap(scored.avgHrv), 0)
@@ -285,7 +285,7 @@ final class IntelligenceRRSourceTests: XCTestCase {
             repo.setStoreForTesting(store)
             let engine = IntelligenceEngine(repo: repo, profile: ProfileStore(), deviceId: canonical)
             await engine.analyzeRecent(maxDays: 2, force: true)
-            let rows = try await store.dailyMetrics(deviceId: canonical + "-noop", from: input.day, to: input.day)
+            let rows = try await store.dailyMetrics(deviceId: canonical + "-zoop", from: input.day, to: input.day)
             let scored = try XCTUnwrap(rows.first)
             XCTAssertGreaterThan(scored.totalSleepMin ?? 0, 0)
             XCTAssertNotNil(scored.restingHr)
@@ -307,7 +307,7 @@ final class IntelligenceRRSourceTests: XCTestCase {
             let repo = Repository(deviceId: canonical)
             repo.setStoreForTesting(store)
             await repo.addManualNap(startTs: start, endTs: start + duration)
-            let before = try await store.sleepSessions(deviceId: canonical + "-noop",
+            let before = try await store.sleepSessions(deviceId: canonical + "-zoop",
                 from: start, to: start + duration, limit: 10)
             let baseline = try XCTUnwrap(before.first?.stagesJSON)
             let rr = (0..<duration).map { i in

@@ -52,10 +52,10 @@ struct WorkoutSelectionScreen: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: NoopMetrics.space5) {
+                LazyVStack(alignment: .leading, spacing: ZoopMetrics.space5) {
                     headerCopy
                     WorkoutSearchField(query: $query, isFocused: $searchFocused)
-                        .padding(.top, NoopMetrics.space1)
+                        .padding(.top, ZoopMetrics.space1)
 
                     if showRecent {
                         recentSection
@@ -63,9 +63,9 @@ struct WorkoutSelectionScreen: View {
 
                     if filtered.isEmpty {
                         emptyResults
-                            .padding(.top, NoopMetrics.space8)
+                            .padding(.top, ZoopMetrics.space8)
                     } else {
-                        LazyVStack(spacing: NoopMetrics.space4) {
+                        LazyVStack(spacing: ZoopMetrics.space4) {
                             ForEach(filtered) { sport in
                                 WorkoutSelectionCard(sport: sport, actionVerb: actionVerb) {
                                     select(sport.name)
@@ -74,9 +74,9 @@ struct WorkoutSelectionScreen: View {
                         }
                     }
                 }
-                .padding(.horizontal, NoopMetrics.space5)
-                .padding(.top, NoopMetrics.space2)
-                .padding(.bottom, NoopMetrics.space10)
+                .padding(.horizontal, ZoopMetrics.space5)
+                .padding(.top, ZoopMetrics.space2)
+                .padding(.bottom, ZoopMetrics.space10)
             }
             #if os(iOS)
             // #697/#horizontal-swipe parity, see ScreenScaffold.
@@ -107,7 +107,7 @@ struct WorkoutSelectionScreen: View {
     }
 
     private var headerCopy: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
             Text(heading)
                 .font(StrandFont.rounded(34, weight: .bold))
                 .foregroundStyle(StrandPalette.textPrimary)
@@ -122,12 +122,12 @@ struct WorkoutSelectionScreen: View {
     }
 
     private var recentSection: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
             Text("Recent")
                 .font(StrandFont.overline).tracking(StrandFont.overlineTracking)
                 .foregroundStyle(StrandPalette.textSecondary)
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: NoopMetrics.space2) {
+                HStack(spacing: ZoopMetrics.space2) {
                     ForEach(recentSports) { sport in
                         RecentWorkoutChip(sport: sport) { select(sport.name) }
                     }
@@ -137,7 +137,7 @@ struct WorkoutSelectionScreen: View {
     }
 
     private var emptyResults: some View {
-        VStack(spacing: NoopMetrics.space3) {
+        VStack(spacing: ZoopMetrics.space3) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 28, weight: .semibold))
                 .foregroundStyle(StrandPalette.textTertiary)
@@ -149,7 +149,7 @@ struct WorkoutSelectionScreen: View {
                 .foregroundStyle(StrandPalette.textSecondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, NoopMetrics.space8)
+        .padding(.vertical, ZoopMetrics.space8)
         .accessibilityElement(children: .combine)
     }
 
@@ -168,7 +168,7 @@ struct WorkoutSearchField: View {
     var isFocused: FocusState<Bool>.Binding
 
     var body: some View {
-        NoopLiquidGlassSearchField(text: $query,
+        ZoopLiquidGlassSearchField(text: $query,
                                    prompt: String(localized: "Search workouts"),
                                    isFocused: isFocused)
     }
@@ -184,15 +184,15 @@ struct RecentWorkoutChip: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: NoopMetrics.space2) {
+            HStack(spacing: ZoopMetrics.space2) {
                 WorkoutTypeIcon(workoutType: sport.name, size: 18, weight: .semibold, color: accent)
                 Text(sport.name)
                     .font(StrandFont.subhead)
                     .foregroundStyle(StrandPalette.textPrimary)
                     .lineLimit(1)
             }
-            .padding(.horizontal, NoopMetrics.space3)
-            .padding(.vertical, NoopMetrics.space2)
+            .padding(.horizontal, ZoopMetrics.space3)
+            .padding(.vertical, ZoopMetrics.space2)
             .frame(minHeight: 44)
             .contentShape(Capsule())
         }
@@ -216,12 +216,12 @@ struct WorkoutSelectionCard: View {
 
     var body: some View {
         Button(action: onSelect) {
-            HStack(alignment: .center, spacing: NoopMetrics.space4) {
+            HStack(alignment: .center, spacing: ZoopMetrics.space4) {
                 WorkoutTypeIcon(workoutType: sport.name, size: 42, weight: .medium, color: accent)
                     .frame(width: 52, height: 52)
                     .background(accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-                VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
                     Text(sport.name)
                         .font(StrandFont.title2)
                         .foregroundStyle(StrandPalette.textPrimary)
@@ -240,11 +240,11 @@ struct WorkoutSelectionCard: View {
                     .background(Circle().fill(StrandPalette.accent))
                     .accessibilityHidden(true)
             }
-            .padding(.horizontal, NoopMetrics.space5)
-            .padding(.vertical, NoopMetrics.space5)
+            .padding(.horizontal, ZoopMetrics.space5)
+            .padding(.vertical, ZoopMetrics.space5)
             .frame(maxWidth: .infinity, minHeight: 96, alignment: .leading)
             .background {
-                NoopPanelSurface(tint: accent, cornerRadius: 28, elevated: true)
+                ZoopPanelSurface(tint: accent, cornerRadius: 28, elevated: true)
             }
             .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         }
@@ -300,7 +300,7 @@ struct WorkoutActivityMetadataView: View {
     let items: [WorkoutActivityMeta.Item]
 
     var body: some View {
-        HStack(spacing: NoopMetrics.space3) {
+        HStack(spacing: ZoopMetrics.space3) {
             ForEach(Array(items.enumerated()), id: \.offset) { _, item in
                 HStack(spacing: 4) {
                     if let symbol = item.symbol {

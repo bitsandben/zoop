@@ -16,8 +16,8 @@ import StrandAnalytics
 // pulls today's per-source metrics and runs `FusionResolver.resolve` lives in Wave 3 — see
 // `wiringNeeded`). It does no I/O and never touches AppModel/Repository directly, so it compiles and
 // previews from a fixture. This file owns only PRESENTATION: a metric label, a value formatter, and
-// the row/sheet chrome — all built from the locked component set (NoopCard / StatePill / SourceBadge /
-// ScoreStatePill / SectionHeader) and tokens (StrandPalette / StrandFont / NoopMetrics).
+// the row/sheet chrome — all built from the locked component set (ZoopCard / StatePill / SourceBadge /
+// ScoreStatePill / SectionHeader) and tokens (StrandPalette / StrandFont / ZoopMetrics).
 //
 // Wellness framing only: a source is "higher-trust for this metric" with a plain reason; we never say
 // a number is accurate / correct / clinical, never flag a value as concerning. "Everything stays on
@@ -83,7 +83,7 @@ struct FusedRecordView: View {
             title: "Your Data, Fused",
             subtitle: subtitle
         ) {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 if isMultiSource { dayBadgeRow }
 
                 if record.rows.isEmpty {
@@ -93,7 +93,7 @@ struct FusedRecordView: View {
                         symbol: "square.stack.3d.up"
                     )
                 } else {
-                    NoopCard(padding: 0) {
+                    ZoopCard(padding: 0) {
                         VStack(spacing: 0) {
                             ForEach(Array(record.rows.enumerated()), id: \.element.id) { index, row in
                                 FusedMetricRowView(
@@ -103,7 +103,7 @@ struct FusedRecordView: View {
                                 )
                                 if index < record.rows.count - 1 {
                                     Divider().overlay(StrandPalette.hairline)
-                                        .padding(.leading, NoopMetrics.cardPadding)
+                                        .padding(.leading, ZoopMetrics.cardPadding)
                                 }
                             }
                         }
@@ -252,7 +252,7 @@ private struct FusedMetricRowView: View {
                 agreementLine
             }
         }
-        .padding(.horizontal, NoopMetrics.cardPadding)
+        .padding(.horizontal, ZoopMetrics.cardPadding)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
@@ -332,8 +332,8 @@ private struct ConflictCompareSheet: View {
 
     var body: some View {
         ScreenScaffold(title: LocalizedStringKey(row.label), subtitle: "Your bands report different numbers. Here's every source, and the one NOOP is using.") {
-            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
-                NoopCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
+                ZoopCard {
                     VStack(spacing: 0) {
                         ForEach(Array(point.contributors.enumerated()), id: \.offset) { index, contrib in
                             ContributorRow(

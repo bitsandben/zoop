@@ -24,10 +24,10 @@ struct LiveSessionView: View {
     /// Low Power Mode / the in-app quiet-motion toggle. The guardian breath is a `repeatForever`
     /// animation that never settles, so it belongs behind the same gate as the liquid surfaces.
     /// The Android twin gated `LiveSessionScreen`'s breath under battery saver in #911.
-    @ObservedObject private var motion = NoopMotionState.shared
+    @ObservedObject private var motion = ZoopMotionState.shared
 
     /// "Card transparency" (0–100, default 100): fades the live-session cards in lockstep with the frosted
-    /// cards; content stays readable. Mirrors Kotlin `NoopPrefs.cardOpacityPercent`.
+    /// cards; content stays readable. Mirrors Kotlin `ZoopPrefs.cardOpacityPercent`.
     @AppStorage(CardAppearancePrefs.opacityKey) private var cardOpacityPercent = CardAppearancePrefs.defaultPercent
     private var cardOpacity: Double { max(0, min(1, Double(cardOpacityPercent) / 100)) }
 
@@ -55,25 +55,25 @@ struct LiveSessionView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-                .padding(.top, NoopMetrics.space6)
+                .padding(.top, ZoopMetrics.space6)
             Spacer()
             ring
             Text(guardianLine)
                 .font(StrandFont.subhead)
                 .foregroundStyle(StrandPalette.textSecondary)
                 .multilineTextAlignment(.center)
-                .padding(.top, NoopMetrics.space6)
-                .padding(.horizontal, NoopMetrics.space6)
+                .padding(.top, ZoopMetrics.space6)
+                .padding(.horizontal, ZoopMetrics.space6)
             chargeSentence
-                .padding(.top, NoopMetrics.space3)
-                .padding(.horizontal, NoopMetrics.space6)
+                .padding(.top, ZoopMetrics.space3)
+                .padding(.horizontal, ZoopMetrics.space6)
             Spacer()
-            NoopButton("End session", systemImage: "stop.fill", kind: .destructive, fullWidth: true) {
+            ZoopButton("End session", systemImage: "stop.fill", kind: .destructive, fullWidth: true) {
                 endSession()
             }
         }
         .screenPadding()
-        .padding(.vertical, NoopMetrics.space6)
+        .padding(.vertical, ZoopMetrics.space6)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(StrandPalette.surfaceBase.ignoresSafeArea())
         #if os(macOS)
@@ -113,7 +113,7 @@ struct LiveSessionView: View {
             Text("SILENT GUARDIAN")
                 .font(StrandFont.overline).tracking(StrandFont.overlineTracking)
                 .foregroundStyle(StrandPalette.metricCyan)
-            HStack(spacing: NoopMetrics.space2) {
+            HStack(spacing: ZoopMetrics.space2) {
                 Text("Live Session")
                     .font(StrandFont.title1).foregroundStyle(StrandPalette.textPrimary)
                 betaPill
@@ -303,7 +303,7 @@ struct LiveSessionSummarySheet: View {
     private var cardOpacity: Double { max(0, min(1, Double(cardOpacityPercent) / 100)) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
+        VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("LIVE SESSION")
                     .font(StrandFont.overline).tracking(StrandFont.overlineTracking)
@@ -311,7 +311,7 @@ struct LiveSessionSummarySheet: View {
                 Text("Session summary")
                     .font(StrandFont.title1).foregroundStyle(StrandPalette.textPrimary)
             }
-            .padding(.top, NoopMetrics.space6)
+            .padding(.top, ZoopMetrics.space6)
 
             Text(Self.verdict(row: row))
                 .font(StrandFont.body)
@@ -346,11 +346,11 @@ struct LiveSessionSummarySheet: View {
                     .frame(maxWidth: .infinity, alignment: .center)
             }
 
-            Spacer(minLength: NoopMetrics.space3)
-            NoopButton("Done", kind: .primary, fullWidth: true) { onDone() }
+            Spacer(minLength: ZoopMetrics.space3)
+            ZoopButton("Done", kind: .primary, fullWidth: true) { onDone() }
         }
         .screenPadding()
-        .padding(.vertical, NoopMetrics.space6)
+        .padding(.vertical, ZoopMetrics.space6)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(StrandPalette.surfaceBase.ignoresSafeArea())
         #if os(macOS)
@@ -361,7 +361,7 @@ struct LiveSessionSummarySheet: View {
     // MARK: Rows
 
     private func bandRow(_ label: String, seconds: Double, tint: Color) -> some View {
-        HStack(spacing: NoopMetrics.rowSpacing) {
+        HStack(spacing: ZoopMetrics.rowSpacing) {
             Circle().fill(tint).frame(width: 8, height: 8)
             Text(label).font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
             Spacer()
@@ -372,10 +372,10 @@ struct LiveSessionSummarySheet: View {
     }
 
     private func summaryCard<V: View>(@ViewBuilder _ content: () -> V) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.rowSpacing) { content() }
+        VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) { content() }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(NoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
+            .background(ZoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
     }
 
     private var cueLine: String {
