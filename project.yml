@@ -263,7 +263,6 @@ targets:
             AppIcon-Navy:
               CFBundleIconFiles: []
               UIPrerenderedIcon: false
-        NSSupportsLiveActivities: true
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UISupportedInterfaceOrientations~ipad:

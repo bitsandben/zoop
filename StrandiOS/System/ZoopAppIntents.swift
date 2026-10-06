@@ -86,11 +86,7 @@ struct BuzzStrapIntent: AppIntent {
 /// iOS runs an in-app intent inside NOOP's own process (launching or resuming it in the background), where the
 /// strap link lives under the bluetooth-central background mode, so the offload carries on after this returns.
 /// The spoken/shown reply reports only what this path observed about the sync starting.
-///
-/// `LiveActivityIntent`, not plain `AppIntent`: that is what lets it START the strap-sync Live Activity
-/// (the Dynamic Island "Connecting… / Syncing… N chunks" readout) from the background. A plain intent
-/// running in a background-launched app is refused by ActivityKit.
-struct SyncStrapIntent: LiveActivityIntent {
+struct SyncStrapIntent: AppIntent {
     static var title: LocalizedStringResource = "Sync Strap"
     static var description = IntentDescription("Pull your WHOOP strap's stored history into NOOP now.")
     static var openAppWhenRun = false

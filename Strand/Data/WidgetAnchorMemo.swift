@@ -6,7 +6,7 @@ import WhoopStore
 /// The Live Activity's `$heartRate` / `$connected` `onReceive` closures in `StrandiOSApp` resolve the
 /// widget anchor on EVERY live tick (~1-3 Hz). Each `widgetAnchor` call re-derives today's anchor row:
 /// two `DateFormatter` formats to build the day keys plus up to two full-history `days.last(where:)`
-/// scans that grow with years of stored rows — all on the MainActor, and BEFORE `LiveActivityController`'s
+/// scans that grow with years of stored rows — all on the MainActor, and BEFORE the live heart rate banner's
 /// own 2 s push throttle, so that throttle never saves it.
 ///
 /// The anchor only changes when `days` changes (tracked by `Repository.refreshSeq`, bumped on every

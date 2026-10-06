@@ -117,11 +117,6 @@ struct SettingsView: View {
     @AppStorage(UnitPrefs.effortScaleKey) private var effortScaleRaw = EffortScale.hundred.rawValue
     @AppStorage(UnitPrefs.trendChartStyleKey) private var trendChartStyleRaw = TrendChartStyle.line.rawValue
     @AppStorage(UnitPrefs.hrvWindowKey) private var hrvWindowRaw = HrvWindow.whole.rawValue
-    // Live-HR Live Activity (Lock Screen + Dynamic Island), iOS only (#336). Default on.
-    @AppStorage(UnitPrefs.liveActivityKey) private var liveActivityEnabled = true
-    // Strap-sync Live Activity, iOS only. Separate from the live-HR one on purpose. Default on.
-    @AppStorage(UnitPrefs.syncLiveActivityKey) private var syncLiveActivityEnabled = true
-    @AppStorage(UnitPrefs.liftLiveActivityKey) private var liftLiveActivityEnabled = true
     @AppStorage(DayCycleMode.storageKey) private var dayCycleModeRaw = DayCycleMode.sleepOnset.rawValue
     // Alternate app icon (iOS only) — false = Titanium (primary AppIcon), true = Blue Titanium
     // ("AppIcon-Navy"). Display-only preference; the live switch goes through setAlternateIconName.
@@ -304,7 +299,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                 switch page {
                 case .profile: profileCard; unitsCard
-                case .strap: strapCard; syncCard; liveNotificationsCard
+                case .strap: strapCard; syncCard
                 case .appearance: appearanceCard
                 case .features: featuresCard; streakCard
                 case .scoring: recoveryCard; hrvCard
@@ -371,9 +366,6 @@ struct SettingsView: View {
                 unitsCard.staggeredAppear(index: 1)
                 appearanceCard.staggeredAppear(index: 2)
                 strapCard.staggeredAppear(index: 3)
-                #if os(iOS)
-                liveNotificationsCard.staggeredAppear(index: 3)
-                #endif
                 streakCard.staggeredAppear(index: 4)
                 featuresCard.staggeredAppear(index: 5)
                 #if os(iOS)
@@ -1671,48 +1663,6 @@ struct SettingsView: View {
     /// or an early reading that anchored too high). It writes now (epoch SECONDS) to BOTH the
     /// `noop.hrvBaselineEpoch` and `noop.recoveryBaselineEpoch` settings the recovery engine reads, then
     /// kicks a recompute the same way the sleep-edit path does (analyzeRecent → refresh). History stays.
-    #if os(iOS)
-    /// NOOP's live notifications — its Live Activities, on the Lock Screen and in the Dynamic Island — one switch
-    /// each: the live heart rate, a Lift Log session, a strap sync. These three are every Live Activity the app has.
-    /// A switch only decides whether its notification is SHOWN: the heart rate is still measured, recorded and
-    /// scored, a session still runs and buzzes, a sync still runs, with any of them off.
-    private var liveNotificationsCard: some View {
-        SettingsSection(
-            icon: "bell.badge",
-            title: "Live notifications",
-            blurb: "Shown on the Lock Screen and in the Dynamic Island. A switch only hides one: NOOP still measures and records everything."
-        ) {
-            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
-                liveNotificationSwitch("Live heart rate", isOn: $liveActivityEnabled,
-                                       detail: "While the strap is connected.")
-                rowDivider
-                liveNotificationSwitch("Lift Log session", isOn: $liftLiveActivityEnabled,
-                                       detail: "Your set, rest and heart rate, and the Lock Screen light-up on a double-tap.")
-                rowDivider
-                liveNotificationSwitch("Strap sync", isOn: $syncLiveActivityEnabled,
-                                       detail: "Progress while NOOP pulls history from the strap.")
-            }
-        }
-    }
-
-    private func liveNotificationSwitch(_ title: LocalizedStringKey, isOn: Binding<Bool>,
-                                        detail: LocalizedStringKey) -> some View {
-        VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
-            Toggle(isOn: isOn) {
-                Text(title)
-                    .font(StrandFont.subhead)
-                    .foregroundStyle(StrandPalette.textPrimary)
-            }
-            .toggleStyle(.switch)
-            .tint(StrandPalette.accent)
-            Text(detail)
-                .font(StrandFont.caption)
-                .foregroundStyle(StrandPalette.textTertiary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-    #endif
-
     private var recoveryCard: some View {
         SettingsSection(
             icon: "heart.text.square",
