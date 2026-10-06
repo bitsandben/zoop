@@ -1,6 +1,12 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Target %lld–%lld": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Ziel %lld–%lld"}}}},
+    "What shapes it": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Woraus es sich ergibt"}}}},
+    "7-day median · reference 65": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Median 7 Tage · Referenz 65"}}}},
+    "%lld active days": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "%lld aktive Tage"}}}},
+    "last 7 days · index %@ of 15": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "letzte 7 Tage · Index %@ von 15"}}}},
+    "years": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Jahre"}}}},
     "Your strap data, on your phone": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Deine Strap-Daten auf deinem Handy"}}}},
     "Recovery, sleep and strain, read directly from your strap. Nothing leaves %@.": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Erholung, Schlaf und Belastung, direkt vom Strap gelesen. Nichts verlässt %@."}}}},
     "Daily scores": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Tägliche Werte"}}}},

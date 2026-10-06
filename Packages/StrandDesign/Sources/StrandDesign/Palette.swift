@@ -193,12 +193,12 @@ public enum StrandPalette {
     // A single warm metal ramp: a deep bronze floor climbs through brand gold into a
     // bright champagne peak — no green anywhere; depleted reads as dim gold, not coral.
     // 0.00 bronze → 0.30 antique gold → 0.55 brand gold → 0.78 soft gold → 1.00 champagne.
-    // Three flat bands in the concept's colours: red below 34, orange to 66, teal from 67.
+    // Three flat bands: red below 34, orange to 66, lime from 67 (the app icon's green).
     public static let recovery000 = Color(light: "#C23B3B", dark: "#D64545") // red band
     public static let recovery030 = Color(light: "#C23B3B", dark: "#D64545") // red band
     public static let recovery055 = Color(light: "#B25C2E", dark: "#C26A38") // orange band
-    public static let recovery078 = Color(light: "#0E9B7C", dark: "#19B595") // teal band
-    public static let recovery100 = Color(light: "#0E9B7C", dark: "#19B595") // teal band
+    public static let recovery078 = Color(light: "#4C7A12", dark: "#BFEB7B") // teal band
+    public static let recovery100 = Color(light: "#4C7A12", dark: "#BFEB7B") // teal band
 
     /// Ordered gradient stops for the recovery scale (Titanium gold ramp, or the Classic red→green).
     public static var recoveryStops: [Gradient.Stop] {
@@ -242,16 +242,16 @@ public enum StrandPalette {
     // #AE5BEF — because the previous three near-identical blues made a fragmented on-device
     // hypnogram unreadable. Light-mode variants are the same hues darkened for contrast on white.
     // The redesign's cool set: four distinct hues drawn only from the concept palette (grey awake,
-    // blue-grey light, strain blue deep, teal REM), replacing the earlier periwinkle/orchid/purple.
+    // blue-grey light, strain blue deep, lime REM), replacing the earlier periwinkle/orchid/purple.
     public static var sleepAwake: Color { isClassic ? cSleepAwake : Color(light: "#8E949E", dark: "#9A9A9A") }
     public static var sleepLight: Color { isClassic ? cSleepLight : Color(light: "#5C8FB0", dark: "#6E9CBC") }
     public static var sleepDeep:  Color { isClassic ? cSleepDeep  : Color(light: "#2860B4", dark: "#2D6CC8") }
-    public static var sleepREM:   Color { isClassic ? cSleepREM   : Color(light: "#0E9B7C", dark: "#13BD9A") }
+    public static var sleepREM:   Color { isClassic ? cSleepREM   : Color(light: "#4C7A12", dark: "#BFEB7B") }
 
     // MARK: HR zones — Titanium cool→warm (no green), or the Classic grey→green→yellow→orange→red.
     // Zones climb through the redesign's palette: blue-grey, teal, gold, orange, red.
     public static var zone1: Color { isClassic ? cZone1 : Color(light: "#5C8FB0", dark: "#6E9CBC") }
-    public static var zone2: Color { isClassic ? cZone2 : Color(light: "#0E9B7C", dark: "#19B595") }
+    public static var zone2: Color { isClassic ? cZone2 : Color(light: "#4C7A12", dark: "#BFEB7B") }
     public static var zone3: Color { isClassic ? cZone3 : Color(light: "#B8962A", dark: "#D9B23E") }
     public static var zone4: Color { isClassic ? cZone4 : Color(light: "#B86A2A", dark: "#D9823E") }
     public static var zone5: Color { isClassic ? cZone5 : Color(light: "#C23B3B", dark: "#D64545") }
@@ -260,7 +260,7 @@ public enum StrandPalette {
     public static var hrZones: [Color] { [zone1, zone1, zone2, zone3, zone4, zone5] }
 
     // MARK: Status — Titanium gold/amber/orange, or the Classic green/amber/red.
-    public static var statusPositive: Color { isClassic ? Color(light: "#2E9E4F", dark: "#46B45A") : Color(light: "#0E9B7C", dark: "#19B595") }
+    public static var statusPositive: Color { isClassic ? Color(light: "#2E9E4F", dark: "#46B45A") : Color(light: "#4C7A12", dark: "#BFEB7B") }
     public static var statusWarning:  Color { isClassic ? Color(light: "#CFA528", dark: "#F2C53D") : Color(light: "#B86A2A", dark: "#D9823E") }
     public static var statusCritical: Color { isClassic ? Color(light: "#CB3A2F", dark: "#E5483B") : Color(light: "#C23B3B", dark: "#D64545") }
 
@@ -274,18 +274,18 @@ public enum StrandPalette {
         #endif
     }
 
-    // Stress bands as the concept's stress chart draws them: deep teal when calm, teal in the middle,
+    // Stress bands: blue-grey when calm, lime in the middle,
     // orange when high. The `Muted` variants are the darker "typical day" comparison bars.
     public static let stressLow         = Color(light: "#5C8FB0", dark: "#6E9CBC")
-    public static let stressMedium      = Color(light: "#0E9B7C", dark: "#19B595")
+    public static let stressMedium      = Color(light: "#4C7A12", dark: "#BFEB7B")
     public static let stressHigh        = Color(light: "#B86A2A", dark: "#D9823E")
     public static let stressLowMuted    = Color(light: "#A9C2D4", dark: "#3D5869")
-    public static let stressMediumMuted = Color(light: "#88CDBD", dark: "#0E6B58")
+    public static let stressMediumMuted = Color(light: "#B5D48C", dark: "#5F7A3A")
     public static let stressHighMuted   = Color(light: "#DDB592", dark: "#7A4C27")
 
     // MARK: Per-metric accents — HRV / SpO₂ / energy / risk. Classic leans the traditional hues (purple HRV, red risk).
     // Metric identities drawn from the redesign palette only.
-    public static var metricCyan:   Color { isClassic ? Color(light: "#2E92B4", dark: "#3FA9C9") : Color(light: "#0E9B7C", dark: "#13BD9A") }
+    public static var metricCyan:   Color { isClassic ? Color(light: "#2E92B4", dark: "#3FA9C9") : Color(light: "#5C8FB0", dark: "#6E9CBC") }
     public static var metricPurple: Color { isClassic ? Color(light: "#6A4FC0", dark: "#8E6FD6") : Color(light: "#2860B4", dark: "#2D6CC8") }
     public static var metricAmber:  Color { isClassic ? Color(light: "#CFA528", dark: "#F2C53D") : Color(light: "#B25C2E", dark: "#C26A38") }
     public static var metricRose:   Color { isClassic ? Color(light: "#CB3A2F", dark: "#E5483B") : Color(light: "#B86A2A", dark: "#D9823E") }
@@ -302,10 +302,10 @@ public enum StrandPalette {
     // full red→green / blue / green→red in Classic regardless of these.
 
     /// Charge (recovery) — gold world / Classic green.
-    public static var chargeColor: Color  { isClassic ? Color(light: "#2E9E4F", dark: "#46B45A") : Color(light: "#0E9B7C", dark: "#19B595") }
-    public static var chargeDeep: Color    { isClassic ? Color(light: "#207A3C", dark: "#2E9E4F") : Color(light: "#0B7A62", dark: "#0E8F74") }
-    public static var chargeBright: Color  { isClassic ? Color(light: "#5FBE6E", dark: "#86D98E") : Color(light: "#10AE8C", dark: "#3FD2B0") }
-    public static var chargeGlow: Color    { isClassic ? Color(light: "#2E9E4F", dark: "#46B45A") : Color(light: "#0E9B7C", dark: "#19B595") }
+    public static var chargeColor: Color  { isClassic ? Color(light: "#2E9E4F", dark: "#46B45A") : Color(light: "#4C7A12", dark: "#BFEB7B") }
+    public static var chargeDeep: Color    { isClassic ? Color(light: "#207A3C", dark: "#2E9E4F") : Color(light: "#3B5F0E", dark: "#8FBF4E") }
+    public static var chargeBright: Color  { isClassic ? Color(light: "#5FBE6E", dark: "#86D98E") : Color(light: "#5A8C1A", dark: "#D4F5A4") }
+    public static var chargeGlow: Color    { isClassic ? Color(light: "#2E9E4F", dark: "#46B45A") : Color(light: "#4C7A12", dark: "#BFEB7B") }
     /// Diagonal accent pair for the Charge card wash + gauge stroke (deep → bright).
     public static var chargeGradient: Gradient { Gradient(colors: [chargeDeep, chargeBright]) }
 

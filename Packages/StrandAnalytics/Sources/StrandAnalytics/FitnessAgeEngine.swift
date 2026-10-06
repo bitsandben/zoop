@@ -127,6 +127,16 @@ public enum FitnessAgeEngine {
         return frequency * intensityDuration
     }
 
+    /// How many years each input moves Fitness Age away from the chronological age (positive = older).
+    /// The two terms of the `fitnessAge` equation, before the [20, 80] clamp, so together they equal
+    /// the unclamped offset: resting HR against the 65 bpm reference, and the activity index against 5.
+    public static func contributionYears(sex: String, restingHR: Double, paIndex: Double)
+        -> (restingHR: Double, activity: Double) {
+        let (_, ageC, _, rhrC, paiC) = coeffs(sex)
+        return (rhrC * (restingHR - restingHRReference) / ageC,
+                -paiC * (paIndex - paiReference) / ageC)
+    }
+
     /// Full Fitness Age from already-aggregated weekly inputs. Returns nil only if RHR or age is
     /// missing (the headline number needs nothing else). `vo2max` is filled only when a waist
     /// measurement is supplied; callers gate data-coverage (≥4 of 7 days) separately.

@@ -867,12 +867,21 @@ struct LiquidTodayView: View {
                           unit: "%",
                           detailRoute: .metric(HeroRingMetric.charge))
             // #45: the hero Effort honours the user's Effort scale (0–100 or 0–21).
+            // The grey arc is today's target: the recovery→strain band the "optimal strain reached" alert
+            // also uses (CoupledView.optimalStrainRange), shown on whichever Effort scale is chosen.
+            let band = CoupledView.optimalStrainRange(recovery: chargeDisplay.pct)
             HeroScoreCell(label: String(localized: "Strain"),
                           score: effortStrain(displayDay).map { UnitFormatter.effortValue($0, scale: effortScale) },
                           tint: StrandPalette.effortColor, animated: dataLoaded,
                           onGuide: { guideSection = .effort },
                           maxValue: effortScale == .whoop ? 21 : 100,
                           decimals: effortScale == .whoop ? 1 : 0,
+                          targetBand: band.map { Double($0.lowerBound) / 21 ... Double($0.upperBound) / 21 },
+                          caption: band.map { b in
+                              let lo = effortScale == .whoop ? b.lowerBound : Int((Double(b.lowerBound) * 100 / 21).rounded())
+                              let hi = effortScale == .whoop ? b.upperBound : Int((Double(b.upperBound) * 100 / 21).rounded())
+                              return String(localized: "Target \(lo)–\(hi)")
+                          },
                           detailRoute: .metric(HeroRingMetric.effort))
         }
         .padding(.vertical, ZoopMetrics.space3)
@@ -2599,6 +2608,10 @@ private struct HeroScoreCell: View {
     var decimals: Int = 0
     /// A suffix drawn small beside the number on iOS ("%" for the percentage scores).
     var unit: String? = nil
+    /// A target span on the ring as fractions of the full scale, drawn grey on the track (iOS).
+    var targetBand: ClosedRange<Double>? = nil
+    /// A short grey line under the label (iOS), e.g. the strain target.
+    var caption: String? = nil
     /// Where the GAUGE taps through to, or nil to keep the ring inert (#1995).
     ///
     /// Same `TabRoute.metric(key)` the Recovery Vitals rows use, so a ring and the Key-Metrics tile for
@@ -2669,15 +2682,24 @@ private struct HeroScoreCell: View {
     private var iosCell: some View {
         VStack(spacing: 12) {
             FlatScoreRing(score: score, tint: tint, diameter: Self.vesselDiameter,
-                          maxValue: maxValue, decimals: decimals, unit: unit, animated: animated)
-            HStack(spacing: 5) {
-                Text(label)
-                    .font(.system(size: 16, weight: .semibold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold))
+                          maxValue: maxValue, decimals: decimals, unit: unit, targetBand: targetBand,
+                          animated: animated)
+            VStack(spacing: 2) {
+                HStack(spacing: 5) {
+                    Text(label)
+                        .font(.system(size: 16, weight: .semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold))
+                }
+                .foregroundStyle(StrandPalette.textPrimary)
+                if let caption {
+                    Text(caption)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(StrandPalette.textSecondary)
+                        .lineLimit(1)
+                }
             }
-            .foregroundStyle(StrandPalette.textPrimary)
         }
         .frame(maxWidth: .infinity)
         .contentShape(Rectangle())
@@ -2726,6 +2748,7 @@ private struct FlatScoreRing: View {
     var maxValue: Double = 100
     var decimals: Int = 0
     var unit: String? = nil
+    var targetBand: ClosedRange<Double>? = nil
     var animated: Bool = true
 
     @State private var shown: Double = 0
@@ -2742,6 +2765,18 @@ private struct FlatScoreRing: View {
         ZStack {
             // The concept's rounded-square ring, filled clockwise from the top centre.
             SquircleRing(fraction: Double(fraction), tint: tint, lineWidth: lineWidth)
+            if let targetBand {
+                // Today's target, grey on the track beneath the filled arc.
+                SquircleShape()
+                    .trim(from: CGFloat(targetBand.lowerBound), to: CGFloat(targetBand.upperBound))
+                    .stroke(StrandPalette.textSecondary.opacity(0.45),
+                            style: StrokeStyle(lineWidth: lineWidth * 2, lineCap: .round))
+                    .padding(lineWidth / 2)
+                SquircleShape()
+                    .trim(from: 0, to: fraction)
+                    .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .padding(lineWidth / 2)
+            }
             HStack(alignment: .firstTextBaseline, spacing: 0) {
                 if score != nil {
                     CountUpNumber(value: shown, font: StrandFont.display(numberSize), decimals: decimals)

@@ -169,4 +169,23 @@ final class FitnessAgeEngineTests: XCTestCase {
         XCTAssertEqual(FitnessAgeEngine.nightsUntilReady(rhrDays: 4), 0)
         XCTAssertEqual(FitnessAgeEngine.nightsUntilReady(rhrDays: 7), 0)
     }
+
+    func testContributionsSumToTheFitnessAgeOffset() {
+        for sex in ["male", "female", "nonbinary"] {
+            for (rhr, pai) in [(52.0, 9.0), (65.0, 5.0), (74.0, 2.5), (58.0, 0.0)] {
+                let c = FitnessAgeEngine.contributionYears(sex: sex, restingHR: rhr, paIndex: pai)
+                let fa = FitnessAgeEngine.fitnessAge(age: 40, sex: sex, restingHR: rhr, paIndex: pai)
+                XCTAssertEqual(40 + c.restingHR + c.activity, fa, accuracy: 1e-9, "\(sex) \(rhr) \(pai)")
+            }
+        }
+    }
+
+    func testContributionSigns() {
+        let fit = FitnessAgeEngine.contributionYears(sex: "male", restingHR: 50, paIndex: 10)
+        XCTAssertLessThan(fit.restingHR, 0)   // low resting HR makes you younger
+        XCTAssertLessThan(fit.activity, 0)    // more activity makes you younger
+        let ref = FitnessAgeEngine.contributionYears(sex: "female", restingHR: 65, paIndex: 5)
+        XCTAssertEqual(ref.restingHR, 0, accuracy: 1e-12)
+        XCTAssertEqual(ref.activity, 0, accuracy: 1e-12)
+    }
 }

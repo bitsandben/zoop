@@ -8,7 +8,7 @@ import SwiftUI
 
 public enum ZoopVisualStyle {
     // Dark mode follows the supplied redesign concept: a flat near-black canvas with no gradient,
-    // charcoal cards, black wells for icons, and a teal accent. Values are sampled from the concept.
+    // charcoal cards, black wells for icons, and the app icon's lime accent. Values are sampled from the concept.
     public static let canvas = Color(light: "#F3F4F6", dark: "#0A0A0A")
     public static let surface = Color(light: "#FFFFFF", dark: "#181818")
     public static let surfaceTop = Color(light: "#FFFFFF", dark: "#202020")
@@ -23,9 +23,9 @@ public enum ZoopVisualStyle {
     public static let secondaryText = Color(light: "#555861", dark: "#8E8E8E")
     public static let tertiaryText = Color(light: "#7D808A", dark: "#5E5E5E")
 
-    public static let mint = Color(light: "#0E9B7C", dark: "#13BD9A")
-    public static let mintDeep = Color(light: "#0B7A62", dark: "#0E8F74")
-    public static let mintGlow = Color(light: "#10AE8C", dark: "#13BD9A")
+    public static let mint = Color(light: "#4C7A12", dark: "#BFEB7B")
+    public static let mintDeep = Color(light: "#3B5F0E", dark: "#8FBF4E")
+    public static let mintGlow = Color(light: "#5A8C1A", dark: "#BFEB7B")
 
     /// The empty part of a score ring.
     public static let ringTrack = Color(light: "#E2E4E8", dark: "#222222")
