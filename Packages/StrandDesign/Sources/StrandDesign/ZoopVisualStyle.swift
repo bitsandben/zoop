@@ -7,27 +7,30 @@ import SwiftUI
 // bindings, while cards, gauges, typography, and chrome share one maintainable source of truth.
 
 public enum ZoopVisualStyle {
-    // Dark mode follows the WHOOP reference: a cool slate canvas, flat charcoal cards with no rim,
-    // and near-white type. Values are sampled from the supplied reference screenshots.
-    public static let canvas = Color(light: "#F3F4F6", dark: "#121619")
-    public static let surface = Color(light: "#FFFFFF", dark: "#272B2F")
-    public static let surfaceTop = Color(light: "#FFFFFF", dark: "#2B3034")
-    public static let surfaceBottom = Color(light: "#F4F5F7", dark: "#25292D")
-    public static let inset = Color(light: "#E8E9ED", dark: "#1E2225")
+    // Dark mode follows the supplied redesign concept: a flat near-black canvas with no gradient,
+    // charcoal cards, black wells for icons, and a teal accent. Values are sampled from the concept.
+    public static let canvas = Color(light: "#F3F4F6", dark: "#0A0A0A")
+    public static let surface = Color(light: "#FFFFFF", dark: "#181818")
+    public static let surfaceTop = Color(light: "#FFFFFF", dark: "#202020")
+    public static let surfaceBottom = Color(light: "#F4F5F7", dark: "#161616")
+    public static let inset = Color(light: "#E8E9ED", dark: "#0A0A0A")
 
-    public static let border = Color(light: "#D8DAE0", dark: "#33383C")
-    public static let borderHighlight = Color(light: "#FFFFFF", dark: "#3C4247")
-    public static let divider = Color(light: "#E4E5E9", dark: "#353B40")
+    public static let border = Color(light: "#D8DAE0", dark: "#262626")
+    public static let borderHighlight = Color(light: "#FFFFFF", dark: "#303030")
+    public static let divider = Color(light: "#E4E5E9", dark: "#242424")
 
-    public static let primaryText = Color(light: "#17181C", dark: "#F2F7FA")
-    public static let secondaryText = Color(light: "#555861", dark: "#A9B1B7")
-    public static let tertiaryText = Color(light: "#7D808A", dark: "#737C83")
+    public static let primaryText = Color(light: "#17181C", dark: "#F5F5F5")
+    public static let secondaryText = Color(light: "#555861", dark: "#8E8E8E")
+    public static let tertiaryText = Color(light: "#7D808A", dark: "#5E5E5E")
 
-    public static let mint = Color(light: "#00A86F", dark: "#00F19F")
-    public static let mintDeep = Color(light: "#008257", dark: "#00B377")
-    public static let mintGlow = Color(light: "#00C985", dark: "#00F19F")
+    public static let mint = Color(light: "#0E9B7C", dark: "#13BD9A")
+    public static let mintDeep = Color(light: "#0B7A62", dark: "#0E8F74")
+    public static let mintGlow = Color(light: "#10AE8C", dark: "#13BD9A")
 
-    public static let cardRadius: CGFloat = 18
+    /// The empty part of a score ring.
+    public static let ringTrack = Color(light: "#E2E4E8", dark: "#222222")
+
+    public static let cardRadius: CGFloat = 20
     public static let compactRadius: CGFloat = 16
     public static let pillRadius: CGFloat = 999
     public static let pagePadding: CGFloat = 16

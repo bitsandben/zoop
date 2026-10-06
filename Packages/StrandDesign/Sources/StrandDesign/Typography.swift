@@ -73,7 +73,7 @@ public enum StrandFont {
     /// Also the face for compact status copy in constrained chrome (the Today header's sync capsule),
     /// used there WITHOUT the tracking — that is sentence case, not an overline, and the letter-spacing
     /// is what makes an overline read as one.
-    public static let overline = Font.system(.caption, design: .default, weight: .bold)
+    public static let overline = Font.system(.footnote, design: .default, weight: .semibold)
 
     /// `overline` at a custom point size — same Helvetica face, weight and Dynamic-Type scaling
     /// (relativeTo `.caption2`), just smaller. Passing 11 returns exactly `.overline`. Lets a caller
@@ -113,17 +113,17 @@ public enum StrandFont {
     }
 
     /// The recommended tracking for overline text (wide ALL-CAPS labels, ≈ 0.13em).
-    public static let overlineTracking: CGFloat = 1.3
+    public static let overlineTracking: CGFloat = 0
 }
 
 // MARK: - Text helpers
 
 public extension Text {
-    /// Style as an overline label: ALL-CAPS, bold, +1.4 tracking, tertiary text.
+    /// Style as a small label: semibold, secondary text, in sentence case as the concept writes
+    /// its labels, so no case transform is applied.
     func strandOverline() -> some View {
         self.font(StrandFont.overline)
             .tracking(StrandFont.overlineTracking)
-            .textCase(.uppercase)
             .foregroundStyle(StrandPalette.textSecondary)
     }
 }

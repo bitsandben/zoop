@@ -24,10 +24,10 @@ private func hx(_ hex: UInt32) -> Color {
 /// The ten keyframes mirror the real app's day-cycle scenes (SceneHeroBackground),
 /// as pure gradients rather than painted art.
 let liquidSkyKeys: [LiquidSkyStop] = [
-    // One cool slate wash at every hour, as in the WHOOP reference: blue-green at the top, settling
-    // into the near-black canvas. The keyframe table stays so the light appearance keeps its cycle.
-    .init(h: 0,  top: hx(0x26323A), mid: hx(0x1B2328), hor: hx(0x151A1E), stars: 0, warm: 0),
-    .init(h: 24, top: hx(0x26323A), mid: hx(0x1B2328), hor: hx(0x151A1E), stars: 0, warm: 0),
+    // Flat near-black at every hour, as in the redesign concept: no gradient behind the content.
+    // The keyframe table stays so the light appearance keeps its cycle.
+    .init(h: 0,  top: hx(0x0A0A0A), mid: hx(0x0A0A0A), hor: hx(0x0A0A0A), stars: 0, warm: 0),
+    .init(h: 24, top: hx(0x0A0A0A), mid: hx(0x0A0A0A), hor: hx(0x0A0A0A), stars: 0, warm: 0),
 ]
 
 /// Light appearance keeps the same time-of-day movement without beginning from the dark-only
@@ -118,9 +118,9 @@ struct LiquidSky: View {
         // so there is no hard seam where the sky meets the page — light mode made this glaring.
         let dark = scheme == .dark
         let settle = Color(.sRGB,
-                           red: dark ? 18.0 / 255.0 : 242.0 / 255.0,
-                           green: dark ? 22.0 / 255.0 : 242.0 / 255.0,
-                           blue: dark ? 25.0 / 255.0 : 247.0 / 255.0,
+                           red: dark ? 10.0 / 255.0 : 242.0 / 255.0,
+                           green: dark ? 10.0 / 255.0 : 242.0 / 255.0,
+                           blue: dark ? 10.0 / 255.0 : 247.0 / 255.0,
                            opacity: 1)
         if Self.pausesFrames(hour: hour ?? liveHour(), light: !dark, poseStill: motion.poseStill(reduceMotion)) {
             // One frame, with no timeline behind it: the breath sits at mid-cycle (`now` 0). A timeline built
@@ -263,9 +263,9 @@ struct LiquidSkyStatic: View {
         let h = hour ?? liveHour()
         let dark = scheme == .dark
         let settle = Color(.sRGB,
-                           red: dark ? 18.0 / 255.0 : 242.0 / 255.0,
-                           green: dark ? 22.0 / 255.0 : 242.0 / 255.0,
-                           blue: dark ? 25.0 / 255.0 : 247.0 / 255.0,
+                           red: dark ? 10.0 / 255.0 : 242.0 / 255.0,
+                           green: dark ? 10.0 / 255.0 : 242.0 / 255.0,
+                           blue: dark ? 10.0 / 255.0 : 247.0 / 255.0,
                            opacity: 1)
         Canvas { ctx, size in
             let S = liquidSkyAt(h, light: !dark)

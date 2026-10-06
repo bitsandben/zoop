@@ -76,15 +76,13 @@ public struct DayNavBar: View {
 
             Button { showingPicker = true } label: {
                 Text(label, bundle: .module)
-                    .font(StrandFont.overlineScaled(13))
-                    .tracking(1.6)
-                    .textCase(.uppercase)
+                    .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(StrandPalette.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
-                    .padding(.horizontal, 18)
-                    .frame(minWidth: 96, minHeight: 32)
-                    .background(Capsule().fill(StrandPalette.hairlineStrong))
+                    .padding(.horizontal, 20)
+                    .frame(minWidth: 104, minHeight: 36)
+                    .background(Capsule().fill(StrandPalette.surfaceBase))
             }
             .buttonStyle(.plain)
             .accessibilityLabel(Text("Pick a date", bundle: .module))
@@ -103,7 +101,7 @@ public struct DayNavBar: View {
             .disabled(!canGoNewer)
             .accessibilityLabel(Text("Next day", bundle: .module))
         }
-        .padding(2)
+        .padding(4)
         .background(Capsule().fill(StrandPalette.surfaceRaised))
     }
 

@@ -121,24 +121,25 @@ struct RootTabView: View {
     @ViewBuilder private var tabShell: some View {
         if #available(iOS 18.0, *) {
             TabView(selection: nativeTabSelection) {
-                Tab("Home", systemImage: "house", value: IOSTab.home) {
+                // Icon-only items, as in the concept; the name stays as the spoken label.
+                Tab(value: IOSTab.home) {
                     tabStack(todayTabRoot, path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home])
-                }
-                Tab("Health", systemImage: "heart", value: IOSTab.health) {
+                } label: { iconLabel("Home", "house") }
+                Tab(value: IOSTab.health) {
                     tabStack(HealthView(), path: $tabPaths[IOSTab.health], scrollSignal: scrollTop[IOSTab.health])
-                }
-                Tab("Trends", systemImage: "chart.xyaxis.line", value: IOSTab.trends) {
+                } label: { iconLabel("Health", "heart") }
+                Tab(value: IOSTab.trends) {
                     tabStack(TrendsView(), path: $tabPaths[IOSTab.trends], scrollSignal: scrollTop[IOSTab.trends])
-                }
-                Tab("More", systemImage: "line.3.horizontal", value: IOSTab.more) {
+                } label: { iconLabel("Trends", "chart.xyaxis.line") }
+                Tab(value: IOSTab.more) {
                     moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more])
-                }
+                } label: { iconLabel("More", "line.3.horizontal") }
                 // A role is what moves Coach into its own round button at the trailing end of the bar,
                 // apart from the four destinations. Hidden rather than left out when Coach is off, so
                 // the tab keeps its tag and path.
-                Tab("Coach", systemImage: "sparkles", value: IOSTab.coach, role: Self.coachTabRole) {
+                Tab(value: IOSTab.coach, role: Self.coachTabRole) {
                     tabStack(CoachView(), path: $tabPaths[IOSTab.coach], scrollSignal: scrollTop[IOSTab.coach])
-                }
+                } label: { iconLabel("Coach", "sparkles") }
                 .hidden(!coachEnabled)
             }
         } else {
@@ -154,6 +155,11 @@ struct RootTabView: View {
                 }
             }
         }
+    }
+
+    /// A tab item that shows only its glyph; the title is still read by VoiceOver.
+    private func iconLabel(_ title: LocalizedStringKey, _ icon: String) -> some View {
+        Image(systemName: icon).accessibilityLabel(Text(title))
     }
 
     /// iOS 27's prominent role draws a separate accented button; earlier releases separate the

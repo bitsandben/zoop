@@ -389,8 +389,9 @@ struct LiquidTodayView: View {
                             #if os(iOS)
                             monitorTilesRow
                             HomeSectionTitle(title: "My Day") { myDayAddButton }
-                            // iOS: the workout card sits with the rest of the day's activity.
-                            ActiveWorkoutIndicatorSection(showStart: selectedDayOffset == 0)
+                            // iOS: an active workout shows with the rest of the day's activity. Starting one
+                            // is in the "+" menu, so the separate Start button is not drawn here.
+                            ActiveWorkoutIndicatorSection(showStart: false)
                             #endif
                         case .liveSession: if liveSessionsBeta { liveSessionStartRow }
                         case .synthesis:
@@ -432,7 +433,7 @@ struct LiquidTodayView: View {
                     // so it renders nothing by default.
                     AutoWorkoutCard()
                     #if os(iOS)
-                    effortChargeWeek
+                    weeklyTrends
                     #endif
                     dataSourcesSection
                     Color.clear.frame(height: 90) // floating tab-bar clearance
@@ -641,56 +642,48 @@ struct LiquidTodayView: View {
         }
     }
 
-    /// The seven days ending at the selected day, for the Effort & Charge chart. Empty days still take
-    /// a column so the week keeps its shape.
-    private var effortChargeWeek: some View {
+    /// The concept's "Weekly Trends": Recovery bars and an HRV line over the seven days ending at the
+    /// selected day. Empty days keep their column so the week holds its shape.
+    private var weeklyTrends: some View {
         let cal = Calendar.current
         let anchor = cal.date(byAdding: .day, value: -selectedDayOffset, to: Repository.logicalDay(Date())) ?? Date()
         let byDay = Dictionary(repo.days.map { ($0.day, $0) }, uniquingKeysWith: { _, last in last })
-        let week: [EffortChargeDay] = (0..<7).reversed().compactMap { back in
+        let week: [WeeklyTrendDay] = (0..<7).reversed().compactMap { back in
             guard let date = cal.date(byAdding: .day, value: -back, to: anchor) else { return nil }
             let key = Repository.localDayKey(date)
             let row = back == 0 ? displayDay : byDay[key]
-            let effort = (back == 0 ? effortStrain(row) : row?.strain).map { UnitFormatter.effortValue($0, scale: effortScale) }
-            return EffortChargeDay(day: key, charge: row?.recovery, effort: effort)
+            return WeeklyTrendDay(day: key, recovery: row?.recovery, hrv: row?.avgHrv)
         }
-        return EffortChargeWeekCard(days: week,
-                                    effortMax: effortScale == .whoop ? 21 : 100,
-                                    effortDecimals: effortScale == .whoop ? 1 : 0)
+        return VStack(spacing: ZoopMetrics.space3) {
+            HomeSectionTitle(title: "Weekly Trends") { EmptyView() }
+            NavigationLink(value: TabRoute.metric(HeroRingMetric.charge)) { WeeklyRecoveryCard(days: week) }
+                .buttonStyle(LiquidPressStyle())
+            NavigationLink(value: TabRoute.metric("hrv")) { WeeklyHRVCard(days: week) }
+                .buttonStyle(LiquidPressStyle())
+        }
     }
 
-    /// The white rounded-square "+" beside "My Day", opening the quick-action menu.
+    /// The white circular "+" beside "My Day", opening the quick-action menu.
     private var myDayAddButton: some View {
         Button { router.requestQuickActions() } label: {
             Image(systemName: "plus")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(Color.black)
-                .frame(width: 44, height: 44)
-                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.white))
+                .font(.system(size: 20, weight: .medium))
+                .foregroundStyle(StrandPalette.surfaceBase)
+                .frame(width: 46, height: 46)
+                .background(Circle().fill(StrandPalette.textPrimary))
         }
         .buttonStyle(LiquidPressStyle())
         .accessibilityLabel("Quick actions")
     }
 
-    /// The gradient "Personalize" pill beside "My Dashboard", opening the Today customization sheet.
+    /// The pencil beside "My Dashboard", opening the Today customization sheet.
     private var personalizeButton: some View {
         Button { customizationDestination = .today } label: {
-            HStack(spacing: ZoopMetrics.space2) {
-                Text("Personalize")
-                    .font(StrandFont.overlineScaled(13))
-                    .tracking(1.5)
-                    .textCase(.uppercase)
-                Image(systemName: "pencil")
-                    .font(.system(size: 14, weight: .bold))
-            }
-            .foregroundStyle(Color.white)
-            .padding(.horizontal, 14)
-            .frame(height: 32)
-            .background(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(LinearGradient(colors: [StrandPalette.metricRose, StrandPalette.sleepREM],
-                                         startPoint: .leading, endPoint: .trailing))
-            )
+            Image(systemName: "pencil")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(StrandPalette.textPrimary)
+                .frame(width: 40, height: 40)
+                .background(Circle().fill(StrandPalette.surfaceRaised))
         }
         .buttonStyle(LiquidPressStyle())
         .accessibilityLabel("Customize Today")
@@ -845,18 +838,18 @@ struct LiquidTodayView: View {
     /// canvas with no card behind them.
     private var heroCard: some View {
         HStack(alignment: .top, spacing: 4) {
-            HeroScoreCell(label: String(localized: "Rest"), score: restScore, tint: StrandPalette.restColor,
+            HeroScoreCell(label: String(localized: "Sleep"), score: restScore, tint: StrandPalette.restColor,
                           animated: dataLoaded, onGuide: { guideSection = .rest },
                           unit: "%",
                           detailRoute: .metric(HeroRingMetric.rest))
             // #543 carry: an unscored today shows the last scored night's Charge; Effort does not carry.
-            HeroScoreCell(label: String(localized: "Charge"), score: chargeDisplay.pct,
+            HeroScoreCell(label: String(localized: "Recovery"), score: chargeDisplay.pct,
                           tint: chargeDisplay.pct.map { StrandPalette.recoveryColor($0) } ?? StrandPalette.chargeColor,
                           animated: dataLoaded, onGuide: { guideSection = .charge },
                           unit: "%",
                           detailRoute: .metric(HeroRingMetric.charge))
             // #45: the hero Effort honours the user's Effort scale (0–100 or 0–21).
-            HeroScoreCell(label: String(localized: "Effort"),
+            HeroScoreCell(label: String(localized: "Strain"),
                           score: effortStrain(displayDay).map { UnitFormatter.effortValue($0, scale: effortScale) },
                           tint: StrandPalette.effortColor, animated: dataLoaded,
                           onGuide: { guideSection = .effort },
@@ -1550,6 +1543,24 @@ struct LiquidTodayView: View {
         return (kSparks[key] ?? []).filter { $0.0 >= cutoff }.map { $0.1 }
     }
 
+    /// The grey line under a Home tile's value: the metric's average over the chosen trend window, in
+    /// the value's own precision and unit. Nil when there are fewer than two readings to average.
+    private func tileAverageLine(_ key: String, displayValue: String, unit: String) -> String? {
+        let values = windowedSpark(key)
+        guard values.count >= 2 else { return nil }
+        let mean = values.reduce(0, +) / Double(values.count)
+        // Match the value's own look: one decimal only when it has one, with the same separator.
+        let separator: Character? = displayValue.first(where: { $0 == "." || $0 == "," })
+        let number: String
+        if let separator, abs(mean) < 100 {
+            number = String(format: "%.1f", mean).replacingOccurrences(of: ".", with: String(separator))
+        } else {
+            number = Int(mean.rounded()).formatted(.number.locale(AppLanguage.activeLocale))
+        }
+        let withUnit = unit.isEmpty ? number : (unit == "%" ? "\(number)%" : "\(number) \(unit)")
+        return String(localized: "Avg \(withUnit)")
+    }
+
     /// The Key-Metrics header's trailing label for the chosen detailed-graph window (Android twin).
     private var trendWindowLabel: String {
         switch keyMetricsWindowDays {
@@ -1566,6 +1577,8 @@ struct LiquidTodayView: View {
         let hrv = displayDay?.avgHrv ?? hrvDay?.avgHrv
         let rhr = (displayDay?.restingHr ?? restingHrDay?.restingHr).map(Double.init)
         return VStack(spacing: 8) {
+            #if !os(iOS)
+            // iOS has the "My Dashboard" title and its pencil above the grid instead.
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 // The label names the window the DETAILED tiles graph, so it is only honest while they
                 // are drawn: with the trend graphs off (the default) nothing in this section renders a
@@ -1581,6 +1594,7 @@ struct LiquidTodayView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Edit Key Metrics")
             }
+            #endif
             // #430 parity: the grid honours the Key-Metrics editor (selection + order, all ten metrics)
             // instead of a hard-coded six — the bespoke Sleep-hours ktile gives way to the shared REST
             // score tile, aligning the liquid grid with the classic macOS grid and Android.
@@ -1692,6 +1706,45 @@ struct LiquidTodayView: View {
     private func ktile(_ label: String, icon: String, _ value: String, _ unit: String, _ tint: Color, _ frac: Double?,
                        key: String? = nil, detailMetric: MetricDescriptor? = nil, caption: String? = nil) -> some View {
         let displayValue = Self.tileDisplayValue(value, unit: unit)
+        #if os(iOS)
+        // The concept's tile: the value with a chevron, a grey comparison line under it, and the
+        // metric's icon in a black well beside its name at the bottom.
+        let tile = VStack(alignment: .leading, spacing: 3) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(verbatim: displayValue)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Spacer(minLength: 4)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textPrimary)
+            }
+            Text(verbatim: caption ?? key.flatMap { tileAverageLine($0, displayValue: displayValue, unit: unit) } ?? " ")
+                .font(StrandFont.subhead)
+                .foregroundStyle(StrandPalette.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            Spacer(minLength: ZoopMetrics.space4)
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                    .frame(width: 40, height: 40)
+                    .background(Circle().fill(StrandPalette.surfaceBase))
+                Text(label)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(minHeight: 150, alignment: .topLeading)
+        .background(ZoopPanelSurface(cornerRadius: 20, surfaceOpacity: cardOpacity))
+        #else
         let tile = VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
                 Image(systemName: icon)
@@ -1752,6 +1805,7 @@ struct LiquidTodayView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(minHeight: keyMetricsDetailed ? 154 : 116, alignment: .topLeading)
         .background(ZoopPanelSurface(tint: tint, cornerRadius: 18, surfaceOpacity: cardOpacity))
+        #endif
         // #430 parity: tap -> the metric's trend detail (the same Explore dossier its MetricRow pushes,
         // closure-based NavigationLink per #38). A metric with no catalog entry stays inert.
         return Group {
@@ -1838,8 +1892,8 @@ struct LiquidTodayView: View {
     private func sectionHead(_ title: String, trailing: String? = nil) -> some View {
         HStack(alignment: .firstTextBaseline) {
             #if os(iOS)
-            Text(LocalizedStringKey(title)).font(StrandFont.overlineScaled(14)).tracking(1.6)
-                .foregroundStyle(StrandPalette.textPrimary)
+            Text(LocalizedStringKey(title)).font(StrandFont.overlineScaled(12)).tracking(1.2)
+                .foregroundStyle(StrandPalette.textSecondary)
             #else
             Text(LocalizedStringKey(title)).font(StrandFont.overline).tracking(1.6).foregroundStyle(StrandPalette.textTertiary)
             #endif
@@ -2472,7 +2526,7 @@ private struct LiquidWordmark: View {
 /// hit-transparent so the tap reaches the vessel). The label row taps through to the scoring guide.
 private struct HeroScoreCell: View {
     #if os(iOS)
-    static let vesselDiameter: CGFloat = 100
+    static let vesselDiameter: CGFloat = 106
     #else
     static let vesselDiameter: CGFloat = 96
     #endif
@@ -2545,13 +2599,12 @@ private struct HeroScoreCell: View {
             gaugeView
             Button(action: onGuide) {
                 #if os(iOS)
-                HStack(spacing: 4) {
-                    Text(label.uppercased())
-                        .font(StrandFont.overlineScaled(14))
-                        .tracking(1.6)
+                HStack(spacing: 5) {
+                    Text(label)
+                        .font(.system(size: 16, weight: .semibold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
-                    Image(systemName: "chevron.right").font(.system(size: 11, weight: .bold))
+                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold))
                 }
                 .foregroundStyle(StrandPalette.textPrimary)
                 #else
@@ -2592,18 +2645,14 @@ private struct FlatScoreRing: View {
         return CGFloat(max(0, min(1, shown / maxValue)))
     }
 
-    private var lineWidth: CGFloat { max(6, diameter * 0.08) }
-    private var numberSize: CGFloat { diameter * 0.34 }
+    private var lineWidth: CGFloat { max(6, diameter * 0.07) }
+    private var numberSize: CGFloat { diameter * 0.36 }
 
     var body: some View {
         ZStack {
-            Circle()
-                .stroke(StrandPalette.hairline, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-            Circle()
-                .trim(from: 0, to: fraction)
-                .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-            HStack(alignment: .firstTextBaseline, spacing: 1) {
+            // The concept's rounded-square ring, filled clockwise from the top centre.
+            SquircleRing(fraction: Double(fraction), tint: tint, lineWidth: lineWidth)
+            HStack(alignment: .firstTextBaseline, spacing: 0) {
                 if score != nil {
                     CountUpNumber(value: shown, font: StrandFont.display(numberSize), decimals: decimals)
                         .foregroundStyle(StrandPalette.textPrimary)
@@ -2614,7 +2663,7 @@ private struct FlatScoreRing: View {
                 }
                 if let unit {
                     Text(unit)
-                        .font(StrandFont.display(numberSize * 0.6))
+                        .font(StrandFont.display(numberSize * 0.82))
                         .foregroundStyle(score != nil ? StrandPalette.textPrimary : StrandPalette.textTertiary)
                 }
             }
