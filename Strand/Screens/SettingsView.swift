@@ -94,6 +94,7 @@ struct SettingsView: View {
     /// minutes. Self-gates on OBSERVED gravity + step density (#345) — a no-op on a sparse night (e.g.
     /// WHOOP 4.0) regardless of this switch. See [PuffinExperiment.motionAwareWakeKey].
     @AppStorage(PuffinExperiment.motionAwareWakeKey) private var motionAwareWakeEnabled = false
+    @AppStorage(PuffinExperiment.alarmAnchoredWakeKey) private var alarmAnchoredWakeEnabled = false
 
     // Display preferences. `units.system` remains the body-measurement choice for compatibility;
     // exercise distance/pace can override it independently. Stored data is always SI.
@@ -2019,6 +2020,21 @@ struct SettingsView: View {
                 .toggleStyle(.switch)
                 .tint(StrandPalette.accent)
                 Text("Reviews each scored wake block for real evidence of getting up (walking cadence, a change in body position) instead of just a heart-rate rise. A wake block with no locomotion and a stable posture — a hot night, a brief turn-over — is folded back into light sleep; a real get-up is left alone. Self-checks how much motion detail your strap actually recorded and stays off on a night that's too sparse to trust (older WHOOP 4.0 firmware, mainly). Off by default; takes effect on the next nights staged.")
+                    .font(StrandFont.caption)
+                    .foregroundStyle(StrandPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                rowDivider
+
+                // Experimental alarm-anchored wake — default OFF.
+                Toggle(isOn: $alarmAnchoredWakeEnabled) {
+                    Text("Wake from alarm (experimental)")
+                        .font(StrandFont.subhead)
+                        .foregroundStyle(StrandPalette.textPrimary)
+                }
+                .toggleStyle(.switch)
+                .tint(StrandPalette.accent)
+                Text("When the strap alarm wakes you, the night ends when your heart rate goes up afterwards, which is usually when you get up. The time between the alarm and getting up counts as awake. Nights without the strap alarm, or without a clear rise, stay as they are. Applies to nights analysed after you turn it on.")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)

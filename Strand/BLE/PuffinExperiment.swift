@@ -282,6 +282,13 @@ enum PuffinExperiment {
 
     static var motionAwareWakeEnabled: Bool { UserDefaults.standard.bool(forKey: motionAwareWakeKey) }
 
+    /// Opt-in "Wake from alarm": a night that ends near the strap's own alarm ends when the heart rate
+    /// rises after it, read as getting up, and the minutes from the alarm on count as awake
+    /// (`AlarmAnchoredWake`). Default OFF and not yet validated on a strap. iOS only in this fork.
+    static let alarmAnchoredWakeKey = "zoop.alarmAnchoredWake"
+
+    static var alarmAnchoredWakeEnabled: Bool { UserDefaults.standard.bool(forKey: alarmAnchoredWakeKey) }
+
     /// Opt-in "WHOOP MG ECG (experimental)": unlock the gated, user-initiated ECG ("Labrador") probe that
     /// asks an MG strap to start its ECG subsystem. Default OFF, and OFF is not merely the default — with
     /// this key false the four ECG opcodes are dropped by the BLEManager allowlist, so no ECG byte can

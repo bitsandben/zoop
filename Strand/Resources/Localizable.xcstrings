@@ -1,6 +1,8 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "When the strap alarm wakes you, the night ends when your heart rate goes up afterwards, which is usually when you get up. The time between the alarm and getting up counts as awake. Nights without the strap alarm, or without a clear rise, stay as they are. Applies to nights analysed after you turn it on." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Wenn dich der Wecker des Bands weckt, endet die Nacht, sobald danach dein Puls steigt – meist dann, wenn du aufstehst. Die Zeit zwischen Wecker und Aufstehen zählt als wach. Nächte ohne Band-Wecker oder ohne klaren Anstieg bleiben unverändert. Gilt für Nächte, die nach dem Einschalten ausgewertet werden."}}}},
+    "Wake from alarm (experimental)" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Aufwachen per Wecker (experimentell)"}}}},
     "A free key from openrouter.ai/keys is enough. Only models ending in :free are listed, so nothing is billed." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Ein kostenloser Schlüssel von openrouter.ai/keys reicht. Es werden nur Modelle mit :free angezeigt, es fällt also nichts an."}}}},
     "Cycle day %lld": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Zyklustag %lld"}}}},
     "Still learning your cycle. Predictions sharpen with each period you log.": {"localizations": {"de": {"stringUnit": {"state": "translated", "value": "Zoop lernt deinen Zyklus noch. Die Vorhersage wird mit jeder eingetragenen Periode genauer."}}}},
