@@ -174,6 +174,8 @@ struct LiquidTodayView: View {
     @State private var refreshArmed = false
     @State private var refreshing = false
     @State private var pullHaptic = 0
+    /// What the last pull ended with, shown for a moment after the refresh settles.
+    @State private var pullOutcome: PullSyncOutcome?
     private let pullThreshold: CGFloat = 80
 
     #if !os(iOS)
@@ -590,7 +592,7 @@ struct LiquidTodayView: View {
     /// visibility decision to `LiquidRefreshIndicator` below, which DOES own LiveState.
     private var liquidRefreshIndicator: some View {
         LiquidRefreshIndicator(pullY: pullY, pullThreshold: pullThreshold, refreshing: refreshing,
-                               liquidHeart: liquidHeart)
+                               liquidHeart: liquidHeart, outcome: pullOutcome)
     }
 
     /// Arm the refresh once the pull passes the threshold; FIRE it when the finger releases (the pull
@@ -610,23 +612,44 @@ struct LiquidTodayView: View {
         // rest of the gesture, since that branch is the only thing that clears it — a worse failure than
         // the silent one being fixed. Not arming also withholds the haptic, which is the honest signal
         // that the gesture is unavailable rather than unresponsive.
-        if pullY >= pullThreshold, !refreshArmed, ble.state.historyReady {
+        // The pull always arms (and buzzes) so the gesture never feels dead; whether a strap sync can run
+        // is decided on release from `historyReady`, the client's own precondition (#1748), and the
+        // indicator then says which of the two happened instead of declining in silence.
+        if pullY >= pullThreshold, !refreshArmed {
             refreshArmed = true
             pullHaptic &+= 1
         }
         if refreshArmed, pullY < 6 {
             refreshArmed = false
             refreshing = true
+            pullOutcome = nil
             Task {
-                // #334 (iOS twin of Android #426): a pull requests a fresh strap history offload, not just
-                // a UI reload. syncNow() is internally gated (connected + bonded + not-already-backfilling),
-                // so a pull while disconnected or mid-offload safely no-ops. The sync status chip owns the
-                // ongoing offload progress; the pull spinner stays short (the reload below).
-                ble.syncNow()
+                // #334: a pull asks the strap for its stored history, not just a UI reload. syncNow() is
+                // itself gated (connected + bonded + not already syncing).
+                let canSync = ble.state.historyReady
+                if canSync { ble.syncNow() }
                 await repo.refresh()
                 await load()
-                try? await Task.sleep(nanoseconds: 350_000_000)   // let the fill read as "done"
-                withAnimation(.easeOut(duration: 0.25)) { refreshing = false }
+                if canSync {
+                    // Keep the indicator up through the offload: give it a moment to start, then follow it
+                    // until it ends (or a minute passes; the sync chip carries anything longer).
+                    var waited = 0
+                    while !ble.state.backfilling && waited < 6 {
+                        try? await Task.sleep(nanoseconds: 500_000_000); waited += 1
+                    }
+                    var running = 0
+                    while ble.state.backfilling && running < 120 {
+                        try? await Task.sleep(nanoseconds: 500_000_000); running += 1
+                    }
+                    await repo.refresh()
+                    await load()
+                }
+                withAnimation(.easeOut(duration: 0.25)) {
+                    refreshing = false
+                    pullOutcome = canSync ? (ble.state.lastSyncError == nil ? .synced : .interrupted) : .offline
+                }
+                try? await Task.sleep(nanoseconds: 1_600_000_000)
+                withAnimation(.easeOut(duration: 0.3)) { pullOutcome = nil }
             }
         }
     }
@@ -2899,34 +2922,111 @@ private struct FlatScoreRing: View {
 ///
 /// No longer reads LiveState at all, so it is no longer an isolated leaf — there is nothing left to
 /// isolate it from.
+enum PullSyncOutcome { case synced, interrupted, offline }
+
+/// Pull-to-sync indicator: a squircle that draws itself as you pull, an arrow that turns over once a
+/// release will sync, a running arc with the strap's chunk count while the offload runs, and a short
+/// result line once it settles.
 private struct LiquidRefreshIndicator: View {
     let pullY: CGFloat
     let pullThreshold: CGFloat
     let refreshing: Bool
     let liquidHeart: Color
+    let outcome: PullSyncOutcome?
+    @EnvironmentObject private var live: LiveState
 
     private var progress: CGFloat { min(1, max(0, pullY / pullThreshold)) }
 
     var body: some View {
         ZStack {
             if refreshing {
-                VStack(spacing: 6) {
-                    LiquidVessel(value: 0.6, tint: liquidHeart, animated: true)
-                        .frame(width: 34, height: 34)
-                    Text("Syncing…")
+                VStack(spacing: 8) {
+                    SyncSpinner(tint: StrandPalette.accent)
+                        .frame(width: 30, height: 30)
+                    Text(syncingLine)
+                        .font(StrandFont.caption.monospacedDigit())
+                        .foregroundStyle(StrandPalette.textSecondary)
+                        .contentTransition(.numericText())
+                        .animation(.default, value: live.syncChunksThisSession)
+                }
+                .transition(.opacity)
+            } else if let outcome {
+                Label(outcomeLine(outcome), systemImage: outcomeIcon(outcome))
+                    .font(StrandFont.caption.weight(.semibold))
+                    .foregroundStyle(outcome == .synced ? StrandPalette.accent : StrandPalette.textSecondary)
+                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            } else if pullY > 2 {
+                VStack(spacing: 8) {
+                    ZStack {
+                        SquircleRing(fraction: Double(progress), tint: StrandPalette.accent, lineWidth: 3)
+                        Image(systemName: "arrow.down")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(progress >= 1 ? StrandPalette.accent : StrandPalette.textSecondary)
+                            .rotationEffect(.degrees(progress >= 1 ? 180 : 0))
+                            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: progress >= 1)
+                    }
+                    .frame(width: 30, height: 30)
+                    .scaleEffect(0.75 + 0.25 * progress)
+                    Text(progress >= 1 ? "Release to sync" : "Pull to sync")
                         .font(StrandFont.caption)
                         .foregroundStyle(StrandPalette.textSecondary)
                 }
-            } else if pullY > 2 {
-                LiquidVessel(value: progress, tint: liquidHeart, animated: false)
-                    .frame(width: 30, height: 30)
-                    .opacity(progress)
-                    .scaleEffect(0.7 + 0.3 * progress)
+                .opacity(Double(progress))
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: refreshing ? 64 : min(pullY, pullThreshold * 1.15))
+        .frame(height: refreshing || outcome != nil ? 64 : min(pullY, pullThreshold * 1.15))
+        .clipped()
         .animation(.easeOut(duration: 0.22), value: refreshing)
+        .animation(.easeOut(duration: 0.22), value: outcome)
+    }
+
+    private var syncingLine: String {
+        guard live.backfilling else { return String(localized: "Updating…") }
+        let n = live.syncChunksThisSession
+        return n > 0 ? String(localized: "Syncing strap · \(n)") : String(localized: "Syncing strap…")
+    }
+
+    private func outcomeLine(_ o: PullSyncOutcome) -> String {
+        switch o {
+        case .synced: return String(localized: "Up to date")
+        case .interrupted: return String(localized: "Sync interrupted")
+        case .offline: return String(localized: "Strap not connected")
+        }
+    }
+
+    private func outcomeIcon(_ o: PullSyncOutcome) -> String {
+        switch o {
+        case .synced: return "checkmark.circle.fill"
+        case .interrupted: return "exclamationmark.circle"
+        case .offline: return "antenna.radiowaves.left.and.right.slash"
+        }
+    }
+}
+
+/// A short arc running round a squircle track, for a sync in progress.
+private struct SyncSpinner: View {
+    let tint: Color
+    private let arc: CGFloat = 0.28
+
+    var body: some View {
+        TimelineView(.animation) { ctx in
+            let t = ctx.date.timeIntervalSinceReferenceDate
+            let head = CGFloat(t.truncatingRemainder(dividingBy: 1.1) / 1.1)
+            ZStack {
+                SquircleShape().stroke(ZoopVisualStyle.ringTrack, lineWidth: 3)
+                segment(from: head, to: min(1, head + arc))
+                // The part of the arc that has run past the end of the path, drawn from the start.
+                if head + arc > 1 { segment(from: 0, to: head + arc - 1) }
+            }
+            .padding(1.5)
+        }
+    }
+
+    private func segment(from a: CGFloat, to b: CGFloat) -> some View {
+        SquircleShape()
+            .trim(from: a, to: b)
+            .stroke(tint, style: StrokeStyle(lineWidth: 3, lineCap: .round))
     }
 }
 
