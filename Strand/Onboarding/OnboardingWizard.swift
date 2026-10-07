@@ -13,11 +13,12 @@ import UserNotifications
 // Steps:
 //  1 Welcome           — NOOP + "all your data, none of the cloud"
 //  2 What it does      — 3 calm value slides
-//  3 Bluetooth priming — explain BEFORE the OS prompt
-//  4 Wear & wake       — put your strap on, make sure it's charged
-//  5 Scan              — radar sweep; auto-scans, Scan retries via model.scan()
-//  6 Bonding           — celebration when live.bonded (a RecoveryRing blooms in)
-//  7 Profile           — age / sex / weight / height bound to ProfileStore
+//  3 About you         — name, birthday, sex, height, weight: one question per step
+//                        (OnboardingProfileSteps.swift), bound to ProfileStore
+//  4 Bluetooth priming — explain BEFORE the OS prompt
+//  5 Wear & wake       — put your strap on, make sure it's charged
+//  6 Scan              — radar sweep; auto-scans, Scan retries via model.scan()
+//  7 Bonding           — celebration when live.bonded (a RecoveryRing blooms in)
 //  8 Import (optional)  — WHOOP / Apple Health import from the wizard
 //  9 Done              — "You're all set" → onFinished()
 //
@@ -35,10 +36,12 @@ public struct OnboardingWizard: View {
     // NOTE: the root deliberately does NOT observe the fast-updating model/live/profile
     // env objects — doing so re-rendered the whole animated wizard on every HR tick and
     // caused flicker. Child steps observe what they need; a hidden BondWatcher (below)
-    // handles the bond→celebration transition without re-rendering the root.
+    // handles the bond→celebration transition without re-rendering the root. The profile is the one
+    // exception: it changes only when the user answers a question, and the name step's button reads it.
+    @EnvironmentObject private var profile: ProfileStore
 
     private enum Step: Int, CaseIterable {
-        case welcome, what, expectations, bluetooth, wear, scan, bonded, profile, importData, notifications, appearance, done
+        case welcome, what, expectations, name, birthday, sex, height, weight, bluetooth, wear, scan, bonded, importData, notifications, appearance, done
 
         var isFirst: Bool { self == .welcome }
         var isLast: Bool { self == .done }
@@ -62,11 +65,15 @@ public struct OnboardingWizard: View {
                     case .welcome:    WelcomeStep()
                     case .what:       WhatItDoesStep()
                     case .expectations: ExpectationsStep()
+                    case .name:       OnboardingNameStep(advance: advance)
+                    case .birthday:   OnboardingBirthdayStep()
+                    case .sex:        OnboardingSexStep()
+                    case .height:     OnboardingHeightStep()
+                    case .weight:     OnboardingWeightStep()
                     case .bluetooth:  BluetoothStep()
                     case .wear:       WearStep()
                     case .scan:       ScanStep(advance: advance)
                     case .bonded:     BondedStep()
-                    case .profile:    ProfileStep()
                     case .importData: ImportStep()
                     case .notifications: NotificationsStep()
                     case .appearance: AppearanceStep()
@@ -164,7 +171,9 @@ public struct OnboardingWizard: View {
         case .wear:       return String(localized: "I'm wearing it")
         case .scan:       return String(localized: "Continue")
         case .bonded:     return String(localized: "Continue")
-        case .profile:    return String(localized: "Save & Continue")
+        case .name:       return profile.name.trimmingCharacters(in: .whitespaces).isEmpty
+                                    ? String(localized: "Skip") : String(localized: "Continue")
+        case .birthday, .sex, .height, .weight: return String(localized: "Continue")
         case .importData: return String(localized: "Continue")
         case .notifications: return String(localized: "Continue")
         case .appearance: return String(localized: "Continue")
@@ -684,113 +693,6 @@ private struct BondedStep: View {
             return String(localized: "Your strap is bonded · \(Int(pct))% battery.")
         }
         return String(localized: "Your strap is bonded and ready to stream.")
-    }
-}
-
-// MARK: - Step 7 · Profile
-
-private struct ProfileStep: View {
-    @EnvironmentObject private var profile: ProfileStore
-
-    // The stored profile is always SI. Body measurements and exercise distance can follow the regional
-    // conventions independently; an unset distance choice follows the body choice for compatibility.
-    @AppStorage(UnitPrefs.systemKey) private var unitSystemRaw = UnitSystem.metric.rawValue
-    @AppStorage(UnitPrefs.distanceSystemKey) private var distanceSystemRaw = ""
-    private var unitSystem: UnitSystem { UnitSystem(rawValue: unitSystemRaw) ?? .metric }
-    private var distanceUnitSystem: UnitSystem {
-        UnitPrefs.resolveDistance(system: unitSystem, override: distanceSystemRaw)
-    }
-    private var distanceSystemBinding: Binding<String> {
-        Binding(get: { distanceUnitSystem.rawValue }, set: { distanceSystemRaw = $0 })
-    }
-
-    private let sexes: [(String, String)] = [
-        ("male", String(localized: "Male")), ("female", String(localized: "Female")),
-        ("nonbinary", String(localized: "Other"))
-    ]
-
-    var body: some View {
-        StepShell(title: String(localized: "About you"),
-                  subtitle: String(localized: "So your zones, calories and baselines are accurate.")) {
-            VStack(spacing: 16) {
-                StrandCard {
-                    VStack(spacing: 18) {
-                        // #146: capture a date of birth so age advances on its own instead of going stale.
-                        DatePicker(selection: $profile.dateOfBirth,
-                                   in: ProfileStore.dateOfBirthRange,
-                                   displayedComponents: .date) {
-                            FieldRow(label: String(localized: "Date of birth"),
-                                     value: String(localized: "\(profile.age) yrs"))
-                        }
-                        .tint(StrandPalette.accent)
-
-                        Divider().overlay(StrandPalette.hairline)
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Sex").strandOverline()
-                            Picker("Sex", selection: $profile.sex) {
-                                ForEach(sexes, id: \.0) { key, label in
-                                    Text(label).tag(key)
-                                }
-                            }
-                            .pickerStyle(.segmented)
-                            .labelsHidden()
-                        }
-
-                        Divider().overlay(StrandPalette.hairline)
-
-                        // Keep the two choices explicit here: "Metric/Imperial" alone cannot describe
-                        // common mixed conventions such as Canadian pounds with kilometres.
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Body measurements").strandOverline()
-                            Picker("Body measurements", selection: $unitSystemRaw) {
-                                Text("Metric").tag(UnitSystem.metric.rawValue)
-                                Text("Imperial").tag(UnitSystem.imperial.rawValue)
-                            }
-                            .pickerStyle(.segmented)
-                            .labelsHidden()
-                        }
-
-                        Divider().overlay(StrandPalette.hairline)
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Exercise distance & pace").strandOverline()
-                            Picker("Exercise distance & pace", selection: distanceSystemBinding) {
-                                Text("Kilometres").tag(UnitSystem.metric.rawValue)
-                                Text("Miles").tag(UnitSystem.imperial.rawValue)
-                            }
-                            .pickerStyle(.segmented)
-                            .labelsHidden()
-                        }
-
-                        Divider().overlay(StrandPalette.hairline)
-
-                        // Steppers, not sliders — matches the Age row above and the macOS Settings
-                        // profile editor (same ranges/steps), so every numeric profile field is
-                        // consistent across onboarding and Settings on both platforms.
-                        Stepper(value: $profile.weightKg, in: 30...250, step: 0.5) {
-                            FieldRow(label: String(localized: "Weight"),
-                                     value: UnitFormatter.massFromKilograms(profile.weightKg, system: unitSystem))
-                        }
-
-                        Divider().overlay(StrandPalette.hairline)
-
-                        Stepper(value: $profile.heightCm, in: 120...230, step: 1) {
-                            FieldRow(label: String(localized: "Height"),
-                                     value: UnitFormatter.heightFromCentimeters(profile.heightCm, system: unitSystem))
-                        }
-                    }
-                }
-
-                HStack(spacing: 8) {
-                    Image(systemName: "bolt.heart")
-                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
-                    Text("Estimated max heart rate · \(profile.hrMax) bpm")
-                        .font(StrandFont.footnote)
-                        .foregroundStyle(StrandPalette.textTertiary)
-                }
-            }
-        }
     }
 }
 

@@ -20,6 +20,8 @@ final class ProfileStore: ObservableObject {
         }
     }
     @Published var sex: String { didSet { d.set(sex, forKey: K.sex) } }          // "male" | "female" | "nonbinary"
+    /// What the app calls the user (a greeting, the More header). Empty = not given.
+    @Published var name: String { didSet { d.set(name, forKey: K.name) } }
     @Published var weightKg: Double { didSet { d.set(weightKg, forKey: K.weight) } }
     @Published var heightCm: Double { didSet { d.set(heightCm, forKey: K.height) } }
     /// Optional waist circumference (cm); 0 = not set. Only used to ALSO show an estimated VO₂max
@@ -86,6 +88,7 @@ final class ProfileStore: ObservableObject {
         /// cross-platform `.zoopbak` whitelist keeps round-tripping an Int age unchanged.
         static let legacyAge = "profile.age"
         static let sex = "profile.sex", weight = "profile.weightKg"
+        static let name = "zoop.profile.name"
         static let height = "profile.heightCm", hrMax = "profile.hrMaxOverride"
         static let hrZoneThresholds = "profile.hrZoneThresholds"
         static let stepScale = "profile.stepTicksPerStep"
@@ -122,6 +125,7 @@ final class ProfileStore: ObservableObject {
         d.set(resolvedDOB, forKey: K.dateOfBirth)
         d.set(Self.years(from: resolvedDOB, to: Date()), forKey: K.legacyAge)
         sex = d.string(forKey: K.sex) ?? "male"
+        name = d.string(forKey: K.name) ?? ""
         weightKg = d.object(forKey: K.weight) as? Double ?? 75
         heightCm = d.object(forKey: K.height) as? Double ?? 178
         waistCm = d.object(forKey: K.waist) as? Double ?? 0
