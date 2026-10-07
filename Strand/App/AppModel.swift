@@ -1697,6 +1697,9 @@ final class AppModel: ObservableObject {
             enabled: behavior.batteryAlerts)
     }
 
+    /// Experimental smart-wake window (`SmartWakeWindow`), planned whenever the alarm is (re)armed.
+    lazy var smartWake = SmartWakeWindow(model: self)
+
     /// The next moment the strap alarm will actually buzz, or nil when nothing will fire.
     ///
     /// The one funnel every alarm readout resolves through (the Alarms screen, Home's evening card), on
@@ -1717,6 +1720,7 @@ final class AppModel: ObservableObject {
         guard behavior.smartAlarmEnabled else {
             ble.disableStrapAlarm()
             Self.cancelSmartAlarmBackupNotification()
+            smartWake.plan(nextAlarm: nil)
             return
         }
         guard let next = Self.nextSmartAlarmDate(minutes: behavior.smartAlarmMinutes,
@@ -1728,7 +1732,9 @@ final class AppModel: ObservableObject {
             Self.cancelSmartAlarmBackupNotification()
             return
         }
-        ble.armStrapAlarm(at: next)
+        // The smart-wake window may already have moved this alarm earlier; keep that, then follow the alarm.
+        ble.armStrapAlarm(at: smartWake.effectiveAlarm(for: next))
+        smartWake.plan(nextAlarm: next)
         // Replace (remove + re-add by stable identifier) on every re-arm so the backup never stacks.
         // The log sink hops to the main actor because the auth check completes off-main and LiveState is
         // @MainActor - the same Task hop the importTraceSink uses.

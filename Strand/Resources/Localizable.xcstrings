@@ -1,6 +1,11 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Your alarm wakes you between %@ and %@, when you sleep lightest. Be in bed by %@ to get %lld%% of your sleep need." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Dein Wecker weckt dich zwischen %@ und %@, wenn du am leichtesten schläfst. Geh bis %@ ins Bett, um %lld %% deines Schlafbedarfs zu erreichen."}}}},
+    "Experimental. In the %lld minutes before your alarm, Zoop checks every few minutes for movement or a rising heart rate and buzzes as soon as it sees one. If it sees nothing, or Zoop isn't running, the alarm rings at its time." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Experimentell. In den %lld Minuten vor deinem Wecker prüft Zoop alle paar Minuten, ob du dich bewegst oder dein Puls steigt, und weckt dich, sobald das passiert. Sieht Zoop nichts oder läuft die App nicht, klingelt der Wecker zur gestellten Zeit."}}}},
+    "From %@" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Ab %@"}}}},
+    "%lld min before" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"%lld min vorher"}}}},
+    "Wake window" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Weckfenster"}}}},
     "Your alarm is not armed on this strap. To wake at %@ with %lld%% of your sleep need, be in bed by %@." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Dein Wecker ist auf diesem Band nicht scharf. Um %@ mit %lld %% deines Schlafbedarfs aufzuwachen, geh bis %@ ins Bett."}}}},
     "Not armed" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Nicht scharf"}}}},
     "Not armed: a WHOOP 5/MG needs Experimental on in Settings" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Nicht scharf: Ein WHOOP 5/MG braucht „Experimental“ in den Einstellungen"}}}},

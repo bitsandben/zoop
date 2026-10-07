@@ -16,7 +16,7 @@ struct SleepPlannerScreen: View {
     @ObservedObject private var behavior: BehaviorStore
     @StateObject private var patterns = PatternsModel()
     @AppStorage(SleepGoal.storageKey) private var goalRaw = SleepGoal.peak.rawValue
-    @State private var showModes = false
+    @AppStorage(SmartWakeWindow.windowKey) private var windowMinutes = 0
     @State private var editTime = false
 
     init(behavior: BehaviorStore) { self.behavior = behavior }
@@ -63,9 +63,6 @@ struct SleepPlannerScreen: View {
         .task(id: "\(repo.refreshSeq)-\(goalRaw)-\(behavior.smartAlarmEnabled)-\(behavior.smartAlarmMinutes)") {
             await reload()
         }
-        .sheet(isPresented: $showModes) {
-            AlarmModeSheet().presentationDetents([.medium])
-        }
         .sheet(isPresented: $editTime) {
             AlarmTimeSheet(behavior: behavior, days: [targetWeekday], minutes: targetWakeMinutes) {
                 Task { await reload() }
@@ -109,6 +106,10 @@ struct SleepPlannerScreen: View {
         let pct = Int((t.goal * 100).rounded())
         let bedText = PatternsScreen.clock(bed / 60)
         if let a = alarm {
+            if windowMinutes > 0 {
+                let from = HomeMomentCard.time(a.addingTimeInterval(-Double(windowMinutes * 60)))
+                return String(localized: "Your alarm wakes you between \(from) and \(HomeMomentCard.time(a)), when you sleep lightest. Be in bed by \(bedText) to get \(pct)% of your sleep need.")
+            }
             return String(localized: "Your alarm goes off at \(HomeMomentCard.time(a)). Be in bed by \(bedText) to get \(pct)% of your sleep need.")
         }
         let wake = t.wake.map { PatternsScreen.clock($0 / 60) } ?? "–"
@@ -233,8 +234,26 @@ struct SleepPlannerScreen: View {
                     .tint(StrandPalette.accent)
             }
             HStack(spacing: 10) {
-                tile(caption: "Alarm mode", value: String(localized: "Fixed time")) { showModes = true }
+                Menu {
+                    Picker("Wake window", selection: Binding(
+                        get: { windowMinutes },
+                        set: { windowMinutes = $0; model.applySmartAlarm() })) {
+                        ForEach(SmartWakeWindow.choices, id: \.self) { m in
+                            Text(m == 0 ? String(localized: "Off") : String(localized: "\(m) min before")).tag(m)
+                        }
+                    }
+                } label: {
+                    tileLabel(caption: "Wake window",
+                              value: windowMinutes == 0 ? String(localized: "Off") : String(localized: "\(windowMinutes) min"))
+                }
                 tile(caption: "Alarm set to", value: PatternsScreen.clock(targetWakeMinutes)) { editTime = true }
+            }
+            if windowMinutes > 0 {
+                Text(String(localized: "Experimental. In the \(windowMinutes) minutes before your alarm, Zoop checks every few minutes for movement or a rising heart rate and buzzes as soon as it sees one. If it sees nothing, or Zoop isn't running, the alarm rings at its time."))
+                    .font(StrandFont.footnote)
+                    .foregroundStyle(StrandPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             if let t = patterns.tonight {
                 WindDownReminderRow(suggestedWakeMinute: t.wake.map { $0 / 60 }) { Task { await reload() } }
@@ -247,7 +266,11 @@ struct SleepPlannerScreen: View {
     }
 
     private func tile(caption: LocalizedStringKey, value: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button(action: action) { tileLabel(caption: caption, value: value) }
+            .buttonStyle(.plain)
+    }
+
+    private func tileLabel(caption: LocalizedStringKey, value: String) -> some View {
             VStack(spacing: 4) {
                 Text(caption)
                     .font(.system(size: 12, weight: .semibold))
@@ -259,8 +282,6 @@ struct SleepPlannerScreen: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(StrandPalette.surfaceBase))
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: Formatting
@@ -275,61 +296,6 @@ struct SleepPlannerScreen: View {
         f.locale = AppLanguage.activeLocale
         f.setLocalizedDateFormatFromTemplate("EEE jj:mm")
         return f.string(from: date)
-    }
-}
-
-// MARK: - Alarm mode
-
-/// The alarm modes. Only a fixed time can be armed on the strap today; waking on a reached sleep goal or
-/// on green recovery would need the night staged live while asleep, which the app does not do.
-struct AlarmModeSheet: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Alarm mode")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundStyle(StrandPalette.textPrimary)
-                .padding(.bottom, 4)
-            mode("Fixed time", "Wake at a set time.", selected: true, available: true)
-            mode("Sleep goal", "Wake once you have slept your goal.", selected: false, available: false)
-            mode("In the green", "Wake once your recovery is green.", selected: false, available: false)
-            Text("Sleep goal and In the green need the night scored live on the strap while you sleep. Zoop scores the night after it syncs, so only a fixed time can be armed.")
-                .font(StrandFont.footnote)
-                .foregroundStyle(StrandPalette.textTertiary)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer()
-        }
-        .padding(20)
-        .presentationBackground(StrandPalette.surfaceBase)
-    }
-
-    private func mode(_ title: LocalizedStringKey, _ detail: LocalizedStringKey, selected: Bool, available: Bool) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 8) {
-                    Text(title)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(available ? StrandPalette.textPrimary : StrandPalette.textTertiary)
-                    if !available {
-                        Text("Not available")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(StrandPalette.textSecondary)
-                            .padding(.horizontal, 7).padding(.vertical, 3)
-                            .background(Capsule().fill(StrandPalette.surfaceBase))
-                    }
-                }
-                Text(detail)
-                    .font(StrandFont.footnote)
-                    .foregroundStyle(StrandPalette.textSecondary)
-            }
-            Spacer()
-            if selected {
-                Image(systemName: "checkmark.circle.fill").foregroundStyle(StrandPalette.accent)
-            }
-        }
-        .padding(16)
-        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(StrandPalette.surfaceRaised))
     }
 }
 

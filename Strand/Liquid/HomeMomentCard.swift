@@ -138,7 +138,7 @@ struct HomeMomentCard: View {
                     HStack(spacing: 5) {
                         Circle().fill(alarm == nil ? StrandPalette.textTertiary : StrandPalette.accent)
                             .frame(width: 7, height: 7)
-                        Text(alarm != nil ? "Alarm on" : model.behavior.smartAlarmEnabled ? "Not armed" : "Alarm off")
+                        Text(alarmStatus(alarm))
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(alarm == nil ? StrandPalette.textSecondary : StrandPalette.accent)
                     }
@@ -157,6 +157,18 @@ struct HomeMomentCard: View {
             NavigationLink(value: TabRoute.sleepPlanner) { Color.clear.contentShape(Rectangle()) }
                 .buttonStyle(.plain)
         }
+    }
+
+    /// "Alarm on", or with a smart-wake window "From 06:20", or why it will not ring.
+    private func alarmStatus(_ alarm: Date?) -> String {
+        guard let alarm else {
+            return model.behavior.smartAlarmEnabled ? String(localized: "Not armed") : String(localized: "Alarm off")
+        }
+        let window = SmartWakeWindow.windowMinutes
+        if window > 0 {
+            return String(localized: "From \(Self.time(alarm.addingTimeInterval(-Double(window * 60))))")
+        }
+        return String(localized: "Alarm on")
     }
 
     // MARK: Morning
