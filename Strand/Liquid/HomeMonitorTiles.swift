@@ -329,8 +329,9 @@ private struct WeeklyCard<Content: View>: View {
     }
 }
 
-/// Tracks which column of a week chart the finger is over while dragging sideways, so a tap still
-/// reaches the card's link and only a horizontal drag scrubs.
+/// Tracks which column of a week chart the finger is over while scrubbing, through the shared chart
+/// scrub: a tap still reaches the card's link, a vertical drag scrolls Home, and only a sideways drag (or
+/// a short hold) scrubs. Draws the vertical rule through the selected column.
 private struct WeekScrub: ViewModifier {
     let count: Int
     @Binding var selected: Int?
@@ -338,16 +339,17 @@ private struct WeekScrub: ViewModifier {
     func body(content: Content) -> some View {
         content.overlay {
             GeometryReader { geo in
-                Color.clear
-                    .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 8)
-                            .onChanged { v in
-                                let col = geo.size.width / CGFloat(max(count, 1))
-                                selected = min(count - 1, max(0, Int(v.location.x / col)))
-                            }
-                            .onEnded { _ in selected = nil }
-                    )
+                let col = geo.size.width / CGFloat(max(count, 1))
+                ZStack(alignment: .topLeading) {
+                    Color.clear
+                    if let i = selected {
+                        CrosshairRule(x: col * (CGFloat(i) + 0.5), height: geo.size.height)
+                    }
+                }
+                .contentShape(Rectangle())
+                .zoopChartScrub(onChange: { location in
+                    selected = min(count - 1, max(0, Int(location.x / col)))
+                }, onEnd: { selected = nil })
             }
         }
     }

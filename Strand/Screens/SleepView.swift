@@ -314,7 +314,16 @@ struct SleepView: View {
     }
 
     /// A direct route to the one alarm screen, available even before a night is recorded.
+    @ViewBuilder
     private var alarmsEntry: some View {
+        #if os(iOS)
+        SleepPlanEntryCard()
+        #else
+        legacyAlarmsEntry
+        #endif
+    }
+
+    private var legacyAlarmsEntry: some View {
         // Button OUTSIDE the card, as `InsightsView.whatMovesYouLink` and `LabBookView` do: with it inside,
         // only the row content answers a tap and the card's own padding is dead, so the same edge tap works
         // on Android (where the whole `ZoopCard` is clickable) and does nothing here.
@@ -816,6 +825,8 @@ struct SleepView: View {
                 get: { napWhyStartTs == nap.startTs },
                 set: { if !$0 { napWhyStartTs = nil } }), arrowEdge: .bottom) {
                 whyPopover(text: "", napSuffix: true)
+                    .frame(maxWidth: 320)
+                    .compactPopover()
             }
             Button {
                 wakeEdit = WakeEdit(detectedStartTs: nap.startTs,
@@ -1250,6 +1261,8 @@ struct SleepView: View {
                 .accessibilityLabel("Why this is your main sleep")
                 .popover(isPresented: $showMainSleepWhy, arrowEdge: .bottom) {
                     whyPopover(text: mainSleepReasonText(night) ?? "", napSuffix: false)
+                    .frame(maxWidth: 320)
+                    .compactPopover()
                 }
             }
         }
@@ -1797,6 +1810,8 @@ struct SleepView: View {
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            // Scrub: the bucket under the finger, mapped with the Canvas's own scale.
+            .overlay { SleepHRScrubOverlay(buckets: buckets, nightStartTs: nightStartTs, origin: origin, span: span) }
             .accessibilityLabel(Text("Sleeping heart rate through the night"))
         } else {
             Text("No heart-rate detail for this night")

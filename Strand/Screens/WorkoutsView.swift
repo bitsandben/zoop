@@ -2057,7 +2057,7 @@ private struct WorkoutRecoveryTrendChart: View {
                         )
                     }
                 }
-                .animation(StrandMotion.fade, value: hoverX)
+                .animation(StrandMotion.fade, value: hoverX == nil)
                 .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
                 .contentShape(Rectangle())
                 .onContinuousHover(coordinateSpace: .local) { phase in
@@ -2072,6 +2072,9 @@ private struct WorkoutRecoveryTrendChart: View {
                         }
                     }
                 }
+                // Touch: the shared chart scrub (sideways drag or short hold); vertical drags scroll.
+                .zoopChartScrub(onChange: { hoverX = min(max($0.x, plot.minX), plot.maxX) },
+                                onEnd: { hoverX = nil })
             }
         }
         .accessibilityLabel("Heart-rate recovery trend in beats per minute")

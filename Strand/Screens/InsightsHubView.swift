@@ -421,6 +421,8 @@ private struct DoseCurveChart: View {
     let accent: Color
     let unitLabel: String
     let outcomeName: String
+    /// The dose under the finger while scrubbing.
+    @State private var scrubIndex: Int?
 
     var body: some View {
         GeometryReader { geo in
@@ -474,7 +476,21 @@ private struct DoseCurveChart: View {
                         .frame(width: 5, height: 5)
                         .position(x: xFor(i), y: yFor(points[i].outcomeDelta))
                 }
+
+                // Scrub readout: the dose under the finger and its modelled change.
+                if let i = scrubIndex, points.indices.contains(i) {
+                    ChartScrubReadout(
+                        x: xFor(i), y: yFor(points[i].outcomeDelta), container: geo.size,
+                        value: "\(String(format: "%+.1f", points[i].outcomeDelta)) \(outcomeName)",
+                        label: "\(points[i].dose) \(unitLabel)",
+                        accent: accent)
+                }
             }
+            .frame(width: w, height: h, alignment: .topLeading)
+            .contentShape(Rectangle())
+            .zoopChartScrub(onChange: { location in
+                scrubIndex = ChartHoverMath.nearestIndex(toX: location.x, count: points.count, width: w)
+            }, onEnd: { scrubIndex = nil })
         }
         .accessibilityElement()
     }

@@ -320,7 +320,7 @@ public struct Hypnogram: View {
                             )
                         }
                     }
-                    .animation(StrandMotion.fade, value: hoverIndex)
+                    .animation(StrandMotion.fade, value: hoverIndex == nil)
                     .animation(StrandMotion.fade, value: highlightedStage)
                     .contentShape(Rectangle())
                     .onContinuousHover(coordinateSpace: .local) { phase in
@@ -332,6 +332,10 @@ public struct Hypnogram: View {
                             hoverIndex = nil
                         }
                     }
+                    // Touch: the shared chart scrub (sideways drag or short hold) walks the stages.
+                    .zoopChartScrub(isEnabled: showsHover && !intervals.isEmpty,
+                                    onChange: { hoverIndex = intervalIndex(atX: $0.x, in: geo.size) },
+                                    onEnd: { hoverIndex = nil })
                     // ONE collapsed VoiceOver element for the whole hypnogram (per-stage totals), instead
                     // of the old O(intervals) per-band layer the accessibility walk re-copied each scroll
                     // frame (#707). The visual bands already live in a `.drawingGroup()` marked

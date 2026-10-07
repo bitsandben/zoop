@@ -680,7 +680,7 @@ struct TrendsView: View {
         // LiquidPressStyle gives the physical settle-inward on press (the liquid tap language). The card's
         // own rich labels (title + chart series + footer stats) are surfaced by the link's button element,
         // with a hint that a tap opens the detail.
-        NavigationLink(value: TabRoute.metric("recovery")) { card }
+        NavigationLink(value: TabRoute.metric("recovery")) { card.tapChevron() }
             .buttonStyle(LiquidPressStyle())
             .accessibilityHint(Text(String(localized: "Opens the full Charge metric.")))
     }
@@ -790,7 +790,7 @@ struct TrendsView: View {
         )
         // Each small-multiple taps through to its own metric detail (like Today's cards / Explore's rows),
         // with the liquid press settle. The chart itself is left uncluttered — no vessel over it (task).
-        NavigationLink(value: TabRoute.metric(metricKey)) { card }
+        NavigationLink(value: TabRoute.metric(metricKey)) { card.tapChevron() }
             .buttonStyle(LiquidPressStyle())
             .accessibilityHint(Text(String(localized: "Opens the full \(accessibilityTitle) metric.")))
     }
@@ -798,14 +798,23 @@ struct TrendsView: View {
     // MARK: Year heat-strip
 
     private var yearStrip: some View {
+        #if os(iOS)
+        // iOS: the last 30 days. A year of cells was slow to draw and scroll for little extra meaning.
+        let stripDays = 30
+        #else
         // Always show at least a full year for context; expand to all history on ALL.
         let stripDays = max(range.days ?? repo.days.count, 365)
+        #endif
         let recent = repo.days.suffix(stripDays)
         let recoveryDays: [RecoveryDay] = recent.compactMap { d in
             guard let dt = date(d.day) else { return nil }
             return RecoveryDay(date: dt, score: d.recovery)
         }
+        #if os(iOS)
+        let title = String(localized: "Recovery (last 30 days)")
+        #else
         let title = (range == .all && repo.days.count > 365) ? String(localized: "Charge (all history)") : String(localized: "Charge (past year)")
+        #endif
         return ZoopCard {
             VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                 SectionHeader("\(title)", overline: "Calendar", trailing: String(localized: "\(recoveryDays.filter { $0.score != nil }.count) days"))
@@ -922,3 +931,20 @@ private func previewRepo() -> Repository {
         .preferredColorScheme(.dark)
 }
 #endif
+
+private extension View {
+    /// A small chevron in the top corner of a card that opens a page, so it reads as tappable (iOS).
+    @ViewBuilder func tapChevron() -> some View {
+        #if os(iOS)
+        overlay(alignment: .topTrailing) {
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(StrandPalette.textTertiary)
+                .padding(14)
+                .accessibilityHidden(true)
+        }
+        #else
+        self
+        #endif
+    }
+}

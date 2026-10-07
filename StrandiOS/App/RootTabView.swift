@@ -94,6 +94,8 @@ struct RootTabView: View {
                     reselectTab(tag)
                 } else {
                     selectedTab = tag
+                    // A page always opens at its top, not wherever it was left.
+                    if tabPaths[tag].isEmpty { scrollTop[tag] += 1 }
                 }
             }
         )
@@ -221,11 +223,15 @@ struct RootTabView: View {
         // animation scoped to the sheet rather than the whole shell.
         .sheet(item: $quickAction) { action in
             quickActionDestination(action)
+                .presentationDetents([.fraction(0.75), .large])
+                .presentationDragIndicator(.visible)
         }
         // Live's "Manage devices" affordance (and any future cross-screen link to Devices) routes here:
         // present the Devices manager in its own nav stack, the same way the quick-action screens do.
         .sheet(isPresented: $showDevices) {
             devicesScreen
+                .presentationDetents([.fraction(0.75), .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showCoach) {
             CoachChatSheet()
@@ -234,6 +240,8 @@ struct RootTabView: View {
         // their own nav stack — the same idiom the quick-action + Devices screens use on iPhone.
         .sheet(item: $routedPillar) { dest in
             pillarScreen(dest)
+                .presentationDetents([.fraction(0.75), .large])
+                .presentationDragIndicator(.visible)
         }
         // Honour a router request: Devices keeps its dedicated sheet; the v5 pillars route through the
         // shared pillar sheet. Cleared so the same tap can fire again later.

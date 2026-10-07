@@ -135,7 +135,8 @@ public struct CrosshairRule: View {
     public var height: CGFloat
     public var color: Color
 
-    public init(x: CGFloat, height: CGFloat, color: Color = StrandPalette.hairlineStrong) {
+    /// The default reads clearly over a chart on a phone (the scrub rule follows a finger, not a cursor).
+    public init(x: CGFloat, height: CGFloat, color: Color = StrandPalette.textSecondary.opacity(0.75)) {
         self.x = x
         self.height = height
         self.color = color

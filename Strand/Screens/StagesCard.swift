@@ -3,6 +3,54 @@ import StrandDesign
 import StrandAnalytics
 import WhoopStore
 
+// MARK: - Sleeping-HR scrub (shared by SleepView and StageDetailView)
+
+/// Touch scrub for the Canvas-drawn sleeping heart-rate trace: a vertical rule at the one-minute bucket
+/// nearest the finger with its bpm and clock time. Uses the SAME x/y mapping as the Canvas (the night span
+/// across the width, the bucket range padded by 5 bpm), so the dot sits on the drawn line. Owns its
+/// scrub state, so the host views gain no state of their own.
+struct SleepHRScrubOverlay: View {
+    let buckets: [HRBucket]
+    let nightStartTs: TimeInterval
+    let origin: TimeInterval
+    let span: TimeInterval
+    @State private var scrubX: CGFloat?
+
+    private func point(_ b: HRBucket, in size: CGSize, lo: Double, hi: Double) -> CGPoint {
+        let rel = TimeInterval(b.ts) - nightStartTs
+        let x = CGFloat((rel - origin) / max(span, 1)) * size.width
+        let y = size.height * (1 - CGFloat((b.bpm - lo) / max(1, hi - lo)))
+        return CGPoint(x: x, y: y)
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .topLeading) {
+                Color.clear
+                if let scrubX, geo.size.width > 0, !buckets.isEmpty {
+                    let bpms = buckets.map(\.bpm)
+                    let lo = (bpms.min() ?? 40) - 5
+                    let hi = (bpms.max() ?? 90) + 5
+                    let target = nightStartTs + origin + Double(scrubX / geo.size.width) * span
+                    let bucket = buckets.min { abs(TimeInterval($0.ts) - target) < abs(TimeInterval($1.ts) - target) }
+                    if let bucket {
+                        let p = point(bucket, in: geo.size, lo: lo, hi: hi)
+                        ChartScrubReadout(
+                            x: min(max(p.x, 0), geo.size.width), y: p.y, container: geo.size,
+                            value: String(localized: "\(Int(bucket.bpm.rounded())) bpm"),
+                            label: Date(timeIntervalSince1970: TimeInterval(bucket.ts))
+                                .formatted(date: .omitted, time: .shortened),
+                            accent: StrandPalette.restColor)
+                    }
+                }
+            }
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
+            .contentShape(Rectangle())
+            .zoopChartScrub(onChange: { scrubX = min(max($0.x, 0), geo.size.width) }, onEnd: { scrubX = nil })
+        }
+    }
+}
+
 // MARK: - Stages (read-only Today host card) (#today-hosted-cards)
 //
 // The Sleep tab's "Stages" hero is deeply STATEFUL/INTERACTIVE (night ◀/▶ navigation, a wake-time edit
@@ -796,6 +844,8 @@ struct StageDetailView: View {
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            // Scrub: the bucket under the finger, mapped with the Canvas's own scale.
+            .overlay { SleepHRScrubOverlay(buckets: buckets, nightStartTs: nightStartTs, origin: origin, span: span) }
             .accessibilityLabel(Text("Sleeping heart rate through the night"))
         } else {
             Text("No heart-rate detail for this night")

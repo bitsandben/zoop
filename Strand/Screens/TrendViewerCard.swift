@@ -341,7 +341,20 @@ struct TrendViewerCard: View {
                         }
                 }
             }
-            .chartXSelection(value: $scrubDate)
+            // Scrub through the shared mechanism rather than `chartXSelection`: a sideways drag (or a short
+            // hold) moves the rule, a vertical drag scrolls Trends, and the rule and its value label jump
+            // straight to each reading instead of animating between them.
+            .chartOverlay { proxy in
+                GeometryReader { geo in
+                    let plot = proxy.plotRectCompat(in: geo)
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .zoopChartScrub(onChange: { location in
+                            let x = min(max(location.x, plot.minX), plot.maxX) - plot.minX
+                            scrubDate = proxy.value(atX: x, as: Date.self)
+                        }, onEnd: { scrubDate = nil })
+                }
+            }
             .chartYScale(domain: yDomain(current, band: band))
             // The area fill runs down to zero; keep it inside the plot when the axis starts higher.
             .chartPlotStyle { $0.clipped() }

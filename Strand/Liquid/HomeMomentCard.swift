@@ -16,19 +16,21 @@ enum HomeMoment: Equatable {
 
     /// Stress level (0–3) from which an hour counts as high.
     static let highStress = 2.0
-    /// How recent the stress reading must be to count as "now".
-    static let stressMaxAge: TimeInterval = 90 * 60
 
-    /// The moment for `now`: recent high stress between 08:00 and 23:00, else the morning from 05:00 to
-    /// 11:00 when today's recovery is known, else the night ahead.
-    static func pick(now: Date, hours: [DaytimeStress.HourPoint], recovery: Double?,
+    /// The moment for `now`: stress that is high right now between 08:00 and 23:00, else the morning
+    /// from 05:00 to 11:00 when today's recovery is known, else the night ahead.
+    ///
+    /// "Right now" means the hour in progress scores high AND the last ten minutes of heart rate
+    /// (`recentHR`) still sit at or above that hour's mean, so one tense moment earlier in the hour does
+    /// not keep the card up once the body has settled.
+    static func pick(now: Date, hours: [DaytimeStress.HourPoint], recovery: Double?, recentHR: Double?,
                      calendar: Calendar = .current) -> HomeMoment? {
         let h = calendar.component(.hour, from: now)
         let nowTs = Int(now.timeIntervalSince1970)
         if (8..<23).contains(h),
-           let latest = hours.last(where: { $0.level != nil && $0.startTs <= nowTs }),
-           TimeInterval(nowTs - latest.startTs) <= stressMaxAge + 3600,
-           let level = latest.level, level >= highStress {
+           let current = hours.last(where: { $0.startTs <= nowTs && nowTs - $0.startTs < 3600 }),
+           let level = current.level, level >= highStress,
+           let recent = recentHR, let hourMean = current.meanHR, recent >= hourMean {
             return .breathe(level: level)
         }
         if (5..<11).contains(h), let r = recovery { return .morning(recovery: r) }
@@ -45,16 +47,27 @@ struct HomeMomentCard: View {
     @EnvironmentObject private var repo: Repository
     @EnvironmentObject private var model: AppModel
     @StateObject private var patterns = PatternsModel()
+    /// Mean heart rate over the last ten minutes, or nil when the strap sent too little.
+    @State private var recentHR: Double?
 
     var body: some View {
         TimelineView(.everyMinute) { ctx in
-            if let moment = HomeMoment.pick(now: ctx.date, hours: hours, recovery: recovery) {
+            if let moment = HomeMoment.pick(now: ctx.date, hours: hours, recovery: recovery, recentHR: recentHR) {
                 content(moment, now: ctx.date)
                     .transition(.opacity)
             }
         }
         .task(id: repo.refreshSeq) {
             await patterns.loadQuick(repo: repo, alarm: model.nextArmedStrapAlarm())
+        }
+        .task {
+            // Refresh the recent heart rate once a minute while Home is on screen.
+            while !Task.isCancelled {
+                let now = Int(Date().timeIntervalSince1970)
+                let hr = await repo.hrSamples(from: now - 600, to: now, limit: 2_000)
+                recentHR = hr.count >= 20 ? Double(hr.map(\.bpm).reduce(0, +)) / Double(hr.count) : nil
+                try? await Task.sleep(nanoseconds: 60_000_000_000)
+            }
         }
     }
 
@@ -72,7 +85,7 @@ struct HomeMomentCard: View {
     private func breathe(_ level: Double) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             header(icon: "wind", title: "Stress is high right now", tint: StrandPalette.stressHigh)
-            Text(String(localized: "\(String(format: "%.1f", level)) of 3 in the last hour. A few minutes of slow breathing usually brings it down."))
+            Text("A few minutes of slow breathing usually brings it down.")
                 .font(StrandFont.subhead)
                 .foregroundStyle(StrandPalette.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -182,7 +195,13 @@ struct HomeMomentCard: View {
         }
         return NavigationLink(value: TabRoute.coupled) {
             VStack(alignment: .leading, spacing: 10) {
-                header(icon: "sunrise.fill", title: "Today", tint: StrandPalette.textPrimary)
+                HStack {
+                    header(icon: "sunrise.fill", title: "Today", tint: StrandPalette.textPrimary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(StrandPalette.textTertiary)
+                }
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text("\(Int(r.rounded()))%")
                         .font(StrandFont.display(36))

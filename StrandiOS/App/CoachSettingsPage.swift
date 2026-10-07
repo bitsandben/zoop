@@ -207,10 +207,11 @@ struct CoachSettingsPage: View {
                 }
             } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "arrow.clockwise")
-                        .rotationEffect(.degrees(refreshing ? 360 : 0))
-                        .animation(refreshing ? .linear(duration: 0.8).repeatForever(autoreverses: false) : .default,
-                                   value: refreshing)
+                    if refreshing {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                    }
                     Text(coach.provider == .openRouter ? "Load current free models" : "Load current models")
                 }
                 .font(.system(size: 14, weight: .semibold))

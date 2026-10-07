@@ -19,7 +19,7 @@ struct CoachChatSheet: View {
         NavigationStack {
             Group {
                 if coach.isConfigured {
-                    CoachChat()
+                    CoachChat(repo: repo)
                         .transition(.opacity.combined(with: .move(edge: .trailing)))
                 } else {
                     CoachSetup()
@@ -51,11 +51,15 @@ struct CoachChatSheet: View {
 
 private struct CoachChat: View {
     @EnvironmentObject private var coach: AICoachEngine
-    @EnvironmentObject private var repo: Repository
-    @State private var draft = UserDefaults.standard.string(forKey: "coach.composerDraft") ?? ""
+    /// Passed in rather than observed: the chat only writes to the journal, and observing the repository
+    /// would redraw the whole message list on every live reading it publishes.
+    let repo: Repository
     @State private var showClearConfirm = false
+    /// Whether the end of the conversation is on screen. A streaming reply is followed only while it is,
+    /// so scrolling up to reread an earlier answer is not undone by the next words arriving.
+    @State private var atBottom = true
+    @State private var follow = StreamFollow()
     @FocusState private var composerFocused: Bool
-    @StateObject private var voice = CoachVoiceInput()
 
     private static let bottomID = "coach.bottom"
 
@@ -70,6 +74,7 @@ private struct CoachChat: View {
                     // the first words arrive.
                     ForEach(coach.messages.filter { !($0.role == .assistant && $0.text.isEmpty) }) { message in
                         CoachBubble(message: message, onSave: save)
+                            .equatable()
                             .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity),
                                                     removal: .opacity))
                     }
@@ -81,6 +86,10 @@ private struct CoachChat: View {
                         errorRow(error)
                     }
                     Color.clear.frame(height: 1).id(Self.bottomID)
+                        // Before iOS 18 there is no scroll geometry to read; the end marker coming into and
+                        // out of view stands in for it.
+                        .onAppear { if #unavailable(iOS 18) { atBottom = true } }
+                        .onDisappear { if #unavailable(iOS 18) { atBottom = false } }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
@@ -89,22 +98,38 @@ private struct CoachChat: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .defaultScrollAnchor(.bottom)
-            .onChange(of: coach.messages.count) { _, _ in scrollDown(proxy) }
-            // Follow a streaming reply as it grows.
+            .modifier(BottomEdgeTracking(atBottom: $atBottom))
+            // A tap anywhere on the conversation puts the keyboard away. Simultaneous, so buttons, links,
+            // text selection and the bubbles' long-press menus still get their touches.
+            .simultaneousGesture(TapGesture().onEnded { if composerFocused { composerFocused = false } })
+            .onChange(of: coach.messages.count) { _, _ in
+                // A question just sent always brings the end into view; anything else only when already there.
+                if coach.messages.last?.role == .user {
+                    atBottom = true
+                    scrollDown(proxy)
+                } else if atBottom {
+                    scrollDown(proxy)
+                }
+            }
+            // Follow a streaming reply as it grows, at most a few times a second and only while the
+            // reader is at the end.
             .onChange(of: coach.messages.last?.text.count ?? 0) { _, _ in
-                if coach.sending { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
+                if coach.sending { followStream(proxy) }
             }
             .onChange(of: coach.sending) { _, sending in
-                scrollDown(proxy)
+                if atBottom { scrollDown(proxy) }
                 if !sending && !coach.messages.isEmpty {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 }
             }
-            .onChange(of: composerFocused) { _, focused in if focused { scrollDown(proxy) } }
+            .onChange(of: composerFocused) { _, focused in if focused && atBottom { scrollDown(proxy) } }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 VStack(spacing: 10) {
-                    if !coach.sending { chips }
-                    composer
+                    if !coach.sending {
+                        CoachChips(prompts: chipPrompts, onSend: send)
+                            .equatable()
+                    }
+                    CoachComposer(sending: coach.sending, focus: $composerFocused, onSend: send)
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 8)
@@ -128,7 +153,6 @@ private struct CoachChat: View {
             Button("Clear", role: .destructive) { coach.clearConversation() }
             Button("Cancel", role: .cancel) {}
         }
-        .onChange(of: draft) { _, value in UserDefaults.standard.set(value, forKey: "coach.composerDraft") }
         .task {
             // The same opening sequence as the Coach screen: restore the saved conversation, surface a
             // morning brief that arrived meanwhile, then the first-open brief, each only into an empty one.
@@ -152,8 +176,26 @@ private struct CoachChat: View {
         return last.role == .user || last.text.isEmpty
     }
 
+    private var chipPrompts: [String] {
+        (coach.messages.last?.role == .assistant) ? AICoachEngine.followUpSuggestions : coach.suggestions
+    }
+
     private func scrollDown(_ proxy: ScrollViewProxy) {
         withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
+    }
+
+    /// Trailing throttle for a streaming reply: the first chunk in a window books one scroll ~150 ms later,
+    /// later chunks in the window ride along, so the list moves in short even glides instead of once per
+    /// token. The bookkeeping lives in a reference so it never redraws the list itself.
+    private func followStream(_ proxy: ScrollViewProxy) {
+        guard atBottom, !follow.pending else { return }
+        follow.pending = true
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 150_000_000)
+            follow.pending = false
+            guard atBottom else { return }
+            withAnimation(.linear(duration: 0.12)) { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
+        }
     }
 
     // MARK: Empty state
@@ -179,90 +221,10 @@ private struct CoachChat: View {
         .padding(.horizontal, 24)
     }
 
-    // MARK: Chips
-
-    private var chips: some View {
-        let prompts = (coach.messages.last?.role == .assistant) ? AICoachEngine.followUpSuggestions : coach.suggestions
-        return ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(prompts, id: \.self) { prompt in
-                    Button { send(prompt) } label: {
-                        Text(LocalizedStringKey(prompt))
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(StrandPalette.textPrimary)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 9)
-                            .background(Capsule().fill(StrandPalette.surfaceRaised))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 4)
-        }
-    }
-
-    // MARK: Composer
-
-    private var composer: some View {
-        let empty = draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        return HStack(alignment: .bottom, spacing: 8) {
-            HStack(alignment: .bottom, spacing: 6) {
-                TextField("Message Coach", text: $draft, axis: .vertical)
-                    .font(StrandFont.body)
-                    .foregroundStyle(StrandPalette.textPrimary)
-                    .lineLimit(1...6)
-                    .focused($composerFocused)
-                    .padding(.vertical, 11)
-                    .padding(.leading, 16)
-                if CoachVoiceInput.isSupported {
-                    Button(action: toggleVoice) {
-                        Image(systemName: voice.isRecording ? "stop.circle.fill" : "mic")
-                            .font(.system(size: 17, weight: .medium))
-                            .foregroundStyle(voice.isRecording ? StrandPalette.statusCritical : StrandPalette.textSecondary)
-                            .symbolEffect(.pulse, isActive: voice.isRecording)
-                            .frame(width: 36, height: 42)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(voice.isRecording ? "Stop dictation" : "Dictate")
-                }
-            }
-            .padding(.trailing, 4)
-            .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(StrandPalette.surfaceRaised))
-
-            Button { send(draft) } label: {
-                Image(systemName: "arrow.up")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(empty || coach.sending ? StrandPalette.textTertiary : StrandPalette.goldDeepText)
-                    .frame(width: 42, height: 42)
-                    .background(Circle().fill(empty || coach.sending ? StrandPalette.surfaceRaised : StrandPalette.accent))
-                    .animation(.snappy, value: empty)
-            }
-            .buttonStyle(.plain)
-            .disabled(empty || coach.sending)
-            .accessibilityLabel("Send")
-        }
-    }
-
     private func send(_ text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !coach.sending else { return }
-        draft = ""
         Task { await coach.send(trimmed) }
-    }
-
-    private func toggleVoice() {
-        if voice.isRecording {
-            voice.stopTranscribing { final in
-                let t = final.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !t.isEmpty { draft = draft.isEmpty ? t : "\(draft) \(t)" }
-            }
-        } else if voice.authorization == .notDetermined {
-            voice.requestAuthorization { state in
-                if state == .authorized { voice.startTranscribing { draft = $0 } }
-            }
-        } else {
-            voice.startTranscribing { draft = $0 }
-        }
     }
 
     private func save(_ text: String) {
@@ -347,11 +309,173 @@ private struct CoachChat: View {
     }
 }
 
+/// Pending-scroll flag for `CoachChat.followStream`, held by reference so toggling it is not a state change.
+private final class StreamFollow {
+    var pending = false
+}
+
+/// Keeps `atBottom` in step with the scroll position on iOS 18 and later. The end counts as reached within
+/// 80 pt of it. Content growing under a still list (a streaming reply) never clears the flag by itself;
+/// only the list actually moving away from the end does, so the follow cannot lose its own grip.
+private struct BottomEdgeTracking: ViewModifier {
+    @Binding var atBottom: Bool
+
+    private struct Probe: Equatable {
+        var offset: CGFloat
+        var near: Bool
+    }
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.onScrollGeometryChange(for: Probe.self) { geo in
+                let visibleEnd = geo.contentOffset.y + geo.containerSize.height - geo.contentInsets.bottom
+                return Probe(offset: geo.contentOffset.y, near: visibleEnd >= geo.contentSize.height - 80)
+            } action: { old, new in
+                if new.near {
+                    if !atBottom { atBottom = true }
+                } else if new.offset != old.offset, atBottom {
+                    atBottom = false
+                }
+            }
+        } else {
+            content
+        }
+    }
+}
+
+// MARK: - Chips
+
+/// Suggested questions above the composer. Equatable on the prompts, so a streaming reply or a scroll
+/// redrawing the chat leaves the row alone.
+private struct CoachChips: View, Equatable {
+    let prompts: [String]
+    let onSend: (String) -> Void
+
+    static func == (lhs: Self, rhs: Self) -> Bool { lhs.prompts == rhs.prompts }
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(prompts, id: \.self) { prompt in
+                    Button { onSend(prompt) } label: {
+                        Text(LocalizedStringKey(prompt))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(StrandPalette.textPrimary)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 9)
+                            .background(Capsule().fill(StrandPalette.surfaceRaised))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 4)
+        }
+    }
+}
+
+// MARK: - Composer
+
+/// The message field and its buttons. It owns the draft, so a keystroke redraws only this view and never
+/// the conversation above it. The draft survives closing the sheet: it is written to defaults once typing
+/// pauses, when the composer goes away, and cleared on send.
+private struct CoachComposer: View {
+    let sending: Bool
+    let focus: FocusState<Bool>.Binding
+    let onSend: (String) -> Void
+
+    private static let draftKey = "coach.composerDraft"
+
+    @State private var draft = UserDefaults.standard.string(forKey: CoachComposer.draftKey) ?? ""
+    @StateObject private var voice = CoachVoiceInput()
+
+    var body: some View {
+        let empty = draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        HStack(alignment: .bottom, spacing: 8) {
+            HStack(alignment: .bottom, spacing: 6) {
+                TextField("Message Coach", text: $draft, axis: .vertical)
+                    .font(StrandFont.body)
+                    .foregroundStyle(StrandPalette.textPrimary)
+                    .lineLimit(1...6)
+                    .focused(focus)
+                    .padding(.vertical, 11)
+                    .padding(.leading, 16)
+                if CoachVoiceInput.isSupported {
+                    Button(action: toggleVoice) {
+                        Image(systemName: voice.isRecording ? "stop.circle.fill" : "mic")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundStyle(voice.isRecording ? StrandPalette.statusCritical : StrandPalette.textSecondary)
+                            .symbolEffect(.pulse, isActive: voice.isRecording)
+                            .frame(width: 36, height: 42)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(voice.isRecording ? "Stop dictation" : "Dictate")
+                }
+            }
+            .padding(.trailing, 4)
+            .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(StrandPalette.surfaceRaised))
+
+            Button(action: send) {
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(empty || sending ? StrandPalette.textTertiary : StrandPalette.goldDeepText)
+                    .frame(width: 42, height: 42)
+                    .background(Circle().fill(empty || sending ? StrandPalette.surfaceRaised : StrandPalette.accent))
+                    .animation(.snappy, value: empty)
+            }
+            .buttonStyle(.plain)
+            .disabled(empty || sending)
+            .accessibilityLabel("Send")
+        }
+        // Debounced save: each keystroke restarts the wait, so defaults are written once typing pauses.
+        .task(id: draft) {
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            guard !Task.isCancelled else { return }
+            persistDraft()
+        }
+        .onDisappear(perform: persistDraft)
+    }
+
+    private func send() {
+        let trimmed = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !sending else { return }
+        onSend(trimmed)
+        draft = ""
+        persistDraft()
+    }
+
+    private func persistDraft() {
+        if draft.isEmpty {
+            UserDefaults.standard.removeObject(forKey: Self.draftKey)
+        } else {
+            UserDefaults.standard.set(draft, forKey: Self.draftKey)
+        }
+    }
+
+    private func toggleVoice() {
+        if voice.isRecording {
+            voice.stopTranscribing { final in
+                let t = final.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !t.isEmpty { draft = draft.isEmpty ? t : "\(draft) \(t)" }
+            }
+        } else if voice.authorization == .notDetermined {
+            voice.requestAuthorization { state in
+                if state == .authorized { voice.startTranscribing { draft = $0 } }
+            }
+        } else {
+            voice.startTranscribing { draft = $0 }
+        }
+    }
+}
+
 // MARK: - Bubbles
 
-private struct CoachBubble: View {
+/// Equatable on the message alone (the save action is the same every time), so while a reply streams only
+/// its own bubble re-renders its Markdown; every earlier bubble is skipped.
+private struct CoachBubble: View, Equatable {
     let message: ChatMessage
     let onSave: (String) -> Void
+
+    static func == (lhs: Self, rhs: Self) -> Bool { lhs.message == rhs.message }
 
     var body: some View {
         switch message.role {
@@ -410,20 +534,17 @@ private struct CoachAvatar: View {
 
 /// A reply on its way: three dots rising and fading in turn.
 private struct TypingBubble: View {
+    @ObservedObject private var motion = ZoopMotionState.shared
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
             CoachAvatar()
-            TimelineView(.animation) { ctx in
-                let t = ctx.date.timeIntervalSinceReferenceDate
-                HStack(spacing: 5) {
-                    ForEach(0..<3, id: \.self) { i in
-                        let phase = (sin((t * 2 * .pi / 1.1) - Double(i) * 0.9) + 1) / 2
-                        Circle()
-                            .fill(StrandPalette.textSecondary)
-                            .frame(width: 8, height: 8)
-                            .opacity(0.35 + 0.65 * phase)
-                            .offset(y: -3 * phase)
-                    }
+            Group {
+                if motion.poseStill(reduceMotion) {
+                    dots(at: 0)
+                } else {
+                    TimelineView(.animation) { ctx in dots(at: ctx.date.timeIntervalSinceReferenceDate) }
                 }
             }
             .padding(.horizontal, 16)
@@ -435,6 +556,20 @@ private struct TypingBubble: View {
             Spacer()
         }
         .accessibilityLabel("Coach is typing")
+    }
+
+    /// The three dots at time `t`; a still frame (t = 0) under Reduce Motion or quiet motion.
+    private func dots(at t: Double) -> some View {
+        HStack(spacing: 5) {
+            ForEach(0..<3, id: \.self) { i in
+                let phase = (sin((t * 2 * .pi / 1.1) - Double(i) * 0.9) + 1) / 2
+                Circle()
+                    .fill(StrandPalette.textSecondary)
+                    .frame(width: 8, height: 8)
+                    .opacity(0.35 + 0.65 * phase)
+                    .offset(y: -3 * phase)
+            }
+        }
     }
 }
 

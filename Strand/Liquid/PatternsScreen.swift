@@ -138,19 +138,7 @@ final class PatternsModel: ObservableObject {
         }
 
         // Sleep sessions: bedtime window and wind-down.
-        let sessions = await repo.sleepSessions(from: now - 150 * Self.day, to: now, limit: 600)
-            .filter { $0.endTs - $0.effectiveStartTs >= 3 * 3600 }
-        var onsetPairs: [(onsetMinute: Int, recovery: Double)] = []
-        for s in sessions {
-            let wakeDay = Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval(s.endTs)))
-            guard let r = byDay[wakeDay]?.recovery else { continue }
-            let c = Calendar.current.dateComponents([.hour, .minute],
-                                                    from: Date(timeIntervalSince1970: TimeInterval(s.effectiveStartTs)))
-            var m = (c.hour ?? 0) * 60 + (c.minute ?? 0)
-            if m < 12 * 60 { m += 24 * 60 }
-            onsetPairs.append((m, r))
-        }
-        bedtime = PatternInsights.bedtimeWindow(nights: onsetPairs)
+        let sessions = await loadBedtime(repo: repo)
 
         var winds: [PatternInsights.WindDown] = []
         for s in sessions.suffix(7) {
@@ -189,6 +177,28 @@ final class PatternsModel: ObservableObject {
 
         // Evening stress against that night's deep sleep (slowest; last).
         stressSleep = await eveningStressAgainstDeepSleep(repo: repo, byDay: byDay)
+    }
+
+    /// The best-bedtime window from the last five months of nights; returns those nights for reuse.
+    @discardableResult
+    func loadBedtime(repo: Repository) async -> [CachedSleepSession] {
+        let now = Int(Date().timeIntervalSince1970)
+        var byDay: [String: DailyMetric] = [:]
+        for d in repo.days { byDay[d.day] = d }
+        let sessions = await repo.sleepSessions(from: now - 150 * Self.day, to: now, limit: 600)
+            .filter { $0.endTs - $0.effectiveStartTs >= 3 * 3600 }
+        var onsetPairs: [(onsetMinute: Int, recovery: Double)] = []
+        for s in sessions {
+            let wakeDay = Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval(s.endTs)))
+            guard let r = byDay[wakeDay]?.recovery else { continue }
+            let c = Calendar.current.dateComponents([.hour, .minute],
+                                                    from: Date(timeIntervalSince1970: TimeInterval(s.effectiveStartTs)))
+            var m = (c.hour ?? 0) * 60 + (c.minute ?? 0)
+            if m < 12 * 60 { m += 24 * 60 }
+            onsetPairs.append((m, r))
+        }
+        bedtime = PatternInsights.bedtimeWindow(nights: onsetPairs)
+        return sessions
     }
 
     private func eveningStressAgainstDeepSleep(repo: Repository,

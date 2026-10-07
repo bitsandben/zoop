@@ -117,12 +117,26 @@ public extension View {
     /// `largeFirst == false` opens at .medium with .large reachable by dragging up (short
     /// forms); `true` opens full-height (long scrolls).
     func noopSheetPresentation(largeFirst: Bool) -> some View {
+        // Zoop: sheets stop at about three quarters of the screen so the page behind stays in view;
+        // long ones can still be pulled to full height.
         self
             .presentationDragIndicator(.visible)
-            .presentationDetents(largeFirst ? [.large] : [.medium, .large])
+            .presentationDetents(largeFirst ? [.fraction(0.75), .large] : [.medium, .fraction(0.75)])
     }
 }
 #endif
+
+public extension View {
+    /// Keep a small explainer a small popover on iPhone instead of letting it grow into a full-screen
+    /// sheet holding two lines of text. A no-op on macOS, where popovers never adapt.
+    @ViewBuilder func compactPopover() -> some View {
+        #if os(iOS)
+        if #available(iOS 16.4, *) { self.presentationCompactAdaptation(.popover) } else { self }
+        #else
+        self
+        #endif
+    }
+}
 
 // MARK: - Surface
 
@@ -726,6 +740,15 @@ public struct ScoreStatePill: View {
         self.state = state; self.text = text
     }
     public var body: some View {
+        #if os(iOS)
+        // Zoop iOS: no lifecycle badges ("Solid", "Building"). They read as decoration, not information.
+        EmptyView()
+        #else
+        pill
+        #endif
+    }
+
+    private var pill: some View {
         let hue = state.color
         return HStack(spacing: 6) {
             PulseDot(color: hue, pulsing: state.pulsing, size: 7)

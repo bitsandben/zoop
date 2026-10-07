@@ -619,6 +619,12 @@ struct StressView: View {
                 // because TrendChart keys its colors off `valueRange`, not this domain.
                 let peak = (points.map(\.value).max() ?? 3).rounded(.up)
                 let yTop = max(1, peak + 0.3)
+                // The one segmented control, above the chart like every range filter. Its eight options
+                // use the shared adaptive-width mode so the control stays inside the same page gutter as
+                // the chart on compact iPhones.
+                SegmentedPillControl(ExploreRange.allCases, selection: $range,
+                                     adaptsToAvailableWidth: true) { $0.label }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 ChartCard(
                     title: "Stress · \(range.label)",
                     subtitle: String(localized: "Daily 0-3 proxy"),
@@ -642,11 +648,6 @@ struct StressView: View {
                         ("Days", "\(points.count)"),
                     ])
                 }
-                // The one segmented control. Its eight options use the shared adaptive-width mode so
-                // the control stays inside the same page gutter as the chart on compact iPhones.
-                SegmentedPillControl(ExploreRange.allCases, selection: $range,
-                                     adaptsToAvailableWidth: true) { $0.label }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
             } else {
                 ZoopCard(tint: StressRamp.calm) {
                     Text("Not enough recent days to chart a trend yet. Import a history or keep wearing your strap.")
@@ -1407,6 +1408,9 @@ private struct StressPreviewHarness: View {
                              accent: StressRamp.calm)
                 }
 
+                SegmentedPillControl(ExploreRange.allCases, selection: $range,
+                                     adaptsToAvailableWidth: true) { $0.label }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 ChartCard(title: "Stress · M", subtitle: "Daily 0-3 proxy", trailing: "avg 1.5") {
                     TrendChart(points: sampleStressTrend(30), gradient: StressRamp.gradient,
                                valueRange: 0...3, showsArea: true, height: ZoopMetrics.chartHeight,
@@ -1414,9 +1418,6 @@ private struct StressPreviewHarness: View {
                 } footer: {
                     ChartFooter([("Today", StressTrace.formatLevel(score)), ("Average", "1.5"), ("Days", "30")])
                 }
-                SegmentedPillControl(ExploreRange.allCases, selection: $range,
-                                     adaptsToAvailableWidth: true) { $0.label }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .padding(ZoopMetrics.screenPadding)
         }

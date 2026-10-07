@@ -281,8 +281,8 @@ enum BodyVitalSigns {
         let fahrenheit = temperatureUnit == .fahrenheit
         let skinUnitLabel = SkinTempDisplay.unitSymbol(kind: skinKind, fahrenheit: fahrenheit)
         let skinTitle = skinIsAbsolute
-            ? String(localized: "Skin Temp")
-            : String(localized: "Skin Temp Δ")
+            ? String(localized: "Skin temperature")
+            : String(localized: "Skin temp change")
         let skinFormat: (Double) -> String = { c in
             SkinTempDisplay.numberString(c, kind: skinKind, fahrenheit: fahrenheit, decimals: 1)
         }
@@ -299,7 +299,7 @@ enum BodyVitalSigns {
         return [
             BodyVitalReading(
                 key: "resp",
-                label: String(localized: "Resp Rate"),
+                label: String(localized: "Breathing rate"),
                 unit: "rpm",
                 value: respRow?.value,
                 format: { String(format: "%.1f", $0) },
@@ -317,7 +317,7 @@ enum BodyVitalSigns {
             ),
             BodyVitalReading(
                 key: "spo2",
-                label: String(localized: "Blood O₂"),
+                label: String(localized: "Blood oxygen"),
                 unit: "%",
                 value: spo2Row?.value,
                 format: { String(format: "%.0f", $0) },

@@ -64,12 +64,13 @@ private struct HealthSectionsStack: View {
             // drives recovery, and the longer-range ages. Syncing runs on its own, so its status card
             // closes the page rather than opening it.
             VitalsSection()
-            HeartRateSection()
             RecoveryContributorsSection()
             VitalitySection()
             FitnessAgeSection()
             SkinTempSection()
             HealthHubLinksSection()
+            // Live heart rate sits low on the page: it is a live readout, not a summary.
+            HeartRateSection()
             SyncStatusSection()
             #else
             // Manual "Sync now" + honest sync status (#364). Its own view so the ~1Hz HR stream
@@ -531,7 +532,7 @@ private struct LiveTimeChart: View {
                         )
                     }
                 }
-                .animation(StrandMotion.fade, value: hoverX)
+                .animation(StrandMotion.fade, value: hoverX == nil)
                 .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
                 .contentShape(Rectangle())
                 .onContinuousHover(coordinateSpace: .local) { phase in
@@ -546,6 +547,9 @@ private struct LiveTimeChart: View {
                         }
                     }
                 }
+                // Touch: the shared chart scrub (sideways drag or short hold); vertical drags scroll.
+                .zoopChartScrub(onChange: { hoverX = min(max($0.x, plot.minX), plot.maxX) },
+                                onEnd: { hoverX = nil })
             }
         }
         .clipped()
@@ -1249,7 +1253,7 @@ private struct VitalitySection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
-            SectionHeader("Vitality", overline: "Weekly",
+            SectionHeader("Health score", overline: "Weekly",
                           trailing: bodyAge != nil ? String(localized: "Body Age \(Int((bodyAge ?? 0).rounded()))") : nil)
             if let v = vitality, let ba = bodyAge {
                 hero(vitality: v, bodyAge: ba)
@@ -1275,7 +1279,7 @@ private struct VitalitySection: View {
                 // Charge world, filled to the score, with the number counting up over it (Today's
                 // HeroScoreCell idiom). Taps splash the gauge; the number is hit-transparent.
                 VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
-                    Text("Vitality").strandOverline()
+                    Text("Health score").strandOverline()
                     ZStack {
                         LiquidVessel(value: max(0, min(1, v / 100)), tint: StrandPalette.chargeColor, animated: true)
                             .frame(width: 108, height: 108)

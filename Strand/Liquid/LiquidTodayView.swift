@@ -303,7 +303,8 @@ struct LiquidTodayView: View {
     private var daySwipeGesture: some Gesture {
         DragGesture(minimumDistance: 24, coordinateSpace: .named(Self.daySwipeSpace))
             .onEnded { value in
-                guard !heartRateCardFrame.contains(value.startLocation) else { return }
+                guard !heartRateCardFrame.contains(value.startLocation),
+                      !ZoopChartScrubState.isActiveOrRecent else { return }
                 let dx = value.translation.width, dy = value.translation.height
                 guard abs(dx) > abs(dy) * 1.5, abs(dx) > 50 else { return }
                 let delta = TodayView.daySwipeDelta(dx: dx)
@@ -1592,7 +1593,7 @@ struct LiquidTodayView: View {
         return card {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("RECOVERY VITALS").font(StrandFont.overline).tracking(1.6)
+                    Text("OVERNIGHT VITALS").font(StrandFont.overline).tracking(1.6)
                         .foregroundStyle(StrandPalette.textSecondary)
                     Spacer()
                     if let line = vitalsProvenanceLine {
@@ -3198,9 +3199,6 @@ private struct LiquidLiveHR: View {
     @State private var samples: [Double] = []
     @State private var beat = false
     @State private var scrubX: CGFloat?
-    #if os(iOS)
-    @State private var scrubEngaged = false
-    #endif
     private let maxSamples = 90   // ~1.5 min of 1 Hz live HR, enough to read the shape
 
     private var isLive: Bool { live.connected && samples.count >= 2 }
@@ -3280,9 +3278,8 @@ private struct LiquidLiveHR: View {
                         }
                     }
                 }
-                #if os(iOS)
-                .gesture(touchScrubGesture)
-                #endif
+                // Touch: the shared chart scrub (sideways drag or short hold); vertical drags scroll Home.
+                .zoopChartScrub(onChange: { scrubX = $0.x }, onEnd: { scrubX = nil })
                 HStack {
                     stat(String(localized: "Min"), series.min())
                     Spacer()
@@ -3350,30 +3347,6 @@ private struct LiquidLiveHR: View {
         .accessibilityHidden(true)
     }
 
-    #if os(iOS)
-    private var touchScrubGesture: some Gesture {
-        LongPressGesture(minimumDuration: 0.25, maximumDistance: 8)
-            .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .local))
-            .onChanged { value in
-                guard case .second(true, let drag) = value else { return }
-                if !scrubEngaged {
-                    scrubEngaged = true
-                    StrandHaptic.selection.play()
-                }
-                if let drag {
-                    var transaction = Transaction()
-                    transaction.disablesAnimations = true
-                    withTransaction(transaction) { scrubX = drag.location.x }
-                }
-            }
-            .onEnded { _ in
-                scrubEngaged = false
-                var transaction = Transaction()
-                transaction.disablesAnimations = true
-                withTransaction(transaction) { scrubX = nil }
-            }
-    }
-    #endif
 }
 
 /// Static technical grid behind the live trace. Canvas draws only when layout/style changes, so the

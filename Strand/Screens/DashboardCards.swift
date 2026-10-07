@@ -60,7 +60,7 @@ enum DashboardCard: String, CaseIterable, Identifiable {
         case .stress:      return String(localized: "Stress")
         case .fitnessAge:  return String(localized: "Fitness Age")
         case .vo2max:      return String(localized: "VO₂ Max")
-        case .vitality:    return String(localized: "Vitality")
+        case .vitality:    return String(localized: "Health score")
         case .bloodOxygen: return String(localized: "Blood Oxygen")
         case .skinTemp:    return String(localized: "Skin Temp")
         case .sleep:       return String(localized: "Sleep")

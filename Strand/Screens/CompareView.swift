@@ -1018,7 +1018,8 @@ private struct OverlayChart: View {
                         )
                     }
                 }
-                .animation(StrandMotion.fade, value: hoverX)
+                .animation(StrandMotion.fade, value: hoverX == nil)
+                .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
                 .contentShape(Rectangle())
                 .onContinuousHover(coordinateSpace: .local) { phase in
                     switch phase {
@@ -1026,22 +1027,11 @@ private struct OverlayChart: View {
                     case .ended: hoverX = nil
                     }
                 }
-                #if os(iOS)
-                // Touch input never fires onContinuousHover (pointer-only), so on iPhone /
-                // iPad-without-pointer the crosshair + value tooltip would be unreachable.
-                // Drive the same hoverX via tap (single touch-down) and drag-to-scrub across
-                // days. minimumDistance:0 keeps the first touch responsive; a clearly vertical
-                // pan is still claimed by the parent ScrollView.
-                .gesture(
-                    SpatialTapGesture(coordinateSpace: .local)
-                        .onEnded { hoverX = $0.location.x }
-                        .exclusively(before:
-                            DragGesture(minimumDistance: 0, coordinateSpace: .local)
-                                .onChanged { hoverX = $0.location.x }
-                                .onEnded { _ in hoverX = nil }
-                        )
-                )
-                #endif
+                // Touch input never fires onContinuousHover (pointer-only), so on iPhone the same hoverX is
+                // driven by the shared chart scrub: a sideways drag (or a short hold) scrubs across days,
+                // a vertical drag scrolls the page.
+                .zoopChartScrub(onChange: { hoverX = min(max($0.x, plot.minX), plot.maxX) },
+                                onEnd: { hoverX = nil })
             }
         }
         // Persist the model into @State so hover-frame body evals hit the cache

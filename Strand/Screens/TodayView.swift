@@ -1264,7 +1264,8 @@ struct TodayView: View {
                 // #829 follow-up: the chart owns every touch that starts within its frame (its pan is the
                 // same horizontal drag). startLocation and hrChartFrame share the daySwipeSpace coordinate
                 // space, so this containment check is layout-direction safe with no RTL special-casing.
-                guard !hrChartFrame.contains(value.startLocation) else { return }
+                guard !hrChartFrame.contains(value.startLocation),
+                      !ZoopChartScrubState.isActiveOrRecent else { return }
                 let dx = value.translation.width
                 let dy = value.translation.height
                 // Horizontal-dominant and far enough to count as a deliberate day flip.
