@@ -37,6 +37,8 @@ enum TabRoute: Hashable {
     case coupled
     /// The menstrual cycle calendar (iOS).
     case cycle
+    /// What the stored history says: tonight, tomorrow, load and patterns (iOS).
+    case patterns
 }
 
 extension View {
@@ -73,6 +75,12 @@ extension View {
             case .health: HealthView()
             case .hydration: HydrationView()
             case .coupled: CoupledView()
+            case .patterns:
+                #if os(iOS)
+                PatternsScreen()
+                #else
+                EmptyView()
+                #endif
             case .cycle:
                 #if os(iOS)
                 CycleScreen()

@@ -516,6 +516,7 @@ struct RootTabView: View {
                     MoreRow("Rhythm", "waveform.path", .rhythm, subtitle: "Beat-to-beat timing")
                 }
                 moreSection("Insights") {
+                    MoreRow("Patterns", "chart.bar.doc.horizontal.fill", .patterns, subtitle: "Tonight, tomorrow and your habits")
                     MoreRow("What Moves You", "wand.and.sparkles", .insightsHub, subtitle: "What changes your scores")
                     MoreRow("Intelligence", "brain.head.profile", .intelligence, subtitle: "Patterns across your history")
                     MoreRow("Insights", "lightbulb.fill", .insights, subtitle: "Journal and correlations")
@@ -576,13 +577,14 @@ struct RootTabView: View {
 }
 
 private enum MoreDestination: Hashable {
-    case insightsHub, intelligence, coach, insights, explore, compare
+    case patterns, insightsHub, intelligence, coach, insights, explore, compare
     case sleep, trends, live, workouts, liftLog, health, labBook, stress, breathe, intervals, rhythm
     case fusedRecord, appleHealth, miBand, dataSources, backupSync, shortcutsExport, noopLimitations
     case alarms, automations, testCentre, siriShortcuts, powerSaving, settings
 
     @ViewBuilder var destination: some View {
         switch self {
+        case .patterns:        PatternsScreen()
         case .insightsHub:     InsightsHubView()
         case .intelligence:    IntelligenceView()
         case .coach:           CoachView()

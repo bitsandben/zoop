@@ -451,6 +451,7 @@ struct LiquidTodayView: View {
                     // so it renders nothing by default.
                     #if os(iOS)
                     if !sectionOrder.contains(.hero) { AutoWorkoutCard() }
+                    if selectedDayOffset == 0 { HomePatternsCarousel() }
                     stressCurveCard
                     weeklyTrends
                     #else
