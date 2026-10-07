@@ -49,11 +49,19 @@ final class PatternsModel: ObservableObject {
         let strain21 = today?.strain.map { $0 * 0.21 }
         let sleepNeed = PatternInsights.sleepNeedTonight(baseNeedMin: need, strain: strain21,
                                                          debtMin: ledger.isDebt ? ledger.magnitudeMin : 0)
+        // The reminder follows this need, so it is handed over every time it is computed.
+        WindDownNudge.updateTonightNeed(Int(sleepNeed.totalMin.rounded()))
+        // One wake time for the card and the reminder: the wake time set for the reminder when it is on,
+        // otherwise the habitual one from past nights.
         var bed: Int?, wake: Int?
-        if let mid = await repo.habitualMidsleepSec() {
+        if WindDownNudge.isEnabled {
+            let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+            wake = WindDownNudge.wakeMinutes(forWeekday: Calendar.current.component(.weekday, from: tomorrow)) * 60
+        } else if let mid = await repo.habitualMidsleepSec() {
             let typical = (SleepModel.sleepNeedMin(days: days)) * 60
-            let w = (mid + Int(typical / 2)) % Self.day
-            wake = w
+            wake = (mid + Int(typical / 2)) % Self.day
+        }
+        if let w = wake {
             bed = ((w - Int(sleepNeed.totalMin * 60) - 15 * 60) % Self.day + Self.day) % Self.day
         }
         tonight = Tonight(need: sleepNeed, bedtime: bed, wake: wake)
@@ -207,7 +215,9 @@ struct PatternsScreen: View {
     var body: some View {
         ScreenScaffold(title: "Patterns") {
             VStack(alignment: .leading, spacing: 14) {
-                if let t = patterns.tonight { PatternTonightCard(tonight: t) }
+                if let t = patterns.tonight {
+                    PatternTonightCard(tonight: t) { Task { await patterns.loadQuick(repo: repo) } }
+                }
                 if let f = patterns.forecast { forecastCard(f) }
                 if let a = patterns.acwr { PatternLoadCard(acwr: a) }
                 illnessCard
@@ -534,6 +544,8 @@ struct PatternCard<Content: View>: View {
 
 struct PatternTonightCard: View {
     let tonight: PatternsModel.Tonight
+    /// Called after the reminder is switched on, so the card can be recomputed with its wake time.
+    var onReminderChange: () -> Void = {}
 
     var body: some View {
         PatternCard(icon: "moon.stars.fill", title: "Tonight",
@@ -551,6 +563,7 @@ struct PatternTonightCard: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(StrandPalette.accent)
             }
+            WindDownReminderRow(suggestedWakeMinute: tonight.wake.map { $0 / 60 }, onChange: onReminderChange)
         }
     }
 
@@ -625,7 +638,10 @@ struct HomePatternsCarousel: View {
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 12) {
-                    if let t = patterns.tonight { PatternTonightCard(tonight: t).frame(width: 290) }
+                    if let t = patterns.tonight {
+                        PatternTonightCard(tonight: t) { Task { await patterns.loadQuick(repo: repo) } }
+                            .frame(width: 290)
+                    }
                     if let f = patterns.forecast {
                         PatternCard(icon: "sunrise.fill", title: "Tomorrow morning",
                                     basis: "If you sleep \(PatternsScreen.hours(f.plannedSleepHours * 60)).") {
@@ -646,6 +662,58 @@ struct HomePatternsCarousel: View {
             .scrollClipDisabled()
         }
         .task(id: repo.refreshSeq) { await patterns.loadQuick(repo: repo) }
+    }
+}
+#endif
+
+#if os(iOS)
+/// The wind-down reminder from the Tonight card: its time when it is on, a button to turn it on when not.
+struct WindDownReminderRow: View {
+    /// The wake time the card shows, handed to the reminder when none was set yet so both use one time.
+    let suggestedWakeMinute: Int?
+    let onChange: () -> Void
+    @State private var enabled = WindDownNudge.isEnabled && WindDownNudge.followsSleepNeed
+    @State private var denied = false
+
+    private var reminderMinute: Int {
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+        return WindDownNudge.nudgeMinuteOfDay(forWeekday: Calendar.current.component(.weekday, from: tomorrow))
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: enabled ? "bell.fill" : "bell")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(enabled ? StrandPalette.textPrimary : StrandPalette.textSecondary)
+            if enabled {
+                Text("Reminder at \(PatternsScreen.clock(reminderMinute))")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(StrandPalette.textSecondary)
+            } else if denied {
+                Text("Notifications are off for Zoop")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(StrandPalette.textSecondary)
+            } else {
+                Button {
+                    WindDownNudge.setFollowsSleepNeed(true)
+                    if !WindDownNudge.hasWakeSetting, let wake = suggestedWakeMinute {
+                        WindDownNudge.setWakeMinutes(wake)
+                    }
+                    WindDownNudge.setEnabled(true) { outcome in
+                        onChange()
+                        withAnimation(.snappy) {
+                            enabled = outcome == .scheduled
+                            denied = outcome == .denied
+                        }
+                    }
+                } label: {
+                    Text("Remind me to wind down")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(StrandPalette.accent)
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 }
 #endif

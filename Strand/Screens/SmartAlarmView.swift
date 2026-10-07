@@ -23,6 +23,7 @@ struct SmartAlarmView: View {
     @EnvironmentObject private var behavior: BehaviorStore
 
     @State private var windDownOn = WindDownNudge.isEnabled
+    @State private var followsNeed = WindDownNudge.followsSleepNeed
     /// Shown when the user flips the nudge on but notifications are denied at the OS level — the reminder
     /// can never fire, so we revert the switch and point them to Settings instead of failing silently.
     @State private var showNotifDeniedAlert = false
@@ -140,7 +141,9 @@ struct SmartAlarmView: View {
                     }
                 }
                 Text(windDownOn
-                     ? "A calm nudge \(WindDownNudge.sleepNeedMinutes / 60)h \(WindDownNudge.leadMinutes)m before your usual wake time."
+                     ? (WindDownNudge.followsSleepNeed && WindDownNudge.tonightNeedMinutes != nil
+                        ? "A calm nudge \(WindDownNudge.leadMinutes) min before tonight's sleep need of \(WindDownNudge.sleepNeedMinutes / 60)h \(WindDownNudge.sleepNeedMinutes % 60)m, counted back from your wake time."
+                        : "A calm nudge \(WindDownNudge.sleepNeedMinutes / 60)h \(WindDownNudge.leadMinutes)m before your usual wake time.")
                      : "Turn on the wind-down reminder below to land at your usual wake time rested.")
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textSecondary)
@@ -371,6 +374,20 @@ struct SmartAlarmView: View {
                 .frame(minHeight: 42)
 
                 if windDownOn {
+                    Divider().overlay(StrandPalette.hairline)
+                    Toggle(isOn: $followsNeed) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Follow tonight's sleep need")
+                                .font(StrandFont.body)
+                                .foregroundStyle(StrandPalette.textPrimary)
+                            Text("Earlier after a hard day or short nights, from the need shown under Patterns.")
+                                .font(StrandFont.footnote)
+                                .foregroundStyle(StrandPalette.textTertiary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .toggleStyle(.switch).tint(StrandPalette.accent)
+                    .onChangeCompat(of: followsNeed) { WindDownNudge.setFollowsSleepNeed($0) }
                     Divider().overlay(StrandPalette.hairline)
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {

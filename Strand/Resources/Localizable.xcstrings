@@ -1,6 +1,12 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "A calm nudge %lld min before tonight's sleep need of %lldh %lldm, counted back from your wake time." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Ein sanfter Hinweis %lld min vor deinem heutigen Schlafbedarf von %lld h %lld min, von deiner Weckzeit zurückgerechnet."}}}},
+    "Earlier after a hard day or short nights, from the need shown under Patterns." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Früher nach einem harten Tag oder kurzen Nächten, nach dem Bedarf unter „Muster“."}}}},
+    "Follow tonight's sleep need" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Schlafbedarf von heute Nacht folgen"}}}},
+    "Notifications are off for Zoop" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Mitteilungen sind für Zoop aus"}}}},
+    "Reminder at %@" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Erinnerung um %@"}}}},
+    "You need about %lld h %lld min of sleep tonight. Winding down now gets you there." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Du brauchst heute Nacht etwa %lld h %lld min Schlaf. Wenn du jetzt runterfährst, schaffst du das."}}}},
     "Your cycle and your body: log at least two periods." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Dein Zyklus und dein Körper: mindestens zwei Perioden eintragen."}}}},
     "Evening stress and deep sleep: two weeks of evenings with the strap on." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Abendstress und Tiefschlaf: zwei Wochen Abende mit Band."}}}},
     "How fast you switch off: nights with heart rate around falling asleep." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Wie schnell du abschaltest: Nächte mit Pulsdaten rund ums Einschlafen."}}}},
