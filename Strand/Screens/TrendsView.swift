@@ -497,9 +497,9 @@ struct TrendsView: View {
         if chargeAvg != nil || effortAvg != nil || restAvg != nil {
             ZoopCard {
                 VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
-                    SectionHeader("Week in review", overline: "Charge · Effort · Rest")
+                    SectionHeader("Week in review", overline: Self.weekOverline)
                     if let v = chargeAvg {
-                        pipScoreRow(label: "Charge", value: v, range: 0...100,
+                        pipScoreRow(label: Self.scoreLabel("Charge", ios: "Recovery"), value: v, range: 0...100,
                                     tint: StrandPalette.chargeColor, frac: v / 100,
                                     format: { "\(Int($0.rounded()))" })
                     }
@@ -514,12 +514,12 @@ struct TrendsView: View {
                         let oneDecimal = effortScale == .whoop
                         // The vessel fills off the stored 0–100 internal scale (v), so it agrees with the
                         // Charge/Rest vessels regardless of the displayed Effort unit.
-                        pipScoreRow(label: "Effort", value: display, range: 0...maxV,
+                        pipScoreRow(label: Self.scoreLabel("Effort", ios: "Strain"), value: display, range: 0...maxV,
                                     tint: StrandPalette.effortColor, frac: v / 100,
                                     format: { oneDecimal ? String(format: "%.1f", $0) : "\(Int($0.rounded()))" })
                     }
                     if let v = restAvg {
-                        pipScoreRow(label: "Rest", value: v, range: 0...100,
+                        pipScoreRow(label: Self.scoreLabel("Rest", ios: "Sleep"), value: v, range: 0...100,
                                     tint: StrandPalette.restColor, frac: v / 100,
                                     format: { "\(Int($0.rounded()))" })
                     }
@@ -534,6 +534,23 @@ struct TrendsView: View {
     /// count-up value, over the segmented count-up bar. `frac` (0…1) is the score on the shared 0–100
     /// internal scale so the three vessels read against the same fill — a small liquid accent on a single
     /// headline metric, exactly where it reads well (not on a chart).
+    /// The score names: Recovery, Strain and Sleep on iOS, as on Home; Charge, Effort and Rest elsewhere.
+    private static func scoreLabel(_ other: LocalizedStringKey, ios: LocalizedStringKey) -> LocalizedStringKey {
+        #if os(iOS)
+        return ios
+        #else
+        return other
+        #endif
+    }
+
+    private static var weekOverline: LocalizedStringKey {
+        #if os(iOS)
+        return "Recovery · Strain · Sleep"
+        #else
+        return "Charge · Effort · Rest"
+        #endif
+    }
+
     private func pipScoreRow(label: LocalizedStringKey, value: Double, range: ClosedRange<Double>,
                              tint: Color, frac: Double, format: @escaping (Double) -> String) -> some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.space2) {

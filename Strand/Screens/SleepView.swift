@@ -578,11 +578,14 @@ struct SleepView: View {
                 .accessibilityElement(children: .combine)
             }
 
+            // iOS drops the provenance badge under the score, as Home does under its rings.
+            #if !os(iOS)
             SourceBadge(
                 score != nil ? heroSource(for: night) : (repo.activeDeviceIsOura ? "Oura" : "On-device"),
                 tint: StrandPalette.restColor
             )
             .padding(.top, 8)
+            #endif
 
             // Subtle Customize at the hero foot — functional, not competing with the gauge.
             sleepArrangeAffordance

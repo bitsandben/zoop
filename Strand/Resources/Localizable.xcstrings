@@ -1,6 +1,7 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Recovery \u00b7 Strain \u00b7 Sleep" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Erholung · Belastung · Schlaf"}}}},
     "How Coach should think and talk. Applies from your next message." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Wie Coach denken und schreiben soll. Gilt ab deiner nächsten Nachricht."}}}},
     "Couldn't write a brief right now. Check your key and that Coach may read your numbers." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Das Briefing konnte gerade nicht geschrieben werden. Prüfe deinen Schlüssel und ob Coach deine Werte lesen darf."}}}},
     "Load current models" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Aktuelle Modelle laden"}}}},

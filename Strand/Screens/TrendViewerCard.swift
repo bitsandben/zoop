@@ -343,6 +343,8 @@ struct TrendViewerCard: View {
             }
             .chartXSelection(value: $scrubDate)
             .chartYScale(domain: yDomain(current, band: band))
+            // The area fill runs down to zero; keep it inside the plot when the axis starts higher.
+            .chartPlotStyle { $0.clipped() }
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 5)) { _ in
                     AxisValueLabel(format: window == .week ? .dateTime.weekday(.abbreviated) : .dateTime.day().month(.abbreviated))
