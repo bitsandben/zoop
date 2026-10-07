@@ -59,4 +59,11 @@ final class PatternInsightsTests: XCTestCase {
         XCTAssertTrue((30...40).contains(w.minutesToSettle), "\(w.minutesToSettle)")
         XCTAssertNil(PatternInsights.windDown(hr: Array(hr.suffix(100)), onset: onset))
     }
+
+    func testInBedMinutesScalesByGoalAndEfficiency() {
+        XCTAssertEqual(PatternInsights.inBedMinutes(needMin: 450, goal: 1, efficiency: 0.9), 500, accuracy: 0.01)
+        XCTAssertEqual(PatternInsights.inBedMinutes(needMin: 450, goal: 0.85, efficiency: 90), 425, accuracy: 0.01)
+        XCTAssertEqual(PatternInsights.inBedMinutes(needMin: 450, goal: 1, efficiency: nil), 500, accuracy: 0.01)
+        XCTAssertEqual(PatternInsights.inBedMinutes(needMin: 490, goal: 1, efficiency: 0.99), 500, accuracy: 0.01)
+    }
 }

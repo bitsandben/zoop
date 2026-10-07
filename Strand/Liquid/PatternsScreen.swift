@@ -19,6 +19,11 @@ final class PatternsModel: ObservableObject {
         let need: PatternInsights.SleepNeed; let bedtime: Int?; let wake: Int?
         /// The armed strap alarm the wake time came from, when there is one.
         var alarm: Date? = nil
+        /// Minutes in bed for the chosen goal, and the goal itself (share of the need).
+        var inBedMin: Double = 0
+        var goal: Double = 1
+        /// Bedtime for the full need, for the planner's "optimal" line.
+        var fullNeedBedtime: Int? = nil
     }
     struct Effect: Identifiable, Equatable { let id: String; let behavior: String; let delta: Double; let n: Int }
     struct HRRStats: Equatable { let latestDrop: Int; let averageDrop: Double; let workouts: Int }
@@ -53,8 +58,14 @@ final class PatternsModel: ObservableObject {
         let strain21 = today?.strain.map { $0 * 0.21 }
         let sleepNeed = PatternInsights.sleepNeedTonight(baseNeedMin: need, strain: strain21,
                                                          debtMin: ledger.isDebt ? ledger.magnitudeMin : 0)
-        // The reminder follows this need, so it is handed over every time it is computed.
-        WindDownNudge.updateTonightNeed(Int(sleepNeed.totalMin.rounded()))
+        // Time in bed for the chosen goal, from the recent share of time in bed spent asleep.
+        let effs = days.suffix(14).compactMap(\.efficiency)
+        let eff = effs.isEmpty ? nil : effs.reduce(0, +) / Double(effs.count)
+        let goal = SleepGoal.current.fraction
+        let inBed = PatternInsights.inBedMinutes(needMin: sleepNeed.totalMin, goal: goal, efficiency: eff)
+        let fullInBed = PatternInsights.inBedMinutes(needMin: sleepNeed.totalMin, goal: 1, efficiency: eff)
+        // The reminder counts back the same time in bed, so it is handed over every time it is computed.
+        WindDownNudge.updateTonightNeed(Int(inBed.rounded()))
         // One wake time for the card and the reminder: an armed strap alarm within the next day first,
         // then the wake time set for the reminder, then the habitual one from past nights.
         var bed: Int?, wake: Int?
@@ -69,10 +80,13 @@ final class PatternsModel: ObservableObject {
             let typical = (SleepModel.sleepNeedMin(days: days)) * 60
             wake = (mid + Int(typical / 2)) % Self.day
         }
+        var fullBed: Int?
         if let w = wake {
-            bed = ((w - Int(sleepNeed.totalMin * 60) - 15 * 60) % Self.day + Self.day) % Self.day
+            bed = ((w - Int(inBed * 60)) % Self.day + Self.day) % Self.day
+            fullBed = ((w - Int(fullInBed * 60)) % Self.day + Self.day) % Self.day
         }
-        tonight = Tonight(need: sleepNeed, bedtime: bed, wake: wake, alarm: usableAlarm)
+        tonight = Tonight(need: sleepNeed, bedtime: bed, wake: wake, alarm: usableAlarm,
+                          inBedMin: inBed, goal: goal, fullNeedBedtime: fullBed)
         forecast = RecoveryForecaster.forecast(recentCharge: days.compactMap(\.recovery),
                                                recentEffort: days.compactMap(\.strain),
                                                todayEffort: today?.strain,
@@ -723,6 +737,36 @@ struct WindDownReminderRow: View {
                 }
                 .buttonStyle(.plain)
             }
+        }
+    }
+}
+#endif
+
+#if os(iOS)
+/// How much of tonight's sleep need the plan aims for. Chosen in the sleep planner; the bedtime, the
+/// Home card and the wind-down reminder all follow it.
+enum SleepGoal: String, CaseIterable, Identifiable {
+    case peak, perform, getBy
+    var id: String { rawValue }
+    static let storageKey = "zoop.sleepPlanner.goal"
+
+    static var current: SleepGoal {
+        UserDefaults.standard.string(forKey: storageKey).flatMap(SleepGoal.init(rawValue:)) ?? .peak
+    }
+
+    var fraction: Double {
+        switch self {
+        case .peak: return 1.0
+        case .perform: return 0.85
+        case .getBy: return 0.7
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .peak: return String(localized: "Get all the sleep I need")
+        case .perform: return String(localized: "Perform well")
+        case .getBy: return String(localized: "Just get by")
         }
     }
 }

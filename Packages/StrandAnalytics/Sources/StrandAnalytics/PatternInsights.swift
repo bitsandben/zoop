@@ -98,6 +98,19 @@ public enum PatternInsights {
                          strainMin: strainMin, debtMin: debtPart)
     }
 
+    // MARK: Time in bed
+
+    /// Minutes in bed to sleep `goal` (0.5–1.0) of `needMin`, given the share of time in bed actually
+    /// spent asleep. `efficiency` may be a fraction or a percentage; nil or implausible values fall back
+    /// to 0.9, and it is held to 0.75–0.98 so one odd night cannot swing the plan.
+    public static func inBedMinutes(needMin: Double, goal: Double, efficiency: Double?) -> Double {
+        var e = efficiency ?? 0.9
+        if e > 1 { e /= 100 }
+        if !(0.5...1).contains(e) { e = 0.9 }
+        e = min(0.98, max(0.75, e))
+        return needMin * min(1, max(0.5, goal)) / e
+    }
+
     // MARK: Split effect
 
     public struct SplitEffect: Equatable, Sendable {

@@ -42,6 +42,8 @@ enum TabRoute: Hashable {
     /// Guided breathing and the strap alarm, reachable from Home's moment card (iOS).
     case breathe
     case alarms
+    /// Bedtime for tonight and the strap alarm (iOS).
+    case sleepPlanner
 }
 
 extension View {
@@ -80,6 +82,12 @@ extension View {
             case .coupled: CoupledView()
             case .breathe: BreathingView()
             case .alarms: SmartAlarmView()
+            case .sleepPlanner:
+                #if os(iOS)
+                SleepPlannerHost()
+                #else
+                SmartAlarmView()
+                #endif
             case .patterns:
                 #if os(iOS)
                 PatternsScreen()

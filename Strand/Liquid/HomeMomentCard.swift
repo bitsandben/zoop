@@ -19,8 +19,8 @@ enum HomeMoment: Equatable {
     /// How recent the stress reading must be to count as "now".
     static let stressMaxAge: TimeInterval = 90 * 60
 
-    /// The moment for `now`: recent high stress between 08:00 and 23:00, else the evening from 19:00 to
-    /// 02:00, else the morning from 05:00 to 11:00 when today's recovery is known.
+    /// The moment for `now`: recent high stress between 08:00 and 23:00, else the morning from 05:00 to
+    /// 11:00 when today's recovery is known, else the night ahead.
     static func pick(now: Date, hours: [DaytimeStress.HourPoint], recovery: Double?,
                      calendar: Calendar = .current) -> HomeMoment? {
         let h = calendar.component(.hour, from: now)
@@ -31,9 +31,8 @@ enum HomeMoment: Equatable {
            let level = latest.level, level >= highStress {
             return .breathe(level: level)
         }
-        if h >= 19 || h < 2 { return .evening }
         if (5..<11).contains(h), let r = recovery { return .morning(recovery: r) }
-        return nil
+        return .evening
     }
 }
 
@@ -92,34 +91,72 @@ struct HomeMomentCard: View {
 
     // MARK: Evening
 
+    /// The night ahead, as the sleep planner states it: the recommended bedtime on the left, the alarm on
+    /// the right with its state, and a way into the planner.
     @ViewBuilder
     private func evening(now: Date) -> some View {
         let alarm = model.nextArmedStrapAlarm(from: now)
-        VStack(alignment: .leading, spacing: 12) {
-            header(icon: "moon.stars.fill", title: "Tonight", tint: StrandPalette.textPrimary)
-            NavigationLink(value: TabRoute.alarms) {
-                row(icon: alarm == nil ? "alarm" : "alarm.fill",
-                    text: alarm.map { String(localized: "Alarm \(Self.time($0))") } ?? String(localized: "No alarm set"),
-                    detail: alarm.map { Self.until($0, from: now) } ?? String(localized: "Set one"),
-                    accent: alarm == nil)
+        let t = patterns.tonight
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Sleep tonight")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textTertiary)
             }
-            .buttonStyle(.plain)
-            if let t = patterns.tonight {
-                NavigationLink(value: TabRoute.patterns) {
-                    row(icon: "bed.double.fill",
-                        text: t.bedtime.map { String(localized: "In bed by \(PatternsScreen.clock($0 / 60))") }
-                            ?? String(localized: "Sleep need tonight"),
-                        detail: PatternsScreen.hours(t.need.totalMin),
-                        accent: false)
+            HStack(alignment: .top) {
+                VStack(spacing: 4) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "sunset.fill")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(StrandPalette.textSecondary)
+                        Text(t?.bedtime.map { PatternsScreen.clock($0 / 60) } ?? "–")
+                            .font(StrandFont.display(32))
+                            .foregroundStyle(StrandPalette.textPrimary)
+                    }
+                    Text("Recommended bedtime")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(StrandPalette.textSecondary)
                 }
-                .buttonStyle(.plain)
-                WindDownReminderRow(suggestedWakeMinute: t.wake.map { $0 / 60 }) {
-                    Task { await patterns.loadQuick(repo: repo, alarm: model.nextArmedStrapAlarm()) }
+                .frame(maxWidth: .infinity)
+                Rectangle()
+                    .fill(StrandPalette.textTertiary)
+                    .frame(width: 34, height: 1)
+                    .padding(.top, 20)
+                VStack(spacing: 4) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "alarm.fill")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(StrandPalette.textSecondary)
+                        Text(alarm.map(Self.time) ?? t?.wake.map { PatternsScreen.clock($0 / 60) } ?? "–")
+                            .font(StrandFont.display(32))
+                            .foregroundStyle(StrandPalette.textPrimary)
+                    }
+                    HStack(spacing: 5) {
+                        Circle().fill(alarm == nil ? StrandPalette.textTertiary : StrandPalette.accent)
+                            .frame(width: 7, height: 7)
+                        Text(alarm != nil ? "Alarm on" : model.behavior.smartAlarmEnabled ? "Not armed" : "Alarm off")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(alarm == nil ? StrandPalette.textSecondary : StrandPalette.accent)
+                    }
                 }
-                .padding(.leading, 2)
+                .frame(maxWidth: .infinity)
             }
+            Text(alarm == nil ? "Set alarm" : "Edit alarm")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(StrandPalette.textPrimary)
+                .frame(maxWidth: .infinity, minHeight: 46)
+                .background(Capsule().fill(StrandPalette.surfaceBase))
         }
         .cardChrome()
+        .overlay {
+            // The whole card opens the planner.
+            NavigationLink(value: TabRoute.sleepPlanner) { Color.clear.contentShape(Rectangle()) }
+                .buttonStyle(.plain)
+        }
     }
 
     // MARK: Morning
