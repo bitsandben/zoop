@@ -39,6 +39,9 @@ enum TabRoute: Hashable {
     case cycle
     /// What the stored history says: tonight, tomorrow, load and patterns (iOS).
     case patterns
+    /// Guided breathing and the strap alarm, reachable from Home's moment card (iOS).
+    case breathe
+    case alarms
 }
 
 extension View {
@@ -75,6 +78,8 @@ extension View {
             case .health: HealthView()
             case .hydration: HydrationView()
             case .coupled: CoupledView()
+            case .breathe: BreathingView()
+            case .alarms: SmartAlarmView()
             case .patterns:
                 #if os(iOS)
                 PatternsScreen()

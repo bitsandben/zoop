@@ -94,7 +94,25 @@ enum WindDownNudge {
     /// The wake time used for a given Calendar weekday (1=Sun…7=Sat) — the per-day override if set, else the
     /// default `wakeMinutes`. The single source of truth both the schedule and the UI read, so they agree.
     static func wakeMinutes(forWeekday weekday: Int) -> Int {
-        perDayWakeOverrides[weekday] ?? wakeMinutes
+        if let alarm = alarmWakeMinutes(forWeekday: weekday) { return alarm }
+        return perDayWakeOverrides[weekday] ?? wakeMinutes
+    }
+
+    /// When the reminder follows the sleep need and the strap alarm rings on `weekday`, the alarm is the
+    /// wake time: the override for that day, else the alarm's own time. Read from the alarm's stored
+    /// settings (`BehaviorStore`) so this enum stays free of the app model.
+    static func alarmWakeMinutes(forWeekday weekday: Int) -> Int? {
+        let d = UserDefaults.standard
+        guard followsSleepNeed, d.bool(forKey: "behavior.smartAlarmEnabled") else { return nil }
+        if let days = d.array(forKey: "behavior.smartAlarmWeekdays") as? [Int], !days.isEmpty,
+           !days.contains(weekday) { return nil }
+        let base = d.object(forKey: "behavior.smartAlarmMinutes") as? Int ?? 7 * 60
+        return perDayWakeOverrides[weekday] ?? base
+    }
+
+    /// Reschedule with the current settings, if the reminder is on.
+    static func refresh() {
+        if isEnabled { schedule() }
     }
 
     /// Whether ANY per-day override is set — drives whether scheduling fans out to 7 per-weekday triggers
@@ -243,7 +261,7 @@ enum WindDownNudge {
 
         // PR#554 — with per-day overrides set, fan out to seven weekday-pinned triggers each at that day's
         // own nudge time; with none, keep the single daily trigger (identical to the pre-#554 behaviour).
-        if hasPerDayOverrides {
+        if hasPerDayOverrides || (1...7).contains(where: { alarmWakeMinutes(forWeekday: $0) != nil }) {
             for weekday in 1...7 {
                 let minute = nudgeMinuteOfDay(forWeekday: weekday)
                 // #1863 — an early wake (e.g. 03:30) wraps the nudge minute to the previous evening

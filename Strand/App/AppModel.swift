@@ -1697,7 +1697,22 @@ final class AppModel: ObservableObject {
             enabled: behavior.batteryAlerts)
     }
 
+    /// The next moment the strap alarm will actually buzz, or nil when nothing will fire.
+    ///
+    /// The one funnel every alarm readout resolves through (the Alarms screen, Home's evening card), on
+    /// the same pure `nextSmartAlarmDate` this file arms the strap from. A WHOOP 5/MG arms only with
+    /// Experimental on, so without it there is no alarm to promise (#864).
+    func nextArmedStrapAlarm(from now: Date = Date()) -> Date? {
+        guard behavior.smartAlarmEnabled, !(whoop5Detected && !PuffinExperiment.isEnabled) else { return nil }
+        return Self.nextSmartAlarmDate(minutes: behavior.smartAlarmMinutes,
+                                       weekdays: behavior.smartAlarmWeekdays,
+                                       overrides: WindDownNudge.perDayWakeOverrides,
+                                       from: now)
+    }
+
     func applySmartAlarm() {
+        // The wind-down reminder counts back from the alarm when it follows the sleep need.
+        WindDownNudge.refresh()
         let overrides = WindDownNudge.perDayWakeOverrides
         guard behavior.smartAlarmEnabled else {
             ble.disableStrapAlarm()

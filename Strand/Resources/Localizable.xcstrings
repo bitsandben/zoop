@@ -1,6 +1,18 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "in %lld h %lld min" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"in %lld h %lld min"}}}},
+    "Keep today light. Easy movement helps more than a hard session." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Halte es heute leicht. Lockere Bewegung hilft mehr als eine harte Einheit."}}}},
+    "A moderate day suits you." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Ein moderater Tag passt zu dir."}}}},
+    "You're recovered. A hard day suits you." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Du bist erholt. Ein harter Tag passt."}}}},
+    "Sleep need tonight" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Schlafbedarf heute Nacht"}}}},
+    "In bed by %@" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Ins Bett um %@"}}}},
+    "Set one" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Stellen"}}}},
+    "No alarm set" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Kein Wecker gestellt"}}}},
+    "Alarm %@" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Wecker %@"}}}},
+    "Breathe for 3 minutes" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"3 Minuten atmen"}}}},
+    "%@ of 3 in the last hour. A few minutes of slow breathing usually brings it down." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"%@ von 3 in der letzten Stunde. Ein paar Minuten langsames Atmen senkt ihn meist."}}}},
+    "Stress is high right now" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Dein Stress ist gerade hoch"}}}},
     "A calm nudge %lld min before tonight's sleep need of %lldh %lldm, counted back from your wake time." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Ein sanfter Hinweis %lld min vor deinem heutigen Schlafbedarf von %lld h %lld min, von deiner Weckzeit zurückgerechnet."}}}},
     "Earlier after a hard day or short nights, from the need shown under Patterns." : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Früher nach einem harten Tag oder kurzen Nächten, nach dem Bedarf unter „Muster“."}}}},
     "Follow tonight's sleep need" : {"localizations":{"de":{"stringUnit":{"state":"translated","value":"Schlafbedarf von heute Nacht folgen"}}}},

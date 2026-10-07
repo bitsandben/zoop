@@ -15,7 +15,11 @@ import WhoopStore
 
 @MainActor
 final class PatternsModel: ObservableObject {
-    struct Tonight: Equatable { let need: PatternInsights.SleepNeed; let bedtime: Int?; let wake: Int? }
+    struct Tonight: Equatable {
+        let need: PatternInsights.SleepNeed; let bedtime: Int?; let wake: Int?
+        /// The armed strap alarm the wake time came from, when there is one.
+        var alarm: Date? = nil
+    }
     struct Effect: Identifiable, Equatable { let id: String; let behavior: String; let delta: Double; let n: Int }
     struct HRRStats: Equatable { let latestDrop: Int; let averageDrop: Double; let workouts: Int }
     struct WindDownStats: Equatable { let minutes: Double; let drop: Double; let nights: Int }
@@ -40,7 +44,7 @@ final class PatternsModel: ObservableObject {
     private static let day = 86_400
 
     /// The quick, in-memory readings (used by Home as well as this screen).
-    func loadQuick(repo: Repository) async {
+    func loadQuick(repo: Repository, alarm: Date? = nil) async {
         let days = repo.days
         guard !days.isEmpty else { return }
         let today = days.last
@@ -51,10 +55,14 @@ final class PatternsModel: ObservableObject {
                                                          debtMin: ledger.isDebt ? ledger.magnitudeMin : 0)
         // The reminder follows this need, so it is handed over every time it is computed.
         WindDownNudge.updateTonightNeed(Int(sleepNeed.totalMin.rounded()))
-        // One wake time for the card and the reminder: the wake time set for the reminder when it is on,
-        // otherwise the habitual one from past nights.
+        // One wake time for the card and the reminder: an armed strap alarm within the next day first,
+        // then the wake time set for the reminder, then the habitual one from past nights.
         var bed: Int?, wake: Int?
-        if WindDownNudge.isEnabled {
+        let usableAlarm = alarm.flatMap { $0.timeIntervalSinceNow < 26 * 3600 ? $0 : nil }
+        if let a = usableAlarm {
+            let c = Calendar.current.dateComponents([.hour, .minute], from: a)
+            wake = ((c.hour ?? 0) * 60 + (c.minute ?? 0)) * 60
+        } else if WindDownNudge.isEnabled {
             let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
             wake = WindDownNudge.wakeMinutes(forWeekday: Calendar.current.component(.weekday, from: tomorrow)) * 60
         } else if let mid = await repo.habitualMidsleepSec() {
@@ -64,7 +72,7 @@ final class PatternsModel: ObservableObject {
         if let w = wake {
             bed = ((w - Int(sleepNeed.totalMin * 60) - 15 * 60) % Self.day + Self.day) % Self.day
         }
-        tonight = Tonight(need: sleepNeed, bedtime: bed, wake: wake)
+        tonight = Tonight(need: sleepNeed, bedtime: bed, wake: wake, alarm: usableAlarm)
         forecast = RecoveryForecaster.forecast(recentCharge: days.compactMap(\.recovery),
                                                recentEffort: days.compactMap(\.strain),
                                                todayEffort: today?.strain,
@@ -81,8 +89,8 @@ final class PatternsModel: ObservableObject {
     }
 
     /// Everything, including the readings that need stored samples.
-    func loadAll(repo: Repository, maxHR: Int, cycleApplies: Bool) async {
-        await loadQuick(repo: repo)
+    func loadAll(repo: Repository, maxHR: Int, cycleApplies: Bool, alarm: Date? = nil) async {
+        await loadQuick(repo: repo, alarm: alarm)
         let days = repo.days
         var byDay: [String: DailyMetric] = [:]
         for d in days { byDay[d.day] = d }
@@ -216,7 +224,7 @@ struct PatternsScreen: View {
         ScreenScaffold(title: "Patterns") {
             VStack(alignment: .leading, spacing: 14) {
                 if let t = patterns.tonight {
-                    PatternTonightCard(tonight: t) { Task { await patterns.loadQuick(repo: repo) } }
+                    PatternTonightCard(tonight: t) { Task { await patterns.loadQuick(repo: repo, alarm: model.nextArmedStrapAlarm()) } }
                 }
                 if let f = patterns.forecast { forecastCard(f) }
                 if let a = patterns.acwr { PatternLoadCard(acwr: a) }
@@ -258,7 +266,8 @@ struct PatternsScreen: View {
             .animation(.snappy, value: patterns.loaded)
         }
         .task(id: repo.refreshSeq) {
-            await patterns.loadAll(repo: repo, maxHR: profile.hrMax, cycleApplies: profile.cycleAwarenessApplies)
+            await patterns.loadAll(repo: repo, maxHR: profile.hrMax, cycleApplies: profile.cycleAwarenessApplies,
+                                   alarm: model.nextArmedStrapAlarm())
         }
     }
 
@@ -624,6 +633,7 @@ struct PatternLoadCard: View {
 /// the week in numbers first on Sundays and Mondays, and a link to all patterns.
 struct HomePatternsCarousel: View {
     @EnvironmentObject private var repo: Repository
+    @EnvironmentObject private var model: AppModel
     @StateObject private var patterns = PatternsModel()
 
     var body: some View {
@@ -639,7 +649,7 @@ struct HomePatternsCarousel: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 12) {
                     if let t = patterns.tonight {
-                        PatternTonightCard(tonight: t) { Task { await patterns.loadQuick(repo: repo) } }
+                        PatternTonightCard(tonight: t) { Task { await patterns.loadQuick(repo: repo, alarm: model.nextArmedStrapAlarm()) } }
                             .frame(width: 290)
                     }
                     if let f = patterns.forecast {
@@ -661,7 +671,7 @@ struct HomePatternsCarousel: View {
             .scrollTargetBehavior(.viewAligned)
             .scrollClipDisabled()
         }
-        .task(id: repo.refreshSeq) { await patterns.loadQuick(repo: repo) }
+        .task(id: repo.refreshSeq) { await patterns.loadQuick(repo: repo, alarm: model.nextArmedStrapAlarm()) }
     }
 }
 #endif

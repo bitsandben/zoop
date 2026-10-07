@@ -531,11 +531,9 @@ struct SmartAlarmView: View {
     /// `from` is a parameter so the ticking countdown re-resolves against the clock it is given rather
     /// than a `Date()` captured somewhere else.
     private func nextStrapAlarm(from now: Date = Date()) -> Date? {
-        guard behavior.smartAlarmEnabled, strapAlarmWillArm else { return nil }
-        return AppModel.nextSmartAlarmDate(minutes: behavior.smartAlarmMinutes,
-                                           weekdays: behavior.smartAlarmWeekdays,
-                                           overrides: overrides,
-                                           from: now)
+        // Resolved through AppModel's single funnel, which Home's evening card reads too.
+        _ = overrides   // re-render when an override changes
+        return model.nextArmedStrapAlarm(from: now)
     }
 
     /// The next alarm as a weekday, date and time: "Mon 21 Sep 10:28".

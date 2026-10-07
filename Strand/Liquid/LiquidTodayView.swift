@@ -395,6 +395,10 @@ struct LiquidTodayView: View {
                             #if os(iOS)
                             monitorTilesRow
                             HomeSectionTitle(title: "My Day") { myDayAddButton }
+                            if selectedDayOffset == 0 {
+                                HomeMomentCard(hours: hostedStressHours, recovery: chargeDisplay.pct,
+                                               strainTarget: strainTargetCaption)
+                            }
                             todaysActivitiesCard
                             // The cycle follows the day for anyone it applies to, unless they hid it.
                             if profile.cycleAwarenessApplies && !cycleCardHidden { HomeCycleCard() }
@@ -696,6 +700,15 @@ struct LiquidTodayView: View {
                 HomeStressMonitorTile(score: stress)
             }
             .buttonStyle(LiquidPressStyle())
+        }
+    }
+
+    /// Today's strain target on the chosen Effort scale ("Target 4–10"), the same band the hero ring draws.
+    private var strainTargetCaption: String? {
+        CoupledView.optimalStrainRange(recovery: chargeDisplay.pct).map { b in
+            let lo = effortScale == .whoop ? b.lowerBound : Int((Double(b.lowerBound) * 100 / 21).rounded())
+            let hi = effortScale == .whoop ? b.upperBound : Int((Double(b.upperBound) * 100 / 21).rounded())
+            return String(localized: "Target \(lo)–\(hi)")
         }
     }
 
@@ -1754,11 +1767,11 @@ struct LiquidTodayView: View {
             // rows use, so all three now agree by construction.
             ktile(String(localized: "Strain"), icon: keyMetricIcon(metric), effortText(effortStrain(displayDay)), "", StrandPalette.effortColor, frac(effortStrain(displayDay)), key: HeroRingMetric.effort)
         case .rest:
-            ktile(String(localized: "Rest"), icon: keyMetricIcon(metric), intText(restScore), "%", StrandPalette.restColor, frac(restScore), key: HeroRingMetric.rest)
+            ktile(Self.iosName("Rest", ios: "Sleep"), icon: keyMetricIcon(metric), intText(restScore), "%", StrandPalette.restColor, frac(restScore), key: HeroRingMetric.rest)
         case .hrv:
             ktile("HRV", icon: keyMetricIcon(metric), intText(hrv), "ms", StrandPalette.metricCyan, fracOver(hrv, 120), key: "hrv")
         case .restingHr:
-            ktile(String(localized: "Rest HR"), icon: keyMetricIcon(metric), intText(rhr), "bpm", StrandPalette.metricRose, fracOver(rhr, 100), key: "rhr")
+            ktile(Self.iosName("Rest HR", ios: "Resting HR"), icon: keyMetricIcon(metric), intText(rhr), "bpm", StrandPalette.metricRose, fracOver(rhr, 100), key: "rhr")
         case .bloodOxygen:
             // Queue 11a: the Liquid tile used to read `spo2Pct` only, with no candidate fallback at all
             // (unlike the classic `TodayView`/`VitalSignsSummary`), so an Oura-only or BLE-only WHOOP
@@ -3923,4 +3936,15 @@ private extension View {
 private struct HomeWorkoutTarget: Identifiable {
     let row: WorkoutRow
     let id = UUID()
+}
+
+extension LiquidTodayView {
+    /// A dashboard name: iOS uses Recovery / Strain / Sleep throughout, other platforms keep their own.
+    static func iosName(_ other: String.LocalizationValue, ios: String.LocalizationValue) -> String {
+        #if os(iOS)
+        return String(localized: ios)
+        #else
+        return String(localized: other)
+        #endif
+    }
 }
