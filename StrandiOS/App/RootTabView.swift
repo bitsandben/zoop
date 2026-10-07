@@ -52,6 +52,8 @@ struct RootTabView: View {
     @State private var quickAction: QuickAction?
     /// Presents the Devices manager (pair / switch bands) when a screen asks the shell to open it.
     @State private var showDevices = false
+    /// The Coach chat, raised by the Coach button in the tab bar.
+    @State private var showCoach = false
     /// A routed v5 pillar screen (Insights hub / Lab Book / fused record / Rhythm) presented as a sheet
     /// when a hub row deep-links to it via NavRouter. nil = closed.
     @State private var routedPillar: NavRouter.Destination?
@@ -85,7 +87,10 @@ struct RootTabView: View {
         Binding(
             get: { selectedTab },
             set: { tag in
-                if tag == selectedTab {
+                // Coach is not a destination: its button raises the chat sheet over whatever is open.
+                if tag == IOSTab.coach {
+                    showCoach = true
+                } else if tag == selectedTab {
                     reselectTab(tag)
                 } else {
                     selectedTab = tag
@@ -130,7 +135,8 @@ struct RootTabView: View {
                 // apart from the four destinations. Hidden rather than left out when Coach is off, so
                 // the tab keeps its tag and path.
                 Tab(value: IOSTab.coach, role: Self.coachTabRole) {
-                    tabStack(CoachView(), path: $tabPaths[IOSTab.coach], scrollSignal: scrollTop[IOSTab.coach])
+                    // Never shown: selecting this tab opens `CoachChatSheet` instead (see `nativeTabSelection`).
+                    Color.clear
                 } label: { iconLabel("Coach", "sparkles") }
                 .hidden(!coachEnabled)
             }
@@ -202,6 +208,9 @@ struct RootTabView: View {
         .sheet(isPresented: $showDevices) {
             devicesScreen
         }
+        .sheet(isPresented: $showCoach) {
+            CoachChatSheet()
+        }
         // v5 pillar deep-links (Insights hub / Lab Book / fused record / Rhythm) present as a sheet in
         // their own nav stack — the same idiom the quick-action + Devices screens use on iPhone.
         .sheet(item: $routedPillar) { dest in
@@ -230,7 +239,7 @@ struct RootTabView: View {
                     router.requestedDestination = nil
                     break
                 }
-                withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = IOSTab.coach }
+                showCoach = true
                 router.requestedDestination = nil
             case .trends:
                 withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = IOSTab.trends }

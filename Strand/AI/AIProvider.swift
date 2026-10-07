@@ -18,7 +18,7 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .openAI:    return "OpenAI"
         case .anthropic: return "Anthropic"
         case .gemini:    return "Google Gemini"
-        case .openRouter: return "OpenRouter (free models)"
+        case .openRouter: return "OpenRouter"
         case .custom:    return "Custom (OpenAI-compatible)"
         }
     }
