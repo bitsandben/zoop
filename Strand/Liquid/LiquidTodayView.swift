@@ -484,7 +484,12 @@ struct LiquidTodayView: View {
         // vertical pull-to-refresh gesture above.
         .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
         #endif
-        .onPreferenceChange(PullOffsetKey.self) { handlePull($0) }
+        .onPreferenceChange(PullOffsetKey.self) { y in
+            // iOS 18+ reads the overscroll from the scroll geometry below; the probe is the iOS 17 path.
+            if #available(iOS 18.0, macOS 15.0, *) { return }
+            handlePull(y)
+        }
+        .modifier(PullOverscrollReader(onChange: handlePull))
         // The sky is a FIXED full-bleed backdrop drawn behind the scroll content, edge-to-edge under the
         // status bar. A ScrollView background does not scroll with the content, so pulling down never
         // moves the sky (the exact behaviour the scaffold uses on the classic Today).
@@ -2614,6 +2619,24 @@ private struct LiquidHeartRateCardFrameKey: PreferenceKey {
 }
 
 /// Carries the Today scroll's top overscroll offset up to the view for the custom liquid pull-to-refresh.
+/// The top overscroll (positive while pulled down past the top) from the scroll view's own geometry.
+/// A GeometryReader preference inside the scroll content stopped reporting reliably on recent iOS.
+private struct PullOverscrollReader: ViewModifier {
+    let onChange: (CGFloat) -> Void
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, macOS 15.0, *) {
+            content.onScrollGeometryChange(for: CGFloat.self) { geo in
+                -(geo.contentOffset.y + geo.contentInsets.top)
+            } action: { _, new in
+                onChange(new)
+            }
+        } else {
+            content
+        }
+    }
+}
+
 private struct PullOffsetKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
