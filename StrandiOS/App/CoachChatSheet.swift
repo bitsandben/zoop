@@ -303,7 +303,7 @@ private struct CoachChat: View {
     private var moreMenu: some View {
         Menu {
             NavigationLink {
-                CoachSettingsView()
+                CoachSettingsPage()
             } label: { Label("Coach settings", systemImage: "slider.horizontal.3") }
             Button(role: .destructive) { showClearConfirm = true } label: {
                 Label("Clear conversation", systemImage: "trash")

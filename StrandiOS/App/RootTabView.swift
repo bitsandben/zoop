@@ -155,6 +155,22 @@ struct RootTabView: View {
         }
     }
 
+    /// A transparent tap target laid exactly over the system Coach button. A system tab is drawn as
+    /// selected (its empty content filling the screen) before the selection binding can refuse it, which
+    /// flashed black on every tap. Catching the touch above the bar opens the sheet without the tab ever
+    /// being selected; the binding's own redirect stays as the path VoiceOver takes.
+    private var coachButton: some View {
+        Color.clear
+            .frame(width: 66, height: 66)
+            .contentShape(Circle())
+            .onTapGesture { showCoach = true }
+            .accessibilityHidden(true)
+            .padding(.trailing, 19)
+            .padding(.bottom, 19)
+            .ignoresSafeArea(.container, edges: .bottom)
+            .sensoryFeedback(.impact(weight: .light), trigger: showCoach)
+    }
+
     /// A tab item that shows only its glyph; the title is still read by VoiceOver.
     private func iconLabel(_ title: LocalizedStringKey, _ icon: String) -> some View {
         Image(systemName: icon).accessibilityLabel(Text(title))
@@ -170,6 +186,9 @@ struct RootTabView: View {
 
     var body: some View {
         tabShell
+        .overlay(alignment: .bottomTrailing) {
+            if coachEnabled, #available(iOS 18.0, *) { coachButton }
+        }
         // The selected tab reads white, as in the reference; colour is kept for the data.
         .tint(StrandPalette.textPrimary)
         // Switching Coach off while STANDING on it leaves `selectedTab` pointing at a tag no tab claims
