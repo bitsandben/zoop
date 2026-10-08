@@ -5,9 +5,11 @@ import WhoopStore
 
 // MARK: - Recovery calibration UI (Zoop)
 //
-// Three surfaces over `RecoveryCalibrationStore`:
-//   - `MorningCheckInCard`: the Home card. Invites the wearer to start calibration once, then asks the
-//     morning question (1–5 plus symptom chips) until today is answered.
+// Surfaces over `RecoveryCalibrationStore`:
+//   - `RecoveryCalibrationInviteCard`: the one-time Home invite to start calibration.
+//   - `MorningCheckInSheet`: the morning question (five faces plus symptom tiles) as a bottom sheet,
+//     raised once a morning by the iOS shell (`MorningCheckInPrompt`) and for edits from
+//     `MorningCheckInSummaryRow` (today's answer, on the Recovery detail and the calibration screen).
 //   - `RecoveryCalibrationView`: the full screen (Settings, the Home card, the Recovery detail): on/off,
 //     progress through the calibration phase, the personal weights next to the standard ones, and how
 //     the mornings compared with the measured Recovery.
@@ -46,6 +48,29 @@ enum RecoveryCalibrationCopy {
         default: return String(localized: "Fully recovered")
         }
     }
+
+    /// The face for a 1–5 answer, from exhausted to fully recovered.
+    static func feelingFace(_ v: Int) -> String {
+        switch v {
+        case ...1: return "😫"
+        case 2: return "😕"
+        case 3: return "😐"
+        case 4: return "🙂"
+        default: return "😄"
+        }
+    }
+
+    /// "2/5 · Tired · Headache, Stressed" — the answer and any reported symptoms on one line.
+    static func summary(_ c: MorningCheckIn) -> String {
+        var symptoms: [String] = []
+        if c.headache { symptoms.append(String(localized: "Headache")) }
+        if c.soreness { symptoms.append(String(localized: "Sore muscles")) }
+        if c.ill { symptoms.append(String(localized: "Feeling ill")) }
+        if c.stress { symptoms.append(String(localized: "Stressed")) }
+        var parts = ["\(c.feeling)/5", feelingLabel(c.feeling)]
+        if !symptoms.isEmpty { parts.append(symptoms.joined(separator: ", ")) }
+        return parts.joined(separator: " · ")
+    }
 }
 
 /// Progress bar through the calibration phase (to `fullDays`).
@@ -64,164 +89,171 @@ private struct CalibrationProgressBar: View {
     }
 }
 
-// MARK: - Morning check-in (Home)
+// MARK: - Home invite
 
-struct MorningCheckInCard: View {
+/// The one-time Home invite to start calibration. Shown until it is accepted or dismissed; once
+/// calibration is on, the morning question lives in `MorningCheckInSheet` (auto-presented by the iOS
+/// shell) and today's answer on the Recovery detail, so Home shows nothing.
+struct RecoveryCalibrationInviteCard: View {
+    @AppStorage(RecoveryCalibrationStore.enabledKey) private var enabled = false
+    @AppStorage(RecoveryCalibrationStore.inviteDismissedKey) private var inviteDismissed = false
+
+    var body: some View {
+        if !enabled && !inviteDismissed {
+            ZoopCard {
+                VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
+                    Text("Personal Recovery").strandOverline()
+                    Text("Tune Recovery to how you feel")
+                        .font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
+                    Text("Answer one short question each morning. After a week Zoop shows a first preview of your personal weighting, and it keeps getting more precise.")
+                        .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: ZoopMetrics.space2) {
+                        ZoopButton("Start calibration", systemImage: "slider.horizontal.3") {
+                            enabled = true
+                        }
+                        ZoopButton("Not now", kind: .tertiary) { inviteDismissed = true }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Morning check-in sheet
+
+/// The morning question as a bottom sheet: five faces for how recovered the wearer feels, a grid of
+/// symptom tiles, and Save. Used for the automatic morning prompt and for editing from the Recovery
+/// detail; it preloads the day's stored answer when there is one.
+struct MorningCheckInSheet: View {
     @EnvironmentObject var repo: Repository
     @EnvironmentObject var intelligence: IntelligenceEngine
-    @AppStorage(RecoveryCalibrationStore.enabledKey) private var enabled = false
-    /// The Home invite is shown until it is either accepted or dismissed once.
-    @AppStorage("zoop.recoveryCalibration.inviteDismissed") private var inviteDismissed = false
+    @Environment(\.dismiss) private var dismiss
 
-    @State private var answered: MorningCheckIn?
-    @State private var loaded = false
+    var day: String = Repository.dayString(Date())
+    /// Called after the answer is stored and Recovery re-scored.
+    var onSaved: (MorningCheckIn) -> Void = { _ in }
+
     @State private var feeling: Int?
     @State private var headache = false
     @State private var soreness = false
     @State private var ill = false
     @State private var stress = false
     @State private var saving = false
-    @State private var editing = false
-
-    private var today: String { Repository.dayString(Date()) }
 
     var body: some View {
-        Group {
-            if !enabled {
-                if !inviteDismissed { invite } else { Color.clear.frame(height: 0) }
-            } else if !loaded {
-                // A real (zero-height) view rather than EmptyView: modifiers on an EmptyView never fire, so
-                // the `.task` below would never load the day's answer.
-                Color.clear.frame(height: 0)
-            } else if let answered, !editing {
-                answeredRow(answered)
-            } else {
-                question
+        ScrollView {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space6) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
+                    Text("Good morning").strandOverline()
+                    Text("How do you feel this morning?")
+                        .font(StrandFont.title2).foregroundStyle(StrandPalette.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                faces
+                VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
+                    Text("Anything else?")
+                        .font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: ZoopMetrics.space3),
+                                        GridItem(.flexible(), spacing: ZoopMetrics.space3)],
+                              spacing: ZoopMetrics.space3) {
+                        symptomTile("Headache", systemImage: "brain.head.profile", isOn: $headache)
+                        symptomTile("Sore muscles", systemImage: "figure.strengthtraining.traditional", isOn: $soreness)
+                        symptomTile("Feeling ill", systemImage: "thermometer.medium", isOn: $ill)
+                        symptomTile("Stressed", systemImage: "cloud.bolt.rain", isOn: $stress)
+                    }
+                }
+                VStack(spacing: ZoopMetrics.space2) {
+                    if saving {
+                        ProgressView().tint(StrandPalette.accent).frame(maxWidth: .infinity)
+                    } else {
+                        ZoopButton("Save", systemImage: "checkmark", fullWidth: true) { save() }
+                            .disabled(feeling == nil)
+                    }
+                    Text(RecoveryCalibrationCopy.phaseLine(RecoveryCalibrationStore.lastResult))
+                        .font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
+            .padding(.horizontal, ZoopMetrics.screenPadding)
+            .padding(.top, ZoopMetrics.space6)
+            .padding(.bottom, ZoopMetrics.space4)
         }
-        .task(id: enabled) { await load() }
+        .background(StrandPalette.surfaceBase.ignoresSafeArea())
+        .task { await load() }
+    }
+
+    private var faces: some View {
+        VStack(spacing: ZoopMetrics.space3) {
+            HStack(spacing: ZoopMetrics.space2) {
+                ForEach(Array(MorningCheckIn.scale), id: \.self) { v in
+                    faceButton(v)
+                }
+            }
+            Text(feeling.map { RecoveryCalibrationCopy.feelingLabel($0) } ?? String(localized: "Tap the face that fits"))
+                .font(StrandFont.headline)
+                .foregroundStyle(feeling == nil ? StrandPalette.textTertiary : StrandPalette.textPrimary)
+                .frame(maxWidth: .infinity)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private func faceButton(_ v: Int) -> some View {
+        let selected = feeling == v
+        let shape = RoundedRectangle(cornerRadius: ZoopVisualStyle.compactRadius, style: .continuous)
+        return Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { feeling = v }
+        } label: {
+            Text(verbatim: RecoveryCalibrationCopy.feelingFace(v))
+                .font(.system(size: 34))
+                .scaleEffect(selected ? 1.15 : 1)
+                .opacity(feeling == nil || selected ? 1 : 0.45)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, ZoopMetrics.space3)
+                .background(shape.fill(selected ? StrandPalette.accent.opacity(0.22) : StrandPalette.surfaceInset))
+                .overlay(shape.strokeBorder(selected ? StrandPalette.accent : Color.clear, lineWidth: 1.5))
+                .contentShape(shape)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("\(v), \(RecoveryCalibrationCopy.feelingLabel(v))"))
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func symptomTile(_ title: LocalizedStringKey, systemImage: String, isOn: Binding<Bool>) -> some View {
+        let on = isOn.wrappedValue
+        let shape = RoundedRectangle(cornerRadius: ZoopVisualStyle.compactRadius, style: .continuous)
+        return Button {
+            withAnimation(.easeOut(duration: 0.15)) { isOn.wrappedValue.toggle() }
+        } label: {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
+                HStack {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(on ? StrandPalette.accent : StrandPalette.textSecondary)
+                    Spacer()
+                    Image(systemName: on ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(on ? StrandPalette.accent : StrandPalette.textTertiary)
+                }
+                Text(title)
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(on ? StrandPalette.textPrimary : StrandPalette.textSecondary)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+            }
+            .padding(ZoopMetrics.space4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(shape.fill(on ? StrandPalette.accent.opacity(0.18) : StrandPalette.surfaceInset))
+            .overlay(shape.strokeBorder(on ? StrandPalette.accent : StrandPalette.hairline, lineWidth: on ? 1.5 : 1))
+            .contentShape(shape)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
     private func load() async {
-        guard enabled else { return }
-        answered = await repo.morningCheckIn(day: today)
-        if let a = answered {
-            feeling = a.feeling; headache = a.headache; soreness = a.soreness; ill = a.ill; stress = a.stress
-        }
-        loaded = true
-    }
-
-    private var invite: some View {
-        ZoopCard {
-            VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
-                Text("Personal Recovery").strandOverline()
-                Text("Tune Recovery to how you feel")
-                    .font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
-                Text("Answer one short question each morning. After a week Zoop shows a first preview of your personal weighting, and it keeps getting more precise.")
-                    .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                HStack(spacing: ZoopMetrics.space2) {
-                    ZoopButton("Start calibration", systemImage: "slider.horizontal.3") {
-                        enabled = true
-                    }
-                    ZoopButton("Not now", kind: .tertiary) { inviteDismissed = true }
-                }
-            }
-        }
-    }
-
-    private var question: some View {
-        ZoopCard {
-            VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
-                HStack {
-                    Text("Morning check-in").strandOverline()
-                    Spacer()
-                    NavigationLink { RecoveryCalibrationView() } label: {
-                        Image(systemName: "info.circle").foregroundStyle(StrandPalette.textTertiary)
-                    }
-                    .accessibilityLabel(Text("About Recovery calibration"))
-                }
-                Text("How recovered do you feel?")
-                    .font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
-                HStack(spacing: ZoopMetrics.space1) {
-                    ForEach(Array(MorningCheckIn.scale), id: \.self) { v in
-                        Button { feeling = v } label: {
-                            VStack(spacing: 2) {
-                                Text(verbatim: "\(v)").font(StrandFont.headline)
-                                Text(RecoveryCalibrationCopy.feelingLabel(v))
-                                    .font(StrandFont.caption).lineLimit(1).minimumScaleFactor(0.6)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, ZoopMetrics.space2)
-                            .foregroundStyle(feeling == v ? StrandPalette.textPrimary : StrandPalette.textSecondary)
-                            .background(RoundedRectangle(cornerRadius: 12)
-                                .fill(feeling == v ? StrandPalette.accent.opacity(0.22) : StrandPalette.surfaceInset))
-                            .overlay(RoundedRectangle(cornerRadius: 12)
-                                .strokeBorder(feeling == v ? StrandPalette.accent : StrandPalette.hairline, lineWidth: 1))
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(Text("\(v), \(RecoveryCalibrationCopy.feelingLabel(v))"))
-                        .accessibilityAddTraits(feeling == v ? .isSelected : [])
-                    }
-                }
-                Text("Anything else this morning?")
-                    .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
-                HStack(spacing: ZoopMetrics.space2) {
-                    chip("Headache", isOn: $headache)
-                    chip("Sore muscles", isOn: $soreness)
-                }
-                HStack(spacing: ZoopMetrics.space2) {
-                    chip("Feeling ill", isOn: $ill)
-                    chip("Stressed", isOn: $stress)
-                }
-                HStack {
-                    Text(RecoveryCalibrationCopy.phaseLine(RecoveryCalibrationStore.lastResult))
-                        .font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Spacer(minLength: ZoopMetrics.space2)
-                    if saving {
-                        ProgressView().controlSize(.small).tint(StrandPalette.accent)
-                    } else {
-                        ZoopButton("Save") { save() }
-                            .disabled(feeling == nil)
-                    }
-                }
-            }
-        }
-    }
-
-    private func answeredRow(_ a: MorningCheckIn) -> some View {
-        ZoopCard {
-            HStack(spacing: ZoopMetrics.space3) {
-                Image(systemName: "checkmark.circle.fill").foregroundStyle(StrandPalette.accent)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Morning check-in: \(a.feeling)/5, \(RecoveryCalibrationCopy.feelingLabel(a.feeling))")
-                        .font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
-                    Text(RecoveryCalibrationCopy.phaseLine(RecoveryCalibrationStore.lastResult))
-                        .font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer()
-                Button { editing = true } label: {
-                    Text("Edit").font(StrandFont.subhead).foregroundStyle(StrandPalette.accent)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private func chip(_ title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
-        Button { isOn.wrappedValue.toggle() } label: {
-            Text(title)
-                .font(StrandFont.subhead)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, ZoopMetrics.space2)
-                .foregroundStyle(isOn.wrappedValue ? StrandPalette.textPrimary : StrandPalette.textSecondary)
-                .background(Capsule().fill(isOn.wrappedValue ? StrandPalette.accent.opacity(0.22) : StrandPalette.surfaceInset))
-                .overlay(Capsule().strokeBorder(isOn.wrappedValue ? StrandPalette.accent : StrandPalette.hairline, lineWidth: 1))
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isOn.wrappedValue ? .isSelected : [])
+        guard let a = await repo.morningCheckIn(day: day) else { return }
+        feeling = a.feeling; headache = a.headache; soreness = a.soreness; ill = a.ill; stress = a.stress
     }
 
     private func save() {
@@ -229,14 +261,103 @@ struct MorningCheckInCard: View {
         let c = MorningCheckIn(feeling: feeling, headache: headache, soreness: soreness, ill: ill, stress: stress)
         saving = true
         Task {
-            await repo.saveMorningCheckIn(day: today, c)
-            answered = c
-            editing = false
+            await repo.saveMorningCheckIn(day: day, c)
             // Re-score so today's symptoms and the refreshed personal weights reach the Recovery ring.
             await intelligence.analyzeRecent()
             await repo.refresh()
             saving = false
+            onSaved(c)
+            dismiss()
         }
+    }
+}
+
+/// Today's answer with an Edit button, or an "Answer" button when today is still open. Presents
+/// `MorningCheckInSheet` itself. Shown on the Recovery detail and the calibration screen.
+struct MorningCheckInSummaryRow: View {
+    @EnvironmentObject var repo: Repository
+    @State private var answer: MorningCheckIn?
+    @State private var loaded = false
+    @State private var showSheet = false
+
+    private var today: String { Repository.dayString(Date()) }
+
+    var body: some View {
+        ZoopCard {
+            HStack(spacing: ZoopMetrics.space3) {
+                if let answer {
+                    Text(verbatim: RecoveryCalibrationCopy.feelingFace(answer.feeling))
+                        .font(.system(size: 26))
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: ZoopMetrics.spaceHalf) {
+                        Text("Morning check-in").font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
+                        Text(verbatim: RecoveryCalibrationCopy.summary(answer))
+                            .font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: ZoopMetrics.space2)
+                    ZoopButton("Edit", kind: .tertiary) { showSheet = true }
+                } else {
+                    Image(systemName: "sun.horizon").foregroundStyle(StrandPalette.accent)
+                    Text("Morning check-in")
+                        .font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
+                    Spacer(minLength: ZoopMetrics.space2)
+                    ZoopButton("Answer morning check-in", kind: .secondary) { showSheet = true }
+                }
+            }
+            .opacity(loaded ? 1 : 0)
+        }
+        .task { await reload() }
+        .sheet(isPresented: $showSheet) {
+            MorningCheckInSheet(day: today) { answer = $0 }
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+    }
+
+    private func reload() async {
+        answer = await repo.morningCheckIn(day: today)
+        loaded = true
+    }
+}
+
+// MARK: - Automatic morning prompt
+
+/// When the iOS shell raises `MorningCheckInSheet` on its own: calibration on, today not answered, it is
+/// morning, and the sheet was not already raised today. Raising it marks the day, so dismissing it
+/// without an answer does not re-open it until tomorrow.
+@MainActor
+enum MorningCheckInPrompt {
+    /// Local day (`Repository.dayString`) the sheet was last raised automatically.
+    static let shownDayKey = "zoop.recoveryCalibration.checkInPromptDay"
+    /// The prompt is a morning question; a sleep ending at or after this hour (a nap) does not open it.
+    static let morningEndHour = 14
+
+    @MainActor
+    static func shouldPresent(repo: Repository, now: Date = Date()) async -> Bool {
+        guard RecoveryCalibrationStore.isEnabled else { return false }
+        let today = Repository.dayString(now)
+        guard UserDefaults.standard.string(forKey: shownDayKey) != today else { return false }
+        guard isMorning(now: now, latestSleepEnd: repo.sleeps.map(\.endTs).max()) else { return false }
+        return await repo.morningCheckIn(day: today) == nil
+    }
+
+    /// Morning = after a sleep that ended today before `morningEndHour`, or, without such a sleep (the
+    /// night not synced yet), between 04:00 and `morningEndHour`.
+    static func isMorning(now: Date, latestSleepEnd: Int?, calendar: Calendar = .current) -> Bool {
+        if let latestSleepEnd {
+            let end = Date(timeIntervalSince1970: TimeInterval(latestSleepEnd))
+            if calendar.isDate(end, inSameDayAs: now), end <= now,
+               calendar.component(.hour, from: end) < morningEndHour {
+                return true
+            }
+        }
+        let hour = calendar.component(.hour, from: now)
+        return hour >= 4 && hour < morningEndHour
+    }
+
+    static func markShown(now: Date = Date()) {
+        UserDefaults.standard.set(Repository.dayString(now), forKey: shownDayKey)
     }
 }
 
@@ -256,6 +377,7 @@ struct RecoveryCalibrationView: View {
             VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 intro
                 if enabled {
+                    MorningCheckInSummaryRow()
                     progressCard
                     if result.phase != .collecting { weightsCard }
                     if !comparison.isEmpty { comparisonCard }
@@ -272,6 +394,8 @@ struct RecoveryCalibrationView: View {
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .task(id: enabled) { await reload() }
+        // An edit from the check-in row re-scores and refreshes; pick up the new answer and fit.
+        .onChangeCompat(of: repo.refreshSeq) { _ in Task { await reload() } }
         .confirmationDialog("Reset Recovery calibration?", isPresented: $showResetConfirm, titleVisibility: .visible) {
             Button("Reset", role: .destructive) { reset() }
             Button("Cancel", role: .cancel) {}
@@ -421,6 +545,7 @@ struct RecoveryInsightCard: View {
                     }
                 }
             }
+            if enabled { MorningCheckInSummaryRow() }
             NavigationLink { RecoveryCalibrationView() } label: {
                 ZoopCard {
                     HStack(spacing: ZoopMetrics.space3) {
