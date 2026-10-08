@@ -44,6 +44,8 @@ enum RecoveryCalibrationStore {
 
     /// Whether the wearer turned calibration on (Settings or setup).
     static let enabledKey = "zoop.recoveryCalibration.enabled"
+    /// The Home invite was dismissed with "Not now" (it also hides once calibration is on).
+    static let inviteDismissedKey = "zoop.recoveryCalibration.inviteDismissed"
     /// The last fit, JSON-encoded `RecoveryCalibrationResult`, written by every re-score.
     static let resultKey = "zoop.recoveryCalibration.result"
 

@@ -50,6 +50,10 @@ struct RootTabView: View {
 
     /// Which quick-action screen the centre FAB is presenting (nil = sheet closed).
     @State private var quickAction: QuickAction?
+    /// The Recovery-calibration morning check-in, raised once on the first foreground of the morning.
+    @State private var showMorningCheckIn = false
+    @AppStorage(RecoveryCalibrationStore.enabledKey) private var recoveryCalibrationEnabled = false
+    @Environment(\.scenePhase) private var scenePhase
     /// Presents the Devices manager (pair / switch bands) when a screen asks the shell to open it.
     @State private var showDevices = false
     /// The Coach chat, raised by the Coach button in the tab bar.
@@ -215,6 +219,7 @@ struct RootTabView: View {
             // back swipe on a pushed screen stays; it is not a tab change.
         .task {
             await repo.refresh()
+            await presentMorningCheckInIfDue()
             // Backup & Sync: on-launch catch-up (see RootView). Detached + utility priority so a
             // 100MB+ whole-DB ZIP never blocks startup; gated on the auto toggle (default OFF). (Must-fix #4.)
             let backupRepo = repo
@@ -239,6 +244,21 @@ struct RootTabView: View {
         }
         .sheet(isPresented: $showCoach) {
             CoachChatSheet()
+        }
+        .sheet(isPresented: $showMorningCheckIn) {
+            MorningCheckInSheet()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        // Foregrounding after the night (or turning calibration on from the Home invite) may raise the
+        // morning check-in; `MorningCheckInPrompt` keeps it to once a day.
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task { await presentMorningCheckInIfDue() }
+        }
+        .onChange(of: recoveryCalibrationEnabled) { _, on in
+            guard on else { return }
+            Task { await presentMorningCheckInIfDue() }
         }
         // v5 pillar deep-links (Insights hub / Lab Book / fused record / Rhythm) present as a sheet in
         // their own nav stack — the same idiom the quick-action + Devices screens use on iPhone.
@@ -345,6 +365,17 @@ struct RootTabView: View {
         .sheet(isPresented: $liftSession.isPresented) {
             LiftSessionView { }
         }
+    }
+
+    /// Raise the morning check-in when `MorningCheckInPrompt` says it is due, but never over a first-run
+    /// gate or another shell sheet. Marks the day shown, so a dismissal stays dismissed until tomorrow.
+    private func presentMorningCheckInIfDue() async {
+        guard homeScreenQuickActionsEnabled, !showMorningCheckIn,
+              quickAction == nil, !showDevices, !showCoach, routedPillar == nil,
+              !liftSession.isPresented else { return }
+        guard await MorningCheckInPrompt.shouldPresent(repo: repo) else { return }
+        MorningCheckInPrompt.markShown()
+        showMorningCheckIn = true
     }
 
     /// Mandatory launch gates defer an external action. Once the shell is available, an explicit Home

@@ -396,7 +396,7 @@ struct LiquidTodayView: View {
                             #if os(iOS)
                             monitorTilesRow
                             // Zoop: the morning check-in behind Recovery calibration (today only).
-                            if selectedDayOffset == 0 { MorningCheckInCard() }
+                            if selectedDayOffset == 0 { RecoveryCalibrationInviteCard() }
                             HomeSectionTitle(title: "My Day") { myDayAddButton }
                             if selectedDayOffset == 0 {
                                 HomeMomentCard(hours: hostedStressHours, recovery: chargeDisplay.pct,
