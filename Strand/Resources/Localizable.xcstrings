@@ -139815,7 +139815,15 @@
     },
     "Zoop is not a medical device and this is not an ECG test. It asks your MG to start its ECG subsystem and logs whatever comes back — unvalidated instrumentation for protocol research, never a measurement or a diagnosis, including any heart-rhythm classification the strap happens to send. Don't use it to make a health decision; see a doctor if you have symptoms.\n\nHold the two indents on the clasp with the fingers of your other hand for the whole capture. The MG measures across your wrist AND that clasp, so until you hold it the circuit is open, the strap has nothing to record, and you would see zero packets whatever the firmware did.\n\nNobody has confirmed a strap honours these commands, so the likely outcome is that nothing happens. Everything here is reversible: “Stop” turns the streams back off. Results land in the strap log." : {
       "comment" : "MEDICAL SAFETY COPY — needs a native speaker, not a machine translation. Deliberately left untranslated: a disclaimer that drifts in meaning is worse than one shown in English. Until a human translates it, the absent localizations make the runtime fall back to this English source text, which is correct and complete. Keep every element when translating: not a medical device, not a diagnosis, and the instruction to see a doctor. The middle paragraph is a RUN INSTRUCTION, not a disclaimer: without the clasp held the electrode circuit is open and the capture returns zero packets for a reason that has nothing to do with the firmware, so a translation that loses it produces false negatives in the very reports #891 is asking people for.",
-      "shouldTranslate" : false
+      "shouldTranslate" : false,
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoop ist kein Medizinprodukt, und das hier ist kein EKG-Test. Es bittet dein MG, sein EKG-Subsystem zu starten, und protokolliert, was zurückkommt – unvalidierte Instrumentierung für Protokollforschung, niemals eine Messung oder Diagnose, auch nicht bei einer Herzrhythmus-Klassifizierung, die der Strap eventuell sendet. Triff damit keine gesundheitlichen Entscheidungen; geh zum Arzt, wenn du Beschwerden hast.\n\nHalte die beiden Vertiefungen am Verschluss während der gesamten Aufnahme mit den Fingern deiner anderen Hand fest. Das MG misst über dein Handgelenk UND diesen Verschluss, solange du ihn also nicht hältst, ist der Stromkreis offen, der Strap hat nichts aufzuzeichnen, und du würdest null Pakete sehen, egal was die Firmware tut.\n\nNiemand hat bestätigt, dass ein Strap diese Befehle befolgt, daher passiert wahrscheinlich gar nichts. Alles hier ist umkehrbar: „Stopp“ schaltet die Streams wieder ab. Die Ergebnisse landen im Strap-Log."
+          }
+        }
+      }
     },
     "Zoop pairs directly with your WHOOP over Bluetooth, no WHOOP app, no cloud." : {
       "extractionState" : "stale",
@@ -256056,6 +256064,1476 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "face à tua base"
+          }
+        }
+      }
+    },
+    "the Zoop database failed its integrity check (SQLite reports: %@). A backup of it would not restore. Export the WHOOP-format CSV (Settings → Export data) to save what's still readable." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "die Zoop-Datenbank hat die Integritätsprüfung nicht bestanden (SQLite meldet: %@). Eine Sicherung davon ließe sich nicht wiederherstellen. Exportiere die CSV im WHOOP-Format (Einstellungen → Daten exportieren), um zu sichern, was noch lesbar ist."
+          }
+        }
+      }
+    },
+    "This backup file is damaged and can't be restored (SQLite reports: %@). Your current data was left untouched. Try an earlier backup file." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Sicherungsdatei ist beschädigt und kann nicht wiederhergestellt werden (SQLite meldet: %@). Deine aktuellen Daten bleiben unverändert. Versuche eine ältere Sicherungsdatei."
+          }
+        }
+      }
+    },
+    "Import failed its post-restore integrity check (SQLite reports: %@). Your previous data was rolled back automatically and is unchanged." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Import hat die Integritätsprüfung nach der Wiederherstellung nicht bestanden (SQLite meldet: %@). Deine vorherigen Daten wurden automatisch zurückgesetzt und sind unverändert."
+          }
+        }
+      }
+    },
+    "Import failed its post-restore integrity check (SQLite reports: %@). The damaged file was removed; there was no previous data to roll back." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Import hat die Integritätsprüfung nach der Wiederherstellung nicht bestanden (SQLite meldet: %@). Die beschädigte Datei wurde entfernt; es gab keine vorherigen Daten zum Zurücksetzen."
+          }
+        }
+      }
+    },
+    "Cardiovascular load for the day, on a 0-100 scale (was 0-21)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kardiovaskuläre Belastung des Tages auf einer Skala von 0–100 (früher 0–21)."
+          }
+        }
+      }
+    },
+    "HR Zones 1-3" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HF-Zonen 1–3"
+          }
+        }
+      }
+    },
+    "HR Zones 4-5" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HF-Zonen 4–5"
+          }
+        }
+      }
+    },
+    "Heart" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herz"
+          }
+        }
+      }
+    },
+    "Band Sleep State" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafstatus des Bands"
+          }
+        }
+      }
+    },
+    "Charge / Effort / Rest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholung / Belastung / Schlaf"
+          }
+        }
+      }
+    },
+    "Recovery Vitals" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholungs-Vitalwerte"
+          }
+        }
+      }
+    },
+    "Your Cards" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Karten"
+          }
+        }
+      }
+    },
+    "Opens the details" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet die Details"
+          }
+        }
+      }
+    },
+    "Newer WHOOP band with live data and history sync" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neueres WHOOP-Band mit Live-Daten und Verlaufssynchronisierung"
+          }
+        }
+      }
+    },
+    "Haptics" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptik"
+          }
+        }
+      }
+    },
+    "Choose which in-session cues buzz your wrist during a breathing session, timer, or workout." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle, welche Hinweise während einer Atemübung, eines Timers oder eines Workouts an deinem Handgelenk vibrieren."
+          }
+        }
+      }
+    },
+    "Breathing pacer" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atem-Taktgeber"
+          }
+        }
+      }
+    },
+    "Buzz each inhale and exhale during a breathing or resonance session." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vibriert bei jedem Ein- und Ausatmen während einer Atem- oder Resonanz-Session."
+          }
+        }
+      }
+    },
+    "Interval timer" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intervall-Timer"
+          }
+        }
+      }
+    },
+    "Buzz on each interval change." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vibriert bei jedem Intervallwechsel."
+          }
+        }
+      }
+    },
+    "Live Session cues" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live-Session-Hinweise"
+          }
+        }
+      }
+    },
+    "Coaching buzzes during a live workout session." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coaching-Vibrationen während einer Live-Workout-Session."
+          }
+        }
+      }
+    },
+    "Workout start & end" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout-Start & -Ende"
+          }
+        }
+      }
+    },
+    "A buzz confirms a workout starting and saving." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Vibration bestätigt Start und Speichern eines Workouts."
+          }
+        }
+      }
+    },
+    "Suppress auto-nudges overnight (10pm-7am)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatische Hinweise nachts unterdrücken (22–7 Uhr)."
+          }
+        }
+      }
+    },
+    "Predictive runtime warning" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorausschauende Laufzeitwarnung"
+          }
+        }
+      }
+    },
+    "An early \"recharge tonight\" heads-up when the strap has about a day of estimated runtime left, at most once per discharge cycle. Turn off to keep only the 15% warning." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein früher Hinweis „Heute Nacht aufladen“, wenn der Strap noch etwa einen Tag geschätzte Laufzeit hat, höchstens einmal pro Entladezyklus. Schalte das aus, um nur die 15-%-Warnung zu behalten."
+          }
+        }
+      }
+    },
+    "Using Zoop's folder" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoops Ordner wird verwendet"
+          }
+        }
+      }
+    },
+    "Backups will be saved inside Zoop. Open the Files app → On My iPhone → Zoop → Backups to see them, or drag that folder into iCloud Drive to read it on your Mac. To use a different folder later, tap Change folder." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sicherungen werden in Zoop gespeichert. Öffne die Dateien-App → Auf meinem iPhone → Zoop → Backups, um sie zu sehen, oder zieh diesen Ordner in iCloud Drive, um sie auf deinem Mac zu lesen. Um später einen anderen Ordner zu nutzen, tippe auf „Ordner ändern“."
+          }
+        }
+      }
+    },
+    "%@ is larger than the %@ Zoop restores without asking. You can still restore it from Settings → Backup & restore → Import, which will ask you to confirm." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist größer als die %@, die Zoop ohne Rückfrage wiederherstellt. Du kannst die Datei trotzdem über Einstellungen → Sicherung & Wiederherstellung → Importieren wiederherstellen; dort wirst du um Bestätigung gebeten."
+          }
+        }
+      }
+    },
+    "No deep sleep detected" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Tiefschlaf erkannt"
+          }
+        }
+      }
+    },
+    "The Deep sleep HRV window needs a night with deep-stage sleep to score Charge. Switch to Whole night in Settings, or wait for a night with more deep sleep." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das HRV-Fenster „Tiefschlaf“ braucht eine Nacht mit Tiefschlafphasen, um die Erholung zu berechnen. Wechsle in den Einstellungen zu „Ganze Nacht“ oder warte auf eine Nacht mit mehr Tiefschlaf."
+          }
+        }
+      }
+    },
+    "Overlay 2-4 signals" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2–4 Signale überlagern"
+          }
+        }
+      }
+    },
+    "Min-max normalized · sparse series widened past %@ · %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Min-Max-normalisiert · dünne Reihen über %@ hinaus erweitert · %@"
+          }
+        }
+      }
+    },
+    "Each line min-max normalized within %@ · %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Linie innerhalb von %@ min-max-normalisiert · %@"
+          }
+        }
+      }
+    },
+    "vs typical - " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vs. üblich – "
+          }
+        }
+      }
+    },
+    "Recovery %lld percent" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholung %lld Prozent"
+          }
+        }
+      }
+    },
+    "Recovery calibrating, %lld of %lld nights" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholung wird kalibriert, %lld von %lld Nächten"
+          }
+        }
+      }
+    },
+    "Recovery, no data yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholung, noch keine Daten"
+          }
+        }
+      }
+    },
+    "Strenuous" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anstrengend"
+          }
+        }
+      }
+    },
+    "Sleep performance not available" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafleistung nicht verfügbar"
+          }
+        }
+      }
+    },
+    "Sleep performance %lld percent. %@ slept, %@ needed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafleistung %lld Prozent. %@ geschlafen, %@ benötigt"
+          }
+        }
+      }
+    },
+    "Sleep performance %lld percent" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafleistung %lld Prozent"
+          }
+        }
+      }
+    },
+    "%lld to %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld bis %lld"
+          }
+        }
+      }
+    },
+    "Estimated, updated weekly" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschätzt, wöchentlich aktualisiert"
+          }
+        }
+      }
+    },
+    "Connected, but not paired" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbunden, aber nicht gekoppelt"
+          }
+        }
+      }
+    },
+    "Clock latched: %@ · last frame %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uhr übernommen: %@ · letzter Frame %@"
+          }
+        }
+      }
+    },
+    "1 paired" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 gekoppelt"
+          }
+        }
+      }
+    },
+    "%lld paired" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld gekoppelt"
+          }
+        }
+      }
+    },
+    "Data kept" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daten behalten"
+          }
+        }
+      }
+    },
+    "Reconnecting…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbindet erneut…"
+          }
+        }
+      }
+    },
+    "Connected · not paired" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbunden · nicht gekoppelt"
+          }
+        }
+      }
+    },
+    "This strap doesn’t send SpO₂ over Bluetooth. Import a WHOOP export or Health Connect to see it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Strap sendet SpO₂ nicht über Bluetooth. Importiere einen WHOOP-Export oder Health Connect, um es zu sehen."
+          }
+        }
+      }
+    },
+    "This strap sends no raw respiration stream. Your estimated respiratory rate appears on the Health screen." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Strap sendet keinen Rohdatenstrom zur Atmung. Deine geschätzte Atemfrequenz erscheint im Bereich Gesundheit."
+          }
+        }
+      }
+    },
+    "Add your age and sex below and we can show your Fitness Age." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib unten dein Alter und Geschlecht an, dann können wir dein Fitnessalter anzeigen."
+          }
+        }
+      }
+    },
+    "1 more night of wear and we can show your Fitness Age." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch 1 Nacht mit Strap, dann können wir dein Fitnessalter anzeigen."
+          }
+        }
+      }
+    },
+    "1 more night of wear, plus your age and sex below, and we can show your Fitness Age." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch 1 Nacht mit Strap und unten dein Alter und Geschlecht, dann können wir dein Fitnessalter anzeigen."
+          }
+        }
+      }
+    },
+    "%lld more nights of wear and we can show your Fitness Age." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch %lld Nächte mit Strap, dann können wir dein Fitnessalter anzeigen."
+          }
+        }
+      }
+    },
+    "%lld more nights of wear, plus your age and sex below, and we can show your Fitness Age." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch %lld Nächte mit Strap und unten dein Alter und Geschlecht, dann können wir dein Fitnessalter anzeigen."
+          }
+        }
+      }
+    },
+    "At least 1 year younger than your age" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mindestens 1 Jahr jünger als dein Alter"
+          }
+        }
+      }
+    },
+    "At least %lld years younger than your age" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mindestens %lld Jahre jünger als dein Alter"
+          }
+        }
+      }
+    },
+    "%lld or younger" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld oder jünger"
+          }
+        }
+      }
+    },
+    "At least 1 year older than your age" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mindestens 1 Jahr älter als dein Alter"
+          }
+        }
+      }
+    },
+    "At least %lld years older than your age" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mindestens %lld Jahre älter als dein Alter"
+          }
+        }
+      }
+    },
+    "%lld or older" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld oder älter"
+          }
+        }
+      }
+    },
+    "That file is too large for a markers CSV import." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei ist zu groß für einen Marker-CSV-Import."
+          }
+        }
+      }
+    },
+    "No usable rows found. Check the file has date, marker and value columns." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine verwertbaren Zeilen gefunden. Prüfe, ob die Datei Spalten für Datum, Marker und Wert hat."
+          }
+        }
+      }
+    },
+    "Imported %lld readings (%lld markers)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Messwerte importiert (%lld Marker)"
+          }
+        }
+      }
+    },
+    "Authenticated ring stream" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Authentifizierter Ring-Stream"
+          }
+        }
+      }
+    },
+    "Streaming" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streamt"
+          }
+        }
+      }
+    },
+    "Average HR must be 25-250 bpm." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Ø-HF muss zwischen 25 und 250 bpm liegen."
+          }
+        }
+      }
+    },
+    "Calories must be 0-20,000." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kalorien müssen zwischen 0 und 20.000 liegen."
+          }
+        }
+      }
+    },
+    "No measured temperature for these nights — showing the difference from your baseline instead. A re-score refills temperatures for nights that have one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine gemessene Temperatur für diese Nächte – stattdessen wird die Abweichung von deiner Basislinie angezeigt. Eine Neuberechnung ergänzt Temperaturen für Nächte, die eine haben."
+          }
+        }
+      }
+    },
+    "Only nights with a measured temperature are shown — the others only have a baseline difference." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Nächte mit gemessener Temperatur werden angezeigt – die anderen haben nur eine Abweichung von der Basislinie."
+          }
+        }
+      }
+    },
+    "Some variation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etwas Variation"
+          }
+        }
+      }
+    },
+    "More varied" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stärker variierend"
+          }
+        }
+      }
+    },
+    "No clear reading" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine eindeutige Messung"
+          }
+        }
+      }
+    },
+    "Your cardiovascular load. Zoop turns every second of heart rate into a training-impulse using heart-rate-reserve zones (Karvonen), weights time in harder zones more heavily (Edwards / Banister), and places it on a logarithmic 0-100 scale, so easy days sit low and an all-out day approaches 100, which stays genuinely rare. A long walk with little cardio still counts, through a steps / active-energy floor." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine kardiovaskuläre Belastung. Zoop wandelt jede Sekunde Herzfrequenz mithilfe von Zonen der Herzfrequenzreserve (Karvonen) in einen Trainingsimpuls um, gewichtet Zeit in härteren Zonen stärker (Edwards / Banister) und bildet das auf einer logarithmischen 0–100-Skala ab: Leichte Tage liegen niedrig, ein Tag mit voller Verausgabung nähert sich 100, was wirklich selten bleibt. Ein langer Spaziergang mit wenig Cardio zählt trotzdem, über eine Untergrenze aus Schritten / aktiver Energie."
+          }
+        }
+      }
+    },
+    "Same cardiovascular-load idea as WHOOP's Day Strain (0-21). We rescaled the top of the ladder from 21 to 100 so all three scores share one scale. The rungs didn't move, so a 100 is as rare as a 21.0 was." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieselbe Idee der kardiovaskulären Belastung wie WHOOPs Day Strain (0–21). Wir haben das obere Ende der Skala von 21 auf 100 umgerechnet, damit alle drei Werte eine gemeinsame Skala teilen. Die Stufen haben sich nicht verschoben, eine 100 ist also so selten wie früher eine 21,0."
+          }
+        }
+      }
+    },
+    "Tune how Zoop captures and windows your heart-rate-variability reading." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lege fest, wie Zoop deine Herzfrequenzvariabilität erfasst und in Zeitfenster einteilt."
+          }
+        }
+      }
+    },
+    "Experimental · Liquid Today" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Experimentell · Liquid Today"
+          }
+        }
+      }
+    },
+    "A redesigned Today screen in the new liquid language: the scores as living liquid, a time-of-day sky, and a calmer layout. Same numbers, new look." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein neu gestalteter Heute-Bildschirm in der neuen Liquid-Sprache: die Werte als lebendige Flüssigkeit, ein Himmel passend zur Tageszeit und ein ruhigeres Layout. Gleiche Zahlen, neuer Look."
+          }
+        }
+      }
+    },
+    "Experimental · Live Sessions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Experimentell · Live-Sessions"
+          }
+        }
+      }
+    },
+    "A one-tap guarded workout: the strap watches your heart rate against a band gated on today's Charge, and only ever buzzes to correct course. Silence means you're on track." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein abgesichertes Workout mit einem Tipp: Der Strap prüft deinen Puls gegen einen Bereich, der an deine heutige Erholung gekoppelt ist, und vibriert nur, um dich zu korrigieren. Stille heißt: Du liegst richtig."
+          }
+        }
+      }
+    },
+    "How Zoop splits a night into light / deep / REM. The V2 recipe is the default; turn it off to fall back to the older V1 staging." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie Zoop eine Nacht in Leicht / Tief / REM aufteilt. Das V2-Verfahren ist Standard; schalte es aus, um auf das ältere V1-Staging zurückzugehen."
+          }
+        }
+      }
+    },
+    "Experimental · Blood Oxygen" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Experimentell · Blutsauerstoff"
+          }
+        }
+      }
+    },
+    "Surfaces a device-conditional, unverified SpO₂ estimate in the Blood Oxygen tile when no calibrated reading exists." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt eine geräteabhängige, ungeprüfte SpO₂-Schätzung in der Blutsauerstoff-Kachel, wenn kein kalibrierter Wert vorliegt."
+          }
+        }
+      }
+    },
+    "Blood Oxygen: strap estimate (WHOOP 5/MG, Oura)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blutsauerstoff: Strap-Schätzung (WHOOP 5/MG, Oura)"
+          }
+        }
+      }
+    },
+    "Your WHOOP 5.0/MG sends a strap-computed SpO₂ percentage (the @82 candidate byte) every second — an 8-night independent validation tracked it at corr +0.99 against the WHOOP app, but two nights on the original test device moved the OPPOSITE direction, so device/firmware variance is unresolved. An Oura ring's own SpO₂ reading runs high on the wire (over 100% on a fifth to a half of samples on a clean night); this instead surfaces the ring's mean with each sample capped at 100% first, which has matched the Oura app's own displayed value on every full night checked against it so far, though only a few nights. Turning this on surfaces whichever applies to your device as \"strap estimate (unverified)\" in the Blood Oxygen tile when no calibrated import exists. It never feeds recovery or illness scoring. WHOOP 4.0 has no @82 stream, so this does nothing there." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein WHOOP 5.0/MG sendet jede Sekunde einen vom Strap berechneten SpO₂-Prozentwert (das @82-Kandidaten-Byte) – eine unabhängige Validierung über 8 Nächte zeigte eine Korrelation von +0,99 mit der WHOOP-App, aber zwei Nächte auf dem ursprünglichen Testgerät liefen in die ENTGEGENGESETZTE Richtung, daher ist die Abweichung zwischen Geräten/Firmware ungeklärt. Der eigene SpO₂-Wert eines Oura-Rings liegt in den Rohdaten zu hoch (über 100% bei einem Fünftel bis der Hälfte der Messungen in einer sauberen Nacht); hier wird stattdessen der Mittelwert des Rings gezeigt, wobei jede Messung zuerst auf 100% begrenzt wird. Das stimmte bisher in jeder vollständigen Nacht, die damit verglichen wurde, mit dem angezeigten Wert der Oura-App überein, allerdings erst in wenigen Nächten. Wenn du das einschaltest, erscheint der für dein Gerät passende Wert als „Strap-Schätzung (ungeprüft)“ in der Blutsauerstoff-Kachel, solange kein kalibrierter Import vorliegt. Er fließt nie in die Erholungs- oder Krankheitsbewertung ein. WHOOP 4.0 hat keinen @82-Stream, dort bewirkt das nichts."
+          }
+        }
+      }
+    },
+    "Marked: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markiert: %@"
+          }
+        }
+      }
+    },
+    "Marker wasn't saved. Keep frame recording on and try again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marker wurde nicht gespeichert. Lass die Frame-Aufzeichnung eingeschaltet und versuche es erneut."
+          }
+        }
+      }
+    },
+    "Saved to %@. Your database is %@, over the %@ Zoop restores without asking — the backup is complete and valid, and restoring it will ask you to confirm once." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gespeichert unter %@. Deine Datenbank ist %@ groß und liegt damit über den %@, die Zoop ohne Rückfrage wiederherstellt – die Sicherung ist vollständig und gültig, beim Wiederherstellen wirst du einmal um Bestätigung gebeten."
+          }
+        }
+      }
+    },
+    "%@ is larger than the %@ Zoop restores without asking. That limit guards against a malicious archive expanding to fill this %@ — a backup you exported yourself is not that. Restoring it needs the space the database will take. You'll be asked to choose the file again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist größer als die %@, die Zoop ohne Rückfrage wiederherstellt. Diese Grenze schützt davor, dass ein bösartiges Archiv beim Entpacken dieses %@ volllaufen lässt – eine Sicherung, die du selbst exportiert hast, ist das nicht. Zum Wiederherstellen wird so viel Speicher benötigt, wie die Datenbank belegt. Du wirst gebeten, die Datei erneut auszuwählen."
+          }
+        }
+      }
+    },
+    "We're not seeing motion from your WHOOP 5.0 / MG yet. Keep Zoop connected and let strap history finish syncing; the experimental R22 flags are not required. Account or Apple Health imports do not contain the raw strap motion this estimate needs." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wir sehen noch keine Bewegungsdaten von deinem WHOOP 5.0 / MG. Lass Zoop verbunden und warte, bis der Strap-Verlauf fertig synchronisiert ist; die experimentellen R22-Flags sind nicht nötig. Konto- oder Apple-Health-Importe enthalten nicht die rohen Bewegungsdaten des Straps, die diese Schätzung braucht."
+          }
+        }
+      }
+    },
+    "Open Zoop near the strap and let WHOOP 5/MG history finish syncing. The step estimate and calibration fill in once enough stored motion has arrived; the legacy R22 experiment is not required." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffne Zoop in der Nähe des Straps und lass den WHOOP-5/MG-Verlauf fertig synchronisieren. Schrittschätzung und Kalibrierung füllen sich, sobald genug gespeicherte Bewegungsdaten angekommen sind; das alte R22-Experiment ist nicht nötig."
+          }
+        }
+      }
+    },
+    "Deep data is on — open Zoop near your strap and let it sync its motion history (a full first-run sync can take a while). Once a day or two of motion lands, your step estimate and the calibration below fill in." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deep Data ist an – öffne Zoop in der Nähe deines Straps und lass ihn seinen Bewegungsverlauf synchronisieren (eine vollständige erste Synchronisierung kann eine Weile dauern). Sobald ein, zwei Tage Bewegungsdaten da sind, füllen sich deine Schrittschätzung und die Kalibrierung unten."
+          }
+        }
+      }
+    },
+    "You've effectively met your current sleep need across %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast deinen aktuellen Schlafbedarf über %@ praktisch gedeckt."
+          }
+        }
+      }
+    },
+    "Add about %@ to your base sleep target tonight. Meeting that complete sleep need clears the displayed debt; recent shortfalls carry forward at a reduced weight." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plane heute Nacht etwa %@ zusätzlich zu deinem Basis-Schlafziel ein. Wenn du diesen vollständigen Schlafbedarf erreichst, ist das angezeigte Defizit ausgeglichen; jüngere Fehlbeträge wirken mit geringerem Gewicht nach."
+          }
+        }
+      }
+    },
+    "above your usual" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "über deinem üblichen Wert"
+          }
+        }
+      }
+    },
+    "below your usual" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unter deinem üblichen Wert"
+          }
+        }
+      }
+    },
+    "about your usual" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "etwa wie üblich"
+          }
+        }
+      }
+    },
+    " %@ · typically %@ to %@, %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " %@ · üblich %@ bis %@, %@."
+          }
+        }
+      }
+    },
+    "Sleep deleted." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlaf gelöscht."
+          }
+        }
+      }
+    },
+    "Sleep deleted. Zoop won't detect sleep between %@ and %@ again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlaf gelöscht. Zoop erkennt zwischen %@ und %@ keinen Schlaf mehr."
+          }
+        }
+      }
+    },
+    "raw on-device stages" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rohe Phasen vom Gerät"
+          }
+        }
+      }
+    },
+    "stages approximate (on-device)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phasen geschätzt (auf dem Gerät)"
+          }
+        }
+      }
+    },
+    "%@ in bed · %@ efficiency · %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ im Bett · %@ Effizienz · %@"
+          }
+        }
+      }
+    },
+    "Notifications are off" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitteilungen sind aus"
+          }
+        }
+      }
+    },
+    "Open Settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen öffnen"
+          }
+        }
+      }
+    },
+    "Daily 0-3 proxy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Täglicher 0–3-Näherungswert"
+          }
+        }
+      }
+    },
+    "Display" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anzeige"
+          }
+        }
+      }
+    },
+    "%@-%@  ·  1 day" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@–%@  ·  1 Tag"
+          }
+        }
+      }
+    },
+    "%@-%@  ·  %lld days" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@–%@  ·  %lld Tage"
+          }
+        }
+      }
+    },
+    "Opens the full Charge metric." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet den vollständigen Erholungswert."
+          }
+        }
+      }
+    },
+    "Opens the full %@ metric." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet den vollständigen Wert %@."
+          }
+        }
+      }
+    },
+    "unverified · over-reports R-R" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ungeprüft · zählt zu viele R-R"
+          }
+        }
+      }
+    },
+    "Raw SpO₂" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Roh-SpO₂"
+          }
+        }
+      }
+    },
+    "No raw SpO₂ decode for the night" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Roh-SpO₂-Dekodierung für diese Nacht"
+          }
+        }
+      }
+    },
+    "Uncalibrated" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unkalibriert"
+          }
+        }
+      }
+    },
+    "Effort %@ %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belastung %@ %@"
+          }
+        }
+      }
+    },
+    "Search workouts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workouts suchen"
+          }
+        }
+      }
+    },
+    "Choose a workout" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout auswählen"
+          }
+        }
+      }
+    },
+    "Pick an activity to begin recording heart rate, effort, peak, and average." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle eine Aktivität, um Herzfrequenz, Belastung, Spitze und Durchschnitt aufzuzeichnen."
+          }
+        }
+      }
+    },
+    "Select" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auswählen"
+          }
+        }
+      }
+    },
+    "Finish selecting" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auswahl beenden"
+          }
+        }
+      }
+    },
+    "Select sessions to merge or delete" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions zum Zusammenführen oder Löschen auswählen"
+          }
+        }
+      }
+    },
+    "Merge (%lld)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zusammenführen (%lld)"
+          }
+        }
+      }
+    },
+    "Delete (%lld)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Löschen (%lld)"
+          }
+        }
+      }
+    },
+    "Double-tap to select" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zum Auswählen doppeltippen"
+          }
+        }
+      }
+    },
+    "Imported history can't be merged" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importierter Verlauf kann nicht zusammengeführt werden"
+          }
+        }
+      }
+    },
+    "Effort %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belastung %@"
+          }
+        }
+      }
+    },
+    "no Effort recorded" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keine Belastung erfasst"
+          }
+        }
+      }
+    },
+    "%@. Imported, can't be merged." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@. Importiert, kann nicht zusammengeführt werden."
+          }
+        }
+      }
+    },
+    "%@. Selected." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@. Ausgewählt."
+          }
+        }
+      }
+    },
+    "%@. Not selected." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@. Nicht ausgewählt."
+          }
+        }
+      }
+    },
+    "Name the merged session" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zusammengeführte Session benennen"
+          }
+        }
+      }
+    },
+    "These sessions have no sport label yet. Pick one for the merged session." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Sessions haben noch keine Sportart. Wähle eine für die zusammengeführte Session."
+          }
+        }
+      }
+    },
+    "Merge" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zusammenführen"
+          }
+        }
+      }
+    },
+    "All sports" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Sportarten"
+          }
+        }
+      }
+    },
+    "All sources" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Quellen"
+          }
+        }
+      }
+    },
+    " · filtered" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · gefiltert"
+          }
+        }
+      }
+    },
+    "Typical effort %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Typische Belastung %@"
+          }
+        }
+      }
+    },
+    "Typical effort, no data" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Typische Belastung, keine Daten"
+          }
+        }
+      }
+    },
+    "Last 13 weeks" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte 13 Wochen"
+          }
+        }
+      }
+    },
+    "Coach brief unavailable" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach-Briefing nicht verfügbar"
+          }
+        }
+      }
+    },
+    "Couldn't generate today's brief. Tap to try again in Coach." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das heutige Briefing konnte nicht erstellt werden. Tippe, um es im Coach erneut zu versuchen."
+          }
+        }
+      }
+    },
+    "Today's coaching brief" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Coaching-Briefing für heute"
           }
         }
       }
