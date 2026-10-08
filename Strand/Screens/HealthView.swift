@@ -1164,10 +1164,10 @@ private struct ReadinessChecklistCard: View {
                 .frame(width: 18)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
-                Text(item.label)
+                Text(engineText(item.label))
                     .font(StrandFont.body)
                     .foregroundStyle(StrandPalette.textPrimary)
-                Text(item.detail)
+                Text(engineText(item.detail))
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textTertiary)
             }
@@ -1179,7 +1179,7 @@ private struct ReadinessChecklistCard: View {
                         .foregroundStyle(StrandPalette.accent)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("\(item.label): \(item.detail). Fix in Settings.")
+                .accessibilityLabel("\(engineText(item.label)): \(engineText(item.detail)). Fix in Settings.")
             }
         }
         // When a Fix button is present keep it as its own VoiceOver stop (.contain); otherwise fold the
@@ -1189,7 +1189,7 @@ private struct ReadinessChecklistCard: View {
         } else {
             row
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("\(item.label), \(statusWord(item.status)). \(item.detail)")
+                .accessibilityLabel("\(engineText(item.label)), \(statusWord(item.status)). \(engineText(item.detail))")
         }
     }
 
@@ -1309,11 +1309,11 @@ private struct VitalitySection: View {
             if (best?.lnHazard ?? 0) < 0 || (worst?.lnHazard ?? 0) > 0 {
                 Divider().overlay(StrandPalette.hairline)
                 if let best, best.lnHazard < 0 {
-                    Text("Helping most: \(best.label)")
+                    Text("Helping most: \(engineText(best.label))")
                         .font(StrandFont.footnote).foregroundStyle(StrandPalette.statusPositive)
                 }
                 if let worst, worst.lnHazard > 0 {
-                    Text("Holding you back: \(worst.label)")
+                    Text("Holding you back: \(engineText(worst.label))")
                         .font(StrandFont.footnote).foregroundStyle(StrandPalette.statusWarning)
                 }
             }
@@ -1843,4 +1843,18 @@ func fitnessAgeBoundSymbol(_ value: Double) -> String {
     if value <= FitnessAgeEngine.minAge { return "≤" }
     if value >= FitnessAgeEngine.maxAge { return "≥" }
     return ""
+}
+
+/// The analytics engines (VitalityEngine, FitnessAgeEngine) return English labels and details so they stay
+/// platform-neutral; this resolves them through the string catalogue at display time. The two count lines
+/// ("5 of last 7 nights") are rebuilt from their number so the localized pattern applies.
+func engineText(_ s: String) -> String {
+    for unit in ["nights", "days"] {
+        let suffix = " of last 7 \(unit)"
+        if s.hasSuffix(suffix), let n = Int(s.dropLast(suffix.count)) {
+            return unit == "nights" ? String(localized: "\(n) of last 7 nights")
+                                    : String(localized: "\(n) of last 7 days")
+        }
+    }
+    return String(localized: String.LocalizationValue(s))
 }
