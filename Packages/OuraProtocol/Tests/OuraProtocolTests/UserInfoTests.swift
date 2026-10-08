@@ -2,7 +2,7 @@ import XCTest
 @testable import OuraProtocol
 
 /// Pins the `0x20` user-info setters against the shapes [open_oura-cheat] records as tested-success
-/// on a Ring 3, and guards the encoding helpers that turn a NOOP profile into value bytes.
+/// on a Ring 3, and guards the encoding helpers that turn a Zoop profile into value bytes.
 final class UserInfoTests: XCTestCase {
 
     private func hex(_ c: OuraCommand) -> String {

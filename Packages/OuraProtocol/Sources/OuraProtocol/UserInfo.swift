@@ -52,7 +52,7 @@ public struct OuraUserInfoAck: Equatable, Sendable {
     public init(field: OuraUserInfoField, result: UInt8) { self.field = field; self.result = result }
 }
 
-/// Builders for the `0x20` user-info setters, plus the encoding candidate that maps a NOOP user
+/// Builders for the `0x20` user-info setters, plus the encoding candidate that maps a Zoop user
 /// profile onto them.
 ///
 /// ⚠️ **The value encoding is a CANDIDATE, not a decoded fact.** Every published `0x20` write sets
@@ -119,7 +119,7 @@ public enum OuraUserInfoWrite {
         try command(.gender, value: try encodeLE(UInt32(code), width: OuraUserInfoField.gender.valueByteCount))
     }
 
-    /// Map NOOP's `sex` string onto the `0x5c` gender code. Anything that is not male/female is
+    /// Map Zoop's `sex` string onto the `0x5c` gender code. Anything that is not male/female is
     /// "unspecified", which is the value `bmr_schofield` documents as the both-sexes average
     /// [open_oura-evt] - so nonbinary and unset both land on the ring's own neutral path.
     public static func genderCode(forSex sex: String) -> UInt8 {
@@ -157,7 +157,7 @@ public func parseOuraUserInfoAck(_ bytes: [UInt8]) -> OuraUserInfoAck? {
 /// One decoded `0x5c` `user_information` record — the read-back side of the experiment.
 ///
 /// The field meanings are [open_oura-evt]'s inference (`_status: inferred`), not a recovered parser,
-/// so they are reported as named bytes and nothing here treats them as authoritative. NOOP does not
+/// so they are reported as named bytes and nothing here treats them as authoritative. Zoop does not
 /// score or store any of it; the record exists to answer whether a `0x20` write moves these bytes.
 public struct OuraUserInfoRecord: Equatable, Sendable {
     public let ringTimestamp: UInt32

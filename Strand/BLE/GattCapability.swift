@@ -2,7 +2,7 @@ import Foundation
 
 /// What the strap's GATT tree actually contains — the Swift twin of `gattTreeLines`.
 ///
-/// NOOP has never asked a strap what it exposes: every characteristic is looked up by a UUID someone
+/// Zoop has never asked a strap what it exposes: every characteristic is looked up by a UUID someone
 /// hardcoded, so anything a 5/MG offers that nobody guessed has never been visible, on the one protocol
 /// still being reverse-engineered.
 ///

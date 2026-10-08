@@ -23,7 +23,7 @@ public struct OuraSleepPeriod: Sendable, Equatable {
 
 /// One extra daily scalar Oura returns that the wide `dailyMetric` columns don't hold (→ metricSeries on
 /// write). `key` is the metricSeries key; the brand's OWN scores use a `ref_` prefix and its contributor
-/// breakdowns an `oura_` prefix, so they are browseable but never mistaken for a NOOP score.
+/// breakdowns an `oura_` prefix, so they are browseable but never mistaken for a Zoop score.
 public struct OuraDailyExtra: Sendable, Equatable {
     public let day: String
     public let key: String

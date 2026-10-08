@@ -2,7 +2,7 @@ import XCTest
 @testable import StrandAnalytics
 
 /// The staleness bound on a carried vital. A carry exists so a missed night doesn't blank a tile — not
-/// so a months-old value keeps reading as tonight's measurement. The regression these pin: NOOP showed
+/// so a months-old value keeps reading as tonight's measurement. The regression these pin: Zoop showed
 /// "Respiratory 15.6" every day for a fortnight, which was the last value of a WHOOP CSV import that
 /// ended 2026-07-30, carried forward unbounded by two separate "latest vital" resolvers.
 final class VitalCarryStalenessTests: XCTestCase {

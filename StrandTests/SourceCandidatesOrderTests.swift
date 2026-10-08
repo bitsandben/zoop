@@ -1,7 +1,7 @@
 import XCTest
 @testable import Strand
 
-/// Resolver precedence must match the documented order: imported WHOOP > NOOP-computed > Apple.
+/// Resolver precedence must match the documented order: imported WHOOP > Zoop-computed > Apple.
 /// Before the fix, the strap-preferred candidate list tried the ACTIVE strap's computed sibling
 /// before the CANONICAL "my-whoop" import, so after a device re-add (active id != canonical) the
 /// new strap's computed estimates shadowed richer imported history. Swift twin of the

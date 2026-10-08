@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Time-of-Day Atmosphere (NOOP identity backdrop)
+// MARK: - Time-of-Day Atmosphere (Zoop identity backdrop)
 //
 // A *whisper* behind content — never decoration, never the old gaudy Canvas starfield.
 // Apple-Weather restraint dialled WAY down: every atmosphere layer sits at opacity <= 0.16,
@@ -11,7 +11,7 @@ import SwiftUI
 //    very low opacity; stars are tiny crisp dots. Beauty = restraint, spacing, type, motion.
 //  - TOKENS first (`StrandPalette`). The only literal hexes are the few subtle atmosphere
 //    tints the spec calls for (warm peach lift, indigo wash, etc.) — kept deliberately faint.
-//  - Reduce Motion — and Low Power Mode, and the in-app "Reduce motion in NOOP" toggle —
+//  - Reduce Motion — and Low Power Mode, and the in-app "Reduce motion in Zoop" toggle —
 //    pin every drifting element still (no looping translation, and the frame loop is `paused:`).
 //  - Light mode is even MORE restrained: warm-paper tints, fewer/softer elements.
 //  - CPU-light: drift runs off a single `TimelineView(.animation)` tick that the system
@@ -53,7 +53,7 @@ public struct TimeOfDayBackground: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var colorScheme
-    /// Low Power Mode and the in-app "Reduce motion in NOOP" toggle, neither of which has a SwiftUI
+    /// Low Power Mode and the in-app "Reduce motion in Zoop" toggle, neither of which has a SwiftUI
     /// environment key. The Android twin (`TimeOfDayBackground.kt`) has consulted battery saver since
     /// #911; this side was left reading Reduce Motion alone.
     @ObservedObject private var motion = ZoopMotionState.shared

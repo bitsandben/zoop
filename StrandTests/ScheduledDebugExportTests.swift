@@ -4,7 +4,7 @@ import XCTest
 /// Pure retention logic behind the scheduled debug export's "Clear scheduled exports" / keep-count
 /// pruning (#650). Mirror of `LogExportRetentionTest` on Android — same shape (stamp extraction,
 /// keep-N, oldest-first) applied to the `noop-strap-log-<stamp>.txt` / `noop-raw-capture-<stamp>.json`
-/// pair NOOP drops into Documents instead of a `.zoopbak` snapshot.
+/// pair Zoop drops into Documents instead of a `.zoopbak` snapshot.
 ///
 /// `ScheduledDebugExport` is @MainActor (mirrors `WindDownNudge`), so this test class is too.
 @MainActor

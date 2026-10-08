@@ -4,7 +4,7 @@ import XCTest
 /// The #1659 automatic update check.
 ///
 /// iOS cannot auto-update a sideloaded build — no API lets an app install or re-sign an `.ipa` — so the
-/// most NOOP can do is notice a release and say so. These rules decide when it may look, and when the
+/// most Zoop can do is notice a release and say so. These rules decide when it may look, and when the
 /// result is worth a row in the Updates inbox.
 final class UpdateAvailabilityTests: XCTestCase {
 

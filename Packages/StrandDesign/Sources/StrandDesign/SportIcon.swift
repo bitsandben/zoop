@@ -110,7 +110,7 @@ public enum KnownWorkoutType: String, CaseIterable, Sendable {
     case netball = "Netball"
     case gaelicFootball = "Gaelic football"
     case spikeball = "Spikeball"
-    // WHOOP-parity batch: activities in WHOOP's catalogue NOOP lacked (raw values byte-identical to
+    // WHOOP-parity batch: activities in WHOOP's catalogue Zoop lacked (raw values byte-identical to
     // WorkoutCatalog / Android WorkoutSport). Icons are distinct SF Symbols available on iOS 17 / macOS 13.
     case meditation = "Meditation"
     case horsebackRiding = "Horseback riding"

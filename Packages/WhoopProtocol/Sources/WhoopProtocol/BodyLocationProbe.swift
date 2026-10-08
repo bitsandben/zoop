@@ -15,7 +15,7 @@ import Foundation
 ///
 /// Protocol facts — the 0x54 command number, the 4-byte `revision/location/confidence/status` response
 /// layout, and the location enum — are reverse-engineered from the WHOOP app (via the goose reference set)
-/// and reimplemented here in NOOP's own code: facts, not copied expression (see ATTRIBUTION.md).
+/// and reimplemented here in Zoop's own code: facts, not copied expression (see ATTRIBUTION.md).
 public enum BodyLocationProbe {
 
     /// Returns the display text and the payload hex to persist for the next capture's diff (nil when there

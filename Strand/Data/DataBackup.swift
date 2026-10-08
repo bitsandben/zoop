@@ -11,7 +11,7 @@ import ZIPFoundation
 
 /// Full-database EXPORT / IMPORT for device migration.
 ///
-/// NOOP keeps everything in one SQLite file (`<AppSupport>/OpenWhoop/whoop.sqlite`, plus the
+/// Zoop keeps everything in one SQLite file (`<AppSupport>/OpenWhoop/whoop.sqlite`, plus the
 /// `-wal`/`-shm` WAL sidecars while the store is open). Export checkpoints the WAL (so the
 /// single file is whole), then wraps the SQLite in a ZIP written as `.zoopbak`, alongside a
 /// small `settings.json` entry (#1000) carrying the whitelisted profile/display settings (see
@@ -454,7 +454,7 @@ enum DataBackup {
         // SQLite file, so an Android (Room) backup — or any other SQLite file that happens to carry our
         // table names without our `grdb_migrations` bookkeeping — would otherwise replace the live DB
         // and leave the migrator re-running v1 forever (`table "device" already exists`, #222). A valid
-        // NOOP-Mac/iOS backup always carries `grdb_migrations`; reject everything else that holds data.
+        // Zoop-Mac/iOS backup always carries `grdb_migrations`; reject everything else that holds data.
         let backupTables = sqliteTableNames(at: source)
         let origin = backupOrigin(of: backupTables)
         let holdsData = backupTables.contains("device") || backupTables.contains("hrSample")
@@ -593,12 +593,12 @@ enum DataBackup {
         }
     }
 
-    /// "NOOP-backup-2026-06-07.zoopbak"
+    /// "Zoop-backup-2026-06-07.zoopbak"
     private static func defaultBackupName() -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "yyyy-MM-dd"
-        return "NOOP-backup-\(f.string(from: Date())).zoopbak"
+        return "Zoop-backup-\(f.string(from: Date())).zoopbak"
     }
 
     private static func timestamp() -> String {
@@ -620,7 +620,7 @@ enum DataBackup {
         return types
     }
 
-    /// Which platform produced a NOOP backup, judged by its migrator's bookkeeping table.
+    /// Which platform produced a Zoop backup, judged by its migrator's bookkeeping table.
     enum BackupOrigin: Equatable { case mac, android, unknown }
 
     /// Pure classification over a backup's `sqlite_master` table names: GRDB (this app) writes

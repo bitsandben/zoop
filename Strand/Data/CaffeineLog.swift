@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Caffeine window (#526) — log an intake + a rough on-device "still active" estimate
 //
-// OPT-IN, MANUAL-FIRST: the user logs a caffeine intake (a time, and OPTIONALLY an amount in mg). NOOP
+// OPT-IN, MANUAL-FIRST: the user logs a caffeine intake (a time, and OPTIONALLY an amount in mg). Zoop
 // then shows a plain "caffeine still active" hint on Today / Insights, computed entirely on-device from a
 // simple exponential half-life decay. This is a ROUGH GUIDE from what the user logged, NOT a measurement
 // and NOT a health claim — caffeine pharmacokinetics vary a lot between people (the ~5–6 h half-life is a
@@ -123,7 +123,7 @@ public struct CaffeineIntake: Codable, Equatable, Identifiable, Sendable {
     /// re-import recognise a drink it already knows rather than logging a second copy of it.
     public let externalId: String?
 
-    /// True when this came from Apple Health rather than from a tap in NOOP. Imported intakes are not
+    /// True when this came from Apple Health rather than from a tap in Zoop. Imported intakes are not
     /// editable here — the app that logged the drink owns it.
     public var isImported: Bool { externalId != nil }
 

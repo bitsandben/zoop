@@ -8,7 +8,7 @@ enum StrapSyncShortcutOutcome {
     case started
     /// A sync was already running when the shortcut arrived, so nothing new was requested.
     case alreadyRunning
-    /// The link was not ready within the wait (NOOP was launched in the background by the shortcut and is
+    /// The link was not ready within the wait (Zoop was launched in the background by the shortcut and is
     /// still connecting). The request is parked and the connect handshake runs it once the link can serve.
     case willSyncWhenConnected
     /// No app model at all, so there was nowhere to park the request.
@@ -43,8 +43,8 @@ extension AppModel {
         }
     }
 
-    /// Background entry point for the "Sync Strap" shortcut. When iOS launches NOOP in the background to run
-    /// the intent, the strap link is still coming up: NOOP auto-connects to the remembered strap on launch,
+    /// Background entry point for the "Sync Strap" shortcut. When iOS launches Zoop in the background to run
+    /// the intent, the strap link is still coming up: Zoop auto-connects to the remembered strap on launch,
     /// but a connect + bond + handshake takes longer than an App Intent can wait, and `BLEManager.syncNow`
     /// declines until it has run (`LiveState.historyReady`). So: wait briefly for a link that is already up
     /// (the app-in-background case, where the reply can say the sync started), otherwise park the request

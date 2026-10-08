@@ -32,7 +32,7 @@ enum WhoopImporter {
                 restingHr: c.restingHeartRate.map { Int($0.rounded()) },
                 avgHrv: c.hrvMs,
                 recovery: c.recoveryScore,
-                // WHOOP Day Strain (0–21) → NOOP's 0–100 Effort axis at the store boundary.
+                // WHOOP Day Strain (0–21) → Zoop's 0–100 Effort axis at the store boundary.
                 strain: WhoopExportImporter.effortFromImportedDayStrain(c.dayStrain),
                 exerciseCount: nil,
                 spo2Pct: c.bloodOxygenPct,
@@ -224,7 +224,7 @@ enum WhoopImporter {
         return result.summary
     }
 
-    /// The NOOP day a WHOOP cycle belongs to: the local calendar day you WOKE. See
+    /// The Zoop day a WHOOP cycle belongs to: the local calendar day you WOKE. See
     /// `WhoopDayKeying.wakeDayKey` for the full rationale (WHOOP exports are onset-to-onset, so a
     /// cycle's start is the evening before; keying off it blanked Today for import-only users, v8.2.1).
     private static func cycleDay(wake: Date?, end: Date?, start: Date?, tzOffsetMin: Int) -> String? {

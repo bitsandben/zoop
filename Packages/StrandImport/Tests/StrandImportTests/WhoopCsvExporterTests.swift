@@ -4,7 +4,7 @@ import WhoopStore
 
 /// THE round-trip contract: serialize with WhoopCsvExporter, re-parse with the REAL
 /// WhoopExportImporter, assert field-level equality. Mirrors the Android WhoopCsvExporterTest so
-/// the exported zip is re-importable by NOOP on either platform. `@testable` is needed because the
+/// the exported zip is re-importable by Zoop on either platform. `@testable` is needed because the
 /// importer's `parse*` helpers and CSVTable are internal.
 final class WhoopCsvExporterTests: XCTestCase {
 

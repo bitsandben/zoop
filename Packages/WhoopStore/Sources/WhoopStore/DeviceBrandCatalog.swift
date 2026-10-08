@@ -21,7 +21,7 @@ public struct DeviceBrandSpec: Sendable, Equatable {
     public let sourceKind: SourceKind
     /// The registry id prefix for a device of this brand ("huami", "oura", "garmin", "strap").
     public let idPrefix: String
-    /// Whether this brand can stream LIVE heart rate at all in NOOP. `false` for Oura (no open live stream)
+    /// Whether this brand can stream LIVE heart rate at all in Zoop. `false` for Oura (no open live stream)
     /// — the wizard routes those to import instead of pretending to connect.
     public let canStreamLiveHR: Bool
     /// True for the opt-in EXPERIMENTAL tier (Amazfit / Mi Band / Garmin / Oura); false for the shipped

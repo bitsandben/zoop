@@ -20,7 +20,7 @@ struct ImportedSleepFigures: Equatable {
 // Product surfaces (Compare, Insights, Stress, Explore, Today) historically read rows under the EXACT
 // requested source. That hid freshly-computed and Apple-compatible data that sat under a different
 // device id. `Repository.resolvedSeries` resolves a metric over an explicit source PRECEDENCE , imported
-// WHOOP wins, NOOP-computed fills the days it doesn't cover, and Apple Health only fills declared-
+// WHOOP wins, Zoop-computed fills the days it doesn't cover, and Apple Health only fills declared-
 // compatible vitals on days neither strap source has. These types model that resolution; the exact-source
 // reads (`series(key:source:)`) stay available for surfaces that must not mix sources.
 
@@ -197,7 +197,7 @@ final class Repository: ObservableObject {
     /// Data Sources "Freshness Pipeline" card so the user can see imported vs computed vs Apple coverage.
     @Published private(set) var freshness: RepositoryFreshness = .empty
     /// Daily metric rows with source provenance, used by vital-sign surfaces that need honest
-    /// "WHOOP import / NOOP computed / Apple Health" captions instead of a silent merged row.
+    /// "WHOOP import / Zoop computed / Apple Health" captions instead of a silent merged row.
     @Published private(set) var vitalRows: [SourcedDailyMetric] = []
     /// Monotonic counter bumped on every successful `refresh()`. Intraday-updating views key their
     /// data load on this so they reload when fresh strap data lands , `today?.day` alone is a stable
@@ -719,7 +719,7 @@ final class Repository: ObservableObject {
     static let activityFileSource = "activity-file"
 
     /// Imported wearable-export sources whose DAILY aggregates (HRV / resting HR / sleep) can be scored
-    /// for a NOOP Charge/Rest on an import-only day, exactly like a live day (#823). These carry no raw HR
+    /// for a Zoop Charge/Rest on an import-only day, exactly like a live day (#823). These carry no raw HR
     /// stream, so the source-only fold in IntelligenceEngine scores them from the daily aggregate vs the
     /// person's own baseline. Matches `WearableBrand.sourceId` plus Health Connect (Android imports HC's
     /// daily metrics under the strap source, but a sideloaded/standalone HC source id is covered too).
@@ -1900,7 +1900,7 @@ final class Repository: ObservableObject {
             case .motion: return String(localized: "Motion")
             // #175: the strap's OWN band sleep_state track (0 wake/1 still/2 asleep/3 up), shown as a
             // distinct stepped track alongside the derived hypnogram. This is the band's reported state,
-            // NOT a stage NOOP trusts as truth — the pill names it "Band Sleep State" so it can't be
+            // NOT a stage Zoop trusts as truth — the pill names it "Band Sleep State" so it can't be
             // mistaken for the derived stages.
             case .bandSleepState: return String(localized: "Band Sleep State")
             // The Oura ring's OWN per-window motion: seconds of movement in each ~30 s window (0x47,
@@ -1959,7 +1959,7 @@ final class Repository: ObservableObject {
     /// 208 `dc_raw` rows land in that band — so they are not contamination. But real SpO2 CANNOT exceed
     /// 100 %, and open_oura's own pipeline clamps its computed SpO2 to [85, 100]
     /// (`docs/spo2-calibration.md`, tag `0x8b` path). So a smooth distribution peaking at 103–104 points
-    /// at an un-modelled offset/transform in NOOP's `0x6F` decode, NOT at real overshoot. Clamping here
+    /// at an un-modelled offset/transform in Zoop's `0x6F` decode, NOT at real overshoot. Clamping here
     /// would HIDE that discrepancy behind a flat line at 100; keeping the bound at 110 leaves it visible
     /// while still excluding the mis-scaled channel. Revisit once the `0x6F` scale is pinned — see
     /// OURA_PROTOCOL.md §6.5.
@@ -2267,7 +2267,7 @@ final class Repository: ObservableObject {
     /// Product-facing daily series for a metric across every COMPATIBLE source, freshest-wins. Use this
     /// on surfaces where the user expects the best available signal (Compare/Insights/Stress/Explore/
     /// Today); use `series(key:source:)` where a single source must be honoured verbatim. Precedence is
-    /// explicit per `sourceCandidates`: imported WHOOP > NOOP-computed > declared-compatible Apple Health.
+    /// explicit per `sourceCandidates`: imported WHOOP > Zoop-computed > declared-compatible Apple Health.
     /// #833/v7.7.2: `fullHistory` forces the full recordable epoch ("0000-01-01" ... "9999-12-31")
     /// regardless of `days`; false (the default) honours `days` exactly as before, so existing callers are
     /// byte-identical.
@@ -2385,7 +2385,7 @@ final class Repository: ObservableObject {
             // Active strap first (live/measured wins per day), then the CANONICAL "my-whoop" import, THEN
             // the computed siblings, so history banked under the canonical id before a re-add still
             // resolves (the union model) and imports outrank computed estimates — the documented
-            // `imported WHOOP > NOOP-computed` order. The computed sibling used to sit ahead of the
+            // `imported WHOOP > Zoop-computed` order. The computed sibling used to sit ahead of the
             // canonical import, so after a device re-add (active != canonical) the new strap's computed
             // estimates shadowed richer imported my-whoop history (Swift twin of the ryanbr/noop#240
             // precedence fix). `uniqued` collapses these to one pair per source on a single-device
@@ -2432,7 +2432,7 @@ final class Repository: ObservableObject {
         }
     }
 
-    /// Whether the NOOP-computed strap source may fill an Apple-preferred metric. Only the two daily
+    /// Whether the Zoop-computed strap source may fill an Apple-preferred metric. Only the two daily
     /// totals the strap genuinely estimates (steps, calories) , never a derived WHOOP score.
     private static func zoopComputedCanFillAppleMetric(_ key: String) -> Bool {
         switch key {

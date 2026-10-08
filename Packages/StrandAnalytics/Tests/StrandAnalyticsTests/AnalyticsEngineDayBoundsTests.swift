@@ -17,7 +17,7 @@ final class AnalyticsEngineDayBoundsTests: XCTestCase {
 
     func testIntegerBoundsMatchDayStringAcrossMidnightAndOffsets() {
         let anchor = 1_700_000_000  // 2023-11-14T22:13:20Z
-        // UTC, the whole-hour extremes NOOP actually threads (±12/13/14 h are the real-world edges),
+        // UTC, the whole-hour extremes Zoop actually threads (±12/13/14 h are the real-world edges),
         // AND the fractional offsets the lane's timezone table carries (#996 review swept these too).
         let offsets = [0,
                        -4 * 3600, 5 * 3600, 13 * 3600, -12 * 3600, 14 * 3600,

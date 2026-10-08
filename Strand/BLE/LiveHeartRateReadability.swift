@@ -1,7 +1,7 @@
 import Foundation
 import WhoopProtocol
 
-/// Whether a standard heart-rate sample (0x2A37) is one NOOP may show as the live heart rate, and when a run of
+/// Whether a standard heart-rate sample (0x2A37) is one Zoop may show as the live heart rate, and when a run of
 /// samples that are not clears what is shown.
 ///
 /// A sample with a heart rate outside 30–220 bpm (0 included), or whose skin-contact flag says contact is not

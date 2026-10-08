@@ -11,7 +11,7 @@ public struct WidgetSnapshot: Codable, Equatable {
     public var updated: Date
     // Richer glance fields (#446). All OPTIONAL with nil defaults so a snapshot written by an OLDER app
     // build (which never encoded these keys) still decodes — Codable fills a missing optional with nil.
-    public var effort: Int?      // Effort / strain on NOOP's 0–100 axis (ring fill is always this / 100)
+    public var effort: Int?      // Effort / strain on Zoop's 0–100 axis (ring fill is always this / 100)
     public var rest: Int?        // Rest (sleep_performance) score, 0–100
     public var hrv: Int?         // HRV (ms), whole-number for the glance
     public var restingHr: Int?   // Resting heart rate (bpm)

@@ -56,7 +56,7 @@ final class WhoopBiomarkerExportParserTests: XCTestCase {
         let rows = WhoopBiomarkerExportParser.parse(text: fixture).rows
         XCTAssertEqual(rows.first { $0.markerKey == "ferritin" }?.note, "WHOOP: Optimal")
         XCTAssertEqual(rows.first { $0.markerKey == "vitamin_d" }?.note, "WHOOP: Sufficient")
-        // A verdict is carried verbatim + attributed — NOOP never asserts it itself.
+        // A verdict is carried verbatim + attributed — Zoop never asserts it itself.
         XCTAssertEqual(rows.first { $0.markerKey == "ldl" }?.note, "WHOOP: Out of Range")
     }
 

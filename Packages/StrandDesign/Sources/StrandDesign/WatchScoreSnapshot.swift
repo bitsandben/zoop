@@ -21,7 +21,7 @@ public struct WatchScoreSnapshot: Codable, Equatable, Sendable {
     /// `nil` and the watch shows a cal marker rather than a number.
     public var chargeCalibrating: Bool
 
-    /// Effort (strain) on NOOP's 0 to 100 axis. `nil` when there is no usable HR window for the day.
+    /// Effort (strain) on Zoop's 0 to 100 axis. `nil` when there is no usable HR window for the day.
     public var effort: Double?
     /// True when Effort is still calibrating. `effort` is `nil` while this is true.
     public var effortCalibrating: Bool

@@ -1,10 +1,10 @@
 import XCTest
 @testable import Strand
 
-/// The temp sweep removes only what NOOP wrote, never a sibling it found (#2446).
+/// The temp sweep removes only what Zoop wrote, never a sibling it found (#2446).
 ///
 /// The sweep used to take every item in the temporary directory whose name began `noop-`, on the
-/// premise that "the temp dir is NOOP's private sandbox". That is true on iOS and false on the shipped
+/// premise that "the temp dir is Zoop's private sandbox". That is true on iOS and false on the shipped
 /// Mac build, which is ad-hoc signed with no entitlements and so is not sandboxed: its temporary
 /// directory is the shared per-user one. The reporter lost a live `xcodebuild`'s derived data to it.
 ///
@@ -54,13 +54,13 @@ final class ZoopScratchTests: XCTestCase {
 
         ZoopScratch.purge(in: root)
 
-        XCTAssertTrue(exists("noop-canary-a"), "#2446: a sibling NOOP never wrote was deleted")
+        XCTAssertTrue(exists("noop-canary-a"), "#2446: a sibling Zoop never wrote was deleted")
         XCTAssertTrue(exists("noop-verify"), "#2446: the reporter's verification folder was deleted")
         XCTAssertTrue(exists("noop-measure"), "#2446: the reporter's measurement folder was deleted")
         XCTAssertTrue(exists("canary-b-noop"))
     }
 
-    /// Everything inside the owned folder is NOOP's, so it goes without being matched by name.
+    /// Everything inside the owned folder is Zoop's, so it goes without being matched by name.
     func testEverythingInsideTheOwnedFolderIsReclaimed() throws {
         let mine = ZoopScratch.directory(in: root)
         for name in ["health-1.xml", "import-2", "anything-at-all.bin"] {
@@ -139,7 +139,7 @@ final class ZoopScratchTests: XCTestCase {
                        (Bundle.main.bundleIdentifier ?? "com.zoopapp.zoop") + ".scratch")
     }
 
-    /// The Storage screen must not attribute another program's disk to NOOP.
+    /// The Storage screen must not attribute another program's disk to Zoop.
     func testSizeCountsOnlyWhatTheSweepWouldReclaim() throws {
         let mine = ZoopScratch.directory(in: root)
         try Data(repeating: 0, count: 100).write(to: mine.appendingPathComponent("a.bin"))
@@ -155,6 +155,6 @@ final class ZoopScratchTests: XCTestCase {
             return Int64(vals?.fileSize ?? 0)
         }
 
-        XCTAssertEqual(110, counted, "the 5000-byte sibling is not NOOP's scratch")
+        XCTAssertEqual(110, counted, "the 5000-byte sibling is not Zoop's scratch")
     }
 }

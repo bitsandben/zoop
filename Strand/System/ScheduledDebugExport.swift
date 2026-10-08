@@ -22,7 +22,7 @@ import BackgroundTasks
 ///   point registers the handler id below via `register(perform:)`; if it isn't registered/permitted yet,
 ///   `submit` fails gracefully and the in-app "Run now" + the macOS path still work.)
 ///
-/// Opt-in, default OFF — like every NOOP automation. Everything is on-device; nothing is sent anywhere.
+/// Opt-in, default OFF — like every Zoop automation. Everything is on-device; nothing is sent anywhere.
 ///
 /// RETENTION (#650): every write is pruned to `keepCount` generations (default 14), oldest first, and
 /// the Test Centre export card offers a manual "Clear scheduled exports" for an immediate wipe — these

@@ -117,8 +117,8 @@ struct StageDetailView: View {
         let s = night.stages
         let isPersisted = (night.realSegments?.count ?? 0) >= 2
         // An Oura night's stages are the ring's RAW on-device SleepNet classification (decoded off the 0x49
-        // phase stream), NOT a NOOP approximation — so it gets its own honest caption instead of the
-        // "stages approximate (on-device)" one that describes NOOP's own sparse-motion staging.
+        // phase stream), NOT a Zoop approximation — so it gets its own honest caption instead of the
+        // "stages approximate (on-device)" one that describes Zoop's own sparse-motion staging.
         let stageCaption = repo.activeDeviceIsOura
             ? String(localized: "raw on-device stages")
             : String(localized: "stages approximate (on-device)")
@@ -483,7 +483,7 @@ struct StageDetailView: View {
                 .font(StrandFont.captionNumber)
                 .foregroundStyle(color)
                 .frame(width: 38, alignment: .leading)
-            // The NOOP signature: a segmented PipBar that counts up to the share-of-night fraction,
+            // The Zoop signature: a segmented PipBar that counts up to the share-of-night fraction,
             // tinted in the stage colour over the canonical inset track. Flat, crisp, no glow.
             PipBar(value: fraction * 100, segments: 20, tint: color, height: 8)
             Text(durationText(minutes))

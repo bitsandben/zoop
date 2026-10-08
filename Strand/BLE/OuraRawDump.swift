@@ -3,13 +3,13 @@ import WhoopStore
 
 /// Append-only JSONL sidecar for the Oura RAW capture — the UNDECODED history-drain notification bytes,
 /// exactly as received. Complement to the *decoded* sidecars (`OuraActivityDump` = MET, `OuraIbiHrDump` =
-/// HR from IBIs): those show what NOOP interpreted; this shows what the ring actually sent.
+/// HR from IBIs): those show what Zoop interpreted; this shows what the ring actually sent.
 ///
-/// WHY: NOOP can drop packets, and the decoded files can only ever show what we decoded — so a hole in them
+/// WHY: Zoop can drop packets, and the decoded files can only ever show what we decoded — so a hole in them
 /// is ambiguous (ring never sent it, vs we dropped/failed to decode it). This raw capture removes the
 /// ambiguity: after a full connect we know exactly which TLV records arrived. Reframe it OFFLINE (walk the
 /// `2+len` records, read tag + ring-time) and a window empty in a decoded file but present here is a DECODE
-/// drop; absent in both is RING-SIDE. It also preserves tags NOOP does not decode yet. Never scored; nothing
+/// drop; absent in both is RING-SIDE. It also preserves tags Zoop does not decode yet. Never scored; nothing
 /// reads it back; safe to delete.
 ///
 /// SCOPE: the HISTORY-drain record path only — the tap sits where reassembled TLV notifications are fed to

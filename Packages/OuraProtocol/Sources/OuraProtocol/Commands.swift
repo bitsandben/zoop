@@ -22,9 +22,9 @@ public enum OuraCommands {
     public static let featureSpO2: UInt8 = 0x04
     // The real-steps feature id (`activity/real_steps`). Nominally server-flag-gated per
     // OURA_PROTOCOL.md s7.1/s7.3 [open_oura-feat], but on-device 2026-08-25 real-steps status reads
-    // came back enabled (status=1) from BOTH an authenticated Oura-app session and NOOP's own fully
+    // came back enabled (status=1) from BOTH an authenticated Oura-app session and Zoop's own fully
     // offline, unauthenticated read of the same ring — the gate is ring-side state, not tied to which
-    // client asks or whether that client is cloud-authenticated. Do not assume "off for NOOP" without
+    // client asks or whether that client is cloud-authenticated. Do not assume "off for Zoop" without
     // checking a live read.
     public static let featureRealSteps: UInt8 = 0x0B
     // The exercise-HR (AWHR) feature id — data arrives as `0x73`/`0x74`. Server-flag-gated per
@@ -57,7 +57,7 @@ public enum OuraCommands {
 
     // MARK: - Notifications / state
 
-    /// The SetNotification mask NOOP has always sent: `3f`. `3f`/`bf`=all per OURA_PROTOCOL.md s4.1.
+    /// The SetNotification mask Zoop has always sent: `3f`. `3f`/`bf`=all per OURA_PROTOCOL.md s4.1.
     public static let notificationMaskDefault: UInt8 = 0x3F
     /// The SetNotification mask the official app sends (`ff`, 08-25 HCI capture). Its only known
     /// difference from `3f` is the two high bits, and whether those are what makes the ring pack ~10
@@ -85,7 +85,7 @@ public enum OuraCommands {
     /// `req_sync_time(secs, 0)` ([oura-proto]/[oura-link], OURA_PROTOCOL.md §5.4/§9.2). Supersedes an
     /// earlier reverse-engineered guess (`token` + `unix_s/256` in 3 bytes + `0xF6` trailer) that did NOT
     /// match the native client. `tzHalfHours` defaults to 0 (UTC), exactly as the reference client sends;
-    /// NOOP does its own LOCAL-day bucketing downstream regardless of what the ring is told here.
+    /// Zoop does its own LOCAL-day bucketing downstream regardless of what the ring is told here.
     /// On-device proven (2026-07-08..10): sending this on connect makes the ring emit the 0x42 anchor.
     public static func syncTime(unixSeconds: Int, tzHalfHours: Int8 = 0) -> OuraCommand {
         let secs = UInt64(bitPattern: Int64(unixSeconds))
@@ -172,7 +172,7 @@ public enum OuraCommands {
 
     /// Read the real-steps feature status, `2f 02 20 0b` (READ verb, not enable). The `0x21` reply reports
     /// the ring's own real_steps gate state — NOT reliably "off" for an offline ring: on-device
-    /// 2026-08-25 this read back status=1 (enabled) from NOOP's own unauthenticated connection, matching
+    /// 2026-08-25 this read back status=1 (enabled) from Zoop's own unauthenticated connection, matching
     /// the real Oura app's read of the same ring byte-for-byte. Read-only diagnostic either way — never
     /// enables anything, never writes a mode. [open_oura-feat]
     public static func realStepsReadStatus() -> OuraCommand {
@@ -187,7 +187,7 @@ public enum OuraCommands {
         OuraCommand(label: "feature_status_\(String(feature, radix: 16))", bytes: [0x2F, 0x02, 0x20, feature])
     }
 
-    /// Write a feature's MODE: `2f 03 22 <id> <mode>`. UNVALIDATED on NOOP's own hardware — see
+    /// Write a feature's MODE: `2f 03 22 <id> <mode>`. UNVALIDATED on Zoop's own hardware — see
     /// OURA_PROTOCOL.md s7.5: [open_oura-feat] reports this write bypassing the account gate for
     /// several features on a consumer ring, tested there only with mode=0x01 (automatic); mode=0x00
     /// ("off") always reverts. Gated to Test Centre / explicit user action only — nothing in

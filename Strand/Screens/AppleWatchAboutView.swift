@@ -4,7 +4,7 @@ import StrandDesign
 // MARK: - About Apple Watch data
 //
 // The honest "what your Apple Watch is good at, and where it's lighter" page (M2 of the
-// Watch-as-a-device project). NOOP can run off only an Apple Watch (the phone computes our
+// Watch-as-a-device project). Zoop can run off only an Apple Watch (the phone computes our
 // Charge / Rest / Effort / Fitness Age live from HealthKit) but the watch is not a chest
 // strap, and this page says so plainly. It renders the per-metric capability + confidence
 // table from the design spec, the HRV-sampling explanation (why recovery calibrates over

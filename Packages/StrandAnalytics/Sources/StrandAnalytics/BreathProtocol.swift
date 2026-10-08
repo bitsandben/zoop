@@ -6,7 +6,7 @@ import Foundation
 //
 // PURE + unit-tested. Mirrors the Ultrahuman-style “app is a renderer, protocols are content”
 // pattern without copying UH assets or copy. Presence Process tempos measured from public guides.
-// See docs/FEATURES.md (Breathe) and the NOOP breathwork catalog plan.
+// See docs/FEATURES.md (Breathe) and the Zoop breathwork catalog plan.
 
 /// How a protocol is driven in the UI.
 public enum BreathProtocolMode: String, Equatable, Sendable {
@@ -22,7 +22,7 @@ public enum BreathProtocolCategory: String, Equatable, Sendable {
     case ans
     /// Presence Process consciously-connected tempos.
     case presence
-    /// Built-in NOOP biofeedback modes (Resonance / Calm) — not listed in this catalog table.
+    /// Built-in Zoop biofeedback modes (Resonance / Calm) — not listed in this catalog table.
     case biofeedback
 }
 

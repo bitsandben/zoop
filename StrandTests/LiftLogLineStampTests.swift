@@ -1,9 +1,9 @@
 import XCTest
 @testable import Strand
 
-/// Every line the Lift Log writes into NOOP's strap log carries its own time.
+/// Every line the Lift Log writes into Zoop's strap log carries its own time.
 ///
-/// NOOP's log takes each line's time from whoever writes it. The Lift Log's lines did not: all 98 of them in
+/// Zoop's log takes each line's time from whoever writes it. The Lift Log's lines did not: all 98 of them in
 /// Utku's 22 Sep session — every double-tap, every light-up, every session picked up after a restart — so the
 /// moment one happened had to be inferred from the neighbouring lines, which is exactly what a strap log is read
 /// for.

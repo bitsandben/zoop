@@ -200,7 +200,7 @@ enum BatteryNotifier {
     /// `BatteryAlertNotifier.onStrapNotSeen`.
     ///
     /// The live crossings need a connection, so a strap that drains out of range is never judged at all.
-    /// This reads the last BANKED reading instead, which is why the copy says "when NOOP last heard from
+    /// This reads the last BANKED reading instead, which is why the copy says "when Zoop last heard from
     /// it" rather than naming a current percentage: the app has not seen the strap since and does not know
     /// what it is at now.
     static func onStrapNotSeen(lastSocPct: Int?,

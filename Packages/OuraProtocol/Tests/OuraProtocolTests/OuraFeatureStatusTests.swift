@@ -1,7 +1,7 @@
 import XCTest
 @testable import OuraProtocol
 
-/// The read-only feature-status diagnostic: NOOP asks the ring its SpO2 (0x04) / real_steps (0x0b) feature
+/// The read-only feature-status diagnostic: Zoop asks the ring its SpO2 (0x04) / real_steps (0x0b) feature
 /// status with the SAME `0x20` read verb as `dhr_read`, decodes the `0x21` reply, and logs it once. It
 /// confirms — from the ring itself — the server-flag gate that keeps those features off for an offline ring.
 /// It must NEVER enable anything (no `0x22` set-mode) and must NOT disturb the live-HR triplet.
@@ -51,7 +51,7 @@ final class OuraFeatureStatusTests: XCTestCase {
     }
 
     /// #1629: the shape a REAL ring actually answers with. On-device captures read real_steps back as
-    /// `status=1` from both an authenticated Oura-app session and NOOP's own offline, unauthenticated
+    /// `status=1` from both an authenticated Oura-app session and Zoop's own offline, unauthenticated
     /// connection to the same ring. Until now the suite only ever exercised the all-zero reply, so the
     /// one reading anybody has actually observed on hardware was the one nothing pinned.
     ///

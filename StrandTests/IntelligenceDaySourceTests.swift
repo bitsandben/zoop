@@ -2,7 +2,7 @@ import XCTest
 @testable import Strand
 
 /// Pins the By-Day honesty fix (Sleep overhaul §2.6) + the per-day diagnostic source token (§2.5):
-/// the By-Day card used to hard-code a "NOOP-computed" badge even on days an IMPORT won the dashboard
+/// the By-Day card used to hard-code a "Zoop-computed" badge even on days an IMPORT won the dashboard
 /// merge, so a user couldn't tell a strap-scored night from an imported one. `DaySource.classify`
 /// resolves the REAL provenance from the imported day-key sets; the badge + log token derive from it.
 /// Pure (no store) — the SAME `classify` the engine ships per day. Mirrors the Android

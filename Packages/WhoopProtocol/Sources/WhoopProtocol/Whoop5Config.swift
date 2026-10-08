@@ -120,7 +120,7 @@ public enum Whoop5Config {
     /// **Confirmed for the sibling opcode, inferred here by shared convention.** The distinction is worth
     /// stating precisely, because it is stronger than a guess and weaker than a measurement.
     ///
-    /// *Confirmed, on real hardware:* `0x30` is how this firmware spells "off" for a config key. NOOP has
+    /// *Confirmed, on real hardware:* `0x30` is how this firmware spells "off" for a config key. Zoop has
     /// shipped that write since #181 — `setBroadcastHr(false)` writes `0x30` to
     /// `whoop_live_hr_in_adv_ind_pkt` through `SET_DEVICE_CONFIG_VALUE` (119 / 0x77) and a Garmin Edge 840
     /// stops seeing the broadcast. `enable_raw_data_w_ecg` independently *reads* `'0'` on an MG whose ECG
@@ -138,7 +138,7 @@ public enum Whoop5Config {
     ///
     /// *Inferred, and stated plainly:* **`'0'` has never been observed in the feature-flag namespace.** Every
     /// `GET_FF_VALUE(128)` read ever taken returned `'1'` or `'2'` — and those sixteen readings are a
-    /// round-trip of NOOP's own `enableR22Sequence` writes, so they say nothing about what the firmware does
+    /// round-trip of Zoop's own `enableR22Sequence` writes, so they say nothing about what the firmware does
     /// with a value it was not handed. The two namespaces are also proven separate at the verb level: a key
     /// asked through the wrong verb answers FAILURE. So the device-config evidence above is a strong
     /// argument by shared convention, not a measurement of this opcode.
@@ -204,10 +204,10 @@ public enum Whoop5Config {
     /// are milder versions of the same story: they tune behaviour rather than gate a stream, and clearing
     /// them returns that tuning to whatever the firmware does with the flag unset.
     ///
-    /// **What this does NOT do: restore a snapshot.** NOOP has never read these values *before* writing
-    /// them, so the strap's pre-NOOP state is unknown and unrecoverable. If the firmware's own default for
+    /// **What this does NOT do: restore a snapshot.** Zoop has never read these values *before* writing
+    /// them, so the strap's pre-Zoop state is unknown and unrecoverable. If the firmware's own default for
     /// some key is `'1'` rather than unset, this writes a value the factory never used. The honest claim
-    /// is "clears the sixteen flags NOOP set", not "restores the strap to how it shipped". Making the
+    /// is "clears the sixteen flags Zoop set", not "restores the strap to how it shipped". Making the
     /// stronger claim true needs a read-before-write snapshot on the ENABLE path; see #174.
     public static let disableR22Sequence: [Flag] = enableR22Sequence.map {
         Flag($0.name, featureFlagOffValue)

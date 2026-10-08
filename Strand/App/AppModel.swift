@@ -23,7 +23,7 @@ enum DataSourceImportKind {
 final class AppModel: ObservableObject {
     /// The live instance, so an AppIntent (Shortcuts) can reach the bonded strap rather than spinning
     /// up a dead second AppModel (which would start a duplicate BLE engine and never buzz). Set in
-    /// init(); `weak` so an intent fired while NOOP is closed sees nil and asks the user to open it. (#42)
+    /// init(); `weak` so an intent fired while Zoop is closed sees nil and asks the user to open it. (#42)
     static weak var shared: AppModel?
 
     /// Timestamp formatter for the generic-HR strap-log lines routed through `straplog` into the shared
@@ -33,7 +33,7 @@ final class AppModel: ObservableObject {
         let f = DateFormatter(); f.dateFormat = "HH:mm:ss"; return f
     }()
 
-    /// One of our own strap-log lines, stamped like the lines around it. NOOP's log takes each line's time from
+    /// One of our own strap-log lines, stamped like the lines around it. Zoop's log takes each line's time from
     /// whoever writes it, and the Lift Log's lines arrived without one: all 98 of them in Utku's 22 Sep session,
     /// so the moment a tap or a step happened had to be inferred from the neighbouring lines. A diagnostic says
     /// when it happened.
@@ -1009,7 +1009,7 @@ final class AppModel: ObservableObject {
         // A session under a minute is a start/stop the wearer did not mean to keep, and it was the thing
         // that made deletion feel broken: the list filled with 5-30 second entries (#2278). Discarded HERE,
         // at save, rather than retained and pruned later, which is the whole difference between dropping
-        // something that never had training data in it and deleting a wearer's history. NOOP has no server
+        // something that never had training data in it and deleting a wearer's history. Zoop has no server
         // and no cloud copy, so a later prune would be irreversible; this is not, because nothing with real
         // data is ever removed.
         //
@@ -1165,7 +1165,7 @@ final class AppModel: ObservableObject {
     }
     func disconnect() { ble.disconnect() }
     /// Restart the connected strap (user-initiated, confirmation-gated in DevicesView). Non-destructive —
-    /// the strap keeps its data and re-advertises after boot; NOOP auto-reconnects. See BLEManager.rebootStrap().
+    /// the strap keeps its data and re-advertises after boot; Zoop auto-reconnects. See BLEManager.rebootStrap().
     func rebootStrap() { ble.rebootStrap() }
     /// Send one WHOOP 4.0 reboot-probe candidate (Test Centre → Connection, 4.0 only). Confirmation-gated
     /// in DevicesView; finds the real 4.0 reboot frame when the production one is ignored (#235).
@@ -1662,7 +1662,7 @@ final class AppModel: ObservableObject {
     }
 
     /// Arm (or clear) the strap's firmware alarm from the smart-alarm settings. The firmware alarm
-    /// fires even if the Mac is asleep / NOOP is closed. No-op until bonded (send is gated on bond).
+    /// fires even if the Mac is asleep / Zoop is closed. No-op until bonded (send is gated on bond).
     ///
     /// On iOS this ALSO (dis)arms the best-effort backup wake notification (#4 + #6): a repeating daily
     /// `UNCalendarNotificationTrigger` that survives suspend/relaunch, so a missed strap buzz still gets
@@ -2164,7 +2164,7 @@ final class AppModel: ObservableObject {
         set { UserDefaults.standard.set(newValue, forKey: Self.cycleAwarenessHiddenKey) }
     }
 
-    /// #polar-debug: whether a connecting Polar strap logs the model NOOP identifies it as (+ its PMD/HRV
+    /// #polar-debug: whether a connecting Polar strap logs the model Zoop identifies it as (+ its PMD/HRV
     /// capability summary) to the strap log. Default off; the Test Centre only exposes the toggle when a
     /// Polar strap is paired. Diagnostic-only — nothing gates behaviour on it. Twin of Android
     /// `ZoopPrefs.KEY_POLAR_DEBUG_LOGGING`.
@@ -2186,8 +2186,8 @@ final class AppModel: ObservableObject {
     }
 
     /// Oura packed-notification A/B (EXPERIMENTAL, default OFF): send the official app's SetNotification
-    /// mask `1c 01 ff` at the next connect instead of NOOP's `3f`. The ring packs ~10 packets per
-    /// notification for the official app (9x the drain throughput) and NOOP's session never gets that
+    /// mask `1c 01 ff` at the next connect instead of Zoop's `3f`. The ring packs ~10 packets per
+    /// notification for the official app (9x the drain throughput) and Zoop's session never gets that
     /// shape; the mask is the first candidate switch (OURA_PROTOCOL.md s2.3). Read once per connect, so
     /// turning it off restores `3f` on the next session — nothing persists on the ring. Readout: the
     /// `-> notify_all(ff)` line and the raw sidecar's notification-size histogram. Test Centre only.
@@ -2599,12 +2599,12 @@ final class AppModel: ObservableObject {
         #endif
     }
 
-    /// Total bytes of NOOP's own temp scratch: its owned folder, plus the flat scratch earlier builds
+    /// Total bytes of Zoop's own temp scratch: its owned folder, plus the flat scratch earlier builds
     /// left beside it. A crash mid-import can strand a multi-GB extraction in there (#590).
     ///
     /// Recurses, because the scratch holds directories (the Xiaomi importer stages one). Scoped to what
     /// [purgeImportTemp] would actually reclaim, so the Storage screen cannot attribute another
-    /// program's disk to NOOP (#2446).
+    /// program's disk to Zoop (#2446).
     nonisolated static func importTempSizeBytes() -> Int64 {
         ZoopScratch.sizeBytes { item in
             let vals = try? item.resourceValues(forKeys: [.fileSizeKey, .isDirectoryKey])
@@ -2637,7 +2637,7 @@ final class AppModel: ObservableObject {
         return await storageReport()
     }
 
-    /// Remove NOOP's stranded temp scratch: everything in the folder it owns, plus the flat scratch
+    /// Remove Zoop's stranded temp scratch: everything in the folder it owns, plus the flat scratch
     /// earlier builds wrote (the multi-GB `noop-health-*` export.xml an interrupted import leaves
     /// behind, #590). Keeps `purgeImportInbox`'s 60 s in-flight guard, so a concurrent import or
     /// export is not disturbed. See `ZoopScratch` for why ownership is a folder and not a prefix.

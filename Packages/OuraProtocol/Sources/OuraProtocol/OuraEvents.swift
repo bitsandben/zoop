@@ -70,7 +70,7 @@ public struct OuraHR: Equatable, Sendable, Codable {
 /// One decoded 5-minute HRV bucket from the ring's own 0x5D tag (OURA_PROTOCOL.md s6.9): the ring's
 /// OWN average HR and RMSSD for that bucket. The 0x5D body is a run of `(u8 avg HR bpm, u8 avg RMSSD ms)`
 /// pairs, one per 5 min; `index` is the pair's position in the record. This is the ring's open HRV tag,
-/// NOT Oura's encrypted readiness score. NOOP also reconstructs RMSSD from the IBI streams for its own
+/// NOT Oura's encrypted readiness score. Zoop also reconstructs RMSSD from the IBI streams for its own
 /// scoring; this tag is the ring's own summary (validated overnight — the hr byte tracks sleeping HR).
 public struct OuraHRV: Equatable, Sendable, Codable {
     public let ringTimestamp: UInt32
@@ -219,7 +219,7 @@ public struct OuraBattery: Equatable, Sendable, Codable {
 /// The 2-bit sleep-phase code values, per open_oura's VALIDATED `decode_sleep_phases` mapping
 /// (events.rs `PHASE = ["deep", "light", "rem", "awake"]`): 0=deep, 1=light, 2=rem, 3=awake.
 ///
-/// CORRECTION (2026-07-11): NOOP previously mapped 0=awake/2=deep/3=rem from the same unverified doc
+/// CORRECTION (2026-07-11): Zoop previously mapped 0=awake/2=deep/3=rem from the same unverified doc
 /// as the rest of s6.12. Two live captures contradict that: phase records decoded AT WAKE (wearer
 /// demonstrably awake) carry code 3 — awake under open_oura's mapping, "REM" under the old one. The
 /// raw code is what persists (`stage.rawValue`); only these LABELS changed, so stored rows are stable.
@@ -269,7 +269,7 @@ public struct OuraMotion: Equatable, Sendable, Codable {
 /// plus an orientation code and a high-intensity count (open_oura `decode_motion`, clean-room fact
 /// citation; OURA_PROTOCOL.md s6.13). This is the SAME shape as a WHOOP 4.0 gravity sample — an averaged
 /// `(x, y, z)` vector, NOT a per-sample raw accel — so it can feed the same motion pipeline. Axis values
-/// are the signed record bytes scaled ×8 (open_oura's convention); the LSB→g scale for NOOP's stager is
+/// are the signed record bytes scaled ×8 (open_oura's convention); the LSB→g scale for Zoop's stager is
 /// a downstream calibration, so this struct carries the ring's raw ×8 integers, unscaled and honest.
 public struct OuraMotionEvent: Equatable, Sendable, Codable {
     public let ringTimestamp: UInt32
@@ -308,7 +308,7 @@ public struct OuraState: Equatable, Sendable, Codable {
 /// A decoded feature-status read reply (the `0x2F` sub-op `0x21` response): the ring's own report of a
 /// feature's mode / status / state / subscription. Read-only diagnostic — used to confirm the server-flag
 /// gate on SpO2 (`0x04`) / real_steps (`0x0b`): a `subscription == 0` with no emitted records is the ring
-/// saying "the cloud has not enabled this", which NOOP cannot override offline. Never scored, never stored.
+/// saying "the cloud has not enabled this", which Zoop cannot override offline. Never scored, never stored.
 public struct OuraFeatureStatus: Equatable, Sendable, Codable {
     public let feature: Int
     public let mode: Int
@@ -379,7 +379,7 @@ public struct OuraActivityInfo: Equatable, Sendable, Codable {
 /// `"_status": "unvalidated"`): two of the 14 fields (index 0 and 8) are genuine 9-bit values built as
 /// `byte*2 + carry_bit`, where the carry bit is stolen from the MSB of a neighboring byte (index 3 for
 /// field 0, index 11 for field 8); the rest are either plain bytes or a bare `byte<<1` with no carry.
-/// NOOP's OWN investigation (2026-07-30, a 2661-pair real Gen 3 capture cross-correlated against the
+/// Zoop's OWN investigation (2026-07-30, a 2661-pair real Gen 3 capture cross-correlated against the
 /// already-anchored 0x50 MET corpus) found `fields[0]` and `fields[8]` - the two carry-completed
 /// 9-bit values - are also the ONLY fields with a consistent movement correlation (r≈+0.3 vs mean MET,
 /// effect size +1.5/+1.25 resting-vs-moving), a real convergence between the bit-layout hint and the
@@ -426,11 +426,11 @@ public struct OuraRealStepsFields: Equatable, Sendable, Codable {
 /// the same records sit +56 … +62 bpm above every other HR channel we hold.
 ///
 /// WHOSE measurement this is decides which bar applies. `breath` is computed BY THE RING and read off
-/// the wire — it is not a signal NOOP derives from raw sensor data. The #194 rule is written for the
-/// opposite case (PPG→HR autocorrelation, RSA-from-R-R: methods where NOOP invents the number and can
+/// the wire — it is not a signal Zoop derives from raw sensor data. The #194 rule is written for the
+/// opposite case (PPG→HR autocorrelation, RSA-from-R-R: methods where Zoop invents the number and can
 /// manufacture a peak that looks physiological), so what has to be right here is the DECODE, which is
 /// what the structural verification above establishes. Same standing as the ring's own SleepNet
-/// hypnogram, which NOOP already persists and scores from (#773 / #877).
+/// hypnogram, which Zoop already persists and scores from (#773 / #877).
 ///
 /// Independent support that byte 4 is the quantity Oura's own app calls respiratory rate: these
 /// records median 14.75/min against the SAME wearer's 851-night Oura app export at 15.250 (IQR

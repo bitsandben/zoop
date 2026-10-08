@@ -124,7 +124,7 @@ public enum ReportMetric: String, CaseIterable, Sendable {
 
 /// The user's display preferences, resolved by the app layer and passed in (#1637).
 ///
-/// NOOP stores everything in SI and on its own native scales; two settings change only how a number
+/// Zoop stores everything in SI and on its own native scales; two settings change only how a number
 /// is *shown* — the temperature unit (°C / °F) and the Effort axis (native 0–100 / WHOOP 0–21). Every
 /// in-app screen honours both, but the exported trends report rendered raw stored values with a
 /// hardcoded unit, so a reader comparing the PDF against the app saw two different numbers for the
@@ -138,7 +138,7 @@ public enum ReportMetric: String, CaseIterable, Sendable {
 public struct ReportDisplayUnits: Equatable, Sendable {
     /// Render temperatures in °F. A DEVIATION scales ×9/5 with no +32 offset (see `displayValue`).
     public let fahrenheit: Bool
-    /// Multiplier onto the stored 0–100 Effort value: 1.0 for NOOP's native axis, 21/100 for WHOOP's
+    /// Multiplier onto the stored 0–100 Effort value: 1.0 for Zoop's native axis, 21/100 for WHOOP's
     /// 0–21 Day Strain axis. Matches `UnitFormatter.effortScaleFactor` / the Kotlin twin.
     public let effortFactor: Double
 

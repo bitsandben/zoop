@@ -213,7 +213,7 @@ struct HydrationView: View {
 
     /// Water Apple Health already had, from a hydration app or a smart bottle (#949).
     ///
-    /// Deliberately not tappable and with no trash: NOOP does not own these drinks, and "deleting" one
+    /// Deliberately not tappable and with no trash: Zoop does not own these drinks, and "deleting" one
     /// here would be a lie — the next sync re-reads the same day from Health and the figure would come
     /// straight back. Removing it for real means removing it in the app that logged it.
     @ViewBuilder private var importedRow: some View {

@@ -217,7 +217,7 @@ final class MigrationTests: XCTestCase {
     }
 
     /// v26 heals `efficiency` values stored on the 0-100 percent scale (written by the pre-fix Oura API
-    /// importer AND the pre-fix WHOOP CSV importer, under any deviceId) back to NOOP's 0-1 fraction
+    /// importer AND the pre-fix WHOOP CSV importer, under any deviceId) back to Zoop's 0-1 fraction
     /// convention. UPDATE-only: seed rows at the v25 schema (i.e. BEFORE v26 has run), then apply the
     /// rest of the migrator and confirm the heal.
     func testV26HealsEfficiencyPercentToFraction() async throws {

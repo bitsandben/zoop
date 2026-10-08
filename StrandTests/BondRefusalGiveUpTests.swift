@@ -3,7 +3,7 @@ import XCTest
 
 /// Pins the #747 / #750 bond-refusal give-up: a strap that keeps REFUSING the encrypted bond
 /// ("Encryption/Authentication is insufficient", no genuine bond between) eventually trips a give-up that
-/// (a) pauses auto-reconnect so NOOP stops hammering it (#747) and (b) writes a one-line epitaph carrying
+/// (a) pauses auto-reconnect so Zoop stops hammering it (#747) and (b) writes a one-line epitaph carrying
 /// only an opaque, install-local id (no MAC, no serial; #750). Pure value type, no CoreBluetooth seam.
 final class BondRefusalGiveUpTests: XCTestCase {
 

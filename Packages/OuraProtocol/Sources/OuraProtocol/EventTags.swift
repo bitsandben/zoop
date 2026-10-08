@@ -14,7 +14,7 @@ public enum TrustTier: String, Sendable, Equatable, Codable {
 }
 
 /// The Oura inner-event-record tag. Raw value == the `type` byte (>= 0x41 per OURA_PROTOCOL.md s2.3).
-/// Only the tags NOOP actually decodes are enumerated; an unknown byte decodes to nil (honest).
+/// Only the tags Zoop actually decodes are enumerated; an unknown byte decodes to nil (honest).
 public enum OuraEventTag: UInt8, Sendable, CaseIterable, Codable {
     // --- Lifecycle / state (Tier A) ---
     case ringStart        = 0x41   // ring_start_ind, OURA_PROTOCOL.md s6.15
@@ -91,7 +91,7 @@ public enum OuraEventTag: UInt8, Sendable, CaseIterable, Codable {
              .sleepSummaryF, .activityInfo, .activitySummary1, .activitySummary2,
              .realSteps1, .realSteps2, .spo2Smoothed,
              // 0x6A sleep_period_info: the field NAMES come from a single decompiled-binary source
-             // ([open_ring]); NOOP's own captures confirm the layout's declared invariants and the
+             // ([open_ring]); Zoop's own captures confirm the layout's declared invariants and the
              // fixed-point scales. Tier B on DECODE PROVENANCE — third-party names, not Oura
              // documentation — not on doubt that the ring measures respiration: `breath` is the ring's
              // own value read off the wire, and it feeds respRateBpm (see OuraSleepPeriodInfo).

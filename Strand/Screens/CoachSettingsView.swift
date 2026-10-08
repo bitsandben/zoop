@@ -279,7 +279,7 @@ struct CoachSettingsView: View {
                     CoachBriefScheduler.setEnabled(on, generateBrief: { await coach.generateBrief() }) { outcome in
                         if outcome == .denied {
                             briefEnabled = false
-                            briefStatus = "Notifications are off for NOOP — enable them in Settings first."
+                            briefStatus = "Notifications are off for Zoop — enable them in Settings first."
                         }
                     }
                 }

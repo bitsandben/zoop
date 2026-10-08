@@ -7,7 +7,7 @@ import WhoopProtocol   // Whoop5Ecg.WristSelection — the MG ECG wrist-selectio
 
 // MARK: - Devices
 //
-// Pair and manage the bands NOOP reads from. WHOOP-FIRST: the WHOOP is the primary, fully-supported
+// Pair and manage the bands Zoop reads from. WHOOP-FIRST: the WHOOP is the primary, fully-supported
 // device; generic heart-rate straps (Polar / Wahoo / Coospo / Garmin HRM …) are an early, in-development
 // addition. The screen is a thin UI over `DeviceRegistry` (the Phase 1A/1B data layer): every mutation
 // goes through a registry op, and the `SourceCoordinator` (already wired in AppModel) reacts to the
@@ -200,7 +200,7 @@ private struct DevicesContent: View {
                             whoopPct: live.batteryPct, ringPct: live.ouraBatteryPct)
                         : nil,
                     liveBatteryMv: (device.status == .active && live.connected) ? live.batteryMv : nil,
-                    // Firmware version for the ACTIVE strap. It's a STABLE property (NOOP can't change a
+                    // Firmware version for the ACTIVE strap. It's a STABLE property (Zoop can't change a
                     // strap's firmware), so prefer the live handshake value but fall back to the last-known
                     // persisted firmware (written on connect in FrameRouter) when the live value is momentarily
                     // nil — mid-handshake, or a connection that hasn't re-read GET_HELLO/REPORT_VERSION_INFO
@@ -616,7 +616,7 @@ private struct DevicesContent: View {
     /// so the dialog's choices come from the still-paired devices.
     private func confirmRemove(_ device: PairedDevice) {
         let wasActive = device.status == .active
-        // #78: actually RELEASE the BLE link, not just archive the registry row — otherwise NOOP keeps
+        // #78: actually RELEASE the BLE link, not just archive the registry row — otherwise Zoop keeps
         // re-grabbing the strap (reconnect timer + targeted-connect pin + iOS state restoration), holding
         // it connected so it can never enter pairing mode to be re-paired.
         model.ble.forgetDevice(device.peripheralId)
@@ -740,7 +740,7 @@ private struct DeviceCard: View {
     /// #221: the full #78 pairing-refusal guidance (bonded-elsewhere / pairing-mode / Forget This Device
     /// steps), shown on the card when `bondRefused` so the fix is self-service. nil otherwise.
     var pairingHint: String? = nil
-    /// The active strap's link dropped for a user-initiated reboot and NOOP is auto-reconnecting (#166).
+    /// The active strap's link dropped for a user-initiated reboot and Zoop is auto-reconnecting (#166).
     /// Drives the transient "Reconnecting…" pill; false for every non-reboot state.
     var isReconnecting: Bool = false
     /// The active+connected device's live battery percent (0–100), surfaced on the card the same way
@@ -820,7 +820,7 @@ private struct DeviceCard: View {
 
                 // Honest local-takeover state row for an adopted Oura ring that is paired but not the
                 // active+connected source right now. States the single-owner reality plainly (if the ring
-                // was reset again or re-claimed in the Oura app, NOOP no longer owns it) without faking a
+                // was reset again or re-claimed in the Oura app, Zoop no longer owns it) without faking a
                 // live reading. Suppressed for the active+connected ring and for removed rings.
                 if device.sourceKind == .oura && !isLiveConnected && device.status == .paired {
                     ouraLocalStateNote
@@ -830,7 +830,7 @@ private struct DeviceCard: View {
                 // mislabel e.g. a "Blood oxygen" chip when no SpO₂ % ever comes off the strap).
                 capabilityRow(symbol: "waveform.path.ecg", text: profile.captures,
                               tint: StrandPalette.textSecondary)
-                // What NOOP USES it for — the scores/screens this device drives.
+                // What Zoop USES it for — the scores/screens this device drives.
                 capabilityRow(symbol: "bolt.fill", text: profile.powers,
                               tint: StrandPalette.textSecondary)
                 // Honest footnote: the "*" estimates + the SpO₂/steps caveats.
@@ -859,7 +859,7 @@ private struct DeviceCard: View {
 
                 // #987: strap clock state for the active+connected strap - "clock latched" + frame
                 // freshness, with the plain amber 1970/71 warning when the RTC was never set (the strap
-                // banks no history in that state, which otherwise looks like a NOOP sync bug).
+                // banks no history in that state, which otherwise looks like a Zoop sync bug).
                 if let clockLine = liveClockLine {
                     Text(clockLine)
                         .font(StrandFont.footnote)
@@ -1122,7 +1122,7 @@ private struct DeviceCard: View {
 
     /// Honest paired-but-not-connected note for a locally-adopted Oura ring. Amber heads-up, no fabricated
     /// reading: re-states the single-owner reality so the user understands why a re-reset / Oura re-claim
-    /// would break NOOP's ownership.
+    /// would break Zoop's ownership.
     private var ouraLocalStateNote: some View {
         HStack(alignment: .top, spacing: 6) {
             Image(systemName: "info.circle")
@@ -1151,19 +1151,19 @@ private struct DeviceCard: View {
 
 // MARK: - Capability profile
 
-/// Honest, per-model summary of what a device captures and what NOOP uses it for — shown on its card.
+/// Honest, per-model summary of what a device captures and what Zoop uses it for — shown on its card.
 ///
 /// Derived from brand/model/sourceKind, NOT from the stored capability `Set`. The stored set is generic
 /// across WHOOP models (it would render an identical "Heart rate · HRV · Blood oxygen · Skin temp · …"
 /// line for a 4.0 and a 5/MG alike) and it mislabels: no SpO₂ **percentage** ever comes off any WHOOP
 /// strap (raw red/IR only — a real % exists only from a WHOOP CSV / Apple Health import), skin temp is a
 /// nightly ±°C sleep deviation rather than a live reading, steps are 5/MG-only and a raw motion count,
-/// and Charge/Effort/Rest are NOOP-derived scores. Verdicts are source-verified against the decode +
+/// and Charge/Effort/Rest are Zoop-derived scores. Verdicts are source-verified against the decode +
 /// scoring paths (the device-capability audit). `*` in a label = an on-device estimate, not a raw sensor.
 struct DeviceCapabilityProfile {
     let displayModel: String   // clean card subtitle (replaces the redundant "WHOOP · WHOOP")
     let captures: String       // "·"-joined honest capture labels for THIS model
-    let powers: String         // the NOOP scores / screens this device drives
+    let powers: String         // the Zoop scores / screens this device drives
     let footnote: String       // one short honest caveat line ("*" estimates + the SpO₂/steps notes)
 
     static func make(for d: PairedDevice) -> DeviceCapabilityProfile {
@@ -1186,7 +1186,7 @@ struct DeviceCapabilityProfile {
                 footnote: String(localized: "Experimental: live heart rate where the band exposes it. Some bands need a pairing we can't do yet. Zoop will say so honestly and never show a made-up number. No sleep, recovery, skin temp, SpO₂ or steps."))
         }
         // EXPERIMENTAL locally-adopted Oura ring (gen 3/4/5). The gen is carried on `model` ("Oura Ring
-        // 3/4/5") and recovered with OuraRingGen.from(model:). NOOP reads the ring's OWN raw signals + open
+        // 3/4/5") and recovered with OuraRingGen.from(model:). Zoop reads the ring's OWN raw signals + open
         // HRV/sleep-phase tags and computes its own Charge/Effort/Rest; it NEVER reads Oura's encrypted
         // Readiness/Sleep scores, and claims NO absolute SpO₂ %. Estimates carry "*"; a signal it can't read
         // stays "-". Per-gen copy and the canonical Beta caveat (spec
@@ -1244,7 +1244,7 @@ struct DeviceCapabilityProfile {
                 powers: whoopPowers,
                 footnote: String(localized: "* on-device estimate: skin temp is a nightly ±°C deviation, steps are a raw motion count (#78). No SpO₂ % off the strap; import a WHOOP CSV for a real %."))
         }
-        // WHOOP 4.0 — NOOP's primary band; no steps over BLE.
+        // WHOOP 4.0 — Zoop's primary band; no steps over BLE.
         if model.contains("4") {
             return DeviceCapabilityProfile(
                 displayModel: "WHOOP 4.0",
@@ -1480,7 +1480,7 @@ private struct FeatureFlagProbeSheets: ViewModifier {
 /// The wrist selection is deliberately a second, independent confirmation rather than a button inside
 /// the start flow: `SELECT_WRIST` writes strap state that survives a disconnect. The right/left mapping
 /// is no longer a guess (right=1/left=2, from the official parser and the firmware constructor), but a
-/// persistent write NOOP has not verified on its own hardware still costs a deliberate extra tap.
+/// persistent write Zoop has not verified on its own hardware still costs a deliberate extra tap.
 private struct EcgProbeSheets: ViewModifier {
     @EnvironmentObject var model: AppModel
     @EnvironmentObject var live: LiveState
@@ -1770,7 +1770,7 @@ struct DeviceCardCatalog: View {
                 DeviceCard(device: Self.dev("whoop-5-refused", "WHOOP", "5.0 MG",
                                             Self.whoopCaps.union([.steps])),
                            isActive: true, isLiveConnected: true, bondRefused: true,
-                           pairingHint: "NOOP can see your strap but it's refusing to pair - it's likely still bonded to the official WHOOP app, or your phone is holding an old pairing. To fix it: (1) fully close the WHOOP app, (2) on a 5.0/MG, tap the band repeatedly until the LEDs flash blue (pairing mode), (3) if your strap is listed under iPhone Settings → Bluetooth, tap it and choose Forget This Device, then reconnect in NOOP.",
+                           pairingHint: "Zoop can see your strap but it's refusing to pair - it's likely still bonded to the official WHOOP app, or your phone is holding an old pairing. To fix it: (1) fully close the WHOOP app, (2) on a 5.0/MG, tap the band repeatedly until the LEDs flash blue (pairing mode), (3) if your strap is listed under iPhone Settings → Bluetooth, tap it and choose Forget This Device, then reconnect in Zoop.",
                            onMakeActive: {}, onRename: {}, onRemove: {})
                 DeviceCard(device: Self.dev("strap-d", "Polar", "H10", [.hr, .hrv]),
                            isActive: false, isLiveConnected: false,
@@ -1826,7 +1826,7 @@ struct BondRefusedDemoScreen: View {
                                             capabilities: WhoopLiveCapabilities.metrics(forModel: "5.0 MG"),
                                             status: .active, addedAt: 0, lastSeenAt: 0),
                        isActive: true, isLiveConnected: true, bondRefused: true,
-                       pairingHint: "NOOP can see your strap but it's refusing to pair - it's likely still bonded to the official WHOOP app, or your phone is holding an old pairing. To fix it: (1) fully close the WHOOP app, (2) on a 5.0/MG, tap the band repeatedly until the LEDs flash blue (pairing mode), (3) if your strap is listed under iPhone Settings → Bluetooth, tap it and choose Forget This Device, then reconnect in NOOP.",
+                       pairingHint: "Zoop can see your strap but it's refusing to pair - it's likely still bonded to the official WHOOP app, or your phone is holding an old pairing. To fix it: (1) fully close the WHOOP app, (2) on a 5.0/MG, tap the band repeatedly until the LEDs flash blue (pairing mode), (3) if your strap is listed under iPhone Settings → Bluetooth, tap it and choose Forget This Device, then reconnect in Zoop.",
                        onMakeActive: {}, onRename: {}, onRemove: {})
         }
     }

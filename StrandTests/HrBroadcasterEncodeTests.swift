@@ -1,7 +1,7 @@
 import XCTest
 @testable import Strand
 
-/// Pins the pure 0x2A37 Heart Rate Measurement *encoder* used by `HrBroadcaster` when NOOP re-broadcasts
+/// Pins the pure 0x2A37 Heart Rate Measurement *encoder* used by `HrBroadcaster` when Zoop re-broadcasts
 /// its live strap HR back out as a standard Bluetooth HR peripheral (so a treadmill / Zwift / Peloton can
 /// read it). The encoder is the inverse of `StandardHeartRate.parse`, so each case here is round-tripped
 /// back through the parser to prove the two agree byte-for-byte. No CoreBluetooth is touched.
@@ -87,7 +87,7 @@ final class HrBroadcasterEncodeTests: XCTestCase {
             let parsed = StandardHeartRate.parse(encoded)
             XCTAssertNotNil(parsed, "encoded \(bpm) must re-parse")
             XCTAssertEqual(parsed?.hr, bpm, "encode→parse round trip must preserve \(bpm)")
-            XCTAssertEqual(parsed?.rr.count, 0, "NOOP broadcasts a plain HR with no R-R")
+            XCTAssertEqual(parsed?.rr.count, 0, "Zoop broadcasts a plain HR with no R-R")
         }
     }
 }

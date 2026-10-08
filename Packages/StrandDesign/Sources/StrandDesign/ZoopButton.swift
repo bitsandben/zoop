@@ -121,7 +121,7 @@ private struct ZoopButtonBackground: View {
 
 // MARK: - ButtonStyle (adopt on any existing Button)
 
-/// Apply the NOOP button look to ANY `Button` — e.g. a role/`Menu` button you can't
+/// Apply the Zoop button look to ANY `Button` — e.g. a role/`Menu` button you can't
 /// replace with `ZoopButton`. Honours Reduce Motion: the press scale drops to a dim-only
 /// state. Pixel-identical to `ZoopButton` since both share `ZoopButtonMetrics`/appearance.
 public struct ZoopButtonStyle: ButtonStyle {

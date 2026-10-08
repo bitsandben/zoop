@@ -21,7 +21,7 @@ import Foundation
 //     125 (0x7D) TOGGLE_LABRADOR_RAW_SAVE · 139 (0x8B) TOGGLE_LABRADOR_FILTERED
 // The packet FIELD LAYOUTS and the command PAYLOAD shapes below are protocol facts sourced from static
 // analysis of the official iOS client (per the #822 precedent: facts are admissible with attribution;
-// implementation expression is not). Nothing here is copied — every line is NOOP's own code, in NOOP's
+// implementation expression is not). Nothing here is copied — every line is Zoop's own code, in Zoop's
 // own style, and no WHOOP code, firmware or asset is present.
 //
 // What is NOT established, and is therefore never asserted:
@@ -29,7 +29,7 @@ import Foundation
 //     timed-out case; the sentinel VALUE is not attested, so an out-of-range byte is carried raw rather
 //     than renamed into a state we cannot prove it means.
 //   • Any clinical meaning whatsoever. `ArrhythmiaCheckResult` is computed ON-STRAP by an embedded
-//     third-party classifier and simply arrives in every packet. NOOP decodes the byte. NOOP is not a
+//     third-party classifier and simply arrives in every packet. Zoop decodes the byte. Zoop is not a
 //     medical device and this value is not a diagnosis — see DISCLAIMER.md and the UI copy.
 //
 // The Kotlin twin is `com.noop.protocol.Whoop5Ecg` — keep the two byte-identical.
@@ -55,7 +55,7 @@ public enum EcgSignalQuality: UInt8, Equatable, Sendable, CaseIterable {
 
 /// The on-strap classifier's verdict, as carried in every Labrador packet.
 ///
-/// This is DECODE ONLY. NOOP does not compute it, cannot validate it, and must never present it as a
+/// This is DECODE ONLY. Zoop does not compute it, cannot validate it, and must never present it as a
 /// finding — see the file header and the non-medical framing in the app layer. The enum's declaration
 /// order is its raw value.
 public enum EcgArrhythmiaCheckResult: UInt8, Equatable, Sendable, CaseIterable {

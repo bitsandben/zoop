@@ -78,7 +78,7 @@ struct StorageView: View {
                     .foregroundStyle(StrandPalette.textPrimary)
                 Text(reclaimable > 0
                      ? "There's about \(Self.format(reclaimable)) of leftover import scratch space to reclaim. This never removes your imported data."
-                     : "Nothing to reclaim right now. NOOP already cleans up import scratch space automatically.")
+                     : "Nothing to reclaim right now. Zoop already cleans up import scratch space automatically.")
                     .font(StrandFont.subhead)
                     .foregroundStyle(StrandPalette.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)

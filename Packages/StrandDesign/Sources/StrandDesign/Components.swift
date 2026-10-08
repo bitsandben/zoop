@@ -785,7 +785,7 @@ private struct PulseDot: View {
     var size: CGFloat
     @State private var animate = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// Low Power Mode / "Reduce motion in NOOP". This halo is a `repeatForever` loop that never
+    /// Low Power Mode / "Reduce motion in Zoop". This halo is a `repeatForever` loop that never
     /// settles and is on screen for long stretches — a connected strap in Settings, a backfill on
     /// every scaffolded screen — so it belongs behind the same gate as the liquid surfaces.
     @ObservedObject private var motion = ZoopMotionState.shared

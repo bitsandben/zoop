@@ -586,7 +586,7 @@ public enum Baselines {
         if sourceId.hasPrefix("oura") { return "oura" }
         if sourceId.hasPrefix("fitbit") { return "fitbit" }
         if sourceId.hasPrefix("garmin") { return "garmin" }
-        // "apple-health" / "health-connect" fall through to "whoop" ON PURPOSE: NOOP's Apple/HC daily
+        // "apple-health" / "health-connect" fall through to "whoop" ON PURPOSE: Zoop's Apple/HC daily
         // rows ride the strap source's scale, and HC is a pass-through whose true origin is unknowable,
         // so they must NOT open a false era boundary against WHOOP nights.
         return "whoop"

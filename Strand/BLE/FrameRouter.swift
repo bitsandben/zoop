@@ -181,7 +181,7 @@ public final class FrameRouter {
                 let verdict = r == nil ? "no result byte" : (accepted ? "accepted" : "REJECTED")
                 state.append(log: "reboot: strap acked result=\(rhex) (\(verdict))")
             }
-            // #1823: the clock exchange, on BOTH families. NOOP wrote "clock synced" the instant it queued
+            // #1823: the clock exchange, on BOTH families. Zoop wrote "clock synced" the instant it queued
             // the writes and never read the answer, so a strap log asserted the clock was set while the
             // readout said 1970/71 — two contradictory lines with nothing to separate them. Same
             // accept/reject shape REBOOT_STRAP already uses: the family's own result offset and polarity
@@ -306,7 +306,7 @@ public final class FrameRouter {
                 } else if cmd.hasPrefix("SET_ALARM_TIME") {
                     // #34 (issue comment 2026-07-12): the strap's OWN answer to the arm we just sent — the
                     // accept/reject datum that was previously thrown away. armStrapAlarm logs "armed" the
-                    // instant the SET goes out, which only proves NOOP transmitted the frame; if the firmware
+                    // instant the SET goes out, which only proves Zoop transmitted the frame; if the firmware
                     // drops it the GET_ALARM_TIME readback then reads back epoch 0 (a silently-unpersisted
                     // alarm — the exact signature in this report). Logging the raw result byte lets a future
                     // report distinguish a strap that accepted the arm from one that rejected it. LOG-ONLY,
@@ -436,7 +436,7 @@ public final class FrameRouter {
             // text and then dropped it on the floor, so an Apple strap log has never carried a word of it.
             //
             // It is worth more than curiosity. `PullStats: Data: 0` is the STRAP stating it sent no
-            // records, which is a far stronger answer to a "synced but no data" report (#1683) than NOOP
+            // records, which is a far stronger answer to a "synced but no data" report (#1683) than Zoop
             // inferring emptiness from its own decode — the difference between the strap saying nothing
             // was there and us saying we found nothing.
             //

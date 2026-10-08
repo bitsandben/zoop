@@ -1,11 +1,11 @@
 import Foundation
 
-/// The strap-log lines for the reports iOS hands NOOP through MetricKit: one a day about the day before, and one
+/// The strap-log lines for the reports iOS hands Zoop through MetricKit: one a day about the day before, and one
 /// after a crash, a hang, a CPU or disk-write exception, or a slow launch.
 ///
 /// Nothing here is sent anywhere. iOS gathers these numbers on the phone and delivers them to the app; the lines go
-/// only into NOOP's own strap log, which a person exports by hand. They exist so a battery or crash question can be
-/// answered from what the phone measured — how much CPU NOOP used in the background, why iOS closed it — rather than
+/// only into Zoop's own strap log, which a person exports by hand. They exist so a battery or crash question can be
+/// answered from what the phone measured — how much CPU Zoop used in the background, why iOS closed it — rather than
 /// from the phone's Analytics Data files, which a user has to find and share one by one.
 ///
 /// Each line says only what iOS reported: a field MetricKit left out is left out of the line, not printed as zero.
@@ -43,14 +43,14 @@ enum MetricKitLine {
         let exits = d.exits.filter { $0.count > 0 }
         parts.append("exits: " + (exits.isEmpty ? "none" : exits.map { "\($0.reason) \($0.count)" }
             .joined(separator: ", ")))
-        return "MetricKit day \(stamp(d.begin, timeZone)) → \(stamp(d.end, timeZone)) (NOOP \(d.appVersion)): "
+        return "MetricKit day \(stamp(d.begin, timeZone)) → \(stamp(d.end, timeZone)) (Zoop \(d.appVersion)): "
             + parts.joined(separator: ", ")
     }
 
     /// A crash, hang, exception or slow-launch report: `kind` names it, `detail` is what iOS said about it.
     static func diagnostic(_ kind: String, appVersion: String, at: Date, detail: String,
                            timeZone: TimeZone = .current) -> String {
-        "MetricKit \(kind) (NOOP \(appVersion), reported \(stamp(at, timeZone))): \(detail)"
+        "MetricKit \(kind) (Zoop \(appVersion), reported \(stamp(at, timeZone))): \(detail)"
     }
 
     /// "1h 12m", "6m 12s", "40s", and tenths below ten seconds ("2.4s") where a hang lives.

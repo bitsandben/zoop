@@ -27,7 +27,7 @@ final class PmdDecoderTests: XCTestCase {
     }
 
     func testHeaderRejectsUnknownMeasurementType() {
-        // 0x7F is not a type NOOP recognises → no wrong guess.
+        // 0x7F is not a type Zoop recognises → no wrong guess.
         XCTAssertNil(PolarPmdDecoder.header([0x7F] + tsBytes + [0x00]))
     }
 

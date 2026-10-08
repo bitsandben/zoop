@@ -1,7 +1,7 @@
 import XCTest
 @testable import Strand
 
-/// The iOS "Sync Strap" shortcut can arrive while NOOP is still launching and reconnecting in the background,
+/// The iOS "Sync Strap" shortcut can arrive while Zoop is still launching and reconnecting in the background,
 /// before any link can serve. The request is parked and the connect handshake's on-connect kick consumes it:
 /// a fresh request upgrades that kick to the un-floored `.manual` tier; a stale or absent one leaves the
 /// ordinary `.connect` kick alone. Pure value logic, no CoreBluetooth seam.

@@ -33,7 +33,7 @@ func shouldSendClientHello(suppressedForDevice: Bool, userInitiated: Bool) -> Bo
 ///
 /// The flat 5 was argued for the AUTH-REFUSAL branch and only makes sense there: the pairing hint shows at
 /// 2, the hint asks the user to do something (close the official app, free a stale phone pairing), and the
-/// extra cycles are the time to do it before NOOP stops hammering.
+/// extra cycles are the time to do it before Zoop stops hammering.
 ///
 /// An unanswered handshake gives the user nothing to act on. The write vanishes, the strap is not refusing
 /// anything it could be talked out of, and the outcome — suppress the hello and keep streaming live HR —

@@ -17,7 +17,7 @@ import FoundationXML
 // hostile input: element nesting depth is capped, the trackpoint count is capped (DoS), and a
 // billion-laughs-style entity expansion is refused by disabling external-entity / DTD resolution.
 // Conceptually adapted from the structure of CoreGPX (MIT) / ticofab android-gpx-parser (Apache);
-// this is NOOP's own clean implementation, no upstream code vendored.
+// this is Zoop's own clean implementation, no upstream code vendored.
 
 enum GpxParser {
 

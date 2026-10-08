@@ -17,7 +17,7 @@ import Foundation
 public enum FusionSource: String, Equatable, Sendable, CaseIterable, Codable {
     /// Imported WHOOP record (CSV/zip export under the strap's `deviceId`, e.g. "my-whoop").
     case whoopImport = "my-whoop"
-    /// NOOP-computed score derived on-device from the raw strap streams (the "$deviceId-zoop" sibling).
+    /// Zoop-computed score derived on-device from the raw strap streams (the "$deviceId-zoop" sibling).
     case zoopComputed = "my-whoop-zoop"
     /// Apple Health aggregate of a declared-compatible quantity.
     case appleHealth = "apple-health"

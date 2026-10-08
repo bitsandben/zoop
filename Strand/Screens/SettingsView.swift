@@ -114,7 +114,7 @@ struct SettingsView: View {
     @AppStorage(UnitPrefs.temperatureKey) private var temperatureRaw = ""
     @AppStorage(UnitPrefs.skinTempDisplayKey) private var skinTempDisplayRaw = ""   // #1846
     // Effort display scale (#268). Display-only — Effort stays stored 0–100, this only chooses whether
-    // it's shown on NOOP's 0–100 axis or WHOOP's 0–21 Day Strain axis.
+    // it's shown on Zoop's 0–100 axis or WHOOP's 0–21 Day Strain axis.
     @AppStorage(UnitPrefs.effortScaleKey) private var effortScaleRaw = EffortScale.hundred.rawValue
     @AppStorage(UnitPrefs.trendChartStyleKey) private var trendChartStyleRaw = TrendChartStyle.line.rawValue
     @AppStorage(UnitPrefs.hrvWindowKey) private var hrvWindowRaw = HrvWindow.whole.rawValue
@@ -125,7 +125,7 @@ struct SettingsView: View {
     // Light/Dark/System theme. Read by both app roots' .preferredColorScheme; default follows the OS.
     @AppStorage(AppearanceMode.storageKey) private var appearanceRaw = AppearanceMode.system.rawValue
     // App-owned copy language. Apple binds a bundle localization at process launch, so this writes the
-    // standard AppleLanguages override and takes effect after the user reopens NOOP.
+    // standard AppleLanguages override and takes effect after the user reopens Zoop.
     @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
     // Chart colour style: Titanium (brand) or Classic (throwback red→green). Re-colours gauges + charts.
     @AppStorage(ChartStyle.storageKey) private var chartStyleRaw = ChartStyle.titanium.rawValue
@@ -142,7 +142,7 @@ struct SettingsView: View {
     @AppStorage(SkyBehindCardsPrefs.enabledKey) private var skyBehindCards = true
     // Card-surface opacity percent (100 = solid). Reactive — moving the slider live-updates every card.
     @AppStorage(CardAppearancePrefs.opacityKey) private var cardOpacityPercent = CardAppearancePrefs.defaultPercent
-    // "Reduce motion in NOOP" (default OFF): pose every looping animation still and stop the decorative
+    // "Reduce motion in Zoop" (default OFF): pose every looping animation still and stop the decorative
     // tilt sensor, without needing system Low Power Mode or system Reduce Motion. Apple-only so far —
     // Android has no such toggle yet and its gate reads two signals, not three (#941).
     @AppStorage(QuietMotionPrefs.enabledKey) private var quietMotion = false
@@ -215,7 +215,7 @@ struct SettingsView: View {
     /// "How your scores work" explainer sheet, reachable any time from About.
     @State private var showScoringGuide = false
 
-    /// "How NOOP works" primer sheet (the four-section explainability primer), reachable any
+    /// "How Zoop works" primer sheet (the four-section explainability primer), reachable any
     /// time from About — covers how sleep is sorted, how scores + calibration work, what
     /// recording means, and where the provenance badges come from.
     @State private var showHowZoopWorks = false
@@ -628,7 +628,7 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 rowDivider
                 // Tap-through to the WHOOP 4.0 steps-ESTIMATE calibration (a SEPARATE thing from the
-                // 5/MG @57 counter divisor above): a 4.0 sends no step count, so NOOP estimates steps
+                // 5/MG @57 counter divisor above): a 4.0 sends no step count, so Zoop estimates steps
                 // from motion and calibrates that to the phone. The sheet explains it, shows the fit +
                 // a recent estimated-vs-phone comparison, and offers a manual coefficient.
                 Button {
@@ -730,7 +730,7 @@ struct SettingsView: View {
 
     /// Custom background image controls (#custom-background): pick from Photos or Browse the files,
     /// choose the fill mode, and (once set) enable / remove. The store downscales + persists a
-    /// device-local file — nothing here is uploaded (NOOP is offline), and it is left out of `.zoopbak`.
+    /// device-local file — nothing here is uploaded (Zoop is offline), and it is left out of `.zoopbak`.
     /// Wrapped in a layout-transparent `Group` so the picker `onChange` + the file importer can hang off
     /// the whole cluster while it still flows inside the appearance VStack.
     @ViewBuilder
@@ -1028,7 +1028,7 @@ struct SettingsView: View {
     // MARK: - Units
 
     /// Independent body and exercise-distance unit choices plus temperature and Effort overrides.
-    /// Display-only — nothing stored changes; NOOP keeps everything in SI.
+    /// Display-only — nothing stored changes; Zoop keeps everything in SI.
     private var unitsCard: some View {
         SettingsSection(
             icon: "ruler",
@@ -1085,7 +1085,7 @@ struct SettingsView: View {
                     .accessibilityLabel("Skin temperature display")
                 }
                 rowDivider
-                // Effort scale (#268) — show NOOP's native 0–100 Effort or WHOOP's 0–21 Day Strain axis.
+                // Effort scale (#268) — show Zoop's native 0–100 Effort or WHOOP's 0–21 Day Strain axis.
                 // Display-only; the stored value never changes, so a flip just re-labels every Effort read-out.
                 FormRow(label: "Effort scale") {
                     Picker("Effort scale", selection: $effortScaleRaw) {
@@ -1199,7 +1199,7 @@ struct SettingsView: View {
         ) {
             VStack(spacing: 0) {
                 // App-owned copy language. Apple binds a bundle localization at process launch, so this
-                // takes effect after the user reopens NOOP (the note below says so). Sits above the theme
+                // takes effect after the user reopens Zoop (the note below says so). Sits above the theme
                 // controls because it re-words everything under it.
                 FormRow(label: "Language") {
                     Picker("Language", selection: $appLanguageRaw) {
@@ -1301,7 +1301,7 @@ struct SettingsView: View {
                 }
                 rowDivider   // #79: the segmented rows sat flush against each other (missing separator)
                 FormRow(label: "Chart colours") {
-                    // Default = NOOP's clean metric ramps; Classic = the throwback red→amber→green
+                    // Default = Zoop's clean metric ramps; Classic = the throwback red→amber→green
                     // readiness scale (cool→hot zones, green→red stress). Both schemes.
                     Picker("Chart colours", selection: $chartStyleRaw) {
                         ForEach(ChartStyle.allCases) { style in
@@ -1382,7 +1382,7 @@ struct SettingsView: View {
                 #endif
 
                 rowDivider
-                // MARK: Reduce motion in NOOP — pose every looping animation still and stop the tilt
+                // MARK: Reduce motion in Zoop — pose every looping animation still and stop the tilt
                 // sensor, WITHOUT requiring system Low Power Mode. Off by default; system Reduce Motion
                 // and Low Power Mode already force the same behaviour, this is the third, in-app signal.
                 Toggle(isOn: $quietMotion) {
@@ -1512,7 +1512,7 @@ struct SettingsView: View {
         SettingsSection(
             icon: "antenna.radiowaves.left.and.right",
             title: "Strap",
-            blurb: "NOOP pairs directly with your WHOOP over Bluetooth: no WHOOP app, no cloud."
+            blurb: "Zoop pairs directly with your WHOOP over Bluetooth: no WHOOP app, no cloud."
         ) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 12) {
@@ -1836,7 +1836,7 @@ struct SettingsView: View {
         SettingsSection(
             icon: "arrow.triangle.2.circlepath",
             title: "Sync",
-            blurb: "How NOOP behaves while it pulls stored history from your strap."
+            blurb: "How Zoop behaves while it pulls stored history from your strap."
         ) {
             VStack(alignment: .leading, spacing: ZoopMetrics.space2 + 2) {
                 Toggle(isOn: $syncKeepScreenOn) {
@@ -1867,7 +1867,7 @@ struct SettingsView: View {
         SettingsSection(
             icon: "waveform.path.ecg",
             title: "HRV",
-            blurb: "Tune how NOOP captures and windows your heart-rate-variability reading."
+            blurb: "Tune how Zoop captures and windows your heart-rate-variability reading."
         ) {
             VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
                 // MARK: Continuous HRV capture — keep the dense beat-to-beat (R-R) stream armed 24/7.
@@ -1902,7 +1902,7 @@ struct SettingsView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                // HRV window (#141) — Whole night (NOOP's long-standing value) or DEEP sleep only
+                // HRV window (#141) — Whole night (Zoop's long-standing value) or DEEP sleep only
                 // (WHOOP-style, reads lower). Unlike the Effort scale this CHANGES the number, so a switch
                 // re-scores + re-baselines (like a sleep edit).
                 FormRow(label: "HRV window") {
@@ -2005,7 +2005,7 @@ struct SettingsView: View {
         SettingsSection(
             icon: "bed.double.fill",
             title: "Sleep staging",
-            blurb: "How NOOP splits a night into light / deep / REM. The V2 recipe is the default; turn it off to fall back to the older V1 staging."
+            blurb: "How Zoop splits a night into light / deep / REM. The V2 recipe is the default; turn it off to fall back to the older V1 staging."
         ) {
             VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
                 Toggle(isOn: $experimentalSleepV2Enabled) {
@@ -2119,18 +2119,18 @@ struct SettingsView: View {
 
     // MARK: - Diagnostics (every model)
 
-    /// Raw-sensor CSV export — a read-only diagnostic over the decoded streams NOOP already stores
+    /// Raw-sensor CSV export — a read-only diagnostic over the decoded streams Zoop already stores
     /// (HR, R-R, motion, steps, PPG-HR, SpO₂, skin temp, resp, events). Split out of the 5/MG card so it
     /// stays visible on EVERY model (#22): a WHOOP 4.0 owner still needs this to share decoded data.
     private var rawSensorDiagnosticsCard: some View {
         SettingsSection(
             icon: "doc.text.magnifyingglass",
             title: "Diagnostics",
-            blurb: "A read-only export of the decoded sensor streams NOOP already stores. Works on any strap. Nothing is written to your device, and nothing is uploaded."
+            blurb: "A read-only export of the decoded sensor streams Zoop already stores. Works on any strap. Nothing is written to your device, and nothing is uploaded."
         ) {
             VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
                 // MARK: Export raw sensor data (CSV) — a read-only diagnostic over the decoded streams
-                // NOOP already stores (HR, R-R, motion, steps, PPG-HR, SpO₂, skin temp, resp, events).
+                // Zoop already stores (HR, R-R, motion, steps, PPG-HR, SpO₂, skin temp, resp, events).
                 Button {
                     exportRawSensorCSV()
                 } label: {
@@ -2239,7 +2239,7 @@ struct SettingsView: View {
         SettingsSection(
             icon: "externaldrive.fill",
             title: "Backup & restore",
-            blurb: "Move all your NOOP data to another machine. Export saves everything (history, sleeps, workouts, settings) to a single file you can copy across; import replaces \(Platform.deviceNounPhrase)'s data with a backup."
+            blurb: "Move all your Zoop data to another machine. Export saves everything (history, sleeps, workouts, settings) to a single file you can copy across; import replaces \(Platform.deviceNounPhrase)'s data with a backup."
         ) {
             VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                 // Three labelled buttons must share a narrow iPhone row without wrapping mid-word
@@ -2444,7 +2444,7 @@ struct SettingsView: View {
                     }
                 }
 
-                // How NOOP works — the plain-English primer: how sleep is sorted, how scores +
+                // How Zoop works — the plain-English primer: how sleep is sorted, how scores +
                 // calibration work, what recording means, and where the provenance badges come
                 // from. The "?" entry point to the four-section explainability primer.
                 Button {
@@ -2503,7 +2503,7 @@ struct SettingsView: View {
                 .buttonStyle(LiquidPressStyle())
                 .accessibilityLabel("How your scores work")
 
-                // About Apple Watch data: the honest capability/confidence page for running NOOP off
+                // About Apple Watch data: the honest capability/confidence page for running Zoop off
                 // just an Apple Watch (what it's great at, where it's lighter than a strap, why recovery
                 // calibrates, the SpO₂ caveat). Its primary action opens the watch setup + Health
                 // permission flow. Renders the same on macOS and iOS (pure reference content); the setup
@@ -2665,7 +2665,7 @@ struct SettingsView: View {
                         .foregroundStyle(StrandPalette.textTertiary)
                 }
 
-                // Project home — NOOP's code, releases, issues and wiki live on GitHub.
+                // Project home — Zoop's code, releases, issues and wiki live on GitHub.
                 Link(destination: URL(string: "https://github.com/ryanbr/noop")!) {
                     HStack(spacing: 10) {
                         Image(systemName: "chevron.left.forwardslash.chevron.right")
@@ -2779,7 +2779,7 @@ struct SettingsView: View {
         .accessibilityLabel("Diagnostics")
     }
 
-    /// Calm, honest "what to expect running NOOP on iPhone" callout — sideloading reality, re-sign
+    /// Calm, honest "what to expect running Zoop on iPhone" callout — sideloading reality, re-sign
     /// cadence, the unlock-after-reboot (#222) note, background-BLE limits, and beta-iOS caveat. Surfaces
     /// the live sideload-cert expiry when we can read it, with a gentle warning under ~3 days.
     private var iphoneExpectations: some View {
@@ -2876,7 +2876,7 @@ enum SettingsDisclosureDefaults {
 /// section card itself (the cards it wraps keep their own `SettingsSection` chrome). It's just a
 /// header row + a default-collapsed reveal, modelled on the Test Centre "Advanced" group. Nothing is
 /// removed: collapsed simply means the wrapped sections aren't drawn until the row is tapped open.
-/// A custom header (not SwiftUI's `DisclosureGroup`) is used so it matches NOOP's near-black
+/// A custom header (not SwiftUI's `DisclosureGroup`) is used so it matches Zoop's near-black
 /// instrument look, which the system control's tint and inset don't.
 private struct SettingsDisclosureGroup<Content: View>: View {
     let title: LocalizedStringKey

@@ -3,7 +3,7 @@ import StrandDesign
 
 // MARK: - Apple Watch setup
 //
-// The honest onboarding flow for using NOOP with only an Apple Watch (M2 of the Watch-as-a-
+// The honest onboarding flow for using Zoop with only an Apple Watch (M2 of the Watch-as-a-
 // device project). Two short steps:
 //   1. What the watch is great at, and where it's lighter than a chest strap. Set expectations
 //      BEFORE asking for anything, so the permission ask is informed and the tone stays honest.

@@ -18,7 +18,7 @@ import GRDB
 
 // MARK: - Rows
 
-/// One exercise in the user's own vocabulary. NOOP ships no catalogue: an exercise is whatever the
+/// One exercise in the user's own vocabulary. Zoop ships no catalogue: an exercise is whatever the
 /// user typed, remembered here the first time it is used so it can be offered back with the muscle
 /// group they gave it. Keeping the name→group mapping in one place is what makes a per-muscle-group
 /// rollup mean the same thing from one session to the next.
@@ -692,7 +692,7 @@ extension WhoopStore {
     /// `fractional` is the headline figure: direct sets count 1, indirect sets count 0.5. That is
     /// not a house convention — the 2025 dose-response meta-regression tested exactly this choice
     /// against counting indirect sets as 1 and as 0, and the evidence was strongest for 0.5, which
-    /// its primary models then used. The reference doses NOOP displays come from those models, so
+    /// its primary models then used. The reference doses Zoop displays come from those models, so
     /// the count and the reference must stay on the same method.
     ///
     /// `direct` and `indirect` are returned alongside so the arithmetic is inspectable rather than

@@ -19,7 +19,7 @@ final class PuffinDeepBufferLogTests: XCTestCase {
     }
 
     func testRejectsSmallType2FRecord() {
-        // The ~124-B type-0x2F frame is the 1 Hz rollup NOOP already decodes — below the size gate,
+        // The ~124-B type-0x2F frame is the 1 Hz rollup Zoop already decodes — below the size gate,
         // it must NOT be logged as a high-rate buffer.
         var f = [UInt8](repeating: 0, count: 124)
         f[8] = 0x2F

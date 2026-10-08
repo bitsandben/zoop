@@ -105,7 +105,7 @@ struct LiftSessionBar: View {
     }
 
     /// Rest counts DOWN (that is the number you act on); everything else counts up. Written as the Lock
-    /// Screen writes the same clock — "0:45", "0:00", "1:05:00" — through NOOP's one running-clock format.
+    /// Screen writes the same clock — "0:45", "0:00", "1:05:00" — through Zoop's one running-clock format.
     private func bigClock(_ engine: LiftSessionEngine) -> LiftRunningClock {
         LiftRunningClock { now in engine.restRemaining(now: now) ?? now - engine.stageStartedAt }
     }

@@ -4,10 +4,10 @@ import WhoopStore
 
 // Edit ONE exercise line of a program: which exercise, and the targets for it.
 //
-// NOOP SHIPS NO EXERCISE CATALOGUE — deliberately. The user types whatever they call the movement
+// Zoop SHIPS NO EXERCISE CATALOGUE — deliberately. The user types whatever they call the movement
 // and it is remembered in `liftExercise` with the muscle group they gave it, then offered back next
 // time. A shipped mapping of common exercises to muscles would be both a permanent maintenance
-// burden and a correctness claim NOOP has no business making about someone else's technique.
+// burden and a correctness claim Zoop has no business making about someone else's technique.
 //
 // Classification is therefore a one-time, few-second action per exercise: pick the primary muscle
 // (a direct set) and any secondaries (indirect, counted at half). It is asked once, on first use,
@@ -102,7 +102,7 @@ struct LiftProgramItemSheet: View {
         } message: {
             Text("It stops being offered here. Sessions you already logged with it are kept exactly as they are.")
         }
-        .alert("You've saved the most exercises NOOP remembers",
+        .alert("You've saved the most exercises Zoop remembers",
                isPresented: Binding(get: { vocabularyFullLimit != nil },
                                     set: { if !$0 { vocabularyFullLimit = nil } })) {
             Button("OK", role: .cancel) { vocabularyFullLimit = nil }

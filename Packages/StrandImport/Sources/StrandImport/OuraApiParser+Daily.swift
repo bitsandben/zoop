@@ -80,7 +80,7 @@ public extension OuraApiParser {
         return (Array(byDay.values), extras)
     }
 
-    /// Oura resilience level → an ordered reference number (1…5). Reference-only — never a NOOP score.
+    /// Oura resilience level → an ordered reference number (1…5). Reference-only — never a Zoop score.
     static func resilienceLevel(_ s: String?) -> Double? {
         switch s {
         case "limited":     return 1

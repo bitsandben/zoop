@@ -68,7 +68,7 @@ public final class ZoopToolDispatcher {
         } catch let error as LocalAccessError {
             throw error
         } catch {
-            throw LocalAccessError.databaseUnavailable("NOOP database is not available: \(error)")
+            throw LocalAccessError.databaseUnavailable("Zoop database is not available: \(error)")
         }
     }
 }

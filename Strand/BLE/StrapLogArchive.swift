@@ -7,14 +7,14 @@ import Foundation
 /// mirror into a ring of the last three runs, 1,000 lines each (#1263). A restart's cause survived only when
 /// restarts were rare and the cause was recent. Three things were lost every time: the lines logged since the
 /// last mirror (up to 31 — the seconds before iOS kills a process, the ones that explain the kill); everything
-/// but a run's last 1,000 lines; and every run before the last three. On 21 Sep 2026 iOS killed NOOP for
+/// but a run's last 1,000 lines; and every run before the last three. On 21 Sep 2026 iOS killed Zoop for
 /// background CPU four times in 28 minutes of one session, and the log saved afterwards began half an hour
 /// after the moment it was saved for.
 ///
 /// Now each line is appended to its run's file as it is logged — one small write, which the kernel keeps even
 /// when the process is killed a moment later. A run is split into segments of `segmentBytes`; once all the
 /// segments pass `budgetBytes`, the oldest are deleted. So the log holds the newest ~2 MB — about 20,000 lines,
-/// some three hours with a strap streaming heart rate — however often NOOP restarts, and a whole run rather
+/// some three hours with a strap streaming heart rate — however often Zoop restarts, and a whole run rather
 /// than its last 5,000 lines. Exports render it exactly as the ring did: earlier runs oldest first, each under
 /// its "previous app session" header, then the current run after its marker, so every tool that reads a strap
 /// log reads it unchanged.

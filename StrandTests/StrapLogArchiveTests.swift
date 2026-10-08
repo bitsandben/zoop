@@ -22,7 +22,7 @@ final class StrapLogArchiveTests: XCTestCase {
         super.tearDown()
     }
 
-    /// A process of NOOP, started `seconds` after t0, writing into the same folder.
+    /// A process of Zoop, started `seconds` after t0, writing into the same folder.
     private func process(at seconds: TimeInterval, budget: Int = StrapLogArchive.budgetBytes,
                          segment: Int = StrapLogArchive.segmentBytes) -> StrapLogArchive {
         StrapLogArchive(directory: directory, budgetBytes: budget, segmentBytes: segment,

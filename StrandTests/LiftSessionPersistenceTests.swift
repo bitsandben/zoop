@@ -39,7 +39,7 @@ final class LiftSessionPersistenceTests: XCTestCase {
         """.utf8)
     }
 
-    /// iOS closes NOOP in the background and relaunches it — four times in one gym session (21 Sep 2026).
+    /// iOS closes Zoop in the background and relaunches it — four times in one gym session (21 Sep 2026).
     /// The session is picked up as the process starts, before any screen, and says so in the strap log.
     @MainActor
     func testASessionIsPickedUpAgainWhenNOOPStartsAndSaysSo() throws {
@@ -62,7 +62,7 @@ final class LiftSessionPersistenceTests: XCTestCase {
         XCTAssertTrue(c.isActive)
         XCTAssertFalse(c.isPresented, "it comes back as the bar, not as a sheet")
         XCTAssertTrue(claimed, "the strap's double-tap is the session's again")
-        XCTAssertEqual(lines, ["Lift Log: session picked up again after NOOP restarted"])
+        XCTAssertEqual(lines, ["Lift Log: session picked up again after Zoop restarted"])
 
         c.resumeSaved(from: defaults)
         XCTAssertEqual(lines.count, 1, "a running session is not picked up twice")

@@ -43,7 +43,7 @@ func ouraAdvertisedLabel(_ advertisedName: String, fallback: String) -> String {
 ///
 /// This is a real transport (it replaced an earlier honest dead-end probe): it decodes the ring's OWN
 /// raw signals + open event tags (HR / IBI / HRV / SpO2 / temp / sleep-phase / battery), persists them
-/// under the ring's `deviceId`, and lets NOOP compute its own Charge/Rest from those streams exactly like
+/// under the ring's `deviceId`, and lets Zoop compute its own Charge/Rest from those streams exactly like
 /// a WHOOP day. It NEVER reads or surfaces Oura's encrypted readiness/sleep scores (honest-data
 /// invariant), and when a signal can't be read it stays at "-", never a fabricated value (Huami precedent).
 ///
@@ -106,7 +106,7 @@ public final class OuraLiveSource: NSObject, ObservableObject {
     @Published public private(set) var discovered: [DiscoveredRing] = []
     @Published public private(set) var scanning: Bool = false
     @Published public private(set) var batteryPct: Int? = nil
-    /// Set to an HONEST explanation string when the ring needs a pairing/key handshake NOOP can't complete
+    /// Set to an HONEST explanation string when the ring needs a pairing/key handshake Zoop can't complete
     /// (no install key, or the ring is in factory reset, or the key was rejected). nil otherwise. The UI
     /// surfaces this instead of a fake reading. Cleared on stop/disconnect.
     @Published public private(set) var needsPairing: String? = nil
@@ -251,7 +251,7 @@ public final class OuraLiveSource: NSObject, ObservableObject {
     private let persist: (Streams) -> Void
     /// Upsert the ring-PROVIDED reconstructed hypnogram as a `CachedSleepSession` (banked under the ring's
     /// own `deviceId`, the imported/measured side, so `SleepMerge`'s imported-over-computed rule makes
-    /// Oura's own SleepNet staging win over NOOP's sparse-motion computed night — "richer record wins").
+    /// Oura's own SleepNet staging win over Zoop's sparse-motion computed night — "richer record wins").
     /// Wired at the composition root to `store.upsertSleepSessions([_], deviceId:)`; default no-op so the
     /// discovery-only scanner and tests take the byte-identical inert path.
     private let persistSleepSession: (CachedSleepSession) -> Void
@@ -434,7 +434,7 @@ public final class OuraLiveSource: NSObject, ObservableObject {
     /// [oura-rs] unpack formula, never scored/persisted to SQLite). See OuraRealStepsDump.
     private let realStepsDump: OuraRealStepsDump?
     /// Append-only JSONL capture of the RAW, undecoded history-drain notification bytes (`oura-raw-<id>.jsonl`).
-    /// Complement to the decoded sidecars above: those show what NOOP interpreted, this shows exactly what the
+    /// Complement to the decoded sidecars above: those show what Zoop interpreted, this shows exactly what the
     /// ring sent, so after a full connect a hole in a decoded file can be pinned as a decode drop vs ring-side.
     /// No dedup (a re-serve is still evidence the ring re-sent it); the offline reframer collapses duplicates.
     private let rawDump: OuraRawDump?
@@ -674,7 +674,7 @@ public final class OuraLiveSource: NSObject, ObservableObject {
     /// `nextEventToSync`), loaded from `OuraHistoryCursorStore` on connect and COMMITTED only when a
     /// drain completes (from `maxStoredRingTime`). 0 = fetch everything the ring has banked.
     ///
-    /// #91: the `0x11` response carries NO cursor — only `bytes_left` (a remaining-byte count). NOOP
+    /// #91: the `0x11` response carries NO cursor — only `bytes_left` (a remaining-byte count). Zoop
     /// previously persisted that byte-count as a "cursor" and compared it across sessions as a clock,
     /// minting a phantom "ring-time regression" → reset-to-0 → full re-dump on every connect.
     private var historyCursor: UInt32 = 0
@@ -1283,7 +1283,7 @@ public final class OuraLiveSource: NSObject, ObservableObject {
     /// ALSO SEEDED AT INIT (`seedScreenOffFromLaunchState`), which is not a nicety: the notification is an
     /// EDGE, and a process launched *into* the background never posts it — it was never in the foreground
     /// to leave it. That is exactly the overnight path this build runs, since #1215's CoreBluetooth
-    /// state-restoration identifier has iOS relaunch NOOP for BLE while the phone is locked. Left nil,
+    /// state-restoration identifier has iOS relaunch Zoop for BLE while the phone is locked. Left nil,
     /// such a process reads "the user is present" forever and re-engages all night, which is
     /// indistinguishable from the build that has no suspend at all — the 2026-08-15/16 night was voided
     /// for exactly that reason.
@@ -1293,7 +1293,7 @@ public final class OuraLiveSource: NSObject, ObservableObject {
     ///
     /// WHY THIS EXISTS. Re-engaging every 15 s does not merely read the ring — it HOLDS it in daytime-HR
     /// mode. Across 10 nights the correlation between our overnight re-engage count and the ring running
-    /// its own night suite is r = -0.91: on the nights NOOP re-engaged all night the ring's `0x43` log
+    /// its own night suite is r = -0.91: on the nights Zoop re-engaged all night the ring's `0x43` log
     /// shows `check_sleep -> not needed` every 300 s and `DHR_mode:3` throughout, so it never produced
     /// SpO2, a hypnogram, or `0x6A` sleep_period. The one night our LINK BROKE is the night the ring
     /// worked; 2026-08-13/14 (phone deliberately far, same 300 s build) restored the suite x23. Both of
@@ -1384,7 +1384,7 @@ public final class OuraLiveSource: NSObject, ObservableObject {
     /// than academic: the voided night's `report.txt` holds FOUR separate app sessions, so a fresh grace
     /// per launch is a relaunch storm resetting the clock forever and never suspending at all.
     ///
-    /// A background launch while the phone is merely unlocked-and-elsewhere costs nothing: opening NOOP
+    /// A background launch while the phone is merely unlocked-and-elsewhere costs nothing: opening Zoop
     /// posts `didBecomeActive`, which clears this and re-engages immediately (`handleScreenCameBack`).
     ///
     /// - Returns: nil when the user is present (the ordinary foreground launch — `handleScreenWentDark`
@@ -1507,7 +1507,7 @@ public final class OuraLiveSource: NSObject, ObservableObject {
     /// The two platforms ask different questions on purpose. On iOS, backgrounding IS the signal — locking
     /// the phone backgrounds the app, and so does switching away, and both mean the same thing here (nobody
     /// is looking at the live HR). On macOS, app-resign would be wrong: switching to another window leaves
-    /// NOOP visible on screen, so the Mac waits for the DISPLAYS to sleep instead. Same rule either way —
+    /// Zoop visible on screen, so the Mac waits for the DISPLAYS to sleep instead. Same rule either way —
     /// suspend when the screen the user would have to be looking at has gone dark.
     private func installScreenStateObservers() {
         guard feedsLive else { return }
@@ -1858,7 +1858,7 @@ public final class OuraLiveSource: NSObject, ObservableObject {
         let cmd = OuraCommands.setFeatureMode(feature, mode: mode)
         let frameHex = cmd.bytes.map { String(format: "%02x", $0) }.joined()
         log("Oura: feature-mode WRITE feature=0x\(String(feature, radix: 16)) mode=\(mode) frame=\(frameHex)"
-            + " - EXPERIMENT, unvalidated on NOOP hardware (OURA_PROTOCOL.md s7.5)")
+            + " - EXPERIMENT, unvalidated on Zoop hardware (OURA_PROTOCOL.md s7.5)")
         loggedFeatureStatuses.remove(Int(feature))
         if mode == 0x00 {
             manuallyDisabledFeatures.insert(Int(feature))
@@ -1963,7 +1963,7 @@ public final class OuraLiveSource: NSObject, ObservableObject {
         }
         pendingInstallKey = key
         adoptPhase = .installingKey
-        log("Oura: installing NOOP's key on the reset ring")
+        log("Oura: installing Zoop's key on the reset ring")
         write([cmd])
     }
 
@@ -2484,7 +2484,7 @@ public final class OuraLiveSource: NSObject, ObservableObject {
     }
 
     /// Log a feature-status read reply once per feature (read-only diagnostic). Confirms, from the ring
-    /// itself, whether a server-flag feature (SpO2 0x04 / real_steps 0x0b) is subscribed/emitting — NOOP
+    /// itself, whether a server-flag feature (SpO2 0x04 / real_steps 0x0b) is subscribed/emitting — Zoop
     /// cannot enable these offline (server ClientConfiguration gate), so a `subscription == 0` here is the
     /// honest "not a bug, it's a gate" reading. Never scored, never stored.
     private func logFeatureStatus(_ st: OuraFeatureStatus) {
@@ -2798,7 +2798,7 @@ public final class OuraLiveSource: NSObject, ObservableObject {
         case installFailed(String)
     }
 
-    /// Record + log the honest "this ring needs a pairing handshake NOOP can't complete" outcome (once),
+    /// Record + log the honest "this ring needs a pairing handshake Zoop can't complete" outcome (once),
     /// and drop the link so no half-authenticated session lingers. We never fabricate a reading. Also marks
     /// `adoptPhase = .failed` so an in-flight adopt's Adopting step lands on a REACHABLE honest Failed state
     /// (file-import + Advanced-key fallbacks), and clears any in-flight install key WITHOUT persisting it (a
@@ -2823,11 +2823,11 @@ public final class OuraLiveSource: NSObject, ObservableObject {
         let detail: String
         switch reason {
         case .factoryResetOrNoKey:
-            detail = "NOOP needs the ring's install key to read it live, and that pairing handshake isn't set up yet."
+            detail = "Zoop needs the ring's install key to read it live, and that pairing handshake isn't set up yet."
         case .authFailed(let status):
             detail = "The ring rejected the pairing handshake (status \(status.rawValue))."
         case .installFailed(let why):
-            detail = "NOOP couldn't take over this ring (\(why))."
+            detail = "Zoop couldn't take over this ring (\(why))."
         }
         let recovery = " The ring isn't bricked: re-pair it in the Oura app to recover it."
         let msg = detail + " Live data isn't available - export from the Oura app and import the file instead." + recovery

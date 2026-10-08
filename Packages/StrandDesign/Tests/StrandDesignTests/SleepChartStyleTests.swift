@@ -13,7 +13,7 @@ final class SleepChartStyleTests: XCTestCase {
         // Exactly these three, in this order (parity with the Kotlin enum entries).
         XCTAssertEqual(SleepChartStyle.garminFilled.rawValue, "garminFilled")
         XCTAssertEqual(SleepChartStyle.allCases.map(\.rawValue), ["classic", "filled", "garminFilled", "ribbon"])
-        // Style → ramp mapping: Fill/Classic keep NOOP, Garmin Fill → Garmin, Ribbon → Oura.
+        // Style → ramp mapping: Fill/Classic keep Zoop, Garmin Fill → Garmin, Ribbon → Oura.
         XCTAssertEqual(SleepChartStyle.filled.stagePalette, .noop)
         XCTAssertEqual(SleepChartStyle.garminFilled.stagePalette, .garmin)
         XCTAssertEqual(SleepChartStyle.ribbon.stagePalette, .oura)

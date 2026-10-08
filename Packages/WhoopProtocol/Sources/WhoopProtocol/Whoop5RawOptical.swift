@@ -16,7 +16,7 @@ import Foundation
 // offset:2`, which is what makes the 7-byte stride visible in a raw hex dump of block 0 (both `range`
 // fields there read 32).
 //
-// PROVENANCE. Every offset, width, endianness and value set below was measured from NOOP's own BLE
+// PROVENANCE. Every offset, width, endianness and value set below was measured from Zoop's own BLE
 // captures: 29,203 records of this type recorded by the #454 deep-buffer recorder from a WHOOP 5.0/MG
 // on fw 50.40.1.0. A validator runs 54 structural assertions over all 29,203 and accounts for
 // 2140/2140 bytes with none left over. The full derivation, the negative controls and the refuted

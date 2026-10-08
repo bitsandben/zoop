@@ -53,7 +53,7 @@ struct ContentView: View {
             // Seed the current What's New into the Updates inbox (idempotent per version) so the bell
             // collects it even if the user dismisses the auto sheet.
             UpdateStore.shared.seedWhatsNewIfNeeded()
-            // #1659: NOOP is sideloaded on every platform, so nothing else will tell you a release
+            // #1659: Zoop is sideloaded on every platform, so nothing else will tell you a release
             // happened. On by default and switchable off - see UpdateAvailability.defaultEnabled.
             //
             // Gated on the SAME condition as showWhatsNewIfDue below, matching the iOS and Android hooks:

@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Exercise → muscle attribution
 //
-// Groundwork for a per-muscle strength view. NOOP already imports lifting sessions (Hevy CSV,
+// Groundwork for a per-muscle strength view. Zoop already imports lifting sessions (Hevy CSV,
 // Liftosaur JSON) but aggregates them to a set count and a volume figure, so nothing downstream can
 // say WHICH muscles did the work. This maps an exercise name to the muscles that move it.
 //

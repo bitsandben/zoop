@@ -2,7 +2,7 @@ import XCTest
 import Foundation
 @testable import StrandImport
 
-/// Pins the offline file-import of a user's OWN Oura / Fitbit / Garmin data export onto NOOP's daily
+/// Pins the offline file-import of a user's OWN Oura / Fitbit / Garmin data export onto Zoop's daily
 /// metrics + sleep sessions. Tiny inline fixtures per brand (no real account data). HONEST DATA:
 /// only fields the export carries are written; a brand's OWN score is reference-only, never Charge.
 final class WearableExportImporterTests: XCTestCase {
@@ -65,13 +65,13 @@ final class WearableExportImporterTests: XCTestCase {
         XCTAssertEqual(d.steps, 8421)
         XCTAssertEqual(d.activeKcal!, 520, accuracy: 1e-6)
         XCTAssertEqual(d.totalSleepMin!, 420, accuracy: 1e-6)    // sleep folded onto the day
-        // Oura's OWN readiness score is kept as REFERENCE only — never surfaced as a NOOP score.
+        // Oura's OWN readiness score is kept as REFERENCE only — never surfaced as a Zoop score.
         XCTAssertEqual(d.readinessScore, 81)
     }
 
     func testImportedNightRespReachesDailyRow() {
         // #17: the night's resp rate (Oura `average_breath`) lives on the SESSION; it must also fold onto
-        // the day's rollup so the imported day carries respRateBpm (which feeds NOOP's Charge), not nil.
+        // the day's rollup so the imported day carries respRateBpm (which feeds Zoop's Charge), not nil.
         let json = """
         {
           "sleep": [
@@ -221,7 +221,7 @@ final class WearableExportImporterTests: XCTestCase {
         id;day;timestamp;vo2_max
         e1;2026-06-01;2026-06-01T07:00:00+00:00;44.6
         """
-        // A health type NOOP does not model + a device file: must be ignored gracefully, never an error.
+        // A health type Zoop does not model + a device file: must be ignored gracefully, never an error.
         let glucoseCsv = """
         timestamp;value
         2026-06-01T12:00:00+00:00;5.4

@@ -188,7 +188,7 @@ final class LiftLogStoreTests: XCTestCase {
     // MARK: - The user's own exercise vocabulary
 
     /// Anything the user types becomes an exercise they can reuse, with the muscle group they gave
-    /// it. NOOP ships no catalogue, so this table IS the catalogue.
+    /// it. Zoop ships no catalogue, so this table IS the catalogue.
     func testCustomExerciseIsRememberedForReuse() async throws {
         let store = try await WhoopStore.inMemory()
         let invented = LiftExerciseRow(id: "e1", deviceId: dev, name: "Sissy Squat on the Smith",

@@ -2,7 +2,7 @@ import XCTest
 @testable import OuraProtocol
 
 /// The feature-mode WRITE (`2f 03 22 <id> <mode>`) and its generalized status read (`2f 02 20 <id>`) —
-/// UNVALIDATED on NOOP's own hardware (OURA_PROTOCOL.md s7.5). These builders are pure byte construction;
+/// UNVALIDATED on Zoop's own hardware (OURA_PROTOCOL.md s7.5). These builders are pure byte construction;
 /// they carry no gate of their own, so the caller (Test Centre only, per the plan) is what keeps this
 /// off the automatic connect path.
 final class OuraFeatureModeWriteTests: XCTestCase {

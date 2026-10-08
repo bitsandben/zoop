@@ -114,7 +114,7 @@ enum WorkoutCatalog {
         Sport(name: "Netball", isDistanceSport: false),
         Sport(name: "Gaelic football", isDistanceSport: false),
         Sport(name: "Spikeball", isDistanceSport: false),
-        // WHOOP-parity batch: activities in WHOOP's catalogue NOOP lacked. All ride EXTRA on Android
+        // WHOOP-parity batch: activities in WHOOP's catalogue Zoop lacked. All ride EXTRA on Android
         // (no dedicated HC type) so GPS defaults off, like every other extra. Ordered to match.
         Sport(name: "Meditation", isDistanceSport: false),
         Sport(name: "Horseback riding", isDistanceSport: false),

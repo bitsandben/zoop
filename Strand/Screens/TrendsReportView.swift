@@ -375,7 +375,7 @@ struct TrendsReportPage: View {
         VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
             Divider().overlay(StrandPalette.hairline)
             // Provenance legend (#457): a clinician (or anyone) reading this needs to know which numbers
-            // are directly measured vs. NOOP's own derived scores. HRV / Resting HR come off the strap;
+            // are directly measured vs. Zoop's own derived scores. HRV / Resting HR come off the strap;
             // Recovery and Strain are computed on-device and are NOT clinical measures.
             Text("How to read this: HRV, Resting HR, Sleep duration, Respiratory rate and Skin temperature are measured from the strap (skin temp is shown as the deviation from your own baseline). Workouts is the count of activities you logged or that were detected. Recovery, Strain and Stress are Zoop's own on-device scores, not clinical measures: Recovery is a daily readiness composite (HRV, resting HR, sleep and skin-temp trend), Strain is cardiovascular load derived from heart rate, and Stress is a 0-3 autonomic-load index from resting HR and HRV.")
                 .font(StrandFont.footnote)
@@ -571,7 +571,7 @@ struct TrendsReportSheet: View {
     private func export(_ report: RangeReport) {
         guard !exporting else { return }
         exporting = true
-        let name = "NOOP-trends-\(report.start)_to_\(report.end).pdf"
+        let name = "Zoop-trends-\(report.start)_to_\(report.end).pdf"
         TrendsReportRenderer.exportPDF(page: page(for: report), suggestedName: name)
         exporting = false
         #if os(macOS)

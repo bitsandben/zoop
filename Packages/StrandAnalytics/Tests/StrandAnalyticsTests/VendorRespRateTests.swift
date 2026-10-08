@@ -4,7 +4,7 @@ import WhoopProtocol
 import WhoopStore
 
 /// A strap that MEASURES its own respiratory rate (the Oura ring's 0x6A `breath`) supplies the night's
-/// `respRateBpm` instead of NOOP's RSA-from-R-R estimate — and the personal baseline that value feeds is
+/// `respRateBpm` instead of Zoop's RSA-from-R-R estimate — and the personal baseline that value feeds is
 /// scoped to the current device era, so a strap switch is not read as physiology.
 final class VendorRespRateTests: XCTestCase {
     private let profile = UserProfile(weightKg: 75, heightCm: 178, age: 30, sex: "male")

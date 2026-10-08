@@ -7,12 +7,12 @@ import StrandDesign
 // They used to be read by the screens that show them: the whole session sheet and the minimised bar watched
 // the session's once-a-second tick and every change the app model published, and the sheet also watched the
 // strap's live state, which changes with every log line and every beat. So the sheet — a hundred text fields —
-// was redrawn several times a second for as long as it was open, even with NOOP off screen, and iOS killed
-// NOOP for background CPU four times in one gym session (21 Sep 2026).
+// was redrawn several times a second for as long as it was open, even with Zoop off screen, and iOS killed
+// Zoop for background CPU four times in one gym session (21 Sep 2026).
 
 /// A running clock that ticks by itself while it is shown and costs nothing while it is not: a `TimelineView`
 /// redraws this one text each second, aligned to the whole second, and SwiftUI runs a timeline only for a view
-/// on screen. `seconds` turns the current unix second into what the clock reads; the format is NOOP's
+/// on screen. `seconds` turns the current unix second into what the clock reads; the format is Zoop's
 /// `ActiveWorkoutClock.clock`, the one the Lock Screen's clock also reads as.
 struct LiftRunningClock: View {
     let seconds: (Int) -> Int

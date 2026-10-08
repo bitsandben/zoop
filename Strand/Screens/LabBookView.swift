@@ -8,9 +8,9 @@ import WhoopStore
 
 // MARK: - Lab Book (Health Records pillar — v5)
 //
-// "Your own logbook." NOOP gives you a private place to KEEP the numbers you already
+// "Your own logbook." Zoop gives you a private place to KEEP the numbers you already
 // get from your doctor or pharmacy — bloods, blood pressure, body measurements — and
-// SEE them next to your wearable signals, entirely on this device. NOOP never tests
+// SEE them next to your wearable signals, entirely on this device. Zoop never tests
 // you, never reads a result for you, and never tells you what a number means medically.
 // (Spec: docs/superpowers/specs/2026-06-19-v5-health-records-design.md.)
 //
@@ -23,7 +23,7 @@ import WhoopStore
 // Pearson idiom + restrained copy as CompareView's pairCard.
 //
 // NON-CLINICAL (load-bearing, spec §"Non-clinical / legal framing"): no word here
-// asserts a clinical judgement — never "abnormal/high/low/normal" as NOOP's own
+// asserts a clinical judgement — never "abnormal/high/low/normal" as Zoop's own
 // statement; any reference range shown is EXACTLY what the user typed from their own
 // report; correlation copy says "association, not a medical finding". The full
 // disclaimer shows on the screen and (Wave 3) links to the consolidated About & Legal.
@@ -780,8 +780,8 @@ private struct MarkerDetailView: View {
             Text(n == 0
                  ? "No overlap yet between this marker and \(signal?.title.lowercased() ?? String(localized: "that signal")). Log a few more readings (and keep wearing your strap)."
                  : (n == 1
-                    ? "1 reading lines up so far, not enough to read a trend yet (NOOP waits for \(LabBookSignals.floor))."
-                    : "\(n) readings line up so far, not enough to read a trend yet (NOOP waits for \(LabBookSignals.floor))."))
+                    ? "1 reading lines up so far, not enough to read a trend yet (Zoop waits for \(LabBookSignals.floor))."
+                    : "\(n) readings line up so far, not enough to read a trend yet (Zoop waits for \(LabBookSignals.floor))."))
                 .font(StrandFont.subhead)
                 .foregroundStyle(StrandPalette.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)

@@ -1333,7 +1333,7 @@ final class SleepStagerTests: XCTestCase {
         // WIRING PROOF through detectSleep, for the SHIPPED default (OFF until PSG supports the veto —
         // the harness currently measures the recipe UNDER-calling wake against truth, bias −4.92 pp, so
         // default-on would move away from it). A still overnight night with a mid-sleep motion+HR burst
-        // that NOOP scores as INTERIOR wake, plus an all-"asleep" band threaded end to end: with the
+        // that Zoop scores as INTERIOR wake, plus an all-"asleep" band threaded end to end: with the
         // flag off the band must change NOTHING — byte-identical stages, identical efficiency. This is
         // the wiring test's inverse: it proves the band stream reaches the veto AND that the flag gates
         // it, so flipping the default is the only change needed to re-enable (the ON-path mechanism is

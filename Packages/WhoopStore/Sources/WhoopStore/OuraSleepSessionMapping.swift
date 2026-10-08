@@ -10,12 +10,12 @@ import OuraProtocol
 /// events (`OuraStreamMapping`), but nothing turns them into a NIGHT with a stage breakdown that the sleep
 /// surfaces read. Banking the ring-PROVIDED hypnogram as a `CachedSleepSession` under the ring's OWN
 /// deviceId (the imported/measured side, not the `-noop` computed sibling) lets `SleepMerge`'s existing
-/// imported-over-computed rule make Oura's own SleepNet staging win over NOOP's sparse-motion computed
+/// imported-over-computed rule make Oura's own SleepNet staging win over Zoop's sparse-motion computed
 /// staging for that night — "richer record wins", reusing the exact arbitration that already picks a
 /// WHOOP/HC import over a computed night (ryanbr/noop#240). The richness exception in `SleepMerge` still
 /// protects a stage-rich computed night from a stage-less import, and vice-versa.
 ///
-/// HONEST-DATA: this is PROVIDED data (Oura's on-ring classifier), not a NOOP-COMPUTED derivation — it is
+/// HONEST-DATA: this is PROVIDED data (Oura's on-ring classifier), not a Zoop-COMPUTED derivation — it is
 /// the Tier-A sleep-phase codes already surfaced, only reshaped into the session's segment JSON. No new
 /// physiological signal is invented here.
 ///
@@ -40,7 +40,7 @@ public enum OuraSleepSessionMapping {
     /// end is anchored + 0x49-refined). Adjacent equal stages are merged into one `[start,end]` segment.
     /// `startTs` = first code's ts; `endTs` = last code's ts + one epoch (the anchored true sleep end).
     /// `efficiency` = asleep / (asleep + awake) as a 0–1 fraction (nil when nothing is in bed). Returns nil
-    /// for an empty sequence (never a zero-length night). `restingHr`/`avgHrv` stay nil — those are NOOP's
+    /// for an empty sequence (never a zero-length night). `restingHr`/`avgHrv` stay nil — those are Zoop's
     /// own downstream computations from the ring's IBI stream, not part of the ring's provided hypnogram.
     public static func session(fromCodes codes: [(ts: Int, stage: OuraSleepStage)],
                                secondsPerCode: Int = 30) -> CachedSleepSession? {

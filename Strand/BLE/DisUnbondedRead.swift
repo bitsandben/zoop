@@ -1,6 +1,6 @@
 import Foundation
 
-/// Should NOOP try reading the Device Information Service on a 5/MG that has NOT bonded?
+/// Should Zoop try reading the Device Information Service on a 5/MG that has NOT bonded?
 ///
 /// `readDisIdentity` is issued only inside the post-bond handshake, so a strap that never bonds never
 /// reads DIS at all — and since #1635 the suppression makes that state PERMANENT rather than transient.
@@ -66,7 +66,7 @@ func disReadFailureLine(uuid: String, status: String) -> String {
 /// Should the standard Device Information Service firmware string be published for this strap?
 ///
 /// A 5/MG that never completes the puffin handshake has no firmware to show, because the only source
-/// NOOP reads it from is a framed command that needs the bond. DIS `0x2A26` sits in the same service the
+/// Zoop reads it from is a framed command that needs the bond. DIS `0x2A26` sits in the same service the
 /// serial and hardware revision come from; it was simply never asked for on this platform.
 ///
 /// DIS is a FALLBACK, never an override. The puffin value is the strap's own report of the firmware it

@@ -2,7 +2,7 @@ import XCTest
 @testable import OuraProtocol
 
 /// Live wear/charge inference for the "On wrist / Off wrist" indicator. The ring emits no dedicated worn
-/// event in NOOP's captures, so wear is inferred from a LIVE-HR beat (a finger), a silent stream past a
+/// event in Zoop's captures, so wear is inferred from a LIVE-HR beat (a finger), a silent stream past a
 /// grace window (removed), and the ring's own "chg. detected"/"chg. stopped" STATE strings (charging).
 final class OuraWearTests: XCTestCase {
 

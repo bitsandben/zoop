@@ -3,7 +3,7 @@ import XCTest
 import WhoopProtocol
 import WhoopStore
 
-/// Pins the success-side observability the log forensics flagged as the blind spot (#150): NOOP logged
+/// Pins the success-side observability the log forensics flagged as the blind spot (#150): Zoop logged
 /// FAILURES (decoded-to-0) but never SUCCESSES, so a strap log couldn't tell a banking strap from a
 /// broken one. These cover the pure tally + summary helpers that drive the new
 /// "Backfill: session persisted N rows (M with motion) across K night(s)" line.
@@ -319,7 +319,7 @@ final class BackfillerSessionTallyTests: XCTestCase {
         XCTAssertTrue(line.contains("stopped saving history"), line)
         // The part the old advice omitted: charging alone has already been retried every connect.
         XCTAssertTrue(line.contains("re-sends the clock on every connect"), line)
-        // The test that tells the user whether NOOP is even involved.
+        // The test that tells the user whether Zoop is even involved.
         XCTAssertTrue(line.contains("official WHOOP app"), line)
         XCTAssertFalse(line.contains("\u{2014}"))
     }
@@ -333,7 +333,7 @@ final class BackfillerSessionTallyTests: XCTestCase {
     }
 
     /// The banner is what the user READS; the log line needs a capture export. The standing banner
-    /// omitted the age entirely and PROMISED that charging "should" work - advice NOOP has effectively
+    /// omitted the age entirely and PROMISED that charging "should" work - advice Zoop has effectively
     /// retried on every connect for weeks, since it re-sends SET_CLOCK each time.
     func testStaleRecordBannerDatesTheSilenceAndPromisesNothing() {
         let line = Backfiller.staleRecordBanner(newestUnix: 1_785_692_420, wallNowUnix: 1_787_820_941)

@@ -24,7 +24,7 @@ import Foundation
 //
 // NON-CLINICAL: WHOOP's own "Status" column (Optimal / Sufficient / Out of Range) is carried
 // VERBATIM into `LabMarkerCsvRow.note` with a "WHOOP:" prefix — the user's own provider's word,
-// source-attributed, never NOOP asserting anything. Units are stored verbatim, never converted.
+// source-attributed, never Zoop asserting anything. Units are stored verbatim, never converted.
 //
 // Pure and deterministic — no DB, no I/O.
 

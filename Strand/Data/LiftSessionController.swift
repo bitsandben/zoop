@@ -139,20 +139,20 @@ final class LiftSessionController: ObservableObject {
         persist()
     }
 
-    /// Pick up the session a previous run of NOOP left going, as the app process starts.
+    /// Pick up the session a previous run of Zoop left going, as the app process starts.
     ///
-    /// iOS closes NOOP in the background and relaunches it when the strap next sends something — four
+    /// iOS closes Zoop in the background and relaunches it when the strap next sends something — four
     /// times in 28 minutes of one gym session (strap log, 21 Sep 2026). The session used to come back only
     /// when the first screen appeared, and the Lock Screen banner is driven by the same screen: its first
-    /// push found no session, ended the banner, and iOS allows a new one only while NOOP is open. Every
-    /// strap step after a restart then lit nothing ("no Lift Log banner is running") until NOOP was opened.
+    /// push found no session, ended the banner, and iOS allows a new one only while Zoop is open. Every
+    /// strap step after a restart then lit nothing ("no Lift Log banner is running") until Zoop was opened.
     /// Resumed here, before any screen exists, the session is back before anything asks about it, and
     /// the banner iOS kept on the Lock Screen is picked up again instead. The line it logs is how a later
     /// strap log shows a restart in the middle of a session.
     func resumeSaved(from defaults: UserDefaults = .standard) {
         guard !isActive, let snapshot = LiftSessionPersistence.load(from: defaults) else { return }
         resume(from: snapshot)
-        log("Lift Log: session picked up again after NOOP restarted")
+        log("Lift Log: session picked up again after Zoop restarted")
     }
 
     /// Rehydrate an interrupted session found on disk. Does NOT present the sheet: the session comes
@@ -671,7 +671,7 @@ final class LiftSessionController: ObservableObject {
     //
     // It used to tick once a second, and publish the tick to every screen watching the session — the whole
     // tab shell, the session sheet, the bar, the Lift Log hub — so all of them were redrawn every second, on
-    // screen or not. iOS killed NOOP four times in one gym session for background CPU (Utku's crash reports,
+    // screen or not. iOS killed Zoop four times in one gym session for background CPU (Utku's crash reports,
     // 21 Sep 2026: over 80% for 60 s, busy redrawing SwiftUI views), and every kill cost a Lock Screen banner
     // and the log before it. The clocks on screen tick by themselves, and only while shown (`LiftRunningClock`).
 

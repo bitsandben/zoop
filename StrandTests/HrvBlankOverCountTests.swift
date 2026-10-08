@@ -1,7 +1,7 @@
 import XCTest
 @testable import Strand
 
-/// #2335: the HRV tile is blank and NOOP knows exactly why, so it has to say so.
+/// #2335: the HRV tile is blank and Zoop knows exactly why, so it has to say so.
 ///
 /// The #1118 caveat cannot answer this. It decorates a value that IS shown, and the over-count verdict is
 /// the very thing that makes `SleepStager.sessionAvgHRV` return nil, so on the night the caveat was

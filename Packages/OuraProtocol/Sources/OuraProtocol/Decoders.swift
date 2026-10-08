@@ -124,7 +124,7 @@ public enum OuraDecoders {
     /// in that walk order). `shift` comes from payload[13] bits [2:0] (`s == 7 → 0`, else `s+1`);
     /// bit [3] set means a firmware-layout mismatch → nil (never guess).
     ///
-    /// TIER-B (#287): this layout has NO verified NOOP capture yet — the result is for the 0x71
+    /// TIER-B (#287): this layout has NO verified Zoop capture yet — the result is for the 0x71
     /// fixture-capture log ONLY (side-by-side with the raw bytes, cross-checked against concurrent
     /// live-HR R-R), never a stored rrInterval. Promote only after a real capture validates it.
     /// Payload indexing: ringverse's `b[i]` spans the whole frame (type/len/rt4/body); our `payload`
@@ -193,7 +193,7 @@ public enum OuraDecoders {
     /// a short body. (The reverse read is the footgun: we walk index 11 down to 7.)
     ///
     /// SCOPE NOTE (honest, not accidental): the 0x6E record also carries a 7-amplitude PPG channel
-    /// (s6.3: "7 amplitudes: first byte<<3, rest byte<<shift"). NOOP v1 deliberately decodes the R-R
+    /// (s6.3: "7 amplitudes: first byte<<3, rest byte<<shift"). Zoop v1 deliberately decodes the R-R
     /// (IBI) channel ONLY and drops the amplitude channel, exactly as the 0x47 motion decoder is held
     /// out of v1 scope. This partial decode is an explicit scope choice, not a missed field.
     public static func decodeSpO2IBI(_ rec: OuraRecord) -> [OuraIBI]? {
@@ -398,7 +398,7 @@ public enum OuraDecoders {
     /// voltage estimate as uint16 LE at body[4..6] (fallback only). charging_progress at body[1],
     /// recommended_flag at body[2]. Per OURA_PROTOCOL.md s6.10. Returns nil on a short body.
     ///
-    /// CONFLICT (s6.10): open_oura-r3 reads percent at body[0], open_ring reads voltage at [4]. NOOP
+    /// CONFLICT (s6.10): open_oura-r3 reads percent at body[0], open_ring reads voltage at [4]. Zoop
     /// rule: percent from body[0]; voltage from [4..6] is a fixture-validated fallback estimate only.
     public static func decodeBattery(_ body: [UInt8]) -> OuraBattery? {
         guard body.count >= 3 else { return nil }
@@ -689,7 +689,7 @@ public enum OuraDecoders {
     ///   against a sleep-vs-activity contrast, i.e. higher at rest); at +2 it reads +2.36, matching
     ///   `0x7E`'s own +2.35, and paired-window agreement goes r = -0.557 -> **+0.790**.
     ///
-    /// See OURA_PROTOCOL.md s6.13. NOOP's own finding - not in the [oura-rs] source, which applies one
+    /// See OURA_PROTOCOL.md s6.13. Zoop's own finding - not in the [oura-rs] source, which applies one
     /// layout to both tags.
     static func realStepsFieldOffset(forTag tag: UInt8) -> Int {
         tag == OuraEventTag.realSteps2.rawValue ? 2 : 0
@@ -703,7 +703,7 @@ public enum OuraDecoders {
     /// Fields 1, 2, 9, 10 are a bare `byte<<1` (no carry completion). Fields 4-7 and 12-13 are plain
     /// bytes. Returns nil unless the body is exactly 14 bytes (the source's own length gate).
     ///
-    /// TAG-DEPENDENT OFFSET (NOOP, 2026-08-01): the block starts at byte 0 for `0x7E` but at **byte 2**
+    /// TAG-DEPENDENT OFFSET (Zoop, 2026-08-01): the block starts at byte 0 for `0x7E` but at **byte 2**
     /// for `0x7F` - see `realStepsFieldOffset(forTag:)` for the evidence. Consequences for `0x7F`:
     /// - It yields **12 fields, not 14**: fields 12/13 would need block bytes 12/13 = record bytes
     ///   14/15, which do not exist in a 14-byte body. They are OMITTED rather than zero-filled - a

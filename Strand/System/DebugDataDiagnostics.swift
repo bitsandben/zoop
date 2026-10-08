@@ -149,7 +149,7 @@ enum DebugDataDiagnostics {
             let bmOk = d.bool(forKey: "backupPicker.lastBookmarkOk")
             lines.append("             scoped-access \(scoped ? "ok" : "FAILED"), bookmark \(bmOk ? "ok" : "FAILED")")
         }
-        lines.append("Backup mode:  \(FolderBackup.useInternalFolder ? "NOOP's own folder (#52 fallback)" : (FolderBackup.hasFolder ? "external folder" : "none chosen"))")
+        lines.append("Backup mode:  \(FolderBackup.useInternalFolder ? "Zoop's own folder (#52 fallback)" : (FolderBackup.hasFolder ? "external folder" : "none chosen"))")
         #endif
         #if os(macOS)
         // #278: macOS Backup & Sync restore-list health. When a user reports "restore shows no files",
@@ -559,7 +559,7 @@ enum DebugDataDiagnostics {
                 line += " · strap clock at arm \(skew > 0 ? "+" : "")\(mag)"
             }
             // #34: live HR at arm, logged only to test whether the strap's own sleep/rest detection (not
-            // anything NOOP sends) gates the physical haptic — see the doc comment on recordAlarmArm.
+            // anything Zoop sends) gates the physical haptic — see the doc comment on recordAlarmArm.
             if let hr = d.object(forKey: "alarm.lastArmHeartRate") as? Int {
                 line += " · HR \(hr) bpm at arm"
             }

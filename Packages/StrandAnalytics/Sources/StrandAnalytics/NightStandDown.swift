@@ -1,10 +1,10 @@
 import Foundation
 
 /// The hours of the local day in which a wearable's daytime-HR mode should stand down so the device can
-/// run its own night suite — derived from the sleep schedule NOOP already learns, never from a fixed clock.
+/// run its own night suite — derived from the sleep schedule Zoop already learns, never from a fixed clock.
 ///
 /// WHY THIS EXISTS. An Oura ring produces daytime heart rate ONLY while a client holds it in daytime-HR
-/// mode (`DHR_mode:3`); there is no banked daytime HR family it emits on its own. NOOP's screen-off suspend
+/// mode (`DHR_mode:3`); there is no banked daytime HR family it emits on its own. Zoop's screen-off suspend
 /// (#1526) stops holding the ring so its sleep suite can run — the right call at night, r = −0.93 between
 /// the overnight hold and the ring producing SpO2 / a hypnogram / `0x6A` — but a screen-off gate is also
 /// true for most of a working day, so from the night that build shipped the daytime 5-min HR bins went from

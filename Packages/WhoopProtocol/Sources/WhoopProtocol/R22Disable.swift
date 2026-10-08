@@ -8,7 +8,7 @@ import Foundation
 /// Before this file the 5/MG send path admitted opcode 120 on an opcode-only clause:
 /// `command == .setConfig && PuffinExperiment.deepDataEnabled`. That admits **any** feature-flag key with
 /// **any** value for as long as the deep-data opt-in happens to be on. The sixteen R22 keys are the only
-/// ones NOOP has any business writing, and the disable path is about to double the number of values that
+/// ones Zoop has any business writing, and the disable path is about to double the number of values that
 /// travel through that opcode, so the clause is tightened at the same time rather than widened.
 ///
 /// This is the same discipline `DeviceConfigReadProbe.isReadOnlyOpcode` established for the read probes:
@@ -36,7 +36,7 @@ import Foundation
 /// Splitting the predicates also makes the invariant exact rather than approximate: **an off value on the
 /// wire means a disable run is in flight**, and an enable value on the wire means the opt-in is on. A single
 /// predicate admitting either value under either gate could not say that. A value outside the pair is
-/// refused even for an R22 key: nothing in NOOP has a reason to write a third value, and admitting one would
+/// refused even for an R22 key: nothing in Zoop has a reason to write a third value, and admitting one would
 /// mean a typo could put an arbitrary byte into persistent strap config. `SET_DEVICE_CONFIG_VALUE` (119) is
 /// refused outright — it keeps its own clause for the Broadcast-HR flag.
 ///
@@ -196,7 +196,7 @@ public struct R22DisableReport: Equatable, Sendable {
     /// instrument. If a `'0'` write to *this* key does not move the stored value, the failure is
     /// attributable to the VALUE rather than to the key or the verb — every other key would leave that
     /// ambiguity open. It is also the flag with the least to lose: its effect is undocumented and it gates
-    /// no stream NOOP reads.
+    /// no stream Zoop reads.
     public static let probeKey = "enable_sig12"
 
     /// Which stage of the run a step belongs to.
@@ -528,8 +528,8 @@ public struct R22DisableReport: Equatable, Sendable {
       • A cleared flag is not the same as reverted BEHAVIOUR. This reports what the strap STORES. Whether
         the deep records actually stop is a separate question, answered by wearing the strap and watching
         the type-0x2F deep-buffer capture stop, not by this report.
-      • This does not restore a snapshot. NOOP never read these values before first writing them, so the
-        strap's pre-NOOP state is unknown. The honest claim is "cleared the flags NOOP set".
+      • This does not restore a snapshot. Zoop never read these values before first writing them, so the
+        strap's pre-Zoop state is unknown. The honest claim is "cleared the flags Zoop set".
       • disable_pip_r26_packets inverts: clearing it is expected to let PIP R26 packets flow AGAIN. That is
         the pre-R22 behaviour and is intended.
     """

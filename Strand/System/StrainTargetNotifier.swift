@@ -8,8 +8,8 @@ import UserNotifications
 // reached" notification. Twin of the Android `StrainTargetNotifier`/`StrainTargetPolicy` — the pure policy
 // must stay byte-identical (feature-level parity).
 //
-// CLEAN-ROOM: this reimplements the BEHAVIOUR only. The copy is NOOP's own — NOT WHOOP's decompiled
-// strings — and the target is NOOP's own recovery→strain band (#43), not a value read off another app.
+// CLEAN-ROOM: this reimplements the BEHAVIOUR only. The copy is Zoop's own — NOT WHOOP's decompiled
+// strings — and the target is Zoop's own recovery→strain band (#43), not a value read off another app.
 //
 // The gate runs on the 0-21 coupled axis: the day's stored Effort (0-100) is converted with the shipped
 // UnitFormatter.effortValue(_, .whoop) at the call site, and the target is the optimal band's lowerBound
@@ -37,7 +37,7 @@ enum StrainTargetNotifier {
         }
 
         /// Title + body for the nudge. `target` is the optimal-band low on the 0-21 coupled axis.
-        /// NOOP's OWN wording — the feature is reimplemented behaviour, not copied copy.
+        /// Zoop's OWN wording — the feature is reimplemented behaviour, not copied copy.
         static func copy(target: Int) -> (title: String, body: String) {
             (String(localized: "Optimal strain reached"),
              String(localized: "You've hit today's optimal strain target of \(target). Nice work — your recovery earned it."))

@@ -2,7 +2,7 @@ import XCTest
 @testable import OuraProtocol
 
 /// 0x6A `sleep_period_info` (OURA_PROTOCOL.md s6.12) — the tag that carries the ring's own average HR
-/// and a CANDIDATE breath rate, and that NOOP used to drop as unknown.
+/// and a CANDIDATE breath rate, and that Zoop used to drop as unknown.
 ///
 /// Every vector here is a REAL captured record from a Gen 3 overnight (`Night 08-06_08_07`,
 /// `oura-raw.jsonl`), full `type len rt(4 LE) body(10)` bytes, not a synthetic body — the point of the

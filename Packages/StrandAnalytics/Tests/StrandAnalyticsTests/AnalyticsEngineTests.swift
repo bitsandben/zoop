@@ -509,7 +509,7 @@ final class AnalyticsEngineTests: XCTestCase {
     }
 
     /// The measured night this guard exists for (2026-08-18, Oura ring vs a paired WHOOP strap): the
-    /// hypnogram covered 140 of 601 minutes, so NOOP stored 70 minutes of sleep where the strap recorded
+    /// hypnogram covered 140 of 601 minutes, so Zoop stored 70 minutes of sleep where the strap recorded
     /// 494. It read SOLID because NEITHER existing guard applies — `gravitySparse` is false (Oura banks
     /// no gravity at all, so `isGravitySparse` returns false for every ring night) and H9 needs
     /// efficiency ≥ 0.85 against this night's 0.50. Pinned so a future refactor cannot quietly lose it.

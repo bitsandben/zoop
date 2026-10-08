@@ -1111,13 +1111,13 @@ public enum SleepStager {
 
     // MARK: - Band sleep_state WAKE-veto (recover strap-disputed false wakes)
 
-    // NOOP's cardiorespiratory stager is known to OVER-CALL wake: an EEG-free stager reads a still, low-HR
+    // Zoop's cardiorespiratory stager is known to OVER-CALL wake: an EEG-free stager reads a still, low-HR
     // but not-quite-asleep epoch as wake far more often than the wearer was actually awake. WHOOP's OWN
     // per-second sleep-state band (the persisted v18 @81 high-nibble `(sb>>4)&3`: 0 wake/1 still/2 asleep/
     // 3 up — banked as `sleepStateJSON`, gridded by `sessionEpochSleepState`) is an INDEPENDENT scored
     // signal, not a re-derivation of ours. On real banded nights the strap scores "asleep"
-    // (`bandStateAsleep`) across ~two-thirds of the epochs NOOP calls wake, while the reverse disagreement
-    // (NOOP asleep, strap wake) is an order of magnitude smaller. So letting the strap's OWN "asleep"
+    // (`bandStateAsleep`) across ~two-thirds of the epochs Zoop calls wake, while the reverse disagreement
+    // (Zoop asleep, strap wake) is an order of magnitude smaller. So letting the strap's OWN "asleep"
     // verdict VETO an INTERIOR wake call recovers most of the spurious wake with near-zero downside.
     // Unlike the H8 consume confirm (which only ever KEEPS a whole borderline re-onset session), this
     // operates per EPOCH on the final hypnogram and only ever turns wake INTO sleep.
@@ -1592,7 +1592,7 @@ public enum SleepStager {
             // Band sleep_state WAKE-veto: recover INTERIOR false-wake epochs the strap's OWN band
             // (`bandSleepState`) scored "asleep". No-op when the band is absent (WHOOP 4.0) or the flag is
             // off; stager-agnostic (corrects whichever hypnogram V1/V2 produced). Efficiency below is then
-            // computed on the corrected stages, so a night NOOP over-called wake on reports true efficiency.
+            // computed on the corrected stages, so a night Zoop over-called wake on reports true efficiency.
             let stages = applyBandStateWakeVeto(rawStages, start: p.start, end: p.end,
                                                 bandSleepState: bandSleepState)
             let eff = efficiency(start: p.start, end: p.end, stages: stages)

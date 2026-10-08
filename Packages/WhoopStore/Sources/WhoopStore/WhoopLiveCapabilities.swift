@@ -1,6 +1,6 @@
 import Foundation
 
-/// Honest live-BLE capability set for a WHOOP strap that NOOP can actually drive **without** a CSV /
+/// Honest live-BLE capability set for a WHOOP strap that Zoop can actually drive **without** a CSV /
 /// Health import.
 ///
 /// Calibrated SpO₂ **%** is deliberately **excluded**: AnalyticsEngine nulls `spo2Pct` for every WHOOP
@@ -8,14 +8,14 @@ import Foundation
 /// registry used to advertise `spo2` on every paired WHOOP, which made an empty Blood Oxygen tile look
 /// like a bug rather than import-only design (#548).
 ///
-/// Steps are 5.0 / MG only over BLE (4.0 has no on-device step counter NOOP can read). Skin temp /
-/// sleep / strain remain listed because NOOP does decode and score them on-device (skin temp as a
+/// Steps are 5.0 / MG only over BLE (4.0 has no on-device step counter Zoop can read). Skin temp /
+/// sleep / strain remain listed because Zoop does decode and score them on-device (skin temp as a
 /// nightly ±°C deviation after baseline calibration; firmware layout dependent).
 ///
 /// Twin of `com.noop.data.WhoopLiveCapabilities`. Pure — covered by `swift test`.
 public enum WhoopLiveCapabilities {
 
-    /// Core metrics every WHOOP generation can feed in NOOP over BLE (no calibrated SpO₂ %).
+    /// Core metrics every WHOOP generation can feed in Zoop over BLE (no calibrated SpO₂ %).
     public static let base: Set<Metric> = [.hr, .hrv, .skinTemp, .sleep, .strainLoad]
 
     /// True when the model label names a 5.0 or MG (wizard labels: "4.0", "5.0 MG", "WHOOP 5.0", …).

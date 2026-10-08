@@ -22,7 +22,7 @@ public struct WhoopExportImporter {
 
     // MARK: - Strain → Effort rescale (Charge/Effort/Rest redesign, 2026-06-12)
 
-    /// WHOOP reports "Day Strain" on its own 0–21 logarithmic scale. NOOP's "Effort" score lives on a
+    /// WHOOP reports "Day Strain" on its own 0–21 logarithmic scale. Zoop's "Effort" score lives on a
     /// 0–100 scale (StrainScorer.maxStrain = 100), so an imported Day Strain must be rescaled by
     /// 100/21 before it is written into the `strain` metric series / `DailyMetric.strain`, otherwise
     /// imported history would sit a fifth as high as live-computed Effort.
@@ -32,21 +32,21 @@ public struct WhoopExportImporter {
     /// Keep this factor byte-identical to the Android importer (WhoopCsvImporter.kt).
     public static let dayStrainToEffortScale = 100.0 / 21.0
 
-    /// Rescale an imported WHOOP Day Strain (0–21) onto NOOP's 0–100 Effort axis. `nil` passes through.
+    /// Rescale an imported WHOOP Day Strain (0–21) onto Zoop's 0–100 Effort axis. `nil` passes through.
     public static func effortFromImportedDayStrain(_ dayStrain: Double?) -> Double? {
         guard let dayStrain else { return nil }
         return dayStrain * dayStrainToEffortScale
     }
 
-    /// Inverse: convert NOOP's internal 0–100 Effort back onto WHOOP's 0–21 Day Strain scale for a
-    /// WHOOP-format CSV export. Keeps the CSV genuinely WHOOP-compatible AND makes a NOOP export →
-    /// NOOP import round-trip lossless (export ÷scale, then import ×scale restores the value).
+    /// Inverse: convert Zoop's internal 0–100 Effort back onto WHOOP's 0–21 Day Strain scale for a
+    /// WHOOP-format CSV export. Keeps the CSV genuinely WHOOP-compatible AND makes a Zoop export →
+    /// Zoop import round-trip lossless (export ÷scale, then import ×scale restores the value).
     public static func whoopDayStrainFromEffort(_ effort: Double?) -> Double? {
         guard let effort else { return nil }
         return effort / dayStrainToEffortScale
     }
 
-    /// WHOOP CSVs carry "Sleep efficiency %" on a 0–100 scale; NOOP's `efficiency` columns store the
+    /// WHOOP CSVs carry "Sleep efficiency %" on a 0–100 scale; Zoop's `efficiency` columns store the
     /// 0–1 fraction the native pipeline writes (`AnalyticsEngine`: actual-sleep ÷ in-bed). Convert at
     /// the WRITE boundary (WhoopImporter → store), NOT at parse time, so the verbatim parsed value
     /// (`sleepEfficiencyPct`) and the CSV round-trip contract are preserved — the same shape as the
@@ -57,7 +57,7 @@ public struct WhoopExportImporter {
     }
 
     /// Inverse: the stored 0–1 fraction back onto the CSV's 0–100 "Sleep efficiency %" column, so an
-    /// exported CSV is WHOOP-compatible and a NOOP export → NOOP import round-trip is lossless to
+    /// exported CSV is WHOOP-compatible and a Zoop export → Zoop import round-trip is lossless to
     /// 4 decimal places of a percent (1e-6 of the fraction). The rounding matters: `num()` prints
     /// shortest-round-trip Doubles, and a raw `fraction * 100` carries FP dust (0.923 × 100 =
     /// 92.30000000000001) straight into the CSV cell.
@@ -394,7 +394,7 @@ public struct WhoopExportImporter {
             r.cycleStart = WhoopTime.parse(row.cell("cycle_start_time"), offsetMinutes: tz)
             r.question = row.cell("question_text", "question")
             // #631: the REAL WHOOP export header is "Answered yes" (-> answered_yes), not the
-            // "Answered yes/no" NOOP's own exporter writes (-> answered_yes_no). Every real WHOOP
+            // "Answered yes/no" Zoop's own exporter writes (-> answered_yes_no). Every real WHOOP
             // journal import silently zeroed out to "without" because neither of the old keys ever
             // matched, regardless of the account's actual answers.
             r.answer   = row.cell("answered_yes", "answered_yes_no", "answer", "answer_text")

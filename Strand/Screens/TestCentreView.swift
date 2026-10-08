@@ -57,7 +57,7 @@ struct TestCentreView: View {
     // #polar-debug: the Polar strap-identity diagnostic toggle. Only rendered when a Polar strap is paired.
     @AppStorage(AppModel.polarDebugLoggingKey) private var polarDebugLogging = false
 
-    /// The model NOOP auto-detects for a PAIRED Polar strap, from its stored advertised name (no live
+    /// The model Zoop auto-detects for a PAIRED Polar strap, from its stored advertised name (no live
     /// connection needed) — e.g. "Polar H10 identified — PMD ecg,acc; HRV via standard R-R". `nil` when no
     /// Polar strap is paired, which hides the whole toggle so a non-Polar user never sees Polar debug.
     private var polarIdentity: String? {
@@ -67,7 +67,7 @@ struct TestCentreView: View {
 
     // #1284 residual 3: experimental Oura 0x49-onset keying, only offered when an Oura ring is paired.
     @AppStorage(AppModel.ouraOnsetKeyingKey) private var ouraOnsetKeying = false
-    // Packed-notification A/B: the official app's SetNotification mask `ff` vs NOOP's `3f`, next connect.
+    // Packed-notification A/B: the official app's SetNotification mask `ff` vs Zoop's `3f`, next connect.
     @AppStorage(AppModel.ouraNotifyMaskFullKey) private var ouraNotifyMaskFull = false
     private var ouraPaired: Bool { model.deviceRegistry?.devices.contains { $0.brand == "Oura" } ?? false }
 
@@ -109,7 +109,7 @@ struct TestCentreView: View {
         return cmd.bytes.map { String(format: "%02x", $0) }.joined()
     }
 
-    /// Prefill from the NOOP profile when the field changes. Sex maps through the 0x5c gender code.
+    /// Prefill from the Zoop profile when the field changes. Sex maps through the 0x5c gender code.
     private func prefillUserInfoValue() {
         switch userInfoField {
         case .height: userInfoValueText = String(Int(profile.heightCm.rounded()))
@@ -444,7 +444,7 @@ struct TestCentreView: View {
 
     /// The 0x20 user-info WRITE experiment. EXPERIMENTAL, manual, one field at a time.
     ///
-    /// This is the only control in NOOP that writes user data to a ring. It exists to answer one
+    /// This is the only control in Zoop that writes user data to a ring. It exists to answer one
     /// question: does a 0x20 write change what tag 0x5c reports? Nothing calls it automatically, and
     /// deliberately NOT on connect: the value encoding is unverified, an automatic write would destroy
     /// the clean before-state the readout depends on, and the connect/bond window is the app's most
@@ -808,7 +808,7 @@ struct TestCentreView: View {
     }
 
     /// The manual "Clear scheduled exports" action (#650): wipes every scheduled strap-log / raw-capture
-    /// file NOOP has dropped into Documents, regardless of the retention setting, then confirms via the
+    /// file Zoop has dropped into Documents, regardless of the retention setting, then confirms via the
     /// same info alert the other export actions use.
     private func clearScheduledExports() {
         let removed = ScheduledDebugExport.clearScheduledExports()

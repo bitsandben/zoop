@@ -22,9 +22,9 @@ public enum HeaderCRCKind: String, Sendable, CaseIterable {
 
 /// WHOOP custom GATT service families visible in advertisements.
 ///
-/// Only `.whoop4` and `.maverickGooseFD4B` are connectable in NOOP today. The other services are
+/// Only `.whoop4` and `.maverickGooseFD4B` are connectable in Zoop today. The other services are
 /// protocol facts from reverse engineering and are diagnostic-only until their connection framing is
-/// mapped and hardware-tested. `.puffin1150` is intentionally qualified because NOOP already uses
+/// mapped and hardware-tested. `.puffin1150` is intentionally qualified because Zoop already uses
 /// "puffin" for the fd4b/Maverick-Goose packet framing.
 public enum WhoopGattServiceFamily: String, Sendable, CaseIterable {
     case whoop4

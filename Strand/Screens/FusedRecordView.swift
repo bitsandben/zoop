@@ -9,7 +9,7 @@ import StrandAnalytics
 // metric it shows the BEST-sourced value, a provenance pill naming the source, the plain published
 // reason from MetricArbitrationPolicy ("counts directly" / "best stager"), and the inline agreement
 // state from FusionResolver (agree / minor delta / conflict). When two sources disagree it offers a
-// conflict-compare sheet that lists EVERY source's value side by side and which one NOOP is using and
+// conflict-compare sheet that lists EVERY source's value side by side and which one Zoop is using and
 // why — it NEVER silently merges or averages.
 //
 // SELF-CONTAINED: the view takes a fully-resolved `FusedRecord` via init (the Repository adapter that
@@ -321,8 +321,8 @@ private struct FusedMetricRowView: View {
 
 // MARK: - Conflict-compare sheet
 
-/// A small read-only sheet: every source's value for the metric, side by side, with the one NOOP is
-/// using marked and its trust reason named. NOOP never adjudicates which is "correct" — it shows the
+/// A small read-only sheet: every source's value for the metric, side by side, with the one Zoop is
+/// using marked and its trust reason named. Zoop never adjudicates which is "correct" — it shows the
 /// spread and explains its best-signal pick. Transparency, not diagnosis.
 private struct ConflictCompareSheet: View {
     let row: FusedRow

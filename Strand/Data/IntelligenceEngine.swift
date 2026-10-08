@@ -7,8 +7,8 @@ import StrandAnalytics
 
 /// On-device "intelligence": computes recovery / day-strain / sleep from the raw strap streams using
 /// the same model shape WHOOP uses (HRV vs personal baseline ~60%, resting HR ~20%, sleep ~15%,
-/// respiration ~5%; strain 0–21 from cardiovascular load). This is what makes NOOP independent of
-/// WHOOP's cloud , for any day the strap collected raw data with NOOP connected, NOOP scores it
+/// respiration ~5%; strain 0–21 from cardiovascular load). This is what makes Zoop independent of
+/// WHOOP's cloud , for any day the strap collected raw data with Zoop connected, Zoop scores it
 /// itself rather than relying on the values WHOOP computed in the imported CSV.
 @MainActor
 final class IntelligenceEngine: ObservableObject {
@@ -135,11 +135,11 @@ final class IntelligenceEngine: ObservableObject {
         return moved.isEmpty ? "none" : moved.joined(separator: "+")
     }
 
-    /// Who supplies the dashboard headline for a By-Day row. The By-Day card always shows NOOP's OWN
+    /// Who supplies the dashboard headline for a By-Day row. The By-Day card always shows Zoop's OWN
     /// on-device numbers, but the WHOLE-DASHBOARD value for the same day can come from an IMPORTED row
     /// that won the per-day merge (imports win field-by-field over computed , see Repository.mergeDaily).
     /// We resolve the REAL provenance so the card's badge tells a strap-scored night apart from an
-    /// imported one, instead of always claiming "NOOP-computed". (Sleep overhaul §2.6 honesty fix.)
+    /// imported one, instead of always claiming "Zoop-computed". (Sleep overhaul §2.6 honesty fix.)
     /// The `stages=` token of the per-day sleep diagnostic line (#386): `<deep>+<rem>+<light>=<sum>` in
     /// rounded minutes when the day carries a full banked stage split, `nil` when any component is
     /// absent (an unstaged night, or an imported day that only brought a total). The sum is printed
@@ -152,7 +152,7 @@ final class IntelligenceEngine: ObservableObject {
     }
 
     enum DaySource: Equatable {
-        /// NOOP scored this day itself from the raw strap streams; no import covers it.
+        /// Zoop scored this day itself from the raw strap streams; no import covers it.
         case computed
         /// A WHOOP export covers this day and wins the dashboard merge.
         case whoopImport
@@ -325,11 +325,11 @@ final class IntelligenceEngine: ObservableObject {
         return n % 2 == 1 ? s[n / 2] : (s[n / 2 - 1] + s[n / 2]) / 2
     }
 
-    /// The per-day RHR floor-vs-mean diagnostic line (#691). NOOP's `floor` is the WHOOP-style resting
+    /// The per-day RHR floor-vs-mean diagnostic line (#691). Zoop's `floor` is the WHOOP-style resting
     /// HR , the lowest SUSTAINED 5-min in-bed level (SleepStager picks the min 5-min rolling-mean HR per
     /// session, the day takes the .min() across them) , whereas a "sleeping HR" app reports the night MEAN
-    /// over the whole asleep span. The mean always sits at-or-above the floor, so NOOP reading lower is BY
-    /// DESIGN, not a bug; logging both makes a "NOOP RHR is lower than my other app" report explainable
+    /// over the whole asleep span. The mean always sits at-or-above the floor, so Zoop reading lower is BY
+    /// DESIGN, not a bug; logging both makes a "Zoop RHR is lower than my other app" report explainable
     /// from the strap log. `inBedBpms` is the bpm of every HR sample inside a matched in-bed session (the
     /// SAME span the floor came from, so the two numbers are directly comparable). Empty in-bed → nightMean
     /// is "nil". Counts/bpm only , no timestamps or PII. Pure so it's unit-tested directly and is the SAME
@@ -372,7 +372,7 @@ final class IntelligenceEngine: ObservableObject {
         let meanLog: String = inBedBpms.isEmpty ? "nil"
             : String(Int((Double(inBedBpms.reduce(0, +)) / Double(inBedBpms.count)).rounded()))
         return "rhr day=\(day) floor=\(floor) nightMean=\(meanLog) inBedSamples=\(inBedBpms.count) "
-            + "(floor = WHOOP-style lowest-sustained = NOOP RHR; mean = sleeping-HR-app number)"
+            + "(floor = WHOOP-style lowest-sustained = Zoop RHR; mean = sleeping-HR-app number)"
     }
 
     /// #1244: one line for a day that CLEARED the ≥200-HR gate yet detected NO in-bed session, so the
@@ -657,7 +657,7 @@ final class IntelligenceEngine: ObservableObject {
     static let effortRescoreFlagKey = "intelligence.effortRescore.v313.done"
 
     /// One-shot, on-upgrade FULL-history Effort rescore (#313 PART B). The Effort hero gauge + numbers
-    /// moved from the old 0–21 axis to NOOP's own 0–100 axis. On-device computed rows since v2.6.1
+    /// moved from the old 0–21 axis to Zoop's own 0–100 axis. On-device computed rows since v2.6.1
     /// already store 0–100, but rows the engine computed on an OLDER build (capped at `maxDays` per run,
     /// so deep history was never revisited) may still hold 0–21 strain.
     ///
@@ -1763,12 +1763,12 @@ final class IntelligenceEngine: ObservableObject {
                         ticksPerStep: up.stepTicksPerStep)
                 }
                 // ── RHR floor-vs-mean diagnostic (#691) ────────────────────────────────────────────────
-                // Make the recurring "NOOP's resting HR reads LOWER than my sleeping-HR app" reports
+                // Make the recurring "Zoop's resting HR reads LOWER than my sleeping-HR app" reports
                 // explainable from the strap log instead of a guess. The two numbers measure different
-                // things BY DESIGN, not a bug: NOOP's `restingHr` is the WHOOP-style FLOOR (the lowest
+                // things BY DESIGN, not a bug: Zoop's `restingHr` is the WHOOP-style FLOOR (the lowest
                 // sustained 5-min in-bed level , SleepStager picks the min 5-min rolling-mean HR per session,
                 // and the day takes the .min() across them), whereas a "sleeping HR" app reports the night
-                // MEAN over the whole asleep span. The mean always sits above the floor, so NOOP looking
+                // MEAN over the whole asleep span. The mean always sits above the floor, so Zoop looking
                 // lower is correct. Log BOTH so a report ships proof of the gap. Mean is computed over the
                 // SAME matched in-bed span the floor came from (so they're directly comparable); a night
                 // with no banked floor (no matched sleep) logs nil and the line is skipped. Logging only ,
@@ -2010,7 +2010,7 @@ final class IntelligenceEngine: ObservableObject {
         // Which SOURCE measured each night's respiration — the input `Baselines.deviceEraEpoch` (#459)
         // needs, and respiration is a metric that requires it: a WHOOP export reports its OWN measured rate
         // (~16.1 for this history) while an Oura ring reports the rate its firmware measured (~14.6), and
-        // NOOP's own RSA estimate is a third method again. Pooling them in one baseline turns a strap SWITCH
+        // Zoop's own RSA estimate is a third method again. Pooling them in one baseline turns a strap SWITCH
         // into a ~3σ illness-ward step against a ~0.52 bpm spread — a device artifact scored as physiology,
         // which is exactly the failure #459 named for HRV (Oura RMSSD ~120-155 ms vs WHOOP ~72-112 ms).
         //
@@ -2029,7 +2029,7 @@ final class IntelligenceEngine: ObservableObject {
         // the "-zoop" computed sibling, the Apple/HC riders) buckets to one brand — so a WHOOP-only user is
         // unaffected; `max` keeps whichever cut is LATER, since both mean "ignore nights before this".
         // KNOWN GAP, and pre-existing: the bucket is per BRAND, so it does not separate an imported WHOOP
-        // vendor rate from NOOP's own RSA estimate on WHOOP nights; since #2525 the two meet only while the
+        // vendor rate from Zoop's own RSA estimate on WHOOP nights; since #2525 the two meet only while the
         // import seeds. #459's primitive is likewise still unwired for the HRV and resting-HR baselines it
         // was written for; that is #459's own scope, not this change's.
         let recoveryEpoch = Baselines.recoveryBaselineEpoch()
@@ -2470,7 +2470,7 @@ final class IntelligenceEngine: ObservableObject {
         // own baseline with the SAME `watchRecoveries` engine the apple fold uses (which reuses
         // RecoveryScorer.recovery verbatim), then write the score under the COMPUTED ("-zoop") source so it
         // merges onto Today exactly like a live day. The imported daily row keeps its raw values untouched;
-        // the computed row carries the NOOP-derived Charge + the Rest composite. HONEST DATA: the engine
+        // the computed row carries the Zoop-derived Charge + the Rest composite. HONEST DATA: the engine
         // returns nil + calibrating until the HRV baseline is usable, so an import-only day stays calibrating
         // rather than faking a number. The strap and a real WHOOP/Apple import keep winning , we skip any day
         // already scored this pass (`dailies`) or owned by a WHOOP/Apple import. The window matches the
@@ -3027,7 +3027,7 @@ final class IntelligenceEngine: ObservableObject {
 
         results = out
         note = out.isEmpty
-            ? "No scored nights yet. Wear the strap with NOOP connected overnight and the engine will score your charge, effort and rest itself, no WHOOP cloud required."
+            ? "No scored nights yet. Wear the strap with Zoop connected overnight and the engine will score your charge, effort and rest itself, no WHOOP cloud required."
             : nil
 
         // Reload the dashboard caches so the freshly computed scores show up immediately. A heal-only

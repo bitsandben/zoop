@@ -218,7 +218,7 @@ public enum DaytimeStress {
         /// ADDITIVE — total minutes across SCORED waking hours at/above `highBandFloor`, the
         /// Oura-comparable "time in high stress" figure. Each scored hour is one `bucketSeconds`
         /// bucket, so this is `(# high-band scored hours) * bucketSeconds / 60`. Compare against
-        /// Oura's `stress_high_s / 60` — NOOP's timeline is hourly-grain vs Oura's ~5-minute
+        /// Oura's `stress_high_s / 60` — Zoop's timeline is hourly-grain vs Oura's ~5-minute
         /// grain, so treat this as a coarse approximation, not a precise match. 0 for `.empty`
         /// and for any day with no scored hours.
         public let highStressMinutes: Int

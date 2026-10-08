@@ -10,7 +10,7 @@ import MapKit
 
 // MARK: - Workout detail (#410)
 //
-// A READ-ONLY drill-down for one tapped session, built ONLY from the locked Noop component system
+// A READ-ONLY drill-down for one tapped session, built ONLY from the locked Zoop component system
 // (ZoopCard / ChartCard / SectionHeader / StatTile / SegmentBar idiom) so it sits in the same
 // instrument-grade, Effort-amber colour world as the Workouts list it opens from.
 //
@@ -546,7 +546,7 @@ struct WorkoutDetailView: View {
                         LiquidVessel(value: fraction, tint: StrandPalette.effortColor, animated: false)
                             .frame(width: 88, height: 88)
                         VStack(spacing: 0) {
-                            // The session's Effort contribution ticks up to its value — the NOOP signature.
+                            // The session's Effort contribution ticks up to its value — the Zoop signature.
                             CountUpText(value: displayValue,
                                         format: { String(format: "%.1f", $0) },
                                         font: StrandFont.rounded(28),
@@ -643,7 +643,7 @@ struct WorkoutDetailView: View {
 // analogue of Android's `RouteCanvas`, but on real map tiles. Built as a platform-bridged representable
 // around `MKMapView` so it runs on BOTH iOS 17 and macOS 13 (SwiftUI's newer `Map { MapPolyline }` needs
 // iOS 17 / macOS 14, and the macOS deployment target is 13). The map is offline-capable: MapKit caches
-// tiles locally and the route itself is on-device — NOOP never sends the route anywhere.
+// tiles locally and the route itself is on-device — Zoop never sends the route anywhere.
 
 #if canImport(MapKit) && canImport(UIKit)
 import UIKit

@@ -180,7 +180,7 @@ extension WhoopStore {
     ///
     /// It cannot fire today. `syncedAt` is only ever set by `markRawBatchSynced`, which has no production
     /// caller — and cannot get one, because marking a batch "synced" needs somewhere to sync it to and
-    /// NOOP has no server, no account and no cloud sync by design (`CLAUDE.md`). The API and this policy
+    /// Zoop has no server, no account and no cloud sync by design (`CLAUDE.md`). The API and this policy
     /// are inherited from the upstream `my-whoop` store (see `ATTRIBUTION.md`), which did have a sync
     /// lane. Kept rather than deleted: both halves are correct and tested, and an on-device EXPORT lane
     /// would be a legitimate server-free way to drain the outbox — at which point marking exported

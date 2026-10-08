@@ -1,5 +1,5 @@
 //  LiquidPrimitives.swift
-//  NOOP · Liquid design language
+//  Zoop · Liquid design language
 //
 //  The Canvas renderers + SwiftUI view wrappers for the signature elements:
 //  the circular vessel gauge, the horizontal tube, and the live heart-rate thread.

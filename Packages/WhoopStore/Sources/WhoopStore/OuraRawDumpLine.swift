@@ -2,14 +2,14 @@ import Foundation
 
 /// Pure, deterministic encoder for ONE line of the Oura RAW capture — a diagnostic JSONL sidecar holding
 /// the UNDECODED TLV-record bytes exactly as received, NOT a datastore row. Complement to the decoded
-/// sidecars (`OuraActivityDumpLine` = MET values, `OuraIbiHrDumpLine` = HR from IBIs): those are what NOOP
+/// sidecars (`OuraActivityDumpLine` = MET values, `OuraIbiHrDumpLine` = HR from IBIs): those are what Zoop
 /// *interpreted*; this is what the ring actually *sent*.
 ///
 /// WHY a raw file too: the decoded sidecars can only show what we successfully decoded, so a hole in them is
 /// ambiguous — did the ring not send those records, or did we drop/fail to decode them? This capture removes
 /// the ambiguity: reframe it OFFLINE (walk `2+len` TLV records, read the tag + ring-time) and a window that is
 /// empty in the decoded file but present here is a DECODE drop; absent in both is RING-SIDE. It also preserves
-/// tags NOOP does not decode yet (superset of the `0x71` fixture log). Never scored, safe to delete.
+/// tags Zoop does not decode yet (superset of the `0x71` fixture log). Never scored, safe to delete.
 ///
 /// SCOPE: the HISTORY-drain record path only (the tap sits where TLV notifications are fed to the driver,
 /// NOT the high-frequency live-HR push), so a night stays bounded. Auth/secure frames are handled+consumed

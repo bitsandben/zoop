@@ -62,7 +62,7 @@ enum PendingIntents {
 /// Record a timestamped "moment" — the iOS analogue of the strap double-tap "mark a moment" action.
 struct MarkMomentIntent: AppIntent {
     static var title: LocalizedStringResource = "Mark a Moment"
-    static var description = IntentDescription("Record a timestamped moment in NOOP.")
+    static var description = IntentDescription("Record a timestamped moment in Zoop.")
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         PendingIntents.append(.markMoment, at: Date())
@@ -82,13 +82,13 @@ struct BuzzStrapIntent: AppIntent {
     }
 }
 
-/// Pull the strap's stored history now: the Shortcuts twin of the "Sync now" button, run WITHOUT opening NOOP.
-/// iOS runs an in-app intent inside NOOP's own process (launching or resuming it in the background), where the
+/// Pull the strap's stored history now: the Shortcuts twin of the "Sync now" button, run WITHOUT opening Zoop.
+/// iOS runs an in-app intent inside Zoop's own process (launching or resuming it in the background), where the
 /// strap link lives under the bluetooth-central background mode, so the offload carries on after this returns.
 /// The spoken/shown reply reports only what this path observed about the sync starting.
 struct SyncStrapIntent: AppIntent {
     static var title: LocalizedStringResource = "Sync Strap"
-    static var description = IntentDescription("Pull your WHOOP strap's stored history into NOOP now.")
+    static var description = IntentDescription("Pull your WHOOP strap's stored history into Zoop now.")
     static var openAppWhenRun = false
 
     @MainActor
@@ -96,9 +96,9 @@ struct SyncStrapIntent: AppIntent {
         switch await AppModel.startStrapSyncFromShortcut() {
         case .started:               return .result(dialog: "Syncing your strap.")
         case .alreadyRunning:        return .result(dialog: "Your strap is already syncing.")
-        case .willSyncWhenConnected: return .result(dialog: "NOOP is connecting to your strap and will sync as soon as it's ready.")
-        case .strapNotReady:         return .result(dialog: "Your strap isn't connected to NOOP yet, so the sync didn't start.")
-        case .notStarted:            return .result(dialog: "NOOP couldn't start the sync. Open NOOP to see the strap log.")
+        case .willSyncWhenConnected: return .result(dialog: "Zoop is connecting to your strap and will sync as soon as it's ready.")
+        case .strapNotReady:         return .result(dialog: "Your strap isn't connected to Zoop yet, so the sync didn't start.")
+        case .notStarted:            return .result(dialog: "Zoop couldn't start the sync. Open Zoop to see the strap log.")
         }
     }
 }
@@ -108,7 +108,7 @@ struct SyncStrapIntent: AppIntent {
 /// the app handles the actual network call using the user's saved key.
 struct AskCoachIntent: AppIntent {
     static var title: LocalizedStringResource = "Ask Coach"
-    static var description = IntentDescription("Ask your NOOP Coach a question about your recovery, sleep, or training.")
+    static var description = IntentDescription("Ask your Zoop Coach a question about your recovery, sleep, or training.")
     static var openAppWhenRun = true
 
     /// The question to ask, populated by Siri from the user's spoken phrase.
@@ -121,7 +121,7 @@ struct AskCoachIntent: AppIntent {
     }
 }
 
-/// Surfaces NOOP's intents to Siri, Spotlight, and the Shortcuts gallery without any user setup.
+/// Surfaces Zoop's intents to Siri, Spotlight, and the Shortcuts gallery without any user setup.
 struct NOOPShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(intent: SyncStrapIntent(),

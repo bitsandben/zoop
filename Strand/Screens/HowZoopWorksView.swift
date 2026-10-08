@@ -1,7 +1,7 @@
 import SwiftUI
 import StrandDesign
 
-// MARK: - How NOOP works (primer)
+// MARK: - How Zoop works (primer)
 //
 // COMPONENT 5 of the Sleep & Recovery Guidance / Explainability layer
 // (docs/superpowers/specs/2026-06-20-sleep-guidance-explainability.md).
@@ -336,7 +336,7 @@ struct HowZoopWorksView: View {
 }
 
 #if DEBUG
-#Preview("How NOOP works") {
+#Preview("How Zoop works") {
     HowZoopWorksView(onClose: {})
         .preferredColorScheme(.dark)
 }

@@ -3,7 +3,7 @@ import Combine
 import WhoopProtocol
 @testable import Strand
 
-/// The live heart rate NOOP shows is cleared when the strap stops measuring, instead of the last reading standing on
+/// The live heart rate Zoop shows is cleared when the strap stops measuring, instead of the last reading standing on
 /// every surface for as long as the link lasts.
 @MainActor
 final class LiveHeartRateReadabilityTests: XCTestCase {

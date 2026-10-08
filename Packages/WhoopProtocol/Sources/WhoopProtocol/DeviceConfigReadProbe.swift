@@ -6,16 +6,16 @@ import Foundation
 ///
 /// ## Why
 ///
-/// NOOP writes config two ways and reads it neither way. `SET_FF_VALUE` (120 / 0x78) writes the sixteen
+/// Zoop writes config two ways and reads it neither way. `SET_FF_VALUE` (120 / 0x78) writes the sixteen
 /// R22 feature flags in `Whoop5Config.enableR22Sequence`; `SET_DEVICE_CONFIG_VALUE` (119 / 0x77) writes
-/// the one device-config key NOOP knows (the Broadcast-HR flag, #181). Those are two *different
+/// the one device-config key Zoop knows (the Broadcast-HR flag, #181). Those are two *different
 /// namespaces* sharing a body layout — and the 117/118 enumerate pair #761 built covers the feature-flag
 /// namespace ONLY. The device-config namespace has never been read or enumerated here at all.
 ///
-/// That matters for #103. NOOP already decodes a byte the deep record carries at offset 82 that reads as
+/// That matters for #103. Zoop already decodes a byte the deep record carries at offset 82 that reads as
 /// real SpO2 on some straps and is flat 0x00 on others, which is what a subscription gate would look
 /// like. If a config value governs it, it is far more likely to live in the device-config namespace than
-/// among the sixteen flags NOOP already writes — and nobody has ever asked a strap for one.
+/// among the sixteen flags Zoop already writes — and nobody has ever asked a strap for one.
 ///
 /// ## What this establishes, and the honest failure case
 ///
@@ -34,14 +34,14 @@ import Foundation
 /// the 5/MG allowlist does not carry the opcode — while an undecodable reply is affirmative evidence the
 /// strap DID transmit, which is the opposite of "not served". Both are reported as **unconfirmed**.
 ///
-/// Only if a verb answers does the probe go on to read values: first the sixteen key names NOOP already
+/// Only if a verb answers does the probe go on to read values: first the sixteen key names Zoop already
 /// has (`Whoop5Config.enableR22Sequence` — their VALUES on a real strap have never been read, only
 /// written), then a short list of GUESSED oxygen-related key names against the device-config namespace.
 ///
 /// ## Read-only by construction
 ///
 /// The probe writes command frames purely in order to read, the same shape as the Oura feature-status
-/// probes NOOP already ships (`Packages/OuraProtocol/…/Commands.swift`) and as the #761 enumeration. The
+/// probes Zoop already ships (`Packages/OuraProtocol/…/Commands.swift`) and as the #761 enumeration. The
 /// SET verbs are named in `writeOpcodes` for exactly one reason: so the send allowlist can be expressed
 /// as "`readOnlyOpcodes` only" and a unit test can prove 119/120 are rejected by it. Nothing in this file
 /// or on its BLE path can form a SET frame.
@@ -72,11 +72,11 @@ public enum DeviceConfigReadProbe {
     // MARK: - Wire constants
 
     /// `GET_DEVICE_CONFIG_VALUE` (121 / 0x79) — ask for one device-config value by key name. Read-only.
-    /// Named in the repo's protocol table; never before sent by NOOP, and possibly unimplemented.
+    /// Named in the repo's protocol table; never before sent by Zoop, and possibly unimplemented.
     public static let getDeviceConfigValueCmd: UInt8 = 121
 
     /// `GET_FF_VALUE` (128 / 0x80) — ask for one feature-flag value by key name. Read-only. Named in the
-    /// repo's protocol table; never before sent by NOOP, and possibly unimplemented.
+    /// repo's protocol table; never before sent by Zoop, and possibly unimplemented.
     public static let getFeatureFlagValueCmd: UInt8 = 128
 
     /// `SET_DEVICE_CONFIG_VALUE` (119 / 0x77). Listed here ONLY so the allowlist below can name what it
@@ -109,13 +109,13 @@ public enum DeviceConfigReadProbe {
     /// The full plan is 2 discovery + 16 known flags + the candidate list, comfortably under this.
     public static let maxSteps = 64
 
-    /// The one device-config key NOOP already knows a real strap accepts: the Broadcast-HR flag written
+    /// The one device-config key Zoop already knows a real strap accepts: the Broadcast-HR flag written
     /// via `SET_DEVICE_CONFIG_VALUE` and hardware-validated in #181. Used as the discovery key for opcode
     /// 121 precisely because it is *known-good* — a FAILURE on this key is evidence about the verb, not
     /// about the key.
     public static let deviceConfigDiscoveryKey = "whoop_live_hr_in_adv_ind_pkt"
 
-    /// Names to read, independent of the flags NOOP writes. The four extra WHOOP 5 keys were
+    /// Names to read, independent of the flags Zoop writes. The four extra WHOOP 5 keys were
     /// returned by a complete 117/118 exchange on firmware 50.41.1.0. Their effects and accepted
     /// values are unknown; observing a name does not authorize adding it to the enable sequence.
     /// This macOS hardware investigation intentionally leaves mobile probe plans and decoding unchanged:
@@ -304,7 +304,7 @@ public struct DeviceConfigReadProbeReport: Equatable, Sendable {
     public enum Group: String, Equatable, Sendable {
         /// One round-trip per verb against a key that verb should know, to establish whether it answers.
         case discovery
-        /// The sixteen flag names NOOP already writes — reading their VALUES is new information.
+        /// The sixteen flag names Zoop already writes — reading their VALUES is new information.
         case knownFlag
         /// Guessed oxygen-related key names. Labelled as guesses everywhere.
         case candidate
@@ -427,7 +427,7 @@ public struct DeviceConfigReadProbeReport: Equatable, Sendable {
         switch phase {
         case 0:
             // Discovery: one round-trip per verb, each against a key that verb has a reason to know.
-            // 128 gets a flag NOOP writes; 121 gets the Broadcast-HR key, hardware-validated in #181.
+            // 128 gets a flag Zoop writes; 121 gets the Broadcast-HR key, hardware-validated in #181.
             let plan: [Step] = [
                 Step(opcode: DeviceConfigReadProbe.getFeatureFlagValueCmd,
                      key: knownFlagKeys.first ?? DeviceConfigReadProbe.deviceConfigDiscoveryKey,
@@ -600,7 +600,7 @@ public struct DeviceConfigReadProbeReport: Equatable, Sendable {
                       empty: "(none — no reply was decoded)")
         let writeNames = Set(Whoop5Config.enableR22Sequence.map(\.name))
         let flagTitle = knownFlagKeys.allSatisfy(writeNames.contains)
-            ? "Known feature-flag values (names NOOP already writes; values never read before)"
+            ? "Known feature-flag values (names Zoop already writes; values never read before)"
             : "Known feature-flag values (includes names observed in strap enumeration)"
         sb += section(.knownFlag,
                       title: flagTitle,

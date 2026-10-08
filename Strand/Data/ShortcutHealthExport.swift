@@ -5,7 +5,7 @@ import StrandAnalytics
 
 /// #155 — Apple-Health-free export for sideloaded iOS installs. A free (7-day) signing identity
 /// can't carry the HealthKit entitlement, so HealthKitBridge never runs for sideloaders. Instead,
-/// NOOP drops a plain-text file at Documents/noop_sync.txt (exposed to Files/Shortcuts via
+/// Zoop drops a plain-text file at Documents/noop_sync.txt (exposed to Files/Shortcuts via
 /// UIFileSharingEnabled) and the reporter's pre-built Siri Shortcut reads it and logs the rows into
 /// Apple Health. One line per 15-minute window — `HR,HRV,Steps,yyyy-MM-dd HH:mm` — en_US_POSIX,
 /// LOCAL time (the Shortcut parses dates in the device zone), empty fields keep their commas so
@@ -20,7 +20,7 @@ import StrandAnalytics
 /// StrandiOSApp and the opt-in toggle in ShortcutExportSettingsView.
 enum ShortcutHealthExport {
 
-    /// Opt-in gate (default OFF — every automation in NOOP is optional).
+    /// Opt-in gate (default OFF — every automation in Zoop is optional).
     static let enabledKey = "zoop.shortcutSync.enabled"
     /// Exclusive end of the last successfully written coverage, unix seconds. Advances ONLY after
     /// a successful file write, so a failed export retries the same span next time.

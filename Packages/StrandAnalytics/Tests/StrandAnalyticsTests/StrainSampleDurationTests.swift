@@ -7,7 +7,7 @@ import WhoopProtocol
 ///
 /// The report: a hard ride showed Effort 6.9 while the day around it showed 14, computed from the same
 /// samples. The old code inferred ONE per-sample duration from `hr[1].ts - hr[0].ts` and multiplied the
-/// whole zone-weight sum by it. NOOP's stream is not uniformly spaced — live Bluetooth ~1 s, banked 5/MG
+/// whole zone-weight sum by it. Zoop's stream is not uniformly spaced — live Bluetooth ~1 s, banked 5/MG
 /// history ~30 s, dropouts larger — so whichever gap came first set the scale for the entire window, and
 /// the workout window and the day window (different first samples) got different scales.
 ///

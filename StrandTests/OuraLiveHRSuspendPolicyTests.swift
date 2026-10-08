@@ -59,7 +59,7 @@ final class OuraLiveHRSuspendPolicyTests: XCTestCase {
     // the defect was never in the predicate, it was in what feeds it. `screenOffAt` was written in exactly
     // one place, from `UIApplication.didEnterBackgroundNotification`, and a process launched *into* the
     // background never posts that notification: it was never in the foreground to leave it. That is the
-    // overnight path this build runs (#1215 has iOS relaunch NOOP for BLE while the phone is locked), so
+    // overnight path this build runs (#1215 has iOS relaunch Zoop for BLE while the phone is locked), so
     // the suspend never armed and the night was indistinguishable from the build with no suspend at all.
     //
     // These pin the seed instead: constructed while the screen is dark ⇒ suspended, not merely eventually.

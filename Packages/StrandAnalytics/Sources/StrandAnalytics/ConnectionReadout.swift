@@ -101,7 +101,7 @@ public enum ConnectionTrace {
 
     /// The firmware-layout line for a HEALTHY sync: which historical record layout the strap emits
     /// (v18/v24/v25/v26). Surfaced once per distinct version so the connection report always reveals the
-    /// firmware the strap hands over, not only when NOOP cannot decode it.
+    /// firmware the strap hands over, not only when Zoop cannot decode it.
     public static func firmwareLine(version: Int, decodable: Bool) -> String {
         "firmware layout=v\(version) \(decodable ? "decodable" : "UNMAPPED (no motion/HR decoded)")"
     }
@@ -253,7 +253,7 @@ public enum ConnectionReadout {
     /// at 100% round a loop they had already run.
     ///
     /// The charged branch deliberately states only what holds for EVERY strap - that charging again
-    /// will not change it - and asks for a log. It must NOT claim NOOP re-sends the clock on every
+    /// will not change it - and asks for a log. It must NOT claim Zoop re-sends the clock on every
     /// connect: that is true on WHOOP4 (`runConnectHandshake` calls SET_CLOCK unconditionally, both
     /// payload forms, #120) but FALSE on a 5/MG, where the clock write is gated behind `didBond`, and
     /// an unbondable 5/MG (#1635) is never clocked at all - precisely the strap most likely to be
@@ -283,7 +283,7 @@ public enum ConnectionReadout {
     /// stamped a liveness timestamp that was then discarded, and the disconnect error reached the log as
     /// the OS `localizedDescription` while the `CBError` code the #617 branch computes was thrown away. A
     /// reporter chasing a silent strap had to infer silence from the fact that every LOGGED line happened
-    /// to be outgoing - which measures NOOP's logging, not the strap. This measures the strap.
+    /// to be outgoing - which measures Zoop's logging, not the strap. This measures the strap.
     ///
     /// `armed` matters because the #80 marginal-radio fallback only counts a drop when the R10/R11 burst
     /// was actually armed; `armed=no` says up front that the detector cannot trip for this link, however

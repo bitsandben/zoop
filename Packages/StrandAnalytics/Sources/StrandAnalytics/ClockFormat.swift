@@ -2,7 +2,7 @@ import Foundation
 
 /// #1821: which clock the UI shows times in. Twin of the Kotlin `ClockFormatPreference`.
 ///
-/// NOOP had no such setting: every user-facing time came from the device REGION's convention. On Apple
+/// Zoop had no such setting: every user-facing time came from the device REGION's convention. On Apple
 /// `AppLanguage.activeLocale` builds `language_REGION` deliberately, to keep regional date order and
 /// clock style - but constructing a locale from a region identifier DISCARDS the user's explicit
 /// "24-Hour Time" switch, because that override lives on `Locale.autoupdatingCurrent`, not on the region

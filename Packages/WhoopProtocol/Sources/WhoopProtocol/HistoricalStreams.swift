@@ -16,7 +16,7 @@ public let histStaleClockThresholdSec = 86_400   // 1 day
 
 /// Shared plausibility bounds for a type-47 record's own unix timestamp (#547). A WHOOP strap with a
 /// bad clock/flash (repeated trim=0xFFFFFFFF no-cursor) emits records whose decoded unix is scattered
-/// garbage — far-past (2024/2029), a bogus 2027=1827642881, and even FUTURE dates. NOOP used to trust
+/// garbage — far-past (2024/2029), a bogus 2027=1827642881, and even FUTURE dates. Zoop used to trust
 /// these verbatim, so one polluted ~12h block got re-attributed to every day-window and a future-dated
 /// record surfaced as the "last night" carry-over. We now reject any record whose ts isn't near "now".
 ///
@@ -71,7 +71,7 @@ public func isPlausibleHistoricalUnix(_ ts: Int, wallNow: Int,
     return ts >= oldest - SESSION_RANGE_MARGIN && ts <= newest + SESSION_RANGE_MARGIN
 }
 
-/// The HISTORICAL_DATA record frames in `rawFrames` that NOOP cannot turn into rows — a genuine CRC
+/// The HISTORICAL_DATA record frames in `rawFrames` that Zoop cannot turn into rows — a genuine CRC
 /// failure, an unmapped firmware layout (5/MG: any `hist_version` outside
 /// `mappedWhoop5HistoricalVersions`), or a mapped layout whose envelope parsed but yielded no usable
 /// biometrics. These are the records the strap is about to free once we ack the trim, so without an
@@ -123,7 +123,7 @@ public func rejectedHistoricalRecords(_ rawFrames: [[UInt8]], family: DeviceFami
         }
         // UNMAPPED LAYOUT (5/MG) — archive UNCONDITIONALLY, whatever it decoded.
         //
-        // The decode-outcome test below is the wrong question for a layout NOOP has no field map for.
+        // The decode-outcome test below is the wrong question for a layout Zoop has no field map for.
         // `decodeWhoop5Historical`'s unmapped branch reads no offsets, so anything that DOES appear in
         // `parsed` for such a record came from the envelope, not from a mapped biometric — and a record
         // that happened to yield a plausible `unix` plus a `gravity_x`/`heart_rate` used to pass the
@@ -477,7 +477,7 @@ public func extractHistoricalStreams(_ parsed: [ParsedFrame],
 ///
 /// The strap sends a 25-sample window as one absolute ADC code plus 24 deltas, so this is the only way to
 /// get back the signal the strap measured: `sample[0] = baseCode`, `sample[i+1] = sample[i] + delta[i]`.
-/// NOOP stores the two as they arrive rather than folding them together, because the delta blob is
+/// Zoop stores the two as they arrive rather than folding them together, because the delta blob is
 /// little-endian i16 and a real code (about 378,000 on the captured fixture) does not fit in one.
 ///
 /// nil when `baseCode` is nil, which is the honest answer for a row written before the base was read: a

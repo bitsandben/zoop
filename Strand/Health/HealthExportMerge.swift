@@ -3,7 +3,7 @@ import WhoopStore
 
 // MARK: - Apple Health export row precedence (#2264)
 //
-// The vitals write-back unions two sources for the same day: NOOP's COMPUTED dailies and any rows a
+// The vitals write-back unions two sources for the same day: Zoop's COMPUTED dailies and any rows a
 // WHOOP CSV import produced, with imported taking precedence to match the dashboard. That precedence is
 // right, and the wholesale replacement it was written as is not.
 //

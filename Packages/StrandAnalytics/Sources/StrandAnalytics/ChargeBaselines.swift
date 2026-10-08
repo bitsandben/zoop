@@ -14,7 +14,7 @@ import WhoopStore
 //     The window is the scan window's own 21 days, so a wearer with no import folds exactly the nights the
 //     21-day pass always folded; what changes is that an imported night ages out like an own one, and
 //     that a full-history repair pass folds the same 21 days instead of the whole history.
-//   - The wearer's own (NOOP-computed) nights are the baseline. Imported vendor nights only SEED it: they
+//   - The wearer's own (Zoop-computed) nights are the baseline. Imported vendor nights only SEED it: they
 //     take part while the own nights alone would not yet make a trusted baseline (`handoffNights`, the
 //     model's own `minNightsTrust`), and drop out entirely once they would. The two sources are different
 //     algorithms, so they are never mixed past the cold start.
@@ -60,7 +60,7 @@ public enum ChargeBaselines {
     /// - Parameters:
     ///   - imported: imported vendor nights as `(day, value)`; a nil value is a night the import covers
     ///     without that metric. A repeated day keeps its last value.
-    ///   - own: NOOP-computed nights, same shape. A repeated day keeps its last value.
+    ///   - own: Zoop-computed nights, same shape. A repeated day keeps its last value.
     ///   - anchorDay: the `yyyy-MM-dd` day the window ends on (the scoring pass's local today).
     ///   - cfg: the metric's baseline configuration, used to count the valid own nights exactly as the
     ///     fold will.
@@ -144,7 +144,7 @@ public enum ChargeBaselines {
     }
 
     /// Resolve HRV, resting-HR and respiration baselines from stored rows: `imported` are the imported
-    /// vendor rows, `own` the NOOP-computed ("-zoop") rows. HRV folds on `hrvEpoch`, resting HR and
+    /// vendor rows, `own` the Zoop-computed ("-zoop") rows. HRV folds on `hrvEpoch`, resting HR and
     /// respiration on `recoveryEpoch`, exactly as the engine does. The engine additionally cuts respiration
     /// at a device-era boundary (#459), which needs a per-night source the stored rows do not carry; the
     /// two agree for every single-brand history. Kotlin twin: `ChargeBaselines.resolve`.

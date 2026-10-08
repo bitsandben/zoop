@@ -40,8 +40,8 @@ enum StorePaths {
         } else {
             // Fork ".staging" build: it installs BESIDE the official app, so its store lives at the plain
             // ~/Library/Application Support/OpenWhoop, NOT the official app's sandbox container. The first
-            // launch (our store still empty) COPIES the official upstream NOOP com.noopapp.noop container store in, so a
-            // user coming from official NOOP keeps their history (#39). (Prod/sandboxed builds took the
+            // launch (our store still empty) COPIES the official upstream Zoop com.noopapp.noop container store in, so a
+            // user coming from official Zoop keeps their history (#39). (Prod/sandboxed builds took the
             // branch above and never reach here.)
             importOfficialContainerStoreIfNeeded(into: base, dbURL: dbURL)
         }
@@ -136,8 +136,8 @@ enum StorePaths {
     }
 
     /// Fork ".staging" builds keep their store outside the official app's sandbox container, so a user
-    /// moving from official NOOP would otherwise see an empty database (#39). The first time (our store
-    /// still empty), COPY the official upstream NOOP `com.noopapp.noop` container store in. COPY — never move — because
+    /// moving from official Zoop would otherwise see an empty database (#39). The first time (our store
+    /// still empty), COPY the official upstream Zoop `com.noopapp.noop` container store in. COPY — never move — because
     /// the official app may still be installed and using it. The distributed build is unsigned (so it isn't
     /// sandboxed and CAN read the sibling container); if a sandbox is unexpectedly engaged,
     /// `homeDirectoryForCurrentUser` points inside OUR container and the official store is unreachable, so

@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Oura API v2 document parser (PURE / network-free)
 //
 // Takes already-fetched JSON `data[]` arrays (the OuraAPIClient does the I/O in the app target) and maps
-// them to NOOP's normalized models. Reuses the SAME field semantics as OuraExportParser — the account export
+// them to Zoop's normalized models. Reuses the SAME field semantics as OuraExportParser — the account export
 // and the API share field names (bedtime_start, total_sleep_duration, …) — and adds the hypnogram +
 // time-series the file export never carried. Crafted-input safe via WearableJSON.
 
@@ -49,7 +49,7 @@ public enum OuraApiParser {
                 remMin: minutes("rem_sleep_duration"),
                 awakeMin: minutes("awake_time"),
                 totalSleepMin: minutes("total_sleep_duration"),
-                // Oura's `efficiency` is a 0-100 integer percent. NOOP's own sleep pipeline
+                // Oura's `efficiency` is a 0-100 integer percent. Zoop's own sleep pipeline
                 // (StrandAnalytics) stores `efficiency` as a 0-1 FRACTION everywhere it's computed
                 // (asleep ÷ in-bed — see AnalyticsEngine.swift / SleepStageTotals.swift) and both
                 // sleepSession.efficiency and dailyMetric.efficiency are that same shared column, so

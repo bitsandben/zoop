@@ -2,9 +2,9 @@ import Foundation
 
 /// #761: READ-ONLY enumeration of the strap's own feature-flag key list.
 ///
-/// NOOP already WRITES feature flags (`SET_FF_VALUE` / 0x78, the R22 deep-stream unlock in
+/// Zoop already WRITES feature flags (`SET_FF_VALUE` / 0x78, the R22 deep-stream unlock in
 /// `Whoop5Config`) but has never been able to ASK a strap which flags it knows. The protocol has a
-/// symmetric read side that NOOP never implemented — `whoop_protocol.json` `CommandNumber` names all of
+/// symmetric read side that Zoop never implemented — `whoop_protocol.json` `CommandNumber` names all of
 /// it: 117 `START_FF_KEY_EXCHANGE`, 118 `SEND_NEXT_FF`, 120 `SET_FF_VALUE`, 128 `GET_FF_VALUE` (and the
 /// device-config quartet 115/116/119/121). This file decodes the **enumeration** pair only — 117 then
 /// repeated 118 — which reads the key NAMES and nothing else.
@@ -16,7 +16,7 @@ import Foundation
 /// complete key dump, which is why the enumerate path is the one built here.
 ///
 /// **Read-only.** The probe writes command frames in order to read — exactly like the Oura feature-status
-/// probe NOOP already ships (`Packages/OuraProtocol/…/Commands.swift`, `spo2ReadStatus()` /
+/// probe Zoop already ships (`Packages/OuraProtocol/…/Commands.swift`, `spo2ReadStatus()` /
 /// `realStepsReadStatus()`, `2f 02 20 <feature>`) — but sets no value, and 120/119 (the SET verbs) are
 /// never sent from this path. Nothing about strap state changes.
 ///
@@ -43,7 +43,7 @@ import Foundation
 /// `SendNextFeatureFlagResponsePacket { revision, index, validKey, keyStringId, padding }`), and the
 /// hands-on WHOOP 4.0 dump above shows literal replies of `0a 01 | 01 <count u16>` and
 /// `0a 01 | 01 <index> 01 <key name…>`, with `0a 01 | 01 ff …` when the cursor is exhausted. Those are
-/// facts about bytes on a wire, reimplemented here in NOOP's own code — no client code or naming is
+/// facts about bytes on a wire, reimplemented here in Zoop's own code — no client code or naming is
 /// copied (see ATTRIBUTION.md, and #822 on the fact/expression line).
 ///
 /// **Unverified on 5/MG.** The hardware result behind this layout is a WHOOP 4.0 with an R19-era key

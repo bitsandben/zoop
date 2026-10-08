@@ -2,7 +2,7 @@ import Foundation
 
 /// Descriptive primary-sleep vs wake HR contrast.
 ///
-/// This is **not** another resting-heart-rate definition. NOOP already ships a floor-style RHR (the
+/// This is **not** another resting-heart-rate definition. Zoop already ships a floor-style RHR (the
 /// scoring input) and collects a separate primary-session mean RHR candidate (#1174/#1188, evidence in
 /// #1169); this engine leaves both untouched. It answers a different, descriptive question: how does HR
 /// during an explicitly supplied **primary-sleep** window compare with HR during an explicitly supplied
@@ -64,7 +64,7 @@ public enum SleepHeartRateContrast {
     /// declared cadence and retain that provenance.
     ///
     /// `minimumValidSamples` is parameterized and applied independently to each window. Its default
-    /// mirrors the provisional 30-valid-sample floor of NOOP's primary-session mean RHR experiment; it is
+    /// mirrors the provisional 30-valid-sample floor of Zoop's primary-session mean RHR experiment; it is
     /// **not** claimed to be a clinically validated coverage threshold.
     public static func evaluate(wakeHR: [Double?], primarySleepHR: [Double?],
                                 minimumValidSamples: Int = defaultMinimumValidSamples) -> Result? {

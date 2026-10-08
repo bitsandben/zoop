@@ -131,7 +131,7 @@ final class CaffeineImportTests: XCTestCase {
     }
 
     /// Deleting the coffee in the app that logged it removes it here on the next sync, rather than
-    /// leaving it stranded in NOOP forever.
+    /// leaving it stranded in Zoop forever.
     @MainActor
     func testAnIntakeThatVanishesFromHealthIsDropped() {
         let now = Date()

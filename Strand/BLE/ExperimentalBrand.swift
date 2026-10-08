@@ -17,7 +17,7 @@ public enum ExperimentalBrand: String, CaseIterable, Sendable, Equatable {
     /// handshake we can't do — the driver surfaces that honestly rather than faking it.
     case miBand
     /// Garmin watch. Live HR is the STANDARD broadcast-HR path (0x180D) when the user enables
-    /// "Broadcast Heart Rate" on the watch — there is no NOOP-proprietary Garmin protocol.
+    /// "Broadcast Heart Rate" on the watch — there is no Zoop-proprietary Garmin protocol.
     case garmin
     /// Oura ring. No open live health stream — proprietary, syncs to Oura's own app. The driver makes
     /// the detection attempt and then points honestly at file import.
@@ -45,7 +45,7 @@ public enum ExperimentalBrand: String, CaseIterable, Sendable, Equatable {
         }
     }
 
-    /// Whether this brand can stream LIVE heart rate at all in NOOP's experimental tier. Derived from the
+    /// Whether this brand can stream LIVE heart rate at all in Zoop's experimental tier. Derived from the
     /// catalog (`false` for Oura — no open live stream — so the wizard routes those to file import instead
     /// of pretending to connect). Defaults to `false` if the catalog row is somehow missing (a test pins
     /// that every case resolves).

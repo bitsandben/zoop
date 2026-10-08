@@ -33,7 +33,7 @@ public struct CachedSleepSession: Equatable, Codable {
     /// UNDER-detect: the gravity-only spine fragments and the sub-60-min pieces are dropped, so a real ~8h
     /// night can collapse to ~1h. The UI reads this to caption "sleep may be incomplete" honestly instead
     /// of presenting the short total as fact. nil for imported nights and pre-migration rows (unknown, not
-    /// flagged). Set per session to the DAY's value; only NOOP-computed nights populate it. Byte-parity twin.
+    /// flagged). Set per session to the DAY's value; only Zoop-computed nights populate it. Byte-parity twin.
     public let stagingSparse: Bool?
     /// Which device's row this is, when the read that produced it knew.
     ///

@@ -58,7 +58,7 @@ final class PuffinEventLog {
     /// Append `frame` if it is a WHOOP 5 EVENT frame and capture is enabled. Cheap for every other
     /// frame: a single byte compare, no parse. Call for BOTH live and offload frames — the strap
     /// replays historical EVENTs during a sync, and either path may be the only one that sees a
-    /// given record (the official app's trim can empty the strap's history before NOOP syncs).
+    /// given record (the official app's trim can empty the strap's history before Zoop syncs).
     func appendIfEvent(frame: [UInt8], char: CBUUID) {
         // Order matters: the EVENT check short-circuits the non-EVENT flood BEFORE the `isEnabled`
         // UserDefaults read, so the cost for an ordinary frame stays a single length+byte compare.

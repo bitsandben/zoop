@@ -610,7 +610,7 @@ struct LiftSessionView: View {
                 $0 - engine.stageStartedAt
             }
         case .resting:
-            // "Rest period", never "Rest": the catalog's "Rest" key is NOOP's SLEEP metric, so this
+            // "Rest period", never "Rest": the catalog's "Rest" key is Zoop's SLEEP metric, so this
             // label rendered as "Erholung" (recovery) in German — the exact collision CLAUDE.md and
             // the handover brief both warn about. Reintroduced by the workout-sheet rewrite.
             clock(String(localized: "Rest period"), tint: StrandPalette.metricAmber) {

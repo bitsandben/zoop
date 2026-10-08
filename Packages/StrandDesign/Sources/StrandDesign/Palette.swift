@@ -37,7 +37,7 @@ public extension Color {
         // liquid layer resolves on every frame: `Color.liquidComponents()` asks for
         // `NSColor(self).usingColorSpace(.sRGB)` (`LiquidCore.swift`), which re-invokes this closure,
         // which used to run `trimmingCharacters` + `Scanner.scanHexInt64` over a string. A reporter
-        // profiling NOOP at a third to half a CPU core on macOS found `Color.sRGBComponents(hex:)` and
+        // profiling Zoop at a third to half a CPU core on macOS found `Color.sRGBComponents(hex:)` and
         // `closure #1 in Color.init(light:dark:)` among the hot leaves (#2393).
         //
         // A cache would also have removed the cost, and a cache is the wrong shape for it: it needs a
@@ -394,7 +394,7 @@ public enum StrandPalette {
         sample(stops: recoveryStops, at: score / 100.0)
     }
 
-    /// Sample the strain ("Effort") gradient at a value on NOOP's 0...100 Effort scale.
+    /// Sample the strain ("Effort") gradient at a value on Zoop's 0...100 Effort scale.
     public static func strainColor(_ strain: Double) -> Color {
         sample(stops: strainStops, at: strain / 100.0)
     }
@@ -483,7 +483,7 @@ public enum StrandPalette {
         static let garmin = [garminAwake, garminREM, garminLight, garminDeep]
     }
 
-    /// A sleep-stage colour in a chosen ramp: NOOP's own tokens, Oura's (Ribbon), or Garmin's (Garmin Fill).
+    /// A sleep-stage colour in a chosen ramp: Zoop's own tokens, Oura's (Ribbon), or Garmin's (Garmin Fill).
     public static func sleepStageColor(_ stage: SleepStage, palette: SleepStagePalette) -> Color {
         switch palette {
         case .noop: return sleepStageColor(stage)

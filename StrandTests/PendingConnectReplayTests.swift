@@ -4,7 +4,7 @@ import XCTest
 /// A connect asked for before the radio is up is replayed against a FRESH retrieve, so a bonded device
 /// is connected by identifier instead of being left to a background scan (#2433).
 ///
-/// The reported shape: NOOP is relaunched into the background, `connect(_:)` runs while the source's
+/// The reported shape: Zoop is relaunched into the background, `connect(_:)` runs while the source's
 /// central is still `.unknown`, `retrievePeripherals` answers nothing because of that, and the empty
 /// answer is read as "this ring has never been seen here". The id is parked, a scan is armed, and the
 /// replay on `.poweredOn` looks only in `seenPeripherals` — empty for the same reason — so it starts the

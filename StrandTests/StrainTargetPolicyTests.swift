@@ -44,7 +44,7 @@ final class StrainTargetPolicyTests: XCTestCase {
 
     func testCopyUsesNoopWordingAndTheTarget() {
         let copy = Policy.copy(target: 14)
-        // NOOP's own copy — must NOT reproduce WHOOP's decompiled strings.
+        // Zoop's own copy — must NOT reproduce WHOOP's decompiled strings.
         XCTAssertTrue(copy.title.contains("Optimal strain"))
         XCTAssertFalse(copy.title.contains("Target Strain Reached"))
         XCTAssertTrue(copy.body.contains("14"))

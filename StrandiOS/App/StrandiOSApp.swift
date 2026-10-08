@@ -73,7 +73,7 @@ struct StrandiOSApp: App {
         // never fires; the macOS timer, foreground catch-up, and "Run now" already work without it.
         ScheduledDebugExport.register()
         // Foreground presentation: without a delegate, iOS suppresses a notification's banner while the app
-        // is open, so a user testing the wind-down reminder with NOOP foregrounded sees nothing. Register
+        // is open, so a user testing the wind-down reminder with Zoop foregrounded sees nothing. Register
         // before the first scene so any early-fired notification is presented.
         UNUserNotificationCenter.current().delegate = NotificationPresenter.shared
         // K5: tapping a scheduled morning-brief notification routes to Coach via the shared NavRouter.
@@ -92,7 +92,7 @@ struct StrandiOSApp: App {
         })
         // Settings → "Keep screen on while syncing". Wired once here, not as another modifier on `body`.
         SyncKeepAwake.shared.attach(to: model.live)
-        // iOS's own daily report of NOOP's CPU, memory, disk writes, hangs and exits, and its crash/hang reports,
+        // iOS's own daily report of Zoop's CPU, memory, disk writes, hangs and exits, and its crash/hang reports,
         // one strap-log line each. Registering is the whole cost; iOS gathers and delivers them (MetricKitLog).
         MetricKitLog.shared.attach(to: model.live)
         // The buzz and the strap-gesture claim are injected, so the controller itself knows nothing
@@ -141,7 +141,7 @@ struct StrandiOSApp: App {
         HealthWritebackBackgroundScheduler.register { [weak bridge] in
             guard let bridge else { return false }
             let succeeded = await bridge.writeBackAfterNewData()
-            // A person can revoke every write type in Settings while NOOP is closed. Stop requesting
+            // A person can revoke every write type in Settings while Zoop is closed. Stop requesting
             // wakes once the cold-launched bridge can no longer resume a prior share grant.
             if bridge.auth != .authorized {
                 HealthWritebackBackgroundScheduler.cancel()
@@ -457,7 +457,7 @@ private struct iOSRootView: View {
             // collects it even if the user dismisses the auto sheet.
             UpdateStore.shared.seedWhatsNewIfNeeded()
             // #1659: iOS cannot auto-update a sideloaded build - no API lets an app install or re-sign an
-            // .ipa - so the most NOOP can do is NOTICE a release and say so.
+            // .ipa - so the most Zoop can do is NOTICE a release and say so.
             //
             // Gated on the SAME condition as showWhatsNewIfDue above, and the Android hook. This matters
             // now that the check is on by default: without it a brand-new install would reach the network

@@ -13,7 +13,7 @@ import WhoopStore
 // that is the design constraint, and it is why there is no single composite "workout score". The
 // maths lives in `LiftMetrics` (pure, unit-tested); this file only lays it out.
 //
-// Effort is shown BESIDE the lifting figures and is never computed from them: it is whatever NOOP
+// Effort is shown BESIDE the lifting figures and is never computed from them: it is whatever Zoop
 // measured from heart rate over the session's window, filled in by the engine's own rescore pass.
 
 struct LiftSessionDetailSheet: View {

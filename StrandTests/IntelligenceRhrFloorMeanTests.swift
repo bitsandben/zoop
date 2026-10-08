@@ -1,10 +1,10 @@
 import XCTest
 @testable import Strand
 
-/// Pins the RHR floor-vs-mean strap-log line (#691). The recurring "NOOP's resting HR reads LOWER than
-/// my sleeping-HR app" reports are NOT a bug: NOOP's `restingHr` is the WHOOP-style FLOOR (the lowest
+/// Pins the RHR floor-vs-mean strap-log line (#691). The recurring "Zoop's resting HR reads LOWER than
+/// my sleeping-HR app" reports are NOT a bug: Zoop's `restingHr` is the WHOOP-style FLOOR (the lowest
 /// sustained 5-min in-bed level), whereas a "sleeping HR" app reports the night MEAN over the whole
-/// asleep span. The mean always sits at-or-above the floor, so NOOP looking lower is by design. The
+/// asleep span. The mean always sits at-or-above the floor, so Zoop looking lower is by design. The
 /// engine now logs BOTH per scored night so a report carries the proof. `rhrFloorMeanLogLine` is the
 /// pure formatter the loop calls; it's tested directly (no store). Mirrors the Android
 /// `IntelligenceRhrFloorMeanTest` so the two platforms log byte-identical lines.
@@ -15,12 +15,12 @@ final class IntelligenceRhrFloorMeanTests: XCTestCase {
 
     func testFloorBelowMean_theReportedDiscrepancy() {
         // The exact shape of the reports: an in-bed stretch that dips to a 48 bpm floor but averages 55.
-        // Both numbers ship so a "NOOP is lower than my other app" report is explainable from the log.
+        // Both numbers ship so a "Zoop is lower than my other app" report is explainable from the log.
         let bpms = [48, 50, 52, 55, 58, 60, 62]   // mean = 55.0 → "55"
         let line = IE.rhrFloorMeanLogLine(day: "2026-06-12", floor: 48, inBedBpms: bpms)
         XCTAssertEqual(line,
             "rhr day=2026-06-12 floor=48 nightMean=55 inBedSamples=7 "
-            + "(floor = WHOOP-style lowest-sustained = NOOP RHR; mean = sleeping-HR-app number)")
+            + "(floor = WHOOP-style lowest-sustained = Zoop RHR; mean = sleeping-HR-app number)")
     }
 
     func testMeanRoundsToNearest() {
@@ -35,12 +35,12 @@ final class IntelligenceRhrFloorMeanTests: XCTestCase {
         let line = IE.rhrFloorMeanLogLine(day: "2026-06-12", floor: 47, inBedBpms: [])
         XCTAssertEqual(line,
             "rhr day=2026-06-12 floor=47 nightMean=nil inBedSamples=0 "
-            + "(floor = WHOOP-style lowest-sustained = NOOP RHR; mean = sleeping-HR-app number)")
+            + "(floor = WHOOP-style lowest-sustained = Zoop RHR; mean = sleeping-HR-app number)")
     }
 
     func testFloorNeverExceedsMean_byConstruction() {
         // Sanity on the framing itself: across any in-bed set the floor (a min over the same span) is
-        // <= the mean, so NOOP's RHR can only read at-or-below a sleeping-HR-app's night mean.
+        // <= the mean, so Zoop's RHR can only read at-or-below a sleeping-HR-app's night mean.
         let bpms = [44, 46, 49, 53, 57, 61]
         let mean = Double(bpms.reduce(0, +)) / Double(bpms.count)
         XCTAssertLessThanOrEqual(Double(bpms.min()!), mean)

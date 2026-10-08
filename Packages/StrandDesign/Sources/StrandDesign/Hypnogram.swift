@@ -60,7 +60,7 @@ public struct Hypnogram: View {
     /// look) instead of the slim ribbon band. The stage → lane mapping, risers and axis are identical;
     /// only the band height changes. Mirrors the Android `FilledHypnogram(filled:)`.
     public var filled: Bool
-    /// The stage-colour ramp: NOOP tokens (default, and every non-sleep caller), Oura's (Ribbon), or
+    /// The stage-colour ramp: Zoop tokens (default, and every non-sleep caller), Oura's (Ribbon), or
     /// Garmin's (Garmin Fill). Only the Sleep-tab stepped chart passes a non-default ramp.
     public var stagePalette: SleepStagePalette
 
@@ -220,7 +220,7 @@ public struct Hypnogram: View {
     private let rowCount = 4
 
     /// The band/lane colour for a stage: the brand ramp (Garmin filled / Oura ribbon) when opted in, else
-    /// the NOOP sleep tokens.
+    /// the Zoop sleep tokens.
     private func stageColor(_ stage: SleepStage) -> Color {
         StrandPalette.sleepStageColor(stage, palette: stagePalette)
     }
@@ -444,7 +444,7 @@ public struct Hypnogram: View {
 /// NOTHING RENDERS THIS (#1536). Its only call sites put it above `stageBreakdownRows`, whose rows carry
 /// their own labels — so it named stages already named, in a different order than the rows list them, and
 /// in the chart ramp's colours while those rows use fixed `StrandPalette` tokens, which made its dots
-/// disagree with the swatches directly beneath them on any non-NOOP ramp. Kept rather than deleted: it is
+/// disagree with the swatches directly beneath them on any non-Zoop ramp. Kept rather than deleted: it is
 /// the only code that knows how to build this key, and a genuinely unlabelled hypnogram is what it is for.
 /// Wire it to one of those, not to a labelled table.
 public struct SleepStageLegend: View {

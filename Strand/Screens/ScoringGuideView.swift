@@ -3,7 +3,7 @@ import StrandDesign
 
 // MARK: - Scoring guide
 //
-// "How your scores work" — the one honest explainer for NOOP's three daily scores
+// "How your scores work" — the one honest explainer for Zoop's three daily scores
 // (Charge, Effort, Rest) and the confidence labels. Presented as a sheet, mirroring
 // WhatsNewView's presentation + dismiss + layout idiom: a fixed header with a close
 // button, a scrollable column of cards, and a "Got it" footer. Reachable from

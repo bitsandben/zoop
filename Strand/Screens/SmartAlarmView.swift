@@ -213,7 +213,7 @@ struct SmartAlarmView: View {
     // MARK: - Strap silent wake-alarm (#766, moved here from Automations)
 
     // The strap's own firmware alarm: a silent wrist buzz at the chosen time, armed over BLE so it fires
-    // even if the phone is asleep or NOOP is closed. Lifted verbatim (behaviour intact) out of
+    // even if the phone is asleep or Zoop is closed. Lifted verbatim (behaviour intact) out of
     // AutomationsView.alarmCard so users stop conflating it with the wind-down reminder below.
     private var strapAlarmCard: some View {
         StrandCard(padding: 20, tint: behavior.smartAlarmEnabled ? StrandPalette.accent : nil) {
@@ -496,7 +496,7 @@ struct SmartAlarmView: View {
         guard let next = nextStrapAlarm() else { return nil }
         let formatter = DateFormatter()
         // `AppLanguage.activeLocale`, not `.current`: the app language is an in-app setting, so a reader
-        // running NOOP in German on an English device must get German weekday words here, while keeping
+        // running Zoop in German on an English device must get German weekday words here, while keeping
         // their device's 24-hour convention. The same reason every other formatter in the app uses it.
         formatter.locale = AppLanguage.activeLocale
         formatter.setLocalizedDateFormatFromTemplate("EEEE jj:mm")

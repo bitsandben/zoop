@@ -3,9 +3,9 @@ import StrandAnalytics
 import SwiftUI
 import UIKit
 
-/// The app-specific actions shown when someone touches and holds NOOP's Home Screen icon.
+/// The app-specific actions shown when someone touches and holds Zoop's Home Screen icon.
 ///
-/// These are dynamic rather than Info.plist actions so their titles come from NOOP's existing
+/// These are dynamic rather than Info.plist actions so their titles come from Zoop's existing
 /// localization catalog and follow the language selected in the app. The menu is installed at launch;
 /// changing the app language requires the same process restart that updates every other localized bundle.
 enum HomeScreenQuickAction: String, CaseIterable {

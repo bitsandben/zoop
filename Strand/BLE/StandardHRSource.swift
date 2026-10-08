@@ -103,7 +103,7 @@ public final class StandardHRSource: NSObject, ObservableObject {
     private let log: (String) -> Void
 
     /// #polar-debug: read live at connect. When it returns true AND the connected strap identifies as Polar,
-    /// the model NOOP resolves it to (+ its PMD/HRV capability summary) is logged ONCE per connection.
+    /// the model Zoop resolves it to (+ its PMD/HRV capability summary) is logged ONCE per connection.
     /// Gated by the Test Centre "Polar debug logging" toggle (only shown when a Polar strap is paired).
     /// Diagnostic-only — nothing gates behaviour on it. Default off keeps existing call sites / tests silent.
     private let polarDebug: () -> Bool
@@ -348,7 +348,7 @@ extension StandardHRSource: @preconcurrency CBCentralManagerDelegate {
         }
     }
 
-    /// #polar-debug: when the toggle is on and the connected strap identifies as Polar, log the model NOOP
+    /// #polar-debug: when the toggle is on and the connected strap identifies as Polar, log the model Zoop
     /// resolves it to (+ PMD/HRV capability summary) ONCE per connection. Auto-detected from the advertised
     /// name via the pure `PolarModel` helper (the same one the Test Centre uses on the paired record); a
     /// non-Polar strap returns nil and logs nothing. Diagnostic-only. Twin of the Android StandardHrSource hook.

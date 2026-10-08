@@ -92,7 +92,7 @@ public enum LiftMuscle: String, CaseIterable, Codable, Sendable {
     /// for a muscle that was only an indirect mover — "total" (count it as 1), "fractional" (count
     /// it as 0.5) and "direct" (count it as 0) — and found the evidence strongest for FRACTIONAL,
     /// which is what its primary models use. So 0.5 here is not a house convention; it is the
-    /// operationalisation with the best empirical support, and the reference doses NOOP shows are
+    /// operationalisation with the best empirical support, and the reference doses Zoop shows are
     /// derived under it. Change one and you must change the other.
     public static let directSetCredit: Double = 1.0
     public static let indirectSetCredit: Double = 0.5

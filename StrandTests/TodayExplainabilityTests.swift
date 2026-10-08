@@ -356,7 +356,7 @@ final class TodayExplainabilityTests: XCTestCase {
 
     func testProvenance_crossStrapComputedSibling_stillOnDevice() {
         // A "-zoop" sibling banked under a DIFFERENT strap id (the user re-paired straps) is still a
-        // score NOOP computed on-device. The resolver matches the "-zoop" suffix, not the exact
+        // score Zoop computed on-device. The resolver matches the "-zoop" suffix, not the exact
         // "\(deviceId)-zoop" — otherwise these rows would fall through to the raw id verbatim.
         XCTAssertEqual(TodayView.provenanceDisplayLabel(rawSource: "whoop5-C0FF-noop", deviceId: "my-whoop"),
                        "On-device")

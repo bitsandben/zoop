@@ -586,7 +586,7 @@ final class OuraDriverTests: XCTestCase {
             fields: [289, 470, 196, 36, 81, 92, 34, 180, 390, 258, 162, 44]))])
     }
 
-    // MARK: - 0x7F's +2 block offset (NOOP finding, 2026-08-01)
+    // MARK: - 0x7F's +2 block offset (Zoop finding, 2026-08-01)
 
     func testRealStepsBlockOffsetIsTagDependent() {
         XCTAssertEqual(OuraDecoders.realStepsFieldOffset(forTag: OuraEventTag.realSteps1.rawValue), 0)

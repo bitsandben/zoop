@@ -29,7 +29,7 @@ public enum HeartRateRecovery {
         }
     }
 
-    /// Zone 3 starts at 70% HRmax in NOOP's display-zone model.
+    /// Zone 3 starts at 70% HRmax in Zoop's display-zone model.
     public static let eligibilityFractionOfMaxHR = 0.70
     /// The high-intensity effort must be sustained, not a single optical spike.
     public static let minimumHighIntensitySeconds = 120

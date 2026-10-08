@@ -5,7 +5,7 @@ import WhoopStore
 /// Which nights the Charge baselines are folded from (#2525).
 ///
 /// The defect these pin: the imported vendor history was folded in full while the wearer's own nights
-/// entered only from the scan window, so the import kept about a third of the weight however long NOOP had
+/// entered only from the scan window, so the import kept about a third of the weight however long Zoop had
 /// been worn. Byte-identical twin: Kotlin `ChargeBaselinesTest` (same cases, same oracle literal).
 final class ChargeBaselinesTests: XCTestCase {
 
@@ -180,7 +180,7 @@ final class ChargeBaselinesTests: XCTestCase {
 
     /// A wearer whose resting HR fell from 58 during their vendor subscription to 52 since. Under the old
     /// rule (the whole import plus the last 21 own nights) the baseline stays about a third of the way back
-    /// towards 58 however long NOOP has been worn; under this rule it follows the wearer to 52.
+    /// towards 58 however long Zoop has been worn; under this rule it follows the wearer to 52.
     func testTheBaselineFollowsTheWearerInsteadOfTheImport() {
         let imported = Self.run(700, endBack: 181, value: 58)
         let own = Self.run(180, endBack: 0, value: 52)

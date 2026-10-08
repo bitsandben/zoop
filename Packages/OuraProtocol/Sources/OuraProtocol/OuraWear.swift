@@ -3,7 +3,7 @@ import Foundation
 // OuraWear: infer whether the Oura ring is on a finger, on the charger, or idle — a live wear/charge
 // indicator for the UI ("On wrist" / "Off wrist").
 //
-// The ring emits no dedicated "worn" event in NOOP's captures: open_health documents an `aohr_event`
+// The ring emits no dedicated "worn" event in Zoop's captures: open_health documents an `aohr_event`
 // (0x86) that "appears when worn", but that decoder is confirmed by code, not data (ported from
 // libringeventparser.so) and has NEVER appeared in a capture (0 records). So wear is inferred from signals
 // that ARE present and validated by real data:

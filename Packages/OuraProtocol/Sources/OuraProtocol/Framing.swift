@@ -152,7 +152,7 @@ public extension OuraFraming {
     /// exactly `len - 4` payload bytes when the notification carries them, otherwise whatever payload
     /// bytes are present (`frame.get(2..2+len).unwrap_or(frame[2..])`). The `len` field is NOT required
     /// to equal the notification length; open_oura tolerates that disagreement, and honoring it is what
-    /// keeps NOOP from (a) minting phantom records out of a "too-small" len's leftover bytes or (b)
+    /// keeps Zoop from (a) minting phantom records out of a "too-small" len's leftover bytes or (b)
     /// swallowing the next notification on a "too-big" len. Returns nil only when the 4 timestamp bytes
     /// are not even present (`count < 6`) or `len < 4` (a record must cover its timestamp) — a genuinely
     /// unusable frame, never a guess (honest-data invariant). Per OURA_PROTOCOL.md s2.3.
@@ -202,7 +202,7 @@ public extension OuraFraming {
 /// open_oura's `Packet::parse` (protocol.rs), with NO cross-notification buffering and NO byte-drop
 /// "resync" — plus the one case the ring has been seen to send that the one-packet model loses: a
 /// notification that tiles EXACTLY into several complete packets. `get_events` streams events as
-/// separate ≤ 20-byte notifications on every NOOP session captured, then a `0x11` summary reporting
+/// separate ≤ 20-byte notifications on every Zoop session captured, then a `0x11` summary reporting
 /// `events_received` (OURA_PROTOCOL.md s5.2); records are never split across notifications. But the same
 /// ring, serving the official app on the same link with the same MTU and the same get_events bytes,
 /// packs ~10 packets per 196–200-byte notification (2026-09-15: 38,136 packets in 3,613 notifications,
@@ -229,7 +229,7 @@ public final class OuraReassembler {
     public func feed(_ fragment: [UInt8]) -> [OuraRecord] {
         guard let rec = OuraFraming.parseRecord(fragment) else { return [] }
         // A PACKED notification carries several complete packets back to back. The ring does this on
-        // some sessions and not others: every NOOP drain captured to date arrives one packet per
+        // some sessions and not others: every Zoop drain captured to date arrives one packet per
         // ≤ 20-byte notification, but the same ring serving the official app on the same link (same
         // MTU 203, same get_events bytes) packs ~10 packets into each 196–200-byte notification —
         // 38,136 packets in 3,613 notifications on 2026-09-15, every one tiling the value exactly, and

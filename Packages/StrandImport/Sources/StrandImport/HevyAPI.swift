@@ -21,7 +21,7 @@ public enum HevyAPI {
     ///
     /// This matters more than it looks: an exercise carries `exercise_template_id`, so this is
     /// authoritative attribution for the exercise a set was performed on, from the people who own the
-    /// catalogue. Anything NOOP derives by matching exercise TITLES is guessing at data that is
+    /// catalogue. Anything Zoop derives by matching exercise TITLES is guessing at data that is
     /// published here.
     ///
     /// An unrecognised value parses to nil rather than to `.other`, because Hevy defines `other` as a
@@ -65,7 +65,7 @@ public enum HevyAPI {
     }
 
     /// An entry in Hevy's exercise catalogue. `equipment` and `type` stay raw strings: nothing in
-    /// NOOP consumes them yet, and an enum would only add a drift risk when Hevy adds a value.
+    /// Zoop consumes them yet, and an enum would only add a drift risk when Hevy adds a value.
     public struct ExerciseTemplate: Sendable, Equatable {
         public let id: String
         public let title: String
@@ -80,11 +80,11 @@ public enum HevyAPI {
     ///
     /// The date is kept as Hevy writes it (a bare `yyyy-MM-dd`, no time and no zone) rather than
     /// resolved to an instant here. Choosing a moment inside that day is a real decision with a real
-    /// failure mode -- NOOP already re-buckets nights when an offset changes -- and it belongs to
+    /// failure mode -- Zoop already re-buckets nights when an offset changes -- and it belongs to
     /// whatever stores the sample, not to the parser.
     ///
     /// Hevy also returns fourteen circumference fields (neck, chest, each bicep, each thigh, and so
-    /// on). They are deliberately not modelled: nothing in NOOP consumes them, and an unused field is
+    /// on). They are deliberately not modelled: nothing in Zoop consumes them, and an unused field is
     /// a schema commitment with no payer.
     public struct BodyMeasurement: Sendable, Equatable {
         public let date: String
@@ -92,7 +92,7 @@ public enum HevyAPI {
         public let fatPercent: Double?
         public let leanMassKg: Double?
 
-        /// True when the entry carries none of the three figures NOOP could use, which is the case
+        /// True when the entry carries none of the three figures Zoop could use, which is the case
         /// for an entry that only recorded circumferences.
         public var isEmpty: Bool { weightKg == nil && fatPercent == nil && leanMassKg == nil }
     }
@@ -109,16 +109,16 @@ public enum HevyAPI {
     /// of one that is gone.
     ///
     /// This is the endpoint that would make an API import worth having over the CSV export, because
-    /// it is the only one that reports DELETIONS. It is also the one that exposes what NOOP does not
+    /// it is the only one that reports DELETIONS. It is also the one that exposes what Zoop does not
     /// yet store: a workout row is keyed by `(deviceId, startTs)`, and neither event can be applied
-    /// through that key. A delete names a Hevy id NOOP never kept, and an edit that moved the start
+    /// through that key. A delete names a Hevy id Zoop never kept, and an edit that moved the start
     /// time would land as a second session rather than replacing the first. Persisting Hevy's id
     /// alongside the row is the missing piece, and it is a schema change on both platforms.
     public enum WorkoutEvent: Sendable {
         case updated(id: String, session: LiftingSession)
         case deleted(id: String, deletedAt: Date?)
 
-        /// The Hevy workout id an event refers to, which is the key NOOP would have to have stored.
+        /// The Hevy workout id an event refers to, which is the key Zoop would have to have stored.
         public var workoutID: String {
             switch self {
             case let .updated(id, _): return id
@@ -186,7 +186,7 @@ public enum HevyAPI {
     // MARK: - GET /v1/body_measurements
 
     /// Parse a body-measurement page. An entry with no date cannot be filed, and one carrying only
-    /// circumferences has nothing NOOP can store, so both are skipped and counted.
+    /// circumferences has nothing Zoop can store, so both are skipped and counted.
     public static func parseBodyMeasurements(data: Data) -> Page<BodyMeasurement> {
         parsePage(data, key: "body_measurements") { dict in
             guard let date = (dict["date"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),

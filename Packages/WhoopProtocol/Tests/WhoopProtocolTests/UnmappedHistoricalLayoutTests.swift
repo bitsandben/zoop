@@ -5,10 +5,10 @@ import XCTest
 /// what the record happened to decode to.
 ///
 /// `rejectedHistoricalRecords` used to ask only "did this decode to a `unix` plus a
-/// `heart_rate`/`gravity_x`?". That screen is the wrong question for a layout NOOP has no field map
+/// `heart_rate`/`gravity_x`?". That screen is the wrong question for a layout Zoop has no field map
 /// for: a record from an unmapped version that answered yes was kept NOWHERE — not as rows (nothing
 /// mapped it) and not as bytes (it passed the archive filter) — and the strap freed it on the very next
-/// trim ack. A record type NOOP has not mapped yet — banked to flash by a newer firmware and pulled
+/// trim ack. A record type Zoop has not mapped yet — banked to flash by a newer firmware and pulled
 /// back in a later offload — is exactly the shape that can look well-formed enough to pass.
 ///
 /// The screen survived in practice only because of an accident: the unmapped branch of
@@ -65,7 +65,7 @@ final class UnmappedHistoricalLayoutTests: XCTestCase {
                        "precondition: the record is CRC-VALID, so only the layout decision can archive it")
         XCTAssertTrue(isUnmappedWhoop5HistoricalRecord(unmapped))
         XCTAssertEqual(rejectedHistoricalRecords([unmapped], family: .whoop5), [unmapped],
-                       "a record from a layout NOOP cannot map must be archived whatever it decoded")
+                       "a record from a layout Zoop cannot map must be archived whatever it decoded")
     }
 
     /// Every version outside `mappedWhoop5HistoricalVersions` is archived — no gaps, no lucky values.
@@ -102,7 +102,7 @@ final class UnmappedHistoricalLayoutTests: XCTestCase {
     }
 
     /// A cleanly-decoding v18 record is still NOT archived — widening the screen must not start
-    /// archiving the layouts NOOP already understands wholesale.
+    /// archiving the layouts Zoop already understands wholesale.
     func testMappedV18RecordStillNotArchived() {
         XCTAssertTrue(rejectedHistoricalRecords([bytes(whoop5V18Hex)], family: .whoop5).isEmpty)
     }

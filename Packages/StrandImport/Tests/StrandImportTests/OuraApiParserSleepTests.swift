@@ -183,7 +183,7 @@ final class OuraApiParserSleepTests: XCTestCase {
         XCTAssertEqual(day.restingHr, 55)
     }
 
-    /// Oura's `efficiency` is a 0-100 integer percent. NOOP's own sleep pipeline stores
+    /// Oura's `efficiency` is a 0-100 integer percent. Zoop's own sleep pipeline stores
     /// sleepSession.efficiency / dailyMetric.efficiency as a 0-1 FRACTION everywhere else it's
     /// written (StrandAnalytics: asleep ÷ in-bed), so the importer must normalize at the parse
     /// boundary rather than passing Oura's native percent straight through — both the individual

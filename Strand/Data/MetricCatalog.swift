@@ -243,7 +243,7 @@ enum MetricCatalog {
 
     /// #616: the calorie twin of `todayStepsMetric` — route the tapped detail to the source that MATCHES
     /// the value the tile shows (imported-first, like Android). The imported Apple-Health detail
-    /// (`active_kcal` / apple-health) when the day has an imported value, else NOOP's on-device HR-estimate
+    /// (`active_kcal` / apple-health) when the day has an imported value, else Zoop's on-device HR-estimate
     /// detail (`energy_kcal` / my-whoop, which `exploreSeries` fuses from `activeKcalEst`). Without this the
     /// Calories card always opened the imported-only detail, so an on-device (WHOOP 5.0) user with no import
     /// saw an empty/disagreeing chart. Defaults to the on-device detail when no import is present.

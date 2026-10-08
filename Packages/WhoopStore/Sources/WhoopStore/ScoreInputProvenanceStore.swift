@@ -7,7 +7,7 @@ public struct SourcedMetricPoint: Sendable {
     public init(deviceId: String, point: MetricPoint) { self.deviceId = deviceId; self.point = point }
 }
 
-/// Provenance for one persisted NOOP-computed score. `sourceId` normally names the input provider;
+/// Provenance for one persisted Zoop-computed score. `sourceId` normally names the input provider;
 /// `vo2max_est` uses the estimator id because the method is the provenance users need for that series.
 /// Natural key: (computed device namespace, day, metric key).
 public struct ScoreInputProvenanceRow: Equatable, Codable, Sendable {

@@ -2,7 +2,7 @@
 import Foundation
 import MetricKit
 
-/// Writes the reports iOS hands NOOP through MetricKit into the strap log, one line each (`MetricKitLine`).
+/// Writes the reports iOS hands Zoop through MetricKit into the strap log, one line each (`MetricKitLine`).
 ///
 /// Costs nothing between reports: registering is one call at launch, iOS gathers the numbers itself, and it
 /// delivers a metric payload about once a day and a diagnostic payload after a crash, hang or exception. No timer,

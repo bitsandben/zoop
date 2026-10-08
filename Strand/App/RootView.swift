@@ -25,7 +25,7 @@ enum NavItem: String, CaseIterable, Identifiable, Hashable {
     case backupSync = "Backup & Sync"
     case fusedRecord = "Your Data, Fused"
     case devices = "Devices"
-    case noopLimitations = "NOOP Limitations"
+    case noopLimitations = "Zoop Limitations"
     case notifications = "Notifications"
     case automation = "Automations"
     case smartAlarm = "Smart Alarm"
@@ -62,7 +62,7 @@ enum NavItem: String, CaseIterable, Identifiable, Hashable {
         case .backupSync: return "Backup & Sync"
         case .fusedRecord: return "Your Data, Fused"
         case .devices: return "Devices"
-        case .noopLimitations: return "NOOP Limitations"
+        case .noopLimitations: return "Zoop Limitations"
         case .notifications: return "Notifications"
         case .automation: return "Automations"
         // "Alarms" is the ONE alarm surface (#766): the strap's silent wake-alarm (moved in from
@@ -416,7 +416,7 @@ struct RootView: View {
     private var brand: some View {
         HStack(spacing: 8) {
             // In-app logo: the open recovery-ring mark so the wordmark reads as a true lockup
-            // (README logo system — mark + "NOOP"). Flat gold gradient, low glow per the v3 restraint.
+            // (README logo system — mark + "Zoop"). Flat gold gradient, low glow per the v3 restraint.
             BrandMark(size: 22)
             Text("Zoop")
                 .font(StrandFont.rounded(20, weight: .bold))
@@ -508,7 +508,7 @@ struct RootView: View {
     }
 }
 
-/// The NOOP logo mark — an **open recovery ring** (~80% arc, round caps, starting at 12 o'clock)
+/// The Zoop logo mark — an **open recovery ring** (~80% arc, round caps, starting at 12 o'clock)
 /// with a **solid centre core dot** ("on-device core"), per the README logo system. Rendered in the
 /// gold gradient and kept deliberately flat / low-glow for the v3 Titanium & Gold restraint. Drawn
 /// purely from design tokens so it tracks the palette. Sized to optically x-height-match the wordmark.

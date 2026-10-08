@@ -75,10 +75,10 @@ public enum ZoopMotion {
 //   1. `@Environment(\.accessibilityReduceMotion)` — the system-wide setting. Supplied by the call
 //      site, because only a View can read the environment.
 //   2. Low Power Mode — the OS-level "stop discretionary work" signal.
-//   3. "Reduce motion in NOOP" — an in-app preference, default OFF, for people who want the app
+//   3. "Reduce motion in Zoop" — an in-app preference, default OFF, for people who want the app
 //      quiet without putting the whole phone in battery saver.
 
-/// "Reduce motion in NOOP" (opt-in, default OFF): pose every looping animation still and stop the
+/// "Reduce motion in Zoop" (opt-in, default OFF): pose every looping animation still and stop the
 /// decorative motion sensor, without requiring system Low Power Mode or system Reduce Motion.
 /// Toggled from Settings → Appearance.
 ///
@@ -93,7 +93,7 @@ public enum QuietMotionPrefs {
 }
 
 /// Publishes the two motion signals that have no SwiftUI environment key — Low Power Mode and the
-/// in-app "Reduce motion in NOOP" preference — so any view can pose its looping animation still.
+/// in-app "Reduce motion in Zoop" preference — so any view can pose its looping animation still.
 ///
 /// A singleton with ONE `NotificationCenter` observer rather than a per-view `DisposableEffect`,
 /// for the reason #911 gives on the Android side: the liquid primitives alone have dozens of call
@@ -115,7 +115,7 @@ public final class ZoopMotionState: ObservableObject {
     /// a frame loop draws can be seen.
     ///
     /// A decorative `TimelineView(.animation…)` keeps running when the app is hidden. A reporter
-    /// measured NOOP at a third to half a core permanently on an M1 Pro, the largest single process on
+    /// measured Zoop at a third to half a core permanently on an M1 Pro, the largest single process on
     /// their machine, ahead of `WindowServer` — and Cmd+H did not reduce it, it RAISED it (28.8% to
     /// 49.3% of a core in one run, 34.2% to 41.8% in another, returning to baseline exactly on
     /// re-show). Their hypothesis is that the display link paces the timeline while the window is on
@@ -126,7 +126,7 @@ public final class ZoopMotionState: ObservableObject {
     /// `scenePhase` covers what it does not; this is the gap AppKit leaves.
     @Published public private(set) var windowObscured: Bool = false
 
-    /// The in-app "Reduce motion in NOOP" preference. Kept in step with `UserDefaults` so a
+    /// The in-app "Reduce motion in Zoop" preference. Kept in step with `UserDefaults` so a
     /// non-SwiftUI reader (the motion sensor) and the `@AppStorage` toggle never disagree.
     @Published public private(set) var quietMotion: Bool
 
@@ -213,7 +213,7 @@ public final class ZoopMotionState: ObservableObject {
     /// screen".
     ///
     /// NO WINDOWS is deliberately NOT obscured, and the case is more common than it sounds: before the
-    /// first window exists during launch, and again when someone closes the window and leaves NOOP
+    /// first window exists during launch, and again when someone closes the window and leaves Zoop
     /// running as a menu-bar app. Treating an empty list as "nothing on screen" would pose every surface
     /// still until the next occlusion notification arrived — a first frame of static gauges on the way
     /// to a live screen, caused by the optimisation. Nothing is lost by the other reading: with no
@@ -282,7 +282,7 @@ public struct CountUpText: View {
     @State private var hasAppeared = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    // The system flag alone misses NOOP's own preference and Low Power Mode. Use the same
+    // The system flag alone misses Zoop's own preference and Low Power Mode. Use the same
     // live gate as the decorative loops so a refresh cannot restart suppressed count-up work.
     @ObservedObject private var motion = ZoopMotionState.shared
     private var poseStill: Bool { motion.poseStill(reduceMotion) }

@@ -51,10 +51,10 @@ public enum StrainScorer {
     public static let maxStrain: Double = 100.0
 
     /// Top of WHOOP's Day Strain axis. Kept beside `maxStrain` so every value inherited from the
-    /// old/WHOOP 0–21 axis can be mapped onto NOOP's current axis through one proportional rule.
+    /// old/WHOOP 0–21 axis can be mapped onto Zoop's current axis through one proportional rule.
     public static let whoopMaxStrain: Double = 21.0
 
-    /// Map any value on WHOOP's 0–21 Day Strain axis onto NOOP's current 0–`maxStrain` Effort axis.
+    /// Map any value on WHOOP's 0–21 Day Strain axis onto Zoop's current 0–`maxStrain` Effort axis.
     /// This is deliberately a value conversion, not a one-off threshold constant: callers carrying
     /// any range boundary from the 0–21 scale must pass it through the same mapping.
     /// Kotlin twin: `StrainScorer.effortValueFromWhoopStrain`. Multiplies by the pre-divided ratio so
@@ -247,7 +247,7 @@ public enum StrainScorer {
     /// `maxSampleGapMin`; the last reuses the gap before it.
     ///
     /// #950: TRIMP used to take ONE duration inferred from the first two timestamps and multiply the whole
-    /// zone-weight sum by it. NOOP's HR stream is not uniformly spaced — live Bluetooth arrives ~1 s apart,
+    /// zone-weight sum by it. Zoop's HR stream is not uniformly spaced — live Bluetooth arrives ~1 s apart,
     /// banked 5/MG history ~30 s, and dropouts leave larger holes — so whichever gap happened to be first
     /// set the scale for the entire window. Worse, a workout window and the day that contains it start at
     /// different samples, so they picked different factors and the two Effort numbers stopped being
@@ -286,7 +286,7 @@ public enum StrainScorer {
     /// `[0]` is the bucket no existing line can show. Edwards scores sub-50 %HRR time as exactly zero, so
     /// it never reaches `trimp` and nothing downstream reports it, yet it is the quantity #2438's step 2
     /// proposes to weight. `[1...5]` are the zone shares step 1 fits its weights on, readable until now
-    /// only from a WHOOP export rather than from what NOOP itself saw.
+    /// only from a WHOOP export rather than from what Zoop itself saw.
     ///
     /// Sums to the same duration TRIMP integrates over, so the six buckets and `trimp` describe exactly
     /// the same time. That is CREDITED time, not wall-clock wear: `sampleDurationsMinutes` clamps each

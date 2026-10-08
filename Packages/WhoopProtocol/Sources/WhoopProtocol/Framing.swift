@@ -110,7 +110,7 @@ public enum FrameRejectReason: String, Codable, Equatable, Sendable, CaseIterabl
 /// metadata frames at this bound are valid and intentional; the minimum preserves the old `length >= 7` rule.
 /// WHOOP 5.0/MG: `[SOF][fmt][declLen u16][hdr u16][crc16 u16] + >=1 payload byte + [crc32 u32]` = 13.
 /// Unlike the 4.0 bound, 13 is an empirical acceptance policy, not an envelope necessity: Goose's
-/// `v5Payload` accepts a 12-byte, zero-payload frame (`declaredLength == 4`). NOOP deliberately
+/// `v5Payload` accepts a 12-byte, zero-payload frame (`declaredLength == 4`). Zoop deliberately
 /// requires the inner type byte. Real fixtures include 20-byte command responses plus 24- and
 /// 32-byte frames, but no captured 12-byte zero-payload frame; those observations do not prove the
 /// boundary. Keep this assumption explicit until hardware evidence changes it.
@@ -234,7 +234,7 @@ private func verifyFrameWhoop5(_ frame: [UInt8]) -> FrameCheck {
     guard frame.first == 0xAA else {
         return FrameCheck(ok: false, reason: .noStartOfFrame)
     }
-    // NOOP's empirical 5/MG floor: envelope + at least the inner type byte + CRC32. The Goose
+    // Zoop's empirical 5/MG floor: envelope + at least the inner type byte + CRC32. The Goose
     // reference parser permits a 12-byte empty payload, but no such hardware frame is known here.
     guard frame.count >= FrameLimits.whoop5MinimumFrameBytes else {
         return FrameCheck(ok: false, reason: .belowMinimumLength)

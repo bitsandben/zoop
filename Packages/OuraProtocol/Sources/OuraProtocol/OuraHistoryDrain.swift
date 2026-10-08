@@ -150,7 +150,7 @@ public struct OuraHistoryDrain: Sendable, Equatable {
     /// the ring's clock having ticked continuously the whole time — i.e. NOT a genuine power-cycle (#2097).
     ///
     /// `OuraHistoryDrain.sawPreResumeData` alone cannot tell a real ring reboot from a second BLE client
-    /// (e.g. the Oura app) having served the ring in between and left NOOP's resume cursor looking stale:
+    /// (e.g. the Oura app) having served the ring in between and left Zoop's resume cursor looking stale:
     /// both produce the identical "a stored sample is older than where we sought" signature. But a real
     /// power-cycle does not reset the ring's free-running tick counter toward zero — it PAUSES it while
     /// the ring is off (measured: a dead-battery reboot lost 13m41s of ticks against wall-clock, bracketed

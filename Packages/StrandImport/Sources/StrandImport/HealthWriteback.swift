@@ -1,6 +1,6 @@
 import Foundation
 
-/// Pure mapping from NOOP's persisted sleep-stage JSON to the interval list the iOS HealthKit
+/// Pure mapping from Zoop's persisted sleep-stage JSON to the interval list the iOS HealthKit
 /// write-back turns into `sleepAnalysis` category samples. Lives here (not in the app target) so
 /// the parsing/clamping logic is covered by `swift test` — HealthKit itself can't be unit-tested.
 public enum HealthWriteback {
@@ -25,7 +25,7 @@ public enum HealthWriteback {
     /// Decode a session's `stagesJSON` into clamped stage intervals for HealthKit.
     ///
     /// Only the on-device SleepStager segment shape (`[{"start","end","stage"}]`, unix seconds)
-    /// carries timing, so only it yields intervals. The two aggregate shapes NOOP has also
+    /// carries timing, so only it yields intervals. The two aggregate shapes Zoop has also
     /// persisted (`{"deep":min,…}` and `[{"stage","min"}]` — see `WhoopCsvExporter.stageMinutes`)
     /// have no placement information; fabricating positions for them would write fiction into
     /// Health, so they return `[]` and the caller falls back to one `.asleepUnspecified` block.
@@ -157,7 +157,7 @@ public enum HealthWriteback {
 
     // MARK: - Apple Health external UUID keys (#1503)
 
-    /// The deterministic `HKMetadataKeyExternalUUID` for a NOOP-written Apple Health record.
+    /// The deterministic `HKMetadataKeyExternalUUID` for a Zoop-written Apple Health record.
     ///
     /// The key is a natural key — `noop:<kind>:<identity>` — with NO device-id segment. The previous
     /// scheme embedded the active strap id (`noop:<deviceId>:<kind>:<identity>`), which is NOT durable:

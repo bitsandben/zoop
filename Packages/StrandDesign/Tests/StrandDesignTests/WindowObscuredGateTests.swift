@@ -48,7 +48,7 @@ final class WindowObscuredGateTests: XCTestCase {
 
     /// The case that decides the empty-list rule rather than following from it.
     ///
-    /// During launch AppKit has no windows yet, and someone can close the window and leave NOOP running
+    /// During launch AppKit has no windows yet, and someone can close the window and leave Zoop running
     /// as a menu-bar app. Reading that as "nothing on screen" would pose every surface still until the
     /// next occlusion notification arrived, so the app's first frame would show static gauges on the way
     /// to a live screen. With no window there is no view hierarchy and so no frame loop to stop.

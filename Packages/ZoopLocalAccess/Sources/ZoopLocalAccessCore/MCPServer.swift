@@ -109,7 +109,7 @@ public final class ZoopMCPServer {
     }
 
     public static let instructions = """
-    NOOP local access is read-only and returns personal health context from the user's on-device SQLite store. Use bounded tools, check data_freshness before stale-data claims, separate facts from inference, and do not diagnose medical conditions. No tool writes data or calls a network service.
+    Zoop local access is read-only and returns personal health context from the user's on-device SQLite store. Use bounded tools, check data_freshness before stale-data claims, separate facts from inference, and do not diagnose medical conditions. No tool writes data or calls a network service.
     """
 
     private func callTool(params: JSONValue?) throws -> JSONValue {
@@ -147,17 +147,17 @@ public final class ZoopMCPServer {
         let description: String
         switch name {
         case "weekly_health_review":
-            description = "Review the last week of NOOP data"
+            description = "Review the last week of Zoop data"
             text = """
-            Use the NOOP local access tools to review the last 7 days. Start with health_snapshot, then inspect any weak driver with metric_series. Separate facts, inferred patterns, and uncertainty. Do not diagnose medical conditions.
+            Use the Zoop local access tools to review the last 7 days. Start with health_snapshot, then inspect any weak driver with metric_series. Separate facts, inferred patterns, and uncertainty. Do not diagnose medical conditions.
             """
         case "debug_data_freshness":
-            description = "Find why a NOOP screen looks stale"
+            description = "Find why a Zoop screen looks stale"
             text = """
             Use data_freshness, then compare health_snapshot with metric_series for the affected metric. Identify whether the issue is source freshness, import coverage, computed-source fallback, or a UI read-model problem.
             """
         case "explain_recovery":
-            description = "Explain recovery drivers from local NOOP data"
+            description = "Explain recovery drivers from local Zoop data"
             text = """
             Use health_snapshot and metric_series for recovery, hrv, rhr, resp_rate, strain, and sleep_total_min. Explain what changed against recent baseline, what is only correlation, and what action is low-risk today.
             """
@@ -186,7 +186,7 @@ public func toolsList() -> JSONValue {
             tool(
                 name: "health_snapshot",
                 title: "Health Snapshot",
-                description: "Return a bounded recent NOOP health snapshot with merged WHOOP imported/computed daily metrics and freshness metadata.",
+                description: "Return a bounded recent Zoop health snapshot with merged WHOOP imported/computed daily metrics and freshness metadata.",
                 properties: [
                     "days": integerProperty("Trailing days to include, default 14, max 120."),
                 ]
@@ -194,7 +194,7 @@ public func toolsList() -> JSONValue {
             tool(
                 name: "metric_series",
                 title: "Metric Series",
-                description: "Return one bounded metric series from WHOOP, NOOP computed, Apple Health, nutrition, or mood sources.",
+                description: "Return one bounded metric series from WHOOP, Zoop computed, Apple Health, nutrition, or mood sources.",
                 properties: [
                     "key": stringProperty("Metric key, such as recovery, hrv, rhr, resp_rate, spo2, strain, sleep_total_min, steps, or active_kcal."),
                     "source": stringProperty("Source id. Defaults to my-whoop and resolves my-whoop + my-whoop-zoop + compatible Apple Health fill-ins."),
@@ -208,13 +208,13 @@ public func toolsList() -> JSONValue {
             tool(
                 name: "data_freshness",
                 title: "Data Freshness",
-                description: "Report local NOOP source freshness, storage counts, available metric keys, and latest heart-rate sample timestamp.",
+                description: "Report local Zoop source freshness, storage counts, available metric keys, and latest heart-rate sample timestamp.",
                 properties: [:]
             ),
             tool(
                 name: "sleep_summary",
                 title: "Sleep Summary",
-                description: "Return bounded sleep sessions and aggregate sleep duration/efficiency from local NOOP data.",
+                description: "Return bounded sleep sessions and aggregate sleep duration/efficiency from local Zoop data.",
                 properties: [
                     "days": integerProperty("Trailing days to include, default 30, max 4000."),
                 ]
@@ -222,7 +222,7 @@ public func toolsList() -> JSONValue {
             tool(
                 name: "workout_summary",
                 title: "Workout Summary",
-                description: "Return bounded workout rows and aggregate effort/calorie/duration summaries from local NOOP data.",
+                description: "Return bounded workout rows and aggregate effort/calorie/duration summaries from local Zoop data.",
                 properties: [
                     "days": integerProperty("Trailing days to include, default 90, max 4000."),
                 ]
@@ -234,10 +234,10 @@ public func toolsList() -> JSONValue {
 public func resourcesList() -> JSONValue {
     .object([
         "resources": .array([
-            resource("zoop://health/snapshot", name: "health_snapshot", title: "NOOP Health Snapshot", description: "Recent merged daily metrics and freshness", mimeType: "application/json"),
-            resource("zoop://data/freshness", name: "data_freshness", title: "NOOP Data Freshness", description: "Source coverage and latest sample timestamps", mimeType: "application/json"),
-            resource("zoop://metrics/catalog", name: "metrics_catalog", title: "NOOP Metrics Catalog", description: "Supported metric keys and source ids", mimeType: "application/json"),
-            resource("zoop://sources", name: "sources", title: "NOOP Sources", description: "Canonical local source identifiers", mimeType: "application/json"),
+            resource("zoop://health/snapshot", name: "health_snapshot", title: "Zoop Health Snapshot", description: "Recent merged daily metrics and freshness", mimeType: "application/json"),
+            resource("zoop://data/freshness", name: "data_freshness", title: "Zoop Data Freshness", description: "Source coverage and latest sample timestamps", mimeType: "application/json"),
+            resource("zoop://metrics/catalog", name: "metrics_catalog", title: "Zoop Metrics Catalog", description: "Supported metric keys and source ids", mimeType: "application/json"),
+            resource("zoop://sources", name: "sources", title: "Zoop Sources", description: "Canonical local source identifiers", mimeType: "application/json"),
         ]),
     ])
 }
@@ -245,8 +245,8 @@ public func resourcesList() -> JSONValue {
 public func promptsList() -> JSONValue {
     .object([
         "prompts": .array([
-            prompt("weekly_health_review", title: "Weekly Health Review", description: "Review the last week of NOOP data with uncertainty separated from facts."),
-            prompt("debug_data_freshness", title: "Debug Data Freshness", description: "Diagnose why a NOOP screen or metric is stale."),
+            prompt("weekly_health_review", title: "Weekly Health Review", description: "Review the last week of Zoop data with uncertainty separated from facts."),
+            prompt("debug_data_freshness", title: "Debug Data Freshness", description: "Diagnose why a Zoop screen or metric is stale."),
             prompt("explain_recovery", title: "Explain Recovery", description: "Explain recovery drivers using local metrics and recent baselines."),
         ]),
     ])

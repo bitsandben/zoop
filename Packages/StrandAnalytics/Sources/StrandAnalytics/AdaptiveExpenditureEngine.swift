@@ -22,7 +22,7 @@ public enum AdaptiveExpenditureConfidence: String, Equatable, Sendable {
 /// A retrospective estimate of average daily energy expenditure, with an interval.
 ///
 /// Never a single number: the method's error is dominated by things this engine cannot see (hydration
-/// swings, an under-logged weekend), so a bare figure would be the fabrication the rest of NOOP refuses
+/// swings, an under-logged weekend), so a bare figure would be the fabrication the rest of Zoop refuses
 /// to make. The interval is the honest output and the caller should render it as one.
 public struct AdaptiveExpenditureEstimate: Equatable, Sendable {
     public let estimatedDailyKcal: Double

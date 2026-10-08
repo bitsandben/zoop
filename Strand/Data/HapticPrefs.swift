@@ -1,6 +1,6 @@
 import Foundation
 
-/// Per-event toggles for NOOP's IN-SESSION strap-haptic cues (#1115) — the byte-parity twin of the Android
+/// Per-event toggles for Zoop's IN-SESSION strap-haptic cues (#1115) — the byte-parity twin of the Android
 /// `HapticPrefs` (same key strings, same default-on).
 ///
 /// These cues are feedback to something the user explicitly started (Breathing pacer, Interval timer, Live

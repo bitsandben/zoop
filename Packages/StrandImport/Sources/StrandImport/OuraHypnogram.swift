@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - Oura compact per-epoch sleep strings (DOCUMENTED Oura API v2 encodings; NOOP's own decoder)
+// MARK: - Oura compact per-epoch sleep strings (DOCUMENTED Oura API v2 encodings; Zoop's own decoder)
 //
 // The Oura `sleep` object carries two compact strings. Their digit legends are DIFFERENT — never share a
 // decoder between them:
@@ -9,7 +9,7 @@ import Foundation
 
 public enum OuraHypnogram {
 
-    /// `sleep_phase_*` digit → NOOP stage string ("deep"/"light"/"rem"/"wake", matching
+    /// `sleep_phase_*` digit → Zoop stage string ("deep"/"light"/"rem"/"wake", matching
     /// `WearableSleepStageInterval`). Unknown digits → nil (skipped, the epoch clock still advances).
     public static func stageName(_ ch: Character) -> String? {
         switch ch {

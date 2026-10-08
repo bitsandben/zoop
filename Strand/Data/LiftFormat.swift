@@ -63,7 +63,7 @@ enum LiftFormat {
     }
 
     /// Parse a typed number, accepting both "7.5" and the comma decimal separator "7,5" that most of
-    /// NOOP's shipped locales use on their keyboards. Returns nil for anything else.
+    /// Zoop's shipped locales use on their keyboards. Returns nil for anything else.
     static func number(_ text: String) -> Double? {
         let cleaned = text.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: ".")
         guard !cleaned.isEmpty else { return nil }

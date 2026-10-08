@@ -38,7 +38,7 @@ struct AutomationsView: View {
     @AppStorage("notif.masterEnabled") private var wristAlertsMaster = false
     #endif
 
-    // #haptics (#1115): per-event toggles for NOOP's IN-SESSION strap buzzes. Default ON (opt-out) — these
+    // #haptics (#1115): per-event toggles for Zoop's IN-SESSION strap buzzes. Default ON (opt-out) — these
     // are feedback to a feature you started, so a fresh install buzzes as before and a user turns off any
     // cue. Ambient cues (inactivity / stress / coaching) keep their own opt-in cards; double-tap is gated by
     // its action picker. Same keys the buzz sites read via HapticPrefs (which also defaults an unset key on).
@@ -95,7 +95,7 @@ struct AutomationsView: View {
 
     // MARK: - Haptics (#1115)
 
-    /// Per-event opt-in toggles for NOOP's in-session strap buzzes (all default OFF, existing installs
+    /// Per-event opt-in toggles for Zoop's in-session strap buzzes (all default OFF, existing installs
     /// migrated on). Parity with the Android Automations "Haptics" section. Ambient cues and the
     /// Android-only call/notification buzzes are not shown here (the latter can't exist on Apple).
     private var hapticsCard: some View {

@@ -23,7 +23,7 @@ struct CaffeineLogCard: View {
     private let quickHoursAgo: [Int] = [0, 1, 2, 3]
 
     // PR#566 (mvanhorn) — caffeine cutoff window + late-intake nudge. OPT-IN (default OFF, manual-first):
-    // when enabled, NOOP works back from the user's bedtime by the dose's decay lead and flags any logged
+    // when enabled, Zoop works back from the user's bedtime by the dose's decay lead and flags any logged
     // intake that lands past that cutoff, with a calm inline nudge. Keys MIRROR the Android prefs
     // (KEY_CAFFEINE_CUTOFF / KEY_CAFFEINE_BEDTIME_MIN, default 23:00) so a layout reads the same on both.
     @AppStorage(Self.cutoffEnabledKey) private var cutoffEnabled = false
@@ -278,7 +278,7 @@ struct CaffeineLogCard: View {
                 Spacer()
                 // No remove control on an imported intake (#949): the next sync re-reads the same window
                 // from Apple Health and would bring it straight back, so offering the button would be
-                // offering something NOOP cannot honour. Remove it where it was logged.
+                // offering something Zoop cannot honour. Remove it where it was logged.
                 if intake.isImported {
                     Text("Apple Health")
                         .font(StrandFont.caption)

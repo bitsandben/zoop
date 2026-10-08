@@ -4,7 +4,7 @@ import WhoopStore
 // Training metrics for the Lift Log.
 //
 // Every figure here is arithmetic the user can redo by hand from their own logged sets. That is the
-// whole design constraint: NOOP shows a few honest numbers rather than one invented score, because a
+// whole design constraint: Zoop shows a few honest numbers rather than one invented score, because a
 // composite "workout score out of 100" feels satisfying and tells you nothing about what to change.
 //
 // PURE. No store, no clock, no UI — the inputs are rows and the outputs are numbers, so the whole
@@ -12,7 +12,7 @@ import WhoopStore
 //
 // WHAT IS DELIBERATELY ABSENT, and must stay absent:
 //
-//  • Anything that feeds `workout.strain` or daily Effort. NOOP's strain is HR-measured (Karvonen
+//  • Anything that feeds `workout.strain` or daily Effort. Zoop's strain is HR-measured (Karvonen
 //    %HRR -> Edwards TRIMP). There is no validated public path from typed sets/reps/weight to a
 //    cardiovascular-strain equivalent — WHOOP's own muscular load runs velocity-based algorithms
 //    over strap accelerometer/gyroscope under an unpublished model — and deriving one here is the
@@ -259,7 +259,7 @@ public enum LiftMetrics {
     /// Weekly fractional sets per muscle, from the same dose-response meta-regression the 0.5
     /// credit comes from.
     ///
-    /// PRESENTED AS A BAND WITH ITS SOURCE NAMED, NEVER AS A PERSONAL PRESCRIPTION. NOOP is not a
+    /// PRESENTED AS A BAND WITH ITS SOURCE NAMED, NEVER AS A PERSONAL PRESCRIPTION. Zoop is not a
     /// medical device and does not tell anyone what their body needs; it says what the research
     /// associates with growth and leaves the conclusion to the reader.
     public enum ReferenceDose {

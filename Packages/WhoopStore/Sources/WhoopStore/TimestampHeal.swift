@@ -18,7 +18,7 @@ extension WhoopStore {
     }
 
     /// ONE-TIME repair of a database polluted by a bad-clock strap (#547, pikapik). Before the ingest
-    /// gate landed, NOOP trusted each type-47 record's own unix timestamp verbatim, so a WHOOP with a
+    /// gate landed, Zoop trusted each type-47 record's own unix timestamp verbatim, so a WHOOP with a
     /// broken clock/flash (repeated trim=0xFFFFFFFF) wrote rows dated to scattered garbage — far-past
     /// (2024/2029), a bogus 2027=1827642881, and FUTURE dates. The day-windows overlap, so one ~12h
     /// polluted block was re-attributed to every day (the repeated totalSleepMin=721 across 06-14..06-21)
@@ -67,7 +67,7 @@ extension WhoopStore {
             // (b) Computed rows. dailyMetric is keyed by a yyyy-MM-dd `day` text; sleepSession by an
             // integer `startTs`. A FUTURE-dated row is always implausible (a future day/ts can only come
             // from a future-dated record), so drop it regardless of source. The far-PAST floor, though, is
-            // applied ONLY to computed (`-noop`) rows: those can't legitimately predate NOOP, so a pre-2023
+            // applied ONLY to computed (`-noop`) rows: those can't legitimately predate Zoop, so a pre-2023
             // one is bad-clock garbage — but a WHOOP CSV import (bare "my-whoop") carries REAL dates going
             // back years, and reusing the floor across all sources silently purged that imported history on
             // any heal (v8.2.1). String comparison is correct for the zero-padded yyyy-MM-dd format.

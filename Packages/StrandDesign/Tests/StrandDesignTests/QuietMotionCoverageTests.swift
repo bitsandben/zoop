@@ -254,7 +254,7 @@ final class QuietMotionCoverageTests: XCTestCase {
             XCTAssertTrue(src.contains(name),
                           "windowObscured must stay live on \(name)")
         }
-        // The window list MUST be filtered to real app windows. NOOP ships a MenuBarExtra whose
+        // The window list MUST be filtered to real app windows. Zoop ships a MenuBarExtra whose
         // status-item window lives in `NSApplication.shared.windows` forever, so dropping this filter
         // leaves the gate permanently open and the fix silently inert.
         //
@@ -290,7 +290,7 @@ final class QuietMotionCoverageTests: XCTestCase {
     }
 
     /// Posing the picture still while the sensor keeps running saves nothing. `onDisappear` is not
-    /// called when the app is backgrounded, and NOOP declares background modes, so without an
+    /// called when the app is backgrounded, and Zoop declares background modes, so without an
     /// explicit app-boundary stop a decorative 60 Hz device-motion feed ran all day behind the lock
     /// screen.
     func testDecorativeMotionSensorStopsAtTheAppBoundary() throws {

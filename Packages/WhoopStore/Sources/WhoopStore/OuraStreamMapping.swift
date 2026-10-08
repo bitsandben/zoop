@@ -10,9 +10,9 @@ import OuraProtocol
 ///
 /// Honest-data invariant (hard): we surface only the ring's decoded raw signals + its own open event
 /// tags (HR/IBI/HRV/SpO2/temp/sleep-phase/battery). We NEVER read or surface Oura's encrypted readiness
-/// or sleep scores. NOOP computes its own Charge/Rest downstream from these per-device streams. The
+/// or sleep scores. Zoop computes its own Charge/Rest downstream from these per-device streams. The
 /// `OuraHRV` 0x5D tag is the ring's OWN RMSSD-derived HRV signal (OURA_PROTOCOL.md s6.9), not a readiness
-/// score; NOOP also independently reconstructs RMSSD from the IBI streams for its own scoring.
+/// score; Zoop also independently reconstructs RMSSD from the IBI streams for its own scoring.
 ///
 /// Timestamping: the live source streams a batch and stamps every row at the arrival wall-clock `ts`
 /// (unix seconds), exactly as `StandardHRMapping.samples(...at:)` does. The decoded events carry only a
@@ -24,7 +24,7 @@ import OuraProtocol
 /// Tier-B (UNVERIFIED) events are dropped: only Tier-A decoded signals map into `Streams`, so an
 /// unverified summary can never silently feed scoring. ONE exception, and it is explicit rather than
 /// silent: `.sleepPeriodInfo`'s `breath` field maps to `resp` (see the case below). That value is the
-/// RING's own measurement, not something NOOP derives, so keeping it is a decode question rather than a
+/// RING's own measurement, not something Zoop derives, so keeping it is a decode question rather than a
 /// method question — but it is kept OUT of the sleep stager at the read (`OuraRespScale.forScoring`)
 /// rather than out of the database, because the stager reads this stream as a 1 Hz raw ADC waveform and
 /// a per-window rate is the wrong SHAPE for it, however good the rate is.
@@ -32,7 +32,7 @@ public enum OuraStreamMapping {
     /// WhoopEvent.kind for the ring's own HRV 0x5D tag. The payload carries the honestly-labelled decoded
     /// fields `pair_index` / `hr_bpm` / `rmssd_ms` — the 0x5D body is a run of `(u8 avg HR bpm, u8 avg
     /// RMSSD ms)` pairs, one per 5-min bucket (layout pinned to open_oura, OURA_PROTOCOL.md s6.9). This is
-    /// the ring's OWN summary tag, NOT Oura's readiness score, and NOT NOOP's scoring RMSSD (that is
+    /// the ring's OWN summary tag, NOT Oura's readiness score, and NOT Zoop's scoring RMSSD (that is
     /// reconstructed from `rr`). Each bucket is stamped at its own 5-min offset (see `.hrv` below) so the
     /// per-bucket series survives the (deviceId, ts, kind) event key. Must match the Kotlin twin exactly.
     public static let hrvEventKind = "OURA_HRV"
@@ -91,7 +91,7 @@ public enum OuraStreamMapping {
                 // scaling (layout pinned to open_oura's (u8 hr, u8 rmssd) pairs — the byte->unit scaling
                 // that was "unpinned" is now known, so these are honestly labelled, not raw bytes).
                 // `pair_index` is the bucket's position in the record. This is the ring's open summary
-                // tag, NOT Oura's readiness score; NOOP's own scoring RMSSD still comes from the IBI
+                // tag, NOT Oura's readiness score; Zoop's own scoring RMSSD still comes from the IBI
                 // stream (`rr`). Keys/values are IDENTICAL to the Kotlin twin so both platforms emit
                 // byte-for-byte the same OURA_HRV payload.
                 //
@@ -219,11 +219,11 @@ public enum OuraStreamMapping {
                 // ~1 Hz raw ADC waveform.
                 //
                 // Why this one field is stored: `breath` is the RING's own measurement, read off the wire
-                // — not a signal NOOP derives from raw sensor data. The #194 rule governs the latter
-                // (PPG→HR, RSA-from-R-R: methods where NOOP invents the number), so the question here is
+                // — not a signal Zoop derives from raw sensor data. The #194 rule governs the latter
+                // (PPG→HR, RSA-from-R-R: methods where Zoop invents the number), so the question here is
                 // whether the DECODE is right, and that is settled structurally: 3,493 records over four
                 // nights, every value an exact multiple of 0.125, both of the source's declared invariants
-                // upheld. It has the same standing as the ring's own hypnogram, which NOOP already
+                // upheld. It has the same standing as the ring's own hypnogram, which Zoop already
                 // persists and scores from (#773/#877). Cross-checks, in order of weight: these records
                 // median 14.75/min against the SAME wearer's 851-night Oura APP export at 15.250 (IQR
                 // 14.875–15.625) — same quantity, same band (distribution, not paired: the corpora do not

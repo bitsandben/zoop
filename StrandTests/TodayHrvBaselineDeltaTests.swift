@@ -3,7 +3,7 @@ import XCTest
 
 /// #696 — STOPGAP guard on the "HRV X% over baseline" Synthesis headline.
 ///
-/// NOOP mixes HRV measurement methods on the shared `avgHrv` field: strap/WHOOP-CSV HRV is RMSSD
+/// Zoop mixes HRV measurement methods on the shared `avgHrv` field: strap/WHOOP-CSV HRV is RMSSD
 /// (~20-100 ms) while Apple-Health-imported HRV is SDNN (~100-200 ms). With no method awareness, an
 /// SDNN reading (e.g. an Oura ring's 176 ms) compared against an RMSSD baseline (~57 ms) yields a
 /// physiologically-impossible delta (+209%) and renders the alarming "210% over baseline" headline.

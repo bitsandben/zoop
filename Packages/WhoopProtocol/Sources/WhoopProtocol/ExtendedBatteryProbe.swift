@@ -55,11 +55,11 @@ public enum ExtendedBatteryProbe {
             payloadHex = pay.map { String(format: "%02x", $0) }.joined()
             sb += "\nPayload (\(pay.count) B, CRC excluded):\n"
             sb += hexGrid(pay)
-            // NOOP's decoder reads the pack voltage at payload bytes 7..8 (LE) — confirmed only on WHOOP4.
+            // Zoop's decoder reads the pack voltage at payload bytes 7..8 (LE) — confirmed only on WHOOP4.
             if !isWhoop5, pay.count >= 9 {
                 let mv = Int(pay[7]) | (Int(pay[8]) << 8)
                 sb += "\nVoltage: " + String(format: "%.2f V", Double(mv) / 1000.0)
-                sb += "  (mV=\(mv) @07) — the field NOOP already reads\n"
+                sb += "  (mV=\(mv) @07) — the field Zoop already reads\n"
             }
             // Per-byte diff vs the previous capture — the field-mapping signal.
             sb += "\n"

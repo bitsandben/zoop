@@ -10,7 +10,7 @@ import WhoopProtocol
 ///
 /// TWO restart opcodes are included, both non-destructive (a restart keeps the strap's stored data)
 /// and both user-initiated + confirmation-gated, never sent automatically:
-///   - `rebootStrap` (29): the normal Restart. NOOP already triggers a reboot today via
+///   - `rebootStrap` (29): the normal Restart. Zoop already triggers a reboot today via
 ///     `setAdvertisingNameHarvard` (rename applies on reboot). See `BLEManager.rebootStrap()`.
 ///   - `powerCycleStrap` (32): a harder restart, included ONLY as a candidate for the WHOOP 4.0
 ///     reboot probe (Test Centre → Connection, 4.0 only). The 4.0 ignores opcode 29/empty (#235) and
@@ -30,10 +30,10 @@ public enum WhoopCommand: UInt8, CaseIterable {
     case toggleGenericHRProfile = 14
     /// ABORT_HISTORICAL_TRANSMITS (20) — ask the strap to stop streaming the offload it is part-way
     /// through. NON-DESTRUCTIVE, and specifically not a trim: the strap only frees banked records when
-    /// NOOP acks a HISTORY_END, so anything unacked when the abort lands stays in flash and re-offloads
+    /// Zoop acks a HISTORY_END, so anything unacked when the abort lands stays in flash and re-offloads
     /// on the next sync. Nothing is deleted and no cursor moves.
     ///
-    /// The counterpart to `sendHistoricalData` (22), which NOOP has always had with no way to stop it:
+    /// The counterpart to `sendHistoricalData` (22), which Zoop has always had with no way to stop it:
     /// until now a drain ran to completion, the 15-minute timeout, or a dropped link.
     ///
     /// `BLEManager.abortBackfill()` tears the session down LOCALLY whether or not the strap honours the
@@ -110,7 +110,7 @@ public enum WhoopCommand: UInt8, CaseIterable {
     /// START_FF_KEY_EXCHANGE (117 / 0x75) — ask the strap how many feature flags its firmware knows.
     /// READ-ONLY: the reply carries a count, and nothing on the strap changes. Payload `[0x01]` (the
     /// inner b3 byte the SET_CONFIG family and GET_HELLO use). This is the READ half of the flag surface
-    /// NOOP has only ever written (`setConfig`/120): the protocol's own `CommandNumber` table names
+    /// Zoop has only ever written (`setConfig`/120): the protocol's own `CommandNumber` table names
     /// 117/118 alongside 119/120, and only the SET pair was implemented. Driven ONLY by
     /// `BLEManager.probeFeatureFlags()` — user-initiated, Test Centre → Connection gated. Parsing lives in
     /// `FeatureFlagProbe` (pure, unit-tested). (#761, and #103 which it exists to answer.)
@@ -166,7 +166,7 @@ public enum WhoopCommand: UInt8, CaseIterable {
     /// gated. Parsing lives in `DeviceConfigReadProbe` (pure, unit-tested). (#103, follow-up to #761.)
     case getDeviceConfigValue = 121
     /// GET_FF_VALUE (128 / 0x80) — ask for ONE feature-flag value by key name.
-    /// READ-ONLY, same body shape as 121. The read half of the flag surface NOOP has only ever written
+    /// READ-ONLY, same body shape as 121. The read half of the flag surface Zoop has only ever written
     /// (`setConfig`/120): #761 read the flag NAMES, this reads a named flag's VALUE. **May not be
     /// implemented in firmware.** Driven ONLY by `BLEManager.probeDeviceConfigValues()`. (#103)
     case getFeatureFlagValue = 128
@@ -333,7 +333,7 @@ public enum WhoopCommand: UInt8, CaseIterable {
 
 /// Candidate reboot frames for the WHOOP 4.0 reboot probe (Test Centre → Connection, WHOOP 4.0 only).
 ///
-/// A real WHOOP 4.0 silently ignores NOOP's production reboot frame (opcode 29 REBOOT_STRAP, empty
+/// A real WHOOP 4.0 silently ignores Zoop's production reboot frame (opcode 29 REBOOT_STRAP, empty
 /// body — #235: no reboot, no disconnect, no COMMAND_RESPONSE), and the correct 4.0 frame is unknown.
 /// These are the plausible NON-DESTRUCTIVE candidates — a restart / power-cycle only, never a
 /// data-wiping opcode — tried one at a time on real hardware so the strap log tells which one works:
@@ -344,7 +344,7 @@ public enum WhoopCommand: UInt8, CaseIterable {
 /// when a 4.0 is in hand. The Kotlin twin is `RebootProbeVariant` (WhoopBleClient.kt); the `logTag`
 /// strings are byte-identical across platforms so a strap log reads the same either side.
 public enum RebootProbeVariant: String, CaseIterable, Sendable {
-    /// A — opcode 29 REBOOT_STRAP, empty body: NOOP's current production frame (ignored on 4.0).
+    /// A — opcode 29 REBOOT_STRAP, empty body: Zoop's current production frame (ignored on 4.0).
     case reboot29Empty
     /// B — opcode 32 POWER_CYCLE_STRAP, empty body: a harder restart, never tried.
     case powerCycle32Empty

@@ -71,7 +71,7 @@ final class EffortScoreFunnelTests: XCTestCase {
     }
 
     /// z0 is the whole point: Edwards scores sub-50 %HRR time as zero, so a day spent entirely below
-    /// zone 1 has TRIMP 0 and is indistinguishable from an unworn day in every line NOOP emitted before.
+    /// zone 1 has TRIMP 0 and is indistinguishable from an unworn day in every line Zoop emitted before.
     func testTimeBelowZoneOneIsVisibleEvenThoughItScoresZero() {
         let hr = (0..<10).map { HRSample(ts: 1_700_000_000 + $0 * 60, bpm: 70) }
         let durations = StrainScorer.sampleDurationsMinutes(hr)

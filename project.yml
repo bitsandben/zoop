@@ -448,8 +448,8 @@ targets:
         # Built from the same $(BUNDLE_ID_PREFIX) rather than $(PRODUCT_BUNDLE_IDENTIFIER) because that
         # build setting would resolve to THIS target's own id, not ZoopiOS's.
         WKCompanionAppBundleIdentifier: $(BUNDLE_ID_PREFIX).zoop
-        NSHealthShareUsageDescription: "NOOP reads your heart rate from the Watch sensor to show a live readout on your wrist. It stays on your device."
-        NSHealthUpdateUsageDescription: "NOOP records a basic workout session on your Watch for a higher-fidelity heart rate. The session stays on your device."
+        NSHealthShareUsageDescription: "Zoop reads your heart rate from the Watch sensor to show a live readout on your wrist. It stays on your device."
+        NSHealthUpdateUsageDescription: "Zoop records a basic workout session on your Watch for a higher-fidelity heart rate. The session stays on your device."
     entitlements:
       path: ZoopWatch/ZoopWatch.entitlements
       properties:

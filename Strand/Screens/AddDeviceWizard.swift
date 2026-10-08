@@ -38,7 +38,7 @@ struct AddDeviceWizard: View {
         case amazfit       // Amazfit / Zepp incl. Helio (Huami custom or standard HR)
         case miBand        // Xiaomi Mi Band (Huami; no-auth live HR path, honest message if auth needed)
         case garmin        // Garmin watch (standard Broadcast HR path + an enable hint)
-        case oura          // Oura ring (factory-reset-and-adopt: NOOP installs its own key, becomes owner)
+        case oura          // Oura ring (factory-reset-and-adopt: Zoop installs its own key, becomes owner)
         var id: Self { self }
 
         var isWhoop: Bool { self == .whoop4 || self == .whoop5mg }
@@ -113,7 +113,7 @@ struct AddDeviceWizard: View {
     @State private var askMakeActive = false
 
     /// The mandatory irreversible-consent gate (Oura factory-reset-and-adopt). The user must tick this
-    /// before the wizard will scan, because adoption installs NOOP's key and the Oura app stops working
+    /// before the wizard will scan, because adoption installs Zoop's key and the Oura app stops working
     /// with the ring. Mirrors the spec's red `statusCritical` gate. Reset whenever the type changes.
     @State private var ouraConsented = false
     /// The Advanced "I already have my ring's key" power-user path: when true, the prep step swaps to a
@@ -508,7 +508,7 @@ struct AddDeviceWizard: View {
         case .garmin:
             return GarminBroadcast.broadcastHint
         case .oura:
-            // The factory-reset-and-adopt checklist, shown only AFTER the irreversible-consent gate. NOOP
+            // The factory-reset-and-adopt checklist, shown only AFTER the irreversible-consent gate. Zoop
             // installs its own key on a reset ring and becomes its sole owner (clean-room facts, see
             // docs/OURA_PROTOCOL.md s3 on the install-key + reset-clears-owner model).
             return [
@@ -883,7 +883,7 @@ struct AddDeviceWizard: View {
 
     // MARK: Step 5 (Oura) - adopting: honest key-install progress (no fake percent)
 
-    /// The Adopting face: an honest "Installing NOOP's key" progress card shown ONLY while a real key install
+    /// The Adopting face: an honest "Installing Zoop's key" progress card shown ONLY while a real key install
     /// is in flight (the standard adopt path; the Advanced path never lands here). Driven to success/Failed by
     /// the live source's `adoptPhase` (see the body `.onChange`). Mirrors the Android `OuraAdoptingStep`.
     @ViewBuilder private var ouraAdoptingFace: some View {
@@ -1166,7 +1166,7 @@ struct AddDeviceWizard: View {
         // Experimental non-Oura types (Amazfit / Mi Band / Garmin) take their stored brand string straight
         // from the catalog via the type→brand bridge. Oura falls through to its detected-generation label.
         if let brand = type?.experimentalBrand, brand != .oura { return brand.displayBrand }
-        // Oura confirms with the detected generation name + a Beta marker so the user sees what NOOP
+        // Oura confirms with the detected generation name + a Beta marker so the user sees what Zoop
         // identified before adopting (the gen is best-effort from the scan, fixed by this pick).
         if let pickedOura { return String(localized: "\(pickedOura.gen.displayName) · Beta") }
         if let pickedStrap { return brandGuess(from: pickedStrap.name) }
@@ -1325,7 +1325,7 @@ struct AddDeviceWizard: View {
 
     /// Build the `.oura` `PairedDevice` for the picked ring. sourceKind `.oura` routes the SourceCoordinator
     /// to the OuraLiveSource (its OWN central, never the WHOOP path). The generation rides `model`
-    /// (OuraRingGen.from(model:) recovers it), and the capability set is gen-filtered. NOOP computes its own
+    /// (OuraRingGen.from(model:) recovers it), and the capability set is gen-filtered. Zoop computes its own
     /// Charge/Rest from the ring's raw signals; it never reads Oura's encrypted readiness/sleep scores, and a
     /// signal it can't read stays "-" (honest-data invariant). Returns nil when no ring is picked.
     private func buildOuraDevice() -> PairedDevice? {
@@ -1352,7 +1352,7 @@ struct AddDeviceWizard: View {
     /// irreversible gate, after the consent tick). It grants the coordinator adopt consent for THIS ring and
     /// registers it active; the live source then runs the one-time key install (s3.2). The wizard moves to its
     /// honest Adopting step, which the live source's adopt phase drives to success (close) or Failed. NO key is
-    /// stored here: the live install persists NOOP's freshly-generated key only on an OK `0x25` ack.
+    /// stored here: the live install persists Zoop's freshly-generated key only on an OK `0x25` ack.
     private func commitOuraAdopt() {
         guard let device = buildOuraDevice() else { onClose(); return }
         stopAllScans()

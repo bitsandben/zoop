@@ -3,7 +3,7 @@ import WhoopStore
 @testable import Strand
 
 /// Pins the source-aware vital-sign resolution (PR#261): the field-by-field daily merge, the per-metric
-/// source precedence (imported WHOOP > NOOP-computed > Apple Health), skin temp's deliberate exclusion of
+/// source precedence (imported WHOOP > Zoop-computed > Apple Health), skin temp's deliberate exclusion of
 /// Apple, the provenance captions, and the "latest day that has a value" fallback. All pure — no store.
 final class VitalSourceResolutionTests: XCTestCase {
     func testMergeDailyFillsOnlyMissingImportedFields() {
@@ -134,7 +134,7 @@ final class VitalSourceResolutionTests: XCTestCase {
         XCTAssertEqual(skin?.value, 0.2)
         XCTAssertEqual(skin?.source, .zoopComputed)
         // #622/#1224: computed skin temp is a ±°C deviation from the personal baseline, so its caption
-        // reads "vs baseline" rather than the generic "NOOP computed" other computed vitals get.
+        // reads "vs baseline" rather than the generic "Zoop computed" other computed vitals get.
         XCTAssertTrue(skin?.stateCaption.contains("vs baseline") == true)
     }
 

@@ -378,7 +378,7 @@ struct RhythmView: View {
 
     /// OpenStrap-style status chip: a compact pill with an icon + the neutral regularity label. Modelled
     /// on `SourceBadge`, but in the calm Rest-blue palette — NEVER a warn/alarm colour (§11 forbids alarm
-    /// styling; OpenStrap tints its chip amber, NOOP does not). States differ by icon + wording only, and
+    /// styling; OpenStrap tints its chip amber, Zoop does not). States differ by icon + wording only, and
     /// the short `chipLabel` sits in the pill, the sentence `headlineDetail` reads below. Non-diagnostic.
     private var statusChip: some View {
         let label = night?.overall ?? headlineWindow?.label ?? .unreadable

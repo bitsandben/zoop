@@ -8,7 +8,7 @@ import SwiftUI
 /// per RESOLUTION, not once per token. The liquid layer resolves every frame: `liquidComponents()` asks
 /// for `NSColor(self).usingColorSpace(.sRGB)`, which re-invokes the provider. While the provider called
 /// `sRGBComponents(hex:)`, every frame ran `trimmingCharacters` plus a `Scanner` over a string, which is
-/// how a reporter's profile of NOOP at a third to half a CPU core came to show
+/// how a reporter's profile of Zoop at a third to half a CPU core came to show
 /// `Color.sRGBComponents(hex:)` and `closure #1 in Color.init(light:dark:)` among its hot leaves.
 ///
 /// This is a source census rather than a behavioural test for the reason `BrandSleepRampTests` already

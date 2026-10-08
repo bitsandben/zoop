@@ -41,9 +41,9 @@ public enum PolarModel: String, Sendable, Equatable, CaseIterable {
         }
     }
 
-    /// The PMD measurement NOOP would request for HRV on this model: `.ppi` (inter-beat interval) where the
+    /// The PMD measurement Zoop would request for HRV on this model: `.ppi` (inter-beat interval) where the
     /// optical bands expose it, nil on the H10/H9 (their R-R comes off the standard HR service — no PMD
-    /// needed) and on `.unknown`. Keeps the "one signal NOOP actually needs" choice in one place.
+    /// needed) and on `.unknown`. Keeps the "one signal Zoop actually needs" choice in one place.
     public var hrvPmdStream: PolarPmdMeasurement? {
         pmdStreams.contains(.ppi) ? .ppi : nil
     }

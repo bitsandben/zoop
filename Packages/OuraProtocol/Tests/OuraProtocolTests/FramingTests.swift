@@ -247,7 +247,7 @@ final class FramingTests: XCTestCase {
     }
 
     func testFeedOnAnOrdinarySinglePacketNotificationIsUnchanged() {
-        // A 20-byte one-packet value from a NOOP drain (2026-09-15 04:20): exactly one record, the
+        // A 20-byte one-packet value from a Zoop drain (2026-09-15 04:20): exactly one record, the
         // whole payload — the tiling walk yields a single packet and the single lenient read wins.
         let r = OuraReassembler()
         let recs = r.feed(bytes("5a121dbdb40200fffffff7d7d555555555543fff"))

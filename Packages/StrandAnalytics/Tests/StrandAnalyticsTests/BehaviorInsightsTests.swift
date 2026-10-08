@@ -209,7 +209,7 @@ final class BehaviorInsightsTests: XCTestCase {
     }
     // MARK: - Unlogged days are not answers (the Reddit report)
 
-    /// "If I didn't track something for 100 days, NOOP takes that as a NO for 100 days, whereas it simply
+    /// "If I didn't track something for 100 days, Zoop takes that as a NO for 100 days, whereas it simply
     /// was not logged at all." Reported by a user on Reddit, and it was exactly what the split did.
     ///
     /// Twin of Kotlin `EffectRankerTest.daysWithNoJournalRowAreNotControls`.

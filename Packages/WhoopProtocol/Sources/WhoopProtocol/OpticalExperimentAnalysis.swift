@@ -1,6 +1,6 @@
 import Foundation
 
-/// A phase marker written by NOOP while a controlled WHOOP 5/MG optical experiment is running.
+/// A phase marker written by Zoop while a controlled WHOOP 5/MG optical experiment is running.
 /// `unixTs` deliberately shares a clock domain with each v20 frame's `baseTs`; log-arrival time does
 /// not, because the strap may deliver a buffer minutes or hours later during history offload.
 public struct OpticalExperimentMarker: Codable, Equatable, Sendable {

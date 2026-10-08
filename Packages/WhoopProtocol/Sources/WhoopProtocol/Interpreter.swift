@@ -415,7 +415,7 @@ private func parseFrameWhoop5(_ frame: [UInt8], collectFields: Bool) -> ParsedFr
 /// Every other version falls through to the "unmapped layout" branch, which decodes nothing and only
 /// describes the payload as an opaque region.
 ///
-/// This is the single source of truth for "does NOOP understand this layout": the dispatch `switch` in
+/// This is the single source of truth for "does Zoop understand this layout": the dispatch `switch` in
 /// `decodeWhoop5Historical` reads nothing else, and `rejectedHistoricalRecords` uses it to decide which
 /// records must be archived raw. Keeping one set means the two can never disagree — the failure mode
 /// this replaced was a record from an unmapped layout that happened to decode a plausible `unix` and
@@ -425,7 +425,7 @@ public let mappedWhoop5HistoricalVersions: Set<Int> = [18, 20, 21, 26]
 
 /// True when `frame` is a WHOOP 5/MG type-47 record whose layout version has NO field map — the
 /// records that reach the unmapped branch of `decodeWhoop5Historical` and are therefore never
-/// re-derivable from anything NOOP stores. Non-type-47 and too-short frames are false.
+/// re-derivable from anything Zoop stores. Non-type-47 and too-short frames are false.
 public func isUnmappedWhoop5HistoricalRecord(_ frame: [UInt8]) -> Bool {
     guard frame.count > 9, Int(frame[8]) == 47 else { return false }
     return !mappedWhoop5HistoricalVersions.contains(Int(frame[9]))

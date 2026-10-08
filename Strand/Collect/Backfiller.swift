@@ -232,7 +232,7 @@ final class Backfiller {
     }
 
     /// Distinct historical layout versions logged this session. Unlike `loggedUnmappedVersions` (which
-    /// only fires for layouts NOOP can't decode), this surfaces the layout on a HEALTHY sync too, so a
+    /// only fires for layouts Zoop can't decode), this surfaces the layout on a HEALTHY sync too, so a
     /// shared strap log always reveals what the strap emits (v18/v24/v25/v26). Mirrors the Android
     /// Backfiller (PR #241, ryanbr); reset per session in `begin`.
     private var loggedLayoutVersions: Set<Int> = []
@@ -495,11 +495,11 @@ final class Backfiller {
     }
 
     /// #773: the recovery-hint line for a corrupt future-dated strap RTC. Names the cause plainly (the
-    /// strap's clock, not a NOOP bug) and gives the fix (charge + reconnect re-syncs the RTC). Byte-identical
+    /// strap's clock, not a Zoop bug) and gives the fix (charge + reconnect re-syncs the RTC). Byte-identical
     /// to the Android twin. No em-dash (project rule).
     nonisolated static func futureRtcLine(endUnix: Int, wallNowUnix: Int) -> String {
         let aheadDays = max(0, (endUnix - wallNowUnix)) / 86_400
-        return "Backfill: the strap reported a record dated about \(aheadDays) day(s) in the FUTURE - its clock (RTC) is corrupt, not a NOOP problem. Those records can't be filed onto the right day. Fully charge the strap to 100% and reconnect so it re-syncs its clock; if it persists, forget and re-pair the strap."
+        return "Backfill: the strap reported a record dated about \(aheadDays) day(s) in the FUTURE - its clock (RTC) is corrupt, not a Zoop problem. Those records can't be filed onto the right day. Fully charge the strap to 100% and reconnect so it re-syncs its clock; if it persists, forget and re-pair the strap."
     }
 
     /// #1683: how far BEHIND the wall clock the strap's newest stored record may sit before a sync that
@@ -524,13 +524,13 @@ final class Backfiller {
     /// number is unremarkable. Asserting a corrupt RTC here would claim more than the data supports, which
     /// is how this area has misled people before.
     ///
-    /// It also says the part the existing advice omits: NOOP re-sends SET_CLOCK on every connect, so
+    /// It also says the part the existing advice omits: Zoop re-sends SET_CLOCK on every connect, so
     /// "charge it" alone has already been retried every session.
     ///
     /// Byte-identical to the Android twin. No em-dash (project rule).
     nonisolated static func staleRecordLine(newestUnix: Int, wallNowUnix: Int) -> String {
         let ageDays = max(0, wallNowUnix - newestUnix) / 86_400
-        return "Backfill: this sync banked nothing and the strap's newest stored record is about \(ageDays) day(s) old. If you have worn it since then, it has stopped saving history to its flash. NOOP already re-sends the clock on every connect, so charging alone may not be enough: charge to 100% and reconnect, then use Restart strap in Devices, and if that does not help forget and re-pair. If the official WHOOP app is also missing these days, the strap is the cause and not NOOP."
+        return "Backfill: this sync banked nothing and the strap's newest stored record is about \(ageDays) day(s) old. If you have worn it since then, it has stopped saving history to its flash. Zoop already re-sends the clock on every connect, so charging alone may not be enough: charge to 100% and reconnect, then use Restart strap in Devices, and if that does not help forget and re-pair. If the official WHOOP app is also missing these days, the strap is the cause and not Zoop."
     }
 
 
@@ -538,7 +538,7 @@ final class Backfiller {
     ///
     /// The standing banner says "fully charge it to 100%, then reconnect, and it should start banking
     /// again". It omits the one fact that makes the situation legible - how long the strap has been
-    /// silent - and it PROMISES a recovery that has already failed every session for weeks, because NOOP
+    /// silent - and it PROMISES a recovery that has already failed every session for weeks, because Zoop
     /// re-sends SET_CLOCK on every connect and the charge advice has therefore been retried all along. A
     /// banner that keeps promising something that keeps not happening teaches people to distrust the app
     /// rather than their strap.
@@ -547,7 +547,7 @@ final class Backfiller {
     /// both platforms; localizing that surface is its own change. No em-dash (project rule).
     nonisolated static func staleRecordBanner(newestUnix: Int, wallNowUnix: Int) -> String {
         let ageDays = max(0, wallNowUnix - newestUnix) / 86_400
-        return "Synced, but your strap handed over no stored history, and its newest saved record is about \(ageDays) day(s) old. If you have been wearing it since then, it has stopped saving to flash. Charge it to 100% and reconnect; NOOP already re-sets its clock every connect, so if that does not help, try Restart strap in Devices, then forget and re-pair. If the official WHOOP app is missing these days too, the strap is the cause and not NOOP."
+        return "Synced, but your strap handed over no stored history, and its newest saved record is about \(ageDays) day(s) old. If you have been wearing it since then, it has stopped saving to flash. Charge it to 100% and reconnect; Zoop already re-sets its clock every connect, so if that does not help, try Restart strap in Devices, then forget and re-pair. If the official WHOOP app is missing these days too, the strap is the cause and not Zoop."
     }
 
     /// #1754: the banner for an empty offload whose flash cursor is VALID and ADVANCING — the strap is
@@ -587,7 +587,7 @@ final class Backfiller {
         // #773: corrupt future-RTC detection. A HISTORY_END carries the strap's own clock; a genuine offload
         // is always PAST-dated (it's banked history), so an end dated days into the future can only be a
         // corrupt strap RTC. Surface it ONCE per session with a recovery hint so the cause (the strap clock,
-        // not a NOOP bug) is named and the fix (charge + reconnect re-syncs the RTC) is given. Observability
+        // not a Zoop bug) is named and the fix (charge + reconnect re-syncs the RTC) is given. Observability
         // only - the ack still proceeds and the #547 ingest gate already keeps the bad-dated rows out of the
         // DB. The 0xFFFFFFFF sentinel above is a different state (it isn't a real date), so skip it here.
         if trim != 0xFFFFFFFF, !loggedFutureRtc {
@@ -643,7 +643,7 @@ final class Backfiller {
                 log?(l)
             }
             // Observability (PR #241): log which layout this strap emits on a HEALTHY sync too — the
-            // unmapped-version path below only fires for layouts NOOP can't decode, so a normal log
+            // unmapped-version path below only fires for layouts Zoop can't decode, so a normal log
             // never revealed v18/v24/v25/v26. Once per distinct layout this session.
             if let v = parsed.lazy.compactMap({ $0.parsed["hist_version"]?.intValue }).first,
                loggedLayoutVersions.insert(v).inserted {
@@ -726,9 +726,9 @@ final class Backfiller {
                 loggedUnmappedVersions.insert(v)
                 switch support {
                 case .unmapped:
-                    log?("Historical records use firmware layout v\(v), which NOOP doesn't decode yet: those records carry no heart rate or motion, so any night made only of them can't be staged from the strap. A strap emitting a mix of layouts still stages the nights it can. Please report this (issue #1992).")
+                    log?("Historical records use firmware layout v\(v), which Zoop doesn't decode yet: those records carry no heart rate or motion, so any night made only of them can't be staged from the strap. A strap emitting a mix of layouts still stages the nights it can. Please report this (issue #1992).")
                 case .decodesWithoutNamedSignal:
-                    log?("Historical records use firmware layout v\(v). NOOP decodes it, but these records carry no per-second heart rate and no motion (they hold raw sensor channels nothing scores yet), so any night made only of them can't be staged from the strap. A strap emitting a mix of layouts still stages the nights it can. Please report this (issue #1992).")
+                    log?("Historical records use firmware layout v\(v). Zoop decodes it, but these records carry no per-second heart rate and no motion (they hold raw sensor channels nothing scores yet), so any night made only of them can't be staged from the strap. A strap emitting a mix of layouts still stages the nights it can. Please report this (issue #1992).")
                 case .supported:
                     break
                 }
@@ -742,7 +742,7 @@ final class Backfiller {
             // timestamp was implausible (far-past / bogus-2027 / future-dated) before it could pollute the
             // DB. Log it (once it's accrued at least one this session, on the first chunk that sees it) so
             // the user's strap log explains why a clock-broken strap banks fewer rows than expected — this
-            // is the strap's clock, not a NOOP decode bug. Observability only; the gate already did the work.
+            // is the strap's clock, not a Zoop decode bug. Observability only; the gate already did the work.
             if decoded.droppedImplausible > 0 {
                 let wasZero = sessionDroppedImplausible == 0
                 sessionDroppedImplausible += decoded.droppedImplausible
@@ -763,7 +763,7 @@ final class Backfiller {
             // it appears; the bad `rawTs` is the future/past base the RTC jumped to.
             let nowForRtc = Int(Date().timeIntervalSince1970)
             for ev in decoded.droppedRtcEvents {
-                log?("Backfill: strap reported \(ev.kind) with an implausible own-timestamp \(BadClockDiagnostics.isoDay(ev.rawTs)) (\(BadClockDiagnostics.hoursOffset(ev.rawTs, now: nowForRtc)) vs now) — the strap's RTC reset to a wrong base (#324/#928); this is the ground-truth cause of the future-dated banking, not a NOOP decode bug.")
+                log?("Backfill: strap reported \(ev.kind) with an implausible own-timestamp \(BadClockDiagnostics.isoDay(ev.rawTs)) (\(BadClockDiagnostics.hoursOffset(ev.rawTs, now: nowForRtc)) vs now) — the strap's RTC reset to a wrong base (#324/#928); this is the ground-truth cause of the future-dated banking, not a Zoop decode bug.")
             }
             // #891: packet types this chunk carried that the decoder has no case for. Logged the first
             // time each type appears so a long offload stays readable. This is the only place such a
@@ -775,7 +775,7 @@ final class Backfiller {
                 if firstSighting {
                     log?("Backfill: the strap sent \(n) record(s) of packet type \(typeName), which this " +
                          "decoder has no rows for — they are being dropped. If \(typeName) is not a name " +
-                         "you recognise, this is a firmware record type NOOP has never mapped: please " +
+                         "you recognise, this is a firmware record type Zoop has never mapped: please " +
                          "report it on #891 with the strap model and firmware build.")
                     // #891: and the bytes, so the report is actionable. Without this the line above asks a
                     // reporter to raise an issue about a record that exists nowhere else: `default:` drops

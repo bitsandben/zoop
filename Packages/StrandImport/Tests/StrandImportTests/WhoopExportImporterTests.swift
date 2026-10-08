@@ -190,7 +190,7 @@ final class WhoopExportImporterTests: XCTestCase {
     }
 
     /// REGRESSION (#631): a REAL WHOOP export names this column "Answered yes" (-> answered_yes), not
-    /// the "Answered yes/no" (-> answered_yes_no) NOOP's own exporter writes -- and above's fixture
+    /// the "Answered yes/no" (-> answered_yes_no) Zoop's own exporter writes -- and above's fixture
     /// happens to use. Header and TRUE/FALSE casing lifted verbatim from a reporter's actual
     /// `journal_entries.csv`. Before this fix none of the old candidate keys ever matched a real
     /// export, so every answer silently read false ("Without" in Insights) regardless of what the

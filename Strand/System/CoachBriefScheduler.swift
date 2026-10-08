@@ -9,7 +9,7 @@ import WidgetKit
 /// generated on-device via the user's already-configured Coach provider, at a chosen time each day.
 /// Tap → opens Coach with the full brief. No push server, no cloud — the network call is the SAME
 /// bring-your-own-key request Coach already makes on every send, just user-armed on a daily timer
-/// instead of triggered by a tap. Default OFF, like every NOOP automation.
+/// instead of triggered by a tap. Default OFF, like every Zoop automation.
 ///
 /// Cross-platform (macOS + iOS), same architecture as `ScheduledDebugExport`:
 /// - **macOS** — the app is usually running; a foreground `DispatchSourceTimer` fires at the chosen

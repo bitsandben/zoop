@@ -101,7 +101,7 @@ struct ZoopWidgetView: View {
 
     /// Lock-Screen rectangular accessory: Charge · Effort · Rest, same trio as the Home Screen rings.
     private var rectangular: some View {
-        // The lock screen gives this family roughly 72pt of height for everything. A "NOOP" title spent
+        // The lock screen gives this family roughly 72pt of height for everything. A "Zoop" title spent
         // a whole row of that restating which widget the user chose to add, leaving the three scores —
         // the only reason to add it — squeezed underneath. The title is gone and the heart-rate line is
         // now conditional, so with no live HR the scores get the entire area.

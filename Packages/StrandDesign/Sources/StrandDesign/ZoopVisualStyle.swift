@@ -1,8 +1,8 @@
 import SwiftUI
 
-// MARK: - NOOP visual foundation
+// MARK: - Zoop visual foundation
 //
-// These tokens describe the visual treatment used by NOOP's existing views. They deliberately
+// These tokens describe the visual treatment used by Zoop's existing views. They deliberately
 // contain no navigation, state, or domain semantics: screens keep their current hierarchy and data
 // bindings, while cards, gauges, typography, and chrome share one maintainable source of truth.
 

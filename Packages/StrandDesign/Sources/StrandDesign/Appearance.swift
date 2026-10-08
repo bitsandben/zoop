@@ -34,7 +34,7 @@ public enum ChartStyle: String, CaseIterable, Identifiable, Sendable {
 /// Device-local (NOT in the `.zoopbak` whitelist), like the Android pref.
 public enum SleepChartStyle: String, CaseIterable, Identifiable, Sendable {
     case classic       // per-stage-rows timeline (the default, unchanged)
-    case filled        // stepped hypnogram filled to the baseline, NOOP sleep colours
+    case filled        // stepped hypnogram filled to the baseline, Zoop sleep colours
     case garminFilled  // the same filled chart in Garmin's blue/magenta ramp
     case ribbon        // slim band at each stage level, Oura's cream/blue ramp
 
@@ -66,7 +66,7 @@ public enum SleepChartStyle: String, CaseIterable, Identifiable, Sendable {
     public static func resolve(_ raw: String) -> SleepChartStyle { SleepChartStyle(rawValue: raw) ?? .classic }
 }
 
-/// Which stage-colour ramp a sleep chart draws with: NOOP's own tokens, Oura's ramp (Ribbon), or Garmin's
+/// Which stage-colour ramp a sleep chart draws with: Zoop's own tokens, Oura's ramp (Ribbon), or Garmin's
 /// (Garmin Fill). Twin of the Kotlin `SleepStagePalette`.
 public enum SleepStagePalette: String, Sendable { case noop, oura, garmin }
 

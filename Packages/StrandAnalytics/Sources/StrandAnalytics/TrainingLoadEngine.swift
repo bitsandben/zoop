@@ -4,7 +4,7 @@ import Foundation
 ///
 /// Complements `ReadinessEngine`'s existing rolling-mean ACWR and Foster monotony without replacing
 /// either and WITHOUT feeding the Readiness level. It keeps chronic load (CTL), acute load (ATL), and
-/// their difference (TSB / "form") in the SAME units as the supplied daily load. NOOP currently supplies
+/// their difference (TSB / "form") in the SAME units as the supplied daily load. Zoop currently supplies
 /// daily Effort/strain, so these values are not TRIMP and must not be relabelled as such.
 ///
 /// Model:

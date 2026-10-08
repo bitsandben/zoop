@@ -3,7 +3,7 @@ import Foundation
 import StrandDesign
 import WhoopStore
 
-// MARK: - Menu-Bar Extra (NOOP)
+// MARK: - Menu-Bar Extra (Zoop)
 //
 // A glanceable presence in the macOS menu bar. The label shows a tiny heart-dot
 // tinted by the current HR zone plus the live HR (or "—" when not streaming).

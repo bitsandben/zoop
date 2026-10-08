@@ -363,7 +363,7 @@ final class SourceCoordinator: ObservableObject {
 
     /// Build the EXPERIMENTAL Oura source (Oura Ring gen 3/4/5) for `id`, driven by the clean-room
     /// `OuraProtocol.OuraDriver`. Decoded raw signals (HR / IBI / HRV / SpO2 / temp / sleep-phase / battery)
-    /// ride the SAME `LiveState` + persist channels as the other sources, so NOOP scores the Oura day with
+    /// ride the SAME `LiveState` + persist channels as the other sources, so Zoop scores the Oura day with
     /// its OWN Charge/Rest exactly like a WHOOP day, while Oura's encrypted readiness/sleep scores are never
     /// read or surfaced. The ring generation is recovered from the registry row's `model` string via
     /// `OuraRingGen.from(model:)`; the 16-byte install key is read from the Keychain via `OuraKeyStore`
@@ -390,7 +390,7 @@ final class SourceCoordinator: ObservableObject {
             persistSleepSession: { [storeHandle, straplog] session in
                 // The ring-PROVIDED hypnogram night, upserted under the ring's OWN id (the imported/measured
                 // side, NOT the "-zoop" computed sibling) so SleepMerge's imported-over-computed rule makes
-                // Oura's SleepNet staging win over NOOP's sparse-motion computed night (#325).
+                // Oura's SleepNet staging win over Zoop's sparse-motion computed night (#325).
                 Task {
                     guard let store = await storeHandle() else { return }
                     // #1284 duplicate-generation diagnostic (LOG-ONLY, no behaviour change). The in-source
@@ -449,7 +449,7 @@ final class SourceCoordinator: ObservableObject {
             onsetKeying: { UserDefaults.standard.bool(forKey: AppModel.ouraOnsetKeyingKey) },  // #1284 residual 3
             notifyMaskFull: { UserDefaults.standard.bool(forKey: AppModel.ouraNotifyMaskFullKey) },  // packed-notification A/B
             adoptIntent: adoptIntent)
-        if adoptIntent { straplog("Oura: adopt consent granted - this session may install NOOP's key") }
+        if adoptIntent { straplog("Oura: adopt consent granted - this session may install Zoop's key") }
         ouraSource = source   // the published typed handle for the adopt mirror (same object as activeSource)
         return source
     }

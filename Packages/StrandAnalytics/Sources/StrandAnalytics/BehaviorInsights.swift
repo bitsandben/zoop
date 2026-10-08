@@ -83,7 +83,7 @@ public enum BehaviorInsights {
     /// The split used to be `if behaviorDays.contains(day) { with } else { without }`, which made every
     /// day carrying an outcome a control — so a behaviour logged Yes on 20 days and never logged at all
     /// on the other 100 was measured against those 100 as though the user had answered No. Reported by a
-    /// user on Reddit, in those terms: "if I didn't track something for 100 days, NOOP takes that as a
+    /// user on Reddit, in those terms: "if I didn't track something for 100 days, Zoop takes that as a
     /// NO for 100 days, whereas it simply was not logged at all."
     ///
     /// The journal already distinguishes the three states — a No writes a row with `answeredYes = false`,

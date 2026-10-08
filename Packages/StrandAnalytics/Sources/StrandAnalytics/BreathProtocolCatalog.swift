@@ -6,7 +6,7 @@ import Foundation
 //
 // Technique list/timings inspired by publicly documented ANS breath protocols
 // (e.g. https://www.ultrahuman.com/blog/harness-the-power-of-breath-protocols-for-your-autonomic-nervous-system/)
-// and measured Presence Process guide tempos. Copy is original NOOP wording (non-clinical).
+// and measured Presence Process guide tempos. Copy is original Zoop wording (non-clinical).
 
 public enum BreathProtocolCatalog {
 
@@ -15,7 +15,7 @@ public enum BreathProtocolCatalog {
 Consciously Connected Breathing (CCB): inhale and exhale in one continuous loop with no hold at the top or bottom. Find a comfortable rhythm — connectedness matters more than intensity. Typical practice is about 15 minutes, twice daily. Regular is the sustainable starter tempo; Mid is a quicker start for later rounds; Punching Through is only when you need to push through drowsiness or stuckness (not a beginner default).
 """
 
-    /// All catalog entries in picker order (legacy NOOP paces first, then ANS, then Presence).
+    /// All catalog entries in picker order (legacy Zoop paces first, then ANS, then Presence).
     public static let all: [BreathProtocol] = {
         var list: [BreathProtocol] = []
         list.append(contentsOf: legacyNoop)
@@ -42,7 +42,7 @@ Consciously Connected Breathing (CCB): inhale and exhale in one continuous loop 
         watchSubsetIds.compactMap { protocolById($0) }
     }
 
-    // MARK: - Legacy NOOP
+    // MARK: - Legacy Zoop
 
     private static let legacyNoop: [BreathProtocol] = [
         BreathProtocol(
@@ -302,7 +302,7 @@ Consciously Connected Breathing (CCB): inhale and exhale in one continuous loop 
             id: "holotropic",
             title: "Holotropic",
             subtitle: "Guided · continuous connected",
-            edu: "Holotropic-style work is continuous, often rapid connected breathing in a supported setting. NOOP only offers a session timer and education — not an auto-pacer — because intensity varies widely and is normally facilitated.",
+            edu: "Holotropic-style work is continuous, often rapid connected breathing in a supported setting. Zoop only offers a session timer and education — not an auto-pacer — because intensity varies widely and is normally facilitated.",
             caution: "Not for DIY high-intensity sessions if you have trauma history, cardiovascular issues, or pregnancy without professional guidance.",
             sessionHint: "Traditional sessions are long; use a short timer here as a check-in only.",
             mode: .guided,
@@ -314,7 +314,7 @@ Consciously Connected Breathing (CCB): inhale and exhale in one continuous loop 
             id: "wim_hof",
             title: "Wim Hof",
             subtitle: "Guided · rounds + holds",
-            edu: "Wim Hof–style rounds typically use ~30 deeper breaths, then an empty hold, then a recovery inhale hold (~15s). Because holds and intensity are personal, this entry is guided: follow a trusted protocol you already know; NOOP times the session and shows reminders — it does not force breath holds.",
+            edu: "Wim Hof–style rounds typically use ~30 deeper breaths, then an empty hold, then a recovery inhale hold (~15s). Because holds and intensity are personal, this entry is guided: follow a trusted protocol you already know; Zoop times the session and shows reminders — it does not force breath holds.",
             caution: "Never practice in water or while driving. Stop if dizzy. Not medical advice.",
             sessionHint: "About 15 minutes for a few rounds.",
             mode: .guided,

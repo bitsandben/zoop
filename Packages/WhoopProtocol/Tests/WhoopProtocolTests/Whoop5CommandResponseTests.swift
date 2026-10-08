@@ -74,7 +74,7 @@ final class Whoop5CommandResponseTests: XCTestCase {
     ///
     /// Committed because they are the only real 5/MG COMMAND_RESPONSE frames in the tree whose payload is
     /// inert — `01 01 00 00` carries no device name, serial or session token — and because they exercise
-    /// the generic response path for commands NOOP does not send, which the battery / data-range / hello
+    /// the generic response path for commands Zoop does not send, which the battery / data-range / hello
     /// fixtures above do not. The Kotlin twin asserts the identical values in `CommandCatalogueTest`; that
     /// pairing is the point, since Android labelled these from its sender enum and rendered them as bare
     /// hex until #891.

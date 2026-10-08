@@ -6,7 +6,7 @@ import Foundation
 
 // MARK: - Trends
 //
-// The longitudinal view, rebuilt on the locked Noop component system so every
+// The longitudinal view, rebuilt on the locked Zoop component system so every
 // surface, height and gap is identical: one SegmentedPillControl for the range,
 // a hero recovery ChartCard, a uniform grid of HRV / Resting HR / Day Strain
 // ChartCards (all ZoopMetrics.chartHeight tall), and the whole history as a
@@ -324,7 +324,7 @@ struct TrendsView: View {
                         // only when NO week in history has data. Past weeks render in the same format.
                         weeklyDigestNav
                             .staggeredAppear(index: 0)
-                        // The Charge / Effort / Rest trio, presented in NOOP's pip language.
+                        // The Charge / Effort / Rest trio, presented in Zoop's pip language.
                         weekInReview(charge: metrics.recovery, effort: metrics.strain, rest: metrics.rest)
                             .staggeredAppear(index: 1)
                         rangeBar(recovery: metrics.recovery)
@@ -490,7 +490,7 @@ struct TrendsView: View {
 
     // MARK: Week in Review — the Charge / Effort / Rest trio in pip language
 
-    /// The three daily scores as NOOP pip rows over the resolved window: Charge (recovery, 0–100),
+    /// The three daily scores as Zoop pip rows over the resolved window: Charge (recovery, 0–100),
     /// Effort (strain, shown on the WHOOP 0–21 scale per the unit toggle) and Rest (sleep_performance
     /// composite, 0–100 — the same metric the Today Rest score shows, #732). Each value ticks up via
     /// `CountUpText`; the segmented `PipBar` cascades on appear. Self-

@@ -1,5 +1,5 @@
 //  LiquidCore.swift
-//  NOOP · Liquid design language (experimental redesign)
+//  Zoop · Liquid design language (experimental redesign)
 //
 //  The physics + motion foundation shared by every liquid element. Ported from the
 //  HTML design prototype: a spring-damped surface that stays level with the world
@@ -91,7 +91,7 @@ final class LiquidMotion {
     private init() {
         #if os(iOS) && !targetEnvironment(macCatalyst)
         // Stop at the app boundary. `onDisappear` is NOT called when the app is backgrounded, and
-        // NOOP declares `bluetooth-central` + `location` background modes, so it keeps RUNNING
+        // Zoop declares `bluetooth-central` + `location` background modes, so it keeps RUNNING
         // behind the lock screen while a strap is connected — which meant a decorative 60 Hz
         // accelerometer+gyro fusion kept being delivered all day for a picture nobody could see.
         // That is the always-on half of this cost; posing the Canvas still never touched it.

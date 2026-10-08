@@ -5,7 +5,7 @@ import WhoopStore
 
 /// A running session does no work between taps: no once-a-second tick, only a rest's two moments.
 ///
-/// From Utku's crash reports of 21 Sep 2026: iOS killed NOOP four times in one gym session for background CPU
+/// From Utku's crash reports of 21 Sep 2026: iOS killed Zoop four times in one gym session for background CPU
 /// (over 80% for 60 s, redrawing SwiftUI views). The session published a tick every second to every screen
 /// watching it, so each of them was redrawn every second, on screen or not.
 @MainActor
