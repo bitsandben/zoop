@@ -80,6 +80,9 @@ struct LiquidTodayView: View {
     /// every hole up and drew a day of sparse live windows as one continuous line. That bites hardest on a
     /// strap whose history never offloads, where heart rate exists ONLY for the windows it was connected.
     @State private var hrSegments: [String] = []
+    /// Per bucket of [hrValues]: true when the bucket falls inside a recorded sleep (the night or a nap),
+    /// so the heart-rate card can shade where the wearer was asleep.
+    @State private var hrSleepMask: [Bool] = []
     @State private var workouts: [WorkoutRow] = [] // newest-first
     /// #today-hosted-cards: the shared SleepModel that backs every SleepModel-derived hosted sleep card
     /// (Stages vs typical today; more to follow). Built ONCE in `load()` from the SAME inputs the Sleep tab
@@ -137,8 +140,19 @@ struct LiquidTodayView: View {
     #if !os(iOS)
     @State private var showDayPicker = false
     #endif
-    @State private var heartRateCardFrame: CGRect = .null
-    private static let daySwipeSpace = "liquidTodayDaySwipeSpace"
+    /// Regions where a horizontal drag belongs to the content (the heart-rate scrub, the "Looking ahead"
+    /// carousel) rather than to the day swipe. Held in a reference box so a frame moving with the scroll
+    /// does not re-render the whole screen on every scroll tick; only the gesture reads it.
+    @State private var daySwipeExclusions = LiquidDaySwipeExclusions()
+    fileprivate static let daySwipeSpace = "liquidTodayDaySwipeSpace"
+    #if os(iOS)
+    /// The nap whose detail sheet is open (tap on a nap row in "Today's activities").
+    @State private var napDetail: HomeNapTarget?
+    /// The nap whose time editor is open (press and hold on a nap row).
+    @State private var napEdit: HomeNapTarget?
+    @State private var napEditHaptic = 0
+    @Environment(\.scenePhase) private var scenePhase
+    #endif
 
     // PERF: the body was rescanning repo.days (599 days) ~23× per pass for displayDay and ~3× for
     // readiness on EVERY re-render (every HR notify, every canvas frame that invalidates, every scroll).
@@ -176,7 +190,15 @@ struct LiquidTodayView: View {
     @State private var pullHaptic = 0
     /// What the last pull ended with, shown for a moment after the refresh settles.
     @State private var pullOutcome: PullSyncOutcome?
-    private let pullThreshold: CGFloat = 80
+    /// How far past the top a pull has to travel before a release syncs. Well beyond what a flick back
+    /// to the top overshoots, so reaching the top of Home never reads as a request to sync.
+    private let pullThreshold: CGFloat = 130
+    /// True while a finger is on the scroll view (iOS 18+, from the scroll phase). A sync is armed and
+    /// fired only by a pull the finger made: the overscroll a momentum scroll bounces into never counts.
+    @State private var pullFingerDown = false
+    /// Whether this OS reports the scroll phase. Without it (iOS 17) the pull falls back to arming on
+    /// the threshold and firing as the overscroll springs back.
+    @State private var pullPhaseTracked = false
 
     #if !os(iOS)
     /// Measured width of the trailing header-control cluster, feeding the day title's fade mask. Seeded
@@ -303,7 +325,7 @@ struct LiquidTodayView: View {
     private var daySwipeGesture: some Gesture {
         DragGesture(minimumDistance: 24, coordinateSpace: .named(Self.daySwipeSpace))
             .onEnded { value in
-                guard !heartRateCardFrame.contains(value.startLocation),
+                guard !daySwipeExclusions.contains(value.startLocation),
                       !ZoopChartScrubState.isActiveOrRecent else { return }
                 let dx = value.translation.width, dy = value.translation.height
                 guard abs(dx) > abs(dy) * 1.5, abs(dx) > 50 else { return }
@@ -313,6 +335,20 @@ struct LiquidTodayView: View {
                 guard next != selectedDayOffset else { return }
                 withAnimation(StrandMotion.interactive) { selectedDayOffset = next }
             }
+    }
+
+    /// Which heart-rate buckets lie inside a recorded sleep: a bucket counts when its midpoint falls in a
+    /// session's displayed window (`effectiveStartTs` to `endTs`), so the night and every nap shade alike.
+    static func sleepMask(bucketTs: [Int], bucketSeconds: Int, sleeps: [CachedSleepSession]) -> [Bool] {
+        guard let first = bucketTs.first, let last = bucketTs.last else { return [] }
+        let windows = sleeps
+            .filter { $0.endTs > first && $0.effectiveStartTs < last + bucketSeconds }
+            .map { $0.effectiveStartTs..<$0.endTs }
+        guard !windows.isEmpty else { return Array(repeating: false, count: bucketTs.count) }
+        return bucketTs.map { ts in
+            let mid = ts + bucketSeconds / 2
+            return windows.contains { $0.contains(mid) }
+        }
     }
 
     static func clampedDayOffset(current: Int, delta: Int, maxOffset: Int) -> Int {
@@ -435,7 +471,12 @@ struct LiquidTodayView: View {
                             #endif
                         case .heartRate: heartRateSection
                         case .recoveryVitals: recoveryVitalsSection
-                        case .yourCards: yourCardsSection
+                        case .yourCards:
+                            #if !os(iOS)
+                            // iOS: the Your Cards chips repeat what Home's own tiles and cards already show,
+                            // so the section is not drawn there.
+                            yourCardsSection
+                            #endif
                         case .menstrualCycle:
                             if selectedDayOffset == 0 { MenstrualCycleHomeCard() }
                         // #656: the persistent journal widget (last-7-days strip + tap-through). Now a
@@ -458,8 +499,10 @@ struct LiquidTodayView: View {
                     // so it renders nothing by default.
                     #if os(iOS)
                     if !sectionOrder.contains(.hero) { AutoWorkoutCard() }
-                    if selectedDayOffset == 0 { HomePatternsCarousel() }
-                    stressCurveCard
+                    // The carousel scrolls sideways itself, so a swipe inside it must not step the day.
+                    if selectedDayOffset == 0 { HomePatternsCarousel().daySwipeExclusionZone("patterns") }
+                    // The day's stress curve lives on the Stress screen, which the Stress tile at the top
+                    // opens; a second copy of it here repeated that tile.
                     weeklyTrends
                     #else
                     AutoWorkoutCard()
@@ -497,7 +540,7 @@ struct LiquidTodayView: View {
             if #available(iOS 18.0, macOS 15.0, *) { return }
             handlePull(y)
         }
-        .modifier(PullOverscrollReader(onChange: handlePull))
+        .modifier(PullOverscrollReader(onChange: handlePull, onInteractingChange: handlePullInteraction))
         // The sky is a FIXED full-bleed backdrop drawn behind the scroll content, edge-to-edge under the
         // status bar. A ScrollView background does not scroll with the content, so pulling down never
         // moves the sky (the exact behaviour the scaffold uses on the classic Today).
@@ -529,12 +572,16 @@ struct LiquidTodayView: View {
             .ignoresSafeArea()
         }
         .coordinateSpace(name: Self.daySwipeSpace)
-        .onPreferenceChange(LiquidHeartRateCardFrameKey.self) { heartRateCardFrame = $0 }
+        .onPreferenceChange(LiquidDaySwipeExclusionKey.self) { daySwipeExclusions.rects = $0 }
         // Swipe left/right changes the DAY on this screen only. Tabs themselves are tap-only.
         .simultaneousGesture(daySwipeGesture)
         // A light tick when the day changes (swipe or calendar pick) — the WHOOP-style day nav should
         // feel physical ("every tiny little thing").
         .liquidSelectionHaptic(trigger: selectedDayOffset)
+        #if os(iOS)
+        // The press-and-hold on a nap row lands with a firm tick before its editor opens.
+        .liquidMediumHaptic(trigger: napEditHaptic)
+        #endif
         // A firm tick when the pull passes the release threshold (the custom liquid refresh).
         .liquidMediumHaptic(trigger: pullHaptic)
         // hydrationSeq joins the id so logging a drink re-reads the card immediately, the same trigger set
@@ -565,6 +612,18 @@ struct LiquidTodayView: View {
                     .environmentObject(repo)
             }
             .noopSheetPresentation(largeFirst: true)
+        }
+        .sheet(item: $napDetail) { target in
+            HomeNapDetailSheet(nap: target.session)
+        }
+        .sheet(item: $napEdit) { target in
+            HomeNapTimeEditor(nap: target.session)
+        }
+        // A cold launch always opens on today (offset 0 is the @State default); this covers a return from
+        // the background, where the view survives with whatever day was last browsed.
+        .onChange(of: scenePhase) { old, new in
+            guard old == .background, new != .background, selectedDayOffset != 0 else { return }
+            selectedDayOffset = 0
         }
         #endif
         .sheet(isPresented: $showCoachLauncher) {
@@ -604,8 +663,23 @@ struct LiquidTodayView: View {
     /// LiveState itself, so it's cheap to re-evaluate as part of the main body. It hands the actual
     /// visibility decision to `LiquidRefreshIndicator` below, which DOES own LiveState.
     private var liquidRefreshIndicator: some View {
-        LiquidRefreshIndicator(pullY: pullY, pullThreshold: pullThreshold, refreshing: refreshing,
+        // With the scroll phase known, only a finger's pull draws the indicator: a bounce at the top of a
+        // fling is just scrolling and shows nothing.
+        LiquidRefreshIndicator(pullY: (pullPhaseTracked && !pullFingerDown) ? 0 : pullY,
+                               pullThreshold: pullThreshold, refreshing: refreshing,
                                liquidHeart: liquidHeart, outcome: pullOutcome)
+    }
+
+    /// The finger went down on, or lifted off, the scroll view (iOS 18+). Lifting it while armed is the
+    /// deliberate release that syncs; a pull eased back under the threshold first has already disarmed.
+    private func handlePullInteraction(_ interacting: Bool) {
+        if !pullPhaseTracked { pullPhaseTracked = true }
+        guard interacting != pullFingerDown else { return }
+        pullFingerDown = interacting
+        guard !interacting, refreshArmed else { return }
+        refreshArmed = false
+        guard !refreshing else { return }
+        startPullRefresh()
     }
 
     /// Arm the refresh once the pull passes the threshold; FIRE it when the finger releases (the pull
@@ -628,42 +702,59 @@ struct LiquidTodayView: View {
         // The pull always arms (and buzzes) so the gesture never feels dead; whether a strap sync can run
         // is decided on release from `historyReady`, the client's own precondition (#1748), and the
         // indicator then says which of the two happened instead of declining in silence.
+        if pullPhaseTracked {
+            // Only the finger arms it, and easing the pull back under the threshold before letting go
+            // cancels it; the release itself fires in `handlePullInteraction`.
+            guard pullFingerDown else { return }
+            if pullY >= pullThreshold, !refreshArmed {
+                refreshArmed = true
+                pullHaptic &+= 1
+            } else if refreshArmed, pullY < pullThreshold * 0.8 {
+                refreshArmed = false
+            }
+            return
+        }
         if pullY >= pullThreshold, !refreshArmed {
             refreshArmed = true
             pullHaptic &+= 1
         }
         if refreshArmed, pullY < 6 {
             refreshArmed = false
-            refreshing = true
-            pullOutcome = nil
-            Task {
-                // #334: a pull asks the strap for its stored history, not just a UI reload. syncNow() is
-                // itself gated (connected + bonded + not already syncing).
-                let canSync = ble.state.historyReady
-                if canSync { ble.syncNow() }
+            startPullRefresh()
+        }
+    }
+
+    /// Runs the sync a released pull asked for, and reports how it ended.
+    private func startPullRefresh() {
+        refreshing = true
+        pullOutcome = nil
+        Task {
+            // #334: a pull asks the strap for its stored history, not just a UI reload. syncNow() is
+            // itself gated (connected + bonded + not already syncing).
+            let canSync = ble.state.historyReady
+            if canSync { ble.syncNow() }
+            await repo.refresh()
+            await load()
+            if canSync {
+                // Keep the indicator up through the offload: give it a moment to start, then follow it
+                // until it ends (or a minute passes; the sync chip carries anything longer).
+                var waited = 0
+                while !ble.state.backfilling && waited < 6 {
+                    try? await Task.sleep(nanoseconds: 500_000_000); waited += 1
+                }
+                var running = 0
+                while ble.state.backfilling && running < 120 {
+                    try? await Task.sleep(nanoseconds: 500_000_000); running += 1
+                }
                 await repo.refresh()
                 await load()
-                if canSync {
-                    // Keep the indicator up through the offload: give it a moment to start, then follow it
-                    // until it ends (or a minute passes; the sync chip carries anything longer).
-                    var waited = 0
-                    while !ble.state.backfilling && waited < 6 {
-                        try? await Task.sleep(nanoseconds: 500_000_000); waited += 1
-                    }
-                    var running = 0
-                    while ble.state.backfilling && running < 120 {
-                        try? await Task.sleep(nanoseconds: 500_000_000); running += 1
-                    }
-                    await repo.refresh()
-                    await load()
-                }
-                withAnimation(.easeOut(duration: 0.25)) {
-                    refreshing = false
-                    pullOutcome = canSync ? (ble.state.lastSyncError == nil ? .synced : .interrupted) : .offline
-                }
-                try? await Task.sleep(nanoseconds: 1_600_000_000)
-                withAnimation(.easeOut(duration: 0.3)) { pullOutcome = nil }
             }
+            withAnimation(.easeOut(duration: 0.25)) {
+                refreshing = false
+                pullOutcome = canSync ? (ble.state.lastSyncError == nil ? .synced : .interrupted) : .offline
+            }
+            try? await Task.sleep(nanoseconds: 1_600_000_000)
+            withAnimation(.easeOut(duration: 0.3)) { pullOutcome = nil }
         }
     }
 
@@ -674,13 +765,14 @@ struct LiquidTodayView: View {
     /// opens the calendar. No wordmark — the scores are the header.
     /// One row, as in the reference: profile on the left, the day capsule in the centre, the strap
     /// battery on the right. Quick actions and Customize live with the sections they act on.
+    ///
+    /// The three sit in one HStack rather than layered in a ZStack: the battery control widens into a
+    /// "Syncing" capsule while history offloads, and layered it painted over the day capsule. In a row
+    /// the day capsule takes the space between the two controls, so it is centred while the battery is
+    /// compact and steps aside, never under, while a sync runs.
     private var iosDayHeader: some View {
-        ZStack {
-            HStack(spacing: headerClusterSpacing) {
-                settingsAvatarButton
-                Spacer(minLength: 0)
-                LiquidBatteryButton()
-            }
+        HStack(spacing: headerClusterSpacing) {
+            settingsAvatarButton
             DayNavBar(selectedOffset: selectedDayOffset,
                       today: Repository.logicalDay(Date()),
                       style: .pill) { offset in
@@ -688,6 +780,9 @@ struct LiquidTodayView: View {
                 guard next != selectedDayOffset else { return }
                 withAnimation(StrandMotion.interactive) { selectedDayOffset = next }
             }
+            .frame(maxWidth: .infinity)
+            .layoutPriority(1)
+            LiquidBatteryButton()
         }
         .padding(.bottom, ZoopMetrics.space3)
     }
@@ -715,14 +810,6 @@ struct LiquidTodayView: View {
         }
     }
 
-    /// The day's stress line as its own card further down Home.
-    private var stressCurveCard: some View {
-        NavigationLink(value: TabRoute.stress) {
-            HomeStressMonitorCard(score: stress, hours: hostedStressHours)
-        }
-        .buttonStyle(LiquidPressStyle())
-    }
-
     /// Today's activities under "My Day": the sleeps that ended on the selected day (the night and any
     /// naps) and that day's workouts, newest last, each with its times and duration.
     private var todaysActivities: [HomeActivity] {
@@ -741,7 +828,7 @@ struct LiquidTodayView: View {
         }
         sleeps += daySleeps.filter { !mainStarts.contains($0.startTs) }.map { s in
             HomeActivity(kind: .nap, title: String(localized: "Nap"),
-                         start: s.effectiveStartTs, end: s.endTs, workout: nil)
+                         start: s.effectiveStartTs, end: s.endTs, workout: nil, nap: s)
         }
         let workouts = workouts.filter { dayOf($0.startTs) == key }.map { w in
             HomeActivity(kind: .workout, title: WorkoutSource.displaySport(w.sport),
@@ -766,6 +853,18 @@ struct LiquidTodayView: View {
                 if let w = item.workout {
                     Button { workoutDetail = HomeWorkoutTarget(row: w) } label: { HomeActivityRow(item: item) }
                         .buttonStyle(LiquidPressStyle())
+                } else if let nap = item.nap {
+                    // A nap opens its own detail here rather than the Sleep tab (which leads with the
+                    // night); pressing and holding opens the same time editor the Sleep tab's nap row uses.
+                    HomeActivityRow(item: item)
+                        .contentShape(Rectangle())
+                        .onTapGesture { napDetail = HomeNapTarget(session: nap) }
+                        .onLongPressGesture(minimumDuration: 0.45) {
+                            napEditHaptic &+= 1
+                            napEdit = HomeNapTarget(session: nap)
+                        }
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityAction(named: "Edit nap times") { napEdit = HomeNapTarget(session: nap) }
                 } else {
                     NavigationLink(value: TabRoute.sleep) { HomeActivityRow(item: item) }
                         .buttonStyle(LiquidPressStyle())
@@ -798,14 +897,15 @@ struct LiquidTodayView: View {
         }
     }
 
-    /// The white circular "+" beside "My Day", opening the quick-action menu.
+    /// The white squircle "+" beside "My Day", opening the quick-action menu.
     private var myDayAddButton: some View {
         Button { router.requestQuickActions() } label: {
             Image(systemName: "plus")
                 .font(.system(size: 20, weight: .medium))
                 .foregroundStyle(StrandPalette.surfaceBase)
                 .frame(width: 46, height: 46)
-                .background(Circle().fill(StrandPalette.textPrimary))
+                .background(SquircleShape().fill(StrandPalette.textPrimary))
+                .contentShape(SquircleShape())
         }
         .buttonStyle(LiquidPressStyle())
         .accessibilityLabel("Quick actions")
@@ -1059,17 +1159,12 @@ struct LiquidTodayView: View {
                     // this card, never the whole Today. Shows the current bpm live with a rolling
                     // beat-by-beat trace; falls back to today's banked 5-minute trace when idle.
                     LiquidLiveHR(tint: liquidHeart, fallback: hrValues, fallbackSegments: hrSegments,
-                                 animated: dataLoaded)
+                                 fallbackSleepMask: hrSleepMask, animated: dataLoaded)
                 }
             }
             .buttonStyle(LiquidPressStyle())
             .accessibilityHint("Opens the full-day heart rate timeline")
-            .background {
-                GeometryReader { geometry in
-                    Color.clear.preference(key: LiquidHeartRateCardFrameKey.self,
-                                           value: geometry.frame(in: .named(Self.daySwipeSpace)))
-                }
-            }
+            .daySwipeExclusionZone("heartRate")
         }
     }
 
@@ -2316,6 +2411,8 @@ struct LiquidTodayView: View {
         let hrBuckets = await hrA
         hrValues = hrBuckets.map { $0.bpm }
         hrSegments = hrGapSegments(bucketTs: hrBuckets.map { $0.ts }, bucketSeconds: 300)
+        hrSleepMask = Self.sleepMask(bucketTs: hrBuckets.map { $0.ts }, bucketSeconds: 300,
+                                     sleeps: repo.sleeps)
         workouts = (await wkA).filter { $0.startTs >= from && $0.startTs < to }
 
         let (chargeSource, effortSource, restSource) = await (chargeSourceA, effortSourceA, restSourceA)
@@ -2639,10 +2736,33 @@ struct LiquidTodayView: View {
     }
 }
 
-/// Measures the heart-rate card in the same coordinate space as the day-swipe gesture.
-private struct LiquidHeartRateCardFrameKey: PreferenceKey {
-    static var defaultValue: CGRect = .null
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) { value = nextValue() }
+/// Measures the regions that own their horizontal drags (see `daySwipeExclusionZone`) in the same
+/// coordinate space as the day-swipe gesture, keyed so each zone reports exactly one frame.
+private struct LiquidDaySwipeExclusionKey: PreferenceKey {
+    static var defaultValue: [String: CGRect] = [:]
+    static func reduce(value: inout [String: CGRect], nextValue: () -> [String: CGRect]) {
+        value.merge(nextValue()) { _, new in new }
+    }
+}
+
+/// The latest exclusion frames. A plain reference type on purpose: writing it does not invalidate the
+/// view, and the day-swipe gesture reads it only when a drag ends.
+private final class LiquidDaySwipeExclusions {
+    var rects: [String: CGRect] = [:]
+    func contains(_ point: CGPoint) -> Bool { rects.values.contains { $0.contains(point) } }
+}
+
+private extension View {
+    /// Marks this view as owning its horizontal drags, so a sideways swipe that starts inside it (a chart
+    /// scrub, a horizontal carousel) never also steps the Home day.
+    func daySwipeExclusionZone(_ id: String) -> some View {
+        background {
+            GeometryReader { geometry in
+                Color.clear.preference(key: LiquidDaySwipeExclusionKey.self,
+                                       value: [id: geometry.frame(in: .named(LiquidTodayView.daySwipeSpace))])
+            }
+        }
+    }
 }
 
 /// Carries the Today scroll's top overscroll offset up to the view for the custom liquid pull-to-refresh.
@@ -2650,6 +2770,8 @@ private struct LiquidHeartRateCardFrameKey: PreferenceKey {
 /// A GeometryReader preference inside the scroll content stopped reporting reliably on recent iOS.
 private struct PullOverscrollReader: ViewModifier {
     let onChange: (CGFloat) -> Void
+    /// Whether a finger is on the scroll view, from its scroll phase (iOS 18+ only).
+    var onInteractingChange: (Bool) -> Void = { _ in }
 
     func body(content: Content) -> some View {
         if #available(iOS 18.0, macOS 15.0, *) {
@@ -2658,6 +2780,10 @@ private struct PullOverscrollReader: ViewModifier {
             } action: { _, new in
                 onChange(new)
             }
+            .onScrollPhaseChange { _, phase in
+                onInteractingChange(phase == .interacting)
+            }
+            .onAppear { onInteractingChange(false) }
         } else {
             content
         }
@@ -3205,6 +3331,9 @@ private struct LiquidLiveHR: View {
     /// so it passes nil and draws exactly as before; the banked buckets skip the hours nothing was
     /// recorded, and without this the sparkline joined across them as though the day were continuous.
     var fallbackSegments: [String] = []
+    /// Per value of [fallback]: inside a recorded sleep. Shaded behind the banked trace only; the live
+    /// stream is the last minute or two and never spans a sleep.
+    var fallbackSleepMask: [Bool] = []
     var animated: Bool
 
     @EnvironmentObject private var live: LiveState
@@ -3269,6 +3398,9 @@ private struct LiquidLiveHR: View {
             if series.count >= 2 {
                 ZStack {
                     LiquidHeartRateGrid()
+                    if !isLive, fallbackSleepMask.count == series.count, fallbackSleepMask.contains(true) {
+                        LiquidHeartRateSleepBands(mask: fallbackSleepMask, values: series)
+                    }
                     // Historical buckets cannot change between live ticks. Do not run the decorative
                     // trace clock for this fallback; genuine live HR keeps its existing animation.
                     LiquidThread(bpm: series,
@@ -3359,6 +3491,40 @@ private struct LiquidLiveHR: View {
         .accessibilityHidden(true)
     }
 
+}
+
+/// The stretches of the banked trace recorded while asleep (the night or a nap), as soft bands with a
+/// small moon at the top of each. Placed through the thread renderer's own x mapping, so a band covers
+/// exactly the samples it marks even across the gaps the trace breaks at.
+private struct LiquidHeartRateSleepBands: View {
+    let mask: [Bool]
+    let values: [Double]
+
+    var body: some View {
+        Canvas { context, size in
+            let plot = LiquidRender.ThreadPlot(size: size, values: values)
+            let half = values.count > 1 ? (plot.x(1) - plot.x(0)) / 2 : 0
+            var i = 0
+            while i < mask.count {
+                guard mask[i] else { i += 1; continue }
+                var j = i
+                while j + 1 < mask.count, mask[j + 1] { j += 1 }
+                let x0 = max(0, plot.x(i) - half)
+                let x1 = min(Double(size.width), plot.x(j) + half)
+                let band = CGRect(x: x0, y: 0, width: max(1, x1 - x0), height: size.height)
+                context.fill(Path(band), with: .color(StrandPalette.restColor.opacity(0.16)))
+                if band.width >= 14 {
+                    context.draw(Text(Image(systemName: "moon.fill"))
+                                    .font(.system(size: 8, weight: .bold))
+                                    .foregroundColor(StrandPalette.restColor),
+                                 at: CGPoint(x: band.minX + 4, y: 4), anchor: .topLeading)
+                }
+                i = j + 1
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
 }
 
 /// Static technical grid behind the live trace. Canvas draws only when layout/style changes, so the

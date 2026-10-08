@@ -205,6 +205,12 @@ struct StressView: View {
             heroCard(model)
                 .staggeredAppear(index: 0)
 
+            #if os(iOS)
+            // iOS: Home's Stress tile is the way in to the day's stress curve (Home no longer repeats it
+            // as a card of its own), so the curve sits straight under the score here.
+            daytimeBlock
+            #endif
+
             // 1b. ADVANCED HRV readouts (additive, on-demand). A separate, clearly-labelled card
             //     that appears only when at least one engine returned a value. It sits BELOW the
             //     hero and never alters the hero, the markers or the timeline.
@@ -222,16 +228,9 @@ struct StressView: View {
 
             // 3. Today's intraday timeline — when in the day stress ran high, + a
             //    passive Breathe suggestion when the recent hours stay elevated.
-            // #2535: THREE states, not two. `daytime` is nil only while the read is still running, and this
-            // used to render nothing then, so a fold that takes seconds looked exactly like a day with no
-            // data. An empty `scored` after the read is a fact about the day and still stays silent.
-            if daytime == nil {
-                daytimeLoading()
-                    .staggeredAppear(index: 2)
-            } else if let daytime, !daytime.scored.isEmpty {
-                daytimeSection(daytime)
-                    .staggeredAppear(index: 2)
-            }
+            #if !os(iOS)
+            daytimeBlock
+            #endif
 
             // 4. Trend over the chosen window.
             trendSection(model)
@@ -259,6 +258,21 @@ struct StressView: View {
     }
 
     // MARK: 3 · Daytime timeline (intraday, same 0–3 proxy)
+
+    /// The timeline in whichever of its states applies.
+    /// #2535: THREE states, not two. `daytime` is nil only while the read is still running, and this
+    /// used to render nothing then, so a fold that takes seconds looked exactly like a day with no
+    /// data. An empty `scored` after the read is a fact about the day and still stays silent.
+    @ViewBuilder
+    private var daytimeBlock: some View {
+        if daytime == nil {
+            daytimeLoading()
+                .staggeredAppear(index: 2)
+        } else if let daytime, !daytime.scored.isEmpty {
+            daytimeSection(daytime)
+                .staggeredAppear(index: 2)
+        }
+    }
 
     /// The intraday timeline while its read is still running (#2535).
     ///
