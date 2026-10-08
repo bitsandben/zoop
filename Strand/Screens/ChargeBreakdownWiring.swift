@@ -30,8 +30,9 @@ enum ChargeBreakdownWiring {
     /// show one baseline in the rows and score against another. (#2315 had already closed the same gap for
     /// the recalibration epoch; the resolver now applies both epochs.)
     ///
-    /// `sleepPerfPercent` is the Rest composite on a 0-100 scale, divided by 100 here to match
-    /// `AnalyticsEngine`'s `sleepPerf` form, so the Sleep row scores against the headline's own input.
+    /// `charge` is the recipe the headline was scored with (`RecoveryCalibrationStore.lastScoring`): its
+    /// sleep term (asleep ÷ need), its weights and the day's check-in symptoms, so every row scores against
+    /// the headline's own inputs.
     ///
     /// The resting-HR and respiration baselines are passed only when usable. `RecoveryScorer` and
     /// `chargeDrivers` both apply that gate themselves since #1990, so these are belt-and-braces rather
@@ -39,7 +40,7 @@ enum ChargeBreakdownWiring {
     /// reader looks first.
     static func breakdown(baselines: ChargeBaselines.Resolved,
                           row: DailyMetric,
-                          sleepPerfPercent: Double?) -> (drivers: [ChargeDriver], confidence: ScoreConfidence)? {
+                          charge: ChargeScoring) -> (drivers: [ChargeDriver], confidence: ScoreConfidence)? {
         guard let hrv = row.avgHrv, let rhr = row.restingHr else { return nil }
         let hrvBase = baselines.hrv
         guard hrvBase.usable else { return nil }
@@ -50,8 +51,10 @@ enum ChargeBreakdownWiring {
             hrvBaseline: hrvBase,
             rhrBaseline: rhrBase.usable ? rhrBase : nil,
             respBaseline: respBase.usable ? respBase : nil,
-            sleepPerf: sleepPerfPercent.map { $0 / 100.0 },
-            skinTempDev: row.skinTempDevC)
+            sleepPerf: charge.sleepTerm(row),
+            skinTempDev: row.skinTempDevC,
+            weights: charge.weights,
+            symptomLoad: charge.symptomLoad(row.day))
         return (drivers, ScoreConfidence.charge(recovery: row.recovery, hrvBaseline: hrvBase))
     }
 }

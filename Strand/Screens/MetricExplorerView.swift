@@ -1015,6 +1015,8 @@ struct MetricDetailView: View {
                     // with the range pill. Then the frosted chart / stat tiles / correlations.
                     heroHeader(effectiveRange: effRange, windowed: win, windowFellBack: fellBack)
                     heroChart(effectiveRange: effRange, windowed: win, windowFellBack: fellBack)
+                    // Zoop: what shaped the latest Recovery, and the calibration status behind it.
+                    if metric.key == HeroRingMetric.charge { RecoveryInsightCard() }
                     // #1848: the skin-temp explorer's explanatory note (nil for every other metric and
                     // for a skin-temp screen that needs no explanation). Sits between the chart and the
                     // stats so it reads as context for the series just plotted, not as a generic banner.

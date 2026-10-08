@@ -176,7 +176,7 @@ final class ChargeDriversTests: XCTestCase {
         let labels = Set(drivers.map { $0.label })
         XCTAssertTrue(labels.contains("Heart rate variability"))
         XCTAssertTrue(labels.contains("Resting heart rate"))
-        XCTAssertTrue(labels.contains("Sleep quality"))
+        XCTAssertTrue(labels.contains("Sleep vs need"))
         XCTAssertFalse(labels.contains("Respiratory rate"))     // omitted, not a fake 0 row
         XCTAssertFalse(labels.contains("Skin temperature"))     // omitted, not a fake 0 row
         XCTAssertEqual(drivers.count, 3)
@@ -207,7 +207,7 @@ final class ChargeDriversTests: XCTestCase {
             respBaseline: baseline(mean: 16, sigma: 2), sleepPerf: 0.91, skinTempDev: nil)
         let hrv = drivers.first { $0.label == "Heart rate variability" }!
         let rhr = drivers.first { $0.label == "Resting heart rate" }!
-        let sleep = drivers.first { $0.label == "Sleep quality" }!
+        let sleep = drivers.first { $0.label == "Sleep vs need" }!
         let resp = drivers.first { $0.label == "Respiratory rate" }!
         XCTAssertGreaterThan(hrv.deltaPoints, 0)
         XCTAssertGreaterThan(rhr.deltaPoints, 0)
@@ -230,7 +230,7 @@ final class ChargeDriversTests: XCTestCase {
             respBaseline: baseline(mean: 16, sigma: 2), sleepPerf: 0.65, skinTempDev: nil)
         let hrv = drivers.first { $0.label == "Heart rate variability" }!
         let rhr = drivers.first { $0.label == "Resting heart rate" }!
-        let sleep = drivers.first { $0.label == "Sleep quality" }!
+        let sleep = drivers.first { $0.label == "Sleep vs need" }!
         XCTAssertLessThan(hrv.deltaPoints, 0)
         XCTAssertLessThan(rhr.deltaPoints, 0)
         XCTAssertLessThan(sleep.deltaPoints, 0)
@@ -281,7 +281,7 @@ final class ChargeDriversTests: XCTestCase {
         XCTAssertEqual(hrv.valueText, "58 ms")
         XCTAssertEqual(hrv.baselineText, "50 ms baseline")
         // Sleep quality has no learned baseline -> empty baselineText (UI omits the line).
-        let sleep = drivers.first { $0.label == "Sleep quality" }!
+        let sleep = drivers.first { $0.label == "Sleep vs need" }!
         XCTAssertEqual(sleep.baselineText, "")
     }
 

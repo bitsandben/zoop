@@ -395,6 +395,8 @@ struct LiquidTodayView: View {
                             if chargeLegacyRRGap { ChargeLegacyRRGapNote() }
                             #if os(iOS)
                             monitorTilesRow
+                            // Zoop: the morning check-in behind Recovery calibration (today only).
+                            if selectedDayOffset == 0 { MorningCheckInCard() }
                             HomeSectionTitle(title: "My Day") { myDayAddButton }
                             if selectedDayOffset == 0 {
                                 HomeMomentCard(hours: hostedStressHours, recovery: chargeDisplay.pct,
@@ -726,9 +728,19 @@ struct LiquidTodayView: View {
     private var todaysActivities: [HomeActivity] {
         let key = selectedDayKey
         let dayOf: (Int) -> String = { Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval($0))) }
-        let sleeps = repo.sleeps.filter { dayOf($0.endTs) == key }.map { s in
-            HomeActivity(kind: (s.endTs - s.effectiveStartTs) >= 3 * 3600 ? .sleep : .nap,
-                         title: (s.endTs - s.effectiveStartTs) >= 3 * 3600 ? String(localized: "Sleep") : String(localized: "Nap"),
+        // Sleep vs nap follows the Sleep tab's main-night pick (the chosen night plus the fragments bridged
+        // into it), not a duration cut: a night split by a wake-up read its shorter piece as a nap here
+        // while the Sleep tab counted it as part of the night.
+        let daySleeps = repo.sleeps.filter { dayOf($0.endTs) == key }
+        let mainGroup = SleepView.mainNightGroup(daySleeps)
+        let mainStarts = Set(mainGroup.map(\.startTs))
+        var sleeps: [HomeActivity] = []
+        if let first = mainGroup.first, let last = mainGroup.last {
+            sleeps.append(HomeActivity(kind: .sleep, title: String(localized: "Sleep"),
+                                       start: first.effectiveStartTs, end: last.endTs, workout: nil))
+        }
+        sleeps += daySleeps.filter { !mainStarts.contains($0.startTs) }.map { s in
+            HomeActivity(kind: .nap, title: String(localized: "Nap"),
                          start: s.effectiveStartTs, end: s.endTs, workout: nil)
         }
         let workouts = workouts.filter { dayOf($0.startTs) == key }.map { w in

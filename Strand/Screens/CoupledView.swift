@@ -536,7 +536,7 @@ struct CoupledView: View {
     private func chargeBreakdown() -> (drivers: [ChargeDriver], confidence: ScoreConfidence)? {
         guard let row = breakdownRow else { return nil }
         guard let baselines = repo.chargeBaselines else { return nil }
-        return ChargeBreakdownWiring.breakdown(baselines: baselines, row: row, sleepPerfPercent: sleepPerformance)
+        return ChargeBreakdownWiring.breakdown(baselines: baselines, row: row, charge: RecoveryCalibrationStore.lastScoring)
     }
 
     @ViewBuilder

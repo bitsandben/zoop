@@ -1671,6 +1671,17 @@ struct SettingsView: View {
             blurb: "Your Charge score learns a personal baseline from your heart-rate variability, resting heart rate and more over time. If a bad first week set it off, you can re-learn it from tonight. Your history stays."
         ) {
             VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
+                // Zoop: personal weighting from the morning check-in.
+                NavigationLink { RecoveryCalibrationView() } label: {
+                    HStack {
+                        Label("Recovery calibration", systemImage: "slider.horizontal.3")
+                            .font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(StrandPalette.textTertiary)
+                    }
+                }
+                .buttonStyle(.plain)
                 ZoopButton("Recalibrate Charge baseline", systemImage: "arrow.triangle.2.circlepath", kind: .secondary) {
                     showRecalibrateConfirm = true
                 }

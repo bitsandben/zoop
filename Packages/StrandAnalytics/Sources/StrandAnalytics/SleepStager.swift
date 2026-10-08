@@ -109,10 +109,18 @@ public enum SleepStager {
     // stretch keeps a near-baseline HR). Overnight windows are UNCHANGED.
 
     /// Local hour (inclusive) at which the stricter daytime bar begins.
-    public static let daytimeBandStartHour: Int = 11
+    ///
+    /// Zoop: 08:00 rather than 11:00. With 11 a still morning block (coffee, a commute, 08:00-10:00, centre
+    /// 09:00) only had to pass the loose overnight bar, and the H7 morning-stillness guard, which runs
+    /// inside the daytime band, never saw the post-wake window it was written for. Late sleepers stay
+    /// covered by the night-tail continuation (`nightContinuationGapMin`).
+    public static let daytimeBandStartHour: Int = 8
     /// Local hour (exclusive) at which the stricter daytime bar ends. A window whose center
     /// is in [start, end) local hours is "daytime"; everything else is "overnight".
-    public static let daytimeBandEndHour: Int = 20
+    ///
+    /// Zoop: 21:00 rather than 20:00, so an evening on the sofa (19:00-22:00, centre 20:30) faces the
+    /// daytime bar instead of the overnight one.
+    public static let daytimeBandEndHour: Int = 21
     /// A still sleep run that resumes within this gap of an overnight sleep chain is the
     /// night's TAIL — a late wake past the daytime-band start, or a brief morning stir then
     /// back to sleep — not an isolated daytime nap, so it skips the daytime guard. Without
@@ -698,7 +706,7 @@ public enum SleepStager {
                                     efficiency: efficiency(start: p.start, end: p.end, stages: stages),
                                     stages: stages,
                                     restingHR: sessionRestingHR(start: p.start, end: p.end, hr: hrS),
-                                    avgHRV: sessionAvgHRV(start: p.start, end: p.end, rr: rrS),
+                                    avgHRV: sessionAvgHRV(start: p.start, end: p.end, rr: rrS, stages: stages),
                                     hrOnly: true))
         }
         traceSink?(GateTrace.hrOnlyLine(
@@ -1588,7 +1596,7 @@ public enum SleepStager {
             let stages = applyBandStateWakeVeto(rawStages, start: p.start, end: p.end,
                                                 bandSleepState: bandSleepState)
             let eff = efficiency(start: p.start, end: p.end, stages: stages)
-            let avgHrv = sessionAvgHRV(start: p.start, end: p.end, rr: rrS)
+            let avgHrv = sessionAvgHRV(start: p.start, end: p.end, rr: rrS, stages: stages)
             sessions.append(SleepSession(start: p.start, end: p.end, efficiency: eff,
                                          stages: stages, restingHR: resting, avgHRV: avgHrv))
             traceSink?(GateTrace.runLine(index: runIndex, startTs: p.start, endTs: p.end,
@@ -2955,8 +2963,13 @@ public enum SleepStager {
 
     /// Mean RMSSD over 5-min tumbling windows across the session (ms), or nil.
     /// A window counts only with `HRVAnalyzer.minBeats` clean intervals (see `sessionHrvWindows`).
-    static func sessionAvgHRV(start: Int, end: Int, rr: [RRInterval]) -> Double? {
-        let vals = sessionHrvWindows(start: start, end: end, rr: rr, stages: []).compactMap { $0.rmssd }
+    ///
+    /// Zoop: when `stages` is supplied the night is no longer a plain mean. Windows are weighted the way
+    /// WHOOP publicly describes its overnight HRV (see `weightedNightHRV`); without stages, or when no
+    /// window carries weight, the plain mean is kept.
+    static func sessionAvgHRV(start: Int, end: Int, rr: [RRInterval], stages: [StageSegment] = []) -> Double? {
+        let windows = sessionHrvWindows(start: start, end: end, rr: rr, stages: stages)
+        let vals = windows.compactMap { $0.rmssd }
         if vals.isEmpty { return nil }
         // #1118: refuse the night outright when its own R-R banks more beat-time than the wall clock it
         // spans. Gated HERE rather than at the caller because this is where RMSSD BECOMES the day's HRV:
@@ -2969,7 +2982,42 @@ public enum SleepStager {
         // `sessionHrvWindows` does, so the verdict cannot describe a different set of beats than the number
         // it is gating.
         guard !sessionHrvOverCounted(start: start, end: end, rr: rr) else { return nil }
+        if !stages.isEmpty, let weighted = weightedNightHRV(windows, start: start, end: end) {
+            return weighted
+        }
         return vals.reduce(0, +) / Double(vals.count)
+    }
+
+    /// Weight of a deep-stage (slow-wave) window relative to a light/REM window in `weightedNightHRV`.
+    static let deepWindowWeight: Double = 2.0
+    /// Extra weight a window gains across the night: 0 at session start, this much at its end, so the
+    /// last window counts (1 + gain) times the first.
+    static let lateNightWeightGain: Double = 1.0
+
+    /// Overnight RMSSD as a weighted mean of the 5-minute windows, after WHOOP's public description of its
+    /// current method: wake windows are dropped, slow-wave windows and later windows weigh more because
+    /// HRV varies by stage and the late night reflects the overnight recovery best. WHOOP does not publish
+    /// its weights; `deepWindowWeight` and `lateNightWeightGain` are Zoop's choice. nil when no scored
+    /// window carries weight (all wake, or no clean window).
+    static func weightedNightHRV(_ windows: [HrvWindow], start: Int, end: Int) -> Double? {
+        let span = Double(max(end - start, 1))
+        var num = 0.0
+        var den = 0.0
+        for w in windows {
+            guard let r = w.rmssd else { continue }
+            let stageWeight: Double
+            switch w.stage {
+            case "wake", "awake": continue
+            case "deep": stageWeight = deepWindowWeight
+            default: stageWeight = 1.0
+            }
+            let center = Double(w.startTs - start) + 150.0
+            let position = min(1.0, max(0.0, center / span))
+            let weight = stageWeight * (1.0 + lateNightWeightGain * position)
+            num += r * weight
+            den += weight
+        }
+        return den > 0 ? num / den : nil
     }
 
     /// Whether the #1118 coverage gate refuses a session's HRV: its own R-R, windowed [start, end] exactly

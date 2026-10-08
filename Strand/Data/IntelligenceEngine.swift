@@ -103,8 +103,14 @@ final class IntelligenceEngine: ObservableObject {
         "hrvBaseline", "rhrBaseline", "age", "sex", "stepTicksPerStep", "maxHROverride",
         "tzOffset", "sleepNeedHours", "sleepConsistency", "habitualMidsleep",
         "experimentalSleepV2", "motionAwareWake", "deepHrvWindow", "spo2CandidateDisplay",
-        "effortMethod", "dayCycleMode",
+        "effortMethod", "dayCycleMode", "scoringRecipe",
     ]
+
+    /// Zoop scoring-recipe tag. Bump it whenever a change alters what a re-score writes without moving the
+    /// raw data, so the per-day cache and the idle-tick watermark both stop serving the old recipe.
+    /// v1: WHOOP-style weighted overnight HRV and sleep sufficiency as Charge's sleep term.
+    /// v2: the stricter daytime (nap) bar runs 08:00-21:00 instead of 11:00-20:00.
+    nonisolated static let scoringRecipe = "zoop-charge-v2"
 
     /// Which config field(s) moved between two signatures, for the `configDropped` tally.
     ///
@@ -817,7 +823,10 @@ final class IntelligenceEngine: ObservableObject {
         // Oura / Apple Watch / re-added-WHOOP install the per-device read returned 0, so this gate never
         // fired and a night finishing after launch stayed unscored until relaunch. Scoring below still reads
         // the registry's ACTIVE device (`owner`); only this change-detector needed to be cross-device.
-        let wmKey = (try? await store.analysisFingerprint()) ?? ""
+        // Zoop: the recipe tag rides on the watermark so an app update that changes scoring re-scores once
+        // even when no new raw data landed. An empty fingerprint stays empty (the gates read it as unknown).
+        let fingerprint = (try? await store.analysisFingerprint()) ?? ""
+        let wmKey = fingerprint.isEmpty ? "" : fingerprint + "|" + Self.scoringRecipe
         // #1538: read the stored watermark ONCE for both gates and the attribution line below. There is no
         // suspension point between them, so the three reads this replaces could not disagree — but the log
         // line asserting `newData` and the gate deciding whether to run must be the SAME comparison by
@@ -1112,6 +1121,7 @@ final class IntelligenceEngine: ObservableObject {
             // window of days scored by a recipe the user just turned off, with nothing to explain it.
             "\(effortMethodGlobal)",
             dayCycleMode.rawValue,
+            Self.scoringRecipe,
         ].joined(separator: "|")
         // Drop the whole cache on a config change, then snapshot it into a Sendable `let` for the detached
         // loop (the engine is @MainActor; the loop can't touch `self`). The loop returns the updated cache
@@ -2077,6 +2087,11 @@ final class IntelligenceEngine: ObservableObject {
                                              baselineEpoch: recoveryEpoch),
             resp: respFold.usable ? respFold : nil,
             skinTemp: skinFold.usable ? skinFold : nil)
+        // Zoop: the Charge recipe for this pass. Sleep enters as asleep ÷ personal need; with recovery
+        // calibration on, the morning check-ins supply personal weights and the symptom term.
+        let chargeScoring = await RecoveryCalibrationStore.scoring(store: store, computedId: computedId,
+                                                                   baselines: baselines2,
+                                                                   needHours: sleepNeedHours)
 
         // Real (non-detected) workouts in the scored window, used to de-duplicate detected bouts so a
         // user who BOTH has real sessions AND wears the strap doesn't see the same session twice (the
@@ -2218,21 +2233,21 @@ final class IntelligenceEngine: ObservableObject {
                                          habitualMidsleepSec: habitualMidsleepSec)
             daily = DayCycleIntelligenceIntegration.applying(physiologicalSteps, to: daily)
             daily = Self.recomputeRecoveryDaily(daily, nightlySkinTempC: night.nightlySkin,
-                                               baselines: baselines2)
+                                               baselines: baselines2, charge: chargeScoring)
             let recovery = daily.recovery
             let skinDev = daily.skinTempDevC
             // Charge term-breakdown trace (Group G): only when the Recovery test mode is on. Emits which
             // term moved Charge and which was nil and forced the renorm, tagged `.recovery`. The trace's
             // score is RecoveryScorer.recovery verbatim, so the `recovery` written above is unchanged.
             if recoveryTraceActive {
-                for line in recoveryTraceLines(daily, baselines2) { diagnosticSink?(line, .recovery) }
+                for line in recoveryTraceLines(daily, baselines2, chargeScoring) { diagnosticSink?(line, .recovery) }
             }
             let source = DaySource.classify(day: daily.day, importedWhoopDays: importedWhoopDays,
                                             appleHealthDays: appleHealthDays)
             // SHARED CONTRACT enrichment: the ordered Charge driver list + the relative skin-temp marker,
             // built from the SAME inputs `recomputeRecovery` reads so the rows can never disagree with the
             // headline. Both are empty/nil pre-baseline (cold-start), matching the score's own null-honesty.
-            let drivers = recomputeChargeDrivers(daily, baselines2)
+            let drivers = recomputeChargeDrivers(daily, baselines2, chargeScoring)
             let skinRel = RecoveryScorer.skinTempRelative(deviationC: skinDev)
             // Honest per-day Charge confidence (A3): the strap night reads `.solid`/`.building`/`.calibrating`
             // off the HRV baseline state rather than a blanket `.solid`, so a thin/provisional baseline shows
@@ -3227,10 +3242,11 @@ final class IntelligenceEngine: ObservableObject {
     /// Pass 1 has no seeded skin baseline. Attach the deviation before scoring so the score,
     /// explanation, trace and persisted row all consume the same temperature. Internal for regression tests.
     static func recomputeRecoveryDaily(_ daily: DailyMetric, nightlySkinTempC: Double?,
-                                       baselines: AnalyticsEngine.ProfileBaselines) -> DailyMetric {
+                                       baselines: AnalyticsEngine.ProfileBaselines,
+                                       charge: ChargeScoring = .standard) -> DailyMetric {
         let skinDev = recomputeSkinTempDev(nightlySkinTempC, baselines.skinTemp)
         let input = daily.with(recovery: daily.recovery, skinTempDevC: skinDev, skinTempC: nightlySkinTempC)
-        return input.with(recovery: recomputeRecovery(input, baselines), skinTempDevC: skinDev,
+        return input.with(recovery: recomputeRecovery(input, baselines, charge), skinTempDevC: skinDev,
                           skinTempC: nightlySkinTempC)
     }
 
@@ -3278,16 +3294,18 @@ final class IntelligenceEngine: ObservableObject {
     /// baseline is usable (RecoveryScorer gates on `hrvBaseline.usable`, i.e. ≥ minNightsSeed valid
     /// nights) , so the honest null-until-4-nights cold-start is free. Mirrors AnalyticsEngine's own
     /// recovery call + Android IntelligenceEngine.recomputeRecovery. (#78)
-    private static func recomputeRecovery(_ daily: DailyMetric, _ baselines: AnalyticsEngine.ProfileBaselines) -> Double? {
+    private static func recomputeRecovery(_ daily: DailyMetric, _ baselines: AnalyticsEngine.ProfileBaselines,
+                                          _ charge: ChargeScoring) -> Double? {
         guard let hrvVal = daily.avgHrv, let rhrVal = daily.restingHr, let hrvBase = baselines.hrv else { return nil }
         // Charge enrichment: feed the Rest COMPOSITE (÷100) as the sleep-quality term instead of raw
         // efficiency, and fold in the night's skin-temp deviation. Both come from the persisted daily
         // fields (the raw streams are gone in pass 2). (Charge/Effort/Rest scoring redesign.)
-        let restQuality = AnalyticsEngine.Rest.composite(daily: daily).map { $0 / 100.0 } ?? daily.efficiency
+        let restQuality = charge.sleepTerm(daily)
         return RecoveryScorer.recovery(hrv: hrvVal, rhr: Double(rhrVal), resp: daily.respRateBpm,
                                        hrvBaseline: hrvBase, rhrBaseline: baselines.restingHR,
                                        respBaseline: baselines.resp, sleepPerf: restQuality,
-                                       skinTempDev: daily.skinTempDevC)
+                                       skinTempDev: daily.skinTempDevC,
+                                       weights: charge.weights, symptomLoad: charge.symptomLoad(daily.day))
     }
 
     /// The ordered "what shaped it" Charge driver list for one day (SHARED CONTRACT). Pure: it feeds the
@@ -3297,15 +3315,17 @@ final class IntelligenceEngine: ObservableObject {
     /// (HRV / RHR / HRV-baseline) is missing or the baseline isn't usable yet, mirroring `recomputeRecovery`'s
     /// own early-nil so a cold-start night shows the calibrating state rather than fabricated rows.
     private func recomputeChargeDrivers(_ daily: DailyMetric,
-                                        _ baselines: AnalyticsEngine.ProfileBaselines) -> [ChargeDriver] {
+                                        _ baselines: AnalyticsEngine.ProfileBaselines,
+                                        _ charge: ChargeScoring) -> [ChargeDriver] {
         guard let hrvVal = daily.avgHrv, let rhrVal = daily.restingHr, let hrvBase = baselines.hrv else {
             return []
         }
-        let restQuality = AnalyticsEngine.Rest.composite(daily: daily).map { $0 / 100.0 } ?? daily.efficiency
+        let restQuality = charge.sleepTerm(daily)
         return RecoveryScorer.chargeDrivers(hrv: hrvVal, rhr: Double(rhrVal), resp: daily.respRateBpm,
                                             hrvBaseline: hrvBase, rhrBaseline: baselines.restingHR,
                                             respBaseline: baselines.resp, sleepPerf: restQuality,
-                                            skinTempDev: daily.skinTempDevC)
+                                            skinTempDev: daily.skinTempDevC,
+                                            weights: charge.weights, symptomLoad: charge.symptomLoad(daily.day))
     }
 
     /// The Charge term-breakdown trace lines for one day (Recovery test mode, Group G). Pure: it feeds the
@@ -3314,12 +3334,17 @@ final class IntelligenceEngine: ObservableObject {
     /// trace can never diverge from the Charge number written for the day. Empty when a hard input
     /// (HRV / RHR / HRV-baseline) is missing, mirroring `recomputeRecovery`'s own early-nil. Only CALLED
     /// when `TestCentre.active(.recovery)` is true, so it costs nothing when the mode is off.
-    private func recoveryTraceLines(_ daily: DailyMetric, _ baselines: AnalyticsEngine.ProfileBaselines) -> [String] {
+    ///
+    /// Zoop: the trace is built on the STANDARD weights without the check-in symptom term. When the day is
+    /// scored with personal weights or symptoms, a trailing `calibrated` line says so, because the trace's
+    /// score is then not the persisted one.
+    private func recoveryTraceLines(_ daily: DailyMetric, _ baselines: AnalyticsEngine.ProfileBaselines,
+                                    _ charge: ChargeScoring) -> [String] {
         guard let hrvVal = daily.avgHrv, let rhrVal = daily.restingHr, let hrvBase = baselines.hrv else {
             return ["charge day=\(daily.day) nilScore reason=missingInput "
                 + "(hrv/rhr/hrvBaseline required)"]
         }
-        let restQuality = AnalyticsEngine.Rest.composite(daily: daily).map { $0 / 100.0 } ?? daily.efficiency
+        let restQuality = charge.sleepTerm(daily)
         let (_, trace) = RecoveryScorer.recoveryTrace(
             hrv: hrvVal, rhr: Double(rhrVal), resp: daily.respRateBpm,
             hrvBaseline: hrvBase, rhrBaseline: baselines.restingHR,
@@ -3328,10 +3353,17 @@ final class IntelligenceEngine: ObservableObject {
         // Prefix each line with the day key so a multi-night export stays parseable, matching the sleep
         // trace's per-day shape. Strip ONLY the leading "charge " token the trace builder writes (every
         // line starts with it), then re-emit as "charge day=<day> ...".
-        return trace.map { line in
+        var lines = trace.map { line in
             let body = line.hasPrefix("charge ") ? String(line.dropFirst("charge ".count)) : line
             return "charge day=\(daily.day) " + body
         }
+        let load = charge.symptomLoad(daily.day)
+        if charge.weights != .standard || (load ?? 0) > 0 {
+            let w = charge.weights
+            lines.append("charge day=\(daily.day) calibrated weights=hrv:\(w.hrv) rhr:\(w.rhr) sleep:\(w.sleep) "
+                + "resp:\(w.resp) skin:\(w.skinTemp) symptomLoad=\(load ?? 0) (score above uses standard weights)")
+        }
+        return lines
     }
 
     /// One day's watch-derived recovery output, keyed by day.

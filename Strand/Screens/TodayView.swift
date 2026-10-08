@@ -851,7 +851,7 @@ struct TodayView: View {
     private func chargeBreakdown() -> (drivers: [ChargeDriver], confidence: ScoreConfidence)? {
         guard let row = chargeBreakdownRow else { return nil }
         guard let baselines = repo.chargeBaselines else { return nil }
-        return ChargeBreakdownWiring.breakdown(baselines: baselines, row: row, sleepPerfPercent: restScore)
+        return ChargeBreakdownWiring.breakdown(baselines: baselines, row: row, charge: RecoveryCalibrationStore.lastScoring)
     }
 
     /// The night's relative skin-temp marker for the displayed row (A5), or nil. Surfaced verbatim from

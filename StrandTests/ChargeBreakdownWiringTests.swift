@@ -31,7 +31,7 @@ final class ChargeBreakdownWiringTests: XCTestCase {
                            hrvEpoch: Double = 0) -> (drivers: [ChargeDriver], confidence: ScoreConfidence)? {
         let baselines = ChargeBaselines.resolve(imported: imported, own: days, anchorDay: row.day,
                                                 hrvEpoch: hrvEpoch, recoveryEpoch: 0)
-        return ChargeBreakdownWiring.breakdown(baselines: baselines, row: row, sleepPerfPercent: 85)
+        return ChargeBreakdownWiring.breakdown(baselines: baselines, row: row, charge: .standard)
     }
 
     /// A history with no banked resting HR folds to `foldHistory`'s synthetic midpoint (about 75 bpm),

@@ -126,7 +126,9 @@ extension RecoveryScorer {
                                      rhrBaseline: BaselineState?,
                                      respBaseline: BaselineState?,
                                      sleepPerf: Double?,
-                                     skinTempDev: Double? = nil) -> [ChargeDriver] {
+                                     skinTempDev: Double? = nil,
+                                     weights: ChargeWeights = .standard,
+                                     symptomLoad: Double? = nil) -> [ChargeDriver] {
 
         // No score => no real contributions to attribute (cold-start). recovery(...) enforces
         // the usable gate; mirror it so a nil headline never yields fabricated driver rows.
@@ -138,7 +140,8 @@ extension RecoveryScorer {
         guard let full = recovery(hrv: hrv, rhr: rhr, resp: resp,
                                   hrvBaseline: hrvBaseline, rhrBaseline: rhrB,
                                   respBaseline: respBaseline, sleepPerf: sleepPerf,
-                                  skinTempDev: skinTempDev) else {
+                                  skinTempDev: skinTempDev, weights: weights,
+                                  symptomLoad: symptomLoad) else {
             return []
         }
 
@@ -173,7 +176,8 @@ extension RecoveryScorer {
         let hrvPoints = points(recovery(hrv: hrvBaseline.baseline, rhr: rhr, resp: resp,
                                         hrvBaseline: hrvBaseline, rhrBaseline: rhrB,
                                         respBaseline: respBaseline, sleepPerf: sleepPerf,
-                                        skinTempDev: skinTempDev))
+                                        skinTempDev: skinTempDev, weights: weights,
+                                  symptomLoad: symptomLoad))
         drivers.append(ChargeDriver(
             label: "Heart rate variability",
             deltaPoints: hrvPoints,
@@ -189,7 +193,8 @@ extension RecoveryScorer {
             let rhrPoints = points(recovery(hrv: hrv, rhr: b.baseline, resp: resp,
                                             hrvBaseline: hrvBaseline, rhrBaseline: rhrB,
                                             respBaseline: respBaseline, sleepPerf: sleepPerf,
-                                            skinTempDev: skinTempDev))
+                                            skinTempDev: skinTempDev, weights: weights,
+                                  symptomLoad: symptomLoad))
             drivers.append(ChargeDriver(
                 label: "Resting heart rate",
                 deltaPoints: rhrPoints,
@@ -198,14 +203,15 @@ extension RecoveryScorer {
                 verdict: rhrVerdict(value: rhr, baseline: b.baseline, deltaPoints: rhrPoints)))
         }
 
-        // ── Rest quality (the Rest composite; neutral at sleepPerfCenter) ────────
+        // ── Sleep vs need (asleep time ÷ personal need; neutral at sleepPerfCenter) ──
         if let sp = sleepPerf {
             drivers.append(ChargeDriver(
-                label: "Sleep quality",
+                label: "Sleep vs need",
                 deltaPoints: points(recovery(hrv: hrv, rhr: rhr, resp: resp,
                                              hrvBaseline: hrvBaseline, rhrBaseline: rhrB,
                                              respBaseline: respBaseline, sleepPerf: sleepPerfCenter,
-                                             skinTempDev: skinTempDev)),
+                                             skinTempDev: skinTempDev, weights: weights,
+                                  symptomLoad: symptomLoad)),
                 valueText: "\(Int((sp * 100).rounded()))%",
                 baselineText: "",   // centred on a fixed "good night", not a learned baseline
                 verdict: sleepVerdict(sleepPerf: sp)))
@@ -217,7 +223,8 @@ extension RecoveryScorer {
             let respPoints = points(recovery(hrv: hrv, rhr: rhr, resp: b.baseline,
                                              hrvBaseline: hrvBaseline, rhrBaseline: rhrB,
                                              respBaseline: respBaseline, sleepPerf: sleepPerf,
-                                             skinTempDev: skinTempDev))
+                                             skinTempDev: skinTempDev, weights: weights,
+                                  symptomLoad: symptomLoad))
             drivers.append(ChargeDriver(
                 label: "Respiratory rate",
                 deltaPoints: respPoints,
@@ -234,13 +241,29 @@ extension RecoveryScorer {
             let skinTempPoints = points(recovery(hrv: hrv, rhr: rhr, resp: resp,
                                                  hrvBaseline: hrvBaseline, rhrBaseline: rhrB,
                                                  respBaseline: respBaseline, sleepPerf: sleepPerf,
-                                                 skinTempDev: 0))
+                                                 skinTempDev: 0, weights: weights,
+                                  symptomLoad: symptomLoad))
             drivers.append(ChargeDriver(
                 label: "Skin temperature",
                 deltaPoints: skinTempPoints,
                 valueText: skinTempDevText(dev),
                 baselineText: "",   // a deviation already; the reference is the personal baseline (0)
                 verdict: skinTempVerdict(dev, deltaPoints: skinTempPoints)))
+        }
+
+        // ── Morning check-in symptoms (Zoop; penalty only, present only when reported) ──
+        if let load = symptomLoad, load > 0 {
+            let symptomPoints = points(recovery(hrv: hrv, rhr: rhr, resp: resp,
+                                                hrvBaseline: hrvBaseline, rhrBaseline: rhrB,
+                                                respBaseline: respBaseline, sleepPerf: sleepPerf,
+                                                skinTempDev: skinTempDev, weights: weights,
+                                                symptomLoad: nil))
+            drivers.append(ChargeDriver(
+                label: "Morning symptoms",
+                deltaPoints: symptomPoints,
+                valueText: "",
+                baselineText: "",
+                verdict: "reported this morning, limiting recovery"))
         }
 
         // Biggest mover first; stable on ties (preserves the append order above).

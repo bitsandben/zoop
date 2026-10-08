@@ -543,7 +543,8 @@ public enum AnalyticsEngine {
                 // skip the fill every other session gets. The rule is uniform: fill what is missing.
                 guard s.restingHR == nil || s.avgHRV == nil else { return s }
                 let rhr = s.restingHR ?? SleepStager.sessionRestingHR(start: s.start, end: s.end, hr: hr)
-                let hrv = s.avgHRV ?? SleepStager.sessionAvgHRV(start: s.start, end: s.end, rr: rrSorted)
+                let hrv = s.avgHRV ?? SleepStager.sessionAvgHRV(start: s.start, end: s.end, rr: rrSorted,
+                                                                stages: s.stages)
                 // `hrOnly` carried explicitly: unlike Kotlin's `copy`, this rebuilds the struct field by
                 // field, so a new flag is dropped by DEFAULT unless named here. #1884 removed the guard
                 // that used to keep HR-only nights away from this line, so this is now the only thing
@@ -893,8 +894,9 @@ public enum AnalyticsEngine {
         // (empty when there is no score / cold-start). Surfaced on DayResult for the UI.
         var chargeDrivers: [ChargeDriver] = []
         if let hrvVal = avgHRVDaily, let rhrVal = restingHRDaily, let hrvBase = baselines.hrv {
-            // Rest-quality term = the Rest composite ÷100 (replaces raw efficiency).
-            let sleepPerf = restScore.map { $0 / 100.0 }
+            // Zoop: the sleep term is sleep sufficiency (asleep ÷ need), WHOOP's published sleep input,
+            // rather than the Rest composite.
+            let sleepPerf: Double? = tstS > 0 ? Rest.sufficiency(tstSeconds: tstS, needHours: sleepNeedHours) : nil
             recovery = RecoveryScorer.recovery(
                 hrv: hrvVal,
                 rhr: Double(rhrVal),
@@ -1273,6 +1275,19 @@ public enum AnalyticsEngine {
                 + wConsistency * consistencyScore
             // weighted is in [0,1] (weights sum to 1). Scale to [0,100] and round to 2dp.
             return (weighted * 10000.0).rounded() / 100.0
+        }
+
+        /// Sleep sufficiency in [0, 1]: asleep time ÷ personal sleep need, capped at 1. This is WHOOP's
+        /// published "sleep performance" (sleep you got versus sleep you needed) and, in the Zoop fork, the
+        /// sleep term Charge is scored with. The Rest composite stays the Sleep ring's own score.
+        public static func sufficiency(tstSeconds: Double, needHours: Double) -> Double {
+            max(0.0, min(1.0, tstSeconds / (max(needHours, 0.1) * 3600.0)))
+        }
+
+        /// `sufficiency` from a persisted `DailyMetric`; nil when the day has no sleep.
+        public static func sufficiency(daily d: DailyMetric, needHours: Double = defaultNeedHours) -> Double? {
+            guard let tstMin = d.totalSleepMin, tstMin > 0 else { return nil }
+            return sufficiency(tstSeconds: tstMin * 60.0, needHours: needHours)
         }
 
         /// Rest composite [0,100] derived from a persisted `DailyMetric` (the pass-2 / display path —

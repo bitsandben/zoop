@@ -79,6 +79,11 @@ public enum RecoveryScorer {
     /// baseline (`Baselines.strainCfg`) are supplied.
     public static let wActivityBalance: Double = 0.05
 
+    /// Weight of the morning check-in symptom term (Zoop). Added only when a symptom was reported.
+    public static let wSymptoms: Double = 0.10
+    /// Ceiling on the symptom load (in z-units) so a check-in can lower Charge but never alone floor it.
+    public static let symptomLoadCap: Double = 3.0
+
     /// Logistic spread: ±2 z-units ≈ full Red–Green band (15%–95%).
     public static let logisticK: Double = 1.6
     /// Logistic offset so Z=0 → 58%.
@@ -324,7 +329,9 @@ public enum RecoveryScorer {
                                 hrvBaselineUsable: Bool = true,
                                 recoveryIndexSlope: Double? = nil,
                                 effortBaseline: DriverBaseline? = nil,
-                                priorDayEffort: Double? = nil) -> Double? {
+                                priorDayEffort: Double? = nil,
+                                weights: ChargeWeights = .standard,
+                                symptomLoad: Double? = nil) -> Double? {
         // Cold-start gate: HRV is the dominant driver; if its baseline isn't
         // usable, refuse to score (more honest than a fabricated value).
         if !hrvBaselineUsable { return nil }
@@ -343,23 +350,23 @@ public enum RecoveryScorer {
         // signature is still detected and reported out-of-band (Charge trace + ChargeDrivers verdict)
         // so real firings can be counted first. See the MARK header for why, and swap in
         // `parasympatheticSaturation(hrvZ:rhrZ:).easedHrvZ` here to enable it.
-        terms.append((zScore(hrv, mean: hrvB.mean, spread: hrvB.spread), wHRV))
+        terms.append((zScore(hrv, mean: hrvB.mean, spread: hrvB.spread), weights.hrv))
         // RHR term: lower is better → (μ − x) / σ.
         if let b = rhrBaseline {
-            terms.append((zScore(b.mean, mean: rhr, spread: b.spread), wRHR))
+            terms.append((zScore(b.mean, mean: rhr, spread: b.spread), weights.rhr))
         }
         // Resp term: lower is better, optional.
         if let r = resp, let b = respBaseline {
-            terms.append((zScore(b.mean, mean: r, spread: b.spread), wResp))
+            terms.append((zScore(b.mean, mean: r, spread: b.spread), weights.resp))
         }
         // Sleep-performance / Rest-quality term: no baseline needed; centered at SLEEP_PERF_CENTER.
         if let sp = sleepPerf {
-            terms.append(((sp - sleepPerfCenter) / sleepPerfScale, wSleep))
+            terms.append(((sp - sleepPerfCenter) / sleepPerfScale, weights.sleep))
         }
         // Skin-temp term: SYMMETRIC penalty on |deviation| (illness/overreach). Any
         // drift from the personal baseline lowers Charge; added only when supplied.
         if let dev = skinTempDev {
-            terms.append((-abs(dev) / skinTempScaleC, wSkinTemp))
+            terms.append((-abs(dev) / skinTempScaleC, weights.skinTemp))
         }
         // Recovery-Index term: overnight HR-DECLINE slope (bpm/hour). No baseline needed (a
         // fixed, documented scale, same style as sleepPerf/skin-temp). Negative (declining)
@@ -372,6 +379,12 @@ public enum RecoveryScorer {
         // and a baseline, matching resp's pattern; added only when both are supplied.
         if let e = priorDayEffort, let b = effortBaseline {
             terms.append((zScore(b.mean, mean: e, spread: b.spread), wActivityBalance))
+        }
+        // Zoop morning check-in: symptoms the wearer reported (headache, soreness, feeling ill, stress).
+        // Only a POSITIVE load adds the term, so answering "no symptoms" never dilutes the others toward
+        // the population mean. See `MorningCheckIn.symptomLoad`.
+        if let load = symptomLoad, load > 0 {
+            terms.append((-min(load, symptomLoadCap), wSymptoms))
         }
 
         guard !terms.isEmpty else { return nil }
@@ -403,7 +416,9 @@ public enum RecoveryScorer {
                                 skinTempDev: Double? = nil,
                                 recoveryIndexSlope: Double? = nil,
                                 effortBaseline: BaselineState? = nil,
-                                priorDayEffort: Double? = nil) -> Double? {
+                                priorDayEffort: Double? = nil,
+                                weights: ChargeWeights = .standard,
+                                symptomLoad: Double? = nil) -> Double? {
         recovery(hrv: hrv,
                  rhr: rhr,
                  resp: resp,
@@ -421,6 +436,8 @@ public enum RecoveryScorer {
                  hrvBaselineUsable: hrvBaseline.usable,
                  recoveryIndexSlope: recoveryIndexSlope,
                  effortBaseline: effortBaseline.map(DriverBaseline.init),
-                 priorDayEffort: priorDayEffort)
+                 priorDayEffort: priorDayEffort,
+                 weights: weights,
+                 symptomLoad: symptomLoad)
     }
 }
