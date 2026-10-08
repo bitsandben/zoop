@@ -116,17 +116,30 @@ public extension View {
     /// NOT receive this, so the helper is iOS-only and call sites stay shared via #if.
     /// `largeFirst == false` opens at .medium with .large reachable by dragging up (short
     /// forms); `true` opens full-height (long scrolls).
+    @ViewBuilder
     func noopSheetPresentation(largeFirst: Bool) -> some View {
         // Zoop: sheets stop at about three quarters of the screen so the page behind stays in view;
         // long ones can still be pulled to full height.
-        self
+        let sized = self
             .presentationDragIndicator(.visible)
             .presentationDetents(largeFirst ? [.fraction(0.75), .large] : [.medium, .fraction(0.75)])
+        sized.opaqueSheetBackground()
     }
 }
 #endif
 
 public extension View {
+    /// An opaque sheet background in the app's base surface instead of the iOS 26 glass default. A glass
+    /// sheet re-refracts the whole screen behind it on every frame while it is resized or dismissed,
+    /// which stuttered. No-op on macOS, where sheets are windows.
+    @ViewBuilder func opaqueSheetBackground() -> some View {
+        #if os(iOS)
+        if #available(iOS 16.4, *) { self.presentationBackground(StrandPalette.surfaceBase) } else { self }
+        #else
+        self
+        #endif
+    }
+
     /// Keep a small explainer a small popover on iPhone instead of letting it grow into a full-screen
     /// sheet holding two lines of text. A no-op on macOS, where popovers never adapt.
     @ViewBuilder func compactPopover() -> some View {

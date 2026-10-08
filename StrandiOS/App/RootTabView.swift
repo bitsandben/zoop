@@ -233,6 +233,7 @@ struct RootTabView: View {
         .sheet(item: $quickAction) { action in
             quickActionDestination(action)
                 .presentationDetents([.fraction(0.75), .large])
+                .opaqueSheetBackground()
                 .presentationDragIndicator(.visible)
         }
         // Live's "Manage devices" affordance (and any future cross-screen link to Devices) routes here:
@@ -240,6 +241,7 @@ struct RootTabView: View {
         .sheet(isPresented: $showDevices) {
             devicesScreen
                 .presentationDetents([.fraction(0.75), .large])
+                .opaqueSheetBackground()
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showCoach) {
@@ -248,6 +250,7 @@ struct RootTabView: View {
         .sheet(isPresented: $showMorningCheckIn) {
             MorningCheckInSheet()
                 .presentationDetents([.medium, .large])
+                .opaqueSheetBackground()
                 .presentationDragIndicator(.visible)
         }
         // Foregrounding after the night (or turning calibration on from the Home invite) may raise the
@@ -265,6 +268,7 @@ struct RootTabView: View {
         .sheet(item: $routedPillar) { dest in
             pillarScreen(dest)
                 .presentationDetents([.fraction(0.75), .large])
+                .opaqueSheetBackground()
                 .presentationDragIndicator(.visible)
         }
         // Honour a router request: Devices keeps its dedicated sheet; the v5 pillars route through the
@@ -467,6 +471,7 @@ struct RootTabView: View {
                 }
             }
             .presentationDetents([.height(344)])
+            .opaqueSheetBackground()
             .presentationDragIndicator(.hidden)
         case .live:
             quickScreen(LiveView())

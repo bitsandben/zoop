@@ -311,6 +311,7 @@ struct MorningCheckInSummaryRow: View {
         .sheet(isPresented: $showSheet) {
             MorningCheckInSheet(day: today) { answer = $0 }
                 .presentationDetents([.medium, .large])
+                .opaqueSheetBackground()
                 .presentationDragIndicator(.visible)
         }
     }

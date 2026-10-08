@@ -592,6 +592,7 @@ struct LiquidTodayView: View {
         }
         .sheet(item: $guideSection) { section in
             NavigationStack { ScoringGuideView(initialSection: section, onClose: { guideSection = nil }) }
+                .opaqueSheetBackground()
         }
         .sheet(item: $customizationDestination) { destination in
             TodayCustomizationSheet(
@@ -604,6 +605,7 @@ struct LiquidTodayView: View {
                 dashboardCardsRaw: $dashboardCardsRaw,
                 hostedCardsRaw: $hostedCardsRaw
             )
+            .opaqueSheetBackground()
         }
         #if os(iOS)
         .sheet(item: $workoutDetail) { target in
@@ -615,9 +617,11 @@ struct LiquidTodayView: View {
         }
         .sheet(item: $napDetail) { target in
             HomeNapDetailSheet(nap: target.session)
+                .opaqueSheetBackground()
         }
         .sheet(item: $napEdit) { target in
             HomeNapTimeEditor(nap: target.session)
+                .opaqueSheetBackground()
         }
         // A cold launch always opens on today (offset 0 is the @State default); this covers a return from
         // the background, where the view survives with whatever day was last browsed.
@@ -635,6 +639,8 @@ struct LiquidTodayView: View {
                     .background(StrandPalette.surfaceBase.ignoresSafeArea())
                     .liquidSheetDoneChrome { showSettings = false }
             }
+            // Opaque so dragging the sheet down does not turn it into live glass over Home (stutter).
+            .opaqueSheetBackground()
         }
         // Live Session (silent guardian, beta): the in-session screen owns the whole display — full
         // screen on iOS (nothing should compete with the ring mid-workout), a sheet on macOS where

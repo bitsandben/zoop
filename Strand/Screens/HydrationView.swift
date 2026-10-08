@@ -478,6 +478,7 @@ private struct HydrationAmountSheet: View {
         // shared `noopSheetPresentation` note); the call site stays cross-platform via this guard.
         #if os(iOS)
         .presentationDetents([.height(300)])
+        .opaqueSheetBackground()
         .presentationDragIndicator(.visible)
         #endif
     }

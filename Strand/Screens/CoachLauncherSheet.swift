@@ -47,6 +47,7 @@ struct CoachLauncherSheet: View {
         }
         #if os(iOS)
         .presentationDetents([.medium, .large])
+        .opaqueSheetBackground()
         #endif
     }
 
