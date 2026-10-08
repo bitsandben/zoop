@@ -585,7 +585,7 @@ struct CoachView: View {
                         Button {
                             saveAdvice(message.text)
                         } label: {
-                            Label("Save to Journal", systemImage: "square.and.pencil")
+                            Label("Save to logbook", systemImage: "square.and.pencil")
                         }
                     }
                 Spacer(minLength: 48)

@@ -512,7 +512,7 @@ private struct CoachBubble: View, Equatable {
                         }
                         ShareLink(item: message.text) { Label("Share", systemImage: "square.and.arrow.up") }
                         Button { onSave(message.text) } label: {
-                            Label("Save to Journal", systemImage: "square.and.pencil")
+                            Label("Save to logbook", systemImage: "square.and.pencil")
                         }
                     }
                 Spacer(minLength: 32)

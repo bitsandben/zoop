@@ -49,7 +49,7 @@ struct JournalReminderCard: View {
         // A recent PAST day with no entry — surfaces the tap-a-bar-to-backfill interaction once today is
         // done (#656). Accent while anything is actionable; calm secondary once fully caught up.
         let hasMissed = keys.contains { $0 != todayKey && !logged.contains($0) }
-        let subtitle: String = !todayLogged ? String(localized: "Log today's journal")
+        let subtitle: String = !todayLogged ? String(localized: "Fill in today's logbook")
             : hasMissed ? String(localized: "Tap a day to catch up")
             : String(localized: "Logged today")
         // No outer Button: each bar is its own tap target that deep-links the journal to THAT day (#656),
@@ -63,7 +63,7 @@ struct JournalReminderCard: View {
                         .font(.system(size: 18))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
-                    Text(String(localized: "Journal"))
+                    Text(String(localized: "Logbook"))
                         .font(StrandFont.headline)
                         .foregroundStyle(StrandPalette.textPrimary)
                     Spacer()
@@ -76,8 +76,8 @@ struct JournalReminderCard: View {
                 .onTapGesture { router.openJournal() }
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isButton)
-                .accessibilityLabel(Text(String(localized: "Journal")))
-                .accessibilityHint(Text(String(localized: "Open journal")))
+                .accessibilityLabel(Text(String(localized: "Logbook")))
+                .accessibilityHint(Text(String(localized: "Open logbook")))
                 // The last-N-days strip: one equal-width bar per day, each its own tap target. Filled =
                 // logged; today is ringed. Tapping a bar deep-links the journal to that day (#656).
                 HStack(spacing: 6) {

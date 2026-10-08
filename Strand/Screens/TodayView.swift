@@ -1374,7 +1374,7 @@ struct TodayView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Quick actions")
-                .accessibilityHint("Start a workout, log your journal, or breathe")
+                .accessibilityHint("Start a workout, fill in your logbook, or breathe")
                 // Menu (Settings), the avatar, same 36 size.
                 Button { showSettings = true } label: {
                     ProfileAvatarView(imageData: profile.avatarImageData, size: 36)

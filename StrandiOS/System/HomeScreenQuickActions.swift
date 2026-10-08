@@ -22,7 +22,7 @@ enum HomeScreenQuickAction: String, CaseIterable {
         switch self {
         case .liveHeartRate: String(localized: "Live HR")
         case .startWorkout: String(localized: "Start workout")
-        case .logJournal: String(localized: "Log journal")
+        case .logJournal: String(localized: "Fill in logbook")
         case .breathe: String(localized: "Breathe")
         }
     }

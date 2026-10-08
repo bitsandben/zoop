@@ -288,8 +288,8 @@ struct RootTabView: View {
                 withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = 0 }
                 router.requestedDestination = nil
             case .journal:
-                // The #627 Today journal widget opens the journal through the quick-action Journal sheet
-                // (InsightsView), matching the FAB's "Log journal" action. Calm sheet easing.
+                // The #627 Today logbook widget opens the quick-action Logbook sheet (LogbookView),
+                // matching the FAB's "Fill in logbook" action. Calm sheet easing.
                 withAnimation(Self.sheetEase) { quickAction = .journal }
                 router.requestedDestination = nil
             case nil:
@@ -389,9 +389,9 @@ struct RootTabView: View {
                 // .liveSession routes to the Today tab (handled above — its Start entry owns the cover);
                 // this keeps the switch exhaustive and falls back to Today if it ever reaches the host.
                 case .liveSession: LiquidTodayView()
-                // .journal opens through the quick-action Journal sheet (handled above); this keeps the
-                // switch exhaustive and falls back to the journal's Insights host if it ever reaches here.
-                case .journal: InsightsView()
+                // .journal opens through the quick-action Logbook sheet (handled above); this keeps the
+                // switch exhaustive and falls back to the Logbook if it ever reaches here.
+                case .journal: LogbookView(onClose: { routedPillar = nil })
                 // .coach switches to the Coach tab (handled above — the morning-brief tap-through and the
                 // #1862 launcher both arrive that way, the launcher's question riding on
                 // `AICoachEngine.pendingPrompt`); this keeps the switch exhaustive and falls back to Coach if
@@ -442,7 +442,7 @@ struct RootTabView: View {
         case .workout:
             quickScreen(WorkoutsView())
         case .journal:
-            quickScreen(InsightsView())
+            quickScreen(LogbookView(onClose: { quickAction = nil }))
         case .breathe:
             quickScreen(BreathingView())
         }
@@ -542,7 +542,7 @@ struct RootTabView: View {
                     MoreRow("Patterns", "chart.bar.doc.horizontal.fill", .patterns, subtitle: "Tonight, tomorrow and your habits")
                     MoreRow("What Moves You", "wand.and.sparkles", .insightsHub, subtitle: "What changes your scores")
                     MoreRow("Intelligence", "brain.head.profile", .intelligence, subtitle: "Patterns across your history")
-                    MoreRow("Insights", "lightbulb.fill", .insights, subtitle: "Journal and correlations")
+                    MoreRow("Insights", "lightbulb.fill", .insights, subtitle: "Logbook and correlations")
                     MoreRow("Explore", "square.grid.2x2.fill", .explore, subtitle: "Every metric, every range")
                     MoreRow("Compare", "rectangle.split.2x1.fill", .compare, subtitle: "Metrics side by side")
                 }
@@ -761,7 +761,7 @@ private struct QuickActionSheet: View {
             VStack(spacing: 8) {
                 row("Live HR", icon: "waveform.path.ecg", tint: StrandPalette.metricRose) { onPick(.live) }
                 row("Start workout", icon: "figure.run", tint: StrandPalette.effortColor) { onPick(.workout) }
-                row("Log journal", icon: "square.and.pencil", tint: StrandPalette.accent) { onPick(.journal) }
+                row("Fill in logbook", icon: "square.and.pencil", tint: StrandPalette.accent) { onPick(.journal) }
                 row("Breathe", icon: "wind", tint: StrandPalette.restColor) { onPick(.breathe) }
             }
             .padding(.horizontal, 16)
