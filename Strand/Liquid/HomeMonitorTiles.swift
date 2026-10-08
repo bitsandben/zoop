@@ -252,6 +252,8 @@ struct HomeActivity: Identifiable {
     let start: Int
     let end: Int
     let workout: WorkoutRow?
+    /// The stored session behind a nap row, so the row can open that nap's own detail and editor.
+    var nap: CachedSleepSession? = nil
     var id: String { "\(kind)-\(start)" }
 }
 
