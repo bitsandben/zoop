@@ -20,7 +20,17 @@
       "category": "health",
       "screenshotURLs": [],
       "minOSVersion": "17.0",
-      "versions": [],
+      "versions": [
+        {
+          "version": "1.0.1",
+          "buildVersion": "436",
+          "date": "2026-10-08",
+          "localizedDescription": "Zoop 1.0.1. See the release notes on GitHub for what changed.",
+          "downloadURL": "https://github.com/bitsandben/zoop/releases/download/v1.0.1/Zoop-ios-v1.0.1.ipa",
+          "size": 21666916,
+          "minOSVersion": "17.0"
+        }
+      ],
       "appPermissions": {
         "entitlements": [
           "com.apple.developer.healthkit",
@@ -36,7 +46,13 @@
           "NSMotionUsageDescription": "Zoop reads your iPhone's step count for a walking or running workout to show steps in the activity summary. It stays on your device. Nothing leaves it.",
           "NSSpeechRecognitionUsageDescription": "Zoop transcribes your question on-device so you can ask the coach out loud instead of typing. Audio never leaves your iPhone."
         }
-      }
+      },
+      "version": "1.0.1",
+      "buildVersion": "436",
+      "versionDate": "2026-10-08",
+      "versionDescription": "Zoop 1.0.1. See the release notes on GitHub for what changed.",
+      "downloadURL": "https://github.com/bitsandben/zoop/releases/download/v1.0.1/Zoop-ios-v1.0.1.ipa",
+      "size": 21666916
     }
   ]
 }
