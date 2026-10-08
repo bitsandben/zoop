@@ -481,6 +481,12 @@ struct SleepView: View {
         return AnalyticsEngine.Rest.composite(daily: daily)
     }
 
+    /// The persisted daily row for a night, keyed by its local wake day like `performanceScore(for:)`.
+    private func dailyRow(for night: Night) -> DailyMetric? {
+        let wakeDay = Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval(night.session.endTs)))
+        return repo.days.last(where: { $0.day == wakeDay })
+    }
+
     /// Dispatch a reorderable Sleep section to its card. Naps rides with `.stages` (drawn inside the stages
     /// hero); the Rest hero is pinned outside this list. Mirrors the Android SleepScreen `when(section)`.
     @ViewBuilder
@@ -491,7 +497,10 @@ struct SleepView: View {
             #if !os(iOS)
             SleepMarkCard()
             #endif
-        case .stages:          hero(model)
+        case .stages:
+            hero(model)
+            // Zoop: the night's own vitals beside the previous 30 nights.
+            NightVitalsCard(day: dailyRow(for: heroNight(model)), history: repo.days)
         case .bodyClock:       bodyClockDial(model)
         case .nightDetail:     NightDetailCard(model: model)
         case .sleepDebt:       SleepDebtLedgerCard(model: model)
