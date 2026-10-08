@@ -317,9 +317,10 @@ struct TrendsView: View {
                     Group {
                         #if os(iOS)
                         // The metric trend viewer leads: pick a metric and a window, read the average
-                        // and its change, then the week-in-review and longer charts follow.
+                        // and its change, then the longer charts follow. iOS shows no week-in-review
+                        // digest or score trio: the viewer and the charts below already carry those values.
                         TrendViewerCard(days: repo.days, effortScale: effortScale)
-                        #endif
+                        #else
                         // Week-in-review digest (#208) with prev/next week browsing (#710) — self-hides
                         // only when NO week in history has data. Past weeks render in the same format.
                         weeklyDigestNav
@@ -327,6 +328,7 @@ struct TrendsView: View {
                         // The Charge / Effort / Rest trio, presented in Zoop's pip language.
                         weekInReview(charge: metrics.recovery, effort: metrics.strain, rest: metrics.rest)
                             .staggeredAppear(index: 1)
+                        #endif
                         rangeBar(recovery: metrics.recovery)
                             .staggeredAppear(index: 2)
                         heroRecovery(recovery: metrics.recovery)
@@ -647,28 +649,23 @@ struct TrendsView: View {
         let avg = mean(pts)
         // Charge world — the WHOOP recovery value scale (red→yellow→green) drawn as a crisp flat line
         // with a bright "now" cap. No glow.
-        let card = ChartCard(
+        let card = TrendsScrubCard(
             title: "Charge",
             // The range bar above already prints the authoritative reading-count caption;
             // the hero only names its window so the count isn't doubled in one card height.
             subtitle: rangeSubtitle,
-            trailing: avg.map { "\(Int($0.rounded()))" },
-            height: ZoopMetrics.chartHeight,
-            showsChevron: Self.cardsShowChevron,
-            chart: {
-                if pts.count >= 2 {
-                    glowChart(points: pts,
-                              gradient: StrandPalette.recoveryGradient,
-                              // Lift the ceiling ~6% so a near-100 peak and the now-cap halo
-                              // clear the top gridline, matching the padded small multiples.
-                              valueRange: 0...106,
-                              tip: StrandPalette.chargeBright,
-                              valueFormat: { "\(Int($0.rounded()))" },
-                              accessibilityLabel: String(localized: "Charge trend"))
-                } else {
-                    sparsePlaceholder
-                }
-            },
+            average: avg.map { "\(Int($0.rounded()))" },
+            tint: nil,
+            points: pts,
+            gradient: StrandPalette.recoveryGradient,
+            // Lift the ceiling ~6% so a near-100 peak and the now-cap halo
+            // clear the top gridline, matching the padded small multiples.
+            valueRange: 0...106,
+            tip: StrandPalette.chargeBright,
+            headerFormat: { "\(Int($0.rounded()))" },
+            valueFormat: { "\(Int($0.rounded()))" },
+            accessibilityLabel: String(localized: "Charge trend"),
+            showsBars: TrendChartStyle(rawValue: trendChartStyleRaw) == .bar,
             footer: {
                 VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
                     HStack {
@@ -767,22 +764,19 @@ struct TrendsView: View {
         fmt: @escaping (Double) -> String
     ) -> some View {
         let avg = mean(pts)
-        let card = ChartCard(
+        let card = TrendsScrubCard(
             title: title,
-            subtitle: subtitle,
-            trailing: avg.map(fmt),
-            height: ZoopMetrics.chartHeight,
+            subtitle: subtitle ?? Self.averageSubtitle,
+            average: avg.map(fmt),
             tint: tint,
-            showsChevron: Self.cardsShowChevron,
-            chart: {
-                if pts.count >= 2 {
-                    glowChart(points: pts, gradient: gradient, valueRange: range,
-                              tip: tip, valueFormat: { "\(fmt($0)) \(unit)" },
-                              accessibilityLabel: String(localized: "\(accessibilityTitle) trend"))
-                } else {
-                    sparsePlaceholder
-                }
-            },
+            points: pts,
+            gradient: gradient,
+            valueRange: range,
+            tip: tip,
+            headerFormat: fmt,
+            valueFormat: { "\(fmt($0)) \(unit)" },
+            accessibilityLabel: String(localized: "\(accessibilityTitle) trend"),
+            showsBars: TrendChartStyle(rawValue: trendChartStyleRaw) == .bar,
             footer: {
                 HStack {
                     ChartFooter([
@@ -829,9 +823,15 @@ struct TrendsView: View {
                 if recoveryDays.isEmpty {
                     sparsePlaceholder.frame(height: 120)
                 } else {
+                    #if os(iOS)
+                    // A month fits the card width, so it is drawn as a Monday-first calendar with
+                    // large square days instead of the tiny cells of the year strip.
+                    RecoveryMonthGrid(days: recoveryDays)
+                    #else
                     ScrollView(.horizontal, showsIndicators: false) {
                         YearHeatStrip(days: recoveryDays).padding(.vertical, ZoopMetrics.space1 / 2)
                     }
+                    #endif
                     Divider().overlay(StrandPalette.hairline)
                     legend
                 }
@@ -870,26 +870,23 @@ struct TrendsView: View {
         ])
     }
 
-    /// A domain-tinted `TrendChart` with a crisp flat line and a bright end-cap dot at the latest
-    /// point. WHOOP-flat: no underglow blur layer — the single crisp line carries the data and the
-    /// fill contrast does the rest. The "now" end-cap is a small dot pinned to the final sample.
-    /// Pure presentation: it forwards every value to the locked `TrendChart` unchanged.
-    @ViewBuilder
-    private func glowChart(points pts: [TrendPoint], gradient: Gradient, valueRange: ClosedRange<Double>,
-                           tip: Color, valueFormat: @escaping (Double) -> String,
-                           accessibilityLabel: String) -> some View {
-        // One crisp, interactive line + area — flat, no blurred glow copy underneath (WHOOP language).
-        // The "now" end-cap is drawn INSIDE this chart (nowCapColor) so it's mapped by the chart's own
-        // scales and lands on the line — the previous sibling overlay guessed the plot insets and
-        // floated the dot left/below the curve (#458).
-        TrendChart(points: pts, gradient: gradient, valueRange: valueRange,
-                   showsArea: true,
-                   showsBars: TrendChartStyle(rawValue: trendChartStyleRaw) == .bar,
-                   height: ZoopMetrics.chartHeight, valueFormat: valueFormat,
-                   accessibilityLabel: accessibilityLabel, nowCapColor: tip)
-    }
+    private var sparsePlaceholder: some View { TrendsSparsePlaceholder() }
 
-    private var sparsePlaceholder: some View {
+    /// The idle header subtitle of a small multiple on iOS: it names the trailing figure (the window
+    /// mean) so the card's header reads the same way before and during a scrub, when it names the day.
+    /// Elsewhere the small multiples keep their bare header.
+    private static var averageSubtitle: String? {
+        #if os(iOS)
+        return String(localized: "Average")
+        #else
+        return nil
+        #endif
+    }
+}
+
+/// The "too few readings" body shared by every Trends chart card.
+private struct TrendsSparsePlaceholder: View {
+    var body: some View {
         Text("Not enough data for this window.")
             .font(StrandFont.subhead)
             .foregroundStyle(StrandPalette.textTertiary)
@@ -897,6 +894,180 @@ struct TrendsView: View {
             .background(ZoopPanelSurface(cornerRadius: 12))
     }
 }
+
+/// The scrub readout's day ("Tue 7 Oct"). Trend days are UTC-midnight instants (parsed from
+/// "yyyy-MM-dd" in UTC), so the day is named in UTC too; the local zone would name the previous day west
+/// of Greenwich.
+private let trendsScrubDayStyle: Date.FormatStyle = {
+    var style = Date.FormatStyle.dateTime.weekday(.abbreviated).day().month(.abbreviated)
+    style.timeZone = TimeZone(identifier: "UTC") ?? .gmt
+    return style
+}()
+
+/// A Trends chart card whose header follows the touch scrub.
+///
+/// At rest the header shows the card's subtitle and the window average. While a finger scrubs the chart,
+/// the subtitle names the day under the finger and the trailing figure shows that day's value; on lift
+/// both return. The chart keeps its rule and dot but draws no tooltip of its own on iOS, so the scrubbed
+/// reading appears once, in the header. The selection lives in this card, so a scrub redraws one card
+/// rather than the whole Trends page.
+private struct TrendsScrubCard<Footer: View>: View {
+    let title: LocalizedStringKey
+    let subtitle: String?
+    let average: String?
+    let tint: Color?
+    let points: [TrendPoint]
+    let gradient: Gradient
+    let valueRange: ClosedRange<Double>
+    let tip: Color
+    /// The header figure, formatted like the average it replaces.
+    let headerFormat: (Double) -> String
+    /// The chart's own value format (VoiceOver summary, pointer tooltip on macOS).
+    let valueFormat: (Double) -> String
+    let accessibilityLabel: String
+    let showsBars: Bool
+    @ViewBuilder let footer: () -> Footer
+
+    @State private var selected: TrendPoint?
+
+    var body: some View {
+        ChartCard(
+            title: title,
+            subtitle: selected.map { $0.date.formatted(trendsScrubDayStyle) } ?? subtitle,
+            trailing: selected.map { headerFormat($0.value) } ?? average,
+            height: ZoopMetrics.chartHeight,
+            tint: tint,
+            showsChevron: TrendsView.cardsShowChevron,
+            chart: {
+                if points.count >= 2 {
+                    // One crisp, interactive line + area, flat with no blurred glow copy (WHOOP language).
+                    // The "now" end-cap is drawn inside the chart (nowCapColor) so the chart's own scales
+                    // place it on the line (#458).
+                    TrendChart(points: points, gradient: gradient, valueRange: valueRange,
+                               showsArea: true,
+                               showsBars: showsBars,
+                               height: ZoopMetrics.chartHeight, valueFormat: valueFormat,
+                               accessibilityLabel: accessibilityLabel, nowCapColor: tip,
+                               showsTooltip: !Self.headerReadout,
+                               onSelectionChange: { selected = $0 })
+                } else {
+                    TrendsSparsePlaceholder()
+                }
+            },
+            footer: footer
+        )
+    }
+
+    /// Touch scrubs read out in the header; the macOS pointer hover keeps the chart's own tooltip.
+    private static var headerReadout: Bool {
+        #if os(iOS)
+        return true
+        #else
+        return false
+        #endif
+    }
+}
+
+#if os(iOS)
+/// The iOS "Recovery (last 30 days)" calendar: seven Monday-first columns of square days that fill the
+/// card width (about 40 pt per day on a 393 pt phone), each tinted by `StrandPalette.recoveryColor`.
+/// A day without a score is a faint inset square; leading blanks align the first day to its weekday.
+private struct RecoveryMonthGrid: View {
+    /// Every calendar day from the first to the last given day, so a day with no row at all still takes
+    /// its place (as an empty square) and the weekday columns stay aligned.
+    let days: [RecoveryDay]
+
+    init(days input: [RecoveryDay]) {
+        let sorted = input.sorted { $0.date < $1.date }
+        guard let first = sorted.first?.date, let last = sorted.last?.date else { days = []; return }
+        let cal = Self.calendar
+        let byDay = Dictionary(sorted.map { (cal.startOfDay(for: $0.date), $0.score) },
+                               uniquingKeysWith: { a, b in b ?? a })
+        var out: [RecoveryDay] = []
+        var d = cal.startOfDay(for: first)
+        let end = cal.startOfDay(for: last)
+        while d <= end, out.count < 366 {
+            out.append(RecoveryDay(date: d, score: byDay[d] ?? nil))
+            guard let next = cal.date(byAdding: .day, value: 1, to: d) else { break }
+            d = next
+        }
+        days = out
+    }
+
+    /// The days are UTC-midnight instants (parsed from "yyyy-MM-dd" in UTC), so weekday and date are
+    /// read in UTC too.
+    private static let calendar: Calendar = {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone(identifier: "UTC") ?? .gmt
+        c.locale = .current
+        return c
+    }()
+
+    private static let dayStyle: Date.FormatStyle = {
+        var style = Date.FormatStyle.dateTime.weekday(.wide).day().month(.wide)
+        style.timeZone = TimeZone(identifier: "UTC") ?? .gmt
+        return style
+    }()
+
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: ZoopMetrics.space2), count: 7)
+
+    /// Monday-first single-letter weekday headers in the current language.
+    private var weekdaySymbols: [String] {
+        let s = Self.calendar.veryShortStandaloneWeekdaySymbols   // Sunday first
+        return Array(s[1...]) + [s[0]]
+    }
+
+    /// Blank cells before the first day so it lands in its weekday column (Monday = 0).
+    private var leadingBlanks: Int {
+        guard let first = days.first?.date else { return 0 }
+        return (Self.calendar.component(.weekday, from: first) + 5) % 7
+    }
+
+    var body: some View {
+        VStack(spacing: ZoopMetrics.space2) {
+            LazyVGrid(columns: columns, spacing: ZoopMetrics.space2) {
+                ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
+                    Text(symbol)
+                        .font(StrandFont.footnote)
+                        .foregroundStyle(StrandPalette.textTertiary)
+                        .accessibilityHidden(true)
+                }
+            }
+            LazyVGrid(columns: columns, spacing: ZoopMetrics.space2) {
+                ForEach(0..<leadingBlanks, id: \.self) { _ in
+                    Color.clear.aspectRatio(1, contentMode: .fit)
+                        .accessibilityHidden(true)
+                }
+                ForEach(days) { day in
+                    cell(day)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func cell(_ day: RecoveryDay) -> some View {
+        let shape = RoundedRectangle(cornerRadius: ZoopMetrics.space2, style: .continuous)
+        let label = Text(day.date.formatted(Self.dayStyle))
+        if let score = day.score {
+            shape
+                .fill(StrandPalette.recoveryColor(score))
+                .aspectRatio(1, contentMode: .fit)
+                .accessibilityElement()
+                .accessibilityLabel(label)
+                .accessibilityValue(Text(verbatim: "\(Int(score.rounded()))"))
+        } else {
+            shape
+                .fill(StrandPalette.surfaceInset)
+                .overlay(shape.stroke(StrandPalette.hairline.opacity(0.6), lineWidth: 0.5))
+                .aspectRatio(1, contentMode: .fit)
+                .accessibilityElement()
+                .accessibilityLabel(label)
+                .accessibilityValue(Text("No data"))
+        }
+    }
+}
+#endif
 
 #if DEBUG
 @MainActor

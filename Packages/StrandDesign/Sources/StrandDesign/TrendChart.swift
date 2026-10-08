@@ -169,6 +169,12 @@ public struct TrendChart: View {
     public var yDomain: ClosedRange<Double>?
     /// Optional elapsed time window for a workout trace, with workout-relative tick labels.
     public var workoutTimeAxis: ClosedRange<Date>?
+    /// Draws the small value/date tooltip beside the scrub rule. A host that prints the scrubbed reading
+    /// itself (e.g. in its card header via `onSelectionChange`) turns it off so the reading is not shown
+    /// twice; the rule and the dot stay.
+    public var showsTooltip: Bool
+    /// Called with the point under the finger while a touch scrub runs, and with nil when it ends (iOS).
+    public var onSelectionChange: ((TrendPoint?) -> Void)?
 
     /// Mean of all point values, computed once in `init` so the area fill's gradient
     /// stop doesn't run an O(n) reduce for every mark on every render.
@@ -194,7 +200,9 @@ public struct TrendChart: View {
         workoutTimeAxis: ClosedRange<Date>? = nil,
         yAxisStep: Double? = nil,
         showsBarValues: Bool = false,
-        largeSelection: Bool = false
+        largeSelection: Bool = false,
+        showsTooltip: Bool = true,
+        onSelectionChange: ((TrendPoint?) -> Void)? = nil
     ) {
         let sorted = points.sorted { $0.date < $1.date }
         self.points = sorted
@@ -214,6 +222,8 @@ public struct TrendChart: View {
         self.yAxisStep = yAxisStep
         self.showsBarValues = showsBarValues
         self.largeSelection = largeSelection
+        self.showsTooltip = showsTooltip
+        self.onSelectionChange = onSelectionChange
         let avg = sorted.isEmpty
             ? valueRange.lowerBound
             : sorted.map(\.value).reduce(0, +) / Double(sorted.count)
@@ -473,15 +483,17 @@ public struct TrendChart: View {
                             .position(x: cx, y: cy)
 
                         // Tooltip near the point, kept in bounds.
-                        PositionedTooltip(
-                            anchor: CGPoint(x: cx, y: cy),
-                            container: geo.size,
-                            tooltip: ChartTooltip(
-                                value: valueFormat(p.value),
-                                label: dateFormat(p.date),
-                                accent: color
+                        if showsTooltip {
+                            PositionedTooltip(
+                                anchor: CGPoint(x: cx, y: cy),
+                                container: geo.size,
+                                tooltip: ChartTooltip(
+                                    value: valueFormat(p.value),
+                                    label: dateFormat(p.date),
+                                    accent: color
+                                )
                             )
-                        )
+                        }
                     }
 
                     // "Now" end-cap on the latest point (#458). Positioned with the SAME proxy mapping the
@@ -518,9 +530,11 @@ public struct TrendChart: View {
                     selectedPoint = nearestPoint(toX: x, proxy: proxy, plot: plot)
                     holdingBar = showsBars
                     hoverX = largeSelection ? nil : x
+                    onSelectionChange?(selectedPoint)
                 }, onEnd: {
                     holdingBar = false
                     hoverX = nil
+                    onSelectionChange?(nil)
                 })
                 #endif
                 .onContinuousHover(coordinateSpace: .local) { phase in
@@ -561,6 +575,7 @@ public struct TrendChart: View {
             selectedPoint = nil
             holdingBar = false
             hoverX = nil
+            onSelectionChange?(nil)
         }
     }
 }
