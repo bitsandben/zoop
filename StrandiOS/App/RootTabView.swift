@@ -292,6 +292,17 @@ struct RootTabView: View {
                 break
             }
         }
+        // A tapped notification: go to Home and push the screen it is about on top of a fresh Home stack.
+        .onChange(of: router.notificationTarget) { _, target in
+            guard let target else { return }
+            showCoach = false
+            quickAction = nil
+            withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = IOSTab.home }
+            var path = NavigationPath()
+            if case .route(let route) = target { path.append(route) }
+            tabPaths[IOSTab.home] = path
+            router.notificationTarget = nil
+        }
         // A screen's top-bar "+" routes here: open the quick-action sheet, then clear the flag.
         .onChange(of: router.quickActionsRequested) { _, req in
             if req {

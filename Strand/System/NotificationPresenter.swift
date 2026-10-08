@@ -23,6 +23,26 @@ final class NotificationPresenter: NSObject, UNUserNotificationCenterDelegate {
     /// root has wired it.
     var onCoachBriefTapped: (() -> Void)?
 
+    /// Zoop: wired by the iOS root to open the screen a tapped notification is about. Before this every
+    /// notification except the morning brief only brought the app forward wherever it was, which read
+    /// as "nothing happens".
+    var onTargetTapped: ((NotificationTarget) -> Void)?
+
+    /// Where a tapped notification leads, decided from its request identifier (each poster uses a fixed
+    /// identifier or prefix). nil leaves the app where it was.
+    static func target(forIdentifier id: String) -> NotificationTarget? {
+        switch true {
+        case id.hasPrefix("smart-alarm-wake"): return .route(.alarms)
+        case id.hasPrefix("wind-down-nudge"): return .route(.sleepPlanner)
+        case id == "strain-target": return .route(.metric(HeroRingMetric.effort))
+        case id == "illness-watch": return .route(.health)
+        case id.hasPrefix("battery-"): return .route(.dataSources)
+        // The detected-workout card (Save / Not a workout) and the move reminder both live on Home.
+        case id == "auto-workout", id == "inactivity-nudge": return .home
+        default: return nil
+        }
+    }
+
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
@@ -31,9 +51,8 @@ final class NotificationPresenter: NSObject, UNUserNotificationCenterDelegate {
         completionHandler([.banner, .sound, .list])
     }
 
-    /// Handle a tap on a delivered notification. Only the scheduled morning-brief category (K5) routes
-    /// anywhere; every other notification (wind-down, smart-alarm, battery/illness) just opens the app
-    /// to wherever it was, matching the pre-K5 behaviour.
+    /// Handle a tap on a delivered notification: the scheduled morning brief (K5) opens Coach, and every
+    /// other known notification opens its screen through `onTargetTapped`.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
@@ -41,7 +60,15 @@ final class NotificationPresenter: NSObject, UNUserNotificationCenterDelegate {
     ) {
         if response.notification.request.content.categoryIdentifier == CoachBriefScheduler.notificationCategoryId {
             onCoachBriefTapped?()
+        } else if let target = Self.target(forIdentifier: response.notification.request.identifier) {
+            onTargetTapped?(target)
         }
         completionHandler()
     }
+}
+
+/// What a tapped notification opens: Home itself, or a screen pushed on the Home stack.
+enum NotificationTarget: Equatable {
+    case home
+    case route(TabRoute)
 }

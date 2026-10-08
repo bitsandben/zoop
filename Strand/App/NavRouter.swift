@@ -61,6 +61,12 @@ final class NavRouter: ObservableObject {
     /// flight, so this is the one path that re-opens the live workout for an existing session.
     @Published var presentActiveWorkout = false
 
+    /// A tapped notification's destination, or nil once the shell has handled it.
+    @Published var notificationTarget: NotificationTarget?
+
+    /// Open what a tapped notification is about (see `NotificationPresenter.target(forIdentifier:)`).
+    func open(_ target: NotificationTarget) { notificationTarget = target }
+
     /// Ask the shell to open the quick-action sheet (Live HR · workout · journal · breathe).
     func requestQuickActions() { quickActionsRequested = true }
 
