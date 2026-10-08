@@ -8890,7 +8890,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Noch nicht genug Überlappung zwischen deinen Tagebuch-Antworten und %@. Erfasse weiter. Jedes Verhalten braucht Tage mit und ohne, bevor Zoop seinen Effekt lesen kann."
+            "value" : "Noch nicht genug Überlappung zwischen deinen Logbuch-Antworten und %@. Erfasse weiter. Jedes Verhalten braucht Tage mit und ohne, bevor Zoop seinen Effekt lesen kann."
           }
         },
         "es" : {
@@ -83605,7 +83605,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Änderung der Zahl"
+            "value" : "In Zahl ändern"
           }
         },
         "es" : {
@@ -83663,7 +83663,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Änderung zu Ja/Nein"
+            "value" : "In Ja/Nein ändern"
           }
         },
         "es" : {
@@ -103958,7 +103958,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Beende den Experimentplan. Tagebuch- und Metrikverlauf bleiben unberührt."
+            "value" : "Beende den Experimentplan. Logbuch- und Metrikverlauf bleiben unberührt."
           }
         },
         "es" : {
@@ -118051,7 +118051,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die Geschichte bleibt unter der ursprünglichen Frage, so dass WHOOP-Importe immer noch Schlange stehen."
+            "value" : "Der Verlauf bleibt unter der ursprünglichen Frage, damit WHOOP-Importe weiterhin passen."
           }
         },
         "es" : {
@@ -124794,7 +124794,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tagebuch"
+            "value" : "Logbuch"
           }
         },
         "es" : {
@@ -131985,7 +131985,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tagebuch erfassen"
+            "value" : "Logbuch erfassen"
           }
         },
         "es" : {
@@ -147298,7 +147298,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Noch nicht genug Überlappung zwischen deinen Tagebuch-Antworten und %@, um einen Effekt zu messen. Erfasse weiter. Effekte brauchen Tage mit und ohne jedes Verhalten."
+            "value" : "Noch nicht genug Überlappung zwischen deinen Logbuch-Antworten und %@, um einen Effekt zu messen. Erfasse weiter. Effekte brauchen Tage mit und ohne jedes Verhalten."
           }
         },
         "es" : {
@@ -167308,7 +167308,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Name des Unternehmens"
+            "value" : "Eintrag umbenennen"
           }
         },
         "es" : {
@@ -167360,7 +167360,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Umbenennung..."
+            "value" : "Umbenennen…"
           }
         },
         "es" : {
@@ -184628,7 +184628,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Starte ein Workout, erfasse dein Tagebuch oder atme"
+            "value" : "Starte ein Workout, erfasse dein Logbuch oder atme"
           }
         },
         "es" : {
@@ -250194,7 +250194,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Im Tagebuch speichern"
+            "value" : "Im Logbuch speichern"
           }
         },
         "es" : {
@@ -255602,6 +255602,376 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Opcional – afina o VO₂máx"
+          }
+        }
+      }
+    },
+    "How do you feel this morning?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie fühlst du dich heute Morgen?"
+          }
+        }
+      }
+    },
+    "Anything else?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonst noch etwas?"
+          }
+        }
+      }
+    },
+    "Tap the face that fits" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe auf das passende Gesicht"
+          }
+        }
+      }
+    },
+    "Answer morning check-in" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morgen-Check-in beantworten"
+          }
+        }
+      }
+    },
+    "Logbook" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logbuch"
+          }
+        }
+      }
+    },
+    "What happened on %@?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was war am %@ los?"
+          }
+        }
+      }
+    },
+    "How much?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie viel?"
+          }
+        }
+      }
+    },
+    "Custom item" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eigener Eintrag"
+          }
+        }
+      }
+    },
+    "Save logbook" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logbuch speichern"
+          }
+        }
+      }
+    },
+    "Fill in logbook" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logbuch ausfüllen"
+          }
+        }
+      }
+    },
+    "Fill in today's logbook" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heutiges Logbuch ausfüllen"
+          }
+        }
+      }
+    },
+    "Open logbook" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logbuch öffnen"
+          }
+        }
+      }
+    },
+    "Logbook reminder" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logbuch-Erinnerung"
+          }
+        }
+      }
+    },
+    "Show a Today card reminding you to fill in your logbook" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Heute-Karte anzeigen, die dich ans Ausfüllen deines Logbuchs erinnert"
+          }
+        }
+      }
+    },
+    "Workout detection, hydration, logbook" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout-Erkennung, Trinken, Logbuch"
+          }
+        }
+      }
+    },
+    "Logbook and correlations" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logbuch und Zusammenhänge"
+          }
+        }
+      }
+    },
+    "Start a workout, fill in your logbook, or breathe" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starte ein Workout, fülle dein Logbuch aus oder atme"
+          }
+        }
+      }
+    },
+    "Save to logbook" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Logbuch speichern"
+          }
+        }
+      }
+    },
+    "Did you drink any alcohol?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hast du Alkohol getrunken?"
+          }
+        }
+      }
+    },
+    "Did you have caffeine late in the day?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hattest du spät am Tag Koffein?"
+          }
+        }
+      }
+    },
+    "Did you view a screen in bed?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hast du im Bett auf einen Bildschirm geschaut?"
+          }
+        }
+      }
+    },
+    "Did you eat close to bedtime?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hast du kurz vor dem Schlafengehen gegessen?"
+          }
+        }
+      }
+    },
+    "Did you feel stressed?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hast du dich gestresst gefühlt?"
+          }
+        }
+      }
+    },
+    "Did you use a sauna?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warst du in der Sauna?"
+          }
+        }
+      }
+    },
+    "Did you share your bed?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hast du dein Bett geteilt?"
+          }
+        }
+      }
+    },
+    "Did you feel sick or ill?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hast du dich krank gefühlt?"
+          }
+        }
+      }
+    },
+    "Did you take magnesium?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hast du Magnesium genommen?"
+          }
+        }
+      }
+    },
+    "Did you read before bed?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hast du vor dem Schlafen gelesen?"
+          }
+        }
+      }
+    },
+    "Rename, regroup, or remove an item to tidy your list. Renaming keeps the original question behind the scenes, so a WHOOP import still lines up. Custom items are deleted; built-in ones are hidden and can be restored below." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benenne Einträge um, gruppiere sie neu oder entferne sie, um deine Liste aufzuräumen. Beim Umbenennen bleibt die ursprüngliche Frage im Hintergrund erhalten, damit ein WHOOP-Import weiterhin passt. Eigene Einträge werden gelöscht, eingebaute ausgeblendet und können unten wiederhergestellt werden."
+          }
+        }
+      }
+    },
+    "Add a custom item…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eigenen Eintrag hinzufügen…"
+          }
+        }
+      }
+    },
+    "Display name" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anzeigename"
+          }
+        }
+      }
+    },
+    "New item group" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gruppe für neuen Eintrag"
+          }
+        }
+      }
+    },
+    "Delete this custom item" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diesen eigenen Eintrag löschen"
+          }
+        }
+      }
+    },
+    "Hide this item" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diesen Eintrag ausblenden"
+          }
+        }
+      }
+    },
+    "Increase" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erhöhen"
+          }
+        }
+      }
+    },
+    "Decrease" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verringern"
+          }
+        }
+      }
+    },
+    "%@, %lld items, %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$lld Einträge, %3$@"
           }
         }
       }
