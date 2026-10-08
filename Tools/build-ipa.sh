@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
 # Build an unsigned Zoop .ipa for sideloading (AltStore / SideStore re-sign it on the device).
-# Mirrors the fork's CI packaging: Release build, watch app stripped, widget extension kept with a
-# replaceable ad-hoc capability template.
+# Mirrors the fork's CI packaging: Release build, watch app and widget extension stripped, with a
+# replaceable ad-hoc capability template for the app.
 #
 # Usage:
 #   Tools/build-ipa.sh [output.ipa]     # default: Zoop-ios-unsigned.ipa in the repo root
@@ -32,6 +32,8 @@ APP=$(find "$DD/Build/Products/Release-iphoneos" -maxdepth 1 -name '*.app' -type
 
 echo "==> Packaging"
 rm -rf "$APP/Watch"
+# No widgets in the Zoop sideload: one App ID per install instead of two.
+rm -rf "$APP/PlugIns/ZoopWidgets.appex"; rmdir "$APP/PlugIns" 2>/dev/null || true
 Tools/prepare-ios-sideload-app.sh "$APP"
 STAGE=$(mktemp -d)
 mkdir "$STAGE/Payload"
