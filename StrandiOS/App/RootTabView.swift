@@ -182,7 +182,11 @@ struct RootTabView: View {
     /// search role instead.
     @available(iOS 18.0, *)
     private static var coachTabRole: TabRole {
+        // `.prominent` exists only in the iOS 27 SDK (Swift 6.4 / Xcode 27); an Xcode 26 build, such as a
+        // CI runner without Xcode 27, must not even see the symbol.
+        #if compiler(>=6.4)
         if #available(iOS 27.0, *) { return .prominent }
+        #endif
         return .search
     }
 
