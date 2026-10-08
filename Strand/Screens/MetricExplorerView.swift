@@ -592,7 +592,7 @@ struct MetricExplorerView: View {
                         .fill(StrandPalette.metricRose.opacity(0.16))
                     Image(systemName: "waveform.path.ecg")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(StrandPalette.metricRose)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.metricRose))
                 }
                 .frame(width: 42, height: 42)
 
@@ -766,6 +766,8 @@ struct MetricDetailView: View {
     /// Draw-in fraction for the hero ring gauge (0–100 scores). Set to the real fraction
     /// in `.onAppear` with a soft ease, exactly as TodayView animates its rings.
     @State private var heroAnimatedFraction: Double = 0
+    /// Whether the raw readings table is expanded (iOS keeps it closed by default).
+    @State private var showReadings = false
     /// Full ascending series for this metric — ALL history.
     @State private var series: [(day: String, value: Double)] = []
     /// day → the RAW source id that supplied that day's value (task #8). Loaded from `resolvedSeries`
@@ -1033,8 +1035,34 @@ struct MetricDetailView: View {
                     statRow(effectiveRange: effRange, windowed: win)
                     // Steps chart summaries are bucketed, but the provenance table deliberately remains
                     // one row per underlying observed day.
+                    #if os(iOS)
+                    // The interpretation leads; the raw rows stay one tap away at the end.
+                    correlationCard
+                    let rawRows = isStepsDetail ? rawWin : win
+                    if !rawRows.isEmpty {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) { showReadings.toggle() }
+                        } label: {
+                            HStack {
+                                Text("All readings (\(rawRows.count))")
+                                    .font(.system(size: 15, weight: .medium))
+                                Spacer()
+                                Image(systemName: "chevron.down")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .rotationEffect(.degrees(showReadings ? 0 : -90))
+                            }
+                            .foregroundStyle(StrandPalette.textSecondary)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 8)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        if showReadings { readingsTable(windowed: rawRows) }
+                    }
+                    #else
                     readingsTable(windowed: isStepsDetail ? rawWin : win)
                     correlationCard
+                    #endif
                 }
             }
             .padding(ZoopMetrics.screenPadding)
@@ -1320,12 +1348,15 @@ struct MetricDetailView: View {
                             ZStack {
                                 // The big hero vessel stays live (animated) — the one sloshing gauge on the
                                 // screen, exactly like the hero gauges on Today.
-                                LiquidVessel(value: heroAnimatedFraction, tint: domain.bright, animated: true)
+                                // Recovery takes its band colour (red, orange, lime), as on Home.
+                                LiquidVessel(value: heroAnimatedFraction,
+                                             tint: metric.key == HeroRingMetric.charge ? StrandPalette.recoveryColor(v) : domain.bright,
+                                             animated: true)
                                     .frame(width: 188, height: 188)
                                     .accessibilityHidden(true)
                                 VStack(spacing: 2) {
-                                    CountUpNumber(value: v, font: StrandFont.rounded(48))
-                                        .foregroundStyle(.white)
+                                    CountUpNumber(value: v, font: StrandFont.display(54))
+                                        .foregroundStyle(StrandPalette.textPrimary)
                                         .shadow(color: .black.opacity(0.5), radius: 6, y: 1)
                                     if !metric.unit.isEmpty {
                                         Text(metric.unit)

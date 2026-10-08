@@ -25,11 +25,39 @@ enum WindDownNudge {
         // Empty / no entry for a day = that day uses the default `wakeMinutes`, so the feature is purely
         // additive (no override → exactly the old single-time behaviour).
         static let perDayWake = "windDown.perDayWakeMinutes"
+        // Zoop: follow tonight's computed sleep need (`PatternInsights.sleepNeedTonight`) instead of the
+        // fixed setting. Default on; the need is refreshed whenever Home or Patterns recomputes it.
+        static let followsNeed = "zoop.windDown.followsSleepNeed"
+        static let tonightNeed = "zoop.windDown.tonightNeedMinutes"
+    }
+
+    /// Whether the reminder uses tonight's computed sleep need rather than the fixed setting.
+    static var followsSleepNeed: Bool {
+        UserDefaults.standard.object(forKey: K.followsNeed) as? Bool ?? true
+    }
+
+    static func setFollowsSleepNeed(_ on: Bool) {
+        UserDefaults.standard.set(on, forKey: K.followsNeed)
+        if isEnabled { schedule() }
+    }
+
+    /// The last computed sleep need for tonight, in minutes, or nil before one was computed.
+    static var tonightNeedMinutes: Int? {
+        UserDefaults.standard.object(forKey: K.tonightNeed) as? Int
+    }
+
+    /// Record tonight's computed sleep need; reschedules when it moved by five minutes or more.
+    static func updateTonightNeed(_ minutes: Int) {
+        let clamped = min(max(minutes, 5 * 60), 11 * 60)
+        if let old = tonightNeedMinutes, abs(old - clamped) < 5 { return }
+        UserDefaults.standard.set(clamped, forKey: K.tonightNeed)
+        if isEnabled && followsSleepNeed { schedule() }
     }
 
     static var isEnabled: Bool { UserDefaults.standard.bool(forKey: K.enabled) }
 
     static var sleepNeedMinutes: Int {
+        if followsSleepNeed, let tonight = tonightNeedMinutes { return min(max(tonight, 5 * 60), 11 * 60) }
         let v = UserDefaults.standard.object(forKey: K.sleepNeed) as? Int ?? 8 * 60
         return min(max(v, 5 * 60), 11 * 60)
     }
@@ -38,6 +66,9 @@ enum WindDownNudge {
         let v = UserDefaults.standard.object(forKey: K.lead) as? Int ?? 30
         return min(max(v, 0), 120)
     }
+
+    /// Whether a wake time was ever set (otherwise `wakeMinutes` is the 07:00 default).
+    static var hasWakeSetting: Bool { UserDefaults.standard.object(forKey: K.wake) != nil }
 
     static var wakeMinutes: Int {
         let v = UserDefaults.standard.object(forKey: K.wake) as? Int ?? 7 * 60   // 07:00
@@ -63,7 +94,25 @@ enum WindDownNudge {
     /// The wake time used for a given Calendar weekday (1=Sun…7=Sat) — the per-day override if set, else the
     /// default `wakeMinutes`. The single source of truth both the schedule and the UI read, so they agree.
     static func wakeMinutes(forWeekday weekday: Int) -> Int {
-        perDayWakeOverrides[weekday] ?? wakeMinutes
+        if let alarm = alarmWakeMinutes(forWeekday: weekday) { return alarm }
+        return perDayWakeOverrides[weekday] ?? wakeMinutes
+    }
+
+    /// When the reminder follows the sleep need and the strap alarm rings on `weekday`, the alarm is the
+    /// wake time: the override for that day, else the alarm's own time. Read from the alarm's stored
+    /// settings (`BehaviorStore`) so this enum stays free of the app model.
+    static func alarmWakeMinutes(forWeekday weekday: Int) -> Int? {
+        let d = UserDefaults.standard
+        guard followsSleepNeed, d.bool(forKey: "behavior.smartAlarmEnabled") else { return nil }
+        if let days = d.array(forKey: "behavior.smartAlarmWeekdays") as? [Int], !days.isEmpty,
+           !days.contains(weekday) { return nil }
+        let base = d.object(forKey: "behavior.smartAlarmMinutes") as? Int ?? 7 * 60
+        return perDayWakeOverrides[weekday] ?? base
+    }
+
+    /// Reschedule with the current settings, if the reminder is on.
+    static func refresh() {
+        if isEnabled { schedule() }
     }
 
     /// Whether ANY per-day override is set — drives whether scheduling fans out to 7 per-weekday triggers
@@ -203,12 +252,16 @@ enum WindDownNudge {
 
         let content = UNMutableNotificationContent()
         content.title = String(localized: "Time to wind down")
-        content.body = String(localized: "A calm hour now helps you hit your wake time well-rested.")
+        if followsSleepNeed, let need = tonightNeedMinutes {
+            content.body = String(localized: "You need about \(need / 60) h \(need % 60) min of sleep tonight. Winding down now gets you there.")
+        } else {
+            content.body = String(localized: "A calm hour now helps you hit your wake time well-rested.")
+        }
         content.sound = .default
 
         // PR#554 — with per-day overrides set, fan out to seven weekday-pinned triggers each at that day's
         // own nudge time; with none, keep the single daily trigger (identical to the pre-#554 behaviour).
-        if hasPerDayOverrides {
+        if hasPerDayOverrides || (1...7).contains(where: { alarmWakeMinutes(forWeekday: $0) != nil }) {
             for weekday in 1...7 {
                 let minute = nudgeMinuteOfDay(forWeekday: weekday)
                 // #1863 — an early wake (e.g. 03:30) wraps the nudge minute to the previous evening

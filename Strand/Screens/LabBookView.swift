@@ -114,7 +114,7 @@ struct LabBookView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "books.vertical.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(StrandPalette.metricCyan)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.metricCyan.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                         .accessibilityHidden(true)
@@ -134,7 +134,7 @@ struct LabBookView: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel("What Lab Book is (and isn't)")
                 }
-                Text("It's a notebook, not a lab. NOOP lines up the numbers you enter. It doesn't test, read, or judge them. Not medical advice.")
+                Text("It's a notebook, not a lab. Zoop lines up the numbers you enter. It doesn't test, read, or judge them. Not medical advice.")
                     .font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                 Button {
@@ -173,7 +173,7 @@ struct LabBookView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "tray.and.arrow.down.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(StrandPalette.metricAmber)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.metricAmber))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.metricAmber.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                         .accessibilityHidden(true)
@@ -320,7 +320,7 @@ struct LabBookView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Image(systemName: "square.and.pencil")
                     .font(StrandFont.headline)
-                    .foregroundStyle(StrandPalette.metricCyan)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                     .accessibilityHidden(true)
                 Text("Keep your own numbers here")
                     .font(StrandFont.headline)
@@ -411,7 +411,7 @@ struct LabBookView: View {
 
     private var disclaimerNote: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Lab Book is a private notebook, not a medical service. NOOP stores and lines up the numbers you enter. It doesn't test, read, diagnose, or advise. Your records never leave \(Platform.deviceNounPhrase); there's no account or cloud, so it isn't \"HIPAA-covered.\" Always rely on your doctor or pharmacist to interpret results.")
+            Text("Lab Book is a private notebook, not a medical service. Zoop stores and lines up the numbers you enter. It doesn't test, read, diagnose, or advise. Your records never leave \(Platform.deviceNounPhrase); there's no account or cloud, so it isn't \"HIPAA-covered.\" Always rely on your doctor or pharmacist to interpret results.")
                 .font(StrandFont.footnote)
                 .foregroundStyle(StrandPalette.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -632,7 +632,7 @@ private struct MarkerDetailView: View {
                 trendSection
                 if !numericReadings.isEmpty { compareSection }
                 historySection
-                Text("These are your own numbers shown back to you. NOOP doesn't decide whether any value is normal, high or low.")
+                Text("These are your own numbers shown back to you. Zoop doesn't decide whether any value is normal, high or low.")
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -728,7 +728,7 @@ private struct MarkerDetailView: View {
                     }
 
                     if signal == nil {
-                        Text("Pick a wearable signal (resting HR, HRV, sleep, Charge, weight…) to line it up against this marker. NOOP averages the signal over the \(window.phrase) before each reading.")
+                        Text("Pick a wearable signal (resting HR, HRV, sleep, Charge, weight…) to line it up against this marker. Zoop averages the signal over the \(window.phrase) before each reading.")
                             .font(StrandFont.subhead)
                             .foregroundStyle(StrandPalette.textTertiary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -1010,10 +1010,10 @@ private struct LabBookDisclaimerView: View {
     var body: some View {
         ScreenScaffold(title: "About Lab Book", subtitle: "A private notebook, not a medical service.") {
             VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
-                bullet(String(localized: "NOOP stores and lines up the numbers you enter yourself. It does not test you, read your results, give medical advice, or diagnose anything."))
+                bullet(String(localized: "Zoop stores and lines up the numbers you enter yourself. It does not test you, read your results, give medical advice, or diagnose anything."))
                 bullet(String(localized: "Anything you see here (including any side-by-side trend) is your own information shown back to you. It's an association, never a cause, and never a medical finding."))
-                bullet(String(localized: "NOOP never decides whether a value is \"normal,\" \"high,\" or \"low.\" Any reference range shown is exactly what you typed from your own report."))
-                bullet(String(localized: "Your records never leave \(Platform.deviceNounPhrase). There's no account, no cloud, no NOOP server. Because NOOP is an independent app you run yourself (not a healthcare provider), it isn't \"HIPAA-covered,\" and that protection doesn't apply here; the safety comes from the data being local-only and yours."))
+                bullet(String(localized: "Zoop never decides whether a value is \"normal,\" \"high,\" or \"low.\" Any reference range shown is exactly what you typed from your own report."))
+                bullet(String(localized: "Your records never leave \(Platform.deviceNounPhrase). There's no account, no cloud, no Zoop server. Because Zoop is an independent app you run yourself (not a healthcare provider), it isn't \"HIPAA-covered,\" and that protection doesn't apply here; the safety comes from the data being local-only and yours."))
                 bullet(String(localized: "Always rely on your doctor, pharmacist, or a qualified professional to interpret results and make decisions. If a number worries you, talk to them, not to an app."))
                 Button("Got it") { dismiss() }
                     .buttonStyle(.noopPrimary)

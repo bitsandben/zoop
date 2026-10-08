@@ -40,7 +40,7 @@ struct NotificationSettingsView: View {
 
     private var masterCard: some View {
         AlertSection(icon: "bell.badge.fill", title: String(localized: "Wrist alerts"),
-                     blurb: String(localized: "When on, NOOP taps your wrist for the apps you pick below, so you can leave the \(Platform.deviceNoun) and still feel what matters.")) {
+                     blurb: String(localized: "When on, Zoop taps your wrist for the apps you pick below, so you can leave the \(Platform.deviceNoun) and still feel what matters.")) {
             VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                 Toggle(isOn: $store.masterEnabled) {
                     Text("Enable wrist alerts")
@@ -75,7 +75,7 @@ struct NotificationSettingsView: View {
     private var deliveryNote: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "info.circle.fill")
-                .foregroundStyle(StrandPalette.accent)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                 .font(.system(size: 13))
                 .accessibilityHidden(true)
             Text("Wrist delivery isn't live yet. It needs a small on-device watcher (coming in an update) to read macOS notifications. Everything stays on this Mac. Your choices are saved now and will apply automatically once delivery ships.")
@@ -121,7 +121,7 @@ struct NotificationSettingsView: View {
     private var emptyAppsCard: some View {
         AlertSection(icon: "bell.slash",
                      title: String(localized: "No supported apps found"),
-                     blurb: String(localized: "NOOP looks for known notification apps on \(Platform.deviceNounPhrase): Mail, Outlook, WhatsApp, Teams, Messages, Slack and similar. Install one and it'll appear here automatically.")) {
+                     blurb: String(localized: "Zoop looks for known notification apps on \(Platform.deviceNounPhrase): Mail, Outlook, WhatsApp, Teams, Messages, Slack and similar. Install one and it'll appear here automatically.")) {
             EmptyView()
         }
     }
@@ -309,7 +309,7 @@ private struct AlertSection<Content: View>: View {
                     Text("\(overline)").strandOverline()
                     HStack(spacing: ZoopMetrics.space2 + 2) {
                         Image(systemName: icon)
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         Text(title)
                             .font(StrandFont.title2)

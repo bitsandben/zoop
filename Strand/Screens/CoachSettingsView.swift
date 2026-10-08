@@ -293,7 +293,7 @@ struct CoachSettingsView: View {
                             .labelsHidden()
                             .accessibilityLabel("Morning brief time")
                     }
-                    Text("At \(Platform.deviceNounPhrase == "Mac" ? "this time" : "or soon after"), NOOP will use your key to generate today's brief. Best-effort: \(Platform.deviceNounPhrase) decides exactly when a backgrounded app wakes.")
+                    Text("At \(Platform.deviceNounPhrase == "Mac" ? "this time" : "or soon after"), Zoop will use your key to generate today's brief. Best-effort: \(Platform.deviceNounPhrase) decides exactly when a backgrounded app wakes.")
                         .font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
                         .fixedSize(horizontal: false, vertical: true)
                     ZoopButton(briefGenerating ? "Generating…" : "Generate now", systemImage: "sparkles", kind: .secondary) {

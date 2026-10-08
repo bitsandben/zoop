@@ -12,7 +12,7 @@ import StrandDesign
 struct SiriShortcutsSettingsView: View {
     var body: some View {
         ScreenScaffold(title: "Siri & Shortcuts",
-                       subtitle: "Run NOOP actions hands-free.") {
+                       subtitle: "Run Zoop actions hands-free.") {
             tips
             shortcutsCard
         }
@@ -23,7 +23,7 @@ struct SiriShortcutsSettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image(systemName: "mic.fill")
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text("Ready-made actions")
                         .font(StrandFont.headline)
@@ -48,13 +48,13 @@ struct SiriShortcutsSettingsView: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 10) {
                     Image(systemName: "square.stack.3d.up.fill")
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text("Build your own")
                         .font(StrandFont.headline)
                         .foregroundStyle(StrandPalette.textPrimary)
                 }
-                Text("Wire NOOP's actions into a Back-Tap, a focus automation, or a longer Shortcut. For example, double-tap the back of your iPhone to buzz the strap.")
+                Text("Wire Zoop's actions into a Back-Tap, a focus automation, or a longer Shortcut. For example, double-tap the back of your iPhone to buzz the strap.")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)

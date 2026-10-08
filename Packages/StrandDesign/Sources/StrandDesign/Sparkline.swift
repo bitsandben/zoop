@@ -132,7 +132,8 @@ public struct Sparkline: View {
                     )
                 }
             }
-            .animation(StrandMotion.fade, value: hoverX)
+            // Fade the readout in and out only; while scrubbing it tracks the finger with no easing.
+            .animation(StrandMotion.fade, value: hoverX == nil)
             .contentShape(Rectangle())
             .onContinuousHover(coordinateSpace: .local) { phase in
                 guard showsHover else { return }
@@ -141,8 +142,11 @@ public struct Sparkline: View {
                 case .ended: hoverX = nil
                 }
             }
-            // The line is pointer-hover only (dead on touch); give VoiceOver a
-            // spoken summary of the series so the trend isn't silent on iPhone.
+            // Touch: the shared chart scrub (sideways drag or short hold; vertical drags scroll the page).
+            .zoopChartScrub(isEnabled: showsHover && values.count > 1,
+                            onChange: { hoverX = min(max($0.x, 0), geo.size.width) },
+                            onEnd: { hoverX = nil })
+            // Give VoiceOver a spoken summary of the series so the trend isn't silent on iPhone.
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text(axSummary))
         }

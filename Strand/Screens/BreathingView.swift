@@ -31,8 +31,8 @@ private struct BreathingContent: View {
 
     @EnvironmentObject private var model: AppModel
     @EnvironmentObject private var live: LiveState
-    /// When the user has Reduce Motion on, the large repeating inhale/exhale orb zoom is
-    /// suppressed — the breath is cued by the phase word + haptics instead. (a11y)
+    /// With Reduce Motion on, the breathing shape stops growing and shrinking: it holds one size and
+    /// the phase is carried by the word, the countdown and a soft change in fill. (a11y)
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// The L1/L2 session controller (walks the engines, fires the buzz path). View-owned, created lazily
@@ -62,11 +62,21 @@ private struct BreathingContent: View {
     }
     @State private var mode: Mode = .breathe
 
-    // MARK: Pace presets (catalog + locked resonance)
+    // MARK: Patterns (catalog + locked resonance)
 
     private enum PaceSelection: Hashable {
         case catalog(String)
         case resonance
+
+        /// The string persisted under `zoop.breathe.pattern`.
+        var key: String {
+            switch self {
+            case .catalog(let id): return id
+            case .resonance: return PaceSelection.resonanceKey
+            }
+        }
+
+        static let resonanceKey = "resonance"
 
         var label: String {
             switch self {
@@ -79,54 +89,61 @@ private struct BreathingContent: View {
         }
     }
 
-    private enum SessionLength: Hashable, CaseIterable {
-        case open, five, ten, fifteen
+    /// The four patterns offered up front. Everything else in the catalog (and a locked resonance
+    /// pace) stays one tap away under "More".
+    private static let featuredIds = ["relax_4_6", "coherence_5_5", "box_4_4_4_4", "four_seven_eight"]
+    private static let defaultPatternId = "relax_4_6"
 
-        var label: String {
-            switch self {
-            case .open: return String(localized: "Open")
-            case .five: return String(localized: "5 min")
-            case .ten: return String(localized: "10 min")
-            case .fifteen: return String(localized: "15 min")
-            }
-        }
-
-        var targetSeconds: Int? {
-            switch self {
-            case .open: return nil
-            case .five: return 5 * 60
-            case .ten: return 10 * 60
-            case .fifteen: return 15 * 60
-            }
-        }
-
-        static func from(recommendedMs: Int) -> SessionLength {
-            switch recommendedMs {
-            case ..<(7 * 60_000): return .five
-            case ..<(12 * 60_000): return .ten
-            default: return .fifteen
-            }
+    /// Short, plain names for the featured patterns; the catalog titles carry the timing already,
+    /// which the chip shows on its own line.
+    private static func featuredName(_ id: String) -> String {
+        switch id {
+        case "relax_4_6":        return String(localized: "Calm")
+        case "coherence_5_5":    return String(localized: "Steady")
+        case "box_4_4_4_4":      return String(localized: "Box")
+        case "four_seven_eight": return String(localized: "Relax")
+        default: return BreathProtocolCatalog.protocolById(id).map {
+            String(localized: String.LocalizationValue($0.title))
+        } ?? id
         }
     }
 
     private enum Phase { case inhale, hold, exhale, textOnly }
 
+    /// The phone haptic to play on the next `hapticTick` bump (iOS only).
+    private enum PhoneCue { case inhale, hold, exhale, done }
+
+    // MARK: Persisted choices
+
+    @AppStorage("zoop.breathe.pattern") private var patternKey = BreathingContent.defaultPatternId
+    @AppStorage("zoop.breathe.minutes") private var minutes = 3
+    /// One switch for every pulse this exercise makes: the phone's taptic cue and the strap buzz.
+    /// Default on; off means neither fires. The strap buzz additionally honours the app-wide
+    /// `HapticPrefs.breathing` gate in Automations.
+    @AppStorage("zoop.breathe.vibration") private var vibration = true
+
+    private static let minuteOptions = [1, 3, 5, 10]
+
     // MARK: State (fixed-pace Breathe — catalog-driven)
 
-    @State private var pace: PaceSelection = .catalog("coherence_5_5")
-    @State private var sessionLength: SessionLength = .ten
     @State private var showEdu = false
     @State private var running = false
 
-    /// 0 = fully contracted, 1 = fully expanded. Drives the orb scale.
-    @State private var orbProgress: CGFloat = 0
     @State private var phase: Phase = .inhale
     @State private var phaseLabel: String? = nil
     @State private var stageIndex: Int = 0
+    @State private var phaseStart: Date = .distantPast
     @State private var phaseDeadline: Date = .distantFuture
+    /// Size of the breathing shape (0 = fully out, 1 = fully in) at the start and end of the
+    /// current phase. The stage interpolates between them on its own clock.
+    @State private var levelFrom: CGFloat = 0
+    @State private var levelTo: CGFloat = 0
 
     @State private var sessionSeconds: Int = 0
     @State private var breathCount: Int = 0
+
+    @State private var hapticTick: Int = 0
+    @State private var lastCue: PhoneCue = .inhale
 
     /// Rolling buffer of the most recent R-R intervals (ms) for RMSSD.
     @State private var rrBuffer: [Int] = []
@@ -156,6 +173,18 @@ private struct BreathingContent: View {
     /// The user's locked resonance pace, read fresh each render (set by the sweep).
     private var lockedBpm: Double? { BiofeedbackPrefs.lockedPace }
 
+    /// The stored pattern, falling back to the default when the stored one is gone (a removed
+    /// catalog id, or a resonance pace that is no longer locked).
+    private var pace: PaceSelection {
+        if patternKey == PaceSelection.resonanceKey {
+            return lockedBpm != nil ? .resonance : .catalog(Self.defaultPatternId)
+        }
+        if BreathProtocolCatalog.protocolById(patternKey) != nil { return .catalog(patternKey) }
+        return .catalog(Self.defaultPatternId)
+    }
+
+    private var targetSeconds: Int { max(1, minutes) * 60 }
+
     private var selectedProtocol: BreathProtocol? {
         if case .catalog(let id) = pace { return BreathProtocolCatalog.protocolById(id) }
         return nil
@@ -171,20 +200,10 @@ private struct BreathingContent: View {
         return 60_000.0 / Double(proto.cycleDurationMs)
     }
 
-    private var selectedTagline: String {
-        if case .resonance = pace {
-            return String(localized: "Your locked pace · \(String(format: "%.1f", lockedBpm ?? ResonanceEngine.fallbackBpm)) br/min")
-        }
-        return String(localized: String.LocalizationValue(selectedProtocol?.subtitle ?? ""))
-    }
-
     var body: some View {
         ScreenScaffold(title: "Breathe",
                        subtitle: "Haptic-paced breathing · find your pace · calm down",
-                       quietSubtitle: true,
-                       // Liquid finish: the same full-bleed day-of-sky backdrop Today + the other liquid
-                       // tabs carry, so Breathe sits in one atmosphere.
-                       topBackground: liquidScaffoldSky()) {
+                       quietSubtitle: true) {
 
             modeSwitch
             StressCheckInCard(center: nudgeCenter) { startOneMinuteCue() }
@@ -202,7 +221,8 @@ private struct BreathingContent: View {
         .onReceive(secondTimer) { _ in
             guard running else { return }
             sessionSeconds += 1
-            if let target = sessionLength.targetSeconds, sessionSeconds >= target {
+            if sessionSeconds >= targetSeconds {
+                if vibration { phoneCue(.done) }
                 stop()
             }
         }
@@ -210,12 +230,12 @@ private struct BreathingContent: View {
         .onRRPackets(live) { rr in
             ingest(rr)
         }
-        .onChangeCompat(of: pace) { newPace in
+        .onChangeCompat(of: patternKey) { _ in
             if running { stop() }
-            if case .catalog(let id) = newPace,
-               let proto = BreathProtocolCatalog.protocolById(id) {
-                sessionLength = SessionLength.from(recommendedMs: proto.recommendedDurationMs)
-            }
+        }
+        .onChangeCompat(of: vibration) { on in
+            // Switching vibration off mid-session also recalls a buzz the strap may be playing.
+            if !on && running { model.stopHaptics() }
         }
         .sheet(isPresented: $showEdu) {
             breathEduSheet
@@ -236,6 +256,17 @@ private struct BreathingContent: View {
             if audioCues { tonePlayer.activate() }
         }
         .onDisappear { model.stopRealtimeHR(); stop(); controller.stop(); tonePlayer.deactivate() }
+        #if os(iOS)
+        // Phone pulses. Only ever triggered through `phoneCue`, which callers gate on `vibration`.
+        .sensoryFeedback(trigger: hapticTick) { _, _ in
+            switch lastCue {
+            case .inhale: return .impact(weight: .medium)
+            case .hold:   return .impact(weight: .light, intensity: 0.5)
+            case .exhale: return .impact(weight: .light)
+            case .done:   return .success
+            }
+        }
+        #endif
     }
 
     // MARK: - Mode switch
@@ -246,13 +277,34 @@ private struct BreathingContent: View {
             .accessibilityLabel("Breathe mode")
     }
 
-    // MARK: - Breathe mode (the shipped fixed-pace trainer)
+    // MARK: - Breathe mode
 
     @ViewBuilder private var breatheMode: some View {
-        statusRow
-        orbCard
-        controlRow
+        VStack(spacing: 18) {
+            BreathStageView(running: running,
+                            guided: isGuided,
+                            reduceMotion: reduceMotion,
+                            exhaling: phase == .exhale,
+                            phaseWord: phaseWord,
+                            phaseStart: phaseStart,
+                            phaseDeadline: phaseDeadline,
+                            levelFrom: levelFrom,
+                            levelTo: levelTo,
+                            idleTitle: patternName(pace),
+                            idleTiming: timing(for: pace),
+                            guidedRemaining: timeString(max(0, targetSeconds - sessionSeconds)))
+                .frame(height: 264)
+                .frame(maxWidth: .infinity)
+
+            sessionLine
+            patternRow
+            durationRow
+            startButton
+        }
+        .padding(.top, 4)
+
         if let line = outcomeLine { outcomeCard(line) }
+        settingsCard
         readoutRow
         coherenceCard
         if !live.bonded { hapticHint }
@@ -269,137 +321,159 @@ private struct BreathingContent: View {
         controller.startResonanceSession(bpm: bpm, cycles: cycles)
     }
 
-    // MARK: - Status row
+    // MARK: - Session line (time left · breaths)
 
-    private var statusRow: some View {
-        HStack(spacing: 10) {
-            StatePill(running ? "Session live" : "Ready",
-                      tone: running ? .accent : .neutral,
-                      pulsing: running)
-
-            if live.bonded {
-                StatePill("Haptics on", tone: .positive, showsDot: true)
-            } else {
-                StatePill("Visual only", tone: .warning, showsDot: true)
-            }
-
-            Spacer()
-
-            HStack(spacing: 6) {
-                if let target = sessionLength.targetSeconds {
-                    Text("\(timeString(sessionSeconds)) / \(timeString(target))")
-                        .font(StrandFont.number(15))
-                        .foregroundStyle(StrandPalette.textPrimary)
-                } else {
-                    Text(timeString(sessionSeconds))
-                        .font(StrandFont.number(15))
-                        .foregroundStyle(StrandPalette.textPrimary)
-                }
-                Text("·").foregroundStyle(StrandPalette.textTertiary)
+    private var sessionLine: some View {
+        HStack(spacing: 8) {
+            if running {
+                Text(verbatim: timeString(max(0, targetSeconds - sessionSeconds)))
+                    .font(StrandFont.number(17))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                    .contentTransition(.numericText())
+                Text(verbatim: "·").foregroundStyle(StrandPalette.textTertiary)
                 Text("\(breathCount) breaths")
-                    .font(StrandFont.captionNumber)
-                    .foregroundStyle(StrandPalette.textSecondary)
-            }
-        }
-    }
-
-    // MARK: - The orb
-
-    private var orbCard: some View {
-        StrandCard(padding: 24, tint: StrandPalette.restColor) {
-            VStack(spacing: 18) {
-                HStack {
-                    Text(pace.label.uppercased()).strandOverline()
-                    Spacer()
-                    Button {
-                        showEdu = true
-                    } label: {
-                        Image(systemName: "info.circle")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(StrandPalette.textSecondary)
-                    }
-                    .accessibilityLabel(String(localized: "Protocol info"))
-                    if selectedBpm > 0 {
-                        Text(String(format: "%.1f br/min", selectedBpm))
-                            .font(StrandFont.captionNumber)
-                            .foregroundStyle(StrandPalette.textSecondary)
-                    } else if isGuided {
-                        Text(String(localized: "Guided"))
-                            .font(StrandFont.captionNumber)
-                            .foregroundStyle(StrandPalette.textSecondary)
-                    }
-                }
-
-                ZStack {
-                    ScenicHeroBackground(domain: .rest, starCount: 56)
-                        .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
-                    breathingOrb
-                        .padding(.vertical, 6)
-                }
-                .frame(height: 320)
-                .frame(maxWidth: .infinity)
-
-                Text(running ? phaseWord : selectedTagline)
                     .font(StrandFont.subhead)
-                    .foregroundStyle(running ? StrandPalette.restBright : StrandPalette.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .animation(.easeInOut(duration: 0.2), value: phaseWord)
-                    .animation(.easeInOut(duration: 0.2), value: running)
-
-                pacePills
-                durationPills
-                audioCueToggle
-            }
-        }
-    }
-
-    /// Opt-in audio pacer toggle, sitting on the orb card so it reads as part of the breathing setup.
-    /// Default off; flipping it primes/tears down the tone engine via the onChange hook above.
-    private var audioCueToggle: some View {
-        HStack(spacing: 10) {
-            Image(systemName: audioCues ? "speaker.wave.2.fill" : "speaker.slash.fill")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(audioCues ? StrandPalette.restBright : StrandPalette.textTertiary)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 1) {
-                Text("Audio cues")
-                    .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textSecondary)
-                Text("Soft tone on each phase · respects silent mode")
-                    .font(StrandFont.caption)
-                    .foregroundStyle(StrandPalette.textTertiary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+            } else {
+                // Same height when idle so starting a session never shifts the layout.
+                Text(verbatim: " ").font(StrandFont.number(17))
             }
-            Spacer(minLength: 8)
-            Toggle("", isOn: $audioCues)
-                .labelsHidden().toggleStyle(.switch).tint(StrandPalette.accent)
-                .accessibilityLabel("Audio cues")
         }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
     }
 
-    private var availablePaces: [PaceSelection] {
-        var items = BreathProtocolCatalog.pickerProtocols.map { PaceSelection.catalog($0.id) }
-        if lockedBpm != nil { items.append(.resonance) }
+    // MARK: - Pattern picker
+
+    private var availableExtraPaces: [PaceSelection] {
+        var items = BreathProtocolCatalog.pickerProtocols
+            .filter { !Self.featuredIds.contains($0.id) }
+            .map { PaceSelection.catalog($0.id) }
+        if lockedBpm != nil { items.insert(.resonance, at: 0) }
         return items
     }
 
-    private var pacePills: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            SegmentedPillControl(availablePaces, selection: $pace) { $0.label }
+    private var patternRow: some View {
+        let isExtra: Bool = {
+            if case .catalog(let id) = pace { return !Self.featuredIds.contains(id) }
+            return true
+        }()
+        return HStack(spacing: 8) {
+            ForEach(Self.featuredIds, id: \.self) { id in
+                let item = PaceSelection.catalog(id)
+                Button { patternKey = item.key } label: {
+                    patternChip(title: Self.featuredName(id), detail: timing(for: item),
+                                selected: pace == item)
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(pace == item ? .isSelected : [])
+            }
+            Menu {
+                ForEach(availableExtraPaces, id: \.self) { item in
+                    Button { patternKey = item.key } label: {
+                        if pace == item {
+                            Label(item.label, systemImage: "checkmark")
+                        } else {
+                            Text(item.label)
+                        }
+                    }
+                }
+            } label: {
+                patternChip(title: isExtra ? patternName(pace) : String(localized: "More"),
+                            detail: isExtra ? timing(for: pace) : nil,
+                            systemImage: isExtra ? nil : "ellipsis",
+                            selected: isExtra)
+            }
+            .menuIndicator(.hidden)
+            .buttonStyle(.plain)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(String(localized: "Breathing pattern"))
+    }
+
+    private func patternChip(title: String, detail: String?, systemImage: String? = nil,
+                             selected: Bool) -> some View {
+        VStack(spacing: 3) {
+            Text(verbatim: title)
+                .font(StrandFont.subhead.weight(.semibold))
+                .foregroundStyle(selected ? StrandPalette.surfaceBase : StrandPalette.textPrimary)
+            if let systemImage {
+                Image(systemName: systemImage)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(StrandPalette.textSecondary)
+                    .accessibilityHidden(true)
+            } else if let detail {
+                Text(verbatim: detail)
+                    .font(StrandFont.captionNumber)
+                    .foregroundStyle(selected ? StrandPalette.surfaceBase.opacity(0.75)
+                                              : StrandPalette.textTertiary)
+            }
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+        .padding(.horizontal, 4)
+        .frame(maxWidth: .infinity, minHeight: 56)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(selected ? StrandPalette.accent : StrandPalette.surfaceRaised)
+        )
+        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: selected)
+    }
+
+    private func patternName(_ item: PaceSelection) -> String {
+        switch item {
+        case .catalog(let id): return Self.featuredName(id)
+        case .resonance: return item.label
         }
     }
 
-    private var durationPills: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(String(localized: "Session length"))
-                .font(StrandFont.caption)
-                .foregroundStyle(StrandPalette.textTertiary)
-            ScrollView(.horizontal, showsIndicators: false) {
-                SegmentedPillControl(SessionLength.allCases, selection: $sessionLength) { $0.label }
-            }
-            .disabled(running)
+    /// "4-7-8", "5.5-5.5" — the pattern's stage lengths in seconds. Nil for guided patterns.
+    private func timing(for item: PaceSelection) -> String? {
+        let stages: [BreathStage]
+        switch item {
+        case .resonance: stages = resonanceStages()
+        case .catalog(let id):
+            stages = BreathProtocolCatalog.protocolById(id)?.stages.filter { $0.durationMs > 0 } ?? []
         }
+        guard !stages.isEmpty else { return nil }
+        return stages.map { Self.secondsText($0.durationMs) }.joined(separator: "-")
+    }
+
+    private static func secondsText(_ ms: Int) -> String {
+        ms % 1000 == 0 ? "\(ms / 1000)" : String(format: "%.1f", Double(ms) / 1000.0)
+    }
+
+    // MARK: - Duration
+
+    private var durationRow: some View {
+        SegmentedPillControl(Self.minuteOptions, selection: $minutes, fillsAvailableWidth: true) {
+            String(localized: "\($0) min")
+        }
+        .disabled(running)
+        .opacity(running ? StrandPalette.disabledOpacity : 1)
+        .accessibilityLabel(String(localized: "Session length"))
+    }
+
+    // MARK: - Start / Stop
+
+    private var startButton: some View {
+        Button {
+            running ? stop() : start()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: running ? "stop.fill" : "play.fill")
+                    .imageScale(.medium)
+                    .accessibilityHidden(true)
+                if running { Text("Stop") } else { Text("Start") }
+            }
+            .font(StrandFont.headline)
+            .foregroundStyle(running ? StrandPalette.textPrimary : StrandPalette.surfaceBase)
+            .frame(maxWidth: .infinity, minHeight: 56)
+            .background(Capsule().fill(running ? StrandPalette.surfaceRaised : StrandPalette.textPrimary))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
     }
 
     private var phaseWord: String {
@@ -407,11 +481,100 @@ private struct BreathingContent: View {
             return String(localized: String.LocalizationValue(phaseLabel))
         }
         switch phase {
-        case .inhale: return String(localized: "Breathe in…")
-        case .hold: return String(localized: "Hold…")
-        case .exhale: return String(localized: "Breathe out…")
+        case .inhale: return String(localized: "Breathe in")
+        case .hold: return String(localized: "Hold")
+        case .exhale: return String(localized: "Breathe out")
         case .textOnly: return String(localized: "Follow the cue…")
         }
+    }
+
+    // MARK: - Settings (vibration, sound, info, test buzz)
+
+    private var settingsCard: some View {
+        VStack(spacing: 0) {
+            toggleRow(icon: "iphone.radiowaves.left.and.right",
+                      title: "Vibration",
+                      detail: "A pulse on each breath, on your phone and strap",
+                      isOn: $vibration)
+            rowDivider
+            toggleRow(icon: audioCues ? "speaker.wave.2.fill" : "speaker.slash.fill",
+                      title: "Audio cues",
+                      detail: "Soft tone on each phase · respects silent mode",
+                      isOn: $audioCues)
+            rowDivider
+            Button { showEdu = true } label: {
+                HStack(spacing: 12) {
+                    rowIcon("info.circle")
+                    Text("About this pace")
+                        .font(StrandFont.body)
+                        .foregroundStyle(StrandPalette.textPrimary)
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(StrandPalette.textTertiary)
+                        .accessibilityHidden(true)
+                }
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            if live.bonded {
+                rowDivider
+                Button { model.buzz(loops: 1) } label: {
+                    HStack(spacing: 12) {
+                        rowIcon("waveform.path")
+                        Text("Test buzz")
+                            .font(StrandFont.body)
+                            .foregroundStyle(StrandPalette.textPrimary)
+                        Spacer(minLength: 8)
+                    }
+                    .padding(.vertical, 12)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("Fire a single haptic pulse on the strap (requires a bonded connection)")
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 4)
+        .background(ZoopPanelSurface())
+    }
+
+    private var rowDivider: some View {
+        Rectangle()
+            .fill(StrandPalette.hairline)
+            .frame(height: 1)
+            .padding(.leading, 40)
+    }
+
+    private func rowIcon(_ name: String) -> some View {
+        Image(systemName: name)
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(StrandPalette.textSecondary)
+            .frame(width: 28)
+            .accessibilityHidden(true)
+    }
+
+    private func toggleRow(icon: String, title: LocalizedStringKey, detail: LocalizedStringKey,
+                           isOn: Binding<Bool>) -> some View {
+        HStack(spacing: 12) {
+            rowIcon(icon)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(StrandFont.body)
+                    .foregroundStyle(StrandPalette.textPrimary)
+                Text(detail)
+                    .font(StrandFont.caption)
+                    .foregroundStyle(StrandPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 8)
+            Toggle(isOn: isOn) { Text(title) }
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .tint(StrandPalette.accent)
+        }
+        .padding(.vertical, 12)
     }
 
     private var breathEduSheet: some View {
@@ -473,64 +636,6 @@ private struct BreathingContent: View {
         }
     }
 
-    private var breathingOrb: some View {
-        GeometryReader { geo in
-            let maxDiameter = min(geo.size.width, geo.size.height)
-            // The breath ring — the resting track the vessel breathes within. Crisp 1px stroke, no glow.
-            ZStack {
-                Circle()
-                    .strokeBorder(StrandPalette.restColor.opacity(0.28), lineWidth: 1)
-                    .frame(width: maxDiameter, height: maxDiameter)
-
-                // The pacer is now the canonical liquid vessel: it FILLS on the inhale and drains on the
-                // exhale as `orbProgress` (0 contracted → 1 expanded) drives the level, so the breath is
-                // cued by water rising and falling rather than a swelling disc. Rest-tinted to match the
-                // world; under Reduce Motion `orbProgress` parks at a steady mid-level (no pulsing), and
-                // the phase word + haptics still carry the pace.
-                LiquidVessel(value: orbProgress, tint: StrandPalette.restColor, animated: running)
-                    .frame(width: maxDiameter, height: maxDiameter)
-
-                VStack(spacing: 2) {
-                    if let bpm = model.bpm {
-                        CountUpText(value: Double(bpm),
-                                    format: { "\(Int($0.rounded()))" },
-                                    font: StrandFont.number(40),
-                                    color: StrandPalette.textPrimary)
-                    } else {
-                        Text("—")
-                            .font(StrandFont.number(40))
-                            .foregroundStyle(StrandPalette.textPrimary)
-                    }
-                    Text(String(localized: "BPM"))
-                        .font(StrandFont.footnote)
-                        .tracking(0.8)
-                        .foregroundStyle(StrandPalette.textTertiary)
-                }
-                .shadow(color: .black.opacity(0.5), radius: 6, y: 1)
-                .allowsHitTesting(false)   // taps fall through to the vessel → splash
-            }
-            .frame(width: geo.size.width, height: geo.size.height)
-        }
-    }
-
-    // MARK: - Controls
-
-    private var controlRow: some View {
-        HStack(spacing: ZoopMetrics.space3) {
-            ZoopButton(running ? "Stop session" : "Start session",
-                       systemImage: running ? "stop.fill" : "play.fill",
-                       kind: running ? .destructive : .primary, fullWidth: true) {
-                running ? stop() : start()
-            }
-
-            ZoopButton("Test buzz", systemImage: "waveform.path", kind: .secondary) {
-                model.buzz(loops: 1)
-            }
-            .disabled(!live.bonded)
-            .help("Fire a single haptic pulse on the strap (requires a bonded connection)")
-        }
-    }
-
     // MARK: - Session outcome
 
     private var outcomeLine: String? {
@@ -548,7 +653,7 @@ private struct BreathingContent: View {
             HStack(spacing: 10) {
                 Image(systemName: "wind")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(StrandPalette.restBright)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.restBright))
                     .accessibilityHidden(true)
                 Text(line)
                     .font(StrandFont.footnote)
@@ -597,7 +702,7 @@ private struct BreathingContent: View {
                         caption: rrBuffer.isEmpty ? String(localized: "Waiting for R-R") : String(localized: "Last \(rrBuffer.count) beats"))
 
             readoutTile(label: String(localized: "Pace"),
-                        value: selectedBpm > 0 ? String(format: "%.1f", selectedBpm) : (isGuided ? "—" : "—"),
+                        value: selectedBpm > 0 ? String(format: "%.1f", selectedBpm) : "—",
                         unit: "br/min",
                         accent: StrandPalette.restBright,
                         caption: paceCaption)
@@ -730,11 +835,14 @@ private struct BreathingContent: View {
         sessionRmssdSum = 0
         sessionRmssdCount = 0
         sessionRmssdPeak = 0
+        // The first phase starts from the resting size, so pressing Start never makes the shape jump.
+        levelFrom = Self.restingLevel
+        levelTo = Self.restingLevel
         if isGuided {
             phase = .textOnly
             phaseLabel = selectedProtocol?.title
+            phaseStart = Date()
             phaseDeadline = .distantFuture
-            if !reduceMotion { orbProgress = reducedSteadyOrb }
         } else {
             armCurrentStage(from: Date(), buzz: true)
         }
@@ -742,26 +850,24 @@ private struct BreathingContent: View {
 
     private func stop() {
         let wasRunning = running
-        running = false
+        // The stage eases back to its resting size when `running` flips.
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.8)) {
+            running = false
+        }
         ScreenIdle.keepAwake(false)
         phaseDeadline = .distantFuture
         phaseLabel = nil
+        phase = .inhale
         // #769: this trainer fires per-phase buzzes (armPhase -> model.buzz). Stopping halts NEW pulses but
         // can't recall one the strap is mid-pattern on, which could wedge the strap if the link drops. Tell
         // the strap to stop haptics too (best-effort; no-op when unbonded / on a 5/MG). Only when we were
         // actually buzzing, so a stop on an idle trainer stays silent.
         if wasRunning { model.stopHaptics() }
         if wasRunning { captureOutcome() }
-        if reduceMotion {
-            orbProgress = 0
-        } else {
-            withAnimation(.easeInOut(duration: 0.8)) {
-                orbProgress = 0
-            }
-        }
     }
 
-    private let reducedSteadyOrb: CGFloat = 0.5
+    /// The shape's size between sessions and for guided patterns, which have no fixed rhythm.
+    static let restingLevel: CGFloat = 0.45
 
     private func captureOutcome() {
         guard sessionSeconds >= 120 else { return }
@@ -808,33 +914,45 @@ private struct BreathingContent: View {
         phase = mapped
         phaseLabel = stage.label
         let duration = Double(stage.durationMs) / 1000.0
+        phaseStart = now
         phaseDeadline = now.addingTimeInterval(duration)
 
-        if reduceMotion {
-            orbProgress = reducedSteadyOrb
-        } else {
-            withAnimation(.easeInOut(duration: duration)) {
-                switch mapped {
-                case .inhale: orbProgress = 1.0
-                case .exhale: orbProgress = 0.0
-                case .hold, .textOnly: break // keep current fill
-                }
-            }
+        // The shape grows across an inhale, shrinks across an exhale and stays put through a hold.
+        levelFrom = levelTo
+        switch mapped {
+        case .inhale: levelTo = 1
+        case .exhale: levelTo = 0
+        case .hold, .textOnly: break
         }
 
-        if buzz {
+        guard buzz else { return }
+        if vibration {
             let loops = BreathProtocolPlayer.loops(for: stage.type)
             if loops > 0 {
                 model.buzz(loops: UInt8(clamping: loops), gate: HapticPrefs.breathing)
             }
-            if audioCues {
-                switch mapped {
-                case .inhale: tonePlayer.play(.inhale)
-                case .exhale: tonePlayer.play(.exhale)
-                case .hold, .textOnly: break
-                }
+            switch mapped {
+            case .inhale: phoneCue(.inhale)
+            case .hold: phoneCue(.hold)
+            case .exhale: phoneCue(.exhale)
+            case .textOnly: break
             }
         }
+        if audioCues {
+            switch mapped {
+            case .inhale: tonePlayer.play(.inhale)
+            case .exhale: tonePlayer.play(.exhale)
+            case .hold, .textOnly: break
+            }
+        }
+    }
+
+    /// Play a phone haptic. Callers check `vibration` first; macOS has no taptic engine to drive.
+    private func phoneCue(_ cue: PhoneCue) {
+        #if os(iOS)
+        lastCue = cue
+        hapticTick &+= 1
+        #endif
     }
 
     private func advance(now: Date) {
@@ -883,9 +1001,162 @@ private struct BreathingContent: View {
     private func timeString(_ total: Int) -> String {
         let m = total / 60
         let s = total % 60
-        return String(format: "%02d:%02d", m, s)
+        return String(format: "%d:%02d", m, s)
     }
 }
+
+// MARK: - Breathing stage
+
+/// The exercise's centrepiece: a squircle that grows on the inhale, holds, and shrinks on the exhale,
+/// inside a fixed outline that fills clockwise as the current phase runs out. The phase word and a
+/// big countdown sit in the middle. It reads its own clock (a `TimelineView`), so only this view
+/// redraws each frame while a session runs; the parent changes state once per phase.
+private struct BreathStageView: View {
+    let running: Bool
+    let guided: Bool
+    let reduceMotion: Bool
+    let exhaling: Bool
+    let phaseWord: String
+    let phaseStart: Date
+    let phaseDeadline: Date
+    let levelFrom: CGFloat
+    let levelTo: CGFloat
+    let idleTitle: String
+    let idleTiming: String?
+    let guidedRemaining: String
+
+    /// Smallest and largest size of the breathing shape, as a share of the outline.
+    private let minScale: CGFloat = 0.5
+    private let maxScale: CGFloat = 0.9
+
+    @ObservedObject private var motion = ZoopMotionState.shared
+
+    var body: some View {
+        // Only a running, timed session gets a frame clock; at rest (or under quiet motion) the stage is
+        // drawn once, so nothing animates in the background.
+        if running && !guided && !motion.poseStill(reduceMotion) {
+            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in stage(at: context.date) }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(accessibilityText)
+        } else {
+            TimelineView(.periodic(from: .now, by: 1)) { context in stage(at: context.date) }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(accessibilityText)
+        }
+    }
+
+    private func stage(at date: Date) -> some View {
+        Group {
+            let progress = phaseProgress(at: date)
+            let level = currentLevel(progress: progress)
+            GeometryReader { geo in
+                let side = min(geo.size.width, geo.size.height)
+                ZStack {
+                    // The fixed outline the breath moves within.
+                    SquircleShape()
+                        .stroke(ZoopVisualStyle.ringTrack, lineWidth: 3)
+
+                    // Time left in this phase, filling clockwise from the top.
+                    if running && !guided {
+                        SquircleShape()
+                            .trim(from: 0, to: progress)
+                            .stroke(StrandPalette.accent,
+                                    style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                    }
+
+                    breathingBody(level: level)
+
+                    centreText(at: date)
+                }
+                .frame(width: side, height: side)
+                .frame(width: geo.size.width, height: geo.size.height)
+            }
+        }
+    }
+
+    private func breathingBody(level: CGFloat) -> some View {
+        let scale = minScale + (maxScale - minScale) * level
+        // Under Reduce Motion the size is fixed; the fill brightens on the inhale and dims on the
+        // exhale instead, which is a cross-fade rather than movement.
+        let glow: Double = reduceMotion && running ? (exhaling ? 0.10 : 0.22) : 0.16
+        return ZStack {
+            SquircleShape()
+                .fill(StrandPalette.accent.opacity(glow * 0.6))
+                .scaleEffect(scale)
+            SquircleShape()
+                .fill(StrandPalette.accent.opacity(glow))
+                .overlay(
+                    SquircleShape()
+                        .stroke(StrandPalette.accent.opacity(0.55), lineWidth: 1.5)
+                )
+                .scaleEffect(scale * 0.84)
+        }
+        .animation(reduceMotion ? .easeInOut(duration: 0.6) : nil, value: exhaling)
+    }
+
+    @ViewBuilder private func centreText(at now: Date) -> some View {
+        VStack(spacing: 4) {
+            if running {
+                Text(verbatim: phaseWord)
+                    .font(StrandFont.headline)
+                    .foregroundStyle(StrandPalette.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                if guided {
+                    Text(verbatim: guidedRemaining)
+                        .font(StrandFont.display(48))
+                        .tracking(StrandFont.displayTracking(48))
+                        .foregroundStyle(StrandPalette.textPrimary)
+                } else {
+                    Text(verbatim: "\(countdown(at: now))")
+                        .font(StrandFont.display(64))
+                        .tracking(StrandFont.displayTracking(64))
+                        .foregroundStyle(StrandPalette.textPrimary)
+                }
+            } else {
+                Text(verbatim: idleTitle)
+                    .font(StrandFont.headline)
+                    .foregroundStyle(StrandPalette.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                if let idleTiming {
+                    Text(verbatim: idleTiming)
+                        .font(StrandFont.display(44))
+                        .tracking(StrandFont.displayTracking(44))
+                        .foregroundStyle(StrandPalette.textPrimary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                }
+            }
+        }
+        .padding(.horizontal, 36)
+        .allowsHitTesting(false)
+    }
+
+    private func phaseProgress(at now: Date) -> CGFloat {
+        let total = phaseDeadline.timeIntervalSince(phaseStart)
+        guard running, total > 0, total.isFinite else { return 0 }
+        return CGFloat(min(max(now.timeIntervalSince(phaseStart) / total, 0), 1))
+    }
+
+    private func currentLevel(progress: CGFloat) -> CGFloat {
+        guard running, !guided, !reduceMotion else { return BreathingContent.restingLevel }
+        // Ease in and out so each breath starts and finishes gently.
+        let eased = progress * progress * (3 - 2 * progress)
+        return levelFrom + (levelTo - levelFrom) * eased
+    }
+
+    private func countdown(at now: Date) -> Int {
+        let left = phaseDeadline.timeIntervalSince(now)
+        guard left.isFinite else { return 0 }
+        return max(1, Int(left.rounded(.up)))
+    }
+
+    private var accessibilityText: String {
+        running ? phaseWord : [idleTitle, idleTiming].compactMap { $0 }.joined(separator: ", ")
+    }
+}
+
 
 // MARK: - Lazy controller holder
 

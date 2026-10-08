@@ -2,6 +2,16 @@ import Foundation
 import StrandAnalytics
 
 struct OpenAIClient: AIProviderClient {
+    /// OpenAI itself, or OpenRouter, which speaks the same chat and models API.
+    var provider: AIProvider = .openAI
+
+    /// OpenRouter asks callers to name the app; neither header carries any user data.
+    private func applyHeaders(_ req: inout URLRequest, key: String) {
+        req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        if provider == .openRouter {
+            req.setValue("Zoop", forHTTPHeaderField: "X-Title")
+        }
+    }
 
     func send(
         key: String,
@@ -45,9 +55,9 @@ struct OpenAIClient: AIProviderClient {
         body["temperature"] = 0.6
         body["max_tokens"] = 4096
 
-        var req = URLRequest(url: AIProvider.openAI.endpoint)
+        var req = URLRequest(url: provider.endpoint)
         req.httpMethod = "POST"
-        req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        applyHeaders(&req, key: key)
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONSerialization.data(withJSONObject: body)
 
@@ -59,9 +69,9 @@ struct OpenAIClient: AIProviderClient {
     }
 
     func fetchModels(key: String, session: URLSession) async throws -> [String] {
-        var req = URLRequest(url: AIProvider.openAI.modelsEndpoint)
+        var req = URLRequest(url: provider.modelsEndpoint)
         req.httpMethod = "GET"
-        req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        applyHeaders(&req, key: key)
 
         return parseModels(try await performRequest(req, session: session))
     }
@@ -69,6 +79,10 @@ struct OpenAIClient: AIProviderClient {
     /// Pure: unwrap the `/models` body into chat-capable ids (gpt*/o*). No network — unit-tested.
     func parseModels(_ json: [String: Any]) -> [String] {
         guard let list = json["data"] as? [[String: Any]] else { return [] }
+        if provider == .openRouter {
+            // Only the free models, sorted, so the picker lists what costs nothing to use.
+            return list.compactMap { $0["id"] as? String }.filter { $0.hasSuffix(":free") }.sorted()
+        }
         return list.compactMap { row in
             guard let id = row["id"] as? String, !id.isEmpty else { return nil }
             return (id.hasPrefix("gpt") || id.hasPrefix("o")) ? id : nil
@@ -95,9 +109,9 @@ struct OpenAIClient: AIProviderClient {
             body["max_tokens"] = 4096
         }
 
-        var req = URLRequest(url: AIProvider.openAI.endpoint)
+        var req = URLRequest(url: provider.endpoint)
         req.httpMethod = "POST"
-        req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        applyHeaders(&req, key: key)
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONSerialization.data(withJSONObject: body)
 

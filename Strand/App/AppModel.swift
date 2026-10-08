@@ -768,6 +768,10 @@ final class AppModel: ObservableObject {
             await intelligence.analyzeRecent(skipIfUnchanged: true)
         }
         await refreshV5Signals()
+        // A workout found in the fresh data is announced now rather than waiting for Today to be opened.
+        if PuffinExperiment.autoDetectWorkoutsEnabled {
+            WorkoutDetectedNotifier.onSyncCompleted(candidate: await repo.autoDetectCandidate(), enabled: true)
+        }
         #if os(iOS)
         // #980: a strap backfill routinely completes while the app is BACKGROUNDED (it runs as a
         // bluetooth-central, so it stays alive to receive the offload). The only other widget-publish
@@ -1693,11 +1697,30 @@ final class AppModel: ObservableObject {
             enabled: behavior.batteryAlerts)
     }
 
+    /// Experimental smart-wake window (`SmartWakeWindow`), planned whenever the alarm is (re)armed.
+    lazy var smartWake = SmartWakeWindow(model: self)
+
+    /// The next moment the strap alarm will actually buzz, or nil when nothing will fire.
+    ///
+    /// The one funnel every alarm readout resolves through (the Alarms screen, Home's evening card), on
+    /// the same pure `nextSmartAlarmDate` this file arms the strap from. A WHOOP 5/MG arms only with
+    /// Experimental on, so without it there is no alarm to promise (#864).
+    func nextArmedStrapAlarm(from now: Date = Date()) -> Date? {
+        guard behavior.smartAlarmEnabled, !(whoop5Detected && !PuffinExperiment.isEnabled) else { return nil }
+        return Self.nextSmartAlarmDate(minutes: behavior.smartAlarmMinutes,
+                                       weekdays: behavior.smartAlarmWeekdays,
+                                       overrides: WindDownNudge.perDayWakeOverrides,
+                                       from: now)
+    }
+
     func applySmartAlarm() {
+        // The wind-down reminder counts back from the alarm when it follows the sleep need.
+        WindDownNudge.refresh()
         let overrides = WindDownNudge.perDayWakeOverrides
         guard behavior.smartAlarmEnabled else {
             ble.disableStrapAlarm()
             Self.cancelSmartAlarmBackupNotification()
+            smartWake.plan(nextAlarm: nil)
             return
         }
         guard let next = Self.nextSmartAlarmDate(minutes: behavior.smartAlarmMinutes,
@@ -1709,7 +1732,9 @@ final class AppModel: ObservableObject {
             Self.cancelSmartAlarmBackupNotification()
             return
         }
-        ble.armStrapAlarm(at: next)
+        // The smart-wake window may already have moved this alarm earlier; keep that, then follow the alarm.
+        ble.armStrapAlarm(at: smartWake.effectiveAlarm(for: next))
+        smartWake.plan(nextAlarm: next)
         // Replace (remove + re-add by stable identifier) on every re-arm so the backup never stacks.
         // The log sink hops to the main actor because the auth check completes off-main and LiveState is
         // @MainActor - the same Task hop the importTraceSink uses.

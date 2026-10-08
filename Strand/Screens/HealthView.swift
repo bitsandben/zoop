@@ -59,6 +59,20 @@ struct HealthView: View {
 private struct HealthSectionsStack: View {
     var body: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
+            #if os(iOS)
+            // iOS follows the redesign's health monitor: the vitals lead, then live heart rate, what
+            // drives recovery, and the longer-range ages. Syncing runs on its own, so its status card
+            // closes the page rather than opening it.
+            VitalsSection()
+            RecoveryContributorsSection()
+            VitalitySection()
+            FitnessAgeSection()
+            SkinTempSection()
+            HealthHubLinksSection()
+            // Live heart rate sits low on the page: it is a live readout, not a summary.
+            HeartRateSection()
+            SyncStatusSection()
+            #else
             // Manual "Sync now" + honest sync status (#364). Its own view so the ~1Hz HR stream
             // doesn't re-render it; depends on `live` (connection/backfill state) + `model`.
             SyncStatusSection()
@@ -87,6 +101,7 @@ private struct HealthSectionsStack: View {
             // v5 deep-links: the records logbook + the multi-device fused record, reachable
             // from their honest Health home as drill-in rows (not their own destinations).
             HealthHubLinksSection()
+            #endif
         }
     }
 }
@@ -517,7 +532,7 @@ private struct LiveTimeChart: View {
                         )
                     }
                 }
-                .animation(StrandMotion.fade, value: hoverX)
+                .animation(StrandMotion.fade, value: hoverX == nil)
                 .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
                 .contentShape(Rectangle())
                 .onContinuousHover(coordinateSpace: .local) { phase in
@@ -532,6 +547,9 @@ private struct LiveTimeChart: View {
                         }
                     }
                 }
+                // Touch: the shared chart scrub (sideways drag or short hold); vertical drags scroll.
+                .zoopChartScrub(onChange: { hoverX = min(max($0.x, plot.minX), plot.maxX) },
+                                onEnd: { hoverX = nil })
             }
         }
         .clipped()
@@ -880,7 +898,7 @@ private struct FitnessAgeSection: View {
             HStack(spacing: 8) {
                 Image(systemName: "lungs.fill")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(StrandPalette.metricCyan)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                 Text("Add your waist for a more accurate VO₂max")
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textSecondary)
@@ -971,6 +989,12 @@ private struct FitnessAgeSection: View {
                 .font(StrandFont.footnote)
                 .foregroundStyle(StrandPalette.textTertiary)
 
+            #if os(iOS)
+            // What the number is made of: the same two inputs, aggregated the same way as the weekly
+            // computation, each with the years it moves the age.
+            FitnessAgeContributors(days: Array(repo.days.suffix(7)), sex: profile.sex)
+            #endif
+
             Divider().overlay(StrandPalette.hairline)
 
             // The honest disclosure: what we have / what we still need, grouped by what it unlocks.
@@ -979,7 +1003,7 @@ private struct FitnessAgeSection: View {
             } label: {
                 HStack(spacing: ZoopMetrics.space2) {
                     Image(systemName: "info.circle")
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text("How accurate is this?")
                         .font(StrandFont.subhead)
@@ -1082,7 +1106,7 @@ private struct ReadinessChecklistCard: View {
                             Button(action: onRefresh) {
                                 Image(systemName: "arrow.clockwise")
                                     .font(StrandFont.subhead)
-                                    .foregroundStyle(StrandPalette.accent)
+                                    .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel("Refresh Fitness Age now")
@@ -1229,7 +1253,7 @@ private struct VitalitySection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
-            SectionHeader("Vitality", overline: "Weekly",
+            SectionHeader("Health score", overline: "Weekly",
                           trailing: bodyAge != nil ? String(localized: "Body Age \(Int((bodyAge ?? 0).rounded()))") : nil)
             if let v = vitality, let ba = bodyAge {
                 hero(vitality: v, bodyAge: ba)
@@ -1255,7 +1279,7 @@ private struct VitalitySection: View {
                 // Charge world, filled to the score, with the number counting up over it (Today's
                 // HeroScoreCell idiom). Taps splash the gauge; the number is hit-transparent.
                 VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
-                    Text("Vitality").strandOverline()
+                    Text("Health score").strandOverline()
                     ZStack {
                         LiquidVessel(value: max(0, min(1, v / 100)), tint: StrandPalette.chargeColor, animated: true)
                             .frame(width: 108, height: 108)
@@ -1332,6 +1356,14 @@ private struct VitalitySection: View {
 private struct VitalsSection: View {
     @EnvironmentObject var repo: Repository
 
+    private static var rangeFootnote: LocalizedStringKey {
+        #if os(iOS)
+        "After 14 nights, ranges are your own. Before that, typical adult ranges. Not medical advice."
+        #else
+        "Once Zoop has 14 nights of history, in-range compares each vital to your own baseline (approximate, not medical advice); until then, typical adult ranges apply."
+        #endif
+    }
+
     // Temperature display preference (D#103). Skin temp is stored in °C (absolute or a ±deviation); the
     // toggle re-labels it to °F. Display-only — banding still runs on the stored °C value.
     @AppStorage(UnitPrefs.systemKey) private var unitSystemRaw = UnitSystem.metric.rawValue
@@ -1363,7 +1395,14 @@ private struct VitalsSection: View {
                 alignment: .leading,
                 spacing: ZoopMetrics.gap
             ) {
-                ForEach(Array(readings.enumerated()), id: \.element.id) { idx, v in
+                // iOS hides the experimental raw SpO₂ tile until it has a value to show.
+                ForEach(Array(readings.filter { r in
+                    #if os(iOS)
+                    return r.key != "spo2raw" || r.value != nil
+                    #else
+                    return true
+                    #endif
+                }.enumerated()), id: \.element.id) { idx, v in
                     // Each headline vital is now a liquid tile: the signature LiquidVessel gauge tinted
                     // to the metric's colour world (rose RHR, purple HRV, cyan SpO₂, amber skin temp),
                     // filled to the metric's fraction, with the value counting up beside it and the same
@@ -1373,7 +1412,7 @@ private struct VitalsSection: View {
                         .staggeredAppear(index: idx)
                 }
             }
-            Text("Once NOOP has 14 nights of history, in-range compares each vital to your own baseline (approximate, not medical advice); until then, typical adult ranges apply.")
+            Text(Self.rangeFootnote)
                 .font(StrandFont.footnote)
                 .foregroundStyle(StrandPalette.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1442,14 +1481,29 @@ private struct LiquidVitalTile: View {
                         .accessibilityHidden(true)
                 }
                 #endif
+                #if os(iOS)
+                // Just the state. Day and source stay in the VoiceOver text and the detail screen.
+                Text(stateWord)
+                    .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary).lineLimit(1)
+                    .padding(.top, 4)
+                #else
                 Text(reading.stateCaption)
                     .font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary).lineLimit(1)
                     .padding(.top, 4)
+                #endif
             }
         }
         .frame(minHeight: ZoopMetrics.tileHeight, maxHeight: .infinity)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(reading.accessibilityText)
+    }
+
+    private var stateWord: LocalizedStringKey {
+        switch reading.banding.band {
+        case .inRange: return "Normal"
+        case .outOfRange: return "Out of range"
+        case .noData: return "No data"
+        }
     }
 
     /// The vessel's fill (0…1): the vital's value mapped onto its physiological span, matching Today's
@@ -1473,6 +1527,112 @@ private struct LiquidVitalTile: View {
         }
     }
 }
+
+#if os(iOS)
+/// The two inputs behind Fitness Age as WHOOP-style rows: the reading, a scale with the reference
+/// marked, and how many years it adds or removes. The two rows sum to the gap to your real age.
+private struct FitnessAgeContributors: View {
+    let days: [DailyMetric]
+    let sex: String
+
+    private var restingHR: Double? {
+        let v = days.compactMap(\.restingHr).map(Double.init).sorted()
+        guard !v.isEmpty else { return nil }
+        return v.count % 2 == 1 ? v[v.count / 2] : (v[v.count / 2 - 1] + v[v.count / 2]) / 2
+    }
+    private var activeStrains: [Double] { days.compactMap(\.strain).filter { $0 >= 30 } }
+    private var paIndex: Double {
+        let st = activeStrains
+        let mean = st.isEmpty ? 0 : st.reduce(0, +) / Double(st.count)
+        return FitnessAgeEngine.physicalActivityIndexFromStrain(activeDaysPerWeek: st.count, meanActiveStrain: mean)
+    }
+
+    var body: some View {
+        if let rhr = restingHR {
+            let c = FitnessAgeEngine.contributionYears(sex: sex, restingHR: rhr, paIndex: paIndex)
+            VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
+                Text("What shapes it")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                row(title: "Resting heart rate",
+                    value: "\(Int(rhr.rounded())) bpm",
+                    detail: String(localized: "7-day median · reference 65"),
+                    position: (rhr - 40) / 40, reference: 25.0 / 40, lowerIsBetter: true,
+                    years: c.restingHR)
+                row(title: "Activity",
+                    value: String(localized: "\(activeStrains.count) active days"),
+                    detail: String(localized: "last 7 days · index \(paIndex.formatted(.number.precision(.fractionLength(1)))) of 15"),
+                    position: paIndex / 15, reference: 5.0 / 15, lowerIsBetter: false,
+                    years: c.activity)
+            }
+        }
+    }
+
+    private func row(title: LocalizedStringKey, value: String, detail: String,
+                     position: Double, reference: Double, lowerIsBetter: Bool, years: Double) -> some View {
+        let younger = years < -0.05, older = years > 0.05
+        let tint = younger ? StrandPalette.statusPositive : (older ? StrandPalette.statusWarning : StrandPalette.textSecondary)
+        return HStack(alignment: .center, spacing: ZoopMetrics.space4) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textSecondary)
+                Text(value)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                scale(position: position, reference: reference, lowerIsBetter: lowerIsBetter)
+                Text(detail)
+                    .font(StrandFont.footnote)
+                    .foregroundStyle(StrandPalette.textTertiary)
+            }
+            VStack(alignment: .trailing, spacing: 0) {
+                Text((years > 0 ? "+" : "") + years.formatted(.number.precision(.fractionLength(1))))
+                    .font(StrandFont.display(26))
+                    .foregroundStyle(tint)
+                Text("years")
+                    .font(StrandFont.footnote)
+                    .foregroundStyle(StrandPalette.textSecondary)
+            }
+            .frame(minWidth: 64, alignment: .trailing)
+        }
+    }
+
+    /// A segmented scale from worse (orange) to better (lime), the reference tick below and your
+    /// reading as a marker above.
+    private func scale(position: Double, reference: Double, lowerIsBetter: Bool) -> some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let segments = 10
+            let x = CGFloat(min(max(position, 0), 1)) * w
+            let rx = CGFloat(min(max(reference, 0), 1)) * w
+            ZStack(alignment: .topLeading) {
+                HStack(spacing: 2) {
+                    ForEach(0..<segments, id: \.self) { i in
+                        let f = Double(i) / Double(segments - 1)
+                        let good = lowerIsBetter ? 1 - f : f
+                        Capsule()
+                            .fill(StrandPalette.sample(stops: [
+                                .init(color: StrandPalette.statusWarning, location: 0),
+                                .init(color: StrandPalette.textTertiary, location: 0.5),
+                                .init(color: StrandPalette.statusPositive, location: 1)], at: good))
+                            .frame(height: 5)
+                    }
+                }
+                .offset(y: 9)
+                Image(systemName: "arrowtriangle.down.fill")
+                    .font(.system(size: 9))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                    .position(x: x, y: 3)
+                Image(systemName: "arrowtriangle.up.fill")
+                    .font(.system(size: 7))
+                    .foregroundStyle(StrandPalette.textTertiary)
+                    .position(x: rx, y: 20)
+            }
+        }
+        .frame(height: 24)
+    }
+}
+#endif
 
 // MARK: - Skin-temperature suite (v5: illness heads-up · body clock · cycle awareness)
 

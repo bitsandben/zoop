@@ -209,7 +209,9 @@ struct WorkoutsView: View {
                 let zonesSummary = WorkoutZones.summary(from: windowRows)
 
                 workoutActionRow
+                #if !os(iOS)
                 scopeBar
+                #endif
                 rangeBar(rows: windowRows, effectiveRange: resolved)
                 if let postLogNote { postLogBanner(postLogNote) }
                 effortHero(rows: windowRows, effectiveRange: resolved, groups: groups)
@@ -427,7 +429,7 @@ struct WorkoutsView: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(StrandPalette.effortColor)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.effortColor))
                 .accessibilityHidden(true)
             Text(text)
                 .font(StrandFont.footnote)
@@ -514,6 +516,46 @@ struct WorkoutsView: View {
     /// #64: filter controls beside the range pill — a Sport menu, a Source menu, and a search field, with
     /// an "×" clear chip that appears only when a filter is active. Present on both size classes / both
     /// platforms. The predicate is the pure `WorkoutFilter`; these controls only drive its state.
+    #if os(iOS)
+    /// iOS folds scope, sport and source into one menu, so a single line sits between the range and
+    /// the content. The sport list replaces the free-text search there.
+    private var filterBar: some View {
+        let parts = [scope == .current ? nil : String(localized: "Archived"), sportFilter,
+                     sourceFilter.map(Self.sourceFilterLabel)].compactMap { $0 }
+        return HStack(spacing: 8) {
+            filterMenu(
+                title: parts.isEmpty ? String(localized: "All workouts") : parts.joined(separator: " · "),
+                active: !parts.isEmpty,
+                a11y: String(localized: "Filter workouts")
+            ) {
+                Picker("Scope", selection: $scope) {
+                    ForEach(Scope.allCases) { s in Text(s.label).tag(s) }
+                }
+                Menu(sportFilter ?? String(localized: "All sports")) {
+                    Button(String(localized: "All sports")) { sportFilter = nil }
+                    Divider()
+                    ForEach(availableSports, id: \.self) { s in
+                        Button(s) { sportFilter = s }
+                    }
+                }
+                Menu(sourceFilter.map(Self.sourceFilterLabel) ?? String(localized: "All sources")) {
+                    Button(String(localized: "All sources")) { sourceFilter = nil }
+                    Divider()
+                    ForEach(Self.sourceFilterOptions, id: \.self) { opt in
+                        Button(Self.sourceFilterLabel(opt)) { sourceFilter = opt }
+                    }
+                }
+                if !parts.isEmpty || filter.isActive {
+                    Divider()
+                    Button(String(localized: "Clear filters"), role: .destructive) {
+                        scope = .current; sportFilter = nil; sourceFilter = nil; searchText = ""
+                    }
+                }
+            }
+            Spacer(minLength: 0)
+        }
+    }
+    #else
     private var filterBar: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
@@ -563,6 +605,7 @@ struct WorkoutsView: View {
             }
         }
     }
+    #endif
 
     /// A pill-styled filter menu: the current selection as its label, tinted the Effort colour when a
     /// filter is active so the user can see at a glance that the list is narrowed.
@@ -1067,7 +1110,7 @@ struct WorkoutsView: View {
                 HStack(spacing: 10) {
                     Image(systemName: sportIcon(g.sport))
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(StrandPalette.effortColor)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.effortColor))
                         .frame(width: 22, alignment: .center)
                     Text(WorkoutSource.displaySport(g.sport))
                         .font(StrandFont.headline)
@@ -2014,7 +2057,7 @@ private struct WorkoutRecoveryTrendChart: View {
                         )
                     }
                 }
-                .animation(StrandMotion.fade, value: hoverX)
+                .animation(StrandMotion.fade, value: hoverX == nil)
                 .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
                 .contentShape(Rectangle())
                 .onContinuousHover(coordinateSpace: .local) { phase in
@@ -2029,6 +2072,9 @@ private struct WorkoutRecoveryTrendChart: View {
                         }
                     }
                 }
+                // Touch: the shared chart scrub (sideways drag or short hold); vertical drags scroll.
+                .zoopChartScrub(onChange: { hoverX = min(max($0.x, plot.minX), plot.maxX) },
+                                onEnd: { hoverX = nil })
             }
         }
         .accessibilityLabel("Heart-rate recovery trend in beats per minute")

@@ -149,7 +149,7 @@ struct FusedRecordView: View {
         HStack(spacing: 8) {
             Image(systemName: "checkmark.seal")
                 .font(StrandFont.footnote)
-                .foregroundStyle(StrandPalette.accent)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                 .accessibilityHidden(true)
             if let owner = record.dayOwner {
                 Text("Today's scores owned by \(owner.displayName)")
@@ -184,7 +184,7 @@ struct FusedRecordView: View {
 
     /// The pillar's standing non-clinical line (umbrella §4.1). Kept inline + plain — wellness only.
     private var disclaimerNote: some View {
-        Text("NOOP picks the best-sourced number and shows you where each came from. It's for wellness and curiosity. It doesn't diagnose or replace medical advice.")
+        Text("Zoop picks the best-sourced number and shows you where each came from. It's for wellness and curiosity. It doesn't diagnose or replace medical advice.")
             .font(StrandFont.footnote)
             .foregroundStyle(StrandPalette.textTertiary)
             .fixedSize(horizontal: false, vertical: true)
@@ -331,7 +331,7 @@ private struct ConflictCompareSheet: View {
     private var point: FusedMetricPoint { row.point }
 
     var body: some View {
-        ScreenScaffold(title: LocalizedStringKey(row.label), subtitle: "Your bands report different numbers. Here's every source, and the one NOOP is using.") {
+        ScreenScaffold(title: LocalizedStringKey(row.label), subtitle: "Your bands report different numbers. Here's every source, and the one Zoop is using.") {
             VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 ZoopCard {
                     VStack(spacing: 0) {
@@ -353,9 +353,9 @@ private struct ConflictCompareSheet: View {
                     HStack(alignment: .top, spacing: 10) {
                         Image(systemName: "info.circle")
                             .font(StrandFont.subhead)
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
-                        Text("NOOP shows the \(winner.source.displayName) reading because it \(winner.reason) for this metric: a higher-trust source here, not a verdict that the others are wrong.")
+                        Text("Zoop shows the \(winner.source.displayName) reading because it \(winner.reason) for this metric: a higher-trust source here, not a verdict that the others are wrong.")
                             .font(StrandFont.subhead)
                             .foregroundStyle(StrandPalette.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)

@@ -13,8 +13,13 @@ import SwiftUI
 // DayNavBar (StrandComponents.kt). Offset is days-back-from-today (0 = today).
 
 public struct DayNavBar: View {
+    /// `standard` is the full-width navigator with a date block; `pill` is the compact capsule the
+    /// iPhone Home header uses, with the day label in an inner pill between the two chevrons.
+    public enum Style: Sendable { case standard, pill }
+
     private let selectedOffset: Int
     private let today: Date
+    private let style: Style
     private let onSelect: (Int) -> Void
 
     @State private var showingPicker = false
@@ -24,9 +29,10 @@ public struct DayNavBar: View {
     /// so every label here counts back from it. Passing it in instead of reading `Date()` keeps the
     /// macOS full-date label in step with the data shown in the 00:00-04:00 window, where a raw
     /// `Date()` already reads the next calendar day while the screen still shows the logical day (#14).
-    public init(selectedOffset: Int, today: Date, onSelect: @escaping (Int) -> Void) {
+    public init(selectedOffset: Int, today: Date, style: Style = .standard, onSelect: @escaping (Int) -> Void) {
         self.selectedOffset = selectedOffset
         self.today = today
+        self.style = style
         self.onSelect = onSelect
     }
 
@@ -50,6 +56,56 @@ public struct DayNavBar: View {
     }
 
     public var body: some View {
+        switch style {
+        case .standard: standardBody
+        case .pill: pillBody
+        }
+    }
+
+    private var pillBody: some View {
+        HStack(spacing: 0) {
+            Button { onSelect(selectedOffset + 1) } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                    .frame(width: 34, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("Previous day", bundle: .module))
+
+            Button { showingPicker = true } label: {
+                Text(label, bundle: .module)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .padding(.horizontal, 20)
+                    .frame(minWidth: 104, minHeight: 36)
+                    .background(Capsule().fill(StrandPalette.surfaceBase))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("Pick a date", bundle: .module))
+            .popover(isPresented: $showingPicker) {
+                datePickerPopover
+            }
+
+            Button { if canGoNewer { onSelect(selectedOffset - 1) } } label: {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(canGoNewer ? StrandPalette.textPrimary : StrandPalette.textTertiary)
+                    .frame(width: 34, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!canGoNewer)
+            .accessibilityLabel(Text("Next day", bundle: .module))
+        }
+        .padding(4)
+        .background(Capsule().fill(StrandPalette.surfaceRaised))
+    }
+
+    private var standardBody: some View {
         HStack(spacing: 12) {
             Spacer(minLength: 0)
             Button { onSelect(selectedOffset + 1) } label: {

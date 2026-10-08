@@ -407,6 +407,15 @@ struct StressView: View {
     // "of 3" over it (the Today HeroScoreCell / Live BPM-gauge idiom). The band pill sits top-trailing and
     // one plain-English line explains the number below. Frosted card, liquid finish.
 
+    #if os(iOS)
+    /// The redesign's stress hero: the squircle arch with the score and band under its crown, drawn
+    /// straight on the canvas.
+    private func heroCard(_ model: StressModel) -> some View {
+        StressArchGauge(score: model.score, bandTitle: model.band.title)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, ZoopMetrics.space2)
+    }
+    #else
     private func heroCard(_ model: StressModel) -> some View {
         ZoopCard(tint: StressRamp.calm) {
             VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
@@ -447,6 +456,7 @@ struct StressView: View {
             }
         }
     }
+    #endif
 
     // MARK: 1b · Advanced HRV readouts (additive, on-demand)
     //
@@ -609,6 +619,12 @@ struct StressView: View {
                 // because TrendChart keys its colors off `valueRange`, not this domain.
                 let peak = (points.map(\.value).max() ?? 3).rounded(.up)
                 let yTop = max(1, peak + 0.3)
+                // The one segmented control, above the chart like every range filter. Its eight options
+                // use the shared adaptive-width mode so the control stays inside the same page gutter as
+                // the chart on compact iPhones.
+                SegmentedPillControl(ExploreRange.allCases, selection: $range,
+                                     adaptsToAvailableWidth: true) { $0.label }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 ChartCard(
                     title: "Stress · \(range.label)",
                     subtitle: String(localized: "Daily 0-3 proxy"),
@@ -632,11 +648,6 @@ struct StressView: View {
                         ("Days", "\(points.count)"),
                     ])
                 }
-                // The one segmented control. Its eight options use the shared adaptive-width mode so
-                // the control stays inside the same page gutter as the chart on compact iPhones.
-                SegmentedPillControl(ExploreRange.allCases, selection: $range,
-                                     adaptsToAvailableWidth: true) { $0.label }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
             } else {
                 ZoopCard(tint: StressRamp.calm) {
                     Text("Not enough recent days to chart a trend yet. Import a history or keep wearing your strap.")
@@ -708,6 +719,57 @@ struct StressView: View {
 /// 0–3 value counting up over it and "of 3" beneath (the Today HeroScoreCell / Live BPM-gauge idiom).
 /// CountUpText self-animates the number roll; the numeral is hit-transparent so a tap reaches the
 /// vessel and splashes it.
+#if os(iOS)
+/// The stress score on the redesign's arch: a squircle top open at the bottom, filled from the left
+/// along the low → high ramp, with a white marker at the score and the value under the crown.
+private struct StressArchGauge: View {
+    let score: Double        // 0–3
+    let bandTitle: String
+    @State private var shown: Double = 0
+
+    private var frac: Double { max(0, min(1, score / 3.0)) }
+
+    var body: some View {
+        VStack(spacing: 6) {
+            ZStack(alignment: .bottom) {
+                SquircleArch()
+                    .stroke(ZoopVisualStyle.ringTrack, style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                SquircleArch()
+                    .trim(from: 0, to: shown)
+                    .stroke(AngularGradient(gradient: StressRamp.gradient, center: .bottom,
+                                            startAngle: .degrees(180), endAngle: .degrees(360)),
+                            style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                SquircleArch()
+                    .trim(from: max(0, shown - 0.006), to: min(1, shown + 0.006))
+                    .stroke(Color.white, style: StrokeStyle(lineWidth: 20, lineCap: .round))
+                VStack(spacing: 2) {
+                    Text(StressTrace.formatLevel(score))
+                        .font(StrandFont.display(64))
+                        .foregroundStyle(StrandPalette.textPrimary)
+                    Text(bandTitle.capitalized)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(StressRamp.color(score))
+                }
+                .padding(.bottom, 4)
+            }
+            .frame(width: 240, height: 150)
+            HStack {
+                Text(StressTrace.formatLevel(0))
+                Spacer()
+                Text(StressTrace.formatLevel(3))
+            }
+            .font(.system(size: 12, weight: .medium).monospacedDigit())
+            .foregroundStyle(StrandPalette.textTertiary)
+            .frame(width: 240)
+        }
+        .onAppear { withAnimation(.easeOut(duration: 0.9)) { shown = frac } }
+        .onChangeCompat(of: score) { _ in withAnimation(.easeOut(duration: 0.6)) { shown = frac } }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(String(localized: "Stress \(StressTrace.formatLevel(score)) of 3"))
+    }
+}
+#endif
+
 private struct StressHeroGauge: View {
     let score: Double        // 0–3
     let tint: Color
@@ -781,9 +843,9 @@ enum StressRamp {
     /// Band anchors, lifted from the shared palette (no hard-coded hex). These are the
     /// blue / green / amber the totals legend and band dots use, kept in lock-step with
     /// the gauge gradient below.
-    static let calm    = StrandPalette.accent         // #60A0E0 — calm WHOOP blue
-    static let steady  = StrandPalette.statusPositive // #03E095 — balanced WHOOP green
-    static let tense   = StrandPalette.statusWarning  // #F0A020 — high WHOOP amber
+    static let calm    = StrandPalette.stressLow     // low — WHOOP blue
+    static let steady  = StrandPalette.stressMedium  // medium — WHOOP green
+    static let tense   = StrandPalette.stressHigh    // high — WHOOP orange
 
     /// The 3-stop gauge ramp, evenly spaced (blue → green → amber).
     static let stops: [Gradient.Stop] = [
@@ -1346,6 +1408,9 @@ private struct StressPreviewHarness: View {
                              accent: StressRamp.calm)
                 }
 
+                SegmentedPillControl(ExploreRange.allCases, selection: $range,
+                                     adaptsToAvailableWidth: true) { $0.label }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 ChartCard(title: "Stress · M", subtitle: "Daily 0-3 proxy", trailing: "avg 1.5") {
                     TrendChart(points: sampleStressTrend(30), gradient: StressRamp.gradient,
                                valueRange: 0...3, showsArea: true, height: ZoopMetrics.chartHeight,
@@ -1353,9 +1418,6 @@ private struct StressPreviewHarness: View {
                 } footer: {
                     ChartFooter([("Today", StressTrace.formatLevel(score)), ("Average", "1.5"), ("Days", "30")])
                 }
-                SegmentedPillControl(ExploreRange.allCases, selection: $range,
-                                     adaptsToAvailableWidth: true) { $0.label }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .padding(ZoopMetrics.screenPadding)
         }

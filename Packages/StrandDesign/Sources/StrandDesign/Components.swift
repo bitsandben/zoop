@@ -117,12 +117,26 @@ public extension View {
     /// `largeFirst == false` opens at .medium with .large reachable by dragging up (short
     /// forms); `true` opens full-height (long scrolls).
     func noopSheetPresentation(largeFirst: Bool) -> some View {
+        // Zoop: sheets stop at about three quarters of the screen so the page behind stays in view;
+        // long ones can still be pulled to full height.
         self
             .presentationDragIndicator(.visible)
-            .presentationDetents(largeFirst ? [.large] : [.medium, .large])
+            .presentationDetents(largeFirst ? [.fraction(0.75), .large] : [.medium, .fraction(0.75)])
     }
 }
 #endif
+
+public extension View {
+    /// Keep a small explainer a small popover on iPhone instead of letting it grow into a full-screen
+    /// sheet holding two lines of text. A no-op on macOS, where popovers never adapt.
+    @ViewBuilder func compactPopover() -> some View {
+        #if os(iOS)
+        if #available(iOS 16.4, *) { self.presentationCompactAdaptation(.popover) } else { self }
+        #else
+        self
+        #endif
+    }
+}
 
 // MARK: - Surface
 
@@ -230,7 +244,11 @@ public struct StatTile<Accessory: View>: View {
                 }
                 Spacer(minLength: 4)
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    #if os(iOS)
+                    Text(value).font(.system(size: 24, weight: .bold)).foregroundStyle(accent).lineLimit(1).minimumScaleFactor(0.6)
+                    #else
                     Text(value).font(StrandFont.number(26)).foregroundStyle(accent).lineLimit(1).minimumScaleFactor(0.6)
+                    #endif
                     Spacer(minLength: 0)
                     // Trend chip — the delta as a tinted pill with a direction arrow.
                     if let delta { TrendChip(text: delta, color: deltaColor) }
@@ -548,11 +566,19 @@ public struct SourceBadge: View {
         // `.frame(height:)` centres its content by default, so the label sits mid-capsule for free. Noted
         // because the Android twin pinned the same 18 with `heightIn` applied to the label itself, which
         // top-aligns — same number, different render. That one is matched to this, not the reverse.
-        Text(text).textCase(.uppercase).font(.system(size: 10, weight: .semibold, design: .rounded)).tracking(0.5)
+        #if os(iOS)
+        // The redesign keeps colour for data: provenance reads as a quiet grey capsule.
+        Text(text).font(.system(size: 11, weight: .semibold))
+            .padding(.horizontal, 9).frame(height: ZoopMetrics.sourceBadgeHeight)
+            .background(StrandPalette.surfaceOverlay, in: Capsule(style: .continuous))
+            .foregroundStyle(StrandPalette.textSecondary)
+        #else
+        Text(text).textCase(.uppercase).font(.system(size: 10, weight: .semibold, design: .default)).tracking(0.5)
             .padding(.horizontal, 9).frame(height: ZoopMetrics.sourceBadgeHeight)
             .background(tint.opacity(0.16), in: Capsule(style: .continuous))
             .foregroundStyle(tint)
             .overlay(Capsule(style: .continuous).strokeBorder(tint.opacity(0.34), lineWidth: 1))
+        #endif
     }
 }
 
@@ -714,6 +740,15 @@ public struct ScoreStatePill: View {
         self.state = state; self.text = text
     }
     public var body: some View {
+        #if os(iOS)
+        // Zoop iOS: no lifecycle badges ("Solid", "Building"). They read as decoration, not information.
+        EmptyView()
+        #else
+        pill
+        #endif
+    }
+
+    private var pill: some View {
         let hue = state.color
         return HStack(spacing: 6) {
             PulseDot(color: hue, pulsing: state.pulsing, size: 7)

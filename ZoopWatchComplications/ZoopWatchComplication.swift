@@ -277,14 +277,14 @@ struct NOOPChargeView: View {
             }
             return String(localized: "Charge · cal")
         case .missing:
-            return noSnapshot ? String(localized: "Open NOOP") : String(localized: "Charge")
+            return noSnapshot ? String(localized: "Open Zoop") : String(localized: "Charge")
         }
     }
 
     // MARK: accessoryInline — a single line of text along the top of the face
 
     private var inlineText: String {
-        if noSnapshot { return String(localized: "NOOP · open on iPhone") }
+        if noSnapshot { return String(localized: "Zoop · open on iPhone") }
         // When the snapshot has aged out we never print the old number; we say it is stale and how old.
         if isStale {
             let fresh = freshness ?? String(localized: "old")
@@ -409,21 +409,21 @@ struct NOOPChargeView: View {
         // is a dash plainly so it is never mistaken for "still calibrating".
         if isStale {
             let fresh = freshness ?? String(localized: "a while ago")
-            return String(localized: "Charge out of date, last synced \(fresh). Open NOOP on iPhone.")
+            return String(localized: "Charge out of date, last synced \(fresh). Open Zoop on iPhone.")
         }
         switch charge {
         case .value(let v):    return String(localized: "Charge \(v) out of 100")
         case .calibrating:     return String(localized: "Charge calibrating, needs more data")
-        case .missing:         return noSnapshot ? String(localized: "No data, open NOOP on iPhone")
+        case .missing:         return noSnapshot ? String(localized: "No data, open Zoop on iPhone")
                                                  : String(localized: "Charge unavailable")
         }
     }
 
     private var accessibilityRectangular: String {
-        if noSnapshot { return String(localized: "NOOP. No data yet, open NOOP on your iPhone to sync.") }
+        if noSnapshot { return String(localized: "Zoop. No data yet, open Zoop on your iPhone to sync.") }
         if isStale {
             let fresh = freshness ?? String(localized: "a while ago")
-            return String(localized: "NOOP. Scores out of date, last synced \(fresh). Open NOOP on iPhone to refresh.")
+            return String(localized: "Zoop. Scores out of date, last synced \(fresh). Open Zoop on iPhone to refresh.")
         }
         func phrase(_ label: String, _ r: ScoreReadout) -> String {
             switch r {
@@ -435,7 +435,7 @@ struct NOOPChargeView: View {
         let chargePhrase = phrase(String(localized: "Charge"), charge)
         let effortPhrase = phrase(String(localized: "Effort"), effort)
         let restPhrase = phrase(String(localized: "Rest"), rest)
-        return String(localized: "NOOP. \(chargePhrase), \(effortPhrase), \(restPhrase).")
+        return String(localized: "Zoop. \(chargePhrase), \(effortPhrase), \(restPhrase).")
     }
 
     // Snapshot recency now comes straight from the shared contract (`freshnessText` / `isStale` on

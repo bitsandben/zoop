@@ -375,7 +375,7 @@ struct AppleHealthView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "heart.text.square.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(StrandPalette.metricCyan)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.metricCyan.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                         .accessibilityHidden(true)
@@ -402,7 +402,7 @@ struct AppleHealthView: View {
                     // can never work and the app can never appear under Settings › Health › Data Access
                     // & Devices. Give the honest path instead of impossible Settings instructions: bring
                     // data in via a file import or the HealthKit-free Shortcuts export.
-                    Text("This install can't connect to Apple Health directly. It was signed with a profile that doesn't include Apple's Health permission, so there's nothing to enable, and NOOP won't appear under Settings › Health.")
+                    Text("This install can't connect to Apple Health directly. It was signed with a profile that doesn't include Apple's Health permission, so there's nothing to enable, and Zoop won't appear under Settings › Health.")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -412,7 +412,7 @@ struct AppleHealthView: View {
                         .fixedSize(horizontal: false, vertical: true)
 
                 case .unknown, .denied:
-                    Text("Read your heart rate, HRV, blood oxygen, respiratory rate, sleep, steps and energy straight from Apple Health, and write NOOP's strap data back: sleep with full stages, continuous heart rate, workouts, and nightly vitals. Everything stays on \(Platform.deviceNounPhrase).")
+                    Text("Read your heart rate, HRV, blood oxygen, respiratory rate, sleep, steps and energy straight from Apple Health, and write Zoop's strap data back: sleep with full stages, continuous heart rate, workouts, and nightly vitals. Everything stays on \(Platform.deviceNounPhrase).")
                         .font(StrandFont.caption)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -434,7 +434,7 @@ struct AppleHealthView: View {
                     .buttonStyle(.borderedProminent)
                     .tint(StrandPalette.metricCyan)
                     if health.auth == .denied {
-                        Text("If you don't see the prompt, enable NOOP under Settings › Health › Data Access & Devices.")
+                        Text("If you don't see the prompt, enable Zoop under Settings › Health › Data Access & Devices.")
                             .font(StrandFont.footnote)
                             .foregroundStyle(StrandPalette.textTertiary)
                             .fixedSize(horizontal: false, vertical: true)

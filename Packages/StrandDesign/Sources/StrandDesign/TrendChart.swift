@@ -495,9 +495,11 @@ public struct TrendChart: View {
                             .allowsHitTesting(false)
                     }
                 }
-                .animation(StrandMotion.fade, value: hoverX)
+                // Fade the readout in and out only; while scrubbing it tracks the finger with no easing.
+                .animation(StrandMotion.fade, value: hoverX == nil)
                 .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
                 .contentShape(Rectangle())
+                #if os(macOS)
                 .gesture(DragGesture(minimumDistance: 0)
                     .onChanged { value in
                         guard showsHover, showsBars else { return }
@@ -508,6 +510,19 @@ public struct TrendChart: View {
                     }
                     .onEnded { _ in holdingBar = false; hoverX = nil },
                     including: showsHover && showsBars ? .all : .none)
+                #else
+                // Touch scrub for lines and bars alike (the shared mechanism): a sideways drag or a short
+                // hold engages it, a vertical drag still scrolls the page.
+                .zoopChartScrub(isEnabled: showsHover, onChange: { location in
+                    let x = min(max(location.x, plot.minX), plot.maxX)
+                    selectedPoint = nearestPoint(toX: x, proxy: proxy, plot: plot)
+                    holdingBar = showsBars
+                    hoverX = largeSelection ? nil : x
+                }, onEnd: {
+                    holdingBar = false
+                    hoverX = nil
+                })
+                #endif
                 .onContinuousHover(coordinateSpace: .local) { phase in
                     guard showsHover else { return }
                     // Update the hover position in a NON-animating transaction. Otherwise entering or

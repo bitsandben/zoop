@@ -7,7 +7,7 @@ enum AppChangelog {
 
     /// Bump this when you add a release below. The "What's New" sheet shows automatically when the
     /// stored last-seen version is behind this. (Decoupled from the bundle version on purpose.)
-    static let currentVersion = "12.0.0"
+    static let currentVersion = "1.0.0"
 
     struct Release: Identifiable {
         let version: String
@@ -19,6 +19,18 @@ enum AppChangelog {
 
     /// Newest first.
     static let releases: [Release] = [
+        // Zoop numbers its own releases from 1.0.0; the entries below it are the upstream NOOP history.
+        Release(
+            version: "1.0.0",
+            title: "Zoop",
+            date: "October 2026",
+            items: [
+                "**A new look.** Flat black, rounded-square score rings, and one colour for each kind of data.",
+                "**Home.** Sleep, Recovery and Strain at the top with today's strain target, then the health and stress monitors, your day and your dashboard.",
+                "**Health and Trends.** Vitals first, a trend viewer for any metric, and what your Fitness Age is made of.",
+                "**Workouts.** Detected workouts are announced after each sync, and a phone-tracked workout shows its route.",
+            ]
+        ),
         Release(
             version: "12.0.0",
             title: "Today your way, heart rate any app can read, and Italian",
@@ -2516,18 +2528,18 @@ enum AppChangelog {
         Expectation(
             icon: "flask",
             title: String(localized: "Independent, and experimental"),
-            body: String(localized: "NOOP is a personal, open project: not the WHOOP app, and not affiliated with WHOOP. It reads a strap you own, on your own device. Treat it as a capable work-in-progress rather than a finished product.")),
+            body: String(localized: "Zoop is a personal, open project: not the WHOOP app, and not affiliated with WHOOP. It reads a strap you own, on your own device. Treat it as a capable work-in-progress rather than a finished product.")),
         Expectation(
             icon: "checkmark.seal",
             title: String(localized: "WHOOP 4.0 is the supported path"),
-            body: String(localized: "WHOOP 4.0 is tested and works end to end. WHOOP 5.0/MG is newer: live heart rate works today, but deeper metrics (recovery, strain, sleep) for 5/MG are still being figured out. NOOP always tells you what's live versus still building.")),
+            body: String(localized: "WHOOP 4.0 is tested and works end to end. WHOOP 5.0/MG is newer: live heart rate works today, but deeper metrics (recovery, strain, sleep) for 5/MG are still being figured out. Zoop always tells you what's live versus still building.")),
         Expectation(
             icon: "hourglass",
             title: String(localized: "Your scores build over a few nights"),
-            body: String(localized: "Live heart rate is instant. Recovery, strain and sleep sharpen as NOOP learns your baseline over your first nights of wear. Want your history now? Import your WHOOP export in Data Sources and it backfills in about a minute.")),
+            body: String(localized: "Live heart rate is instant. Recovery, strain and sleep sharpen as Zoop learns your baseline over your first nights of wear. Want your history now? Import your WHOOP export in Data Sources and it backfills in about a minute.")),
         Expectation(
             icon: "lock.shield",
             title: String(localized: "Everything stays on your device"),
-            body: String(localized: "No account, no cloud, no sync. NOOP talks only to your strap and keeps everything local. Your data is yours alone.")),
+            body: String(localized: "No account, no cloud, no sync. Zoop talks only to your strap and keeps everything local. Your data is yours alone.")),
     ]
 }

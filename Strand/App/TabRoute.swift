@@ -35,6 +35,15 @@ enum TabRoute: Hashable {
     case health
     case hydration
     case coupled
+    /// The menstrual cycle calendar (iOS).
+    case cycle
+    /// What the stored history says: tonight, tomorrow, load and patterns (iOS).
+    case patterns
+    /// Guided breathing and the strap alarm, reachable from Home's moment card (iOS).
+    case breathe
+    case alarms
+    /// Bedtime for tonight and the strap alarm (iOS).
+    case sleepPlanner
 }
 
 extension View {
@@ -71,6 +80,26 @@ extension View {
             case .health: HealthView()
             case .hydration: HydrationView()
             case .coupled: CoupledView()
+            case .breathe: BreathingView()
+            case .alarms: SmartAlarmView()
+            case .sleepPlanner:
+                #if os(iOS)
+                SleepPlannerHost()
+                #else
+                SmartAlarmView()
+                #endif
+            case .patterns:
+                #if os(iOS)
+                PatternsScreen()
+                #else
+                EmptyView()
+                #endif
+            case .cycle:
+                #if os(iOS)
+                CycleScreen()
+                #else
+                EmptyView()
+                #endif
             }
         }
     }

@@ -164,7 +164,7 @@ struct SleepView: View {
                        // re-evaluates this heavy body.
                        onRefresh: { await repo.refresh() },
                        lazy: true,
-                       topBackground: resolved == nil ? nil : AnyView(sleepNightTopBackground)) {
+                       topBackground: resolved == nil ? nil : sleepTopBackground) {
             Group {
                 if let resolved {
                     // Each top-level section fades + rises in sequence on first appear (Reduce-Motion safe).
@@ -314,7 +314,16 @@ struct SleepView: View {
     }
 
     /// A direct route to the one alarm screen, available even before a night is recorded.
+    @ViewBuilder
     private var alarmsEntry: some View {
+        #if os(iOS)
+        SleepPlanEntryCard()
+        #else
+        legacyAlarmsEntry
+        #endif
+    }
+
+    private var legacyAlarmsEntry: some View {
         // Button OUTSIDE the card, as `InsightsView.whatMovesYouLink` and `LabBookView` do: with it inside,
         // only the row content answers a tap and the card's own padding is dead, so the same edge tap works
         // on Android (where the whole `ZoopCard` is clickable) and does nothing here.
@@ -322,7 +331,7 @@ struct SleepView: View {
             ZoopCard(tint: StrandPalette.restColor) {
                 HStack(spacing: ZoopMetrics.gap) {
                     Image(systemName: "alarm.fill")
-                        .foregroundStyle(StrandPalette.restColor)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                         .accessibilityHidden(true)
                     Text("Alarms")
                         .font(StrandFont.headline)
@@ -393,11 +402,11 @@ struct SleepView: View {
         // tombstone, so only it gets the "won't detect ... again" wording. (#65 banner honesty.)
         let message = banner.snapshot.session.userEdited
             ? String(localized: "Sleep deleted.")
-            : String(localized: "Sleep deleted. NOOP won't detect sleep between \(clockTime(banner.displayStart)) and \(clockTime(banner.windowEnd)) again.")
+            : String(localized: "Sleep deleted. Zoop won't detect sleep between \(clockTime(banner.displayStart)) and \(clockTime(banner.windowEnd)) again.")
         HStack(alignment: .center, spacing: 10) {
             Image(systemName: "moon.zzz")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(StrandPalette.restColor)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                 .accessibilityHidden(true)
             Text(message)
                 .font(StrandFont.footnote)
@@ -410,7 +419,7 @@ struct SleepView: View {
                 Text("Undo").font(StrandFont.footnote.weight(.semibold))
             }
             .buttonStyle(LiquidPressStyle())
-            .foregroundStyle(StrandPalette.restColor)
+            .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
             .accessibilityLabel("Undo sleep deletion")
         }
         .padding(ZoopMetrics.space3)
@@ -477,7 +486,11 @@ struct SleepView: View {
     @ViewBuilder
     private func sleepSectionView(_ section: SleepSection, _ model: SleepModel) -> some View {
         switch section {
-        case .sleepMarks:      SleepMarkCard()
+        case .sleepMarks:
+            // iOS leaves wake detection to the strap's heart rate and motion; marks never fed it.
+            #if !os(iOS)
+            SleepMarkCard()
+            #endif
         case .stages:          hero(model)
         case .bodyClock:       bodyClockDial(model)
         case .nightDetail:     NightDetailCard(model: model)
@@ -533,9 +546,8 @@ struct SleepView: View {
         let score = performanceScore(for: night)
         VStack(spacing: 0) {
             Text("Sleep")
-                .font(StrandFont.rounded(24, weight: .semibold))
-                .foregroundStyle(Color.white.opacity(0.96))
-                .shadow(color: .black.opacity(0.35), radius: 5, y: 1)
+                .font(.system(size: 30, weight: .bold))
+                .foregroundStyle(StrandPalette.textPrimary)
                 .padding(.top, 6)
                 .accessibilityAddTraits(.isHeader)
 
@@ -548,13 +560,12 @@ struct SleepView: View {
                         diameter: 184,
                         animated: true,
                         captionText: String(localized: "of 100"),
-                        numberColor: Color.white.opacity(0.98),
-                        captionColor: Color.white.opacity(0.52)
+                        numberColor: StrandPalette.textPrimary,
+                        captionColor: StrandPalette.textSecondary
                     )
                     Text(sleepScoreWord(score))
                         .font(StrandFont.subhead.weight(.semibold))
-                        .foregroundStyle(Color.white.opacity(0.90))
-                        .shadow(color: .black.opacity(0.30), radius: 2, y: 1)
+                        .foregroundStyle(StrandPalette.textPrimary)
                 }
                 .padding(.top, 8)
                 .accessibilityElement(children: .ignore)
@@ -565,22 +576,25 @@ struct SleepView: View {
                         value: night.stages.asleep,
                         format: { durationText($0) },
                         font: StrandFont.number(42),
-                        color: Color.white.opacity(0.96)
+                        color: StrandPalette.textPrimary
                     )
                     Text("asleep last night")
                         .font(StrandFont.subhead)
-                        .foregroundStyle(Color.white.opacity(0.72))
+                        .foregroundStyle(StrandPalette.textSecondary)
                 }
                 .padding(.top, 14)
                 .padding(.bottom, 4)
                 .accessibilityElement(children: .combine)
             }
 
+            // iOS drops the provenance badge under the score, as Home does under its rings.
+            #if !os(iOS)
             SourceBadge(
                 score != nil ? heroSource(for: night) : (repo.activeDeviceIsOura ? "Oura" : "On-device"),
                 tint: StrandPalette.restColor
             )
             .padding(.top, 8)
+            #endif
 
             // Subtle Customize at the hero foot — functional, not competing with the gauge.
             sleepArrangeAffordance
@@ -593,6 +607,15 @@ struct SleepView: View {
 
     /// Fixed night-scene band behind Sleep scroll content — same ScreenScaffold.topBackground pattern
     /// as Home's sky. Tall enough for safe-area + hero; fades to surfaceBase before the first card.
+    /// iOS keeps the redesign's flat canvas; macOS keeps the night scene.
+    private var sleepTopBackground: AnyView? {
+        #if os(iOS)
+        nil
+        #else
+        AnyView(sleepNightTopBackground)
+        #endif
+    }
+
     private var sleepNightTopBackground: some View {
         SleepPerformanceNightScene()
             .frame(maxWidth: .infinity)
@@ -718,7 +741,7 @@ struct SleepView: View {
                     Button { addNap = AddNapSeed(forNight: night) } label: {
                         Label("Add nap", systemImage: "plus.circle.fill")
                             .font(StrandFont.subhead)
-                            .foregroundStyle(StrandPalette.restColor)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                     }
                     .buttonStyle(LiquidPressStyle())
                     .accessibilityLabel("Add a nap")
@@ -777,7 +800,7 @@ struct SleepView: View {
         HStack(spacing: 10) {
             Image(systemName: "powersleep")
                 .font(StrandFont.headline)
-                .foregroundStyle(StrandPalette.restColor)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(napWindowText(nap)).font(StrandFont.body).foregroundStyle(StrandPalette.textPrimary)
@@ -791,7 +814,7 @@ struct SleepView: View {
             Button { napWhyStartTs = (napWhyStartTs == nap.startTs) ? nil : nap.startTs } label: {
                 Image(systemName: "info.circle")
                     .font(StrandFont.headline)
-                    .foregroundStyle(StrandPalette.restColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                     .frame(minWidth: 44, minHeight: 44)
                     .contentShape(Rectangle())
             }
@@ -802,6 +825,8 @@ struct SleepView: View {
                 get: { napWhyStartTs == nap.startTs },
                 set: { if !$0 { napWhyStartTs = nil } }), arrowEdge: .bottom) {
                 whyPopover(text: "", napSuffix: true)
+                    .frame(maxWidth: 320)
+                    .compactPopover()
             }
             Button {
                 wakeEdit = WakeEdit(detectedStartTs: nap.startTs,
@@ -812,7 +837,7 @@ struct SleepView: View {
             } label: {
                 Image(systemName: isEdited ? "pencil.circle.fill" : "pencil.circle")
                     .font(StrandFont.headline)
-                    .foregroundStyle(StrandPalette.restColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                     .frame(minWidth: 44, minHeight: 44)
                     .contentShape(Rectangle())
             }
@@ -1224,7 +1249,7 @@ struct SleepView: View {
                         Text("Why this sleep?")
                     }
                     .font(StrandFont.footnote)
-                    .foregroundStyle(StrandPalette.restColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                     // This is a compact metadata footer inside an already surfaced card. A forced
                     // 44-point label made the WHOOP / Why row look vertically padded despite having
                     // only one line of content.
@@ -1236,6 +1261,8 @@ struct SleepView: View {
                 .accessibilityLabel("Why this is your main sleep")
                 .popover(isPresented: $showMainSleepWhy, arrowEdge: .bottom) {
                     whyPopover(text: mainSleepReasonText(night) ?? "", napSuffix: false)
+                    .frame(maxWidth: 320)
+                    .compactPopover()
                 }
             }
         }
@@ -1249,7 +1276,7 @@ struct SleepView: View {
         VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
             HStack(spacing: ZoopMetrics.space2) {
                 Image(systemName: "moon.stars.fill")
-                    .foregroundStyle(StrandPalette.restColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                     .accessibilityHidden(true)
                 Text(napSuffix ? "About this nap" : "About your main sleep")
                     .font(StrandFont.subhead.weight(.semibold))
@@ -1278,7 +1305,7 @@ struct SleepView: View {
         HStack(spacing: 10) {
             Image(systemName: icon)
                 .font(StrandFont.headline)
-                .foregroundStyle(StrandPalette.restColor)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(label).strandOverline()
@@ -1312,7 +1339,7 @@ struct SleepView: View {
             } label: {
                 Image(systemName: isEdited ? "pencil.circle.fill" : "pencil.circle")
                     .font(StrandFont.headline)
-                    .foregroundStyle(StrandPalette.restColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
             }
             .buttonStyle(LiquidPressStyle())
             .help("Edit sleep times")
@@ -1783,6 +1810,8 @@ struct SleepView: View {
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            // Scrub: the bucket under the finger, mapped with the Canvas's own scale.
+            .overlay { SleepHRScrubOverlay(buckets: buckets, nightStartTs: nightStartTs, origin: origin, span: span) }
             .accessibilityLabel(Text("Sleeping heart rate through the night"))
         } else {
             Text("No heart-rate detail for this night")
@@ -2653,7 +2682,7 @@ struct SleepMarkCard: View {
                     if let lastMark {
                         Text(lastMark.confirmation)
                             .font(StrandFont.footnote)
-                            .foregroundStyle(StrandPalette.restColor)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
                             .transition(.opacity)
                             .accessibilityLabel(lastMark.confirmation)
                     }
@@ -2739,7 +2768,7 @@ private struct SleepFreshnessNote: View {
             SyncingHistoryNote(chunks: live.syncChunksThisSession)
         case .calculating:
             DataPendingNote(title: "Calculating last night's sleep…",
-                            message: "Your strap history is in. NOOP is detecting and staging the night now.",
+                            message: "Your strap history is in. Zoop is detecting and staging the night now.",
                             symbol: "waveform.path.ecg")
         case .syncFailed:
             DataPendingNote(title: "Last night's sleep hasn't synced",
@@ -2747,11 +2776,11 @@ private struct SleepFreshnessNote: View {
                             symbol: "exclamationmark.arrow.triangle.2.circlepath")
         case .awaitingSync:
             DataPendingNote(title: "Waiting for last night's sleep",
-                            message: "Connect the strap and sync its history. NOOP will calculate the night when the overnight data arrives.",
+                            message: "Connect the strap and sync its history. Zoop will calculate the night when the overnight data arrives.",
                             symbol: "arrow.triangle.2.circlepath")
         case .notDetected:
             DataPendingNote(title: "Last night's sleep wasn't detected",
-                            message: "Sync finished, but NOOP couldn't confidently identify a sleep window. Keep the strap connected and try Sync again; the older night below is still your latest detected sleep.",
+                            message: "Sync finished, but Zoop couldn't confidently identify a sleep window. Keep the strap connected and try Sync again; the older night below is still your latest detected sleep.",
                             symbol: "moon.zzz")
         case nil:
             EmptyView()

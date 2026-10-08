@@ -190,6 +190,11 @@ public struct YearHeatStrip: View {
                 hoverCell = nil
             }
         }
+        // Touch: hold, then drag across the days. Hold-only because the strip sits in a horizontal
+        // scroll view, which keeps sideways drags for itself.
+        .zoopChartScrub(isEnabled: showsHover, start: .holdOnly,
+                        onChange: { hoverCell = cellIndex(at: $0, weekCount: weeks.count) },
+                        onEnd: { hoverCell = nil })
         // ONE collapsed VoiceOver element for the whole calendar. The 365 coloured cells are pure shapes
         // (hover is dead on touch), and emitting one a11y node PER scored day (the old `cell` did) built
         // an O(days) semantics subtree the accessibility walk re-copied on every scroll — a #707 OOM

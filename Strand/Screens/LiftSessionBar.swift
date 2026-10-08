@@ -26,9 +26,8 @@ struct LiftSessionBar: View {
             Button {
                 session.isPresented = true
             } label: {
-                // The Lock Screen banner's layout (`LiftLiveActivity`), because this is the same banner
-                // seen inside the app: the icon and the numbers sit near the edges and the heart rate
-                // stacks over the clock, so the words get the width (Utku, 21 Sep 2026, with a screenshot
+                // The icon and the numbers sit near the edges and the heart rate stacks over the clock,
+                // so the words get the width (Utku, 21 Sep 2026, with a screenshot
                 // of the bar: "more place for writings"). Same sizes as before.
                 HStack(spacing: 10) {
                     Image(systemName: "dumbbell.fill")

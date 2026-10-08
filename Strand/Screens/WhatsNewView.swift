@@ -59,7 +59,7 @@ struct WhatsNewView: View {
                 Text("WHAT'S NEW").font(StrandFont.overline)
                     .tracking(StrandFont.overlineTracking)
                     .foregroundStyle(StrandPalette.textTertiary)
-                Text("NOOP \(AppChangelog.currentVersion)")
+                Text("Zoop \(AppChangelog.currentVersion)")
                     .font(StrandFont.rounded(26, weight: .bold))
                     .foregroundStyle(StrandPalette.textPrimary)
                 Text("Release notes").font(StrandFont.caption)
@@ -86,7 +86,7 @@ struct WhatsNewView: View {
                 ForEach(AppChangelog.expectations) { e in
                     HStack(alignment: .top, spacing: 12) {
                         Image(systemName: e.icon)
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .frame(width: 22)
                             .padding(.top, 2)
                         VStack(alignment: .leading, spacing: 3) {

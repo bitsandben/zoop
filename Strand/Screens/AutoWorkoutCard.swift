@@ -18,7 +18,7 @@ struct AutoWorkoutCard: View {
     @EnvironmentObject var repo: Repository
 
     /// Whether the toggle is on. Read here too so the card disappears the instant it's switched off.
-    @AppStorage(PuffinExperiment.autoDetectWorkoutsKey) private var autoDetectEnabled = false
+    @AppStorage(PuffinExperiment.autoDetectWorkoutsKey) private var autoDetectEnabled = true
 
     /// The current suggestion, loaded in `.task`. nil → nothing to show.
     @State private var candidate: DetectedWorkout?
@@ -46,7 +46,7 @@ struct AutoWorkoutCard: View {
                 HStack(spacing: ZoopMetrics.space2) {
                     Image(systemName: "figure.run")
                         .font(.system(size: 18))
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text("Looks like a workout")
                         .font(StrandFont.headline)

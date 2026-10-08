@@ -246,7 +246,7 @@ struct InsightsView: View {
                     if behaviours.isEmpty {
                         // No journal yet, explain, without dead-ending on a paid export.
                         ZoopCard {
-                            Text("Log behaviours above. After a few days of answers, NOOP ranks how each one moves your charge, HRV and rest. Importing a WHOOP export (which includes its journal) backfills history instantly.")
+                            Text("Log behaviours above. After a few days of answers, Zoop ranks how each one moves your charge, HRV and rest. Importing a WHOOP export (which includes its journal) backfills history instantly.")
                                 .font(StrandFont.subhead)
                                 .foregroundStyle(StrandPalette.textSecondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -300,7 +300,7 @@ struct InsightsView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "wand.and.sparkles")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                         .accessibilityHidden(true)
@@ -317,7 +317,7 @@ struct InsightsView: View {
                     Spacer(minLength: 8)
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                 }
             }
@@ -574,7 +574,7 @@ struct InsightsView: View {
                     Text("Run a clean personal test")
                         .font(StrandFont.headline)
                         .foregroundStyle(StrandPalette.textPrimary)
-                    Text("Pick one behaviour you log, one outcome, and a short window. NOOP compares the days you log the behaviour against your behaviour-free days before the start.")
+                    Text("Pick one behaviour you log, one outcome, and a short window. Zoop compares the days you log the behaviour against your behaviour-free days before the start.")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1154,7 +1154,7 @@ struct InsightsView: View {
             SectionHeader("Activity Cost", overline: "What each activity costs your recovery")
             if activityCosts.isEmpty {
                 ZoopCard {
-                    Text("Tag a few sessions of the same activity and NOOP will learn its personal recovery cost.")
+                    Text("Tag a few sessions of the same activity and Zoop will learn its personal recovery cost.")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)

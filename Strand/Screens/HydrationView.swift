@@ -155,7 +155,7 @@ struct HydrationView: View {
                 Button { showCustomSizeSheet = true } label: {
                     Image(systemName: "pencil")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .frame(width: 44, height: 44)
                         .background(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous)
                             .fill(StrandPalette.surfaceInset))
@@ -244,7 +244,7 @@ struct HydrationView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "drop.fill")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text(Self.entryTimeFmt.string(from: entry.loggedAt))
                         .font(StrandFont.subhead)
@@ -341,7 +341,7 @@ struct HydrationView: View {
                     HStack(spacing: 10) {
                         Image(systemName: "drop.fill")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         Text("Logged today")
                             .font(StrandFont.subhead)

@@ -94,6 +94,7 @@ struct SettingsView: View {
     /// minutes. Self-gates on OBSERVED gravity + step density (#345) — a no-op on a sparse night (e.g.
     /// WHOOP 4.0) regardless of this switch. See [PuffinExperiment.motionAwareWakeKey].
     @AppStorage(PuffinExperiment.motionAwareWakeKey) private var motionAwareWakeEnabled = false
+    @AppStorage(PuffinExperiment.alarmAnchoredWakeKey) private var alarmAnchoredWakeEnabled = false
 
     // Display preferences. `units.system` remains the body-measurement choice for compatibility;
     // exercise distance/pace can override it independently. Stored data is always SI.
@@ -117,11 +118,6 @@ struct SettingsView: View {
     @AppStorage(UnitPrefs.effortScaleKey) private var effortScaleRaw = EffortScale.hundred.rawValue
     @AppStorage(UnitPrefs.trendChartStyleKey) private var trendChartStyleRaw = TrendChartStyle.line.rawValue
     @AppStorage(UnitPrefs.hrvWindowKey) private var hrvWindowRaw = HrvWindow.whole.rawValue
-    // Live-HR Live Activity (Lock Screen + Dynamic Island), iOS only (#336). Default on.
-    @AppStorage(UnitPrefs.liveActivityKey) private var liveActivityEnabled = true
-    // Strap-sync Live Activity, iOS only. Separate from the live-HR one on purpose. Default on.
-    @AppStorage(UnitPrefs.syncLiveActivityKey) private var syncLiveActivityEnabled = true
-    @AppStorage(UnitPrefs.liftLiveActivityKey) private var liftLiveActivityEnabled = true
     @AppStorage(DayCycleMode.storageKey) private var dayCycleModeRaw = DayCycleMode.sleepOnset.rawValue
     // Alternate app icon (iOS only) — false = Titanium (primary AppIcon), true = Blue Titanium
     // ("AppIcon-Navy"). Display-only preference; the live switch goes through setAlternateIconName.
@@ -154,10 +150,10 @@ struct SettingsView: View {
     // hidden. Mirrors the Android pref so the toggle reads the same on both platforms.
     @AppStorage(HydrationStore.enabledKey) private var hydrationEnabled = false
 
-    /// Opt-in "Auto-detect workouts" (default OFF). When ON, Today scans the last day or two of HR for a
+    /// "Auto-detect workouts" (default ON in the Zoop fork). When ON, Today scans the last day or two of HR for a
     /// sustained-elevated window and offers — via a single dismissible card — to save it as a workout.
     /// Nothing is ever created automatically. Mirrors the Android `ZoopPrefs.KEY_AUTO_DETECT_WORKOUTS`.
-    @AppStorage(PuffinExperiment.autoDetectWorkoutsKey) private var autoDetectWorkoutsEnabled = false
+    @AppStorage(PuffinExperiment.autoDetectWorkoutsKey) private var autoDetectWorkoutsEnabled = true
 
     /// "Journal reminder" (#627, default ON). When ON, Today shows the persistent journal widget
     /// (last-7-days strip + tap-through). Mirrors the Android `ZoopPrefs.KEY_JOURNAL_REMINDER_ENABLED`.
@@ -252,9 +248,114 @@ struct SettingsView: View {
     /// Persisted so it remembers the user's choice; mirrors the Android `noop.settingsAdvancedOpen` key.
     @AppStorage(SettingsDisclosureDefaults.advancedOpenKey) private var advancedOpen = SettingsDisclosureDefaults.advancedOpenDefault
 
-    var body: some View {
+    #if os(iOS)
+    /// iOS groups the cards into pages, the often-used ones first, so the root is one short list.
+    enum SettingsPage: String, Hashable, CaseIterable, Identifiable {
+        case profile, strap, appearance, features, scoring, backup, advanced, about
+        var id: String { rawValue }
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .profile: return "Profile & units"
+            case .strap: return "Strap & sync"
+            case .appearance: return "Appearance"
+            case .features: return "Features"
+            case .scoring: return "Scores & HRV"
+            case .backup: return "Backup & restore"
+            case .advanced: return "Advanced"
+            case .about: return "About Zoop"
+            }
+        }
+
+        var subtitle: LocalizedStringKey {
+            switch self {
+            case .profile: return "Age, body, heart-rate zones, units"
+            case .strap: return "Connection, battery, live notifications"
+            case .appearance: return "Language, theme, icon"
+            case .features: return "Workout detection, hydration, journal"
+            case .scoring: return "Charge baseline, HRV capture"
+            case .backup: return "Export, import, automatic backups"
+            case .advanced: return "Experimental features, Test Centre"
+            case .about: return "Version, updates, how scores work"
+            }
+        }
+
+        var icon: String {
+            switch self {
+            case .profile: return "person.fill"
+            case .strap: return "dot.radiowaves.left.and.right"
+            case .appearance: return "paintbrush.fill"
+            case .features: return "square.grid.2x2.fill"
+            case .scoring: return "waveform.path.ecg"
+            case .backup: return "externaldrive.fill"
+            case .advanced: return "slider.horizontal.3"
+            case .about: return "info.circle.fill"
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func settingsPage(_ page: SettingsPage) -> some View {
+        ScreenScaffold(title: page.title, lazy: true) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
+                switch page {
+                case .profile: profileCard; unitsCard
+                case .strap: strapCard; syncCard
+                case .appearance: appearanceCard
+                case .features: featuresCard; streakCard
+                case .scoring: recoveryCard; hrvCard
+                case .backup: backupCard
+                case .advanced: experimentalCard; testCentreCard
+                case .about: aboutCard
+                }
+            }
+        }
+    }
+
+    private func settingsGroup(_ title: LocalizedStringKey, _ pages: [SettingsPage]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(StrandPalette.textSecondary)
+                .padding(.horizontal, 4)
+            VStack(spacing: 0) {
+                ForEach(pages) { page in
+                    NavigationLink(value: page) {
+                        ZoopIconRow(page.title, subtitle: page.subtitle, icon: page.icon)
+                            .overlay(alignment: .bottom) {
+                                if page != pages.last {
+                                    Rectangle().fill(StrandPalette.hairline).frame(height: 1).padding(.leading, 68)
+                                }
+                            }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .background(ZoopPanelSurface())
+            .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
+        }
+    }
+    #endif
+
+    @ViewBuilder
+    private var settingsContent: some View {
+        #if os(iOS)
+        ScreenScaffold(title: "Settings") {
+            VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
+                settingsGroup("Everyday", [.profile, .strap, .appearance, .features])
+                settingsGroup("Data", [.scoring, .backup])
+                settingsGroup("More", [.advanced, .about])
+            }
+        }
+        .navigationDestination(for: SettingsPage.self) { page in
+            settingsPage(page)
+                .background(StrandPalette.surfaceBase.ignoresSafeArea())
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(.hidden, for: .navigationBar)
+        }
+        #else
         ScreenScaffold(title: "Settings",
-                       subtitle: "Your numbers, your strap, and how NOOP works. All on \(Platform.deviceNounPhrase).",
+                       subtitle: "Your numbers, your strap, and how Zoop works. All on \(Platform.deviceNounPhrase).",
                        quietSubtitle: true,
                        // The day-of-sky liquid backdrop, matching Today / Health / Sleep / Trends / Devices:
                        // a fixed, full-bleed time-of-day sky behind the scroll content (it does not scroll).
@@ -266,9 +367,6 @@ struct SettingsView: View {
                 unitsCard.staggeredAppear(index: 1)
                 appearanceCard.staggeredAppear(index: 2)
                 strapCard.staggeredAppear(index: 3)
-                #if os(iOS)
-                liveNotificationsCard.staggeredAppear(index: 3)
-                #endif
                 streakCard.staggeredAppear(index: 4)
                 featuresCard.staggeredAppear(index: 5)
                 #if os(iOS)
@@ -296,6 +394,11 @@ struct SettingsView: View {
                 aboutCard.staggeredAppear(index: 7)
             }
         }
+        #endif
+    }
+
+    var body: some View {
+        settingsContent
         .alert(backupAlertTitle, isPresented: $showBackupAlert) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -325,7 +428,7 @@ struct SettingsView: View {
             Button("Clear flags on strap") { model.ble.disableWhoop5DeepData() }
             Button("Just stop sending", role: .cancel) { }
         } message: {
-            Text("Turning this switch off only stops NOOP sending the unlock. The flags it already wrote stay on the strap until something clears them. NOOP can write the off value to all 16 now and read each one back so you can see what the strap actually stores. Needs the strap connected and bonded.")
+            Text("Turning this switch off only stops Zoop sending the unlock. The flags it already wrote stay on the strap until something clears them. Zoop can write the off value to all 16 now and read each one back so you can see what the strap actually stores. Needs the strap connected and bonded.")
         }
         .confirmationDialog("Mark optical experiment phase",
                             isPresented: $showOpticalPhasePicker, titleVisibility: .visible) {
@@ -519,7 +622,7 @@ struct SettingsView: View {
                             .accessibilityLabel("Step calibration, \(String(format: "%.1f", profile.stepTicksPerStep)) counter ticks per step")
                     }
                 }
-                Text("Counter ticks per step. Leave at 1.0 unless your steps run high. On a WHOOP 5/MG they can run very high (10× or more), so this goes up to 30. Walk a known 1,000 steps and divide NOOP's count by the real count to get your value.")
+                Text("Counter ticks per step. Leave at 1.0 unless your steps run high. On a WHOOP 5/MG they can run very high (10× or more), so this goes up to 30. Walk a known 1,000 steps and divide Zoop's count by the real count to get your value.")
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -546,7 +649,7 @@ struct SettingsView: View {
                 }
                 .buttonStyle(LiquidPressStyle())
                 .accessibilityLabel("Steps estimate calibration. \(stepsCalibrationSummary). Opens the calibration screen.")
-                Text("For a WHOOP 4.0, which sends no step count: NOOP estimates steps from motion, calibrated to your phone. Tap to see how close it is and adjust it.")
+                Text("For a WHOOP 4.0, which sends no step count: Zoop estimates steps from motion, calibrated to your phone. Tap to see how close it is and adjust it.")
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1111,7 +1214,7 @@ struct SettingsView: View {
                     .accessibilityLabel("Language")
                     .onChangeCompat(of: appLanguageRaw) { AppLanguage.apply($0) }
                 }
-                Text("NOOP is available in English and German. System follows a German phone, and uses English otherwise. Reopen NOOP to apply a change.")
+                Text("Zoop is available in English and German. System follows a German phone, and uses English otherwise. Reopen Zoop to apply a change.")
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1266,7 +1369,9 @@ struct SettingsView: View {
                 FormRow(label: "App icon") {
                     Picker("App icon", selection: $useNavyIcon) {
                         Text("Default").tag(false)
-                        Text("Navy").tag(true)
+                        // The alternate set keeps its "AppIcon-Navy" asset name so a saved choice still
+                        // resolves; it now holds the light version of the squircle icon.
+                        Text("Light").tag(true)
                     }
                     .labelsHidden()
                     .pickerStyle(.menu)
@@ -1281,7 +1386,7 @@ struct SettingsView: View {
                 // sensor, WITHOUT requiring system Low Power Mode. Off by default; system Reduce Motion
                 // and Low Power Mode already force the same behaviour, this is the third, in-app signal.
                 Toggle(isOn: $quietMotion) {
-                    Text("Reduce motion in NOOP")
+                    Text("Reduce motion in Zoop")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textPrimary)
                 }
@@ -1559,48 +1664,6 @@ struct SettingsView: View {
     /// or an early reading that anchored too high). It writes now (epoch SECONDS) to BOTH the
     /// `noop.hrvBaselineEpoch` and `noop.recoveryBaselineEpoch` settings the recovery engine reads, then
     /// kicks a recompute the same way the sleep-edit path does (analyzeRecent → refresh). History stays.
-    #if os(iOS)
-    /// NOOP's live notifications — its Live Activities, on the Lock Screen and in the Dynamic Island — one switch
-    /// each: the live heart rate, a Lift Log session, a strap sync. These three are every Live Activity the app has.
-    /// A switch only decides whether its notification is SHOWN: the heart rate is still measured, recorded and
-    /// scored, a session still runs and buzzes, a sync still runs, with any of them off.
-    private var liveNotificationsCard: some View {
-        SettingsSection(
-            icon: "bell.badge",
-            title: "Live notifications",
-            blurb: "Shown on the Lock Screen and in the Dynamic Island. A switch only hides one: NOOP still measures and records everything."
-        ) {
-            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
-                liveNotificationSwitch("Live heart rate", isOn: $liveActivityEnabled,
-                                       detail: "While the strap is connected.")
-                rowDivider
-                liveNotificationSwitch("Lift Log session", isOn: $liftLiveActivityEnabled,
-                                       detail: "Your set, rest and heart rate, and the Lock Screen light-up on a double-tap.")
-                rowDivider
-                liveNotificationSwitch("Strap sync", isOn: $syncLiveActivityEnabled,
-                                       detail: "Progress while NOOP pulls history from the strap.")
-            }
-        }
-    }
-
-    private func liveNotificationSwitch(_ title: LocalizedStringKey, isOn: Binding<Bool>,
-                                        detail: LocalizedStringKey) -> some View {
-        VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
-            Toggle(isOn: isOn) {
-                Text(title)
-                    .font(StrandFont.subhead)
-                    .foregroundStyle(StrandPalette.textPrimary)
-            }
-            .toggleStyle(.switch)
-            .tint(StrandPalette.accent)
-            Text(detail)
-                .font(StrandFont.caption)
-                .foregroundStyle(StrandPalette.textTertiary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-    #endif
-
     private var recoveryCard: some View {
         SettingsSection(
             icon: "heart.text.square",
@@ -1633,7 +1696,7 @@ struct SettingsView: View {
             await model.repo.refresh()
         }
         backupAlertTitle = String(localized: "Charge baseline recalibrating")
-        backupAlertMessage = String(localized: "NOOP will re-learn your baseline from tonight's data onward. Your history is kept, and it takes a few nights to settle.")
+        backupAlertMessage = String(localized: "Zoop will re-learn your baseline from tonight's data onward. Your history is kept, and it takes a few nights to settle.")
         showBackupAlert = true
     }
 
@@ -1691,7 +1754,7 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 #if os(iOS)
-                Text("Also imports water from Apple Health when connected and allowed to read water data. Drinks logged in NOOP are not written to Apple Health.")
+                Text("Also imports water from Apple Health when connected and allowed to read water data. Drinks logged in Zoop are not written to Apple Health.")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1708,7 +1771,7 @@ struct SettingsView: View {
                 .tint(StrandPalette.accent)
                 .accessibilityHint("Offers to save a workout when it spots sustained elevated heart rate")
 
-                Text("After a sync, NOOP looks over your recent heart rate for a sustained, raised stretch that looks like exercise and offers to save it. It only ever suggests. Nothing is saved until you tap Save, and you can dismiss any suggestion. Turning this off stops future suggestions but keeps your existing workout history. Deliberately conservative, so the odd workout may be missed. On \(Platform.deviceNounPhrase) only.")
+                Text("After a sync, Zoop looks over your recent heart rate for a sustained, raised stretch that looks like exercise and offers to save it. It only ever suggests. Nothing is saved until you tap Save, and you can dismiss any suggestion. Turning this off stops future suggestions but keeps your existing workout history. Deliberately conservative, so the odd workout may be missed. On \(Platform.deviceNounPhrase) only.")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1774,7 +1837,7 @@ struct SettingsView: View {
                 .tint(StrandPalette.accent)
                 .accessibilityHint("Stops the screen locking while your strap's history syncs")
 
-                Text("Holds the screen awake while NOOP pulls stored history from your strap, so you can watch a long sync finish without the phone locking. Only applies while a sync is running and NOOP is open. The screen sleeps normally the rest of the time. It uses a bit more battery while the screen stays on.")
+                Text("Holds the screen awake while Zoop pulls stored history from your strap, so you can watch a long sync finish without the phone locking. Only applies while a sync is running and Zoop is open. The screen sleeps normally the rest of the time. It uses a bit more battery while the screen stays on.")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1805,7 +1868,7 @@ struct SettingsView: View {
                 .toggleStyle(.switch)
                 .tint(StrandPalette.accent)
                 .onChangeCompat(of: continuousHrvEnabled) { on in model.ble.setKeepRealtimeForData(on) }
-                Text("Keeps the detailed beat-to-beat heart-rate stream running all day and night, not just while a live screen is open, so NOOP captures much more for overnight HRV, recovery and sleep. Uses more battery: your strap streams heart rate continuously while connected.")
+                Text("Keeps the detailed beat-to-beat heart-rate stream running all day and night, not just while a live screen is open, so Zoop captures much more for overnight HRV, recovery and sleep. Uses more battery: your strap streams heart rate continuously while connected.")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1849,7 +1912,7 @@ struct SettingsView: View {
                         Task { await model.intelligence.analyzeRecent(); await model.repo.refresh() }
                     }
                 }
-                Text("Whole night is NOOP's default measure; Deep sleep pools HRV over slow-wave sleep only, reading lower and matching WHOOP. Switching re-scores your recent nights over the new window and takes effect right away once you have a few nights of data.")
+                Text("Whole night is Zoop's default measure; Deep sleep pools HRV over slow-wave sleep only, reading lower and matching WHOOP. Switching re-scores your recent nights over the new window and takes effect right away once you have a few nights of data.")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1960,6 +2023,21 @@ struct SettingsView: View {
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
+
+                rowDivider
+
+                // Experimental alarm-anchored wake — default OFF.
+                Toggle(isOn: $alarmAnchoredWakeEnabled) {
+                    Text("Wake from alarm (experimental)")
+                        .font(StrandFont.subhead)
+                        .foregroundStyle(StrandPalette.textPrimary)
+                }
+                .toggleStyle(.switch)
+                .tint(StrandPalette.accent)
+                Text("When the strap alarm wakes you, the night ends when your heart rate goes up afterwards, which is usually when you get up. The time between the alarm and getting up counts as awake. Nights without the strap alarm, or without a clear rise, stay as they are. Applies to nights analysed after you turn it on.")
+                    .font(StrandFont.caption)
+                    .foregroundStyle(StrandPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -2020,7 +2098,7 @@ struct SettingsView: View {
                 }
                 .toggleStyle(.switch)
                 .tint(StrandPalette.accent)
-                Text("Your Oura ring only measures daytime heart rate while NOOP keeps it in that mode, and NOOP stops asking whenever the screen has been off for five minutes — which protects the ring's own sleep tracking at night, but also leaves a pocketed phone's day blank on the Heart Rate and HRV charts. On, NOOP keeps asking through the day and stops only for your usual night, learned from your sleep history (an hour before your typical bedtime to an hour after your usual wake), so the night is unchanged. Costs ring battery: the ring runs its own optical sensor all day. Until enough nights are learned it behaves as if off. Off by default.")
+                Text("Your Oura ring only measures daytime heart rate while Zoop keeps it in that mode, and Zoop stops asking whenever the screen has been off for five minutes — which protects the ring's own sleep tracking at night, but also leaves a pocketed phone's day blank on the Heart Rate and HRV charts. On, Zoop keeps asking through the day and stops only for your usual night, learned from your sleep history (an hour before your typical bedtime to an hour after your usual wake), so the night is unchanged. Costs ring battery: the ring runs its own optical sensor all day. Until enough nights are learned it behaves as if off. Off by default.")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -2199,7 +2277,7 @@ struct SettingsView: View {
                         .foregroundStyle(StrandPalette.textTertiary)
                         .font(.system(size: 13))
                         .accessibilityHidden(true)
-                    Text("Importing overwrites everything currently on \(Platform.deviceNounPhrase). Your old data is kept in a side file just in case. NOOP needs a relaunch for an import to take effect. Export CSV writes a WHOOP-format zip of your days, sleeps, workouts and journal that re-imports into NOOP on Mac, iPhone, or Android. On-device computed rows are marked APPROXIMATE in its Source column; the full backup stays the lossless restore path.")
+                    Text("Importing overwrites everything currently on \(Platform.deviceNounPhrase). Your old data is kept in a side file just in case. Zoop needs a relaunch for an import to take effect. Export CSV writes a WHOOP-format zip of your days, sleeps, workouts and journal that re-imports into Zoop on Mac, iPhone, or Android. On-device computed rows are marked APPROXIMATE in its Source column; the full backup stays the lossless restore path.")
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -2285,7 +2363,7 @@ struct SettingsView: View {
                 return
             case .exported(let url):
                 backupAlertTitle = String(localized: "CSV exported")
-                backupAlertMessage = String(localized: "Saved to \(url.lastPathComponent). The zip re-imports into NOOP (Data Sources → WHOOP Export) on any Mac, iPhone, or Android device.")
+                backupAlertMessage = String(localized: "Saved to \(url.lastPathComponent). The zip re-imports into Zoop (Data Sources → WHOOP Export) on any Mac, iPhone, or Android device.")
                 showBackupAlert = true
             case .failure(let message):
                 backupAlertTitle = String(localized: "Export problem")
@@ -2312,15 +2390,15 @@ struct SettingsView: View {
             let size = ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
             let cap = ByteCountFormatter.string(fromByteCount: limit, countStyle: .file)
             backupAlertTitle = String(localized: "Backup exported")
-            backupAlertMessage = String(localized: "Saved to \(url.lastPathComponent). Your database is \(size), over the \(cap) NOOP restores without asking — the backup is complete and valid, and restoring it will ask you to confirm once.")
+            backupAlertMessage = String(localized: "Saved to \(url.lastPathComponent). Your database is \(size), over the \(cap) Zoop restores without asking — the backup is complete and valid, and restoring it will ask you to confirm once.")
             showBackupAlert = true
         case .restoreTooLarge(let name, let limit):
             let cap = ByteCountFormatter.string(fromByteCount: limit, countStyle: .file)
-            oversizeRestoreMessage = String(localized: "\(name) is larger than the \(cap) NOOP restores without asking. That limit guards against a malicious archive expanding to fill this \(Platform.deviceNoun) — a backup you exported yourself is not that. Restoring it needs the space the database will take. You'll be asked to choose the file again.")
+            oversizeRestoreMessage = String(localized: "\(name) is larger than the \(cap) Zoop restores without asking. That limit guards against a malicious archive expanding to fill this \(Platform.deviceNoun) — a backup you exported yourself is not that. Restoring it needs the space the database will take. You'll be asked to choose the file again.")
             showOversizeRestoreConfirm = true
         case .imported:
             backupAlertTitle = String(localized: "Backup imported")
-            backupAlertMessage = String(localized: "Your data has been restored. Quit and reopen NOOP for it to take effect.")
+            backupAlertMessage = String(localized: "Your data has been restored. Quit and reopen Zoop for it to take effect.")
             showBackupAlert = true
         case .failure(let message):
             backupAlertTitle = String(localized: "Backup problem")
@@ -2341,7 +2419,7 @@ struct SettingsView: View {
         SettingsSection(
             icon: "info.circle.fill",
             title: "About",
-            blurb: "NOOP: all your data, none of the cloud."
+            blurb: "Your strap data, on your phone."
         ) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 10) {
@@ -2363,10 +2441,10 @@ struct SettingsView: View {
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "questionmark.circle")
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 1) {
-                            Text("How NOOP works")
+                            Text("How Zoop works")
                                 .font(StrandFont.body)
                                 .foregroundStyle(StrandPalette.textPrimary)
                             Text("Sleep sorting, scores, recording, and where your numbers come from.")
@@ -2383,7 +2461,7 @@ struct SettingsView: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(LiquidPressStyle())
-                .accessibilityLabel("How NOOP works")
+                .accessibilityLabel("How Zoop works")
 
                 // How your scores work — the honest explainer for Charge / Effort / Rest and the
                 // confidence labels. Always reachable here, mirroring the "What's new" affordance.
@@ -2392,7 +2470,7 @@ struct SettingsView: View {
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "questionmark.circle")
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("How your scores work")
@@ -2424,13 +2502,13 @@ struct SettingsView: View {
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "applewatch")
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("About Apple Watch data")
                                 .font(StrandFont.body)
                                 .foregroundStyle(StrandPalette.textPrimary)
-                            Text("Use NOOP with just an Apple Watch. What it's great at, and where it's lighter than a strap.")
+                            Text("Use Zoop with just an Apple Watch. What it's great at, and where it's lighter than a strap.")
                                 .font(StrandFont.footnote)
                                 .foregroundStyle(StrandPalette.textTertiary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -2454,13 +2532,13 @@ struct SettingsView: View {
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "internaldrive")
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("Storage")
                                 .font(StrandFont.body)
                                 .foregroundStyle(StrandPalette.textPrimary)
-                            Text("Where NOOP's on-device space is going, and a one-tap clean-up.")
+                            Text("Where Zoop's on-device space is going, and a one-tap clean-up.")
                                 .font(StrandFont.footnote)
                                 .foregroundStyle(StrandPalette.textTertiary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -2528,7 +2606,7 @@ struct SettingsView: View {
                             Text("Check automatically")
                                 .font(StrandFont.subhead)
                                 .foregroundStyle(StrandPalette.textPrimary)
-                            Text("Once a day, NOOP asks GitHub for the latest version number and puts a note in Updates if there's a newer one. Nothing about you is sent, and it never installs anything.")
+                            Text("Once a day, Zoop asks GitHub for the latest version number and puts a note in Updates if there's a newer one. Nothing about you is sent, and it never installs anything.")
                                 .font(StrandFont.footnote)
                                 .foregroundStyle(StrandPalette.textSecondary)
                         }
@@ -2580,7 +2658,7 @@ struct SettingsView: View {
                 Link(destination: URL(string: "https://github.com/ryanbr/noop")!) {
                     HStack(spacing: 10) {
                         Image(systemName: "chevron.left.forwardslash.chevron.right")
-                            .foregroundStyle(StrandPalette.accent)
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("Project home & source")
@@ -2601,7 +2679,7 @@ struct SettingsView: View {
                 }
                 .accessibilityLabel("Project home and source code on GitHub")
 
-                Text("A standalone companion for your WHOOP. Everything stays on this device: your history, your live stream, your numbers. Nothing is uploaded. NOOP is an independent, experimental project, not the WHOOP app.")
+                Text("A standalone companion for your WHOOP. Everything stays on this device: your history, your live stream, your numbers. Nothing is uploaded. Zoop is an independent, experimental project, not the WHOOP app.")
                     .font(StrandFont.subhead)
                     .foregroundStyle(StrandPalette.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -2612,7 +2690,7 @@ struct SettingsView: View {
                         .foregroundStyle(StrandPalette.statusWarning)
                         .font(.system(size: 13))
                         .accessibilityHidden(true)
-                    Text("NOOP is not a medical device. It is for informational and personal-insight purposes only and is not intended to diagnose, treat, cure or prevent any condition. Talk to a clinician for medical advice.")
+                    Text("Zoop is not a medical device. It is for informational and personal-insight purposes only and is not intended to diagnose, treat, cure or prevent any condition. Talk to a clinician for medical advice.")
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -2645,7 +2723,7 @@ struct SettingsView: View {
         HStack(spacing: 8) {
             Image(systemName: "chevron.right")
                 .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(StrandPalette.accent)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                 .accessibilityHidden(true)
             Text(repo)
                 .font(StrandFont.mono(12))
@@ -2667,7 +2745,7 @@ struct SettingsView: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "stethoscope")
-                    .foregroundStyle(StrandPalette.accent)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Diagnostics")
@@ -2699,16 +2777,16 @@ struct SettingsView: View {
         return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "iphone.gen3")
-                    .foregroundStyle(StrandPalette.accent)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                     .accessibilityHidden(true)
-                Text("Using NOOP on iPhone")
+                Text("Using Zoop on iPhone")
                     .font(StrandFont.subhead.weight(.semibold))
                     .foregroundStyle(StrandPalette.textPrimary)
             }
 
             iphoneExpectationLine(String(localized: "This is a sideloaded build, installed outside the App Store. It needs re-signing periodically: roughly every 7 days on a free Apple ID, about a year on a paid developer account."))
-            iphoneExpectationLine(String(localized: "After your iPhone reboots, unlock it once. Until you do, iOS keeps NOOP's files locked (Data Protection), so new history can't be written or synced."))
-            iphoneExpectationLine(String(localized: "Background Bluetooth has OS limits: iOS may pause NOOP when it's not in the foreground, so keep it open while syncing a fresh strap."))
+            iphoneExpectationLine(String(localized: "After your iPhone reboots, unlock it once. Until you do, iOS keeps Zoop's files locked (Data Protection), so new history can't be written or synced."))
+            iphoneExpectationLine(String(localized: "Background Bluetooth has OS limits: iOS may pause Zoop when it's not in the foreground, so keep it open while syncing a fresh strap."))
             iphoneExpectationLine(String(localized: "On a beta version of iOS, things can break that work on the release build."))
 
             if let days = expiry {
@@ -2846,21 +2924,24 @@ private struct SettingsSection<Content: View>: View {
     var body: some View {
         StrandCard(padding: ZoopMetrics.space5) {
             VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Settings").strandOverline()
-                    HStack(spacing: ZoopMetrics.space2 + 2) {
-                        Image(systemName: icon)
-                            .foregroundStyle(StrandPalette.accent)
-                            .accessibilityHidden(true)
+                // The redesign's card head: the glyph in a black well beside the title and its blurb.
+                HStack(alignment: .top, spacing: ZoopMetrics.space3) {
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(StrandPalette.textPrimary)
+                        .frame(width: 40, height: 40)
+                        .background(Circle().fill(StrandPalette.surfaceBase))
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 3) {
                         Text(title)
-                            .font(StrandFont.title2)
+                            .font(.system(size: 18, weight: .semibold))
                             .foregroundStyle(StrandPalette.textPrimary)
+                        Text(blurb)
+                            .font(StrandFont.subhead)
+                            .foregroundStyle(StrandPalette.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                Text(blurb)
-                    .font(StrandFont.subhead)
-                    .foregroundStyle(StrandPalette.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
                 content()
             }
         }
@@ -3097,12 +3178,12 @@ struct StepsCalibrationSheet: View {
                     .font(StrandFont.headline)
                     .foregroundStyle(StrandPalette.textPrimary)
                 Text(is5MG
-                     ? String(localized: "NOOP estimates your steps from your WHOOP's stored motion, calibrated to your phone's step count. It's an estimate, not a hardware step counter; normal WHOOP 5/MG history sync supplies the motion data.")
-                     : String(localized: "NOOP estimates your steps from your WHOOP's motion, calibrated to your phone's step count. It's an estimate, not a step counter. A WHOOP 4.0 doesn't transmit steps."))
+                     ? String(localized: "Zoop estimates your steps from your WHOOP's stored motion, calibrated to your phone's step count. It's an estimate, not a hardware step counter; normal WHOOP 5/MG history sync supplies the motion data.")
+                     : String(localized: "Zoop estimates your steps from your WHOOP's motion, calibrated to your phone's step count. It's an estimate, not a step counter. A WHOOP 4.0 doesn't transmit steps."))
                     .font(StrandFont.subhead)
                     .foregroundStyle(StrandPalette.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("On the days your phone also counted steps, NOOP learns how much your motion maps to steps, then applies that to the strap-only days. The more matching days it has, the more it trusts the estimate.")
+                Text("On the days your phone also counted steps, Zoop learns how much your motion maps to steps, then applies that to the strap-only days. The more matching days it has, the more it trusts the estimate.")
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -3138,20 +3219,20 @@ struct StepsCalibrationSheet: View {
     /// The "why it's empty" line — a 5/MG needs the deep-data unlock before it streams motion at all.
     private var noMotionLead: String {
         if is5MG {
-            return String(localized: "We're not seeing motion from your WHOOP 5.0 / MG yet. Keep NOOP connected and let strap history finish syncing; the experimental R22 flags are not required. Account or Apple Health imports do not contain the raw strap motion this estimate needs.")
+            return String(localized: "We're not seeing motion from your WHOOP 5.0 / MG yet. Keep Zoop connected and let strap history finish syncing; the experimental R22 flags are not required. Account or Apple Health imports do not contain the raw strap motion this estimate needs.")
         }
-        return String(localized: "We're not seeing any motion from your strap yet. Steps are estimated from your WHOOP's banked motion history, so your strap needs to sync that history before NOOP has anything to count.")
+        return String(localized: "We're not seeing any motion from your strap yet. Steps are estimated from your WHOOP's banked motion history, so your strap needs to sync that history before Zoop has anything to count.")
     }
 
     /// The "what to do" line — 5/MG points at the deep-data toggle (unless it's already on, then just sync).
     private var noMotionAction: String {
         if is5MG && !deepDataEnabled {
-            return String(localized: "Open NOOP near the strap and let WHOOP 5/MG history finish syncing. The step estimate and calibration fill in once enough stored motion has arrived; the legacy R22 experiment is not required.")
+            return String(localized: "Open Zoop near the strap and let WHOOP 5/MG history finish syncing. The step estimate and calibration fill in once enough stored motion has arrived; the legacy R22 experiment is not required.")
         }
         if is5MG {
-            return String(localized: "Deep data is on — open NOOP near your strap and let it sync its motion history (a full first-run sync can take a while). Once a day or two of motion lands, your step estimate and the calibration below fill in.")
+            return String(localized: "Deep data is on — open Zoop near your strap and let it sync its motion history (a full first-run sync can take a while). Once a day or two of motion lands, your step estimate and the calibration below fill in.")
         }
-        return String(localized: "Open NOOP near your strap and let it catch up (a full history sync can take a while on first run). Once a day or two of motion lands, your step estimate and the calibration below will start to fill in.")
+        return String(localized: "Open Zoop near your strap and let it catch up (a full history sync can take a while on first run). Once a day or two of motion lands, your step estimate and the calibration below will start to fill in.")
     }
 
     /// The current calibration read-out: coefficient, sample days, and a Low/Medium/High confidence —
@@ -3209,7 +3290,7 @@ struct StepsCalibrationSheet: View {
                         .headline)
                         .font(StrandFont.bodyNumber)
                         .foregroundStyle(StrandPalette.accent)
-                    Text("These are the days where your phone also counted steps, so NOOP can learn how your motion maps to steps. Or set the coefficient manually below.")
+                    Text("These are the days where your phone also counted steps, so Zoop can learn how your motion maps to steps. Or set the coefficient manually below.")
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -3226,7 +3307,7 @@ struct StepsCalibrationSheet: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Estimated vs your phone").strandOverline()
                 if comparison.isEmpty {
-                    Text("No days yet where both NOOP and your phone counted steps. Once your phone logs a few days alongside the strap, they'll appear here so you can see how close the estimate is.")
+                    Text("No days yet where both Zoop and your phone counted steps. Once your phone logs a few days alongside the strap, they'll appear here so you can see how close the estimate is.")
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .fixedSize(horizontal: false, vertical: true)

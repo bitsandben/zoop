@@ -202,7 +202,7 @@ struct CoachView: View {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 10) {
                     Image(systemName: "sparkles")
-                        .foregroundStyle(StrandPalette.accent)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text("Connect a provider")
                         .font(StrandFont.headline)
@@ -284,6 +284,12 @@ struct CoachView: View {
                             .strokeBorder(StrandPalette.hairline, lineWidth: 1))
                         .onSubmit { coach.provider == .custom ? connectCustom() : saveKey() }
                         .accessibilityLabel("API key")
+                    if coach.provider == .openRouter {
+                        Text("A free key from openrouter.ai/keys is enough. Only models ending in :free are listed, so nothing is billed.")
+                            .font(StrandFont.footnote)
+                            .foregroundStyle(StrandPalette.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
 
                 HStack {

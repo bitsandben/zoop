@@ -63,8 +63,14 @@ struct ZoopButtonAppearance {
     init(_ kind: ZoopButtonKind) {
         switch kind {
         case .primary:
+            #if os(iOS)
+            // The redesign's primary action is a white control with dark text.
+            fill = StrandPalette.textPrimary
+            label = StrandPalette.surfaceBase
+            #else
             fill = StrandPalette.accent
             label = StrandPalette.goldDeepText   // designated crisp white for text on accent fills
+            #endif
             border = nil
             usesPanelSurface = false
         case .secondary:
@@ -74,7 +80,11 @@ struct ZoopButtonAppearance {
             usesPanelSurface = true
         case .tertiary:
             fill = nil
+            #if os(iOS)
+            label = StrandPalette.textPrimary
+            #else
             label = StrandPalette.accent
+            #endif
             border = nil
             usesPanelSurface = false
         case .destructive:

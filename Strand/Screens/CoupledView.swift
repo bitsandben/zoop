@@ -506,7 +506,7 @@ struct CoupledView: View {
     // (a coupled read of NOOP's OWN scores, same data, different lens) without the branding word. The
     // matching Android caption is byte-identical.
     private var footerCaption: some View {
-        Text("A classic one-glance read of NOOP's own scores. Same data, different lens.")
+        Text("A classic one-glance read of Zoop's own scores. Same data, different lens.")
             .font(StrandFont.footnote)
             .foregroundStyle(StrandPalette.textTertiary)
             .fixedSize(horizontal: false, vertical: true)
@@ -580,7 +580,7 @@ struct CoupledView: View {
                         HStack(spacing: 10) {
                             Image(systemName: "function")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(StrandPalette.chargeColor)
+                                .foregroundStyle(StrandPalette.icon(StrandPalette.chargeColor))
                             VStack(alignment: .leading, spacing: 1) {
                                 Text("How Charge is calculated")
                                     .font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
@@ -638,7 +638,7 @@ struct CoupledView: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "gauge.with.dots.needle.bottom.50percent")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(StrandPalette.chargeColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.chargeColor))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(alignment: .firstTextBaseline, spacing: 8) {

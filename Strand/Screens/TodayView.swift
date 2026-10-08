@@ -1264,7 +1264,8 @@ struct TodayView: View {
                 // #829 follow-up: the chart owns every touch that starts within its frame (its pan is the
                 // same horizontal drag). startLocation and hrChartFrame share the daySwipeSpace coordinate
                 // space, so this containment check is layout-direction safe with no RTL special-casing.
-                guard !hrChartFrame.contains(value.startLocation) else { return }
+                guard !hrChartFrame.contains(value.startLocation),
+                      !ZoopChartScrubState.isActiveOrRecent else { return }
                 let dx = value.translation.width
                 let dy = value.translation.height
                 // Horizontal-dominant and far enough to count as a deliberate day flip.
@@ -1981,7 +1982,7 @@ struct TodayView: View {
                 HStack(spacing: ZoopMetrics.space3) {
                     Image(systemName: "shield.lefthalf.filled")
                         .font(StrandFont.headline)
-                        .foregroundStyle(StrandPalette.metricCyan)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
                         Text("Start session")
@@ -2094,7 +2095,7 @@ struct TodayView: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "moon.zzz")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(StrandPalette.chargeColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.chargeColor))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(ChargeBreakdownFormat.chargeDeepWindowGapTitle)
@@ -2125,7 +2126,7 @@ struct TodayView: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "gauge.with.dots.needle.bottom.50percent")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(StrandPalette.chargeColor)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.chargeColor))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -2209,7 +2210,7 @@ struct TodayView: View {
                         HStack(spacing: 10) {
                             Image(systemName: "function")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(StrandPalette.chargeColor)
+                                .foregroundStyle(StrandPalette.icon(StrandPalette.chargeColor))
                             VStack(alignment: .leading, spacing: 1) {
                                 Text("How Charge is calculated")
                                     .font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
@@ -2319,7 +2320,7 @@ struct TodayView: View {
                 HStack(alignment: .top, spacing: 6) {
                     Image(systemName: "info.circle")
                         .font(StrandFont.footnote)
-                        .foregroundStyle(StrandPalette.effortColor)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.effortColor))
                     Text(note)
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textTertiary)
@@ -3858,7 +3859,7 @@ struct TodayView: View {
                 Image(systemName: metricsExpanded ? "chevron.up" : "chevron.down")
                     .font(.system(size: 11, weight: .bold))
             }
-            .foregroundStyle(StrandPalette.accent)
+            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
             .contentShape(Rectangle())
@@ -4296,7 +4297,7 @@ struct TodayView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Data sources")
-        .accessibilityHint("Show what NOOP is synced from")
+        .accessibilityHint("Show what Zoop is synced from")
     }
 
     /// PURE: the "Synced from: …" summary string for the collapsed footer (S5). Names the sources with
@@ -4384,7 +4385,7 @@ struct TodayView: View {
         }
         return Image(systemName: symbol)
             .font(.system(size: 12, weight: .regular))
-            .foregroundStyle(StrandPalette.metricCyan)
+            .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
             .accessibilityLabel(label)
             .help(label)
     }

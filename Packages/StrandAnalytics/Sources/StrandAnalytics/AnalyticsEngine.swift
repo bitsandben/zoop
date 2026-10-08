@@ -443,6 +443,11 @@ public enum AnalyticsEngine {
                                   // caller/test byte-identical; IntelligenceEngine threads
                                   // `PuffinExperiment.motionAwareWakeEnabled`.
                                   useMotionAwareWake: Bool = false,
+                                  // Experimental: fire times of the strap's own alarm in this window, and
+                                  // whether a night ending near one ends when the user got up after it
+                                  // (`AlarmAnchoredWake`). Default off keeps every caller unchanged.
+                                  alarmFires: [Int] = [],
+                                  useAlarmAnchoredWake: Bool = false,
                                   // Caller-supplied, already-staged sleep sessions to fold in ALONGSIDE the
                                   // motion detector's — the day owner's OWN device-provided hypnogram (an
                                   // Oura ring's SleepNet night, #773), reconstructed from its persisted
@@ -517,6 +522,9 @@ public enum AnalyticsEngine {
         let refinedSessions = useMotionAwareWake
             ? detectedSessions.map { WakeMotionRefinement.refine($0, grav: gravity, steps: steps) }
             : detectedSessions
+        let wakeAnchoredSessions = useAlarmAnchoredWake && !alarmFires.isEmpty
+            ? refinedSessions.map { AlarmAnchoredWake.refine($0, alarmFires: alarmFires, hr: hr) }
+            : refinedSessions
         // #804 Fix A: fold in the caller's device-provided hypnogram (see `providedSleep`). Empty = the
         // byte-identical motion-only path. Otherwise enrich each provided session's nightly restingHR/avgHRV
         // from THIS day's hr/rr over its window (the stored ring row carries neither), using the SAME helpers
@@ -524,7 +532,7 @@ public enum AnalyticsEngine {
         // provided one (provided is authoritative where they collide; a separate nap survives).
         let allSessions: [SleepSession]
         if providedSleep.isEmpty {
-            allSessions = refinedSessions
+            allSessions = wakeAnchoredSessions
         } else {
             let rrSorted = rr.sortedByTsStable()
             let enrichedProvided: [SleepSession] = providedSleep.map { s in
@@ -543,7 +551,7 @@ public enum AnalyticsEngine {
                 return SleepSession(start: s.start, end: s.end, efficiency: s.efficiency,
                                     stages: s.stages, restingHR: rhr, avgHRV: hrv, hrOnly: s.hrOnly)
             }
-            let keptDetected = refinedSessions.filter { d in
+            let keptDetected = wakeAnchoredSessions.filter { d in
                 !enrichedProvided.contains { $0.start < d.end && d.start < $0.end }
             }
             allSessions = keptDetected + enrichedProvided

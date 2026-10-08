@@ -326,7 +326,7 @@ struct WeeklyDigestContent: View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "sparkles")
                 .font(StrandFont.footnote)
-                .foregroundStyle(StrandPalette.accent)
+                .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                 .accessibilityHidden(true)
             Text(line)
                 .font(StrandFont.subhead)
@@ -560,7 +560,7 @@ private struct DigestScoreCard: View {
     private var content: some View {
         VStack(spacing: ZoopMetrics.space2) {
             if isEmbedded {
-                Text(summary.metric.label)
+                Text(summary.metric.displayLabel)
                     .font(StrandFont.overline)
                     .tracking(StrandFont.overlineTracking)
                     .textCase(.uppercase)
@@ -597,7 +597,7 @@ private struct DigestScoreCard: View {
             .onTapGesture { showScaleGuide = true }
             .popover(isPresented: $showScaleGuide, arrowEdge: .bottom) {
                 VStack(spacing: ZoopMetrics.space1) {
-                    Text(summary.metric.label)
+                    Text(summary.metric.displayLabel)
                         .font(StrandFont.subhead.weight(.semibold))
                         .foregroundStyle(domain.color)
                     Text(captionText)
@@ -618,7 +618,7 @@ private struct DigestScoreCard: View {
     }
 
     private var metricLabel: some View {
-        Text(summary.metric.label)
+        Text(summary.metric.displayLabel)
             .font(StrandFont.overline)
             .tracking(StrandFont.overlineTracking)
             .textCase(.uppercase)
@@ -703,3 +703,19 @@ private func previewDigest() -> WeeklyDigest {
     .preferredColorScheme(.dark)
 }
 #endif
+
+extension WeeklyMetric {
+    /// The label shown on screen. iOS names the three scores Recovery, Strain and Sleep, as Home does.
+    var displayLabel: String {
+        #if os(iOS)
+        switch self {
+        case .charge: return String(localized: "Recovery")
+        case .effort: return String(localized: "Strain")
+        case .rest: return String(localized: "Sleep")
+        default: return String(localized: String.LocalizationValue(label))
+        }
+        #else
+        return String(localized: String.LocalizationValue(label))
+        #endif
+    }
+}

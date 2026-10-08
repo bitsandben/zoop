@@ -7,26 +7,30 @@ import SwiftUI
 // bindings, while cards, gauges, typography, and chrome share one maintainable source of truth.
 
 public enum ZoopVisualStyle {
-    // Neutral, low-chroma surfaces sampled from the supplied dark-mode reference.
-    public static let canvas = Color(light: "#F3F4F6", dark: "#1D1E23")
-    public static let surface = Color(light: "#FFFFFF", dark: "#2A2C34")
-    public static let surfaceTop = Color(light: "#FFFFFF", dark: "#30323B")
-    public static let surfaceBottom = Color(light: "#F4F5F7", dark: "#282A31")
-    public static let inset = Color(light: "#E8E9ED", dark: "#23252C")
+    // Dark mode follows the supplied redesign concept: a flat near-black canvas with no gradient,
+    // charcoal cards, black wells for icons, and the app icon's lime accent. Values are sampled from the concept.
+    public static let canvas = Color(light: "#F3F4F6", dark: "#0A0A0A")
+    public static let surface = Color(light: "#FFFFFF", dark: "#181818")
+    public static let surfaceTop = Color(light: "#FFFFFF", dark: "#202020")
+    public static let surfaceBottom = Color(light: "#F4F5F7", dark: "#161616")
+    public static let inset = Color(light: "#E8E9ED", dark: "#0A0A0A")
 
-    public static let border = Color(light: "#D8DAE0", dark: "#373A44")
-    public static let borderHighlight = Color(light: "#FFFFFF", dark: "#4B4E59")
-    public static let divider = Color(light: "#E4E5E9", dark: "#383A43")
+    public static let border = Color(light: "#D8DAE0", dark: "#262626")
+    public static let borderHighlight = Color(light: "#FFFFFF", dark: "#303030")
+    public static let divider = Color(light: "#E4E5E9", dark: "#242424")
 
-    public static let primaryText = Color(light: "#17181C", dark: "#F7F7FA")
-    public static let secondaryText = Color(light: "#555861", dark: "#C3C4CA")
-    public static let tertiaryText = Color(light: "#7D808A", dark: "#7D7F88")
+    public static let primaryText = Color(light: "#17181C", dark: "#F5F5F5")
+    public static let secondaryText = Color(light: "#555861", dark: "#8E8E8E")
+    public static let tertiaryText = Color(light: "#7D808A", dark: "#5E5E5E")
 
-    public static let mint = Color(light: "#149A78", dark: "#69DDB8")
-    public static let mintDeep = Color(light: "#0D765C", dark: "#13A982")
-    public static let mintGlow = Color(light: "#38C99E", dark: "#54E6BD")
+    public static let mint = Color(light: "#4C7A12", dark: "#BFEB7B")
+    public static let mintDeep = Color(light: "#3B5F0E", dark: "#8FBF4E")
+    public static let mintGlow = Color(light: "#5A8C1A", dark: "#BFEB7B")
 
-    public static let cardRadius: CGFloat = 22
+    /// The empty part of a score ring.
+    public static let ringTrack = Color(light: "#E2E4E8", dark: "#222222")
+
+    public static let cardRadius: CGFloat = 20
     public static let compactRadius: CGFloat = 16
     public static let pillRadius: CGFloat = 999
     public static let pagePadding: CGFloat = 16
@@ -64,12 +68,9 @@ public struct ZoopPanelSurface: View {
         // Scrolling stacks contain many panels. Layered translucent gradients and blurred shadows
         // multiply their compositing work, so iOS uses one theme-aware fill and a thin tinted rim.
         // This changes decorative depth only; card geometry and the design-system colors stay the same.
+        // WHOOP-style cards carry no rim: a flat charcoal fill on the slate canvas.
         shape
             .fill(ZoopVisualStyle.surface)
-            .overlay(shape.strokeBorder(
-                tint?.opacity(0.14) ?? ZoopVisualStyle.borderHighlight.opacity(elevated ? 0.9 : 0.65),
-                lineWidth: 0.8
-            ))
             .opacity(surfaceOpacity)
         #else
         shape

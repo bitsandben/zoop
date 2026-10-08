@@ -310,7 +310,9 @@ struct TrendsView: View {
                     // The main card list ripples in once on appear (Reduce-Motion safe).
                     Group {
                         #if os(iOS)
-                        weeklyChargeBars
+                        // The metric trend viewer leads: pick a metric and a window, read the average
+                        // and its change, then the week-in-review and longer charts follow.
+                        TrendViewerCard(days: repo.days, effortScale: effortScale)
                         #endif
                         // Week-in-review digest (#208) with prev/next week browsing (#710) — self-hides
                         // only when NO week in history has data. Past weeks render in the same format.
@@ -352,57 +354,6 @@ struct TrendsView: View {
             sleepPerfRevision += 1
         }
     }
-
-    // MARK: Week bars (iOS)
-
-    // Last seven stored days of Charge, drawn as value-tinted bars. Days without a score keep
-    // their tick so a gap stays visible. Hidden until two scores exist — one bar is not a week.
-    #if os(iOS)
-    @ViewBuilder
-    private var weeklyChargeBars: some View {
-        let recent = Array(repo.days.suffix(7))
-        let scored = recent.compactMap(\.recovery)
-        if scored.count >= 2 {
-            ZoopCard {
-                VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
-                    Text("Charge").strandOverline()
-                    HStack(alignment: .bottom, spacing: ZoopMetrics.space2) {
-                        ForEach(recent, id: \.day) { day in
-                            chargeBar(day)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private func chargeBar(_ day: DailyMetric) -> some View {
-        let value = day.recovery
-        let height = CGFloat(value.map { max(0.08, min(1, $0 / 100)) } ?? 0.08) * (ZoopMetrics.space8 * 2)
-        return VStack(spacing: ZoopMetrics.space1) {
-            Text(value.map { "\(Int($0.rounded()))" } ?? " ")
-                .font(StrandFont.captionNumber)
-                .foregroundStyle(StrandPalette.textSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-            RoundedRectangle(cornerRadius: ZoopMetrics.space1, style: .continuous)
-                .fill(value.map { StrandPalette.recoveryColor($0) } ?? StrandPalette.hairline)
-                .frame(maxWidth: .infinity)
-                .frame(height: height)
-            Text(weekdayTick(day.day))
-                .font(StrandFont.caption)
-                .foregroundStyle(StrandPalette.textTertiary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private func weekdayTick(_ key: String) -> String {
-        guard let d = date(key) else { return "" }
-        return d.formatted(.dateTime.weekday(.narrow).locale(locale))
-    }
-    #endif
 
     // MARK: Week-in-review digest with prev/next week browsing (#710)
 
@@ -546,9 +497,9 @@ struct TrendsView: View {
         if chargeAvg != nil || effortAvg != nil || restAvg != nil {
             ZoopCard {
                 VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
-                    SectionHeader("Week in review", overline: "Charge · Effort · Rest")
+                    SectionHeader("Week in review", overline: Self.weekOverline)
                     if let v = chargeAvg {
-                        pipScoreRow(label: "Charge", value: v, range: 0...100,
+                        pipScoreRow(label: Self.scoreLabel("Charge", ios: "Recovery"), value: v, range: 0...100,
                                     tint: StrandPalette.chargeColor, frac: v / 100,
                                     format: { "\(Int($0.rounded()))" })
                     }
@@ -563,12 +514,12 @@ struct TrendsView: View {
                         let oneDecimal = effortScale == .whoop
                         // The vessel fills off the stored 0–100 internal scale (v), so it agrees with the
                         // Charge/Rest vessels regardless of the displayed Effort unit.
-                        pipScoreRow(label: "Effort", value: display, range: 0...maxV,
+                        pipScoreRow(label: Self.scoreLabel("Effort", ios: "Strain"), value: display, range: 0...maxV,
                                     tint: StrandPalette.effortColor, frac: v / 100,
                                     format: { oneDecimal ? String(format: "%.1f", $0) : "\(Int($0.rounded()))" })
                     }
                     if let v = restAvg {
-                        pipScoreRow(label: "Rest", value: v, range: 0...100,
+                        pipScoreRow(label: Self.scoreLabel("Rest", ios: "Sleep"), value: v, range: 0...100,
                                     tint: StrandPalette.restColor, frac: v / 100,
                                     format: { "\(Int($0.rounded()))" })
                     }
@@ -583,6 +534,23 @@ struct TrendsView: View {
     /// count-up value, over the segmented count-up bar. `frac` (0…1) is the score on the shared 0–100
     /// internal scale so the three vessels read against the same fill — a small liquid accent on a single
     /// headline metric, exactly where it reads well (not on a chart).
+    /// The score names: Recovery, Strain and Sleep on iOS, as on Home; Charge, Effort and Rest elsewhere.
+    private static func scoreLabel(_ other: LocalizedStringKey, ios: LocalizedStringKey) -> LocalizedStringKey {
+        #if os(iOS)
+        return ios
+        #else
+        return other
+        #endif
+    }
+
+    private static var weekOverline: LocalizedStringKey {
+        #if os(iOS)
+        return "Recovery · Strain · Sleep"
+        #else
+        return "Charge · Effort · Rest"
+        #endif
+    }
+
     private func pipScoreRow(label: LocalizedStringKey, value: Double, range: ClosedRange<Double>,
                              tint: Color, frac: Double, format: @escaping (Double) -> String) -> some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
@@ -618,7 +586,7 @@ struct TrendsView: View {
             HStack(spacing: ZoopMetrics.space3) {
                 Image(systemName: "doc.richtext")
                     .font(StrandFont.title2)
-                    .foregroundStyle(StrandPalette.accent)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
                     Text("Export trends report").strandOverline()
@@ -712,7 +680,7 @@ struct TrendsView: View {
         // LiquidPressStyle gives the physical settle-inward on press (the liquid tap language). The card's
         // own rich labels (title + chart series + footer stats) are surfaced by the link's button element,
         // with a hint that a tap opens the detail.
-        NavigationLink(value: TabRoute.metric("recovery")) { card }
+        NavigationLink(value: TabRoute.metric("recovery")) { card.tapChevron() }
             .buttonStyle(LiquidPressStyle())
             .accessibilityHint(Text(String(localized: "Opens the full Charge metric.")))
     }
@@ -822,7 +790,7 @@ struct TrendsView: View {
         )
         // Each small-multiple taps through to its own metric detail (like Today's cards / Explore's rows),
         // with the liquid press settle. The chart itself is left uncluttered — no vessel over it (task).
-        NavigationLink(value: TabRoute.metric(metricKey)) { card }
+        NavigationLink(value: TabRoute.metric(metricKey)) { card.tapChevron() }
             .buttonStyle(LiquidPressStyle())
             .accessibilityHint(Text(String(localized: "Opens the full \(accessibilityTitle) metric.")))
     }
@@ -830,14 +798,23 @@ struct TrendsView: View {
     // MARK: Year heat-strip
 
     private var yearStrip: some View {
+        #if os(iOS)
+        // iOS: the last 30 days. A year of cells was slow to draw and scroll for little extra meaning.
+        let stripDays = 30
+        #else
         // Always show at least a full year for context; expand to all history on ALL.
         let stripDays = max(range.days ?? repo.days.count, 365)
+        #endif
         let recent = repo.days.suffix(stripDays)
         let recoveryDays: [RecoveryDay] = recent.compactMap { d in
             guard let dt = date(d.day) else { return nil }
             return RecoveryDay(date: dt, score: d.recovery)
         }
+        #if os(iOS)
+        let title = String(localized: "Recovery (last 30 days)")
+        #else
         let title = (range == .all && repo.days.count > 365) ? String(localized: "Charge (all history)") : String(localized: "Charge (past year)")
+        #endif
         return ZoopCard {
             VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                 SectionHeader("\(title)", overline: "Calendar", trailing: String(localized: "\(recoveryDays.filter { $0.score != nil }.count) days"))
@@ -954,3 +931,20 @@ private func previewRepo() -> Repository {
         .preferredColorScheme(.dark)
 }
 #endif
+
+private extension View {
+    /// A small chevron in the top corner of a card that opens a page, so it reads as tappable (iOS).
+    @ViewBuilder func tapChevron() -> some View {
+        #if os(iOS)
+        overlay(alignment: .topTrailing) {
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(StrandPalette.textTertiary)
+                .padding(14)
+                .accessibilityHidden(true)
+        }
+        #else
+        self
+        #endif
+    }
+}

@@ -3290,9 +3290,16 @@ final class Repository: ObservableObject {
             }
             candidates = results
         } else {
+            // Zoop: a raised heart rate alone (stress, heat, a hot shower) kept being offered as a workout.
+            // Confirm with wrist movement whenever the strap banked enough of it, and only offer sessions
+            // that are clearly exercise: at least 15 minutes, averaging 35 bpm or more above resting.
+            let gravity = await gravitySamplesUnion(from: from, to: now, limit: 200_000)
+            let motion = gravity.count >= 600 ? AutoWorkoutDetector.motionPoints(gravity) : nil
+            let floor = (restingBpm ?? AutoWorkoutDetector.defaultRestingHR) + 35
             candidates = AutoWorkoutDetector.detect(hr: hr, restingBpm: restingBpm,
-                                                    motion: nil, savedSpans: savedSpans,
+                                                    motion: motion, savedSpans: savedSpans,
                                                     minimumSustainedMinutes: AutoWorkoutDetector.minSustainedMin)
+                .filter { $0.durationMin >= 15 && $0.avgBpm >= floor }
         }
         return Self.selectAutoDetectCandidate(
             candidates,

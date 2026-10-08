@@ -73,7 +73,7 @@ struct InsightsHubView: View {
 
             if model.ranked.isEmpty {
                 ZoopCard {
-                    Text(String(localized: "Not enough overlap between your journal answers and \(outcome.outcomeName.lowercased()) yet. Keep logging. Each behaviour needs days both with and without it before NOOP can read its effect."))
+                    Text(String(localized: "Not enough overlap between your journal answers and \(outcome.outcomeName.lowercased()) yet. Keep logging. Each behaviour needs days both with and without it before Zoop can read its effect."))
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -172,7 +172,7 @@ struct InsightsHubView: View {
             SectionHeader("Dose-response", overline: "Personal curve · prior-shrunk")
             if model.doseCards.isEmpty {
                 ZoopCard {
-                    Text(String(localized: "Log alcohol or late caffeine with an amount and NOOP fits a personal dose curve: how much each extra unit tends to move your numbers. Until then it shows typical patterns, clearly labelled as not yet yours."))
+                    Text(String(localized: "Log alcohol or late caffeine with an amount and Zoop fits a personal dose curve: how much each extra unit tends to move your numbers. Until then it shows typical patterns, clearly labelled as not yet yours."))
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -421,6 +421,8 @@ private struct DoseCurveChart: View {
     let accent: Color
     let unitLabel: String
     let outcomeName: String
+    /// The dose under the finger while scrubbing.
+    @State private var scrubIndex: Int?
 
     var body: some View {
         GeometryReader { geo in
@@ -474,7 +476,21 @@ private struct DoseCurveChart: View {
                         .frame(width: 5, height: 5)
                         .position(x: xFor(i), y: yFor(points[i].outcomeDelta))
                 }
+
+                // Scrub readout: the dose under the finger and its modelled change.
+                if let i = scrubIndex, points.indices.contains(i) {
+                    ChartScrubReadout(
+                        x: xFor(i), y: yFor(points[i].outcomeDelta), container: geo.size,
+                        value: "\(String(format: "%+.1f", points[i].outcomeDelta)) \(outcomeName)",
+                        label: "\(points[i].dose) \(unitLabel)",
+                        accent: accent)
+                }
             }
+            .frame(width: w, height: h, alignment: .topLeading)
+            .contentShape(Rectangle())
+            .zoopChartScrub(onChange: { location in
+                scrubIndex = ChartHoverMath.nearestIndex(toX: location.x, count: points.count, width: w)
+            }, onEnd: { scrubIndex = nil })
         }
         .accessibilityElement()
     }

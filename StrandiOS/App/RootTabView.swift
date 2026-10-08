@@ -2,14 +2,16 @@
 import SwiftUI
 import StrandDesign
 
-/// Tab tags for the iPhone bar: Home, Health, AI Coach, More. Coach keeps its own tag when the
-/// master switch hides it, so More does not inherit Coach's navigation path.
+/// Tab tags for the iPhone bar: Home, Health, Trends, More, and Coach as the separate round button.
+/// Coach keeps its own tag when the master switch hides it, so More does not inherit Coach's
+/// navigation path.
 private enum IOSTab {
     static let home = 0
     static let health = 1
     static let coach = 2
     static let more = 3
-    static let count = 4
+    static let trends = 4
+    static let count = 5
 }
 
 /// iOS navigation shell. macOS uses a `NavigationSplitView` sidebar (`RootView`); on iPhone the
@@ -50,6 +52,8 @@ struct RootTabView: View {
     @State private var quickAction: QuickAction?
     /// Presents the Devices manager (pair / switch bands) when a screen asks the shell to open it.
     @State private var showDevices = false
+    /// The Coach chat, raised by the Coach button in the tab bar.
+    @State private var showCoach = false
     /// A routed v5 pillar screen (Insights hub / Lab Book / fused record / Rhythm) presented as a sheet
     /// when a hub row deep-links to it via NavRouter. nil = closed.
     @State private var routedPillar: NavRouter.Destination?
@@ -67,14 +71,6 @@ struct RootTabView: View {
     /// a no-op). Threaded into each tab's root via `\.scrollToTopSignal`; ScreenScaffold / LiquidTodayView
     /// scroll to their top anchor when their tab's token changes.
     @State private var scrollTop: [Int] = Array(repeating: 0, count: IOSTab.count)
-    /// Which More-tab groups are expanded (S2). Insights + Body stay open at rest; Data + App collapse to
-    /// just their header until tapped. Persisted (#860 item 2): the user's open/closed choice must SURVIVE
-    /// leaving and re-entering the More tab (and relaunch), not reset to the seed every visit. Backed by an
-    /// `@AppStorage` CSV string (keyed identically to the Android `MoreSectionPrefs`), bridged to a
-    /// `Set<String>` through `MoreSectionPrefs` so the section logic below is unchanged.
-    @AppStorage(MoreSectionPrefs.storageKey) private var expandedMoreSectionsCSV = MoreSectionPrefs.defaultCSV
-    private var expandedMoreSections: Set<String> { MoreSectionPrefs.decode(expandedMoreSectionsCSV) }
-
     /// V8 liquid redesign is the default Today; the Settings toggle lets a user fall back to the classic
     /// Today if they prefer it (keyed identically to the SettingsView toggle). Default ON.
     @AppStorage("zoop.liquidTodayEnabled") private var liquidTodayEnabled = true
@@ -91,10 +87,15 @@ struct RootTabView: View {
         Binding(
             get: { selectedTab },
             set: { tag in
-                if tag == selectedTab {
+                // Coach is not a destination: its button raises the chat sheet over whatever is open.
+                if tag == IOSTab.coach {
+                    showCoach = true
+                } else if tag == selectedTab {
                     reselectTab(tag)
                 } else {
                     selectedTab = tag
+                    // A page always opens at its top, not wherever it was left.
+                    if tabPaths[tag].isEmpty { scrollTop[tag] += 1 }
                 }
             }
         )
@@ -109,23 +110,89 @@ struct RootTabView: View {
         }
     }
 
-    var body: some View {
-        // The platform tab bar is intentionally left fully native. iOS 26 supplies Liquid Glass and
-        // its dynamic interaction with scrolling content automatically; older supported releases use
-        // the corresponding system material and safe-area behaviour from the same TabView.
-        TabView(selection: nativeTabSelection) {
-            tab(todayTabRoot, "Home", "house.fill", path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home]).tag(IOSTab.home)
-            tab(HealthView(), "Health", "heart.text.square.fill", path: $tabPaths[IOSTab.health], scrollSignal: scrollTop[IOSTab.health]).tag(IOSTab.health)
-            // Conditional on the master switch. The tags stay LITERAL rather than being renumbered when
-            // Coach is absent: `tabPaths` and `scrollTop` are indexed by tag, and More stays on its own
-            // tag in both shapes, so a wearer's More tab keeps its identity, its navigation path and its
-            // scroll position across a flip instead of inheriting Coach's.
-            if coachEnabled {
-                tab(CoachView(), "AI Coach", "sparkles", path: $tabPaths[IOSTab.coach], scrollSignal: scrollTop[IOSTab.coach]).tag(IOSTab.coach)
+    /// The platform tab bar is intentionally left native. iOS 26 supplies Liquid Glass and its
+    /// interaction with scrolling content; older releases use the system material from the same
+    /// TabView.
+    ///
+    /// The tags stay LITERAL rather than being renumbered when Coach is absent: `tabPaths` and
+    /// `scrollTop` are indexed by tag, so a wearer's More tab keeps its identity, navigation path and
+    /// scroll position across a Coach flip instead of inheriting Coach's.
+    @ViewBuilder private var tabShell: some View {
+        if #available(iOS 18.0, *) {
+            TabView(selection: nativeTabSelection) {
+                // Icon-only items, as in the concept; the name stays as the spoken label.
+                Tab(value: IOSTab.home) {
+                    tabStack(todayTabRoot, path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home])
+                } label: { iconLabel("Home", "house") }
+                Tab(value: IOSTab.health) {
+                    tabStack(HealthView(), path: $tabPaths[IOSTab.health], scrollSignal: scrollTop[IOSTab.health])
+                } label: { iconLabel("Health", "heart") }
+                Tab(value: IOSTab.trends) {
+                    tabStack(TrendsView(), path: $tabPaths[IOSTab.trends], scrollSignal: scrollTop[IOSTab.trends])
+                } label: { iconLabel("Trends", "chart.xyaxis.line") }
+                Tab(value: IOSTab.more) {
+                    moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more])
+                } label: { iconLabel("More", "line.3.horizontal") }
+                // A role is what moves Coach into its own round button at the trailing end of the bar,
+                // apart from the four destinations. Hidden rather than left out when Coach is off, so
+                // the tab keeps its tag and path.
+                Tab(value: IOSTab.coach, role: Self.coachTabRole) {
+                    // Never shown: selecting this tab opens `CoachChatSheet` instead (see `nativeTabSelection`).
+                    Color.clear
+                } label: { iconLabel("Coach", "sparkles") }
+                .hidden(!coachEnabled)
             }
-            moreTab(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more]).tag(IOSTab.more)
+        } else {
+            TabView(selection: nativeTabSelection) {
+                tab(todayTabRoot, "Home", "house", path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home]).tag(IOSTab.home)
+                tab(HealthView(), "Health", "heart", path: $tabPaths[IOSTab.health], scrollSignal: scrollTop[IOSTab.health]).tag(IOSTab.health)
+                tab(TrendsView(), "Trends", "chart.xyaxis.line", path: $tabPaths[IOSTab.trends], scrollSignal: scrollTop[IOSTab.trends]).tag(IOSTab.trends)
+                moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more])
+                    .tabItem { Label("More", systemImage: "line.3.horizontal") }
+                    .tag(IOSTab.more)
+                if coachEnabled {
+                    tab(CoachView(), "Coach", "sparkles", path: $tabPaths[IOSTab.coach], scrollSignal: scrollTop[IOSTab.coach]).tag(IOSTab.coach)
+                }
+            }
         }
-        .tint(StrandPalette.accent)
+    }
+
+    /// A transparent tap target laid exactly over the system Coach button. A system tab is drawn as
+    /// selected (its empty content filling the screen) before the selection binding can refuse it, which
+    /// flashed black on every tap. Catching the touch above the bar opens the sheet without the tab ever
+    /// being selected; the binding's own redirect stays as the path VoiceOver takes.
+    private var coachButton: some View {
+        Color.clear
+            .frame(width: 66, height: 66)
+            .contentShape(Circle())
+            .onTapGesture { showCoach = true }
+            .accessibilityHidden(true)
+            .padding(.trailing, 19)
+            .padding(.bottom, 19)
+            .ignoresSafeArea(.container, edges: .bottom)
+            .sensoryFeedback(.impact(weight: .light), trigger: showCoach)
+    }
+
+    /// A tab item that shows only its glyph; the title is still read by VoiceOver.
+    private func iconLabel(_ title: LocalizedStringKey, _ icon: String) -> some View {
+        Image(systemName: icon).accessibilityLabel(Text(title))
+    }
+
+    /// iOS 27's prominent role draws a separate accented button; earlier releases separate the
+    /// search role instead.
+    @available(iOS 18.0, *)
+    private static var coachTabRole: TabRole {
+        if #available(iOS 27.0, *) { return .prominent }
+        return .search
+    }
+
+    var body: some View {
+        tabShell
+        .overlay(alignment: .bottomTrailing) {
+            if coachEnabled, #available(iOS 18.0, *) { coachButton }
+        }
+        // The selected tab reads white, as in the reference; colour is kept for the data.
+        .tint(StrandPalette.textPrimary)
         // Switching Coach off while STANDING on it leaves `selectedTab` pointing at a tag no tab claims
         // any more, which renders as an empty tab rather than as an error. Send that wearer to Today, and
         // only in that case, so a flip made from anywhere else does not move them.
@@ -156,16 +223,25 @@ struct RootTabView: View {
         // animation scoped to the sheet rather than the whole shell.
         .sheet(item: $quickAction) { action in
             quickActionDestination(action)
+                .presentationDetents([.fraction(0.75), .large])
+                .presentationDragIndicator(.visible)
         }
         // Live's "Manage devices" affordance (and any future cross-screen link to Devices) routes here:
         // present the Devices manager in its own nav stack, the same way the quick-action screens do.
         .sheet(isPresented: $showDevices) {
             devicesScreen
+                .presentationDetents([.fraction(0.75), .large])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showCoach) {
+            CoachChatSheet()
         }
         // v5 pillar deep-links (Insights hub / Lab Book / fused record / Rhythm) present as a sheet in
         // their own nav stack — the same idiom the quick-action + Devices screens use on iPhone.
         .sheet(item: $routedPillar) { dest in
             pillarScreen(dest)
+                .presentationDetents([.fraction(0.75), .large])
+                .presentationDragIndicator(.visible)
         }
         // Honour a router request: Devices keeps its dedicated sheet; the v5 pillars route through the
         // shared pillar sheet. Cleared so the same tap can fire again later.
@@ -190,14 +266,11 @@ struct RootTabView: View {
                     router.requestedDestination = nil
                     break
                 }
-                withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = IOSTab.coach }
+                showCoach = true
                 router.requestedDestination = nil
             case .trends:
-                // Trends left the bar for the More list. Open More and push Trends so the deep link
-                // still lands on the chart, not on the Health tab that now occupies the old slot.
-                withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = IOSTab.more }
-                tabPaths[IOSTab.more] = NavigationPath()
-                tabPaths[IOSTab.more].append(MoreDestination.trends)
+                withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = IOSTab.trends }
+                tabPaths[IOSTab.trends] = NavigationPath()
                 router.requestedDestination = nil
             case .activeWorkout:
                 // The Today active-workout indicator opens Live through the quick-action Live sheet; once
@@ -403,6 +476,11 @@ struct RootTabView: View {
 
     private func tab<V: View>(_ view: V, _ title: LocalizedStringKey, _ icon: String,
                               path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
+        tabStack(view, path: path, scrollSignal: scrollSignal)
+            .tabItem { Label(title, systemImage: icon) }
+    }
+
+    private func tabStack<V: View>(_ view: V, path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
         // Each primary tab gets its OWN NavigationStack so the in-content NavigationLinks (e.g. the Today
         // dashboard card rows) both navigate AND render opaque. An ORPHANED NavigationLink (no
         // NavigationStack ancestor) renders its whole label in a disabled/translucent state — that was
@@ -420,7 +498,6 @@ struct RootTabView: View {
         // Drive this tab's root scroll-to-top on an at-root re-tap (#198 follow-up); read by ScreenScaffold
         // / LiquidTodayView inside. Only THIS tab's token changes on its reselect, so the others don't scroll.
         .environment(\.scrollToTopSignal, scrollSignal)
-        .tabItem { Label(title, systemImage: icon) }
     }
 
     // The "More" tab is the app's catch-all index. It was a plain SwiftUI `List` with system large-title
@@ -428,68 +505,48 @@ struct RootTabView: View {
     // + SectionHeader's UPPERCASE overline + the 28pt section rhythm). Rebuilt on the shared page chrome:
     // ScreenScaffold for the title1 "More" + subtitle, a `SectionHeader` overline per group, and the group's
     // rows in a single grouped ZoopCard with hairline dividers — the same row idiom Settings/Health use.
-    private func moreTab(path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
+    private func moreStack(path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
         NavigationStack(path: path) {
             ScreenScaffold(title: "More", subtitle: "Everything else, one tap away",
                            quietSubtitle: true,
                            onRefresh: { await repo.refresh() },
                            topBackground: liquidScaffoldSky()) {
-                moreSection("Insights") {
-                    MoreRow("What Moves You", "wand.and.sparkles", .insightsHub)
-                    MoreRow("Intelligence", "brain.head.profile", .intelligence)
-                    // K3: Coach promoted to a top-level tab — no longer listed under More.
-                    MoreRow("Insights", "lightbulb.fill", .insights)
-                    MoreRow("Explore", "square.grid.2x2.fill", .explore)
-                    MoreRow("Compare", "rectangle.split.2x1.fill", .compare)
-                }
+                MoreDeviceHeader()
                 moreSection("Body") {
-                    // Sleep and Trends left the bottom bar when Health took that slot. They stay one
-                    // tap down in More so neither screen disappears.
-                    MoreRow("Sleep", "bed.double", .sleep)
-                    MoreRow("Trends", "chart.line.uptrend.xyaxis", .trends)
-                    MoreRow("Live", "waveform.path.ecg", .live)
-                    MoreRow("Workouts", "figure.run", .workouts)
-                    MoreRow("Lift Log", "dumbbell.fill", .liftLog)
-                    MoreRow("Lab Book", "books.vertical.fill", .labBook)
-                    MoreRow("Stress", "bolt.heart.fill", .stress)
-                    MoreRow("Breathe", "wind", .breathe)
-                    MoreRow("Intervals", "timer", .intervals)
-                    // Experimental beat-to-beat regularity visualization — self-gates on its own consent.
-                    MoreRow("Rhythm", "waveform.path", .rhythm)
+                    MoreRow("Sleep", "bed.double.fill", .sleep, subtitle: "Stages, debt and consistency")
+                    MoreRow("Workouts", "figure.run", .workouts, subtitle: "Sessions, zones and routes")
+                    MoreRow("Stress", "bolt.heart.fill", .stress, subtitle: "Load across your day")
+                    MoreRow("Live", "waveform.path.ecg", .live, subtitle: "Heart rate in real time")
+                    MoreRow("Lift Log", "dumbbell.fill", .liftLog, subtitle: "Programs and sets")
+                    MoreRow("Breathe", "wind", .breathe, subtitle: "Guided breathing")
+                    MoreRow("Intervals", "timer", .intervals, subtitle: "Haptic interval timer")
+                    MoreRow("Lab Book", "books.vertical.fill", .labBook, subtitle: "Experiments on yourself")
+                    MoreRow("Rhythm", "waveform.path", .rhythm, subtitle: "Beat-to-beat timing")
+                }
+                moreSection("Insights") {
+                    MoreRow("Patterns", "chart.bar.doc.horizontal.fill", .patterns, subtitle: "Tonight, tomorrow and your habits")
+                    MoreRow("What Moves You", "wand.and.sparkles", .insightsHub, subtitle: "What changes your scores")
+                    MoreRow("Intelligence", "brain.head.profile", .intelligence, subtitle: "Patterns across your history")
+                    MoreRow("Insights", "lightbulb.fill", .insights, subtitle: "Journal and correlations")
+                    MoreRow("Explore", "square.grid.2x2.fill", .explore, subtitle: "Every metric, every range")
+                    MoreRow("Compare", "rectangle.split.2x1.fill", .compare, subtitle: "Metrics side by side")
                 }
                 moreSection("Data") {
-                    MoreRow("Your Data, Fused", "square.stack.3d.up.fill", .fusedRecord)
-                    MoreRow("Apple Health", "heart.fill", .appleHealth)
-                    MoreRow("Mi Band", "figure.walk.motion", .miBand)
-                    MoreRow("Data Sources", "externaldrive.fill", .dataSources)
-                    MoreRow("Backup & Sync", "externaldrive.fill.badge.icloud", .backupSync)
-                    // #155: HealthKit-free Apple Health path for sideloaded installs (Siri Shortcut
-                    // reads the opt-in Documents/noop_sync.txt drop file).
-                    MoreRow("Shortcuts Export", "square.and.arrow.up.fill", .shortcutsExport)
-                    // The plain 4.0 vs 5.0/MG capability grid — what NOOP reads live off each strap.
-                    MoreRow("NOOP Limitations", "list.bullet.rectangle", .noopLimitations)
+                    MoreRow("Data Sources", "externaldrive.fill", .dataSources, subtitle: "Where each number comes from")
+                    MoreRow("Your Data, Fused", "square.stack.3d.up.fill", .fusedRecord, subtitle: "One record from every source")
+                    MoreRow("Apple Health", "heart.fill", .appleHealth, subtitle: "Import and write-back")
+                    MoreRow("Mi Band", "figure.walk.motion", .miBand, subtitle: "Steps and heart rate")
+                    MoreRow("Backup & Sync", "externaldrive.fill.badge.icloud", .backupSync, subtitle: "Back up and restore")
+                    MoreRow("Shortcuts Export", "square.and.arrow.up.fill", .shortcutsExport, subtitle: "Send data to Shortcuts")
+                    MoreRow("Zoop Limitations", "list.bullet.rectangle", .noopLimitations, subtitle: "What is not measured yet")
                 }
                 moreSection("App") {
-                    // #805/#811: the v7.3.1 #766 alarm consolidation moved Smart Alarm under a single
-                    // "Alarms" sidebar entry (RootView .smartAlarm) but the regression dropped the row
-                    // from the iPhone More list, leaving Alarms unreachable on iPhone. Restore it here
-                    // (route to SmartAlarmView, the cross-platform iOS/macOS surface).
-                    //
-                    // Notifications (RootView .notifications) is deliberately NOT added: that screen is
-                    // macOS-only (it picks which Mac apps tap your wrist via NSWorkspace, imports AppKit,
-                    // and project.yml excludes Screens/NotificationSettingsView.swift from the iOS target),
-                    // so it can't compile or apply on iPhone. iPhone's wrist-alert controls live on the
-                    // Automations screen instead. Its absence from the iPhone More list is correct.
-                    MoreRow("Alarms", "alarm.fill", .alarms)
-                    MoreRow("Automations", "wand.and.stars", .automations)
-                    // The Test Centre (the diagnostics + bug-report hub) gets a first-class home here, not
-                    // just buried in Settings, so the feedback loop is one tap from the More tab.
-                    MoreRow("Test Centre", "stethoscope", .testCentre)
-                    MoreRow("Siri & Shortcuts", "mic.fill", .siriShortcuts)
-                    // #477 lives here rather than inside Settings: the strap-battery levers are the
-                    // ones people reach for when a strap is running down, so they get their own row.
-                    MoreRow("Power saving", "battery.25", .powerSaving)
-                    MoreRow("Settings", "gearshape.fill", .settings)
+                    MoreRow("Settings", "gearshape.fill", .settings, subtitle: "Profile, units and appearance")
+                    MoreRow("Alarms", "alarm.fill", .alarms, subtitle: "Strap alarm and wind-down")
+                    MoreRow("Automations", "wand.and.stars", .automations, subtitle: "Alerts and reminders")
+                    MoreRow("Power saving", "battery.25", .powerSaving, subtitle: "Ease the strap's battery")
+                    MoreRow("Siri & Shortcuts", "mic.fill", .siriShortcuts, subtitle: "Voice and automation")
+                    MoreRow("Test Centre", "stethoscope", .testCentre, subtitle: "Diagnostics and logs")
                 }
             }
             // The rows push MoreDestination VALUES so a re-tap of the More tab can pop them off the
@@ -508,76 +565,34 @@ struct RootTabView: View {
         }
         // Scroll the More index to the top on an at-root re-tap (#198 follow-up); read by its ScreenScaffold.
         .environment(\.scrollToTopSignal, scrollSignal)
-        .tabItem { Label("More", systemImage: "ellipsis") }
     }
 
-    /// One titled, COLLAPSIBLE group in the More index (S2): the app's overline (UPPERCASE) becomes a
-    /// tappable header with a disclosure chevron; tapping it expands/collapses the grouped rows card.
-    /// Insights + Body default open, Data + App default collapsed (the `expandedMoreSections` seed) so the
-    /// list is shorter at rest without dropping a single row. The grouped card is unchanged: a single
-    /// `ZoopCard` holding a `VStack(spacing: 0)` whose `MoreRow`s draw their own hairlines, clipped to the
-    /// card's rounded shape so the last divider is trimmed inside the corners. Same idiom Settings/Health use.
+    /// One group in the More index: a small grey label over the group's rows in a single card. Every
+    /// group is always open, so the whole index reads at a glance.
     @ViewBuilder
-    private func moreSection<Rows: View>(_ title: String,
+    private func moreSection<Rows: View>(_ title: LocalizedStringKey,
                                          @ViewBuilder rows: @escaping () -> Rows) -> some View {
-        let isOpen = expandedMoreSections.contains(title)
         VStack(alignment: .leading, spacing: 10) {
-            // Tappable overline header: the same ALL-CAPS tracked label as before, now with a trailing
-            // chevron that rotates open. A plain Button (not a SwiftUI DisclosureGroup) so the header keeps
-            // the exact strandOverline styling and the card layout below stays identical to before.
-            Button {
-                withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) {
-                    // Persist the toggle via the CSV-backed @AppStorage so the choice survives leaving and
-                    // re-entering the More tab and relaunch (#860 item 2). MoreSectionPrefs owns encode/decode.
-                    var open = expandedMoreSections
-                    if isOpen { open.remove(title) } else { open.insert(title) }
-                    expandedMoreSectionsCSV = MoreSectionPrefs.encode(open)
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    Text(title).strandOverline()
-                    Spacer(minLength: 8)
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(StrandPalette.textTertiary)
-                        .rotationEffect(.degrees(isOpen ? 0 : -90))
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(Text(title))
-            .accessibilityValue(Text(isOpen ? String(localized: "Expanded") : String(localized: "Collapsed")))
-            .accessibilityHint(Text(isOpen ? String(localized: "Double tap to collapse") : String(localized: "Double tap to expand")))
-
-            if isOpen {
-                // Zero internal padding so each MoreRow owns its own comfortable insets + height; the rows
-                // supply their own hairline separators (drawn at the bottom of every row but the last via the
-                // divider overlay) so the group reads as one continuous grouped list, matching Settings/Health.
-                ZoopCard(padding: 0) {
-                    VStack(spacing: 0) { rows() }
-                        // Clip the rows column to the card's rounded shape so the last row's bottom hairline is
-                        // trimmed inside the corners (the card draws its surface in the BACKGROUND and doesn't
-                        // clip content itself, so without this the final divider would run past the rounded edge).
-                        .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
-                }
-            }
+            Text(title)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(StrandPalette.textSecondary)
+                .padding(.horizontal, 4)
+            VStack(spacing: 0) { rows() }
+                .background(ZoopPanelSurface())
+                .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
         }
     }
 }
 
-/// Every screen the More index links to, as a `Hashable` value the tab's `NavigationPath` can carry
-/// (#198): a closure-destination push would bypass the path and be un-poppable on tab re-tap. The
-/// per-screen chrome the old inline links applied lives at the single `navigationDestination(for:)`
-/// registration in `moreTab`.
 private enum MoreDestination: Hashable {
-    case insightsHub, intelligence, coach, insights, explore, compare
+    case patterns, insightsHub, intelligence, coach, insights, explore, compare
     case sleep, trends, live, workouts, liftLog, health, labBook, stress, breathe, intervals, rhythm
     case fusedRecord, appleHealth, miBand, dataSources, backupSync, shortcutsExport, noopLimitations
     case alarms, automations, testCentre, siriShortcuts, powerSaving, settings
 
     @ViewBuilder var destination: some View {
         switch self {
+        case .patterns:        PatternsScreen()
         case .insightsHub:     InsightsHubView()
         case .intelligence:    IntelligenceView()
         case .coach:           CoachView()
@@ -621,43 +636,78 @@ private struct MoreRow: View {
     let title: LocalizedStringKey
     let icon: String
     let route: MoreDestination
+    let subtitle: LocalizedStringKey?
 
-    init(_ title: LocalizedStringKey, _ icon: String, _ route: MoreDestination) {
-        self.title = title; self.icon = icon; self.route = route
+    init(_ title: LocalizedStringKey, _ icon: String, _ route: MoreDestination, subtitle: LocalizedStringKey? = nil) {
+        self.title = title; self.icon = icon; self.route = route; self.subtitle = subtitle
     }
 
     var body: some View {
         NavigationLink(value: route) {
-            HStack(spacing: 14) {
-                // Pin the icon to the accent explicitly. A plain inherited tint gets re-resolved by iOS to
-                // its default blue a beat after first render — so the icons flashed green→blue (#184). The
-                // explicit foregroundStyle on the image overrides that; the title keeps the primary colour.
-                Image(systemName: icon)
-                    .font(.system(size: 17, weight: .regular))
-                    .foregroundStyle(StrandPalette.accent)
-                    .frame(width: 26, alignment: .center)
-                Text(title)
-                    .font(StrandFont.body)
-                    .foregroundStyle(StrandPalette.textPrimary)
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textTertiary)
-            }
-            .padding(.horizontal, 16)
-            .frame(minHeight: 44)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-            // Hairline under every row; the grouped container clips the last one's overflow so the bottom
-            // edge stays clean (the divider sits inside the card's rounded corners).
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(StrandPalette.hairline)
-                    .frame(height: 1)
-                    .padding(.leading, 16)
-            }
+            ZoopIconRow(title, subtitle: subtitle, icon: icon)
+                .overlay(alignment: .bottom) {
+                    // Hairline between rows, inset to the text; the card clips the last one.
+                    Rectangle()
+                        .fill(StrandPalette.hairline)
+                        .frame(height: 1)
+                        .padding(.leading, 68)
+                }
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// The More index's header card: the profile picture beside the active strap's connection, battery and
+/// last sync, tapping through to Devices.
+private struct MoreDeviceHeader: View {
+    @EnvironmentObject private var live: LiveState
+    @EnvironmentObject private var profile: ProfileStore
+    @EnvironmentObject private var router: NavRouter
+
+    private var status: String {
+        guard live.connected else { return String(localized: "Not connected") }
+        if let pct = live.batteryPct {
+            return String(localized: "Connected · \(Int(pct.rounded()))%")
+        }
+        return String(localized: "Connected")
+    }
+
+    private var syncLine: String {
+        guard let t = live.lastSyncedAt else { return String(localized: "Not synced yet") }
+        let when = Date(timeIntervalSince1970: t).formatted(.relative(presentation: .named))
+        return String(localized: "Last sync \(when)")
+    }
+
+    var body: some View {
+        Button { router.openDevices() } label: {
+            HStack(spacing: 14) {
+                ProfileAvatarView(imageData: profile.avatarImageData, size: 52)
+                    .frame(width: 52, height: 52)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(live.connected ? StrandPalette.accent : StrandPalette.textTertiary)
+                            .frame(width: 8, height: 8)
+                        Text(status)
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(StrandPalette.textPrimary)
+                    }
+                    Text(syncLine)
+                        .font(StrandFont.subhead)
+                        .foregroundStyle(StrandPalette.textSecondary)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textPrimary)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(ZoopPanelSurface())
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("\(status). \(syncLine). Opens Devices."))
     }
 }
 

@@ -41,6 +41,20 @@ public struct StatePill: View {
     }
 
     public var body: some View {
+        #if os(iOS)
+        // Zoop iOS: plain words instead of a coloured capsule; only a live state keeps its dot.
+        HStack(spacing: 5) {
+            if pulsing { ConnectionDot(tone: tone, pulsing: true, size: 6) }
+            Text(title)
+                .font(StrandFont.footnote.weight(.medium))
+                .foregroundStyle(StrandPalette.textSecondary)
+        }
+        #else
+        capsule
+        #endif
+    }
+
+    private var capsule: some View {
         HStack(spacing: 6) {
             if showsDot {
                 ConnectionDot(tone: tone, pulsing: pulsing, size: 7)

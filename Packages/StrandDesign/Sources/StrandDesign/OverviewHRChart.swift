@@ -62,9 +62,8 @@ public struct OverviewHRChart: View {
     public var xRange: ClosedRange<Date>?
     public var height: CGFloat
     public var showsHover: Bool
-    /// iPhone touch scrub (#979 spin-off): when true, touch-and-hold pins the hover crosshair under the
-    /// finger and dragging scrubs it — driving the SAME readout layer the Mac pointer hover uses. Off by
-    /// default so every existing call site keeps its exact touch behaviour; the Deep Timeline opts in.
+    /// Legacy opt-in for the iPhone touch scrub (#979 spin-off). Every chart now scrubs on touch through the
+    /// shared `zoopChartScrub` whenever `showsHover` is on; the flag is kept so call sites still compile.
     public var touchScrub: Bool
     public var valueFormat: (Double) -> String
     public var dateFormat: (Date) -> String
@@ -134,8 +133,8 @@ public struct OverviewHRChart: View {
     /// against a stable anchor instead of compounding each frame.
     @State private var gestureAnchorDomain: ClosedRange<Date>? = nil
     #if os(iOS)
-    /// True while a touch scrub is engaged (the hold completed). Only used to fire the engage haptic
-    /// exactly once per scrub — the sequenced gesture can report `.second(true, nil)` more than once.
+    /// True while a touch scrub is engaged, so the zoom pan is masked off and cannot slide the window
+    /// sideways out from under the crosshair (#1342).
     @State private var scrubEngaged = false
     #endif
 
@@ -380,34 +379,25 @@ public struct OverviewHRChart: View {
     }
 
     #if os(iOS)
-    /// Touch-and-hold-then-drag scrub (#979 spin-off). The stationary hold (0.25 s within 8 pt) is the
-    /// gate that separates scrubbing from the pan drag (min 6 pt) and pinch that own immediate movement.
-    /// LongPressGesture reports no location, so the crosshair appears from the drag phase's coordinates —
-    /// in practice the first micro-movement of a held finger, which is immediate; the engage haptic marks
-    /// the mode switch the instant the hold lands. Drives the SAME `hoverX` the Mac pointer hover drives,
-    /// so the readout (crosshair + dot + tooltip) is byte-identical across input methods.
-    private var touchScrubGesture: some Gesture {
-        LongPressGesture(minimumDuration: 0.25, maximumDistance: 8)
-            .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .local))
-            .onChanged { value in
-                guard case .second(true, let drag) = value else { return }
-                if !scrubEngaged {
-                    scrubEngaged = true
-                    StrandHaptic.selection.play()
-                }
-                if let drag {
-                    // Non-animating transaction, same reason as hover (TrendChart #104 flicker).
-                    var tx = Transaction()
-                    tx.disablesAnimations = true
-                    withTransaction(tx) { hoverX = drag.location.x }
-                }
-            }
-            .onEnded { _ in
-                scrubEngaged = false
-                var tx = Transaction()
-                tx.disablesAnimations = true
-                withTransaction(tx) { hoverX = nil }
-            }
+    /// Touch scrub (#979 spin-off), through the shared `zoopChartScrub`. Wherever a plain horizontal drag
+    /// pans the window (zoomed in, or a visible window narrower than its pan bounds, as on the Deep
+    /// Timeline's three-day clamp), only the short hold engages a scrub; where a pan has nothing to move, a
+    /// sideways drag scrubs straight away. Vertical drags never engage it, so the page keeps scrolling.
+    /// Drives the SAME `hoverX` the Mac pointer hover drives, so the readout is identical across inputs.
+    private var scrubStart: ZoopChartScrubStart {
+        guard zoomBounds != nil else { return .horizontalDragOrHold }
+        let canPan = zoomDomain != nil || xDomain != zoomClampBounds
+        return canPan ? .holdOnly : .horizontalDragOrHold
+    }
+
+    private func scrubMoved(_ location: CGPoint) {
+        scrubEngaged = true
+        hoverX = location.x
+    }
+
+    private func scrubEnded() {
+        scrubEngaged = false
+        hoverX = nil
     }
     #endif
 
@@ -454,7 +444,7 @@ public struct OverviewHRChart: View {
                     markerLabels(proxy: proxy, plot: plot)
                     hoverLayer(proxy: proxy, plot: plot, container: geo.size)
                 }
-                .animation(StrandMotion.fade, value: hoverX)
+                .animation(StrandMotion.fade, value: hoverX == nil)
                 .contentShape(Rectangle())
                 .onContinuousHover(coordinateSpace: .local) { phase in
                     guard showsHover else { return }
@@ -470,14 +460,12 @@ public struct OverviewHRChart: View {
                     }
                 }
                 #if os(iOS)
-                // #979 spin-off — touch scrub. onContinuousHover above is pointer-only, so on iPhone the
-                // crosshair readout was unreachable (the collapsed a11y summary was the only datum
-                // affordance; cf. CompareView's touch-scrub note). Touch-and-hold claims the touch for
-                // scrubbing, then dragging moves the crosshair; lift clears it. Gating behind the hold is
-                // what keeps zoom/pan untouched: an immediate drag exceeds the hold's max distance and
-                // still pans (ZoomPanModifier), pinch still zooms, double-tap still resets. `.subviews`
-                // masks the gesture entirely on the call sites that don't opt in.
-                .gesture(touchScrubGesture, including: (touchScrub && showsHover) ? .all : .subviews)
+                // #979 spin-off — touch scrub on every call site (`touchScrub` is kept for source
+                // compatibility). onContinuousHover above is pointer-only; the shared scrub claims a
+                // sideways drag or a short hold, leaves vertical drags to the page, and, while zoomed,
+                // leaves horizontal drags to the pan (ZoomPanModifier), pinch to zoom, double-tap to reset.
+                .zoopChartScrub(isEnabled: showsHover, start: scrubStart,
+                                onChange: { scrubMoved($0) }, onEnd: { scrubEnded() })
                 #endif
             }
         }

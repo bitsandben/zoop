@@ -17,9 +17,23 @@ final class StrandDesignTests: XCTestCase {
     }
 
     func testRecoveryGradientStops() {
-        XCTAssertEqual(StrandPalette.recoveryStops.count, 5)
+        // Three flat bands: red, yellow, green, each held by a pair of stops.
+        XCTAssertEqual(StrandPalette.recoveryStops.count, 6)
         XCTAssertEqual(StrandPalette.recoveryStops.first?.location, 0.0)
         XCTAssertEqual(StrandPalette.recoveryStops.last?.location, 1.0)
+    }
+
+    func testRecoveryColorBands() {
+        // Within a band the colour is flat; across the 34 and 67 boundaries it changes.
+        func rgb(_ score: Double) -> [Double] {
+            let c = StrandPalette.recoveryColor(score).rgbaComponents
+            return [c.r, c.g, c.b]
+        }
+        XCTAssertEqual(rgb(10), rgb(30))
+        XCTAssertEqual(rgb(40), rgb(60))
+        XCTAssertEqual(rgb(70), rgb(95))
+        XCTAssertNotEqual(rgb(30), rgb(40))
+        XCTAssertNotEqual(rgb(60), rgb(70))
     }
 
     func testRecoveryColorEndpoints() {

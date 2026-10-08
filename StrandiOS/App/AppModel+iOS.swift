@@ -50,25 +50,11 @@ extension AppModel {
     /// (the app-in-background case, where the reply can say the sync started), otherwise park the request
     /// with `armPendingManualSync` so the connect handshake runs it the moment the link can serve.
     static func startStrapSyncFromShortcut(waitSeconds: Int = 8) async -> StrapSyncShortcutOutcome {
-        // The Dynamic Island readout goes up first, from here, because only a LiveActivityIntent may start
-        // one from the background; the controller carries it through the sync from there.
-        var islandStarted = false
-        if let model = shared {
-            SyncLiveActivityController.shared.startFromShortcut(live: model.live)
-            islandStarted = true
-        }
         for _ in 0..<waitSeconds {
-            // A cold launch can hand the intent its first tick before the model exists; start the island
-            // on the first tick that has one rather than never.
-            if !islandStarted, let model = shared {
-                SyncLiveActivityController.shared.startFromShortcut(live: model.live)
-                islandStarted = true
-            }
             if let model = shared, model.live.historyReady { break }
             try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
         guard let model = shared else {
-            SyncLiveActivityController.shared.shortcutDidNotStart()
             return .strapNotReady
         }
         guard model.live.historyReady else {
@@ -79,7 +65,6 @@ extension AppModel {
         if model.live.backfilling { return .alreadyRunning }
         model.ble.syncNow()
         if model.live.backfilling { return .started }
-        SyncLiveActivityController.shared.shortcutDidNotStart()
         return .notStarted
     }
 
