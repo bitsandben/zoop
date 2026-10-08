@@ -52,7 +52,7 @@ enum TodaySection: String, CaseIterable, Identifiable {
         case .recoveryVitals: return String(localized: "Recovery Vitals")
         case .yourCards:      return String(localized: "Your Cards")
         case .menstrualCycle: return String(localized: "Menstrual Cycle")
-        case .journal:        return String(localized: "Journal")
+        case .journal:        return String(localized: "Logbook")
         case .addedCards:     return String(localized: "Added Cards")
         }
     }

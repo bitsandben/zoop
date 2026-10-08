@@ -272,7 +272,7 @@ struct SettingsView: View {
             case .profile: return "Age, body, heart-rate zones, units"
             case .strap: return "Connection, battery, live notifications"
             case .appearance: return "Language, theme, icon"
-            case .features: return "Workout detection, hydration, journal"
+            case .features: return "Workout detection, hydration, logbook"
             case .scoring: return "Charge baseline, HRV capture"
             case .backup: return "Export, import, automatic backups"
             case .advanced: return "Experimental features, Test Centre"
@@ -1795,15 +1795,15 @@ struct SettingsView: View {
                 rowDivider
 
                 Toggle(isOn: $journalReminderEnabled) {
-                    Text("Journal reminder")
+                    Text("Logbook reminder")
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textPrimary)
                 }
                 .toggleStyle(.switch)
                 .tint(StrandPalette.accent)
-                .accessibilityHint("Show a Today card reminding you to log your journal")
+                .accessibilityHint("Show a Today card reminding you to fill in your logbook")
 
-                Text("Show a Today card reminding you to log your journal")
+                Text("Show a Today card reminding you to fill in your logbook")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
