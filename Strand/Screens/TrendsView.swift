@@ -13,6 +13,12 @@ import Foundation
 // recovery YearHeatStrip in a ZoopCard. No hand-sized cards anywhere.
 
 struct TrendsView: View {
+    /// iOS cards that open a page carry a chevron beside their title, so they read as tappable.
+    #if os(iOS)
+    static let cardsShowChevron = true
+    #else
+    static let cardsShowChevron = false
+    #endif
     @EnvironmentObject var repo: Repository
     @Environment(\.locale) private var locale
     // NOTE: deliberately does NOT observe LiveState — Trends shows historical data only, and
@@ -648,6 +654,7 @@ struct TrendsView: View {
             subtitle: rangeSubtitle,
             trailing: avg.map { "\(Int($0.rounded()))" },
             height: ZoopMetrics.chartHeight,
+            showsChevron: Self.cardsShowChevron,
             chart: {
                 if pts.count >= 2 {
                     glowChart(points: pts,
@@ -680,7 +687,7 @@ struct TrendsView: View {
         // LiquidPressStyle gives the physical settle-inward on press (the liquid tap language). The card's
         // own rich labels (title + chart series + footer stats) are surfaced by the link's button element,
         // with a hint that a tap opens the detail.
-        NavigationLink(value: TabRoute.metric("recovery")) { card.tapChevron() }
+        NavigationLink(value: TabRoute.metric("recovery")) { card }
             .buttonStyle(LiquidPressStyle())
             .accessibilityHint(Text(String(localized: "Opens the full Charge metric.")))
     }
@@ -766,6 +773,7 @@ struct TrendsView: View {
             trailing: avg.map(fmt),
             height: ZoopMetrics.chartHeight,
             tint: tint,
+            showsChevron: Self.cardsShowChevron,
             chart: {
                 if pts.count >= 2 {
                     glowChart(points: pts, gradient: gradient, valueRange: range,
@@ -790,7 +798,7 @@ struct TrendsView: View {
         )
         // Each small-multiple taps through to its own metric detail (like Today's cards / Explore's rows),
         // with the liquid press settle. The chart itself is left uncluttered — no vessel over it (task).
-        NavigationLink(value: TabRoute.metric(metricKey)) { card.tapChevron() }
+        NavigationLink(value: TabRoute.metric(metricKey)) { card }
             .buttonStyle(LiquidPressStyle())
             .accessibilityHint(Text(String(localized: "Opens the full \(accessibilityTitle) metric.")))
     }
@@ -932,19 +940,3 @@ private func previewRepo() -> Repository {
 }
 #endif
 
-private extension View {
-    /// A small chevron in the top corner of a card that opens a page, so it reads as tappable (iOS).
-    @ViewBuilder func tapChevron() -> some View {
-        #if os(iOS)
-        overlay(alignment: .topTrailing) {
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(StrandPalette.textTertiary)
-                .padding(14)
-                .accessibilityHidden(true)
-        }
-        #else
-        self
-        #endif
-    }
-}

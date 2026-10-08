@@ -541,7 +541,7 @@ struct StressView: View {
             StatTile(
                 label: "Stress",
                 value: StressTrace.formatLevel(model.score),
-                caption: String(localized: "of 3 · \(model.band.title)"),
+                caption: String(localized: "Scale 0–3 · \(model.band.title)"),
                 accent: StressRamp.color(model.score),
                 sparkline: model.sparkValues.count > 1 ? model.sparkValues : nil,
                 sparkColor: StressRamp.color(model.score)

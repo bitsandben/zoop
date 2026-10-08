@@ -14,10 +14,16 @@ enum WorkoutDetectedNotifier {
     /// The start of the last candidate a notification was posted for, so each one notifies once.
     private static let lastStartKey = "behavior.autoWorkoutNotifiedStart"
 
+    /// Two candidates whose starts lie closer than this are the same workout. The detector re-runs after
+    /// every sync and its start edge moves by a few minutes as more heart rate lands, so an exact match
+    /// re-announced one workout after nearly every sync.
+    static let sameWorkoutToleranceSec = 30 * 60
+
     /// Pure, testable decision: notify only for a candidate not already announced.
     static func shouldNotify(enabled: Bool, candidateStart: Int?, lastNotifiedStart: Int?) -> Bool {
         guard enabled, let candidateStart else { return false }
-        return candidateStart != lastNotifiedStart
+        guard let last = lastNotifiedStart else { return true }
+        return abs(candidateStart - last) >= sameWorkoutToleranceSec
     }
 
     static func copy(for w: DetectedWorkout) -> (title: String, body: String) {

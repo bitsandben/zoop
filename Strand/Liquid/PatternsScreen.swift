@@ -564,12 +564,14 @@ struct PatternCard<Content: View>: View {
                     .foregroundStyle(StrandPalette.textSecondary)
             }
             content()
+            // The basis sits at the foot, so cards stretched to a shared height keep their text aligned.
+            Spacer(minLength: 0)
             basis
                 .font(StrandFont.footnote)
                 .foregroundStyle(StrandPalette.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(16)
         .background(ZoopPanelSurface())
     }
@@ -656,6 +658,7 @@ struct PatternLoadCard: View {
 /// Home's look ahead: tonight's sleep need, tomorrow's recovery and training load side by side, with
 /// the week in numbers first on Sundays and Mondays, and a link to all patterns.
 struct HomePatternsCarousel: View {
+    static let cardWidth: CGFloat = 280
     @EnvironmentObject private var repo: Repository
     @EnvironmentObject private var model: AppModel
     @StateObject private var patterns = PatternsModel()
@@ -674,7 +677,7 @@ struct HomePatternsCarousel: View {
                 HStack(alignment: .top, spacing: 12) {
                     if let t = patterns.tonight {
                         PatternTonightCard(tonight: t) { Task { await patterns.loadQuick(repo: repo, alarm: model.nextArmedStrapAlarm()) } }
-                            .frame(width: 290)
+                            .frame(width: Self.cardWidth)
                     }
                     if let f = patterns.forecast {
                         PatternCard(icon: "sunrise.fill", title: "Tomorrow morning",
@@ -686,10 +689,12 @@ struct HomePatternsCarousel: View {
                                 .font(StrandFont.subhead)
                                 .foregroundStyle(StrandPalette.textSecondary)
                         }
-                        .frame(width: 240)
+                        .frame(width: Self.cardWidth)
                     }
-                    if let a = patterns.acwr { PatternLoadCard(acwr: a).frame(width: 290) }
+                    if let a = patterns.acwr { PatternLoadCard(acwr: a).frame(width: Self.cardWidth) }
                 }
+                // One width and, through the fixed vertical size, one height for every card in the row.
+                .fixedSize(horizontal: false, vertical: true)
                 .scrollTargetLayout()
             }
             .scrollTargetBehavior(.viewAligned)

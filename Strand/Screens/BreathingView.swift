@@ -1035,7 +1035,8 @@ private struct BreathStageView: View {
         // Only a running, timed session gets a frame clock; at rest (or under quiet motion) the stage is
         // drawn once, so nothing animates in the background.
         if running && !guided && !motion.poseStill(reduceMotion) {
-            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in stage(at: context.date) }
+            // Display rate, not a 30 fps cap: at 30 fps the growing shape stepped visibly on a 120 Hz screen.
+            TimelineView(.animation) { context in stage(at: context.date) }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(accessibilityText)
         } else {
@@ -1064,7 +1065,10 @@ private struct BreathStageView: View {
                                     style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
                     }
 
+                    // Rasterised in one pass so the per-frame redraw is a single layer, not two shapes
+                    // with strokes recomputed every frame.
                     breathingBody(level: level)
+                        .drawingGroup()
 
                     centreText(at: date)
                 }

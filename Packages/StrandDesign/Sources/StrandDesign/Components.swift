@@ -335,15 +335,19 @@ public struct ChartCard<ChartBody: View, Footer: View>: View {
     var trailing: String? = nil
     var height: CGFloat = ZoopMetrics.chartHeight
     var tint: Color? = nil
+    /// Draws a small chevron right after the title, for a card that opens a page. Beside the title it
+    /// never collides with the trailing value the way a corner overlay did.
+    var showsChevron: Bool = false
     @ViewBuilder let chart: () -> ChartBody
     @ViewBuilder let footer: () -> Footer
 
     public init(title: LocalizedStringKey, subtitle: String? = nil, trailing: String? = nil,
-                height: CGFloat = ZoopMetrics.chartHeight, tint: Color? = nil,
+                height: CGFloat = ZoopMetrics.chartHeight, tint: Color? = nil, showsChevron: Bool = false,
                 @ViewBuilder chart: @escaping () -> ChartBody,
                 @ViewBuilder footer: @escaping () -> Footer = { EmptyView() }) {
         self.title = title; self.subtitle = subtitle; self.trailing = trailing
-        self.height = height; self.tint = tint; self.chart = chart; self.footer = footer
+        self.height = height; self.tint = tint; self.showsChevron = showsChevron
+        self.chart = chart; self.footer = footer
     }
 
     public var body: some View {
@@ -351,7 +355,15 @@ public struct ChartCard<ChartBody: View, Footer: View>: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(title).strandOverline()
+                        HStack(spacing: 4) {
+                            Text(title).strandOverline()
+                            if showsChevron {
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(StrandPalette.textTertiary)
+                                    .accessibilityHidden(true)
+                            }
+                        }
                         if let subtitle { Text(subtitle).font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary) }
                     }
                     Spacer()

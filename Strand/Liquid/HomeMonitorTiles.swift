@@ -10,44 +10,43 @@ import WhoopStore
 // and the current stress level that taps through to Stress. Both read figures the destination screens
 // already compute (BodyVitalSigns, StressModel), so a tile and its screen cannot disagree.
 
-/// The concept's tile: a headline with a chevron, a grey line under it, and a black well holding a
-/// glyph or a number beside the tile's name at the bottom.
-struct HomeMonitorTile<Well: View>: View {
-    let headline: String
-    var headlineTint: Color = StrandPalette.textPrimary
-    let detail: String
+/// A Home monitor tile in the same language as the other Home cards: the tile's name with a chevron, a
+/// large tinted value, and a footer the tile fills (a band word, or the per-vital status strip).
+struct HomeMonitorTile<Footer: View>: View {
     let name: LocalizedStringKey
-    @ViewBuilder var well: () -> Well
+    let value: String
+    var valueSuffix: String? = nil
+    var valueTint: Color = StrandPalette.textPrimary
+    @ViewBuilder var footer: () -> Footer
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(headline)
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(headlineTint)
+        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
+            HStack(spacing: 6) {
+                Text(name)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textPrimary)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textTertiary)
                     .accessibilityHidden(true)
             }
-            Text(detail)
-                .font(StrandFont.subhead)
-                .foregroundStyle(StrandPalette.textSecondary)
-                .lineLimit(1)
-            Spacer(minLength: ZoopMetrics.space4)
-            HStack(spacing: 10) {
-                well()
-                    .frame(width: 40, height: 40)
-                    .background(Circle().fill(StrandPalette.surfaceBase))
-                Text(name)
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(StrandPalette.textPrimary)
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(value)
+                    .font(StrandFont.display(34))
+                    .foregroundStyle(valueTint)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+                    .minimumScaleFactor(0.6)
+                if let valueSuffix {
+                    Text(valueSuffix)
+                        .font(StrandFont.subhead)
+                        .foregroundStyle(StrandPalette.textSecondary)
+                }
             }
+            Spacer(minLength: 0)
+            footer()
         }
         .padding(16)
         .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
@@ -56,55 +55,90 @@ struct HomeMonitorTile<Well: View>: View {
     }
 }
 
-/// Vitals at a glance: how many of the latest readings sit inside their range.
+/// Vitals at a glance: the in-range count as the value, and one short tag per vital with a check (in
+/// range), an exclamation mark (outside it) or a dash (no reading).
 struct HomeHealthMonitorTile: View {
     @EnvironmentObject private var repo: Repository
     let temperatureUnit: TemperatureUnit
 
-    private var summary: (inRange: Int, withData: Int) {
-        let readings = BodyVitalSigns.readings(sourceRows: repo.vitalMetricRows, temperatureUnit: temperatureUnit)
-        let scored = readings.filter { $0.banding.band != .noData }
-        return (scored.filter { $0.banding.band == .inRange }.count, scored.count)
+    /// Short tags so five vitals fit a half-width tile. Keys follow `BodyVitalSigns`.
+    static func shortName(_ key: String) -> String {
+        switch key {
+        case "hrv": return "HRV"
+        case "rhr": return String(localized: "vital.short.rhr", defaultValue: "RHR")
+        case "resp": return String(localized: "vital.short.resp", defaultValue: "Resp")
+        case "spo2", "spo2raw": return "SpO₂"
+        case "skin": return String(localized: "vital.short.temp", defaultValue: "Temp")
+        default: return key.uppercased()
+        }
     }
 
     var body: some View {
-        let s = summary
-        let allIn = s.withData > 0 && s.inRange == s.withData
+        let readings = BodyVitalSigns.readings(sourceRows: repo.vitalMetricRows, temperatureUnit: temperatureUnit)
+        let scored = readings.filter { $0.banding.band != .noData }
+        let inRange = scored.filter { $0.banding.band == .inRange }.count
+        let allIn = !scored.isEmpty && inRange == scored.count
         HomeMonitorTile(
-            headline: s.withData == 0 ? String(localized: "Pending")
-                : (allIn ? String(localized: "Within range") : String(localized: "Outside range")),
-            detail: s.withData == 0 ? String(localized: "No readings yet")
-                : String(localized: "\(s.inRange)/\(s.withData) metrics"),
-            name: "Health monitor"
+            name: "Health monitor",
+            value: scored.isEmpty ? "–" : "\(inRange)/\(scored.count)",
+            valueSuffix: scored.isEmpty ? nil : String(localized: "in range"),
+            valueTint: scored.isEmpty ? StrandPalette.textSecondary
+                : (allIn ? StrandPalette.statusPositive : StrandPalette.statusWarning)
         ) {
-            Image(systemName: s.withData == 0 ? "minus" : (allIn ? "checkmark" : "exclamationmark"))
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(s.withData == 0 ? StrandPalette.textSecondary
-                                 : (allIn ? StrandPalette.textPrimary : StrandPalette.statusWarning))
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 6, alignment: .leading),
+                                GridItem(.flexible(), spacing: 6, alignment: .leading)],
+                      alignment: .leading, spacing: 4) {
+                // Only vitals with a reading; the raw-SpO₂ row would otherwise repeat "SpO₂" with a dash.
+                ForEach(scored) { r in
+                    HStack(spacing: 4) {
+                        Image(systemName: Self.symbol(r.banding.band))
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(Self.tint(r.banding.band))
+                        Text(Self.shortName(r.key))
+                            .font(StrandFont.caption)
+                            .foregroundStyle(StrandPalette.textSecondary)
+                            .lineLimit(1)
+                    }
+                }
+            }
         }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Health monitor"))
+        .accessibilityValue(Text(readings.map(\.accessibilityText).joined(separator: ", ")))
+    }
+
+    static func symbol(_ band: VitalBands.Band) -> String {
+        switch band {
+        case .inRange: return "checkmark"
+        case .outOfRange: return "exclamationmark"
+        case .noData: return "minus"
+        }
+    }
+
+    static func tint(_ band: VitalBands.Band) -> Color {
+        switch band {
+        case .inRange: return StrandPalette.statusPositive
+        case .outOfRange: return StrandPalette.statusWarning
+        case .noData: return StrandPalette.textTertiary
+        }
     }
 }
 
-/// The current stress level on its 0–3 scale.
+/// The current stress level on its 0–3 scale, tinted by its band, with the band named underneath.
 struct HomeStressMonitorTile: View {
     let score: Double?
 
     var body: some View {
         HomeMonitorTile(
-            headline: score.map { Self.bandName(StressBand(score: $0)) } ?? String(localized: "Pending"),
-            detail: score == nil ? String(localized: "No readings yet") : String(localized: "Today"),
-            name: "Stress monitor"
+            name: "Stress monitor",
+            value: score.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "–",
+            valueSuffix: score == nil ? nil : "/ 3",
+            valueTint: score.map { Self.tint(StressBand(score: $0)) } ?? StrandPalette.textSecondary
         ) {
-            if let score {
-                Text(score, format: .number.precision(.fractionLength(1)))
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Self.tint(StressBand(score: score)))
-            } else {
-                Image(systemName: "minus")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(StrandPalette.textSecondary)
-            }
+            Text(score.map { Self.bandName(StressBand(score: $0)) } ?? String(localized: "No readings yet"))
+                .font(StrandFont.subhead)
+                .foregroundStyle(StrandPalette.textSecondary)
+                .lineLimit(1)
         }
         .accessibilityElement(children: .combine)
     }

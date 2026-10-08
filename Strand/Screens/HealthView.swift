@@ -798,7 +798,7 @@ private struct FitnessAgeSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
-            SectionHeader("Fitness Age", overline: "Weekly",
+            SectionHeader("Fitness Age", overline: "Updated weekly",
                           trailing: fitnessAge != nil ? String(localized: "vs age \(profile.age)") : nil)
             content
         }
@@ -1253,7 +1253,7 @@ private struct VitalitySection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
-            SectionHeader("Health score", overline: "Weekly",
+            SectionHeader("Health score", overline: "Updated weekly",
                           trailing: bodyAge != nil ? String(localized: "Body Age \(Int((bodyAge ?? 0).rounded()))") : nil)
             if let v = vitality, let ba = bodyAge {
                 hero(vitality: v, bodyAge: ba)
