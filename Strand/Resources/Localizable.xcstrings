@@ -258317,6 +258317,16 @@
           }
         }
       }
+    },
+    "Where your Recovery comes from" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Woher deine Erholung kommt"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

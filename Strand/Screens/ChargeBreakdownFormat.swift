@@ -312,6 +312,22 @@ struct ChargeBreakdownSection: View {
     var skinTempRel: SkinTempRelative? = nil
 
     var body: some View {
+        #if os(iOS)
+        // Zoop iOS: a plain list, one line per input — its reading against your normal and the points it
+        // moved Recovery by. No confidence tag, bars or verdict sentences: colour and sign already say it.
+        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
+            Text("Where your Recovery comes from").strandOverline()
+            ForEach(Array(drivers.enumerated()), id: \.offset) { i, driver in
+                if i > 0 { Divider().overlay(StrandPalette.hairline) }
+                ChargeDriverLine(driver: driver)
+            }
+        }
+        #else
+        legacyBody
+        #endif
+    }
+
+    private var legacyBody: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
             Divider().overlay(StrandPalette.hairline)
             HStack(alignment: .firstTextBaseline) {
@@ -338,6 +354,38 @@ struct ChargeBreakdownSection: View {
 /// One driver row: a signed point-delta chip (+N green / -N red), the value vs baseline, a thin
 /// progress bar proportional to the term's magnitude, and the plain-English verdict line. The bar is
 /// a presentation cue for "how big a mover" this term was, scaled within the day's own drivers.
+/// One compact breakdown line (iOS): the input, its reading against your normal, and its points.
+struct ChargeDriverLine: View {
+    let driver: ChargeDriver
+
+    var body: some View {
+        HStack(alignment: .center, spacing: ZoopMetrics.space3) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(LocalizedStringKey(driver.label))
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(StrandPalette.textPrimary)
+                Text(verbatim: readout)
+                    .font(StrandFont.caption)
+                    .foregroundStyle(StrandPalette.textTertiary)
+            }
+            Spacer(minLength: ZoopMetrics.space2)
+            Text(verbatim: driver.deltaPoints == 0 ? "±0" : String(format: "%+d", driver.deltaPoints))
+                .font(StrandFont.number(18))
+                .foregroundStyle(driver.deltaPoints == 0 ? StrandPalette.textTertiary
+                                 : ChargeBreakdownFormat.chipColor(deltaPoints: driver.deltaPoints))
+        }
+        .padding(.vertical, ZoopMetrics.space1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(ChargeBreakdownFormat.driverAccessibilityLabel(driver))
+    }
+
+    private var readout: String {
+        let value = ChargeBreakdownFormat.localizedReadout(driver.valueText)
+        guard !driver.baselineText.isEmpty else { return value }
+        return "\(value) · \(ChargeBreakdownFormat.localizedReadout(driver.baselineText))"
+    }
+}
+
 struct ChargeDriverRow: View {
     let driver: ChargeDriver
     /// The largest |deltaPoints| in the same breakdown, so each bar reads as a share of the day's
