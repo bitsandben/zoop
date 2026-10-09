@@ -320,6 +320,8 @@ struct TrendsView: View {
                         // and its change, then the longer charts follow. iOS shows no week-in-review
                         // digest or score trio: the viewer and the charts below already carry those values.
                         TrendViewerCard(days: repo.days, effortScale: effortScale)
+                        // What the logbook answers add up to; draws nothing until there is an effect to show.
+                        HabitEffectsCard()
                         #else
                         // Week-in-review digest (#208) with prev/next week browsing (#710) — self-hides
                         // only when NO week in history has data. Past weeks render in the same format.

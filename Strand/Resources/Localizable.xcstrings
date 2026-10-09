@@ -257717,6 +257717,26 @@
           }
         }
       }
+    },
+    "Your habits" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Gewohnheiten"
+          }
+        }
+      }
+    },
+    "Recovery on days you answered yes, against days you answered no." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholung an Tagen mit „Ja“ im Vergleich zu Tagen mit „Nein“."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

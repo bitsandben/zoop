@@ -102,6 +102,21 @@ final class PatternsModel: ObservableObject {
         digest = d.isEmpty ? nil : d
     }
 
+    /// What moves recovery: logbook yes/no days against recovery, strongest first (at most four). Empty
+    /// until the logbook has enough answered days for the ranker to call an effect.
+    func loadEffects(repo: Repository) async {
+        let entries = await repo.journalEntries()
+        var yes: [String: Set<String>] = [:], no: [String: Set<String>] = [:]
+        for e in entries {
+            if e.answeredYes { yes[e.question, default: []].insert(e.day) } else { no[e.question, default: []].insert(e.day) }
+        }
+        var recovery: [String: Double] = [:]
+        for d in repo.days { if let r = d.recovery { recovery[d.day] = r } }
+        effects = EffectRanker.rank(behaviors: yes, controls: no, outcomeByDay: recovery, outcome: "Recovery")
+            .prefix(4)
+            .map { Effect(id: $0.behavior + "\($0.lag)", behavior: $0.behavior, delta: $0.effect.delta, n: $0.effect.nWith) }
+    }
+
     /// Everything, including the readings that need stored samples.
     func loadAll(repo: Repository, maxHR: Int, cycleApplies: Bool, alarm: Date? = nil) async {
         await loadQuick(repo: repo, alarm: alarm)
@@ -110,17 +125,7 @@ final class PatternsModel: ObservableObject {
         for d in days { byDay[d.day] = d }
         let now = Int(Date().timeIntervalSince1970)
 
-        // What moves recovery: journal yes/no days against recovery.
-        let entries = await repo.journalEntries()
-        var yes: [String: Set<String>] = [:], no: [String: Set<String>] = [:]
-        for e in entries {
-            if e.answeredYes { yes[e.question, default: []].insert(e.day) } else { no[e.question, default: []].insert(e.day) }
-        }
-        var recovery: [String: Double] = [:]
-        for d in days { if let r = d.recovery { recovery[d.day] = r } }
-        effects = EffectRanker.rank(behaviors: yes, controls: no, outcomeByDay: recovery, outcome: "Recovery")
-            .prefix(4)
-            .map { Effect(id: $0.behavior + "\($0.lag)", behavior: $0.behavior, delta: $0.effect.delta, n: $0.effect.nWith) }
+        await loadEffects(repo: repo)
 
         // Heart-rate recovery after recent workouts.
         let rows = await repo.workoutRows(days: 120).filter { $0.endTs - $0.startTs >= 600 }.suffix(12)
@@ -779,6 +784,55 @@ enum SleepGoal: String, CaseIterable, Identifiable {
         case .perform: return String(localized: "Perform well")
         case .getBy: return String(localized: "Just get by")
         }
+    }
+}
+#endif
+
+#if os(iOS)
+/// Trends: what the logbook answers add up to, shown only once there is something to say. The strongest
+/// habit effects on Recovery, each as one row, and a link to the full ranking (What Moves You).
+struct HabitEffectsCard: View {
+    @EnvironmentObject private var repo: Repository
+    @StateObject private var patterns = PatternsModel()
+
+    var body: some View {
+        Group {
+            if !patterns.effects.isEmpty {
+                NavigationLink { InsightsHubView() } label: {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
+                        HStack {
+                            Text("Your habits").font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(StrandPalette.textPrimary)
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(StrandPalette.textTertiary)
+                        }
+                        ForEach(patterns.effects.prefix(3)) { e in
+                            HStack(alignment: .firstTextBaseline) {
+                                Text(String(localized: String.LocalizationValue(e.behavior)))
+                                    .font(StrandFont.subhead)
+                                    .foregroundStyle(StrandPalette.textPrimary)
+                                    .lineLimit(2)
+                                    .multilineTextAlignment(.leading)
+                                Spacer(minLength: ZoopMetrics.space3)
+                                Text(verbatim: String(format: "%+.0f %%", locale: AppLanguage.activeLocale, e.delta))
+                                    .font(StrandFont.bodyNumber)
+                                    .foregroundStyle(e.delta >= 0 ? StrandPalette.statusPositive : StrandPalette.statusWarning)
+                            }
+                        }
+                        Text("Recovery on days you answered yes, against days you answered no.")
+                            .font(StrandFont.caption)
+                            .foregroundStyle(StrandPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(ZoopPanelSurface(cornerRadius: 20))
+                }
+                .buttonStyle(LiquidPressStyle())
+            }
+        }
+        .task(id: repo.refreshSeq) { await patterns.loadEffects(repo: repo) }
     }
 }
 #endif
