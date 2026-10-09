@@ -17,6 +17,21 @@ import StrandAnalytics
 
 enum ChargeBreakdownFormat {
 
+    /// The engine writes its value and baseline read-outs in English ("80 ms baseline",
+    /// "+0.4 C vs baseline") so they stay platform-neutral; this localizes their wording around the
+    /// number. Anything else passes through unchanged.
+    static func localizedReadout(_ s: String) -> String {
+        if s.hasSuffix(" C vs baseline") {
+            let v = String(s.dropLast(" C vs baseline".count))
+            return String(localized: "\(v) °C vs. baseline")
+        }
+        if s.hasSuffix(" baseline") {
+            let v = String(s.dropLast(" baseline".count))
+            return String(localized: "\(v) baseline")
+        }
+        return s
+    }
+
     // MARK: - Signed point-delta chip (A1)
 
     /// The chip label for a term's signed point contribution, e.g. +6 pts / -3 pts / 0 pts.
@@ -353,12 +368,12 @@ struct ChargeDriverRow: View {
             }
             // value vs baseline , the baseline line is omitted for terms with no learned baseline.
             HStack(spacing: 6) {
-                Text(driver.valueText)
+                Text(ChargeBreakdownFormat.localizedReadout(driver.valueText))
                     .font(StrandFont.captionNumber)
                     .foregroundStyle(StrandPalette.textSecondary)
                 if !driver.baselineText.isEmpty {
                     Text("·").font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
-                    Text(driver.baselineText)
+                    Text(ChargeBreakdownFormat.localizedReadout(driver.baselineText))
                         .font(StrandFont.caption)
                         .foregroundStyle(StrandPalette.textTertiary)
                 }

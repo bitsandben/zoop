@@ -217614,7 +217614,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "über der Basislinie, Unterschied zu klein, um Charge zu verändern"
+            "value" : "über der Basislinie, Unterschied zu klein, um die Erholung zu verändern"
           }
         },
         "es" : {
@@ -218728,7 +218728,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "unter der Basislinie, Unterschied zu klein, um Charge zu verändern"
+            "value" : "unter der Basislinie, Unterschied zu klein, um die Erholung zu verändern"
           }
         },
         "es" : {
@@ -257734,6 +257734,586 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Erholung an Tagen mit „Ja“ im Vergleich zu Tagen mit „Nein“."
+          }
+        }
+      }
+    },
+    "%@ with · %@ without · %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ mit · %@ ohne · %@"
+          }
+        }
+      }
+    },
+    "Alcohol & caffeine · your curve" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alkohol & Koffein · deine Kurve"
+          }
+        }
+      }
+    },
+    "Based mostly on typical patterns, not yet yours. Log a few more days with alcohol and this becomes yours." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basiert überwiegend auf typischen Mustern, noch nicht auf deinen. Erfasse ein paar weitere Tage mit Alkohol, dann wird es deins."
+          }
+        }
+      }
+    },
+    "Based mostly on typical patterns, not yet yours. Log a few more days with late caffeine and this becomes yours." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basiert überwiegend auf typischen Mustern, noch nicht auf deinen. Erfasse ein paar weitere Tage mit spätem Koffein, dann wird es deins."
+          }
+        }
+      }
+    },
+    "Caffeine by noon: the forecast for %@ stays where it is." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koffein bis mittags: Die Prognose für %@ bleibt, wo sie ist."
+          }
+        }
+      }
+    },
+    "Cohen’s d %@: the size of the gap compared with your usual day-to-day spread." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cohens d %@: wie groß der Unterschied im Vergleich zu deiner üblichen Schwankung von Tag zu Tag ist."
+          }
+        }
+      }
+    },
+    "Compared on the same day." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verglichen am selben Tag."
+          }
+        }
+      }
+    },
+    "Dose-response curve. %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dosis-Wirkungs-Kurve. %@"
+          }
+        }
+      }
+    },
+    "Drinks: %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drinks: %lld"
+          }
+        }
+      }
+    },
+    "Each extra drink typically lines up with about %@ on %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jedes zusätzliche Getränk geht typischerweise mit etwa %@ bei %@ einher."
+          }
+        }
+      }
+    },
+    "Each later caffeine step typically lines up with about %@ on %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede spätere Koffein-Stufe geht typischerweise mit etwa %@ bei %@ einher."
+          }
+        }
+      }
+    },
+    "Early" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Früh"
+          }
+        }
+      }
+    },
+    "For you, each extra drink tends to line up with about %@ on %@ (%lld days)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei dir geht jedes zusätzliche Getränk tendenziell mit etwa %@ bei %@ einher (%lld Tage)."
+          }
+        }
+      }
+    },
+    "For you, each later caffeine step tends to line up with about %@ on %@ (%lld days)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei dir geht jede spätere Koffein-Stufe tendenziell mit etwa %@ bei %@ einher (%lld Tage)."
+          }
+        }
+      }
+    },
+    "In your data so far, this doesn’t move %@ the way it typically does (%lld days)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In deinen bisherigen Daten bewegt das %@ nicht so, wie es typischerweise der Fall ist (%lld Tage)."
+          }
+        }
+      }
+    },
+    "Large effect" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Großer Effekt"
+          }
+        }
+      }
+    },
+    "Late caffeine" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spätes Koffein"
+          }
+        }
+      }
+    },
+    "Late meal" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spätes Essen"
+          }
+        }
+      }
+    },
+    "Magnesium" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Magnesium"
+          }
+        }
+      }
+    },
+    "Measured %lld days later." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gemessen %lld Tage später."
+          }
+        }
+      }
+    },
+    "Measured the next morning." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gemessen am nächsten Morgen."
+          }
+        }
+      }
+    },
+    "Moderate effect" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moderater Effekt"
+          }
+        }
+      }
+    },
+    "Negligible effect" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vernachlässigbarer Effekt"
+          }
+        }
+      }
+    },
+    "No extra drink tonight: the forecast for %@ stays where it is." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein zusätzlicher Drink heute Abend: Die Prognose für %@ bleibt, wo sie ist."
+          }
+        }
+      }
+    },
+    "On days with “%@”, %@ was %@ higher (%@ vs. %@)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An Tagen mit „%@“ war %@ %@ höher (%@ vs. %@)."
+          }
+        }
+      }
+    },
+    "On days with “%@”, %@ was %@ lower (%@ vs. %@)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An Tagen mit „%@“ war %@ %@ niedriger (%@ vs. %@)."
+          }
+        }
+      }
+    },
+    "On days with “%@”, %@ was about the same (%@ vs. %@)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An Tagen mit „%@“ war %@ etwa gleich (%@ vs. %@)."
+          }
+        }
+      }
+    },
+    "Per extra drink" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro zusätzlichem Getränk"
+          }
+        }
+      }
+    },
+    "Per later step" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro spätere Stufe"
+          }
+        }
+      }
+    },
+    "Reading before bed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lesen vor dem Schlafen"
+          }
+        }
+      }
+    },
+    "Screen in bed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bildschirm im Bett"
+          }
+        }
+      }
+    },
+    "Shared bed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bett geteilt"
+          }
+        }
+      }
+    },
+    "Small effect" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kleiner Effekt"
+          }
+        }
+      }
+    },
+    "What moves your Charge" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was deine Erholung beeinflusst"
+          }
+        }
+      }
+    },
+    "What moves your HRV" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was deine HRV beeinflusst"
+          }
+        }
+      }
+    },
+    "What moves your Rest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was deinen Schlaf beeinflusst"
+          }
+        }
+      }
+    },
+    "What moves your resting HR" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was deine Ruhe-HF beeinflusst"
+          }
+        }
+      }
+    },
+    "With %@ tonight, %@ tends to land about %@ higher tomorrow (based on %lld of your days)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei %@ heute Abend liegt %@ morgen tendenziell etwa %@ höher (basierend auf %lld deiner Tage)."
+          }
+        }
+      }
+    },
+    "With %@ tonight, %@ tends to land about %@ higher tomorrow (typical patterns)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei %@ heute Abend liegt %@ morgen tendenziell etwa %@ höher (typische Muster)."
+          }
+        }
+      }
+    },
+    "With %@ tonight, %@ tends to land about %@ lower tomorrow (based on %lld of your days)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei %@ heute Abend liegt %@ morgen tendenziell etwa %@ niedriger (basierend auf %lld deiner Tage)."
+          }
+        }
+      }
+    },
+    "With %@ tonight, %@ tends to land about %@ lower tomorrow (typical patterns)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei %@ heute Abend liegt %@ morgen tendenziell etwa %@ niedriger (typische Muster)."
+          }
+        }
+      }
+    },
+    "With caffeine %@, %@ tends to land about %@ higher the next morning (based on %lld of your days)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit Koffein %@ liegt %@ am nächsten Morgen tendenziell etwa %@ höher (basierend auf %lld deiner Tage)."
+          }
+        }
+      }
+    },
+    "With caffeine %@, %@ tends to land about %@ higher the next morning (typical patterns)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit Koffein %@ liegt %@ am nächsten Morgen tendenziell etwa %@ höher (typische Muster)."
+          }
+        }
+      }
+    },
+    "With caffeine %@, %@ tends to land about %@ lower the next morning (based on %lld of your days)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit Koffein %@ liegt %@ am nächsten Morgen tendenziell etwa %@ niedriger (basierend auf %lld deiner Tage)."
+          }
+        }
+      }
+    },
+    "With caffeine %@, %@ tends to land about %@ lower the next morning (typical patterns)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit Koffein %@ liegt %@ am nächsten Morgen tendenziell etwa %@ niedriger (typische Muster)."
+          }
+        }
+      }
+    },
+    "after %lld days" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nach %lld Tagen"
+          }
+        }
+      }
+    },
+    "after 2 pm" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nach 14 Uhr"
+          }
+        }
+      }
+    },
+    "around noon" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gegen Mittag"
+          }
+        }
+      }
+    },
+    "in the evening" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "am Abend"
+          }
+        }
+      }
+    },
+    "in the morning" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "am Morgen"
+          }
+        }
+      }
+    },
+    "next morning" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "am nächsten Morgen"
+          }
+        }
+      }
+    },
+    "same day" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "am selben Tag"
+          }
+        }
+      }
+    },
+    "your Charge" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "deine Erholung"
+          }
+        }
+      }
+    },
+    "your HRV" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "deine HRV"
+          }
+        }
+      }
+    },
+    "your Rest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dein Schlaf"
+          }
+        }
+      }
+    },
+    "your resting HR" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "deine Ruhe-HF"
+          }
+        }
+      }
+    },
+    "%@ °C vs. baseline" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ °C ggü. Normalwert"
+          }
+        }
+      }
+    },
+    "%@ baseline" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal %@"
           }
         }
       }

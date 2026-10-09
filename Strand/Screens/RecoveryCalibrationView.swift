@@ -298,11 +298,19 @@ struct MorningCheckInSummaryRow: View {
                     Spacer(minLength: ZoopMetrics.space2)
                     ZoopButton("Edit", kind: .tertiary) { showSheet = true }
                 } else {
-                    Image(systemName: "sun.horizon").foregroundStyle(StrandPalette.accent)
-                    Text("Morning check-in")
-                        .font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
-                    Spacer(minLength: ZoopMetrics.space2)
-                    ZoopButton("Answer morning check-in", kind: .secondary) { showSheet = true }
+                    // The whole row is the button, so the label never has to fit beside a second title.
+                    Button { showSheet = true } label: {
+                        HStack(spacing: ZoopMetrics.space3) {
+                            Image(systemName: "sun.horizon").foregroundStyle(StrandPalette.accent)
+                            Text("Answer morning check-in")
+                                .font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
+                            Spacer(minLength: ZoopMetrics.space2)
+                            Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(StrandPalette.textTertiary)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .opacity(loaded ? 1 : 0)
