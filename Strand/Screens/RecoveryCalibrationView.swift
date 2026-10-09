@@ -535,6 +535,16 @@ struct RecoveryCalibrationView: View {
 
 /// The breakdown of the latest scored Recovery plus the calibration status, for the Recovery detail.
 struct RecoveryInsightCard: View {
+    /// "Mo., 6. Okt." for a stored "yyyy-MM-dd" day key; the key itself when it does not parse.
+    static func nightLabel(_ day: String) -> String {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd"
+        guard let d = f.date(from: day) else { return day }
+        return d.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).locale(AppLanguage.activeLocale))
+    }
+
     @EnvironmentObject var repo: Repository
     @AppStorage(RecoveryCalibrationStore.enabledKey) private var enabled = false
 
@@ -548,9 +558,9 @@ struct RecoveryInsightCard: View {
                !b.drivers.isEmpty {
                 ZoopCard {
                     VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
-                        Text("Latest night: \(row.day)").font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
-                        ChargeBreakdownSection(drivers: b.drivers, confidence: b.confidence,
-                                               skinTempRel: RecoveryScorer.skinTempRelative(deviationC: row.skinTempDevC))
+                        Text("Latest night: \(Self.nightLabel(row.day))").font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
+                        // Skin temperature is already one of the driver rows; no second marker below them.
+                        ChargeBreakdownSection(drivers: b.drivers, confidence: b.confidence)
                     }
                 }
             }

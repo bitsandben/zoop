@@ -285,10 +285,7 @@ struct ConfidenceTierChip: View {
                 .tracking(0.4)
                 .foregroundStyle(hue)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(Capsule(style: .continuous).fill(hue.opacity(0.12)))
-        .overlay(Capsule(style: .continuous).stroke(hue.opacity(0.32), lineWidth: 1))
+        // Zoop: dot and tinted tag only, no capsule.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibility)
     }
@@ -363,8 +360,6 @@ struct ChargeDriverRow: View {
                 Text(chipText)
                     .font(StrandFont.captionNumber)
                     .foregroundStyle(chipHue)
-                    .padding(.horizontal, 8).padding(.vertical, 2)
-                    .background(chipHue.opacity(0.14), in: Capsule(style: .continuous))
             }
             // value vs baseline , the baseline line is omitted for terms with no learned baseline.
             HStack(spacing: 6) {

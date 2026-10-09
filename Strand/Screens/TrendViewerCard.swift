@@ -253,9 +253,6 @@ struct TrendViewerCard: View {
                 .font(.system(size: 13, weight: .semibold))
         }
         .foregroundStyle(tint)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(tint.opacity(0.16)))
     }
 
     private func sentence(avg: Double, prevAvg: Double) -> String {

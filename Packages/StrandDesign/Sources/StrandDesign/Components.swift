@@ -333,9 +333,8 @@ public struct TrendChip: View {
             // the pill never grows a tile past its floor. Matches Android's unconditional ellipsize (#934).
             Text(text).font(StrandFont.captionNumber).lineLimit(1)
         }
+        // Zoop: plain tinted text, no pill. Colour and the arrow carry the direction.
         .foregroundStyle(color)
-        .padding(.horizontal, 6).padding(.vertical, 2)
-        .background(color.opacity(0.14), in: Capsule(style: .continuous))
         .accessibilityHidden(true)
     }
 }
@@ -592,11 +591,10 @@ public struct SourceBadge: View {
         // because the Android twin pinned the same 18 with `heightIn` applied to the label itself, which
         // top-aligns — same number, different render. That one is matched to this, not the reverse.
         #if os(iOS)
-        // The redesign keeps colour for data: provenance reads as a quiet grey capsule.
-        Text(text).font(.system(size: 11, weight: .semibold))
-            .padding(.horizontal, 9).frame(height: ZoopMetrics.sourceBadgeHeight)
-            .background(StrandPalette.surfaceOverlay, in: Capsule(style: .continuous))
-            .foregroundStyle(StrandPalette.textSecondary)
+        // Zoop: provenance is a quiet caption, no capsule.
+        Text(text).font(.system(size: 12, weight: .medium))
+            .frame(height: ZoopMetrics.sourceBadgeHeight)
+            .foregroundStyle(StrandPalette.textTertiary)
         #else
         Text(text).textCase(.uppercase).font(.system(size: 10, weight: .semibold, design: .default)).tracking(0.5)
             .padding(.horizontal, 9).frame(height: ZoopMetrics.sourceBadgeHeight)
@@ -782,9 +780,7 @@ public struct ScoreStatePill: View {
                 .tracking(0.4)
                 .foregroundStyle(hue)
         }
-        .padding(.horizontal, 10).padding(.vertical, 5)
-        .background(Capsule(style: .continuous).fill(hue.opacity(0.12)))
-        .overlay(Capsule(style: .continuous).stroke(hue.opacity(0.32), lineWidth: 1))
+        // Zoop: dot and tinted label only, no capsule.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(text ?? state.label)
     }
