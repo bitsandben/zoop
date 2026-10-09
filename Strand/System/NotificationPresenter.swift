@@ -36,6 +36,7 @@ final class NotificationPresenter: NSObject, UNUserNotificationCenterDelegate {
         case id.hasPrefix("wind-down-nudge"): return .route(.sleepPlanner)
         case id == "strain-target": return .route(.metric(HeroRingMetric.effort))
         case id == "illness-watch": return .route(.health)
+        case id == "good-morning": return .route(.metric(HeroRingMetric.charge))
         case id.hasPrefix("battery-"): return .route(.dataSources)
         // The detected-workout card (Save / Not a workout) and the move reminder both live on Home.
         case id == "auto-workout", id == "inactivity-nudge": return .home

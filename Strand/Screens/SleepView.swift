@@ -2943,10 +2943,146 @@ struct SleepTimeEditor: View {
         }
     }
 
+    /// Which endpoint the iOS wheel is editing.
+    private enum Endpoint { case bed, wake }
+    @State private var editing: Endpoint = .bed
+
+    /// Save, shared by both layouts: the #940 disjoint check, then the single commit funnel.
+    private func attemptSave() {
+        guard let window = validatedWindow else { return }
+        if let coverage, SleepEditGuard.isDisjoint(
+            newStart: window.start, newEnd: window.end,
+            coverageStart: coverage.lowerBound, coverageEnd: coverage.upperBound) {
+            confirmingDisjoint = true
+        } else {
+            commit(start: window.start, end: window.end)
+        }
+    }
+
     var body: some View {
+        #if os(iOS)
+        guarded(iosContent)
+        #else
+        guarded(legacyContent)
+        #endif
+    }
+
+    #if os(iOS)
+    /// Zoop iOS layout: two large endpoint tiles (as on Home), one wheel for the selected endpoint, the
+    /// resulting duration, and a full-width save. Sized to its content instead of a mostly empty sheet.
+    private var iosContent: some View {
+        let canSave = validatedWindow != nil
+        return VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
+                Text(title).font(StrandFont.title2).foregroundStyle(StrandPalette.textPrimary)
+                Text(blurb)
+                    .font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            HStack(spacing: ZoopMetrics.space3) {
+                endpointTile(.bed, label: bedLabel, icon: "moon.zzz.fill", date: bed)
+                endpointTile(.wake, label: wakeLabel, icon: "sun.max.fill", date: wake)
+            }
+            Group {
+                if editing == .bed {
+                    DatePicker("", selection: $bed, in: ...Date(), displayedComponents: [.date, .hourAndMinute])
+                } else {
+                    DatePicker("", selection: $wake, in: ...Date(), displayedComponents: [.date, .hourAndMinute])
+                }
+            }
+            .datePickerStyle(.wheel)
+            .labelsHidden()
+            .frame(maxWidth: .infinity)
+            .frame(height: 170)
+            .clipped()
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(StrandPalette.surfaceInset))
+
+            HStack {
+                Text("Duration").font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
+                Spacer()
+                Text(verbatim: durationLabel)
+                    .font(StrandFont.number(17))
+                    .foregroundStyle(canSave ? StrandPalette.textPrimary : StrandPalette.statusWarning)
+            }
+
+            Button(action: attemptSave) {
+                Text(saving ? "Saving…" : "Save")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(StrandPalette.surfaceBase)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(SquircleShape().fill(StrandPalette.textPrimary))
+            }
+            .buttonStyle(.plain)
+            .disabled(saving || !canSave)
+            .opacity(canSave ? 1 : 0.5)
+
+            HStack {
+                if onDelete != nil {
+                    Button(role: .destructive) { confirmingDelete = true } label: {
+                        Label(deleteLabel, systemImage: "trash")
+                            .font(StrandFont.subhead)
+                            .foregroundStyle(StrandPalette.statusCritical)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(saving)
+                }
+                Spacer()
+                Button("Cancel") { dismiss() }
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(StrandPalette.textSecondary)
+                    .buttonStyle(.plain)
+                    .disabled(saving)
+            }
+        }
+        .padding(.horizontal, ZoopMetrics.screenPadding)
+        .padding(.top, ZoopMetrics.space6)
+        .padding(.bottom, ZoopMetrics.space4)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .presentationDetents([.height(640), .large])
+        .presentationDragIndicator(.visible)
+        .opaqueSheetBackground()
+    }
+
+    private func endpointTile(_ which: Endpoint, label: LocalizedStringKey, icon: String, date: Date) -> some View {
+        let selected = editing == which
+        return Button { withAnimation(.snappy) { editing = which } } label: {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
+                HStack(spacing: 6) {
+                    Image(systemName: icon).font(.system(size: 13, weight: .semibold))
+                    Text(label).font(StrandFont.subhead)
+                }
+                .foregroundStyle(StrandPalette.textSecondary)
+                Text(date, format: .dateTime.hour().minute())
+                    .font(StrandFont.display(30))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                Text(date, format: .dateTime.weekday(.abbreviated).day().month(.abbreviated))
+                    .font(StrandFont.caption)
+                    .foregroundStyle(StrandPalette.textTertiary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(ZoopMetrics.space3)
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(selected ? StrandPalette.restColor.opacity(0.18) : StrandPalette.surfaceInset))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(selected ? StrandPalette.restColor : StrandPalette.hairline, lineWidth: selected ? 1.5 : 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    /// "7 h 28 min" for the current window, or a short warning when the window is invalid.
+    private var durationLabel: String {
+        guard let w = validatedWindow else { return String(localized: "Check the times") }
+        let m = (w.end - w.start) / 60
+        return String(localized: "\(m / 60) h \(m % 60) min")
+    }
+    #endif
+
+    private var legacyContent: some View {
         let canSave = validatedWindow != nil
 
-        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
+        return VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             Text(title).font(StrandFont.title2).foregroundStyle(StrandPalette.textPrimary)
             Text(blurb)
                 .font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
@@ -3013,6 +3149,11 @@ struct SleepTimeEditor: View {
         .padding(ZoopMetrics.screenPadding)
         .frame(minWidth: 360)
         .background(ZoopChromeSurface())
+    }
+
+    /// The #940 bed auto-correct and the two confirms, shared by both layouts.
+    private func guarded<V: View>(_ content: V) -> some View {
+        content
         // #940 guard 1: a time-only roll that lands the bed in the future, or at/after the night's
         // wake, almost always means the PREVIOUS evening (23:00 "yesterday", not tonight). Snap the
         // date back a day so the picker visibly shows the night the user meant. Pure rule + tests:

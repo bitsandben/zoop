@@ -174038,7 +174038,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sichern"
+            "value" : "Speichern"
           }
         },
         "es" : {
@@ -174212,7 +174212,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sichern"
+            "value" : "Speichern"
           }
         },
         "es" : {
@@ -257534,6 +257534,96 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dein Coaching-Briefing für heute"
+          }
+        }
+      }
+    },
+    "Recovery %lld%% · %lld h %lld min sleep. Tap to see what shaped it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholung %1$lld %% · %2$lld h %3$lld min Schlaf. Tippe, um zu sehen, woher sie kommt."
+          }
+        }
+      }
+    },
+    "Recovery %lld%%. Tap to see what shaped it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholung %lld %%. Tippe, um zu sehen, woher sie kommt."
+          }
+        }
+      }
+    },
+    "What Zoop tells you when you wake up." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was Zoop dir nach dem Aufwachen sagt."
+          }
+        }
+      }
+    },
+    "Good morning notification" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guten-Morgen-Mitteilung"
+          }
+        }
+      }
+    },
+    "Once your night is synced and scored, a short message with your Recovery and sleep time. At most once a day, before 14:00." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sobald deine Nacht synchronisiert und bewertet ist, eine kurze Nachricht mit Erholung und Schlafdauer. Höchstens einmal am Tag, vor 14:00."
+          }
+        }
+      }
+    },
+    "Backup alarm on iPhone" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersatzwecker auf dem iPhone"
+          }
+        }
+      }
+    },
+    "A phone notification at your alarm time in case the strap does not buzz. Off by default, since the strap is the alarm." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Mitteilung zur Weckzeit, falls das Band nicht vibriert. Standardmäßig aus, weil das Band der Wecker ist."
+          }
+        }
+      }
+    },
+    "Check the times" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeiten prüfen"
+          }
+        }
+      }
+    },
+    "%lld h %lld min" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld h %lld min"
           }
         }
       }

@@ -360,6 +360,7 @@ final class AppModel: ObservableObject {
         repo.$days.sink { [weak self] days in
             self?.evaluateIllness(days)
             self?.evaluateStrainTarget()
+            self?.evaluateGoodMorning()
             // Keep the battery night-guard's learned bedtime warm off the same signal (throttled inside).
             self?.refreshHabitualMidsleep()
         }.store(in: &hrCancellables)
@@ -770,7 +771,8 @@ final class AppModel: ObservableObject {
         await refreshV5Signals()
         // A workout found in the fresh data is announced now rather than waiting for Today to be opened.
         if PuffinExperiment.autoDetectWorkoutsEnabled {
-            WorkoutDetectedNotifier.onSyncCompleted(candidate: await repo.autoDetectCandidate(), enabled: true)
+            WorkoutDetectedNotifier.onSyncCompleted(candidate: await repo.autoDetectCandidate(requireMotion: true),
+                                                   enabled: true)
         }
         #if os(iOS)
         // #980: a strap backfill routinely completes while the app is BACKGROUNDED (it runs as a
@@ -1577,6 +1579,8 @@ final class AppModel: ObservableObject {
         // Always clear BOTH the single and the per-day ids so switching modes (or editing the weekday set)
         // never leaves an orphaned trigger or double-fires.
         center.removePendingNotificationRequests(withIdentifiers: smartAlarmBackupIds)
+        // Zoop: the backup wake is opt-in (Automations → Morning). Off, the cleared set stays empty.
+        guard AlarmBackupPrefs.isEnabled else { return }
         // #34: the backup follows THE ALARM, not the wrist-alerts master. This is only reached from
         // applySmartAlarm() with the alarm enabled, so the alarm being on IS the correct gate — a user who
         // sets a smart alarm but never turned on the separate wrist HR/strain alerts must still get a backup
@@ -2130,6 +2134,14 @@ final class AppModel: ObservableObject {
             dayStrain21: row.strain.map { UnitFormatter.effortValue($0, scale: .whoop) },
             target21: CoupledView.optimalStrainRange(recovery: row.recovery)?.lowerBound,
             enabled: behavior.strainTargetNudge)
+    }
+
+    /// Zoop: the once-a-day good-morning notification with the night's Recovery (see GoodMorningNotifier).
+    func evaluateGoodMorning() {
+        guard let row = repo.today else { return }
+        let nightEnd = repo.sleeps.map(\.endTs).max()
+        GoodMorningNotifier.onDayUpdate(today: Repository.localDayKey(Date()), recovery: row.recovery,
+                                        sleepMinutes: row.totalSleepMin, nightEndTs: nightEnd)
     }
 
     /// Re-run the illness watch over the cached history. Called when the Automations toggle

@@ -3249,7 +3249,11 @@ final class Repository: ObservableObject {
     /// candidate to suggest , newest first , that is NOT already saved and NOT previously dismissed.
     /// Returns nil when the toggle is off, there's nothing to suggest, or detection finds nothing.
     /// PURE READ: never writes a workout. The window scans from `daysBack` days ago to now.
-    func autoDetectCandidate(daysBack: Int = 2) async -> DetectedWorkout? {
+    /// `requireMotion`: return nothing unless the strap banked enough wrist movement to confirm the bout.
+    /// The background notifier passes true: after a sync the heart rate lands before the ~15-minute gravity
+    /// offload, so an HR-only candidate was announced and then vanished from Home once the movement data
+    /// arrived and showed no exercise.
+    func autoDetectCandidate(daysBack: Int = 2, requireMotion: Bool = false) async -> DetectedWorkout? {
         guard PuffinExperiment.autoDetectWorkoutsEnabled else { return nil }
         let now = Int(Date().timeIntervalSince1970)
         let from = now - daysBack * 86_400
@@ -3295,6 +3299,7 @@ final class Repository: ObservableObject {
             // that are clearly exercise: at least 15 minutes, averaging 35 bpm or more above resting.
             let gravity = await gravitySamplesUnion(from: from, to: now, limit: 200_000)
             let motion = gravity.count >= 600 ? AutoWorkoutDetector.motionPoints(gravity) : nil
+            if requireMotion && motion == nil { return nil }
             let floor = (restingBpm ?? AutoWorkoutDetector.defaultRestingHR) + 35
             candidates = AutoWorkoutDetector.detect(hr: hr, restingBpm: restingBpm,
                                                     motion: motion, savedSpans: savedSpans,

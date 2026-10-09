@@ -70,6 +70,9 @@ struct AutomationsView: View {
             healthInsightsCard
             batteryCard
             strainTargetCard
+            #if os(iOS)
+            morningCard
+            #endif
         }
     }
 
@@ -441,6 +444,30 @@ struct AutomationsView: View {
                 }
         }
     }
+
+    // MARK: - Morning (Zoop)
+
+    #if os(iOS)
+    @AppStorage(GoodMorningNotifier.enabledKey) private var goodMorningOn = true
+    @AppStorage(AlarmBackupPrefs.enabledKey) private var alarmBackupOn = false
+
+    private var morningCard: some View {
+        Section2(icon: "sun.horizon", title: String(localized: "Morning"),
+                 blurb: String(localized: "What Zoop tells you when you wake up."),
+                 active: goodMorningOn || alarmBackupOn) {
+            ToggleRow(label: String(localized: "Good morning notification"),
+                      help: String(localized: "Once your night is synced and scored, a short message with your Recovery and sleep time. At most once a day, before 14:00."),
+                      isOn: $goodMorningOn)
+                .onChangeCompat(of: goodMorningOn) { on in
+                    if on { StrainTargetNotifier.requestAuthorization(); model.evaluateGoodMorning() }
+                }
+            ToggleRow(label: String(localized: "Backup alarm on iPhone"),
+                      help: String(localized: "A phone notification at your alarm time in case the strap does not buzz. Off by default, since the strap is the alarm."),
+                      isOn: $alarmBackupOn)
+                .onChangeCompat(of: alarmBackupOn) { _ in model.applySmartAlarm() }
+        }
+    }
+    #endif
 
     // MARK: - Helpers
 
