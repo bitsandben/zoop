@@ -257627,6 +257627,56 @@
           }
         }
       }
+    },
+    "Stages are recalculated from your data." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Phasen werden aus deinen Daten neu berechnet."
+          }
+        }
+      }
+    },
+    "Saved as its own session, apart from the night." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird als eigene Einheit gespeichert, getrennt von der Nacht."
+          }
+        }
+      }
+    },
+    "Lots of sleep but almost no deep or REM. Likely an estimate miss." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Viel Schlaf, aber kaum Tief- oder REM-Schlaf. Vermutlich ein Schätzfehler."
+          }
+        }
+      }
+    },
+    "Little movement was recorded overnight, so the total may read short." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nachts wurde wenig Bewegung aufgezeichnet, die Gesamtdauer kann zu kurz sein."
+          }
+        }
+      }
+    },
+    "Stage data covers %lld%% of this night." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phasendaten decken %lld %% dieser Nacht ab."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

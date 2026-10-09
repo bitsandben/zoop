@@ -127,6 +127,8 @@ struct HomeHealthMonitorTile: View {
 /// The current stress level on its 0–3 scale, tinted by its band, with the band named underneath.
 struct HomeStressMonitorTile: View {
     let score: Double?
+    /// The day's hourly stress, drawn faintly behind the tile (the same series the Stress screen plots).
+    var hours: [DaytimeStress.HourPoint] = []
 
     var body: some View {
         HomeMonitorTile(
@@ -140,6 +142,8 @@ struct HomeStressMonitorTile: View {
                 .foregroundStyle(StrandPalette.textSecondary)
                 .lineLimit(1)
         }
+        .background(alignment: .bottom) { StressTileSparkline(hours: hours, tint: score.map { Self.tint(StressBand(score: $0)) } ?? StrandPalette.textTertiary) }
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 
@@ -547,6 +551,44 @@ struct HomeSectionTitle<Trailing: View>: View {
         }
         .padding(.top, ZoopMetrics.space5)
         .padding(.horizontal, 2)
+    }
+}
+/// A faint area line of the day's hourly stress (0–3) along the bottom of the stress tile. Hours without a
+/// reading are skipped; fewer than two readings draw nothing.
+private struct StressTileSparkline: View {
+    let hours: [DaytimeStress.HourPoint]
+    let tint: Color
+
+    var body: some View {
+        let pts = hours.compactMap { h in h.level.map { (Double(h.hour), $0) } }
+        if pts.count >= 2 {
+            GeometryReader { g in
+                let minX = pts.map(\.0).min() ?? 0, maxX = max((pts.map(\.0).max() ?? 1), minX + 1)
+                let h = g.size.height
+                let point: ((Double, Double)) -> CGPoint = { p in
+                    CGPoint(x: (p.0 - minX) / (maxX - minX) * g.size.width,
+                            y: h - CGFloat(min(3, max(0, p.1)) / 3) * h * 0.9)
+                }
+                let line = Path { path in
+                    path.move(to: point(pts[0]))
+                    for p in pts.dropFirst() { path.addLine(to: point(p)) }
+                }
+                let area = Path { path in
+                    path.move(to: CGPoint(x: point(pts[0]).x, y: h))
+                    for p in pts { path.addLine(to: point(p)) }
+                    path.addLine(to: CGPoint(x: point(pts[pts.count - 1]).x, y: h))
+                    path.closeSubpath()
+                }
+                ZStack {
+                    area.fill(LinearGradient(colors: [tint.opacity(0.22), tint.opacity(0.02)],
+                                             startPoint: .top, endPoint: .bottom))
+                    line.stroke(tint.opacity(0.55), style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+                }
+            }
+            .frame(height: 70)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        }
     }
 }
 #endif

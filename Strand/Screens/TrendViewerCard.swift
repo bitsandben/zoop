@@ -157,15 +157,24 @@ struct TrendViewerCard: View {
             return (avg - prevAvg) / prevAvg * 100
         }()
 
+        // While scrubbing, the header shows the reading under the finger in place of the average, the
+        // same readout the other Trends cards use (a value bubble over the line was clipped by the plot).
+        let scrubbed = scrubDate.flatMap { nearest(current, to: $0) }
         VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
             metricPicker
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Average")
+                    Group {
+                        if let scrubbed {
+                            Text(scrubbed.date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
+                        } else {
+                            Text("Average")
+                        }
+                    }
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(StrandPalette.textSecondary)
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text(avg.map(format) ?? "–")
+                        Text((scrubbed?.value ?? avg).map(format) ?? "–")
                             .font(StrandFont.display(46))
                             .foregroundStyle(StrandPalette.textPrimary)
                         if !metric.unit.isEmpty {
@@ -174,7 +183,7 @@ struct TrendViewerCard: View {
                                 .foregroundStyle(StrandPalette.textPrimary)
                         }
                     }
-                    if let change { changeChip(change) }
+                    if let change { changeChip(change).opacity(scrubbed == nil ? 1 : 0) }
                 }
                 Spacer(minLength: 8)
                 windowPicker
@@ -307,7 +316,7 @@ struct TrendViewerCard: View {
                             .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
                     }
                 }
-                if let last = current.last, !metric.drawsBars {
+                if let last = current.last, !metric.drawsBars, scrubDate == nil {
                     PointMark(x: .value("Day", last.date), y: .value("Value", last.value))
                         .symbol { Circle().stroke(metric.tint, lineWidth: 2.5).background(Circle().fill(StrandPalette.surfaceRaised)).frame(width: 12, height: 12) }
                         .annotation(position: .top) {
@@ -322,23 +331,13 @@ struct TrendViewerCard: View {
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                 }
                 if let scrubDate, let p = nearest(current, to: scrubDate) {
-                    // The reading under the finger: a rule at that day with its value and date.
+                    // The reading under the finger: a rule and a dot; its value and date show in the header.
                     RuleMark(x: .value("Selected", p.date))
                         .foregroundStyle(StrandPalette.textPrimary.opacity(0.6))
-                        .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
-                            VStack(spacing: 2) {
-                                Text(format(p.value) + (metric.unit.isEmpty ? "" : " \(metric.unit)"))
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundStyle(StrandPalette.textPrimary)
-                                Text(p.date.formatted(window == .halfYear
-                                                      ? .dateTime.day().month(.abbreviated)
-                                                      : .dateTime.weekday(.abbreviated).day().month(.abbreviated)))
-                                    .font(.system(size: 11, weight: .medium))
-                                    .foregroundStyle(StrandPalette.textSecondary)
-                            }
-                            .padding(.horizontal, 8).padding(.vertical, 5)
-                            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(StrandPalette.surfaceOverlay))
-                        }
+                    if !metric.drawsBars {
+                        PointMark(x: .value("Selected", p.date), y: .value("Value", p.value))
+                            .symbol { Circle().fill(metric.tint).frame(width: 10, height: 10) }
+                    }
                 }
             }
             // Scrub through the shared mechanism rather than `chartXSelection`: a sideways drag (or a short

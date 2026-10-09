@@ -801,7 +801,7 @@ struct LiquidTodayView: View {
             }
             .buttonStyle(LiquidPressStyle())
             NavigationLink(value: TabRoute.stress) {
-                HomeStressMonitorTile(score: stress)
+                HomeStressMonitorTile(score: stress, hours: hostedStressHours)
             }
             .buttonStyle(LiquidPressStyle())
         }

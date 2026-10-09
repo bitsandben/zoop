@@ -302,7 +302,7 @@ struct SleepView: View {
             .sheet(item: $addNap) { seed in
                 SleepTimeEditor(bedTs: seed.bedTs, wakeTs: seed.wakeTs,
                                 title: "Add a nap",
-                                blurb: "Pick when the nap started and ended. Zoop stages it from your data as its own session, separate from the night's sleep.",
+                                blurb: "Saved as its own session, apart from the night.",
                                 bedLabel: "Nap started", wakeLabel: "Nap ended") { startTs, endTs in
                     await repo.addManualNap(startTs: startTs, endTs: endTs)
                     // Re-score so the day's aggregates pick up the new session, exactly like an edit.
@@ -748,9 +748,11 @@ struct SleepView: View {
                     SectionHeader("Naps", overline: "Daytime sleep", trailing: nil)
                     Spacer(minLength: 8)
                     Button { addNap = AddNapSeed(forNight: night) } label: {
-                        Label("Add nap", systemImage: "plus.circle.fill")
-                            .font(StrandFont.subhead)
-                            .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
+                        Image(systemName: "plus")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(StrandPalette.surfaceBase)
+                            .frame(width: 36, height: 36)
+                            .background(SquircleShape().fill(StrandPalette.textPrimary))
                     }
                     .buttonStyle(LiquidPressStyle())
                     .accessibilityLabel("Add a nap")
@@ -1019,28 +1021,18 @@ struct SleepView: View {
     /// empty note rather than a fabricated flat zero trace.
     @ViewBuilder
     private func motionStrip(_ night: Night) -> some View {
-        // Label above the trace, plot inset 10pt to line up with the stage-timeline rows' strips
-        // (the old 44+12 gutter matched the removed Hypnogram's y-axis column). (ryanAtriumAi #988)
-        VStack(alignment: .leading, spacing: 2) {
-            // "Move" alone did not say what the height means. The trace is normalised to THIS night's
-            // peak, so the tallest spike is full height whatever its absolute size and heights do not
-            // compare between nights. The strap calibrates no absolute magnitude, so naming the scale
-            // is the honest axis label rather than a number. Twin of the Kotlin `MotionStrip` label.
-            Text("Move, relative to tonight")
-                .font(StrandFont.footnote)
-                .foregroundStyle(StrandPalette.textTertiary)
-            if night.motionEpochs.count >= 2 {
-                MotionTrace(epochs: night.motionEpochs, height: 40, tint: StrandPalette.restColor)
-                    .padding(.horizontal, 10)
-            } else {
-                Text("No movement detail for this night")
-                    .font(StrandFont.footnote)
-                    .foregroundStyle(StrandPalette.textTertiary)
-                    .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
-                    .accessibilityLabel(Text("No movement detail recorded for this night"))
+        // Zoop: shown only when the night has movement data, inside its own card so it lines up with the
+        // cards around it. A night without it says nothing rather than printing an empty line.
+        if night.motionEpochs.count >= 2 {
+            ZoopCard {
+                VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
+                    // The trace is normalised to THIS night's peak, so heights do not compare between nights.
+                    Text("Move, relative to tonight").strandOverline()
+                    MotionTrace(epochs: night.motionEpochs, height: 40, tint: StrandPalette.restColor)
+                }
             }
+            .accessibilityElement(children: .contain)
         }
-        .accessibilityElement(children: .contain)
     }
 
     /// H9 — true when this night's staging is LOW-CONFIDENCE: a high-efficiency night (lots of measured
@@ -1139,32 +1131,16 @@ struct SleepView: View {
     /// one-line honest explanation. No faked stages, no tanked score; just a clear "treat this split with
     /// care" so a user doesn't read a likely staging miss as a real deep/REM drought. (#H9)
     private var stageLowConfidenceNote: some View {
-        HStack(alignment: .top, spacing: 8) {
-            SourceBadge("Low confidence", tint: StrandPalette.statusWarning)
-            Text("This night scored high efficiency but very little deep or REM, more likely a staging estimate miss than a real restorative shortfall. The totals are kept as-is; read the split with care.")
-                .font(StrandFont.footnote)
-                .foregroundStyle(StrandPalette.textTertiary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.horizontal, 2)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Low confidence staging. This night scored high efficiency but very little deep or REM, more likely an estimate miss than a real restorative shortfall.")
+        sleepNote(title: "Low confidence",
+                  text: "Lots of sleep but almost no deep or REM. Likely an estimate miss.")
     }
 
     /// The sparse-coverage caveat: a night staged on thin motion data can under-detect and collapse a real
     /// night to a fraction ("slept 8h, shows 1h"). Honest + actionable — tells the user to make sure the
     /// strap fully synced. Distinct from the H9 note (an off deep/REM split, not a short total). (#345)
     private var stageIncompleteNote: some View {
-        HStack(alignment: .top, spacing: 8) {
-            SourceBadge("May be incomplete", tint: StrandPalette.statusWarning)
-            Text("Your strap recorded little movement overnight (common on WHOOP 4.0), so this night may be under-detected and the sleep total can read short. Make sure the strap fully synced; the numbers are kept as-is.")
-                .font(StrandFont.footnote)
-                .foregroundStyle(StrandPalette.textTertiary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.horizontal, 2)
-        // `.combine` builds the a11y label from the badge + body Text (no separate localized string).
-        .accessibilityElement(children: .combine)
+        sleepNote(title: "May be incomplete",
+                  text: "Little movement was recorded overnight, so the total may read short.")
     }
 
     /// The PARTIAL-TIMELINE caveat (#1716): this night's stage segments account for less than
@@ -1185,14 +1161,26 @@ struct SleepView: View {
     /// that carries them, so "the totals below" pointed the wrong way on every screen that shipped it.
     private func stagePartialNote(_ coverage: Double) -> some View {
         let pct = Int((coverage * 100).rounded(.down))
-        return HStack(alignment: .top, spacing: 8) {
-            SourceBadge("Partly recorded", tint: StrandPalette.statusWarning)
-            Text("Only \(pct)% of this night's window has stage data. The stage totals cover only that part of the night.")
-                .font(StrandFont.footnote)
-                .foregroundStyle(StrandPalette.textTertiary)
-                .fixedSize(horizontal: false, vertical: true)
+        return sleepNote(title: "Partly recorded", text: "Stage data covers \(pct)% of this night.")
+    }
+
+    /// One compact caveat under the stage breakdown: a warning glyph, a short title and one sentence, in an
+    /// inset panel aligned with the cards. Shared by the low-confidence, incomplete and partial notes.
+    private func sleepNote(title: LocalizedStringKey, text: LocalizedStringKey) -> some View {
+        HStack(alignment: .top, spacing: ZoopMetrics.space3) {
+            Image(systemName: "exclamationmark.circle.fill")
+                .font(.system(size: 16))
+                .foregroundStyle(StrandPalette.statusWarning)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(StrandFont.subhead.weight(.semibold)).foregroundStyle(StrandPalette.textPrimary)
+                Text(text).font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 2)
+        .padding(ZoopMetrics.space3)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(StrandPalette.surfaceRaised))
         .accessibilityElement(children: .combine)
     }
 
@@ -2903,7 +2891,7 @@ struct SleepTimeEditor: View {
     /// action; `deleteLabel` lets the nap editor say "Delete this nap".
     init(bedTs: Int, wakeTs: Int,
          title: LocalizedStringKey = "Edit sleep times",
-         blurb: LocalizedStringKey = "Correct when you went to bed and woke. Stages are re-derived from your data; the edit is kept through the next strap sync.",
+         blurb: LocalizedStringKey = "Stages are recalculated from your data.",
          bedLabel: LocalizedStringKey = "Asleep",
          wakeLabel: LocalizedStringKey = "Woke",
          deleteLabel: LocalizedStringKey = "Delete this sleep",
@@ -2973,11 +2961,24 @@ struct SleepTimeEditor: View {
     private var iosContent: some View {
         let canSave = validatedWindow != nil
         return VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
-            VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
-                Text(title).font(StrandFont.title2).foregroundStyle(StrandPalette.textPrimary)
-                Text(blurb)
-                    .font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
+                    Text(title).font(StrandFont.title2).foregroundStyle(StrandPalette.textPrimary)
+                    Text(blurb)
+                        .font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: ZoopMetrics.space3)
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(StrandPalette.textSecondary)
+                        .frame(width: 34, height: 34)
+                        .background(Circle().fill(StrandPalette.surfaceInset))
+                }
+                .buttonStyle(.plain)
+                .disabled(saving)
+                .accessibilityLabel(Text("Cancel"))
             }
             HStack(spacing: ZoopMetrics.space3) {
                 endpointTile(.bed, label: bedLabel, icon: "moon.zzz.fill", date: bed)
@@ -3017,29 +3018,24 @@ struct SleepTimeEditor: View {
             .disabled(saving || !canSave)
             .opacity(canSave ? 1 : 0.5)
 
-            HStack {
-                if onDelete != nil {
-                    Button(role: .destructive) { confirmingDelete = true } label: {
-                        Label(deleteLabel, systemImage: "trash")
-                            .font(StrandFont.subhead)
-                            .foregroundStyle(StrandPalette.statusCritical)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(saving)
+            if onDelete != nil {
+                Button(role: .destructive) { confirmingDelete = true } label: {
+                    Label(deleteLabel, systemImage: "trash")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(StrandPalette.statusCritical)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(SquircleShape().fill(StrandPalette.statusCritical.opacity(0.12)))
                 }
-                Spacer()
-                Button("Cancel") { dismiss() }
-                    .font(StrandFont.subhead)
-                    .foregroundStyle(StrandPalette.textSecondary)
-                    .buttonStyle(.plain)
-                    .disabled(saving)
+                .buttonStyle(.plain)
+                .disabled(saving)
             }
         }
         .padding(.horizontal, ZoopMetrics.screenPadding)
         .padding(.top, ZoopMetrics.space6)
         .padding(.bottom, ZoopMetrics.space4)
         .frame(maxHeight: .infinity, alignment: .top)
-        .presentationDetents([.height(640), .large])
+        .presentationDetents([.height(onDelete == nil ? 560 : 620), .large])
         .presentationDragIndicator(.visible)
         .opaqueSheetBackground()
     }
