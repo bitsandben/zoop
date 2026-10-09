@@ -563,41 +563,34 @@ struct RootTabView: View {
                            onRefresh: { await repo.refresh() },
                            topBackground: liquidScaffoldSky()) {
                 MoreDeviceHeader()
-                moreSection("Body") {
-                    MoreRow("Sleep", "bed.double.fill", .sleep, subtitle: "Stages, debt and consistency")
+                // Zoop: only what no card, ring or the "+" menu already opens. Sleep, Stress, Live, Breathe and
+                // Patterns are reached from Home; What Moves You from the Recovery detail and the Logbook.
+                moreSection("Training") {
                     MoreRow("Workouts", "figure.run", .workouts, subtitle: "Sessions, zones and routes")
-                    MoreRow("Stress", "bolt.heart.fill", .stress, subtitle: "Load across your day")
-                    MoreRow("Live", "waveform.path.ecg", .live, subtitle: "Heart rate in real time")
                     MoreRow("Lift Log", "dumbbell.fill", .liftLog, subtitle: "Programs and sets")
-                    MoreRow("Breathe", "wind", .breathe, subtitle: "Guided breathing")
                     MoreRow("Intervals", "timer", .intervals, subtitle: "Haptic interval timer")
+                }
+                moreSection("Tools") {
+                    MoreRow("Explore", "square.grid.2x2.fill", .explore, subtitle: "Every metric, every range")
+                    MoreRow("Compare", "rectangle.split.2x1.fill", .compare, subtitle: "Metrics side by side")
                     MoreRow("Lab Book", "books.vertical.fill", .labBook, subtitle: "Experiments on yourself")
                     MoreRow("Rhythm", "waveform.path", .rhythm, subtitle: "Beat-to-beat timing")
                 }
-                moreSection("Insights") {
-                    MoreRow("Patterns", "chart.bar.doc.horizontal.fill", .patterns, subtitle: "Tonight, tomorrow and your habits")
-                    MoreRow("What Moves You", "wand.and.sparkles", .insightsHub, subtitle: "What changes your scores")
-                    MoreRow("Intelligence", "brain.head.profile", .intelligence, subtitle: "Patterns across your history")
-                    MoreRow("Insights", "lightbulb.fill", .insights, subtitle: "Logbook and correlations")
-                    MoreRow("Explore", "square.grid.2x2.fill", .explore, subtitle: "Every metric, every range")
-                    MoreRow("Compare", "rectangle.split.2x1.fill", .compare, subtitle: "Metrics side by side")
-                }
                 moreSection("Data") {
                     MoreRow("Data Sources", "externaldrive.fill", .dataSources, subtitle: "Where each number comes from")
-                    MoreRow("Your Data, Fused", "square.stack.3d.up.fill", .fusedRecord, subtitle: "One record from every source")
                     MoreRow("Apple Health", "heart.fill", .appleHealth, subtitle: "Import and write-back")
                     MoreRow("Mi Band", "figure.walk.motion", .miBand, subtitle: "Steps and heart rate")
                     MoreRow("Backup & Sync", "externaldrive.fill.badge.icloud", .backupSync, subtitle: "Back up and restore")
                     MoreRow("Shortcuts Export", "square.and.arrow.up.fill", .shortcutsExport, subtitle: "Send data to Shortcuts")
-                    MoreRow("Zoop Limitations", "list.bullet.rectangle", .noopLimitations, subtitle: "What is not measured yet")
                 }
-                moreSection("App") {
+                moreSection("Settings") {
                     MoreRow("Settings", "gearshape.fill", .settings, subtitle: "Profile, units and appearance")
                     MoreRow("Alarms", "alarm.fill", .alarms, subtitle: "Strap alarm and wind-down")
                     MoreRow("Automations", "wand.and.stars", .automations, subtitle: "Alerts and reminders")
                     MoreRow("Power saving", "battery.25", .powerSaving, subtitle: "Ease the strap's battery")
                     MoreRow("Siri & Shortcuts", "mic.fill", .siriShortcuts, subtitle: "Voice and automation")
                     MoreRow("Test Centre", "stethoscope", .testCentre, subtitle: "Diagnostics and logs")
+                    MoreRow("Zoop Limitations", "list.bullet.rectangle", .noopLimitations, subtitle: "What is not measured yet")
                 }
             }
             // The rows push MoreDestination VALUES so a re-tap of the More tab can pop them off the

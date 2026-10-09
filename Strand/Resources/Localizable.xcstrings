@@ -257677,6 +257677,46 @@
           }
         }
       }
+    },
+    "Training" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Training"
+          }
+        }
+      }
+    },
+    "Tools" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Werkzeuge"
+          }
+        }
+      }
+    },
+    "What affects your Recovery" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was deine Erholung beeinflusst"
+          }
+        }
+      }
+    },
+    "From your logbook answers" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus deinen Logbuch-Antworten"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

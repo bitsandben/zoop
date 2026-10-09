@@ -43,6 +43,16 @@ struct LogbookView: View {
         .scrollDismissesKeyboard(.interactively)
         .background(StrandPalette.surfaceBase.ignoresSafeArea())
         .safeAreaInset(edge: .bottom) { saveBar }
+        // What the answers add up to: the ranked habit effects ("What Moves You"), like WHOOP's Insights.
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                NavigationLink { InsightsHubView() } label: {
+                    Label("Insights", systemImage: "lightbulb")
+                        .labelStyle(.titleAndIcon)
+                        .font(StrandFont.subhead.weight(.semibold))
+                }
+            }
+        }
         .task {
             // Honour a day the Today logbook widget deep-linked to (#656), consumed once on arrival.
             if let day = router.pendingJournalDayOffset {

@@ -547,6 +547,22 @@ struct RecoveryInsightCard: View {
                 }
             }
             if enabled { MorningCheckInSummaryRow() }
+            // Which logged habits move Recovery (What Moves You), reached from here rather than from More.
+            NavigationLink { InsightsHubView() } label: {
+                ZoopCard {
+                    HStack(spacing: ZoopMetrics.space3) {
+                        Image(systemName: "wand.and.sparkles").foregroundStyle(StrandPalette.accent)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("What affects your Recovery").font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
+                            Text("From your logbook answers").font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(StrandPalette.textTertiary)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
             NavigationLink { RecoveryCalibrationView() } label: {
                 ZoopCard {
                     HStack(spacing: ZoopMetrics.space3) {

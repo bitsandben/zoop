@@ -247,13 +247,9 @@ struct PatternsScreen: View {
     var body: some View {
         ScreenScaffold(title: "Patterns") {
             VStack(alignment: .leading, spacing: 14) {
-                if let t = patterns.tonight {
-                    PatternTonightCard(tonight: t) { Task { await patterns.loadQuick(repo: repo, alarm: model.nextArmedStrapAlarm()) } }
-                }
-                if let f = patterns.forecast { forecastCard(f) }
-                if let a = patterns.acwr { PatternLoadCard(acwr: a) }
+                // Zoop: tonight's need, tomorrow's forecast and training load already sit in Home's Ausblick,
+                // and habit effects are What Moves You; this page keeps only the readings of your history.
                 illnessCard
-                if !patterns.effects.isEmpty { effectsCard }
                 if let w = patterns.bedtime { bedtimeCard(w) }
                 if let w = patterns.weekday { weekdayCard(w) }
                 if let s = patterns.stressSleep { stressCard(s) }
