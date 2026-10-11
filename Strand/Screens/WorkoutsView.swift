@@ -660,7 +660,7 @@ struct WorkoutsView: View {
     /// Opens the add sheet (editing == nil). Present on the populated screen and the empty state so a
     /// user with no imports can still log a session.
     private var addWorkoutButton: some View {
-        ZoopButton("Add workout", systemImage: "plus", kind: .secondary, fullWidth: true) {
+        ZoopButton("Add", systemImage: "plus", kind: .secondary, fullWidth: true) {
             sheet = WorkoutSheetTarget(editing: nil)
         }
         .accessibilityLabel("Add a workout")

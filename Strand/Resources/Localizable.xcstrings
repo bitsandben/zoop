@@ -258387,6 +258387,466 @@
           }
         }
       }
+    },
+    "Generate routine" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routine generieren"
+          }
+        }
+      }
+    },
+    "Plan weekdays" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wochentage planen"
+          }
+        }
+      }
+    },
+    "Planned days show as dashed circles in your training calendar." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geplante Tage erscheinen als gestrichelte Kreise in deinem Trainingskalender."
+          }
+        }
+      }
+    },
+    "Plan" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planen"
+          }
+        }
+      }
+    },
+    "Set up a provider in Coach settings to generate routines." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Richte in den Coach-Einstellungen einen Anbieter ein, um Routinen zu generieren."
+          }
+        }
+      }
+    },
+    "Equipment" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausrüstung"
+          }
+        }
+      }
+    },
+    "Focus" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fokus"
+          }
+        }
+      }
+    },
+    "Build muscle" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muskelaufbau"
+          }
+        }
+      }
+    },
+    "Full gym" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komplettes Fitnessstudio"
+          }
+        }
+      }
+    },
+    "Upper body" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oberkörper"
+          }
+        }
+      }
+    },
+    "Generate" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generieren"
+          }
+        }
+      }
+    },
+    "Only these answers are sent to your coach provider." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur diese Antworten werden an deinen Coach-Anbieter gesendet."
+          }
+        }
+      }
+    },
+    "Edit answers" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antworten bearbeiten"
+          }
+        }
+      }
+    },
+    "Saved as a program you can edit like any other." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird als Programm gespeichert, das du wie jedes andere bearbeiten kannst."
+          }
+        }
+      }
+    },
+    "%lld s rest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld s Pause"
+          }
+        }
+      }
+    },
+    "The coach's reply wasn't a routine. Try again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Antwort des Coaches war keine Routine. Versuche es erneut."
+          }
+        }
+      }
+    },
+    "Previous month" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorheriger Monat"
+          }
+        }
+      }
+    },
+    "Next month" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächster Monat"
+          }
+        }
+      }
+    },
+    "%@, %lld workouts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$lld Workouts"
+          }
+        }
+      }
+    },
+    "%@, planned: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, geplant: %2$@"
+          }
+        }
+      }
+    },
+    "Nothing logged on this day." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An diesem Tag wurde nichts erfasst."
+          }
+        }
+      }
+    },
+    "Planned" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geplant"
+          }
+        }
+      }
+    },
+    "After the workout" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach dem Training"
+          }
+        }
+      }
+    },
+    "Fills in over the hours after your workout." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Füllt sich in den Stunden nach deinem Training."
+          }
+        }
+      }
+    },
+    "Drop after 1 min" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abfall nach 1 Min."
+          }
+        }
+      }
+    },
+    "Drop after 2 min" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abfall nach 2 Min."
+          }
+        }
+      }
+    },
+    "Back near resting" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurück nahe Ruhe-HF"
+          }
+        }
+      }
+    },
+    "Not within 3 h" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht innerhalb von 3 Std."
+          }
+        }
+      }
+    },
+    "Afterburn (1–3 h)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nachbrenneffekt (1–3 Std.)"
+          }
+        }
+      }
+    },
+    "%@ bpm over resting" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ bpm über Ruhe-HF"
+          }
+        }
+      }
+    },
+    "%lld ms (%@)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ms (%@)"
+          }
+        }
+      }
+    },
+    "%lld bpm (%@)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld bpm (%@)"
+          }
+        }
+      }
+    },
+    "%lld%% (%@)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %% (%@)"
+          }
+        }
+      }
+    },
+    "Compared with your 30-day average." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verglichen mit deinem 30-Tage-Durchschnitt."
+          }
+        }
+      }
+    },
+    "Heart rate over the 3 hours after the workout" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenz in den 3 Stunden nach dem Training"
+          }
+        }
+      }
+    },
+    "Fast recovery" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schnelle Pulserholung"
+          }
+        }
+      }
+    },
+    "Normal recovery" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normale Pulserholung"
+          }
+        }
+      }
+    },
+    "Slow recovery" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langsame Pulserholung"
+          }
+        }
+      }
+    },
+    "Faster than your usual (%@ bpm)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schneller als sonst (%@ bpm)"
+          }
+        }
+      }
+    },
+    "Slower than your usual (%@ bpm)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langsamer als sonst (%@ bpm)"
+          }
+        }
+      }
+    },
+    "In line with your usual" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie sonst auch"
+          }
+        }
+      }
+    },
+    "Energy Bank" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Energiekonto"
+          }
+        }
+      }
+    },
+    "+%lld charged · −%lld drained" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%lld aufgeladen · −%lld verbraucht"
+          }
+        }
+      }
+    },
+    "Charged" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufgeladen"
+          }
+        }
+      }
+    },
+    "Drained" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbraucht"
+          }
+        }
+      }
+    },
+    "Sleep and calm rest fill it; activity, stress and simply being awake drain it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlaf und ruhige Pausen füllen es auf, Aktivität, Stress und das Wachsein selbst leeren es."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

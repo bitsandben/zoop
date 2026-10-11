@@ -28,7 +28,8 @@ struct WorkoutStartControl: View {
                     showLiveWorkout = true
                 }
             } else {
-                ZoopButton(model.activeWorkout == nil ? "Start workout" : "View active workout",
+                // Short labels: two half-width buttons on a phone cut "Workout starten" / "Workout hinzufügen" off.
+                ZoopButton(model.activeWorkout == nil ? "Start" : "Active",
                            systemImage: model.activeWorkout == nil ? "figure.run" : "timer",
                            kind: .primary,
                            fullWidth: true) {
