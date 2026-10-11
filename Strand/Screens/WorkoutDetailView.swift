@@ -4,6 +4,7 @@ import StrandAnalytics
 import StrandImport
 import WhoopStore
 import Foundation
+import Charts
 #if canImport(MapKit)
 import MapKit
 #endif
@@ -53,9 +54,10 @@ struct WorkoutDetailView: View {
     /// True when the zones bar came from imported WHOOP percentages (vs derived from raw strap HR).
     @State private var zonesFromImport = false
     @State private var loaded = false
-    /// #516: computed from the recorded workout-end + post-workout HR window. nil when the workout was
-    /// not intense enough or the strap did not record enough post-workout coverage.
-    @State private var heartRateRecovery: HeartRateRecovery.Result?
+    /// "After the workout": HRR (#516), time back to near resting, afterburn, next-morning deltas and the
+    /// HRR1 trend, all from `PostWorkoutRecovery`. nil until loaded.
+    @State private var afterWorkout: PostWorkoutRecovery.Result?
+    @State private var afterWorkoutTrend: PostWorkoutRecovery.Trend?
 
     /// The GPS route captured for this session on-device (#524), if any. Decoded from `RouteStore` by the
     /// row's natural key. nil = no route was recorded (honest — the map only shows when points exist).
@@ -88,7 +90,7 @@ struct WorkoutDetailView: View {
             routeCard
             hrCurveCard
             zonesCard
-            heartRateRecoveryCard
+            afterWorkoutCard
             if let strain = row.strain {
                 effortCard(strain: strain)
             }
@@ -136,8 +138,7 @@ struct WorkoutDetailView: View {
                                                     source: row.source)
         }
 
-        let hrr = await repo.workoutHeartRateRecovery(
-            from: row.startTs, to: row.endTs, maxHR: Double(profile.hrMax), source: row.source)
+        let after = await repo.postWorkoutRecovery(row: row, maxHR: Double(profile.hrMax))
 
         // Steps for an on-foot session (#398), computed at display time over the exact window so it
         // "fills in after sync": prefer the strap's own counter (MG/5.0) once it has offloaded the window,
@@ -162,53 +163,189 @@ struct WorkoutDetailView: View {
             self.hrPoints = points
             self.zoneMinutes = minutes
             self.zonesFromImport = fromImport
-            self.heartRateRecovery = hrr
+            self.afterWorkout = after.result
+            self.afterWorkoutTrend = after.trend
             self.steps = stepReadout
             self.loaded = true
         }
     }
 
-    // MARK: - Heart-rate recovery (#516)
+    // MARK: - After the workout
 
-    @ViewBuilder private var heartRateRecoveryCard: some View {
-        if let recovery = heartRateRecovery {
+    /// One card for how the body behaved after the session: the first minutes (HRR1/HRR2 with the trend
+    /// against recent sessions), the next hours (time back near resting, afterburn, the 3 h curve) and the
+    /// next morning (HRV, resting HR, Charge vs the 30-day average). Rows without data are hidden.
+    @ViewBuilder private var afterWorkoutCard: some View {
+        if let a = afterWorkout {
             VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
-                SectionHeader("Heart Rate Recovery", overline: "After high-intensity effort",
-                              trailing: String(localized: "Peak \(recovery.endHR) bpm"))
+                SectionHeader("After the workout")
                 ZoopCard(tint: StrandPalette.metricRose) {
-                    VStack(alignment: .leading, spacing: 14) {
-                        HStack(spacing: 0) {
-                            recoveryStat(String(localized: "1 min"), value: recovery.after1Minute)
-                            recoveryStat(String(localized: "2 min"), value: recovery.after2Minutes)
-                            recoveryStat(String(localized: "5 min"), value: recovery.after5Minutes)
-                        }
-                        Divider().overlay(StrandPalette.hairline)
-                        Text("The change from your heart rate at the end of exercise. Positive values mean your heart rate fell; a dash means the strap did not record enough data around that minute.")
-                            .font(StrandFont.footnote)
-                            .foregroundStyle(StrandPalette.textTertiary)
-                            .fixedSize(horizontal: false, vertical: true)
+                    if a.hasAnything {
+                        afterWorkoutContent(a)
+                    } else {
+                        emptyNote(String(localized: "Fills in over the hours after your workout."))
                     }
                 }
             }
         }
     }
 
-    private func recoveryStat(_ label: String, value: Int?) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(label).strandOverline()
-            Text(value.map { "\($0)" } ?? "–")
-                .font(StrandFont.number(24))
-                .foregroundStyle(value.map { $0 >= 0 ? StrandPalette.statusPositive
-                                                     : StrandPalette.statusWarning }
-                                 ?? StrandPalette.textTertiary)
-            Text("bpm")
-                .font(StrandFont.footnote)
-                .foregroundStyle(StrandPalette.textTertiary)
+    private func afterWorkoutContent(_ a: PostWorkoutRecovery.Result) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let v = a.verdict {
+                Text(verdictLabel(v))
+                    .font(StrandFont.headline)
+                    .foregroundStyle(verdictTint(v))
+            }
+            if let h1 = a.hrr1 {
+                afterRow(String(localized: "Drop after 1 min"), String(localized: "\(h1) bpm"),
+                         tint: h1 >= 0 ? StrandPalette.textPrimary : StrandPalette.statusWarning)
+            }
+            if let h2 = a.hrr2 {
+                afterRow(String(localized: "Drop after 2 min"), String(localized: "\(h2) bpm"),
+                         tint: h2 >= 0 ? StrandPalette.textPrimary : StrandPalette.statusWarning)
+            }
+            if let t = afterWorkoutTrend {
+                Text(trendLabel(t))
+                    .font(StrandFont.footnote)
+                    .foregroundStyle(trendTint(t))
+            }
+            if let m = a.minutesToNearResting {
+                afterRow(String(localized: "Back near resting"), durationLabel(Double(max(m, 1)) * 60),
+                         tint: StrandPalette.textPrimary)
+            } else if a.verdict == .slow, a.hrr1 == nil {
+                afterRow(String(localized: "Back near resting"), String(localized: "Not within 3 h"),
+                         tint: StrandPalette.statusWarning)
+            }
+            if let d = a.afterburnDelta {
+                afterRow(String(localized: "Afterburn (1–3 h)"),
+                         String(localized: "\(signed(d)) bpm over resting"),
+                         tint: d > 10 ? StrandPalette.statusWarning : StrandPalette.textPrimary)
+            }
+            if a.curve.count >= PostWorkoutRecovery.minimumCurvePoints {
+                afterCurve(a)
+                    .padding(.top, 4)
+            }
+            if let morning = a.morning {
+                Divider().overlay(StrandPalette.hairline)
+                Text("Next morning").strandOverline()
+                if let hrv = morning.hrv {
+                    afterRow(String(localized: "HRV"),
+                             String(localized: "\(Int(hrv.value.rounded())) ms (\(signed(hrv.delta)))"),
+                             tint: deltaTint(hrv.delta, goodWhenHigher: true, neutralBand: 3))
+                }
+                if let rhr = morning.restingHr {
+                    afterRow(String(localized: "Resting HR"),
+                             String(localized: "\(Int(rhr.value.rounded())) bpm (\(signed(rhr.delta)))"),
+                             tint: deltaTint(rhr.delta, goodWhenHigher: false, neutralBand: 2))
+                }
+                if let charge = morning.recovery {
+                    afterRow(String(localized: "Charge"),
+                             String(localized: "\(Int(charge.value.rounded()))% (\(signed(charge.delta)))"),
+                             tint: deltaTint(charge.delta, goodWhenHigher: true, neutralBand: 5))
+                }
+                Text("Compared with your 30-day average.")
+                    .font(StrandFont.footnote)
+                    .foregroundStyle(StrandPalette.textTertiary)
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// HR over the three hours after the end, with the resting baseline as a dashed line.
+    private func afterCurve(_ a: PostWorkoutRecovery.Result) -> some View {
+        let values = a.curve.map(\.bpm) + (a.restingBaseline.map { [$0] } ?? [])
+        let lo = max(0, (values.min() ?? 50) - 5)
+        let hi = (values.max() ?? 150) + 5
+        let endTs = row.endTs
+        func date(_ minute: Int) -> Date { Date(timeIntervalSince1970: TimeInterval(endTs + minute * 60)) }
+        return Chart {
+            ForEach(a.curve, id: \.minute) { p in
+                LineMark(x: .value("Time", date(p.minute)), y: .value("Heart rate", p.bpm))
+                    .foregroundStyle(StrandPalette.metricRose)
+                    .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                    .interpolationMethod(.monotone)
+            }
+            if let rest = a.restingBaseline {
+                RuleMark(y: .value("Resting HR", rest))
+                    .foregroundStyle(StrandPalette.textTertiary)
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+            }
+        }
+        .chartXScale(domain: date(0)...date(PostWorkoutRecovery.windowMinutes))
+        .chartYScale(domain: lo...hi)
+        .chartYAxis {
+            AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { _ in
+                AxisGridLine().foregroundStyle(StrandPalette.hairline)
+                AxisValueLabel().foregroundStyle(StrandPalette.textTertiary)
+            }
+        }
+        .chartXAxis {
+            AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                AxisValueLabel(format: .dateTime.hour().minute()).foregroundStyle(StrandPalette.textTertiary)
+            }
+        }
+        .frame(height: 120)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(String(localized: "Heart rate over the 3 hours after the workout"))
+    }
+
+    private func afterRow(_ label: String, _ value: String, tint: Color) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(label)
+                .font(StrandFont.subhead)
+                .foregroundStyle(StrandPalette.textSecondary)
+            Spacer(minLength: 8)
+            Text(value)
+                .font(StrandFont.number(15))
+                .foregroundStyle(tint)
+                .lineLimit(1).minimumScaleFactor(0.8)
+        }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(value.map { String(localized: "Heart rate recovery at \(label), \($0) beats per minute") }
-                            ?? String(localized: "Heart rate recovery at \(label), not available"))
+    }
+
+    private func verdictLabel(_ v: PostWorkoutRecovery.Verdict) -> String {
+        switch v {
+        case .fast: return String(localized: "Fast recovery")
+        case .normal: return String(localized: "Normal recovery")
+        case .slow: return String(localized: "Slow recovery")
+        }
+    }
+
+    private func verdictTint(_ v: PostWorkoutRecovery.Verdict) -> Color {
+        switch v {
+        case .fast: return StrandPalette.statusPositive
+        case .normal: return StrandPalette.textPrimary
+        case .slow: return StrandPalette.statusWarning
+        }
+    }
+
+    private func trendLabel(_ t: PostWorkoutRecovery.Trend) -> String {
+        let delta = signed(Double(t.delta))
+        switch t.kind {
+        case .faster: return String(localized: "Faster than your usual (\(delta) bpm)")
+        case .slower: return String(localized: "Slower than your usual (\(delta) bpm)")
+        case .usual: return String(localized: "In line with your usual")
+        }
+    }
+
+    private func trendTint(_ t: PostWorkoutRecovery.Trend) -> Color {
+        switch t.kind {
+        case .faster: return StrandPalette.statusPositive
+        case .usual: return StrandPalette.textSecondary
+        case .slower: return StrandPalette.statusWarning
+        }
+    }
+
+    /// Positive tint when the morning moved the good way by more than `neutralBand`, warning the other way.
+    private func deltaTint(_ delta: Double, goodWhenHigher: Bool, neutralBand: Double) -> Color {
+        guard abs(delta) > neutralBand else { return StrandPalette.textPrimary }
+        return (delta > 0) == goodWhenHigher ? StrandPalette.statusPositive : StrandPalette.statusWarning
+    }
+
+    /// A rounded whole number with an explicit sign ("+4", "−3", "0").
+    private func signed(_ v: Double) -> String {
+        let n = Int(v.rounded())
+        return n > 0 ? "+\(n)" : (n < 0 ? "\u{2212}\(-n)" : "0")
     }
 
     // MARK: - Header

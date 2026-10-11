@@ -3404,6 +3404,53 @@ final class Repository: ObservableObject {
                                            maxHR: maxHR)
     }
 
+    /// "After the workout": the post-workout engine's inputs for one session, read in one place. HR is the
+    /// session's own recording namespace from 5 min before the end to 3 h after; the daily rows are the
+    /// 30 logical days up to the workout day (baseline) and the following wake day (next morning). The
+    /// trend compares this session's HRR1 with up to 8 earlier sessions of the last 60 days.
+    func postWorkoutRecovery(row: WorkoutRow, maxHR: Double)
+        async -> (result: PostWorkoutRecovery.Result, trend: PostWorkoutRecovery.Trend?) {
+        let end = row.endTs
+        let ids = Self.workoutHrDeviceIds(source: row.source, activeStrapId: deviceId,
+                                          importedIds: importedReadIds)
+        let readFrom = max(row.startTs, end - HeartRateRecovery.eligibilityLookbackSeconds)
+        let readTo = end + PostWorkoutRecovery.windowMinutes * 60
+        let samples = await hrSamples(deviceIds: ids, from: readFrom, to: readTo, limit: 30_000)
+
+        let workoutDay = Self.logicalDay(Date(timeIntervalSince1970: TimeInterval(end)))
+        let cal = Calendar.current
+        let firstDay = cal.date(byAdding: .day, value: -29, to: workoutDay) ?? workoutDay
+        let nextDay = cal.date(byAdding: .day, value: 1, to: workoutDay) ?? workoutDay
+        let nextKey = Self.localDayKey(nextDay)
+        let rows = await dailyMetrics(fromDay: Self.localDayKey(firstDay), toDay: nextKey)
+        func reading(_ m: DailyMetric) -> PostWorkoutRecovery.DayReading {
+            .init(restingHr: m.restingHr.map(Double.init), hrv: m.avgHrv, recovery: m.recovery)
+        }
+        let baseline = rows.filter { $0.day < nextKey }.map(reading)
+        let nextMorning = rows.first { $0.day == nextKey }.map(reading)
+
+        let result = PostWorkoutRecovery.analyze(
+            samples: samples, workoutStart: row.startTs, workoutEnd: end, maxHR: maxHR,
+            baselineDays: baseline, nextMorning: nextMorning, now: Int(Date().timeIntervalSince1970))
+
+        var trend: PostWorkoutRecovery.Trend?
+        if let current = result.hrr1 {
+            let earlier = await workoutRows(days: 60)
+                .filter { $0.endTs < row.startTs && $0.endTs > $0.startTs }
+                .sorted { $0.startTs > $1.startTs }
+                .prefix(8)
+            var history: [Int] = []
+            for w in earlier {
+                if let h = await workoutHeartRateRecovery(from: w.startTs, to: w.endTs, maxHR: maxHR,
+                                                          source: w.source)?.after1Minute {
+                    history.append(h)
+                }
+            }
+            trend = PostWorkoutRecovery.trend(currentHRR1: current, recentHRR1: history)
+        }
+        return (result, trend)
+    }
+
     /// Apple Health daily aggregates (steps/energy/vo2/hr).
     func appleDailyRows(days: Int = 4000) async -> [AppleDaily] {
         guard let store = await ensureStore() else { return [] }
