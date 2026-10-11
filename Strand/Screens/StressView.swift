@@ -95,11 +95,11 @@ struct StressView: View {
         .onChangeCompat(of: repo.days) { _ in rebuildModelIfNeeded() }
         .task(id: repo.refreshSeq) { await load() }
         #if os(iOS)
-        // Keep the current level live while the screen is open: the curve's sliding read moves every
-        // half hour, and new heart rate lands continuously while the strap is connected.
+        // Keep the current level live while the screen is open (every five minutes: a rescore reads and
+        // scores the whole day, so more often only costs battery and smoothness).
         .task {
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 120_000_000_000)
+                try? await Task.sleep(nanoseconds: 300_000_000_000)
                 await loadDaytime()
             }
         }

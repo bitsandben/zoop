@@ -48,6 +48,11 @@ public enum DaytimeStress {
     /// Half is the least overlap that still doubles the resolution, and it keeps every on-the-hour
     /// point exactly where the hourly pass put it. Byte-twin of the Kotlin `timelineStepSeconds`.
     public static let timelineStepSeconds: Int = 1_800
+    /// Smallest across-hour HR spread (bpm) the day-relative mode divides by. See `analyze`.
+    public static let dayRelativeMinSDHR: Double = 5.0
+    /// Smallest across-hour RMSSD spread (ms) the day-relative mode divides by. See `analyze`.
+    public static let dayRelativeMinSDRMSSD: Double = 8.0
+
     /// Band floor for "high" on the shared 0–3 scale (matches StressBand .high).
     public static let highBandFloor: Double = 2.0
     /// Consecutive most-recent covered hours that must all be HIGH to flag sustained stress.
@@ -492,10 +497,16 @@ public enum DaytimeStress {
             let referenceAggs = aggs.filter { isWakingHour($0.bucket) && !isAmbulatory($0.bucket) }
             let hrMeans = referenceAggs.compactMap { $0.meanHR }
             let rmssdVals = referenceAggs.compactMap { $0.rmssd }
-            refHR = calmReference(hrMeans, calmIsLow: true)         // calm HR is LOW
-            refRMSSD = calmReference(rmssdVals, calmIsLow: false)   // calm HRV is HIGH
-            sdHR = std(hrMeans, mean: mean(hrMeans))
-            sdRMSSD = std(rmssdVals, mean: mean(rmssdVals))
+            // Zoop: anchor on the day's TYPICAL waking hour (median), not its calmest quartile. The
+            // shared curve puts the reference itself at 1.5 (medium), so with a calm-quartile anchor an
+            // ordinary hour already sat above it on both terms and read "high" by construction.
+            refHR = typicalReference(hrMeans)
+            refRMSSD = typicalReference(rmssdVals)
+            // Zoop: floored spreads. Early in the day, or on an even day, the across-hour SD can be a
+            // couple of bpm, and then an ordinary 5 bpm rise plus a little lower HRV squashed to ~2.9
+            // ("high") while nothing was happening. The floors keep a z of 1 at a meaningful change.
+            sdHR = max(std(hrMeans, mean: mean(hrMeans)), dayRelativeMinSDHR)
+            sdRMSSD = max(std(rmssdVals, mean: mean(rmssdVals)), dayRelativeMinSDRMSSD)
             hrOnlyFallback = false
 
         case .baselineRelative(let hrBaseline, let rmssdBaseline):
@@ -636,6 +647,13 @@ public enum DaytimeStress {
     /// The day's "calm" reference for a signal: the quartile toward the calm end (lower
     /// quartile when calm is LOW, e.g. HR; upper quartile when calm is HIGH, e.g. RMSSD).
     /// Falls back to the plain mean below 4 values, and to nil when empty.
+    /// The median of the waking hours (the plain mean below four hours), the day-relative reference.
+    static func typicalReference(_ xs: [Double]) -> Double? {
+        guard !xs.isEmpty else { return nil }
+        guard xs.count >= 4 else { return mean(xs) }
+        return quantile(xs.sorted(), 0.5)
+    }
+
     static func calmReference(_ xs: [Double], calmIsLow: Bool) -> Double? {
         guard !xs.isEmpty else { return nil }
         guard xs.count >= 4 else { return mean(xs) }

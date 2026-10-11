@@ -101,4 +101,16 @@ final class ChargePersonalWeightingTests: XCTestCase {
         XCTAssertTrue(SleepStager.isDaytimeCenter(p(19, 22), tzOffsetSeconds: 0))
         XCTAssertFalse(SleepStager.isDaytimeCenter(p(23, 31), tzOffsetSeconds: 0))
     }
+
+    /// Zoop: the day-relative read anchors on the day's typical hour with floored spreads; with the old
+    /// calm-quartile anchor and a 2 bpm spread an ordinary moment squashed to ~2.9 ("high").
+    func testDayRelativeStressFloorsKeepAnEvenDayOutOfHigh() {
+        // A typical moment (at the day's median) is medium, and a calm one is low.
+        let typical = DaytimeStress.rawScore(hr: 72, meanHR: 72, sdHR: DaytimeStress.dayRelativeMinSDHR,
+                                             rmssd: 42, meanRMSSD: 42, sdRMSSD: DaytimeStress.dayRelativeMinSDRMSSD)
+        XCTAssertLessThan(DaytimeStress.squash(typical), DaytimeStress.highBandFloor)
+        XCTAssertEqual(DaytimeStress.typicalReference([60, 70, 72, 74, 90]), 72)
+        let unfloored = DaytimeStress.rawScore(hr: 75, meanHR: 70, sdHR: 2, rmssd: 40, meanRMSSD: 44, sdRMSSD: 3)
+        XCTAssertGreaterThan(DaytimeStress.squash(unfloored), 2.8)
+    }
 }

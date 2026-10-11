@@ -98,14 +98,17 @@ final class DaytimeStressTests: XCTestCase {
             points.map { "\($0.startTs):" + ($0.level.map { String(format: "%.6f", $0) } ?? "nil") }
                 .joined(separator: " ")
         }
+        // Zoop: the day-relative reference is the median waking hour (not the calm quartile), so every
+        // hour reads one step lower than the Kotlin twin, which this fork no longer mirrors.
         XCTAssertEqual(render(res.hours),
-                       "25200:0.990715 28800:1.500000 32400:2.009285 36000:2.413289 39600:2.678875")
+                       "25200:0.586711 28800:0.990715 32400:1.500000 36000:2.009285 39600:2.413289")
         XCTAssertEqual(render(res.timeline),
-                       "23400:0.990715 25200:0.990715 27000:1.500000 28800:1.500000 30600:2.009285 "
-                       + "32400:2.009285 34200:2.413289 36000:2.413289 37800:2.678875 39600:2.678875")
-        XCTAssertEqual(res.highStressMinutes, 180)
-        XCTAssertTrue(res.sustainedHigh)
-        XCTAssertEqual(res.sustainedRun, 3)
+                       "23400:0.586711 25200:0.586711 27000:0.990715 28800:0.990715 30600:1.500000 "
+                       + "32400:1.500000 34200:2.009285 36000:2.009285 37800:2.413289 39600:2.413289")
+        XCTAssertEqual(res.highStressMinutes, 120)
+        // Two high hours no longer make the three-hour sustained run.
+        XCTAssertFalse(res.sustainedHigh)
+        XCTAssertEqual(res.sustainedRun, 2)
         XCTAssertEqual(res.peak?.startTs, 39600)
     }
 

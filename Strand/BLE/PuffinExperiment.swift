@@ -84,7 +84,11 @@ enum PuffinExperiment {
     /// `ZoopPrefs.KEY_STRESS_PERSONAL_BASELINE`.
     static let stressPersonalBaselineKey = "noopStressPersonalBaseline"
 
-    static var stressPersonalBaselineEnabled: Bool { UserDefaults.standard.bool(forKey: stressPersonalBaselineKey) }
+    /// Zoop: ON unless explicitly turned off. The day-relative fallback scores against the day's own calm hours and
+    /// read ordinary moments as high; the personal cross-day baseline is the validated mode.
+    static var stressPersonalBaselineEnabled: Bool {
+        UserDefaults.standard.object(forKey: stressPersonalBaselineKey) as? Bool ?? true
+    }
 
     /// Opt-in "Banister Effort" (#1545): score Effort with Banister's EXPONENTIAL TRIMP instead of the
     /// default Edwards 5-zone summation.

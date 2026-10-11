@@ -30,7 +30,17 @@ enum StressDayCurve {
         let day: Int
         let personalBaseline: Bool
         let result: DaytimeStress.Result
+        /// When this memo was scored, for the refresh throttle below.
+        let at: Date
     }
+
+    /// Zoop: rescore at most this often. While the strap streams, the heart-rate fingerprint changes
+    /// every second, so the fingerprint gate alone let Home, the Stress screen and the Energy Bank each
+    /// re-read and re-score the whole day (up to 200 000 samples) on every tick, which made the app lag.
+    static let minRescoreInterval: TimeInterval = 300
+
+    /// A scoring already under way, shared by every caller that asks meanwhile.
+    @MainActor private static var inFlight: [Bool: Task<(result: DaytimeStress.Result, day: Int)?, Never>] = [:]
 
     /// ONE SLOT PER LENS, not one slot carrying the lens.
     ///
@@ -71,6 +81,25 @@ enum StressDayCurve {
            memo.count == fingerprint.count, memo.maxTs == fingerprint.maxTs {
             return (memo.result, day)
         }
+        if let memo = memos[personalBaseline], memo.day == day,
+           now.timeIntervalSince(memo.at) < minRescoreInterval {
+            return (memo.result, day)
+        }
+        if let running = inFlight[personalBaseline] { return await running.value }
+        let task = Task { @MainActor in
+            await score(repo: repo, now: now, calendar: calendar, personalBaseline: personalBaseline,
+                        from: from, to: to, day: day, startOfDay: startOfDay, fingerprint: fingerprint)
+        }
+        inFlight[personalBaseline] = task
+        let out = await task.value
+        inFlight[personalBaseline] = nil
+        return out
+    }
+
+    @MainActor
+    private static func score(repo: Repository, now: Date, calendar: Calendar, personalBaseline: Bool,
+                              from: Int, to: Int, day: Int, startOfDay: Date,
+                              fingerprint: (count: Int, maxTs: Int)) async -> (result: DaytimeStress.Result, day: Int)? {
 
         let hr = await repo.hrSamples(from: from, to: to, limit: 200_000)
         var scored: DaytimeStress.Result = .empty
@@ -113,7 +142,7 @@ enum StressDayCurve {
         // Too little signal leaves an EMPTY result, which is a real answer about today rather than a
         // refusal: a reader should drop yesterday's line rather than keep drawing it.
         memos[personalBaseline] = Memo(count: fingerprint.count, maxTs: fingerprint.maxTs, day: day,
-                                       personalBaseline: personalBaseline, result: scored)
+                                       personalBaseline: personalBaseline, result: scored, at: now)
         return (scored, day)
     }
 

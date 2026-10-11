@@ -45,6 +45,13 @@ enum EnergyBankDay {
         let samples: [HRSample]
         if let m = memo, m.day == "\(todayKey)-\(start)", m.count == fingerprint.count, m.maxTs == fingerprint.maxTs {
             samples = m.samples
+        } else if let m = memo, m.day == "\(todayKey)-\(start)", fingerprint.maxTs > m.maxTs,
+                  fingerprint.count > m.count {
+            // Zoop: the strap streams a sample a second, so read only what arrived since the last read
+            // instead of the whole day again (that full re-read on every tick was a source of lag).
+            let newer = await repo.hrSamples(from: m.maxTs + 1, to: nowTs, limit: 200_000)
+            samples = m.samples + newer
+            memo = Memo(day: m.day, count: fingerprint.count, maxTs: fingerprint.maxTs, samples: samples)
         } else {
             samples = await repo.hrSamples(from: start, to: nowTs, limit: 200_000)
             memo = Memo(day: "\(todayKey)-\(start)", count: fingerprint.count, maxTs: fingerprint.maxTs,
