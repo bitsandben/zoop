@@ -22,6 +22,15 @@
       "minOSVersion": "17.0",
       "versions": [
         {
+          "version": "1.0.4",
+          "buildVersion": "439",
+          "date": "2026-10-11",
+          "localizedDescription": "Zoop 1.0.4. See the release notes on GitHub for what changed.",
+          "downloadURL": "https://github.com/bitsandben/zoop/releases/download/v1.0.4/Zoop-ios-v1.0.4.ipa",
+          "size": 22024626,
+          "minOSVersion": "17.0"
+        },
+        {
           "version": "1.0.3",
           "buildVersion": "438",
           "date": "2026-10-09",
@@ -65,12 +74,12 @@
           "NSSpeechRecognitionUsageDescription": "Zoop transcribes your question on-device so you can ask the coach out loud instead of typing. Audio never leaves your iPhone."
         }
       },
-      "version": "1.0.3",
-      "buildVersion": "438",
-      "versionDate": "2026-10-09",
-      "versionDescription": "Zoop 1.0.3. See the release notes on GitHub for what changed.",
-      "downloadURL": "https://github.com/bitsandben/zoop/releases/download/v1.0.3/Zoop-ios-v1.0.3.ipa",
-      "size": 21721010
+      "version": "1.0.4",
+      "buildVersion": "439",
+      "versionDate": "2026-10-11",
+      "versionDescription": "Zoop 1.0.4. See the release notes on GitHub for what changed.",
+      "downloadURL": "https://github.com/bitsandben/zoop/releases/download/v1.0.4/Zoop-ios-v1.0.4.ipa",
+      "size": 22024626
     }
   ]
 }
