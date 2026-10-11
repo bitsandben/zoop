@@ -435,6 +435,10 @@ struct LiquidTodayView: View {
                             if chargeLegacyRRGap { ChargeLegacyRRGapNote() }
                             #if os(iOS)
                             monitorTilesRow
+                            if selectedDayOffset == 0 {
+                                NavigationLink(value: TabRoute.energyBank) { HomeEnergyBankCard() }
+                                    .buttonStyle(LiquidPressStyle())
+                            }
                             // Zoop: the morning check-in behind Recovery calibration (today only).
                             if selectedDayOffset == 0 { RecoveryCalibrationInviteCard() }
                             HomeSectionTitle(title: "My Day") { myDayAddButton }

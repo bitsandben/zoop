@@ -44,6 +44,8 @@ enum TabRoute: Hashable {
     case alarms
     /// Bedtime for tonight and the strap alarm (iOS).
     case sleepPlanner
+    /// Today's Energy Bank estimate (iOS).
+    case energyBank
 }
 
 extension View {
@@ -97,6 +99,12 @@ extension View {
             case .cycle:
                 #if os(iOS)
                 CycleScreen()
+                #else
+                EmptyView()
+                #endif
+            case .energyBank:
+                #if os(iOS)
+                EnergyBankScreen()
                 #else
                 EmptyView()
                 #endif
