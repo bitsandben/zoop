@@ -1331,3 +1331,26 @@ final class AICoachEngine: ObservableObject {
         return f.string(from: Date(timeIntervalSince1970: TimeInterval(ts)))
     }
 }
+
+// MARK: - One-shot structured requests
+
+extension AICoachEngine {
+    /// True when a one-shot request can be sent: the Coach is switched on and a provider is set up.
+    var canSendOneShot: Bool { CoachBriefScheduler.coachMasterEnabled && isConfigured }
+
+    /// Send a single prompt with its own system prompt through the user's configured provider and
+    /// model, returning the raw reply. Touches neither the chat transcript nor the metrics context:
+    /// only `systemPrompt` and `prompt` leave the device. Used by the Lift Log routine generator.
+    func oneShot(systemPrompt: String, prompt: String) async throws -> String {
+        guard CoachBriefScheduler.coachMasterEnabled, isConfigured, let key = resolvedKey else {
+            throw AICoachError.noKey
+        }
+        return try await provider.client.send(
+            key: key,
+            model: model,
+            systemPrompt: systemPrompt,
+            messages: [(.user, prompt)],
+            session: session
+        )
+    }
+}

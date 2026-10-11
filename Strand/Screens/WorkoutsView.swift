@@ -194,6 +194,9 @@ struct WorkoutsView: View {
                         ? "No workouts yet. They come from your WHOOP and Apple Health history. Import in Data Sources to bring them in, or add one you tracked elsewhere."
                         : "Loading your sessions…")
                     if loaded {
+                        #if os(iOS)
+                        TrainingCalendarCard(rows: allRows, onOpenWorkout: openDetail)
+                        #endif
                         workoutActionRow
                     }
                 }
@@ -208,6 +211,10 @@ struct WorkoutsView: View {
                 let groups = sportGroups(from: windowRows)
                 let zonesSummary = WorkoutZones.summary(from: windowRows)
 
+                #if os(iOS)
+                // Bevel-style training calendar: the month at a glance, planned routines dashed.
+                TrainingCalendarCard(rows: allRows, onOpenWorkout: openDetail)
+                #endif
                 workoutActionRow
                 #if !os(iOS)
                 scopeBar

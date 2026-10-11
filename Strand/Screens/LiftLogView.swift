@@ -26,6 +26,10 @@ struct LiftLogView: View {
     /// The program being created or edited (nil = the editor is closed).
     @State private var editing: ProgramEditTarget?
     @State private var importing = false
+    @State private var generating = false
+    /// The program whose weekday schedule is being edited.
+    @State private var planning: ProgramEditTarget?
+    @AppStorage(TrainingPlan.storageKey) private var planRaw = ""
     /// The live session, owned at the app root so it survives this screen going away.
     @EnvironmentObject private var session: LiftSessionController
     /// Recent finished sessions, newest first.
@@ -62,6 +66,14 @@ struct LiftLogView: View {
         }
         .sheet(isPresented: $importing) {
             LiftProgramImportSheet { await load() }
+        }
+        .sheet(isPresented: $generating) {
+            LiftRoutineGenerateSheet { await load() }
+        }
+        .sheet(item: $planning) { target in
+            if let program = target.program {
+                LiftProgramPlanSheet(program: program)
+            }
         }
         .sheet(item: $viewing) { target in
             LiftSessionDetailSheet(session: target.session) { await load() }
@@ -132,6 +144,13 @@ struct LiftLogView: View {
                 }
                 .buttonStyle(ZoopButtonStyle(.secondary))
             }
+
+            Button {
+                generating = true
+            } label: {
+                Label("Generate routine", systemImage: "sparkles")
+            }
+            .buttonStyle(ZoopButtonStyle(.secondary))
         }
     }
 
@@ -165,14 +184,32 @@ struct LiftLogView: View {
                                 .foregroundStyle(StrandPalette.textSecondary)
                                 .lineLimit(3)
                         }
-                        Text("Tap to edit")
-                            .font(StrandFont.footnote)
-                            .foregroundStyle(StrandPalette.textTertiary)
+                        if let days = plannedDaysLabel(program) {
+                            Text(days)
+                                .font(StrandFont.footnote)
+                                .foregroundStyle(StrandPalette.effortColor)
+                        } else {
+                            Text("Tap to edit")
+                                .font(StrandFont.footnote)
+                                .foregroundStyle(StrandPalette.textTertiary)
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+
+                Button {
+                    planning = ProgramEditTarget(id: program.id, program: program)
+                } label: {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(StrandPalette.textSecondary)
+                        .frame(width: ZoopMetrics.compactControlSize, height: ZoopMetrics.compactControlSize)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Plan weekdays")
 
                 Button(session.isActive ? "Running" : "Start") { Task { await start(program) } }
                     .buttonStyle(.noopPrimary)
@@ -184,39 +221,18 @@ struct LiftLogView: View {
 
     // MARK: - Start a session
 
-    /// Flatten a program into the plan the session runs. The plan is SNAPSHOT at start: editing or
-    /// deleting the program mid-session cannot change what is being tapped through.
     private func start(_ program: LiftProgramRow) async {
-        guard let store = await repo.storeHandle() else { return }
-        let items = (try? await store.liftProgramItems(programId: program.id)) ?? []
-        guard !items.isEmpty else { return }
-        let vocabulary = (try? await store.liftExercises(deviceId: repo.deviceId)) ?? []
+        await LiftProgramStarter.start(program, repo: repo, session: session)
+    }
 
-        let plan = items.map { item -> LiftPlanItem in
-            // The classification comes from the exercise vocabulary, which is the one place that owns
-            // it — the program line deliberately stores no muscle of its own to drift from.
-            let known = vocabulary.first { $0.name == item.exercise }
-            return LiftPlanItem(exercise: item.exercise,
-                                primaryMuscle: known?.primaryMuscle,
-                                secondaryMuscles: known?.secondaryMuscles ?? [],
-                                targetSets: item.targetSets,
-                                restSec: item.restSec,
-                                targetRepsLow: item.targetRepsLow,
-                                targetRepsHigh: item.targetRepsHigh,
-                                targetRpe: item.targetRpe,
-                                targetWeightKg: item.targetWeightKg,
-                                note: item.note,
-                                // Carried so a set added or dropped mid-session can be written back
-                                // onto the line it came from, and be there next time.
-                                programItemId: item.id)
-        }
-        // Refuse to start a second session over a running one: two live sessions would both claim
-        // the strap gesture and both write the in-flight snapshot.
-        guard !session.isActive else {
-            session.isPresented = true
-            return
-        }
-        session.start(plan: plan, programId: program.id, programName: program.name)
+    /// The program's planned weekdays as short names in week order, or nil when it is not planned.
+    private func plannedDaysLabel(_ program: LiftProgramRow) -> String? {
+        let days = TrainingPlan.decode(planRaw).days(for: program.id)
+        guard !days.isEmpty else { return nil }
+        let cal = Calendar.current
+        let symbols = cal.shortStandaloneWeekdaySymbols
+        let ordered = (0..<7).map { (cal.firstWeekday - 1 + $0) % 7 + 1 }.filter { days.contains($0) }
+        return ordered.map { symbols[$0 - 1] }.joined(separator: " · ")
     }
 
     // MARK: - This week, per muscle
