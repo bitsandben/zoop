@@ -129,6 +129,8 @@ struct HomeStressMonitorTile: View {
     let score: Double?
     /// The day's hourly stress, drawn faintly behind the tile (the same series the Stress screen plots).
     var hours: [DaytimeStress.HourPoint] = []
+    /// False when `score` is the morning's daily value because today has no intraday reading yet.
+    var isLive: Bool = true
 
     var body: some View {
         HomeMonitorTile(
@@ -137,7 +139,9 @@ struct HomeStressMonitorTile: View {
             valueSuffix: score == nil ? nil : "/ 3",
             valueTint: score.map { Self.tint(StressBand(score: $0)) } ?? StrandPalette.textSecondary
         ) {
-            Text(score.map { Self.bandName(StressBand(score: $0)) } ?? String(localized: "No readings yet"))
+            Text(score.map { isLive ? Self.bandName(StressBand(score: $0))
+                                    : String(localized: "\(Self.bandName(StressBand(score: $0))) · this morning") }
+                 ?? String(localized: "No readings yet"))
                 .font(StrandFont.subhead)
                 .foregroundStyle(StrandPalette.textSecondary)
                 .lineLimit(1)
@@ -250,7 +254,8 @@ struct HomeStressMonitorCard: View {
 
 /// One entry in "Today's activities".
 struct HomeActivity: Identifiable {
-    enum Kind { case sleep, nap, workout }
+    /// `detected`: a workout the auto-detector found that is not saved yet (Save / Not a workout).
+    enum Kind { case sleep, nap, workout, detected }
     let kind: Kind
     let title: String
     let start: Int
@@ -258,6 +263,8 @@ struct HomeActivity: Identifiable {
     let workout: WorkoutRow?
     /// The stored session behind a nap row, so the row can open that nap's own detail and editor.
     var nap: CachedSleepSession? = nil
+    /// The unsaved candidate behind a `detected` row.
+    var detected: DetectedWorkout? = nil
     var id: String { "\(kind)-\(start)" }
 }
 
@@ -268,7 +275,7 @@ struct HomeActivityRow: View {
     private var tint: Color {
         switch item.kind {
         case .sleep, .nap: return StrandPalette.restColor
-        case .workout: return StrandPalette.effortColor
+        case .workout, .detected: return StrandPalette.effortColor
         }
     }
     private var icon: String {
@@ -276,6 +283,7 @@ struct HomeActivityRow: View {
         case .sleep: return "moon.fill"
         case .nap: return "bed.double.fill"
         case .workout: return "figure.run"
+        case .detected: return "sparkles"
         }
     }
 
@@ -289,9 +297,16 @@ struct HomeActivityRow: View {
                 .foregroundStyle(StrandPalette.surfaceBase)
                 .frame(width: 44, height: 36)
                 .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(tint))
-            Text(item.title)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(StrandPalette.textPrimary)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(item.title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                if item.kind == .detected {
+                    Text("Detected · tap to save")
+                        .font(StrandFont.caption)
+                        .foregroundStyle(StrandPalette.textTertiary)
+                }
+            }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 1) {
                 Text("\(start.formatted(date: .omitted, time: .shortened))–\(end.formatted(date: .omitted, time: .shortened))")

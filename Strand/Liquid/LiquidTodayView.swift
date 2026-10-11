@@ -95,6 +95,10 @@ struct LiquidTodayView: View {
     // cheap heart-rate fingerprint and memoises, so the widget, this shell and the other Today view all
     // share one computation rather than scoring the day three times.
     @State private var hostedStressHours: [DaytimeStress.HourPoint] = []
+    /// The auto-detected, not yet saved workout shown in Today's activities (iOS), and the one whose
+    /// Save / Not a workout choice is open.
+    @State private var detectedWorkout: DetectedWorkout?
+    @State private var detectedPrompt: DetectedWorkout?
     @State private var hostedStressActivityMaskedHours = 0
 
     // sheets / expanders
@@ -444,8 +448,6 @@ struct LiquidTodayView: View {
                             // iOS: an active workout shows with the rest of the day's activity. Starting one
                             // is in the "+" menu, so the separate Start button is not drawn here.
                             ActiveWorkoutIndicatorSection(showStart: false)
-                            // A detected workout waiting to be saved belongs with the day's activity.
-                            AutoWorkoutCard()
                             #endif
                         case .liveSession:
                             #if !os(iOS)
@@ -622,6 +624,39 @@ struct LiquidTodayView: View {
         .sheet(item: $napEdit) { target in
             HomeNapTimeEditor(nap: target.session)
                 .opaqueSheetBackground()
+        }
+        .task(id: repo.refreshSeq) {
+            detectedWorkout = PuffinExperiment.autoDetectWorkoutsEnabled ? await repo.autoDetectCandidate() : nil
+        }
+        .confirmationDialog(Text("Save this workout?"),
+                            isPresented: Binding(get: { detectedPrompt != nil }, set: { if !$0 { detectedPrompt = nil } }),
+                            titleVisibility: .visible, presenting: detectedPrompt) { d in
+            Button("Save it") {
+                Task {
+                    _ = await repo.saveDetectedWorkout(d)
+                    detectedWorkout = nil
+                    await repo.refresh()
+                }
+            }
+            Button("Not a workout", role: .destructive) {
+                repo.dismissDetectedSuggestion(d)
+                detectedWorkout = nil
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { d in
+            Text("\(d.durationMin) min, average \(d.avgBpm) bpm")
+        }
+        // The stress tile's current level: re-read today's intraday curve every two minutes while Home
+        // is open, so it follows the day instead of holding the morning's value.
+        .task(id: selectedDayOffset) {
+            guard selectedDayOffset == 0 else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 120_000_000_000)
+                guard !Task.isCancelled else { break }
+                let result = await StressDayCurve.today(
+                    repo: repo, personalBaseline: PuffinExperiment.stressPersonalBaselineEnabled)?.result
+                hostedStressHours = result?.timeline ?? []
+            }
         }
         // A cold launch always opens on today (offset 0 is the @State default); this covers a return from
         // the background, where the view survives with whatever day was last browsed.
@@ -801,7 +836,9 @@ struct LiquidTodayView: View {
             }
             .buttonStyle(LiquidPressStyle())
             NavigationLink(value: TabRoute.stress) {
-                HomeStressMonitorTile(score: stress, hours: hostedStressHours)
+                HomeStressMonitorTile(score: (selectedDayOffset == 0 ? liveStressLevel(hostedStressHours) : nil) ?? stress,
+                                      hours: hostedStressHours,
+                                      isLive: selectedDayOffset == 0 && liveStressLevel(hostedStressHours) != nil)
             }
             .buttonStyle(LiquidPressStyle())
         }
@@ -836,9 +873,14 @@ struct LiquidTodayView: View {
             HomeActivity(kind: .nap, title: String(localized: "Nap"),
                          start: s.effectiveStartTs, end: s.endTs, workout: nil, nap: s)
         }
-        let workouts = workouts.filter { dayOf($0.startTs) == key }.map { w in
+        var workouts = workouts.filter { dayOf($0.startTs) == key }.map { w in
             HomeActivity(kind: .workout, title: WorkoutSource.displaySport(w.sport),
                          start: w.startTs, end: w.endTs, workout: w)
+        }
+        // The unsaved auto-detected workout sits with the day's activity, where a workout is looked for.
+        if let d = detectedWorkout, dayOf(d.startSec) == key {
+            workouts.append(HomeActivity(kind: .detected, title: String(localized: "Workout"),
+                                         start: d.startSec, end: d.endSec, workout: nil, detected: d))
         }
         return (sleeps + workouts).sorted { $0.start < $1.start }
     }
@@ -856,7 +898,10 @@ struct LiquidTodayView: View {
                     .foregroundStyle(StrandPalette.textSecondary)
             }
             ForEach(items) { item in
-                if let w = item.workout {
+                if let d = item.detected {
+                    Button { detectedPrompt = d } label: { HomeActivityRow(item: item) }
+                        .buttonStyle(LiquidPressStyle())
+                } else if let w = item.workout {
                     Button { workoutDetail = HomeWorkoutTarget(row: w) } label: { HomeActivityRow(item: item) }
                         .buttonStyle(LiquidPressStyle())
                 } else if let nap = item.nap {

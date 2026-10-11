@@ -258327,6 +258327,66 @@
           }
         }
       }
+    },
+    "This morning" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute Morgen"
+          }
+        }
+      }
+    },
+    "The curve fills in as the strap records your heart rate through the day." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Kurve füllt sich, sobald das Band über den Tag deinen Puls aufzeichnet."
+          }
+        }
+      }
+    },
+    "Detected · tap to save" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erkannt · tippen zum Speichern"
+          }
+        }
+      }
+    },
+    "Save this workout?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Workout speichern?"
+          }
+        }
+      }
+    },
+    "%lld min, average %lld bpm" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld min, Ø %2$lld bpm"
+          }
+        }
+      }
+    },
+    "%@ · this morning" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · heute Morgen"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

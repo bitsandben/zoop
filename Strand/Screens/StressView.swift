@@ -94,6 +94,24 @@ struct StressView: View {
         .onAppear { rebuildModelIfNeeded() }
         .onChangeCompat(of: repo.days) { _ in rebuildModelIfNeeded() }
         .task(id: repo.refreshSeq) { await load() }
+        #if os(iOS)
+        // Keep the current level live while the screen is open: the curve's sliding read moves every
+        // half hour, and new heart rate lands continuously while the strap is connected.
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 120_000_000_000)
+                await loadDaytime()
+            }
+        }
+        #endif
+    }
+
+    /// Today's sleep spans (the night and naps ending today), shaded on the hero curve.
+    private var todaySleeps: [(start: Int, end: Int)] {
+        let cal = Calendar.current
+        return repo.sleeps
+            .filter { cal.isDateInToday(Date(timeIntervalSince1970: TimeInterval($0.endTs))) }
+            .map { ($0.effectiveStartTs, $0.endTs) }
     }
 
     private func load() async {
@@ -201,14 +219,16 @@ struct StressView: View {
     private func content(_ model: StressModel) -> some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
 
+            #if os(iOS)
+            // Zoop iOS: one hero — the current level from today's intraday curve, large, with the curve
+            // (scrubbable, sleep shaded) under it. Replaces the gauge, the separate timeline card and the
+            // markers' Stress tile, which showed the morning's daily score as if it were the current state.
+            StressDayHero(hours: daytime?.timeline ?? [], sleeps: todaySleeps, fallbackScore: model.score)
+                .staggeredAppear(index: 0)
+            #else
             // 1. HERO — the liquid stress-level vessel + band + one plain-English line, all in one card.
             heroCard(model)
                 .staggeredAppear(index: 0)
-
-            #if os(iOS)
-            // iOS: Home's Stress tile is the way in to the day's stress curve (Home no longer repeats it
-            // as a card of its own), so the curve sits straight under the score here.
-            daytimeBlock
             #endif
 
             // 1b. ADVANCED HRV readouts (additive, on-demand). A separate, clearly-labelled card
@@ -551,7 +571,8 @@ struct StressView: View {
             alignment: .leading,
             spacing: ZoopMetrics.gap
         ) {
-            // Today's stress value, with its band as the caption.
+            // Today's stress value, with its band as the caption. iOS shows the current level in the hero.
+            #if !os(iOS)
             StatTile(
                 label: "Stress",
                 value: StressTrace.formatLevel(model.score),
@@ -560,6 +581,7 @@ struct StressView: View {
                 sparkline: model.sparkValues.count > 1 ? model.sparkValues : nil,
                 sparkColor: StressRamp.color(model.score)
             )
+            #endif
             // Resting HR — an INCREASE is the stressful direction.
             markerTile(
                 label: "Resting HR",
@@ -602,7 +624,8 @@ struct StressView: View {
         } else if let delta, abs(delta) >= 0.5 {
             let up = delta > 0
             let isStressful = (up == higherIsStress)
-            deltaText = String(localized: "\(up ? "+" : "−")\(Int(abs(delta).rounded())) vs base")
+            // The section header already says "vs 30-day baseline"; the tile shows only the signed change.
+            deltaText = "\(up ? "+" : "−")\(Int(abs(delta).rounded()))"
             deltaColor = isStressful ? StrandPalette.statusWarning : StrandPalette.statusPositive
         } else {
             deltaText = String(localized: "at baseline")
