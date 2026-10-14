@@ -544,7 +544,6 @@ enum DemoScreens {
         case "recoverycalibrating": return AnyView(RecoveryDemoHost(nights: 2, scale: 0.8))
         case "fitnessage": return AnyView(NavigationStack { FitnessAgeScreen() })
         case "fasting": return AnyView(FastingScreen())
-        case "vitality": return AnyView(VitalityDemoScreen())
         case "addwizard": return AnyView(AddWizardDemoHost())
         // Oura onboarding: the Add-device wizard deep-linked straight to the Oura factory-reset-and-adopt
         // prep step (the Beta banner + get/lose card + the red irreversible-consent gate), screenshot-able

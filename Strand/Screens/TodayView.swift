@@ -2392,7 +2392,12 @@ struct TodayView: View {
         case .stress:
             pinnedCardRow(icon: card.icon, tint: tint, title: card.title, subtitle: card.subtitle,
                           value: dashboardValue(card), route: .stress)
-        case .fitnessAge, .vo2max, .vitality, .steps, .calories:
+#if os(macOS)
+        case .vitality:
+            pinnedCardRow(icon: card.icon, tint: tint, title: card.title, subtitle: card.subtitle,
+                          value: dashboardValue(card), route: .health)
+#endif
+        case .fitnessAge, .vo2max, .steps, .calories:
             pinnedCardRow(icon: card.icon, tint: tint, title: card.title, subtitle: card.subtitle,
                           value: dashboardValue(card), route: .health)
         case .hrv, .restingHr, .respiratory, .bloodOxygen, .skinTemp:
@@ -2430,7 +2435,9 @@ struct TodayView: View {
         case .stress:      return StrandPalette.effortColor
         case .fitnessAge:  return StrandPalette.chargeColor
         case .vo2max:      return StrandPalette.chargeColor
+#if os(macOS)
         case .vitality:    return StrandPalette.restColor
+#endif
         case .hrv:         return StrandPalette.metricPurple
         case .restingHr:   return StrandPalette.metricRose
         case .respiratory: return StrandPalette.accent
@@ -2542,8 +2549,10 @@ struct TodayView: View {
             return withUnit(fitnessAgeToday.map { "\(fitnessAgeBoundSymbol($0))\(Int($0.rounded()))" } ?? "—")
         case .vo2max:
             return vo2maxToday.map { "\(Int($0.rounded()))" } ?? "—"
+#if os(macOS)
         case .vitality:
             return vitalityToday.map { "\(Int($0.rounded()))" } ?? "—"
+#endif
         case .hydration:
             // "<total> / <goal> L" in litres to 1 dp (the string bakes in the " L" itself). Always shows a
             // value (a fresh day reads "0.0 / 3.2 L"); the goal is always derivable from the profile.

@@ -27,7 +27,9 @@ enum DashboardCard: String, CaseIterable, Identifiable {
     case stress
     case fitnessAge
     case vo2max
+#if os(macOS)
     case vitality
+#endif
     case bloodOxygen
     case skinTemp
     case sleep
@@ -61,7 +63,9 @@ enum DashboardCard: String, CaseIterable, Identifiable {
         case .stress:      return String(localized: "Stress")
         case .fitnessAge:  return String(localized: "Fitness Age")
         case .vo2max:      return String(localized: "VO₂ Max")
+#if os(macOS)
         case .vitality:    return String(localized: "Health score")
+#endif
         case .bloodOxygen: return String(localized: "Blood Oxygen")
         case .skinTemp:    return String(localized: "Skin Temp")
         case .sleep:       return String(localized: "Sleep")
@@ -84,7 +88,9 @@ enum DashboardCard: String, CaseIterable, Identifiable {
         case .stress:      return String(localized: "Autonomic load")
         case .fitnessAge:  return String(localized: "Updated weekly")
         case .vo2max:      return String(localized: "Estimated, updated weekly")
+#if os(macOS)
         case .vitality:    return String(localized: "Wellness score")
+#endif
         case .bloodOxygen: return String(localized: "Blood oxygen")
         case .skinTemp:    return String(localized: "Skin temperature")
         case .sleep:       return String(localized: "Last night")
@@ -107,7 +113,9 @@ enum DashboardCard: String, CaseIterable, Identifiable {
         case .stress:      return "bolt.heart"
         case .fitnessAge:  return "figure.run"
         case .vo2max:      return "lungs"
+#if os(macOS)
         case .vitality:    return "sparkles"
+#endif
         case .bloodOxygen: return "drop.fill"
         case .skinTemp:    return "thermometer.medium"
         case .sleep:       return "bed.double.fill"
@@ -128,7 +136,9 @@ enum DashboardCard: String, CaseIterable, Identifiable {
         case .stress:      return ""
         case .fitnessAge:  return "yrs"
         case .vo2max:      return ""    // the estimated VO₂max number alone; ml/kg/min is too long for a tile
+#if os(macOS)
         case .vitality:    return ""
+#endif
         case .bloodOxygen: return ""    // value carries the % itself
         case .skinTemp:    return ""    // value carries the ° itself
         case .sleep:       return ""    // value carries the h/m itself
@@ -143,20 +153,18 @@ enum DashboardCard: String, CaseIterable, Identifiable {
     /// Vitality trio plus HRV + Resting HR (per the task's "sensible default"). Cards with no value yet
     /// simply render "—", so the default set is safe on a fresh install.
     static var defaultSelection: [DashboardCard] {
-        [.stress, .fitnessAge, .vitality, .hrv, .restingHr].filter(\.isOffered)
+        #if os(macOS)
+        return [.stress, .fitnessAge, .vitality, .hrv, .restingHr]
+        #else
+        return [.stress, .fitnessAge, .hrv, .restingHr]
+        #endif
     }
 
     /// Canonical order used to list the disabled remainder in the editor.
     static var canonicalOrder: [DashboardCard] { allCases.filter(\.isOffered) }
 
-    /// Whether the card can be shown at all. On iOS Vitality ("Body age") is a second age number beside
-    /// Fitness age, so it is Test Centre instrumentation (Longevity domain) rather than a user card.
-    var isOffered: Bool {
-        #if os(iOS)
-        if self == .vitality { return TestCentre.active(.longevity) }
-        #endif
-        return true
-    }
+    /// Whether the card can be shown at all. Vitality exists on macOS only.
+    var isOffered: Bool { true }
 }
 
 /// Display-only persistence for the "Your cards" dashboard selection. Holds an ORDERED list of the enabled

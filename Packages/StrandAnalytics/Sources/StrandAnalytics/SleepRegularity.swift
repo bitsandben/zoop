@@ -6,28 +6,27 @@ import Foundation
 // means identical sleep timing every day, 0 means timing is random. A day only counts when it holds at
 // least three hours of recorded sleep: a night the strap was off would otherwise read as "awake all
 // night" and drag the index down for a reason that has nothing to do with the sleeper.
-// Pure, and a candidate to move into StrandAnalytics beside `CircadianEngine` once WP-04 lands.
 
-enum SleepRegularity {
+public enum SleepRegularity {
 
-    struct Result: Equatable {
+    public struct Result: Equatable, Sendable {
         /// −100…100; in practice 40–95 for adults.
-        let index: Double
+        public let index: Double
         /// Consecutive valid day pairs the index was computed over.
-        let dayPairs: Int
+        public let dayPairs: Int
         /// Mean sleep midpoint in minutes after local midnight (0..<1440).
-        let midpointMin: Double
+        public let midpointMin: Double
     }
 
-    static let epochSeconds = 300
-    static let epochsPerDay = 86_400 / epochSeconds
+    public static let epochSeconds = 300
+    public static let epochsPerDay = 86_400 / epochSeconds
     /// Fewer pairs than this leaves the index dominated by a single odd night.
-    static let minDayPairs = 5
-    static let minSleepPerDayMin = 180.0
-    static let windowDays = 14
+    public static let minDayPairs = 5
+    public static let minSleepPerDayMin = 180.0
+    public static let windowDays = 14
 
     /// Sleep windows as `(start, end)` unix seconds; `endDay` is the local day the window ends on.
-    static func compute(windows: [(start: Int, end: Int)], endDay: Date, days: Int = windowDays,
+    public static func compute(windows: [(start: Int, end: Int)], endDay: Date, days: Int = windowDays,
                         calendar: Calendar = .current) -> Result? {
         let grid = paint(windows: windows, endDay: endDay, days: days, calendar: calendar)
         return index(grid)
@@ -35,7 +34,7 @@ enum SleepRegularity {
 
     /// The index for each of the last `count` days, oldest first, each over its own trailing window.
     /// nil entries are days without enough data, so the history fold treats them as missing.
-    static func trailingSeries(windows: [(start: Int, end: Int)], endDay: Date, count: Int,
+    public static func trailingSeries(windows: [(start: Int, end: Int)], endDay: Date, count: Int,
                                days: Int = windowDays, calendar: Calendar = .current) -> [(day: Date, index: Double?)] {
         let grid = paint(windows: windows, endDay: endDay, days: days + count - 1, calendar: calendar)
         return (0..<count).map { i in
