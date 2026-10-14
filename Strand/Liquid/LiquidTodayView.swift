@@ -484,7 +484,12 @@ struct LiquidTodayView: View {
                             lastWorkoutsSection
                             #endif
                         case .heartRate: heartRateSection
-                        case .recoveryVitals: recoveryVitalsSection
+                        case .recoveryVitals:
+                            // iOS: the Health monitor tile and the Sleep screen's night vitals already show
+                            // these three; the rings here had no meaning of their own.
+                            #if !os(iOS)
+                            recoveryVitalsSection
+                            #endif
                         case .yourCards:
                             #if !os(iOS)
                             // iOS: the Your Cards chips repeat what Home's own tiles and cards already show,
@@ -492,7 +497,10 @@ struct LiquidTodayView: View {
                             yourCardsSection
                             #endif
                         case .menstrualCycle:
+                            // iOS: the cycle lives in the "My Day" cycle card; this older card repeated it.
+                            #if !os(iOS)
                             if selectedDayOffset == 0 { MenstrualCycleHomeCard() }
+                            #endif
                         // #656: the persistent journal widget (last-7-days strip + tap-through). Now a
                         // reorderable section like the others — the Arrange sheet moves it. Today only;
                         // the card self-hides when the reminder toggle is off (an empty branch renders
