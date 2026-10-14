@@ -37,12 +37,12 @@ struct StressDayHero: View {
             HStack(alignment: .firstTextBaseline, spacing: ZoopMetrics.space2) {
                 Text(value.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "–")
                     .font(StrandFont.display(52))
-                    .foregroundStyle(value.map { HomeStressMonitorTile.tint(StressBand(score: $0)) } ?? StrandPalette.textSecondary)
+                    .foregroundStyle(value.map { StressBand(score: $0).color } ?? StrandPalette.textSecondary)
                 Text(verbatim: "/ 3")
                     .font(StrandFont.subhead)
                     .foregroundStyle(StrandPalette.textTertiary)
                 if let value {
-                    Text(HomeStressMonitorTile.bandName(StressBand(score: value)))
+                    Text(StressBand(score: value).name)
                         .font(StrandFont.headline)
                         .foregroundStyle(StrandPalette.textPrimary)
                         .padding(.leading, ZoopMetrics.space1)
@@ -99,7 +99,7 @@ struct StressDayHero: View {
                 RuleMark(x: .value("Selected", date(s.startTs)))
                     .foregroundStyle(StrandPalette.textPrimary.opacity(0.5))
                 PointMark(x: .value("Selected", date(s.startTs)), y: .value("Stress", l))
-                    .symbol { Circle().fill(HomeStressMonitorTile.tint(StressBand(score: l))).frame(width: 10, height: 10) }
+                    .symbol { Circle().fill(StressBand(score: l).color).frame(width: 10, height: 10) }
             }
         }
         .chartYScale(domain: 0...3)

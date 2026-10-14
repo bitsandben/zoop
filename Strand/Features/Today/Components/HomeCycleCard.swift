@@ -73,11 +73,11 @@ struct HomeCycleCard: View {
         VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
             HStack {
                 Text("Cycle")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(ZoopType.headline)
                     .foregroundStyle(StrandPalette.textPrimary)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(ZoopType.caption.weight(.semibold))
                     .foregroundStyle(StrandPalette.textTertiary)
             }
             if let e = estimate {
@@ -87,13 +87,13 @@ struct HomeCycleCard: View {
                             .font(StrandFont.display(34))
                             .foregroundStyle(StrandPalette.textPrimary)
                         Text(e.phase.title)
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(ZoopType.caption.weight(.semibold))
                             .foregroundStyle(e.phase.tint)
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(nextLine(e))
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(ZoopType.headline)
                             .foregroundStyle(StrandPalette.textPrimary)
                         Text(CycleDays.date(e.nextPeriodStart).formatted(.dateTime.day().month(.abbreviated)))
                             .font(StrandFont.footnote)
@@ -112,7 +112,7 @@ struct HomeCycleCard: View {
                     .foregroundStyle(StrandPalette.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("Log period")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(ZoopType.headline)
                     .foregroundStyle(StrandPalette.primaryButtonText)
                     .padding(.horizontal, 16)
                     .frame(height: 40)
@@ -188,7 +188,7 @@ struct CycleLogSheet: View {
                         Task { await repo.logPeriodStart(day: Repository.localDayKey(date)); await reload() }
                     } label: {
                         Text(starts.contains(Repository.localDayKey(date)) ? "Already logged" : "Log period start")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(ZoopType.headline)
                             .frame(maxWidth: .infinity)
                     }
                     .disabled(starts.contains(Repository.localDayKey(date)))

@@ -100,7 +100,7 @@ struct HomeNapDetailSheet: View {
     private var header: some View {
         HStack(spacing: ZoopMetrics.space3) {
             Image(systemName: "bed.double.fill")
-                .font(.system(size: 18, weight: .semibold))
+                .font(ZoopType.headline)
                 .foregroundStyle(StrandPalette.surfaceBase)
                 .frame(width: 48, height: 40)
                 .background(SquircleShape().fill(StrandPalette.restColor))
@@ -132,7 +132,7 @@ struct HomeNapDetailSheet: View {
         if let decoded {
             VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 Text("Stages")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(ZoopType.headline)
                     .foregroundStyle(StrandPalette.textPrimary)
                 if !decoded.intervals.isEmpty {
                     Hypnogram(intervals: decoded.intervals, height: 120, showsStageAxis: false,
@@ -154,7 +154,7 @@ struct HomeNapDetailSheet: View {
         if heartRate.count >= 2 {
             VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 Text("Heart rate")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(ZoopType.headline)
                     .foregroundStyle(StrandPalette.textPrimary)
                 LiquidThread(bpm: heartRate, tint: StrandPalette.liquidHeart, height: 92, animated: false)
                 HStack {

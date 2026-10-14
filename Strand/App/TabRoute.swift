@@ -9,7 +9,7 @@ import SwiftUI
 // the root (#135) without the #197 rebuild. Deeper links stay closure-based on purpose: popping a
 // route off the path also pops everything pushed above it, so only the first hop needs a value.
 //
-// Shared with macOS because the tab roots (TodayView / LiquidTodayView / TrendsView) are the SAME
+// Shared with macOS because the tab roots (TodayView / TodayScreen / TrendsView) are the SAME
 // views the sidebar shell hosts — every `NavigationStack` that hosts one must register
 // `tabRouteDestinations()`, and must register it exactly ONCE: the same value type resolving
 // against two registrations in one stack double-pushes (see MetricExplorerView, #38).

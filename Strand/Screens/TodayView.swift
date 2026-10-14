@@ -5,6 +5,9 @@ import WhoopStore
 import WhoopProtocol
 import Foundation
 
+// The classic Today is the macOS Today only; iOS renders `TodayScreen` (Strand/Features/Today).
+#if os(macOS)
+
 // MARK: - Control Center (the home dashboard), HomeDensity rewrite
 //
 // The owner's complaint was "cards then random space". This rebuild is a tight,
@@ -5627,4 +5630,6 @@ enum RecordingState: Equatable {
         .frame(width: 920, height: 940)
         .preferredColorScheme(.dark)
 }
+#endif
+
 #endif
