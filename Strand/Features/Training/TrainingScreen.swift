@@ -62,6 +62,9 @@ struct TrainingScreen: View {
                 WorkoutDetailView(row: row, presentation: .pushed)
             }
         }
+        .navigationDestination(for: TrainingCalendarRoute.self) { _ in
+            TrainingCalendarScreen(model: model)
+        }
         .sheet(item: $model.editor) { target in
             ManualWorkoutSheet(editing: target.editing) { row, replacing in
                 model.save(row, replacing: replacing, isCopy: target.isCopy)

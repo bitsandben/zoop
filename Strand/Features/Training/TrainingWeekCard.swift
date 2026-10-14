@@ -41,6 +41,11 @@ struct TrainingWeekCard: View {
                 .font(ZoopType.headline)
                 .foregroundStyle(StrandPalette.textPrimary)
             Spacer(minLength: ZoopSpacing.s)
+            NavigationLink(value: TrainingCalendarRoute()) {
+                Label(TrainingStrings.month, systemImage: "calendar")
+                    .font(ZoopType.caption)
+                    .foregroundStyle(StrandPalette.accent)
+            }
             // The empty sentence below already says "none"; a "0 sessions" beside it would say it twice.
             if !week.isEmpty {
                 Text(TrainingStrings.sessionCount(week.sessions.count))

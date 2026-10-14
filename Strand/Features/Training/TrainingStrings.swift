@@ -66,6 +66,21 @@ enum TrainingStrings {
                defaultValue: "Your last 7 days were heavier than your usual load.", bundle: .main)
     }
 
+    // Calendar
+    static var month: String { String(localized: "zoop.training.calendar.month", defaultValue: "Month", bundle: .main) }
+    static var calendarTitle: String { String(localized: "zoop.training.calendar.title", defaultValue: "Calendar", bundle: .main) }
+    static var routinesTitle: String { String(localized: "zoop.training.calendar.routines", defaultValue: "Routines", bundle: .main) }
+    static var noRoutines: String {
+        String(localized: "zoop.training.calendar.noRoutines",
+               defaultValue: "No routines yet. Generate one, or create one in the Lift Log.", bundle: .main)
+    }
+    static var generateRoutine: String {
+        String(localized: "zoop.training.calendar.generate", defaultValue: "Generate routine", bundle: .main)
+    }
+    static var noWeekdays: String {
+        String(localized: "zoop.training.calendar.noWeekdays", defaultValue: "Not planned", bundle: .main)
+    }
+
     // Gauges, muscles, sessions
     static var gaugesTitle: String { String(localized: "zoop.training.gauges.title", defaultValue: "Weekly load", bundle: .main) }
     static var allMusclesRecovered: String {

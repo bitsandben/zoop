@@ -18,6 +18,7 @@ struct TrainingSessionsSection: View {
         let rows = model.visibleRows
         VStack(alignment: .leading, spacing: ZoopSpacing.m) {
             header(rows)
+            ZoopLiquidGlassSearchField(text: $model.searchText, prompt: String(localized: "Search sport"))
             if model.selectionMode { selectionStrip(rows) }
             if rows.isEmpty {
                 Text(model.scope == .archived && !model.filter.isActive
@@ -97,6 +98,7 @@ struct TrainingSessionsSection: View {
                     model.scope = .current
                     model.sportFilter = nil
                     model.sourceFilter = nil
+                    model.searchText = ""
                 }
             }
         } label: {
