@@ -303,7 +303,7 @@ private struct AlertSection<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        StrandCard(padding: 20, tint: StrandPalette.accent) {
+        ContentCard {
             VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(overline)").strandOverline()

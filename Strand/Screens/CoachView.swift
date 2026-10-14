@@ -198,7 +198,7 @@ struct CoachView: View {
     // MARK: - Setup (no key yet)
 
     private var setupCard: some View {
-        StrandCard(padding: 20) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 10) {
                     Image(systemName: "sparkles")
@@ -483,7 +483,7 @@ struct CoachView: View {
     #endif
 
     private var transcript: some View {
-        StrandCard(padding: 16) {
+        ContentCard {
             if coach.messages.isEmpty {
                 emptyTranscript
             } else {
@@ -611,7 +611,7 @@ struct CoachView: View {
     }
 
     private func errorBanner(_ message: String) -> some View {
-        StrandCard(padding: 14) {
+        ContentCard {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(StrandPalette.statusCritical)
@@ -634,7 +634,7 @@ struct CoachView: View {
     /// custom provider: far more than correcting a typo asks for, and named for an outcome the wearer
     /// is trying to avoid. Twin of the Kotlin editor in `CoachChat`.
     private var keyRepairPanel: some View {
-        StrandCard(padding: 14) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 8) {
                 if coach.keyRejected {
                     Text("Paste the corrected key. Your conversation is kept.")

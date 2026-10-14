@@ -649,7 +649,7 @@ private struct BreathingContent: View {
     }
 
     private func outcomeCard(_ line: String) -> some View {
-        StrandCard(padding: 14, tint: StrandPalette.restColor) {
+        ContentCard {
             HStack(spacing: 10) {
                 Image(systemName: "wind")
                     .font(.system(size: 14, weight: .semibold))
@@ -725,7 +725,7 @@ private struct BreathingContent: View {
 
     private func readoutTile(label: String, value: String, unit: String,
                              accent: Color, caption: String) -> some View {
-        StrandCard(padding: 14, tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 0) {
                 Text(label.uppercased()).strandOverline()
                 Spacer(minLength: 6)
@@ -753,7 +753,7 @@ private struct BreathingContent: View {
     // MARK: - Coherence estimate
 
     private var coherenceCard: some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text("Coherence estimate").strandOverline()
@@ -1328,7 +1328,7 @@ private struct ResonanceModeView: View {
     }
 
     private var explainerCard: some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Find your resonance pace").strandOverline()
@@ -1349,7 +1349,7 @@ private struct ResonanceModeView: View {
     }
 
     private var startCard: some View {
-        StrandCard {
+        ContentCard {
             VStack(spacing: ZoopMetrics.space3) {
                 ZoopButton("Full sweep · ~13 min", systemImage: "waveform.path.ecg",
                            kind: .primary, fullWidth: true) {
@@ -1370,7 +1370,7 @@ private struct ResonanceModeView: View {
     }
 
     private var sweepProgressCard: some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text(controller.sweepLabel ?? String(localized: "Sweeping…"))
@@ -1394,7 +1394,7 @@ private struct ResonanceModeView: View {
     }
 
     private func resultCard(_ result: ResonanceEngine.SweepResult) -> some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text(result.didLock ? "Your resonance pace" : "Couldn't lock today").strandOverline()
@@ -1432,7 +1432,7 @@ private struct ResonanceModeView: View {
     }
 
     private func lockedCard(_ bpm: Double) -> some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Your locked pace").strandOverline()
@@ -1534,7 +1534,7 @@ private struct CalmModeView: View {
     }
 
     private var explainerCard: some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Calm me").strandOverline()
@@ -1558,7 +1558,7 @@ private struct CalmModeView: View {
     private var canRun: Bool { controller.canBuzz && (model.bpm.map { $0 >= 55 && $0 <= 120 } ?? false) }
 
     private var startCard: some View {
-        StrandCard {
+        ContentCard {
             VStack(spacing: ZoopMetrics.rowSpacing) {
                 ZoopButton("Calm me · 3 min", systemImage: "heart.fill",
                            kind: .primary, fullWidth: true) {
@@ -1582,7 +1582,7 @@ private struct CalmModeView: View {
     }
 
     private var liveCard: some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(spacing: 14) {
                 HStack {
                     Text("Settling").strandOverline()
@@ -1631,7 +1631,7 @@ private struct CalmModeView: View {
     }
 
     private func outcomeCard(_ line: String) -> some View {
-        StrandCard(padding: 14, tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 10) {
                     Image(systemName: controller.calmDidNotFall ? "minus.circle" : "checkmark.circle")

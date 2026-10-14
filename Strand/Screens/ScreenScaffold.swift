@@ -271,7 +271,7 @@ struct DataPendingNote: View {
     var symbol: String = "sparkles"
 
     var body: some View {
-        StrandCard(padding: 20) {
+        ContentCard {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: symbol)
                     .font(StrandFont.headline)

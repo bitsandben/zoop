@@ -128,11 +128,11 @@ struct WindDownReminderRow: View {
                 .foregroundStyle(enabled ? StrandPalette.textPrimary : StrandPalette.textSecondary)
             if enabled {
                 Text("Reminder at \(PatternsScreen.clock(reminderMinute))")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(ZoopType.caption.weight(.medium))
                     .foregroundStyle(StrandPalette.textSecondary)
             } else if denied {
                 Text("Notifications are off for Zoop")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(ZoopType.caption.weight(.medium))
                     .foregroundStyle(StrandPalette.textSecondary)
             } else {
                 Button {
@@ -149,7 +149,7 @@ struct WindDownReminderRow: View {
                     }
                 } label: {
                     Text("Remind me to wind down")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(ZoopType.caption.weight(.semibold))
                         .foregroundStyle(StrandPalette.accent)
                 }
                 .buttonStyle(.plain)

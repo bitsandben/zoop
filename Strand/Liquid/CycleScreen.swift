@@ -96,40 +96,40 @@ struct CycleScreen: View {
         let leading = (cal.component(.weekday, from: first) + 5) % 7
         let cells: [Int?] = Array(repeating: nil, count: leading) + (1...daysInMonth).map { Optional($0) }
         let rows = stride(from: 0, to: cells.count, by: 7).map { Array(cells[$0..<min($0 + 7, cells.count)]) }
-        return VStack(spacing: ZoopMetrics.space3) {
-            HStack {
-                Button { monthOffset -= 1 } label: { Image(systemName: "chevron.left") }
-                Text(first.formatted(.dateTime.month(.wide).year()))
-                    .font(.system(size: 15, weight: .semibold))
-                    .frame(minWidth: 140)
-                Button { monthOffset += 1 } label: { Image(systemName: "chevron.right") }
-                Spacer()
-            }
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(StrandPalette.textPrimary)
-            .buttonStyle(.plain)
-
-            HStack(spacing: 0) {
-                ForEach(Array(cal.veryShortStandaloneWeekdaySymbols.enumerated().map { $0 }), id: \.offset) { i, _ in
-                    let symbols = cal.shortStandaloneWeekdaySymbols
-                    Text(symbols[(i + 1) % 7])
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(StrandPalette.textSecondary)
-                        .frame(maxWidth: .infinity)
+        return ContentCard {
+            VStack(spacing: ZoopMetrics.space3) {
+                HStack {
+                    Button { monthOffset -= 1 } label: { Image(systemName: "chevron.left") }
+                    Text(first.formatted(.dateTime.month(.wide).year()))
+                        .font(StrandFont.subhead.weight(.semibold))
+                        .frame(minWidth: 140)
+                    Button { monthOffset += 1 } label: { Image(systemName: "chevron.right") }
+                    Spacer()
                 }
-            }
-            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(StrandPalette.textPrimary)
+                .buttonStyle(.plain)
+
                 HStack(spacing: 0) {
-                    ForEach(0..<7, id: \.self) { i in
-                        let day = i < row.count ? row[i] : nil
-                        dayCell(day, row: row, index: i, first: first)
+                    ForEach(Array(cal.veryShortStandaloneWeekdaySymbols.enumerated().map { $0 }), id: \.offset) { i, _ in
+                        let symbols = cal.shortStandaloneWeekdaySymbols
+                        Text(symbols[(i + 1) % 7])
+                            .font(StrandFont.caption.weight(.semibold))
+                            .foregroundStyle(StrandPalette.textSecondary)
+                            .frame(maxWidth: .infinity)
                     }
                 }
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    HStack(spacing: 0) {
+                        ForEach(0..<7, id: \.self) { i in
+                            let day = i < row.count ? row[i] : nil
+                            dayCell(day, row: row, index: i, first: first)
+                        }
+                    }
+                }
+                legend
             }
-            legend
         }
-        .padding(16)
-        .background(ZoopPanelSurface())
     }
 
     private func dayNumber(_ dayOfMonth: Int, first: Date) -> Int? {
@@ -181,7 +181,7 @@ struct CycleScreen: View {
                 HStack(spacing: 8) {
                     Capsule().fill(p.tint).frame(width: 18, height: 8)
                     Text(p.title)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(ZoopType.caption.weight(.medium))
                         .foregroundStyle(StrandPalette.textSecondary)
                 }
             }
@@ -193,24 +193,24 @@ struct CycleScreen: View {
 
     private var logRow: some View {
         Button { showLog = true } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "drop.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textPrimary)
-                    .frame(width: 40, height: 40)
-                    .background(Circle().fill(StrandPalette.surfaceBase))
-                Text("Log period data")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textPrimary)
-                Spacer()
-                Image(systemName: "plus")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(StrandPalette.primaryButtonText)
-                    .frame(width: 36, height: 36)
-                    .background(Circle().fill(StrandPalette.primaryButtonFill))
+            ContentCard {
+                HStack(spacing: 12) {
+                    Image(systemName: "drop.fill")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(StrandPalette.textPrimary)
+                        .frame(width: 40, height: 40)
+                        .background(Circle().fill(StrandPalette.surfaceBase))
+                    Text("Log period data")
+                        .font(ZoopType.headline.weight(.semibold))
+                        .foregroundStyle(StrandPalette.textPrimary)
+                    Spacer()
+                    Image(systemName: "plus")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(StrandPalette.primaryButtonText)
+                        .frame(width: 36, height: 36)
+                        .background(Circle().fill(StrandPalette.primaryButtonFill))
+                }
             }
-            .padding(14)
-            .background(ZoopPanelSurface())
         }
         .buttonStyle(LiquidPressStyle())
     }
@@ -218,33 +218,33 @@ struct CycleScreen: View {
     private func phaseCard(current: CycleCalendar.Phase) -> some View {
         let phases: [CycleCalendar.Phase] = [.menstrual, .follicular, .ovulatory, .luteal]
         let shown = selectedPhase ?? current
-        return VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
-            Text("Phases")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(StrandPalette.textPrimary)
-            HStack(spacing: 6) {
-                ForEach(phases, id: \.self) { p in
-                    Button { selectedPhase = p } label: {
-                        Text(String(p.title.prefix(1)))
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(p == shown ? p.tint : StrandPalette.textSecondary)
-                            .frame(maxWidth: p == shown ? .infinity : 44, minHeight: 40)
-                            .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(p == shown ? p.tint.opacity(0.18) : StrandPalette.surfaceBase))
+        return ContentCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
+                Text("Phases")
+                    .font(StrandFont.subhead.weight(.semibold))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                HStack(spacing: 6) {
+                    ForEach(phases, id: \.self) { p in
+                        Button { selectedPhase = p } label: {
+                            Text(String(p.title.prefix(1)))
+                                .font(ZoopType.caption.weight(.bold))
+                                .foregroundStyle(p == shown ? p.tint : StrandPalette.textSecondary)
+                                .frame(maxWidth: p == shown ? .infinity : 44, minHeight: 40)
+                                .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(p == shown ? p.tint.opacity(0.18) : StrandPalette.surfaceBase))
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
+                Text(shown.title)
+                    .font(ZoopType.headline.weight(.semibold))
+                    .foregroundStyle(shown.tint)
+                Text(shown.summary)
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(StrandPalette.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            Text(shown.title)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(shown.tint)
-            Text(shown.summary)
-                .font(StrandFont.subhead)
-                .foregroundStyle(StrandPalette.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(16)
-        .background(ZoopPanelSurface())
     }
 }
 

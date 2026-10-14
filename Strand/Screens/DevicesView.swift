@@ -547,7 +547,7 @@ private struct DevicesContent: View {
     }
 
     @ViewBuilder private func compareCard(_ c: StrapCompareData) -> some View {
-        StrandCard(padding: 18, tint: StrandPalette.accent) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 12) {
                 Text(compareTitle).strandOverline()
                 HStack {
@@ -798,7 +798,7 @@ private struct DeviceCard: View {
     /// The card's visible content. The required `body` wraps this in the whole-card liquid press button +
     /// the ⋮ menu overlay.
     private var cardContent: some View {
-        StrandCard(padding: 18, tint: isActive ? StrandPalette.accent : nil) {
+        ContentCard {
             VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                 HStack(alignment: .top, spacing: ZoopMetrics.space3) {
                     Image(systemName: icon)

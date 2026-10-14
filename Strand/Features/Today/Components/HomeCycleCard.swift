@@ -64,58 +64,57 @@ struct HomeCycleCard: View {
     }
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
-            HStack {
-                Text("Cycle")
-                    .font(ZoopType.headline)
-                    .foregroundStyle(StrandPalette.textPrimary)
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(ZoopType.caption.weight(.semibold))
-                    .foregroundStyle(StrandPalette.textTertiary)
-            }
-            if let e = estimate {
-                HStack(alignment: .firstTextBaseline) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Day \(e.cycleDay)")
-                            .font(StrandFont.display(34))
-                            .foregroundStyle(StrandPalette.textPrimary)
-                        Text(e.phase.title)
-                            .font(ZoopType.caption.weight(.semibold))
-                            .foregroundStyle(e.phase.tint)
-                    }
+        ContentCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
+                HStack {
+                    Text("Cycle")
+                        .font(ZoopType.headline)
+                        .foregroundStyle(StrandPalette.textPrimary)
                     Spacer()
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text(nextLine(e))
-                            .font(ZoopType.headline)
-                            .foregroundStyle(StrandPalette.textPrimary)
-                        Text(CycleDays.date(e.nextPeriodStart).formatted(.dateTime.day().month(.abbreviated)))
-                            .font(StrandFont.footnote)
-                            .foregroundStyle(StrandPalette.textSecondary)
-                    }
+                    Image(systemName: "chevron.right")
+                        .font(ZoopType.caption.weight(.semibold))
+                        .foregroundStyle(StrandPalette.textTertiary)
                 }
-                CycleBar(estimate: e)
-                Text(e.cyclesUsed == 0
-                     ? String(localized: "Estimate from a 28-day cycle until you log a second period.")
-                     : String(localized: "Your cycle averages \(e.cycleLength) days. An estimate, not contraception."))
-                    .font(StrandFont.footnote)
-                    .foregroundStyle(StrandPalette.textTertiary)
-            } else {
-                Text("Log the first day of your period to see your cycle day, phase and next period.")
-                    .font(StrandFont.subhead)
-                    .foregroundStyle(StrandPalette.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("Log period")
-                    .font(ZoopType.headline)
-                    .foregroundStyle(StrandPalette.primaryButtonText)
-                    .padding(.horizontal, 16)
-                    .frame(height: 40)
-                    .background(Capsule().fill(StrandPalette.primaryButtonFill))
+                if let e = estimate {
+                    HStack(alignment: .firstTextBaseline) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Day \(e.cycleDay)")
+                                .font(StrandFont.display(34))
+                                .foregroundStyle(StrandPalette.textPrimary)
+                            Text(e.phase.title)
+                                .font(ZoopType.caption.weight(.semibold))
+                                .foregroundStyle(e.phase.tint)
+                        }
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text(nextLine(e))
+                                .font(ZoopType.headline)
+                                .foregroundStyle(StrandPalette.textPrimary)
+                            Text(CycleDays.date(e.nextPeriodStart).formatted(.dateTime.day().month(.abbreviated)))
+                                .font(StrandFont.footnote)
+                                .foregroundStyle(StrandPalette.textSecondary)
+                        }
+                    }
+                    CycleBar(estimate: e)
+                    Text(e.cyclesUsed == 0
+                         ? String(localized: "Estimate from a 28-day cycle until you log a second period.")
+                         : String(localized: "Your cycle averages \(e.cycleLength) days. An estimate, not contraception."))
+                        .font(StrandFont.footnote)
+                        .foregroundStyle(StrandPalette.textTertiary)
+                } else {
+                    Text("Log the first day of your period to see your cycle day, phase and next period.")
+                        .font(StrandFont.subhead)
+                        .foregroundStyle(StrandPalette.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Log period")
+                        .font(ZoopType.headline)
+                        .foregroundStyle(StrandPalette.primaryButtonText)
+                        .padding(.horizontal, 16)
+                        .frame(height: 40)
+                        .background(Capsule().fill(StrandPalette.primaryButtonFill))
+                }
             }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(ZoopPanelSurface())
     }
 
     private func nextLine(_ e: CycleCalendar.Estimate) -> String {

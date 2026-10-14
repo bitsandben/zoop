@@ -560,7 +560,7 @@ private struct Section2<Content: View>: View {
     var active: Bool = false
     @ViewBuilder var content: () -> Content
     var body: some View {
-        StrandCard(padding: 20, tint: StrandPalette.accent) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 8) {

@@ -17,7 +17,7 @@ struct ShortcutExportSettingsView: View {
     }
 
     private var exportCard: some View {
-        StrandCard(padding: 20) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 10) {
                     Image(systemName: "square.and.arrow.up.on.square.fill")

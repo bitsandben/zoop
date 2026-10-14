@@ -64,7 +64,7 @@ struct BackupSyncView: View {
     // MARK: - Cards
 
     private var folderCard: some View {
-        StrandCard(padding: 20) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Backup folder")
                     .font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
@@ -104,7 +104,7 @@ struct BackupSyncView: View {
     }
 
     private var autoCard: some View {
-        StrandCard(padding: 20, tint: auto && folderLabel != nil ? StrandPalette.accent : nil) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .center, spacing: 16) {
                     VStack(alignment: .leading, spacing: 2) {
@@ -165,7 +165,7 @@ struct BackupSyncView: View {
     }
 
     private var restoreCard: some View {
-        StrandCard(padding: 20) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Restore")
                     .font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)

@@ -659,7 +659,7 @@ struct RootTabView: View {
                                          @ViewBuilder rows: @escaping () -> Rows) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
-                .font(.system(size: 15, weight: .semibold))
+                .font(StrandFont.subhead.weight(.semibold))
                 .foregroundStyle(StrandPalette.textSecondary)
                 .padding(.horizontal, 4)
             VStack(spacing: 0) { rows() }
@@ -744,30 +744,29 @@ private struct MoreDeviceHeader: View {
 
     var body: some View {
         Button { router.openDevices() } label: {
-            HStack(spacing: 14) {
-                ProfileAvatarView(imageData: profile.avatarImageData, size: 52)
-                    .frame(width: 52, height: 52)
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(live.connected && live.historyReady ? StrandPalette.accent : StrandPalette.textTertiary)
-                            .frame(width: 8, height: 8)
-                        Text(status)
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(StrandPalette.textPrimary)
+            ContentCard {
+                HStack(spacing: 14) {
+                    ProfileAvatarView(imageData: profile.avatarImageData, size: 52)
+                        .frame(width: 52, height: 52)
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(live.connected && live.historyReady ? StrandPalette.accent : StrandPalette.textTertiary)
+                                .frame(width: 8, height: 8)
+                            Text(status)
+                                .font(ZoopType.headline.weight(.semibold))
+                                .foregroundStyle(StrandPalette.textPrimary)
+                        }
+                        Text(syncLine)
+                            .font(StrandFont.subhead)
+                            .foregroundStyle(StrandPalette.textSecondary)
                     }
-                    Text(syncLine)
-                        .font(StrandFont.subhead)
-                        .foregroundStyle(StrandPalette.textSecondary)
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(StrandPalette.textPrimary)
                 }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textPrimary)
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(ZoopPanelSurface())
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

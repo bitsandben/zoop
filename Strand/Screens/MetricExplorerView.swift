@@ -1065,7 +1065,7 @@ struct MetricDetailView: View {
                         } label: {
                             HStack {
                                 Text("All readings (\(rawRows.count))")
-                                    .font(.system(size: 15, weight: .medium))
+                                    .font(StrandFont.subhead.weight(.medium))
                                 Spacer()
                                 Image(systemName: "chevron.down")
                                     .font(.system(size: 13, weight: .semibold))

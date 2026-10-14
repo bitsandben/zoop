@@ -19,7 +19,7 @@ struct FitnessAgeHero: View {
         VStack(spacing: ZoopMetrics.space1) {
             if let d = fitnessDayDate(day) {
                 Text(FitnessAgeStrings.week(d.formatted(.dateTime.day().month(.wide))))
-                    .font(.system(size: 14, weight: .medium))
+                    .font(ZoopType.caption.weight(.medium))
                     .foregroundStyle(StrandPalette.textSecondary)
             }
             ZStack(alignment: .bottom) {
@@ -30,7 +30,7 @@ struct FitnessAgeHero: View {
                         .font(StrandFont.display(76).monospacedDigit())
                         .foregroundStyle(StrandPalette.textPrimary)
                     Text(fitnessAgeDeltaLine(fitnessAge: value, chronoAge: chronoAge))
-                        .font(.system(size: 15, weight: .medium))
+                        .font(StrandFont.subhead.weight(.medium))
                         .foregroundStyle(fitnessTint(delta: chrono - value))
                     // The number is an estimate; say how far off it can be, right where it is read.
                     Text(FitnessAgeStrings.band(fitnessOneDecimal(FitnessAgeEngine.displayBandYears)))

@@ -556,7 +556,7 @@ struct AddDeviceWizard: View {
     @ViewBuilder private var ouraConsentGateFace: some View {
         ouraBetaBanner
 
-        StrandCard(padding: 16) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("What you get").strandOverline()

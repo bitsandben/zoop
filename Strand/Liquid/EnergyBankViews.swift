@@ -151,7 +151,7 @@ struct EnergyBankScreen: View {
         let shown = scrubbed ?? result?.timeline.last
         return VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
             Text(scrubbed.map { date($0.ts).formatted(date: .omitted, time: .shortened) } ?? String(localized: "Now"))
-                .font(.system(size: 13, weight: .semibold))
+                .font(ZoopType.caption.weight(.semibold))
                 .foregroundStyle(StrandPalette.textSecondary)
             HStack(alignment: .firstTextBaseline, spacing: ZoopMetrics.space2) {
                 Text(shown.map { "\(Int($0.level.rounded()))" } ?? "–")

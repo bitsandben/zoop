@@ -130,7 +130,7 @@ struct HRVSnapshotView: View {
     // MARK: - Capture card
 
     private var captureCard: some View {
-        StrandCard(padding: 24, tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(spacing: 18) {
                 ZStack {
                     ScenicHeroBackground(domain: .rest, starCount: 48)
@@ -294,7 +294,7 @@ struct HRVSnapshotView: View {
     // MARK: - Result
 
     private func resultCard(_ result: HRVAnalyzer.HRVResult) -> some View {
-        StrandCard(padding: 18, tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 14) {
                 Text("YOUR READING").strandOverline()
 
@@ -347,7 +347,7 @@ struct HRVSnapshotView: View {
     /// `SpotHrvReading.caveatFor` adds the honest limits — including the noisier optical-PPG note on a
     /// WHOOP 5/MG. Single-sourced with Android via the shared helper, no em-dashes.
     private var methodologyCard: some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 8) {
                 Text("How this is measured").strandOverline()
                 Text("A 60-second snapshot of your beat-to-beat (R-R) intervals from the strap, cleaned (range and ectopic-beat filtering) before computing RMSSD the same way your overnight HRV is computed.")

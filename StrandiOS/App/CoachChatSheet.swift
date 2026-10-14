@@ -142,7 +142,7 @@ private struct CoachChat: View {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 1) {
                     Text("Coach")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(ZoopType.headline.weight(.semibold))
                         .foregroundStyle(StrandPalette.textPrimary)
                     modelMenu
                 }
@@ -246,7 +246,7 @@ private struct CoachChat: View {
         } label: {
             HStack(spacing: 3) {
                 Text(shortModel)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(StrandFont.caption.weight(.medium))
                     .lineLimit(1)
                 Image(systemName: "chevron.down").font(.system(size: 9, weight: .bold))
             }
@@ -359,7 +359,7 @@ private struct CoachChips: View, Equatable {
                 ForEach(prompts, id: \.self) { prompt in
                     Button { onSend(prompt) } label: {
                         Text(LocalizedStringKey(prompt))
-                            .font(.system(size: 14, weight: .medium))
+                            .font(ZoopType.caption.weight(.medium))
                             .foregroundStyle(StrandPalette.textPrimary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
@@ -656,7 +656,7 @@ private struct CoachSetup: View {
                             .background(Circle().fill(StrandPalette.surfaceBase))
                         VStack(alignment: .leading, spacing: 2) {
                             Text(p.displayName)
-                                .font(.system(size: 17, weight: .semibold))
+                                .font(ZoopType.headline.weight(.semibold))
                                 .foregroundStyle(StrandPalette.textPrimary)
                             Text(blurb(p))
                                 .font(StrandFont.footnote)
@@ -665,7 +665,7 @@ private struct CoachSetup: View {
                         Spacer()
                         if p == .openRouter {
                             Text("Free")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(ZoopType.caption.weight(.semibold))
                                 .foregroundStyle(StrandPalette.accent)
                         }
                         Image(systemName: "chevron.right")
@@ -681,7 +681,7 @@ private struct CoachSetup: View {
                 CoachView()
             } label: {
                 Text("Use your own server instead")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(ZoopType.caption.weight(.medium))
                     .foregroundStyle(StrandPalette.textSecondary)
                     .frame(maxWidth: .infinity)
                     .padding(.top, 8)
@@ -708,7 +708,7 @@ private struct CoachSetup: View {
             Toggle(isOn: $coach.dataConsent) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Let Coach read my numbers")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(ZoopType.headline.weight(.semibold))
                         .foregroundStyle(StrandPalette.textPrimary)
                     Text("A summary of recovery, sleep, strain and workouts goes with each question.")
                         .font(StrandFont.footnote)
@@ -728,7 +728,7 @@ private struct CoachSetup: View {
 
             Button(action: connect) {
                 Text("Connect")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(ZoopType.headline.weight(.semibold))
                     .foregroundStyle(empty ? StrandPalette.textTertiary : StrandPalette.surfaceBase)
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)

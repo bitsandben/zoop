@@ -72,7 +72,7 @@ struct SleepPlannerScreen: View {
                 .font(.system(size: 18))
                 .foregroundStyle(StrandPalette.stressHigh)
             Text("Your WHOOP 5/MG needs one switch for the alarm.")
-                .font(.system(size: 14, weight: .medium))
+                .font(ZoopType.caption.weight(.medium))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 4)
@@ -81,7 +81,7 @@ struct SleepPlannerScreen: View {
                 model.applySmartAlarm()
             } label: {
                 Text("Turn on")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(ZoopType.caption.weight(.semibold))
                     .foregroundStyle(StrandPalette.primaryButtonText)
                     .padding(.horizontal, 14)
                     .frame(height: 34)
@@ -100,7 +100,7 @@ struct SleepPlannerScreen: View {
                 .font(.system(size: 18))
                 .foregroundStyle(StrandPalette.statusWarning)
             Text("Your strap isn't taking the alarm. Charge and reconnect it, and keep a phone alarm until it does.")
-                .font(.system(size: 14, weight: .medium))
+                .font(ZoopType.caption.weight(.medium))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -112,30 +112,30 @@ struct SleepPlannerScreen: View {
     // MARK: Tonight
 
     private func tonightCard(_ t: PatternsModel.Tonight) -> some View {
-        VStack(spacing: 16) {
-            HStack(alignment: .top) {
-                timeColumn(t.bedtime.map { PatternsScreen.clock($0 / 60) } ?? "–",
-                           label: "Bedtime", icon: "moon.fill")
-                Spacer()
-                timeColumn(t.wake.map { PatternsScreen.clock($0 / 60) } ?? "–",
-                           label: alarm == nil ? "Wake up" : "Alarm", icon: "alarm.fill")
+        ContentCard {
+            VStack(spacing: 16) {
+                HStack(alignment: .top) {
+                    timeColumn(t.bedtime.map { PatternsScreen.clock($0 / 60) } ?? "–",
+                               label: "Bedtime", icon: "moon.fill")
+                    Spacer()
+                    timeColumn(t.wake.map { PatternsScreen.clock($0 / 60) } ?? "–",
+                               label: alarm == nil ? "Wake up" : "Alarm", icon: "alarm.fill")
+                }
+                ZStack {
+                    Capsule().fill(StrandPalette.accent.opacity(0.22)).frame(height: 8)
+                    Text(Self.duration(t.inBedMin))
+                        .font(.system(size: 15, weight: .bold).monospacedDigit())
+                        .foregroundStyle(StrandPalette.textPrimary)
+                        .padding(.horizontal, 14)
+                        .frame(height: 30)
+                        .background(Capsule().fill(StrandPalette.surfaceRaised))
+                        .overlay(Capsule().strokeBorder(StrandPalette.textPrimary, lineWidth: 1.5))
+                }
+                Text("Time in bed")
+                    .font(StrandFont.caption.weight(.semibold))
+                    .foregroundStyle(StrandPalette.textSecondary)
             }
-            ZStack {
-                Capsule().fill(StrandPalette.accent.opacity(0.22)).frame(height: 8)
-                Text(Self.duration(t.inBedMin))
-                    .font(.system(size: 15, weight: .bold).monospacedDigit())
-                    .foregroundStyle(StrandPalette.textPrimary)
-                    .padding(.horizontal, 14)
-                    .frame(height: 30)
-                    .background(Capsule().fill(StrandPalette.surfaceRaised))
-                    .overlay(Capsule().strokeBorder(StrandPalette.textPrimary, lineWidth: 1.5))
-            }
-            Text("Time in bed")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(StrandPalette.textSecondary)
         }
-        .padding(18)
-        .background(ZoopPanelSurface())
     }
 
     private func timeColumn(_ value: String, label: LocalizedStringKey, icon: String) -> some View {
@@ -144,7 +144,7 @@ struct SleepPlannerScreen: View {
                 .font(StrandFont.display(38))
                 .foregroundStyle(StrandPalette.textPrimary)
             Label(label, systemImage: icon)
-                .font(.system(size: 12, weight: .semibold))
+                .font(StrandFont.caption.weight(.semibold))
                 .foregroundStyle(StrandPalette.textSecondary)
         }
     }
@@ -211,7 +211,7 @@ struct SleepPlannerScreen: View {
         VStack(spacing: 0) {
             HStack {
                 Text("Alarm")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(ZoopType.headline.weight(.semibold))
                     .foregroundStyle(StrandPalette.textPrimary)
                 Spacer()
                 Toggle("", isOn: Binding(
@@ -227,7 +227,7 @@ struct SleepPlannerScreen: View {
                 Button { editing = g } label: {
                     HStack {
                         Text(Self.dayRange(g.days))
-                            .font(.system(size: 15, weight: .medium))
+                            .font(StrandFont.subhead.weight(.medium))
                             .foregroundStyle(StrandPalette.textSecondary)
                         Spacer()
                         Text(g.minutes.map { PatternsScreen.clock($0) } ?? String(localized: "Off"))
@@ -272,7 +272,7 @@ struct SleepPlannerScreen: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Gentle wake")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(ZoopType.headline.weight(.semibold))
                             .foregroundStyle(StrandPalette.textPrimary)
                         Text("Wakes you a little earlier if you're sleeping lightly")
                             .font(StrandFont.footnote)
@@ -281,7 +281,7 @@ struct SleepPlannerScreen: View {
                     }
                     Spacer()
                     Text(windowMinutes == 0 ? String(localized: "Off") : String(localized: "\(windowMinutes) min"))
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(StrandFont.subhead.weight(.semibold))
                         .foregroundStyle(windowMinutes == 0 ? StrandPalette.textSecondary : StrandPalette.accent)
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.system(size: 12, weight: .semibold))
@@ -360,7 +360,7 @@ struct AlarmTimeSheet: View {
                         if on { selected.remove(d) } else { selected.insert(d) }
                     } label: {
                         Text(String(SleepPlannerScreen.short(d).prefix(2)))
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(ZoopType.caption.weight(.semibold))
                             .foregroundStyle(on ? StrandPalette.surfaceBase : StrandPalette.textSecondary)
                             .frame(width: 42, height: 42)
                             .background(Circle().fill(on ? StrandPalette.accent : StrandPalette.surfaceRaised))
@@ -374,7 +374,7 @@ struct AlarmTimeSheet: View {
                 .labelsHidden()
             Button(action: save) {
                 Text("Save")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(ZoopType.headline.weight(.semibold))
                     .foregroundStyle(StrandPalette.primaryButtonText)
                     .frame(maxWidth: .infinity, minHeight: 54)
                     .background(Capsule().fill(selected.isEmpty ? StrandPalette.textTertiary : StrandPalette.primaryButtonFill))
@@ -417,35 +417,35 @@ struct SleepPlanEntryCard: View {
 
     var body: some View {
         NavigationLink(value: TabRoute.sleepPlanner) {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 12) {
-                    Image(systemName: "moon.stars.fill")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(StrandPalette.textPrimary)
-                        .frame(width: 38, height: 38)
-                        .background(Circle().fill(StrandPalette.surfaceBase))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Tonight")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(StrandPalette.textSecondary)
-                        Text(line)
-                            .font(.system(size: 17, weight: .semibold).monospacedDigit())
+            ContentCard {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "moon.stars.fill")
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(StrandPalette.textPrimary)
+                            .frame(width: 38, height: 38)
+                            .background(Circle().fill(StrandPalette.surfaceBase))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Tonight")
+                                .font(ZoopType.caption.weight(.semibold))
+                                .foregroundStyle(StrandPalette.textSecondary)
+                            Text(line)
+                                .font(.system(size: 17, weight: .semibold).monospacedDigit())
+                                .foregroundStyle(StrandPalette.textPrimary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(StrandPalette.textTertiary)
                     }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(StrandPalette.textTertiary)
-                }
-                if let w = patterns.bedtime, w.windowMean - w.overallMean >= 3 {
-                    Text(String(localized: "You recover best after falling asleep between \(PatternsScreen.clock(w.startMinute)) and \(PatternsScreen.clock(w.endMinute))."))
-                        .font(StrandFont.footnote)
-                        .foregroundStyle(StrandPalette.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if let w = patterns.bedtime, w.windowMean - w.overallMean >= 3 {
+                        Text(String(localized: "You recover best after falling asleep between \(PatternsScreen.clock(w.startMinute)) and \(PatternsScreen.clock(w.endMinute))."))
+                            .font(StrandFont.footnote)
+                            .foregroundStyle(StrandPalette.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
-            .padding(16)
-            .background(ZoopPanelSurface())
         }
         .buttonStyle(.plain)
         .task(id: repo.refreshSeq) {
