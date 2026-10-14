@@ -34,11 +34,7 @@ func fitnessAgeDeltaLine(fitnessAge: Double, chronoAge: Int) -> String {
 
 /// Stored series days are `yyyy-MM-dd` in the user's calendar.
 func fitnessDayDate(_ day: String) -> Date? {
-    let f = DateFormatter()
-    f.calendar = Calendar(identifier: .gregorian)
-    f.locale = Locale(identifier: "en_US_POSIX")
-    f.dateFormat = "yyyy-MM-dd"
-    return f.date(from: day)
+    DayKeyFormat.local.date(from: day)
 }
 
 /// Which way a factor's signal is moving, judged on its last 14 days against the 46 before.

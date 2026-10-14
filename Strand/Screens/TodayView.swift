@@ -867,12 +867,7 @@ struct TodayView: View {
 
     /// Parses a stored `yyyy-MM-dd` day key in the device-local zone (matching how DailyMetric.day
     /// is written), local so a key never shifts a day under timezone conversion.
-    private static let dayKeyParser: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let dayKeyParser: DateFormatter = DayKeyFormat.local
     /// "d MMM" for a stored `yyyy-MM-dd` day key, used by the carried-over Charge caption (#543). Falls
     /// back to the raw key if it can't be parsed so the caption is never empty.
     private static func lastChargeDateFmt(_ dayKey: String) -> String {
@@ -5161,13 +5156,7 @@ struct TodayView: View {
     // header subtitle then printed the previous day for everyone west of UTC (#319/#320).
     // Matching dayKeyFormatter (no explicit zone) makes the parse→format round-trip an identity.
 
-    static let dayParser: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone.current
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    static let dayParser: DateFormatter = DayKeyFormat.local
 
     /// Local wall-clock time for the HR trend's x-axis / tooltip, the chart spans one day, so it must
     /// show times, not the day-granularity default ("EEE d MMM"). Also formats the workout-tile caption's

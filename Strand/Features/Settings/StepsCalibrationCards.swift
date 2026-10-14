@@ -263,8 +263,7 @@ extension StepsCalibrationSheet {
     }
     /// "yyyy-MM-dd" → "EEE d MMM" for the table's day column.
     static func shortDay(_ key: String) -> String {
-        let inF = DateFormatter(); inF.locale = Locale(identifier: "en_US_POSIX"); inF.dateFormat = "yyyy-MM-dd"
-        guard let d = inF.date(from: key) else { return key }
+        guard let d = DayKeyFormat.local.date(from: key) else { return key }
         let outF = DateFormatter(); outF.dateFormat = "EEE d MMM"
         return outF.string(from: d)
     }

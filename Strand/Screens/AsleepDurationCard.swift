@@ -17,13 +17,7 @@ struct AsleepDurationData {
     let typicalTotalMin: Double?
 
     /// yyyy-MM-dd → Date (en_US_POSIX, UTC) — matches `SleepView.dayParser`.
-    private static let dayParser: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let dayParser: DateFormatter = DayKeyFormat.utc
 
     /// Trailing 30 days of total sleep in HOURS, falling back to all nights with data when the trailing
     /// window is too sparse (verbatim of `SleepView.durationTrendPoints`). `typicalTotalMin` is the mean

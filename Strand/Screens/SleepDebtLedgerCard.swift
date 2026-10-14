@@ -58,7 +58,7 @@ struct SleepDebtLedgerCard: View {
                         Divider().overlay(StrandPalette.hairline)
                         ChartFooter([
                             ("Balance", debtSigned(ledger.balanceMin)),
-                            ("Per-night need", durationText(ledger.needMin)),
+                            ("Per-night need", ZoopDuration.text(minutes: ledger.needMin)),
                             ("Nights", "\(ledger.nightCount)"),
                         ])
                     }
@@ -110,7 +110,7 @@ struct SleepDebtLedgerCard: View {
     /// once, matching the final reading. Final-value identical to `debtHeadline(_:)`.
     private func debtHeadline(forMagnitudeMin m: Double, ledger: SleepDebtLedger) -> String {
         if m < SleepDebt.onTargetBandMin { return String(localized: "On target") }
-        return "≈\(durationText(m))"
+        return "≈\(ZoopDuration.text(minutes: m))"
     }
 
     /// Short tag under/beside the headline: DEBT / ON TARGET.
@@ -128,7 +128,7 @@ struct SleepDebtLedgerCard: View {
         if ledger.magnitudeMin < SleepDebt.onTargetBandMin {
             return String(localized: "You've effectively met your current sleep need across \(span).")
         }
-        let mag = durationText(ledger.magnitudeMin)
+        let mag = ZoopDuration.text(minutes: ledger.magnitudeMin)
         if ledger.isDebt {
             return String(localized: "Add about \(mag) to your base sleep target tonight. Meeting that complete sleep need clears the displayed debt; recent shortfalls carry forward at a reduced weight.")
         }
@@ -149,14 +149,9 @@ struct SleepDebtLedgerCard: View {
     private func debtSigned(_ minutes: Double) -> String {
         if abs(minutes) < 1 { return String(localized: "0m") }
         let sign = minutes >= 0 ? "+" : "−"
-        return "\(sign)\(durationText(abs(minutes)))"
+        return "\(sign)\(ZoopDuration.text(minutes: abs(minutes)))"
     }
 
     /// Minutes → "Xm" / "Yh Zm" (verbatim of `SleepView.durationText`). Kept local to the card so it
     /// renders identically whether hosted in Today or shown in the Sleep tab.
-    private func durationText(_ minutes: Double) -> String {
-        let m = Swift.max(0, Int(minutes.rounded()))
-        if m < 60 { return String(localized: "\(m)m") }
-        return String(localized: "\(m / 60)h \(m % 60)m")
-    }
 }

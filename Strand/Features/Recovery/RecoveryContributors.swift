@@ -152,13 +152,7 @@ enum RecoveryContributors {
 // MARK: - Day keys
 
 enum RecoveryDayKey {
-    private static let formatter: DateFormatter = {
-        let f = DateFormatter()
-        f.calendar = Calendar(identifier: .gregorian)
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let formatter: DateFormatter = DayKeyFormat.local
 
     /// A stored "yyyy-MM-dd" day key as local midnight.
     static func date(_ key: String) -> Date? { formatter.date(from: key) }

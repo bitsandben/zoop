@@ -185,12 +185,7 @@ enum TodayLogic {
     // MARK: Day keys
 
     /// Parses a stored "yyyy-MM-dd" key in the device zone, as `DailyMetric.day` is written.
-    static let dayKeyParser: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    static let dayKeyParser: DateFormatter = DayKeyFormat.local
 
     /// "14 Oct" for a day key in the app language; the raw key when it does not parse.
     static func shortDate(_ dayKey: String) -> String {

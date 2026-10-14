@@ -28,8 +28,7 @@ struct LiveSessionView: View {
 
     /// "Card transparency" (0–100, default 100): fades the live-session cards in lockstep with the frosted
     /// cards; content stays readable. Mirrors Kotlin `ZoopPrefs.cardOpacityPercent`.
-    @AppStorage(CardAppearancePrefs.opacityKey) private var cardOpacityPercent = CardAppearancePrefs.defaultPercent
-    private var cardOpacity: Double { max(0, min(1, Double(cardOpacityPercent) / 100)) }
+    @CardOpacity private var cardOpacity: Double
 
     /// One runner per presentation — created here, started on appear, never restarted.
     @StateObject private var runner = LiveSessionRunner()
@@ -299,8 +298,7 @@ struct LiveSessionSummarySheet: View {
     let row: LiveSessionRow
     let guardedCount: Int?
     let onDone: () -> Void
-    @AppStorage(CardAppearancePrefs.opacityKey) private var cardOpacityPercent = CardAppearancePrefs.defaultPercent
-    private var cardOpacity: Double { max(0, min(1, Double(cardOpacityPercent) / 100)) }
+    @CardOpacity private var cardOpacity: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {

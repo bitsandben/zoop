@@ -29,14 +29,7 @@ struct TrainingFitnessCard: View {
 
     /// Day keys are local calendar days, so they are parsed in the local zone; a UTC parse would shift
     /// the points a day in the Americas.
-    private static let dayParser: DateFormatter = {
-        let f = DateFormatter()
-        f.calendar = Calendar(identifier: .gregorian)
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = .current
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let dayParser: DateFormatter = DayKeyFormat.local
 
     private var rows: [Row] {
         load.points.suffix(Self.windowDays).compactMap { p in

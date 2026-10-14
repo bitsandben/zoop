@@ -102,12 +102,7 @@ struct TrendViewerCard: View {
         var id: Date { date }
     }
 
-    private static let parser: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let parser: DateFormatter = DayKeyFormat.local
 
     private func value(_ d: DailyMetric) -> Double? {
         switch metric {

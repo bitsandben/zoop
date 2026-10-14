@@ -39,8 +39,7 @@ struct HydrationView: View {
 
     /// "Card transparency" (0–100, default 100): fades the hydration cards in lockstep with the frosted
     /// cards; content stays readable. Mirrors Kotlin `ZoopPrefs.cardOpacityPercent`.
-    @AppStorage(CardAppearancePrefs.opacityKey) private var cardOpacityPercent = CardAppearancePrefs.defaultPercent
-    private var cardOpacity: Double { max(0, min(1, Double(cardOpacityPercent) / 100)) }
+    @CardOpacity private var cardOpacity: Double
 
     private var goalML: Int { repo.hydrationGoalML(profileSex: profile.sex) }
     private var fraction: Double { HydrationGoal.fraction(totalML: totalML, goalML: goalML) }
@@ -369,12 +368,7 @@ struct HydrationView: View {
     // #perf: fixed-locale formatters, hoisted to static so the history-bar ForEach doesn't allocate two
     // DateFormatters per bar per render (label + a11y both call this). Locale is pinned (en_US_POSIX /
     // en_US), so caching is behaviour-identical — no dependence on the device locale.
-    private static let dayKeyParser: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let dayKeyParser: DateFormatter = DayKeyFormat.local
     private static let weekdayAbbrev: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US")

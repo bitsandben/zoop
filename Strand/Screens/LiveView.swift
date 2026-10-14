@@ -34,8 +34,7 @@ struct LiveView: View {
 
     /// "Card transparency" (0–100, default 100): fades the live console cards in lockstep with the frosted
     /// cards; content stays readable. Mirrors Kotlin `ZoopPrefs.cardOpacityPercent`.
-    @AppStorage(CardAppearancePrefs.opacityKey) private var cardOpacityPercent = CardAppearancePrefs.defaultPercent
-    private var cardOpacity: Double { max(0, min(1, Double(cardOpacityPercent) / 100)) }
+    @CardOpacity private var cardOpacity: Double
 
     /// Maps the picked strap model to the HRV-reading source so the spot caveat is honest (#537): a
     /// WHOOP 5/MG's R-R is optical PPG (noisier), a WHOOP 4 is electrical R-R. Mirrors the Android
@@ -1277,8 +1276,7 @@ private struct LiveLogCard: View {
     /// app-switcher snapshot, and blanking the log there would be visible for no benefit. The kill needs
     /// sustained non-frontmost CPU, which is `.background`.
     @Environment(\.scenePhase) private var scenePhase
-    @AppStorage(CardAppearancePrefs.opacityKey) private var cardOpacityPercent = CardAppearancePrefs.defaultPercent
-    private var cardOpacity: Double { max(0, min(1, Double(cardOpacityPercent) / 100)) }
+    @CardOpacity private var cardOpacity: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -1401,8 +1399,7 @@ private enum LiveSyncFormat {
 /// and a one-line detail. The whole card is combined into a single accessibility element so VoiceOver
 /// reads "Heart rate: 62 bpm. Streaming now." rather than three disjoint fragments.
 private struct SignalTrustTile: View {
-    @AppStorage(CardAppearancePrefs.opacityKey) private var cardOpacityPercent = CardAppearancePrefs.defaultPercent
-    private var cardOpacity: Double { max(0, min(1, Double(cardOpacityPercent) / 100)) }
+    @CardOpacity private var cardOpacity: Double
 
     struct Model: Identifiable {
         let title: String

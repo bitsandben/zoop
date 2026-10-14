@@ -123,8 +123,8 @@ struct StageDetailView: View {
             ? String(localized: "raw on-device stages")
             : String(localized: "stages approximate (on-device)")
         let subtitle = isPersisted
-            ? String(localized: "\(durationText(night.timeInBed)) in bed · \(efficiencyText(night)) efficiency · \(stageCaption)")
-            : String(localized: "\(durationText(night.timeInBed)) in bed · \(efficiencyText(night)) efficiency")
+            ? String(localized: "\(ZoopDuration.text(minutes: night.timeInBed)) in bed · \(efficiencyText(night)) efficiency · \(stageCaption)")
+            : String(localized: "\(ZoopDuration.text(minutes: night.timeInBed)) in bed · \(efficiencyText(night)) efficiency")
         VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
             if intervals.count >= 2 {
                 // #sleep-chart-style: Classic keeps the per-stage timeline ROWS (ryanAtriumAi #988);
@@ -141,7 +141,7 @@ struct StageDetailView: View {
                 ChartCard(
                     title: "Stage breakdown",
                     subtitle: subtitle,
-                    trailing: durationText(s.asleep),
+                    trailing: ZoopDuration.text(minutes: s.asleep),
                     height: ZoopMetrics.chartHeight,
                     tint: StrandPalette.restColor,
                     chart: { stageBar(s) },
@@ -221,7 +221,7 @@ struct StageDetailView: View {
         ChartCard(
             title: "Stage breakdown",
             subtitle: subtitle,
-            trailing: durationText(s.asleep),
+            trailing: ZoopDuration.text(minutes: s.asleep),
             height: ZoopMetrics.chartHeight,
             tint: StrandPalette.restColor,
             chart: {
@@ -486,7 +486,7 @@ struct StageDetailView: View {
             // The Zoop signature: a segmented PipBar that counts up to the share-of-night fraction,
             // tinted in the stage colour over the canonical inset track. Flat, crisp, no glow.
             PipBar(value: fraction * 100, segments: 20, tint: color, height: 8)
-            Text(durationText(minutes))
+            Text(ZoopDuration.text(minutes: minutes))
                 .font(StrandFont.captionNumber)
                 .foregroundStyle(StrandPalette.textPrimary)
                 .frame(width: 60, alignment: .trailing)
@@ -505,7 +505,7 @@ struct StageDetailView: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(stage.label): \(durationText(minutes)), \(percent) percent of the night")
+        .accessibilityLabel("\(stage.label): \(ZoopDuration.text(minutes: minutes)), \(percent) percent of the night")
         .accessibilityHint("Highlights this stage on the sleep chart")
         .accessibilityAddTraits(.isButton)
     }
@@ -569,7 +569,7 @@ struct StageDetailView: View {
         let restorative = s.deep + s.rem
         HStack(alignment: .top, spacing: ZoopMetrics.space6) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(durationText(s.asleep))
+                Text(ZoopDuration.text(minutes: s.asleep))
                     .font(StrandFont.number(26))
                     .foregroundStyle(StrandPalette.textPrimary)
                 Text("HOURS OF SLEEP")
@@ -577,13 +577,13 @@ struct StageDetailView: View {
                     .tracking(StrandFont.overlineTracking)
                     .foregroundStyle(StrandPalette.textTertiary)
                 if let t = stageTypical(nil) {
-                    Text("typically \(durationText(t.mean))")
+                    Text("typically \(ZoopDuration.text(minutes: t.mean))")
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textTertiary)
                 }
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(durationText(restorative))
+                Text(ZoopDuration.text(minutes: restorative))
                     .font(StrandFont.number(26))
                     .foregroundStyle(StrandPalette.sleepREM)
                 Text("RESTORATIVE SLEEP")
@@ -591,7 +591,7 @@ struct StageDetailView: View {
                     .tracking(StrandFont.overlineTracking)
                     .foregroundStyle(StrandPalette.textTertiary)
                 if let t = restorativeTypical() {
-                    Text("typically \(durationText(t))")
+                    Text("typically \(ZoopDuration.text(minutes: t))")
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textTertiary)
                 }
@@ -612,12 +612,12 @@ struct StageDetailView: View {
                     : (minutes < t.lo ? String(localized: "below your usual")
                                       : String(localized: "about your usual"))
                 (Text(sel.label).fontWeight(.semibold).foregroundColor(StrandPalette.sleepStageColor(sel))
-                    + Text(" \(durationText(minutes)) · typically \(durationText(t.lo)) to \(durationText(t.hi)), \(phrase)."))
+                    + Text(" \(ZoopDuration.text(minutes: minutes)) · typically \(ZoopDuration.text(minutes: t.lo)) to \(ZoopDuration.text(minutes: t.hi)), \(phrase)."))
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textSecondary)
                     .lineLimit(2)
             } else {
-                Text("\(sel.label): \(durationText(minutes)). Not enough history yet for a typical range.")
+                Text("\(sel.label): \(ZoopDuration.text(minutes: minutes)). Not enough history yet for a typical range.")
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textSecondary)
                     .lineLimit(2)
@@ -698,7 +698,7 @@ struct StageDetailView: View {
                     .font(StrandFont.captionNumber)
                     .foregroundStyle(dimmed ? StrandPalette.textTertiary : color)
                 Spacer()
-                Text(durationText(minutes))
+                Text(ZoopDuration.text(minutes: minutes))
                     .font(StrandFont.captionNumber)
                     .foregroundStyle(StrandPalette.textPrimary)
             }
@@ -733,7 +733,7 @@ struct StageDetailView: View {
             withAnimation(StrandMotion.fade) { selectedStage = isSelected ? nil : stage }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(stage.label): \(durationText(minutes)), \(percent) percent of the night")
+        .accessibilityLabel("\(stage.label): \(ZoopDuration.text(minutes: minutes)), \(percent) percent of the night")
         .accessibilityHint("Highlights this stage on the sleep chart")
         .accessibilityAddTraits(.isButton)
     }
@@ -892,10 +892,5 @@ struct StageDetailView: View {
         return Swift.min(100, night.stages.asleep / bed * 100)
     }
 
-    private func durationText(_ minutes: Double) -> String {
-        let m = Swift.max(0, Int(minutes.rounded()))
-        if m < 60 { return String(localized: "\(m)m") }
-        return String(localized: "\(m / 60)h \(m % 60)m")
-    }
 
 }

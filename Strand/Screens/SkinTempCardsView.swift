@@ -421,11 +421,7 @@ struct MenstrualCycleHomeCard: View {
     }
 
     private func prettyDay(_ day: String) -> String {
-        let parser = DateFormatter()
-        parser.calendar = Calendar(identifier: .gregorian)
-        parser.locale = Locale(identifier: "en_US_POSIX")
-        parser.dateFormat = "yyyy-MM-dd"
-        guard let date = parser.date(from: day) else { return day }
+        guard let date = DayKeyFormat.local.date(from: day) else { return day }
         return date.formatted(date: .abbreviated, time: .omitted)
     }
 }
@@ -924,11 +920,7 @@ private struct FlowChips: View {
 
 /// "12 Jun" from a "yyyy-MM-dd" key (locale-aware for display only; the engine math stays UTC).
 private func prettyDay(_ key: String) -> String {
-    let parser = DateFormatter()
-    parser.calendar = Calendar(identifier: .gregorian)
-    parser.locale = Locale(identifier: "en_US_POSIX")
-    parser.dateFormat = "yyyy-MM-dd"
-    guard let date = parser.date(from: key) else { return key }
+    guard let date = DayKeyFormat.local.date(from: key) else { return key }
     return date.formatted(
         .dateTime.day().month(.abbreviated).locale(AppLanguage.activeLocale)
     )

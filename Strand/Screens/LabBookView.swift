@@ -562,25 +562,14 @@ enum LabBookFormat {
     }()
 
     /// The `yyyy-MM-dd` day key the projection uses (LOCAL day of the reading).
-    private static let keyFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let keyFormatter: DateFormatter = DayKeyFormat.local
     static func dayKey(_ date: Date) -> String { keyFormatter.string(from: date) }
 
     /// A `yyyy-MM-dd` parser PINNED to UTC, so a day string always maps to the same instant regardless
     /// of the device zone. The local-zone `keyFormatter` above returns nil for a day whose LOCAL midnight
     /// is skipped by a DST transition (e.g. Chile/Cuba, 06 Sep) - which used to collapse `noonEpoch` to
     /// epoch 0 and collide different days on the natural key. UTC never skips midnight.
-    private static let utcKeyFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let utcKeyFormatter: DateFormatter = DayKeyFormat.utc
 
     /// Epoch seconds of UTC noon on a `yyyy-MM-dd` day — the deterministic, LOCATION-INDEPENDENT `takenAt`
     /// for CSV-imported readings, so re-importing the same file (even after travel to another zone) upserts

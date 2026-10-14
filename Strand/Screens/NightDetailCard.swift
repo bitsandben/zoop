@@ -41,7 +41,7 @@ struct NightDetailCard: View {
             // vitals) are already shown on this screen, so they are not repeated here.
             StatTile(
                 label: "Sleep Debt",
-                value: debt.latest.map { durationText($0) } ?? "—",
+                value: debt.latest.map { ZoopDuration.text(minutes: $0) } ?? "—",
                 caption: nightDetailDebtCaption(debt.latest),
                 accent: nightDetailDebtColor(debt.latest),
                 sparkline: spark(debt.series),
@@ -110,7 +110,7 @@ struct NightDetailCard: View {
                 // phone-width summary tile across an unbounded desktop detail pane.
                 StatTile(
                     label: "Sleep Debt",
-                    value: debt.latest.map { durationText($0) } ?? "—",
+                    value: debt.latest.map { ZoopDuration.text(minutes: $0) } ?? "—",
                     caption: nightDetailDebtCaption(debt.latest),
                     accent: nightDetailDebtColor(debt.latest),
                     sparkline: spark(debt.series),
@@ -159,11 +159,6 @@ struct NightDetailCard: View {
 
     /// Minutes → "Xm" / "Yh Zm" (verbatim of `SleepView.durationText`). Kept local to the card so it
     /// renders identically whether hosted in Today or shown in the Sleep tab.
-    private func durationText(_ minutes: Double) -> String {
-        let m = Swift.max(0, Int(minutes.rounded()))
-        if m < 60 { return String(localized: "\(m)m") }
-        return String(localized: "\(m / 60)h \(m % 60)m")
-    }
 }
 
 func nightDetailDebtCaption(_ debt: Double?) -> String {
