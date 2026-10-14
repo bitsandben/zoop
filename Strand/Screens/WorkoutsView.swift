@@ -871,7 +871,7 @@ struct WorkoutsView: View {
                         // interpolates it straight to one decimal — no re-scaling in the format closure.
                         CountUpText(
                             value: displayValue,
-                            format: { String(format: "%.1f", $0) },
+                            format: { $0.formatted(.number.precision(.fractionLength(1))) },
                             font: StrandFont.rounded(46),
                             color: StrandPalette.textPrimary
                         )
@@ -915,16 +915,12 @@ struct WorkoutsView: View {
             HStack(spacing: ZoopMetrics.gap) {
                 heroCountStat(String(localized: "Sessions"), value: Double(rows.count),
                               format: { "\(Int($0.rounded()))" }, tint: StrandPalette.effortColor)
-                heroStat(String(localized: "Active"), String(localized: "\(oneDecimal(totalTimeH))h"), tint: StrandPalette.textPrimary)
-                heroStat(String(localized: "Top sport"), modal.count > 0 ? "\(modal.count)×" : "—",
+                // Zoop: total time has its own card below, so the hero names the top sport instead of
+                // repeating it, and the count reads as a sport, not "1×".
+                heroStat(String(localized: "Top sport"),
+                         modal.count > 0 ? WorkoutSource.displaySport(modal.sport) : "—",
                          tint: StrandPalette.effortBright)
             }
-            Text(modal.count > 0
-                 ? "Mostly \(WorkoutSource.displaySport(modal.sport)) (\(effectiveRange.caption))."
-                 : "Logged sessions across \(effectiveRange.caption).")
-                .font(StrandFont.footnote)
-                .foregroundStyle(StrandPalette.textTertiary)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -1103,10 +1099,12 @@ struct WorkoutsView: View {
         }
         #endif
         LazyVGrid(columns: tileColumns, alignment: .leading, spacing: ZoopMetrics.gap) {
+            #if !os(iOS)   // iOS: the effort hero above already counts the sessions
             StatTile(label: "Total Workouts",
                      value: "\(totalCount)",
                      caption: effectiveRange.caption,
                      accent: StrandPalette.effortColor)
+            #endif
             #if !os(iOS)
             StatTile(label: "Total Time",
                      value: String(localized: "\(oneDecimal(totalTimeH))h"),
@@ -1121,12 +1119,14 @@ struct WorkoutsView: View {
                      value: distancesM.isEmpty ? "–" : UnitFormatter.distanceFromKilometers(totalKmRaw, system: distanceUnitSystem),
                      caption: String(localized: "covered"),
                      accent: StrandPalette.metricCyan)
+            #if !os(iOS)   // iOS: the effort hero above names the top sport
             StatTile(label: "Most Active",
                      value: modal.sport,
                      caption: modal.count > 0
                          ? (modal.count == 1 ? String(localized: "1 session") : String(localized: "\(modal.count) sessions"))
                          : nil,
                      accent: StrandPalette.textPrimary)
+            #endif
         }
         }
     }
@@ -1919,7 +1919,7 @@ struct WorkoutsView: View {
         return UnitFormatter.distanceFromMeters(m, system: distanceUnitSystem)
     }
 
-    private func oneDecimal(_ v: Double) -> String { String(format: "%.1f", v) }
+    private func oneDecimal(_ v: Double) -> String { v.formatted(.number.precision(.fractionLength(1))) }
 
     private func grouped(_ v: Double) -> String {
         Self.intFmt.string(from: NSNumber(value: Int(v.rounded()))) ?? "\(Int(v.rounded()))"

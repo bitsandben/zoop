@@ -522,7 +522,8 @@ struct LiquidTodayView: View {
                     #if os(iOS)
                     if !sectionOrder.contains(.hero) { AutoWorkoutCard() }
                     // The carousel scrolls sideways itself, so a swipe inside it must not step the day.
-                    if selectedDayOffset == 0 { HomePatternsCarousel().daySwipeExclusionZone("patterns") }
+                    // The "Looking ahead" carousel repeated the evening card (bedtime, alarm, reminder) and
+                    // guessed tomorrow's Recovery, so it is no longer drawn on Home.
                     // The day's stress curve lives on the Stress screen, which the Stress tile at the top
                     // opens; a second copy of it here repeated that tile.
                     weeklyTrends
