@@ -189,6 +189,10 @@ struct SleepView: View {
                         ForEach(Array(sleepVisibleSections.enumerated()), id: \.element) { idx, section in
                             sleepSectionView(section, resolved).staggeredAppear(index: idx + 1)
                         }
+                        #if os(iOS)
+                        // Zoop: interpretations across nights, below the per-night cards.
+                        SleepInsightsSection()
+                        #endif
                     }
                 } else {
                     emptyState
