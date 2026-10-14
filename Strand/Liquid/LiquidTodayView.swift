@@ -392,11 +392,15 @@ struct LiquidTodayView: View {
                 Color.clear.frame(height: 0).id(Self.topAnchorID)
                 // Scroll-offset probe at the very top (before padding), so its minY in the scroll's
                 // coordinate space reads the top OVERSCROLL: ~0 at rest, positive as you pull down.
-                GeometryReader { g in
-                    Color.clear.preference(key: PullOffsetKey.self,
-                                           value: g.frame(in: .named(Self.pullSpace)).minY)
+                // iOS 18+ reads the overscroll from the scroll geometry (PullOverscrollReader), so the probe
+                // is only mounted where it is still the source: it re-published a preference every frame.
+                if #available(iOS 18.0, macOS 15.0, *) {} else {
+                    GeometryReader { g in
+                        Color.clear.preference(key: PullOffsetKey.self,
+                                               value: g.frame(in: .named(Self.pullSpace)).minY)
+                    }
+                    .frame(height: 0)
                 }
-                .frame(height: 0)
 
                 liquidRefreshIndicator   // grows in the revealed space; a vessel filling with the pull
 
@@ -578,7 +582,7 @@ struct LiquidTodayView: View {
             .ignoresSafeArea()
         }
         .coordinateSpace(name: Self.daySwipeSpace)
-        .onPreferenceChange(LiquidDaySwipeExclusionKey.self) { daySwipeExclusions.rects = $0 }
+        .environment(\.liquidDaySwipeExclusions, daySwipeExclusions)
         // Swipe left/right changes the DAY on this screen only. Tabs themselves are tap-only.
         .simultaneousGesture(daySwipeGesture)
         // A light tick when the day changes (swipe or calendar pick) — the WHOOP-style day nav should
@@ -2791,15 +2795,6 @@ struct LiquidTodayView: View {
     }
 }
 
-/// Measures the regions that own their horizontal drags (see `daySwipeExclusionZone`) in the same
-/// coordinate space as the day-swipe gesture, keyed so each zone reports exactly one frame.
-private struct LiquidDaySwipeExclusionKey: PreferenceKey {
-    static var defaultValue: [String: CGRect] = [:]
-    static func reduce(value: inout [String: CGRect], nextValue: () -> [String: CGRect]) {
-        value.merge(nextValue()) { _, new in new }
-    }
-}
-
 /// The latest exclusion frames. A plain reference type on purpose: writing it does not invalidate the
 /// view, and the day-swipe gesture reads it only when a drag ends.
 private final class LiquidDaySwipeExclusions {
@@ -2807,16 +2802,44 @@ private final class LiquidDaySwipeExclusions {
     func contains(_ point: CGPoint) -> Bool { rects.values.contains { $0.contains(point) } }
 }
 
+private struct LiquidDaySwipeExclusionsKey: EnvironmentKey {
+    static let defaultValue: LiquidDaySwipeExclusions? = nil
+}
+
+private extension EnvironmentValues {
+    /// The box the exclusion zones below write their frames into, handed down by Today's body.
+    var liquidDaySwipeExclusions: LiquidDaySwipeExclusions? {
+        get { self[LiquidDaySwipeExclusionsKey.self] }
+        set { self[LiquidDaySwipeExclusionsKey.self] = newValue }
+    }
+}
+
+/// Writes one zone's frame, in the day-swipe gesture's coordinate space, straight into the box.
+///
+/// These frames move on every scroll frame. They used to travel up as a preference, which made SwiftUI
+/// re-reduce and re-deliver it through the whole Today tree each frame of a scroll; a geometry callback
+/// writing into the reference box costs nothing beyond the write. A zone that leaves the screen removes
+/// its frame, as the preference did by no longer reporting it.
+private struct LiquidDaySwipeExclusionZone: ViewModifier {
+    let id: String
+    @Environment(\.liquidDaySwipeExclusions) private var box
+
+    func body(content: Content) -> some View {
+        content
+            .onGeometryChange(for: CGRect.self) { geometry in
+                geometry.frame(in: .named(LiquidTodayView.daySwipeSpace))
+            } action: { frame in
+                box?.rects[id] = frame
+            }
+            .onDisappear { box?.rects[id] = nil }
+    }
+}
+
 private extension View {
     /// Marks this view as owning its horizontal drags, so a sideways swipe that starts inside it (a chart
     /// scrub, a horizontal carousel) never also steps the Home day.
     func daySwipeExclusionZone(_ id: String) -> some View {
-        background {
-            GeometryReader { geometry in
-                Color.clear.preference(key: LiquidDaySwipeExclusionKey.self,
-                                       value: [id: geometry.frame(in: .named(LiquidTodayView.daySwipeSpace))])
-            }
-        }
+        modifier(LiquidDaySwipeExclusionZone(id: id))
     }
 }
 

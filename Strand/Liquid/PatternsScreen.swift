@@ -246,7 +246,10 @@ final class PatternsModel: ObservableObject {
 struct PatternsScreen: View {
     @EnvironmentObject private var repo: Repository
     @EnvironmentObject private var profile: ProfileStore
-    @EnvironmentObject private var model: AppModel
+    /// Not observed here: the app model publishes the smoothed heart rate every few seconds, which re-ran
+    /// this whole screen mid-scroll. The two cards that show model state read it through
+    /// `PatternsModelReader`, so only they follow it.
+    private var model: AppModel? { AppModel.shared }
     @StateObject private var patterns = PatternsModel()
 
     var body: some View {
@@ -292,7 +295,7 @@ struct PatternsScreen: View {
         }
         .task(id: repo.refreshSeq) {
             await patterns.loadAll(repo: repo, maxHR: profile.hrMax, cycleApplies: profile.cycleAwarenessApplies,
-                                   alarm: model.nextArmedStrapAlarm())
+                                   alarm: model?.nextArmedStrapAlarm())
         }
     }
 
@@ -328,16 +331,17 @@ struct PatternsScreen: View {
         }
     }
 
-    @ViewBuilder
     private var illnessCard: some View {
-        if let s = model.illnessSignal {
-            let calm = s.level == .quiet
-            PatternCard(icon: calm ? "checkmark.shield.fill" : "cross.case.fill", title: "Illness watch",
-                        basis: "Breathing rate, skin temperature and resting heart rate against your normal.") {
-                Text(calm ? String(localized: "Nothing unusual") : s.copy)
-                    .font(.system(size: calm ? 24 : 17, weight: .bold))
-                    .foregroundStyle(calm ? StrandPalette.accent : StrandPalette.textPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
+        PatternsModelReader { model in
+            if let s = model.illnessSignal {
+                let calm = s.level == .quiet
+                PatternCard(icon: calm ? "checkmark.shield.fill" : "cross.case.fill", title: "Illness watch",
+                            basis: "Breathing rate, skin temperature and resting heart rate against your normal.") {
+                    Text(calm ? String(localized: "Nothing unusual") : s.copy)
+                        .font(.system(size: calm ? 24 : 17, weight: .bold))
+                        .foregroundStyle(calm ? StrandPalette.accent : StrandPalette.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }
@@ -461,8 +465,12 @@ struct PatternsScreen: View {
     }
 
     private var cycleCard: some View {
+        PatternsModelReader { model in cycleCard(basis: model.cyclePhase.map { $0.note }) }
+    }
+
+    private func cycleCard(basis: String?) -> some View {
         PatternCard(icon: "drop.fill", title: "Your cycle and your body",
-                    basisText: model.cyclePhase.map { $0.note } ?? String(localized: "From the periods you logged.")) {
+                    basisText: basis ?? String(localized: "From the periods you logged.")) {
             VStack(spacing: 10) {
                 ForEach(patterns.cycle) { p in
                     HStack {
@@ -531,6 +539,15 @@ struct PatternsScreen: View {
         let total = Int(minutes.rounded())
         return total % 60 == 0 ? "\(total / 60) h" : "\(total / 60) h \(total % 60) min"
     }
+}
+
+/// Observes the app model for the cards that show its state, so the screen around it does not
+/// re-render on the model's every publish.
+private struct PatternsModelReader<Content: View>: View {
+    @EnvironmentObject private var model: AppModel
+    @ViewBuilder let content: (AppModel) -> Content
+
+    var body: some View { content(model) }
 }
 
 // MARK: - Shared cards (also used on Home)
@@ -661,7 +678,9 @@ struct PatternLoadCard: View {
 struct HomePatternsCarousel: View {
     static let cardWidth: CGFloat = 280
     @EnvironmentObject private var repo: Repository
-    @EnvironmentObject private var model: AppModel
+    /// Reached WITHOUT observing: only the alarm is read, inside the load task, while the app model
+    /// publishes the smoothed heart rate every few seconds and re-ran this view mid-scroll for it.
+    private var model: AppModel? { AppModel.shared }
     @StateObject private var patterns = PatternsModel()
 
     var body: some View {
@@ -677,7 +696,7 @@ struct HomePatternsCarousel: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 12) {
                     if let t = patterns.tonight {
-                        PatternTonightCard(tonight: t) { Task { await patterns.loadQuick(repo: repo, alarm: model.nextArmedStrapAlarm()) } }
+                        PatternTonightCard(tonight: t) { Task { await patterns.loadQuick(repo: repo, alarm: model?.nextArmedStrapAlarm()) } }
                             .frame(width: Self.cardWidth)
                     }
                     if let f = patterns.forecast {
@@ -701,7 +720,7 @@ struct HomePatternsCarousel: View {
             .scrollTargetBehavior(.viewAligned)
             .scrollClipDisabled()
         }
-        .task(id: repo.refreshSeq) { await patterns.loadQuick(repo: repo, alarm: model.nextArmedStrapAlarm()) }
+        .task(id: repo.refreshSeq) { await patterns.loadQuick(repo: repo, alarm: model?.nextArmedStrapAlarm()) }
     }
 }
 #endif
