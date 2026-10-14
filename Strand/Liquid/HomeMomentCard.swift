@@ -16,7 +16,11 @@ enum HomeMoment: Equatable {
     /// Stress level (0–3) from which an hour counts as high.
     static let highStress = 2.0
 
-    /// The moment for `now`: stress that is high right now between 08:00 and 23:00, else the night ahead.
+    /// The night ahead shows from this hour until 04:00; earlier in the day there is nothing to plan yet.
+    static let eveningFromHour = 17
+
+    /// The moment for `now`: stress that is high right now between 08:00 and 23:00, else the night ahead
+    /// in the evening, else nothing.
     ///
     /// "Right now" means the hour in progress scores high AND the last ten minutes of heart rate
     /// (`recentHR`) still sit at or above that hour's mean, so one tense moment earlier in the hour does
@@ -31,7 +35,7 @@ enum HomeMoment: Equatable {
            let recent = recentHR, let hourMean = current.meanHR, recent >= hourMean {
             return .breathe(level: level)
         }
-        return .evening
+        return (h >= eveningFromHour || h < 4) ? .evening : nil
     }
 }
 
