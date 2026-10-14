@@ -261428,6 +261428,426 @@
           }
         }
       }
+    },
+    "Approximate" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschätzt"
+          }
+        }
+      }
+    },
+    "From the ring" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vom Ring"
+          }
+        }
+      }
+    },
+    "Fell asleep in %lld min" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In %lld Min. eingeschlafen"
+          }
+        }
+      }
+    },
+    "Shows the heart rate and movement behind this night's start and end" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt Puls und Bewegung hinter Beginn und Ende dieser Nacht"
+          }
+        }
+      }
+    },
+    "average" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durchschnitt"
+          }
+        }
+      }
+    },
+    "range" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spanne"
+          }
+        }
+      }
+    },
+    "%@: %@, %lld%%" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@, %3$lld %%"
+          }
+        }
+      }
+    },
+    "This night has no strap data to show, for example because it was imported." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für diese Nacht gibt es keine Strap-Daten, zum Beispiel weil sie importiert wurde."
+          }
+        }
+      }
+    },
+    "Fell asleep" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingeschlafen"
+          }
+        }
+      }
+    },
+    "You" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du"
+          }
+        }
+      }
+    },
+    "Moving" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewegung"
+          }
+        }
+      }
+    },
+    "Moved %lld min later by what Zoop learned from your corrections." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um %lld Min. nach hinten verschoben, gelernt aus deinen Korrekturen."
+          }
+        }
+      }
+    },
+    "Moved %lld min earlier by what Zoop learned from your corrections." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um %lld Min. nach vorne verschoben, gelernt aus deinen Korrekturen."
+          }
+        }
+      }
+    },
+    "You set the start to %@ yourself." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den Beginn hast du selbst auf %@ gesetzt."
+          }
+        }
+      }
+    },
+    "Heart rate stayed %lld bpm above your sleeping level until %@, so the quiet time before doesn't count as sleep." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Puls lag bis %2$@ noch %1$lld Schläge über deinem Schlafniveau, deshalb zählt die ruhige Zeit davor nicht als Schlaf."
+          }
+        }
+      }
+    },
+    "Your heart rate reached your sleeping level soon after you lay still, so sleep starts at %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Puls hat kurz nach dem Stillliegen dein Schlafniveau erreicht, deshalb beginnt der Schlaf um %@."
+          }
+        }
+      }
+    },
+    "Your heart rate was already close to your sleeping level while you lay still, so sleep starts at %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Puls lag beim Stillliegen schon nahe an deinem Schlafniveau, deshalb beginnt der Schlaf um %@."
+          }
+        }
+      }
+    },
+    "Your heart rate never settled clearly, so sleep starts when you lay still at %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Puls hat sich nie klar beruhigt, deshalb beginnt der Schlaf, als du um %@ still lagst."
+          }
+        }
+      }
+    },
+    "There was too little heart rate data to check, so sleep starts when you lay still at %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es gab zu wenig Pulsdaten zum Prüfen, deshalb beginnt der Schlaf, als du um %@ still lagst."
+          }
+        }
+      }
+    },
+    "The night was too short to trim, so sleep starts when you lay still at %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Nacht war zu kurz zum Kürzen, deshalb beginnt der Schlaf, als du um %@ still lagst."
+          }
+        }
+      }
+    },
+    "Waking up" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufwachen"
+          }
+        }
+      }
+    },
+    "You set the wake time to %@ yourself." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Aufwachzeit hast du selbst auf %@ gesetzt."
+          }
+        }
+      }
+    },
+    "The still stretch ended at %@; heart rate and movement placed your wake time at %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die ruhige Phase endete um %1$@; Puls und Bewegung legen deine Aufwachzeit auf %2$@."
+          }
+        }
+      }
+    },
+    "You started moving at %@, so the night ends there." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um %@ hast du dich zu bewegen begonnen, deshalb endet die Nacht dort."
+          }
+        }
+      }
+    },
+    "Sleeping level" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafniveau"
+          }
+        }
+      }
+    },
+    "Awake level" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wachniveau"
+          }
+        }
+      }
+    },
+    "Detection" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erkennung"
+          }
+        }
+      }
+    },
+    "Sleep onset detection" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erkennung des Einschlafens"
+          }
+        }
+      }
+    },
+    "Strict" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streng"
+          }
+        }
+      }
+    },
+    "Standard" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard"
+          }
+        }
+      }
+    },
+    "Relaxed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Locker"
+          }
+        }
+      }
+    },
+    "Learn from my corrections" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus meinen Korrekturen lernen"
+          }
+        }
+      }
+    },
+    "Reset what was learned" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gelerntes zurücksetzen"
+          }
+        }
+      }
+    },
+    "Counts quiet time as sleep only once your heart rate has clearly settled." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zählt ruhige Zeit erst als Schlaf, wenn sich dein Puls klar beruhigt hat."
+          }
+        }
+      }
+    },
+    "Quiet time before sleep is cut when your heart rate is clearly awake." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhige Zeit vor dem Schlaf fällt weg, wenn dein Puls klar wach ist."
+          }
+        }
+      }
+    },
+    "Counts quiet time in bed as sleep sooner; only a clearly raised heart rate is cut." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zählt ruhige Zeit im Bett früher als Schlaf; nur ein klar erhöhter Puls fällt weg."
+          }
+        }
+      }
+    },
+    "You usually fall asleep about %lld min later than detected; applied." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du schläfst meist etwa %lld Min. später ein als erkannt; wird angewendet."
+          }
+        }
+      }
+    },
+    "You usually fall asleep about %lld min earlier than detected; applied." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du schläfst meist etwa %lld Min. früher ein als erkannt; wird angewendet."
+          }
+        }
+      }
+    },
+    "Your corrections point different ways, so nothing is applied." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Korrekturen zeigen in verschiedene Richtungen, deshalb wird nichts angewendet."
+          }
+        }
+      }
+    },
+    "Learns after 3 start-time corrections in the same direction." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lernt nach 3 Korrekturen der Startzeit in dieselbe Richtung."
+          }
+        }
+      }
+    },
+    "Learns after 3 start-time corrections in the same direction (%lld so far)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lernt nach 3 Korrekturen der Startzeit in dieselbe Richtung (bisher %lld)."
+          }
+        }
+      }
+    },
+    "Heart rate and movement" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puls und Bewegung"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
