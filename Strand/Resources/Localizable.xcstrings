@@ -263195,6 +263195,778 @@
           }
         }
       }
+    },
+    "zoop.training.empty.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch kein Training"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No training yet"
+          }
+        }
+      }
+    },
+    "zoop.training.empty.body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einheiten kommen von deinem WHOOP oder aus Apple Health, oder du trägst eine selbst ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions arrive from your WHOOP or Apple Health, or you add one you tracked elsewhere."
+          }
+        }
+      }
+    },
+    "zoop.training.week.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte 7 Tage"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last 7 days"
+          }
+        }
+      }
+    },
+    "zoop.training.week.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Training in den letzten 7 Tagen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No training in the last 7 days."
+          }
+        }
+      }
+    },
+    "zoop.training.week.bars.a11y" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anstrengung pro Tag, letzte 7 Tage"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effort per day, last 7 days"
+          }
+        }
+      }
+    },
+    "zoop.training.week.bars.caption" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anstrengung pro Tag, Skala 0–%@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effort per day, scale 0–%@"
+          }
+        }
+      }
+    },
+    "zoop.training.sessions.count" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Einheit"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Einheiten"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld session"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sessions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "zoop.training.week.time" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time"
+          }
+        }
+      }
+    },
+    "zoop.training.week.energy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Energie"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Energy"
+          }
+        }
+      }
+    },
+    "zoop.training.week.distance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distanz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance"
+          }
+        }
+      }
+    },
+    "zoop.training.week.zones" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenzzonen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart-rate zones"
+          }
+        }
+      }
+    },
+    "zoop.training.fitness.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fitness & Ermüdung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fitness & fatigue"
+          }
+        }
+      }
+    },
+    "zoop.training.fitness.fitness" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fitness"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fitness"
+          }
+        }
+      }
+    },
+    "zoop.training.fitness.fatigue" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ermüdung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fatigue"
+          }
+        }
+      }
+    },
+    "zoop.training.fitness.explain" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fitness ist dein 42-Tage-Schnitt der Anstrengung, Ermüdung der 7-Tage-Schnitt. Der Abstand dazwischen ist deine Form."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fitness is your 42-day average Effort, fatigue the 7-day average. The gap between them is your form."
+          }
+        }
+      }
+    },
+    "zoop.training.fitness.a11y" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fitness und Ermüdung der letzten sechs Wochen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fitness and fatigue over the last six weeks"
+          }
+        }
+      }
+    },
+    "zoop.training.fitness.needsDays" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für Fitness und Ermüdung braucht es %lld Tage Anstrengung am Stück. Bisher sind es %lld."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fitness and fatigue need %lld days of Effort in a row. You have %lld so far."
+          }
+        }
+      }
+    },
+    "zoop.training.fitness.takeaway.calibrating" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoop braucht etwa drei Wochen Verlauf, bevor es deine Woche mit deiner Norm vergleicht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoop needs about three weeks of history before it compares your week with your norm."
+          }
+        }
+      }
+    },
+    "zoop.training.fitness.takeaway.low" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine letzten 7 Tage waren leichter als deine übliche Belastung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your last 7 days were lighter than your usual load."
+          }
+        }
+      }
+    },
+    "zoop.training.fitness.takeaway.optimal" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine letzten 7 Tage entsprechen der Belastung, die du gewohnt bist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your last 7 days match the load you are used to."
+          }
+        }
+      }
+    },
+    "zoop.training.fitness.takeaway.high" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine letzten 7 Tage waren fordernder als deine übliche Belastung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your last 7 days were heavier than your usual load."
+          }
+        }
+      }
+    },
+    "zoop.training.gauges.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wochenbelastung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekly load"
+          }
+        }
+      }
+    },
+    "zoop.training.muscle.allRecovered" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Muskelgruppen sind erholt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All muscle groups are recovered."
+          }
+        }
+      }
+    },
+    "zoop.training.sessions.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einheiten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions"
+          }
+        }
+      }
+    },
+    "zoop.training.sessions.nothingArchived" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nichts archiviert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing archived yet."
+          }
+        }
+      }
+    },
+    "zoop.training.sessions.noMatches" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Einheiten für diesen Filter."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No sessions match this filter."
+          }
+        }
+      }
+    },
+    "zoop.training.zone.a11y" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zone %lld: %lld Prozent"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "zone %lld %lld percent"
+          }
+        }
+      }
+    },
+    "zoop.training.zoneSplit.a11y" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenzzonen-Verteilung: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart-rate zone split: %@"
+          }
+        }
+      }
+    },
+    "zoop.training.detail.effort" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anstrengung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effort"
+          }
+        }
+      }
+    },
+    "zoop.training.detail.effort.none" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es wurde keine Herzfrequenz aufgezeichnet, daher hat diese Einheit keine Anstrengung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No heart rate was recorded, so this session has no Effort."
+          }
+        }
+      }
+    },
+    "zoop.training.detail.effort.restorative" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine leichte Einheit. Dein Herz wurde kaum gefordert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An easy session. It barely taxed your heart."
+          }
+        }
+      }
+    },
+    "zoop.training.detail.effort.building" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine solide Einheit, die Fitness aufbaut, ohne dich auszulaugen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A solid session that builds fitness without draining you."
+          }
+        }
+      }
+    },
+    "zoop.training.detail.effort.demanding" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine harte Einheit. Gib deinem Körper Zeit zur Erholung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A hard session. Give your body time to recover."
+          }
+        }
+      }
+    },
+    "zoop.training.detail.effort.overreaching" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Einheit am Limit. Plane als Nächstes einen leichten Tag."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An all-out session. Plan an easy day next."
+          }
+        }
+      }
+    },
+    "zoop.training.detail.effort.whatItIs" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Anstrengung zeigt, wie hart eine Einheit für dein Herz war, von 0 bis 100. Mehr Zeit bei hohem Puls zählt stärker."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effort shows how hard a session was for your heart, from 0 to 100. More time at higher heart rates scores more."
+          }
+        }
+      }
+    },
+    "zoop.training.detail.effort.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenz-Belastung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart-rate load"
+          }
+        }
+      }
+    },
+    "zoop.training.detail.effort.methodSummary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Zeit in fünf Herzfrequenzzonen wird zu den harten Zonen hin gewichtet und logarithmisch gestaucht, sodass jeder weitere Punkt mehr Arbeit kostet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time in five heart-rate zones is weighted towards the hard zones and compressed logarithmically, so each extra point takes more work."
+          }
+        }
+      }
+    },
+    "zoop.training.detail.heartRate" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart rate"
+          }
+        }
+      }
+    },
+    "zoop.training.detail.hr.above" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Höher als in deinen üblichen Einheiten dieser Sportart."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Higher than in your usual sessions of this sport."
+          }
+        }
+      }
+    },
+    "zoop.training.detail.hr.below" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niedriger als in deinen üblichen Einheiten dieser Sportart."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lower than in your usual sessions of this sport."
+          }
+        }
+      }
+    },
+    "zoop.training.detail.hr.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Rahmen deiner üblichen Einheiten dieser Sportart."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In line with your usual sessions of this sport."
+          }
+        }
+      }
+    },
+    "zoop.training.detail.zones.imported" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die für diese Einheit importierte Verteilung auf die Zonen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The per-zone split imported for this session."
+          }
+        }
+      }
+    },
+    "zoop.training.detail.zones.derived" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeit in jeder Herzfrequenzzone, aus dem Puls des Armbands in diesem Zeitraum abgeleitet (ungefähr)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time in each heart-rate zone, derived from the strap's heart rate over this window (approximate)."
+          }
+        }
+      }
+    },
+    "No heart-rate samples were recorded over this session's window." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Zeitraum dieser Einheit wurde keine Herzfrequenz aufgezeichnet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No heart-rate samples were recorded over this session's window."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

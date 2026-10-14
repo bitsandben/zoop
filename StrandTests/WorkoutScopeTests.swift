@@ -20,14 +20,14 @@ final class WorkoutScopeTests: XCTestCase {
 
     func testFewerThanTheLimitPutsEverythingInCurrentAndNothingInArchived() {
         let rows = (0..<4).map { row(1_700_000_000 + $0 * 3600) }
-        XCTAssertEqual(WorkoutsView.scopedRows(rows, scope: .current, currentCount: 10).count, 4)
-        XCTAssertTrue(WorkoutsView.scopedRows(rows, scope: .archived, currentCount: 10).isEmpty)
+        XCTAssertEqual(TrainingScope.rows(rows, scope: .current, currentCount: 10).count, 4)
+        XCTAssertTrue(TrainingScope.rows(rows, scope: .archived, currentCount: 10).isEmpty)
     }
 
     func testCurrentHoldsTheMostRecentAndArchivedHoldsTheRest() {
         let rows = (0..<25).map { row(1_700_000_000 + $0 * 3600) }   // ascending
-        let current = WorkoutsView.scopedRows(rows, scope: .current, currentCount: 10)
-        let archived = WorkoutsView.scopedRows(rows, scope: .archived, currentCount: 10)
+        let current = TrainingScope.rows(rows, scope: .current, currentCount: 10)
+        let archived = TrainingScope.rows(rows, scope: .archived, currentCount: 10)
         XCTAssertEqual(current.count, 10)
         XCTAssertEqual(archived.count, 15)
         let newestCurrent = current.map(\.startTs).min() ?? 0
@@ -39,8 +39,8 @@ final class WorkoutScopeTests: XCTestCase {
         // Nothing may be lost or duplicated by the split: a row the wearer cannot find in either tab has
         // effectively been deleted by the UI, which is the outcome this design exists to avoid.
         let rows = (0..<23).map { row(1_700_000_000 + $0 * 3600) }
-        let combined = WorkoutsView.scopedRows(rows, scope: .current)
-            + WorkoutsView.scopedRows(rows, scope: .archived)
+        let combined = TrainingScope.rows(rows, scope: .current)
+            + TrainingScope.rows(rows, scope: .archived)
         XCTAssertEqual(combined.count, rows.count)
         XCTAssertEqual(Set(combined.map(\.startTs)), Set(rows.map(\.startTs)))
     }
@@ -49,14 +49,14 @@ final class WorkoutScopeTests: XCTestCase {
         // Ranking, not a cutoff timestamp: twelve sessions that all start in the same second must still
         // yield exactly ten in Current. A threshold comparison would hand back all twelve.
         let rows = (0..<12).map { row(1_700_000_000, sport: "Sport\($0)") }
-        XCTAssertEqual(WorkoutsView.scopedRows(rows, scope: .current, currentCount: 10).count, 10)
-        XCTAssertEqual(WorkoutsView.scopedRows(rows, scope: .archived, currentCount: 10).count, 2)
+        XCTAssertEqual(TrainingScope.rows(rows, scope: .current, currentCount: 10).count, 10)
+        XCTAssertEqual(TrainingScope.rows(rows, scope: .archived, currentCount: 10).count, 2)
     }
 
     func testOrderIsPreserved() {
         // The caller's sort decides what the screen shows; the split only chooses membership.
         let rows = (0..<25).map { row(1_700_000_000 + $0 * 3600) }.sorted { $0.startTs > $1.startTs }
-        let current = WorkoutsView.scopedRows(rows, scope: .current)
+        let current = TrainingScope.rows(rows, scope: .current)
         XCTAssertEqual(current.map(\.startTs), current.map(\.startTs).sorted(by: >))
     }
 

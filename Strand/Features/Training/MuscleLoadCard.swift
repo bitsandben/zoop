@@ -105,35 +105,37 @@ struct MuscleLoadCard: View {
 
     @State private var showDetail = false
 
-    /// Least recovered first, then the most loaded; eight cells on the card, every group in the sheet.
+    /// Muscles that took load in the last seven days and are not back to full, least recovered first.
+    /// Muscles at 100 % say nothing the sentence above does not, so they stay out of the grid.
     private var cells: [MuscleLoad.Entry] {
-        Array(result.entries.sorted {
-            ($0.percentRecovered, -$0.weekLoad) < ($1.percentRecovered, -$1.weekLoad)
-        }.prefix(8))
+        Array(result.entries
+            .filter { $0.weekLoad > 0 && $0.percentRecovered < 100 }
+            .sorted { ($0.percentRecovered, -$0.weekLoad) < ($1.percentRecovered, -$1.weekLoad) }
+            .prefix(8))
+    }
+
+    /// Nothing loaded a muscle in the last seven days. The Training page leaves the card out then, so it
+    /// never says "no training" under a week card that lists sessions.
+    static func isQuiet(_ result: MuscleLoad.Result) -> Bool {
+        if case .quietWeek = result.verdict { return true }
+        return false
     }
 
     var body: some View {
         Button { showDetail = true } label: {
-            ZoopCard {
-                VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
-                    VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
-                        HStack(spacing: ZoopMetrics.space2) {
-                            Text(String(localized: "muscle.recovery.title", defaultValue: "Muscle recovery"))
-                                .font(StrandFont.headline)
-                                .foregroundStyle(StrandPalette.textPrimary)
-                            Image(systemName: "arrow.right")
-                                .font(StrandFont.footnote.weight(.semibold))
-                                .foregroundStyle(StrandPalette.textSecondary)
-                            Spacer(minLength: 0)
-                        }
-                        Text(MuscleLoadText.verdict(result.verdict))
-                            .font(StrandFont.subhead)
-                            .foregroundStyle(StrandPalette.textSecondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: ZoopMetrics.space4, alignment: .leading),
+            ContentCard("muscle.recovery.title", showsChevron: true) {
+                Text(MuscleLoadText.verdict(result.verdict))
+                    .font(ZoopType.body)
+                    .foregroundStyle(StrandPalette.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                if cells.isEmpty {
+                    Text(TrainingStrings.allMusclesRecovered)
+                        .font(ZoopType.caption)
+                        .foregroundStyle(StrandPalette.textSecondary)
+                } else {
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: ZoopSpacing.l, alignment: .leading),
                                         GridItem(.flexible(), alignment: .leading)],
-                              alignment: .leading, spacing: ZoopMetrics.space4) {
+                              alignment: .leading, spacing: ZoopSpacing.l) {
                         ForEach(cells, id: \.group) { MuscleRecoveryCell(entry: $0) }
                     }
                 }

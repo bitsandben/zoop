@@ -9,22 +9,22 @@ final class WorkoutEffortCellTests: XCTestCase {
 
     func testEffortLabelOnHundredScale() {
         // Stored 0-100 axis renders unchanged on the default Effort scale.
-        XCTAssertEqual(WorkoutsView.effortCellLabel(strain: 60, scale: .hundred), "60.0")
+        XCTAssertEqual(TrainingEffort.cellLabel(strain: 60, scale: .hundred), ZoopNumber.decimal(60, digits: 1))
     }
 
     func testEffortLabelOnWhoopScale() {
         // The WHOOP 0-21 scale applies the 21/100 factor (60 -> 12.6), matching every other read-out.
-        XCTAssertEqual(WorkoutsView.effortCellLabel(strain: 60, scale: .whoop), "12.6")
+        XCTAssertEqual(TrainingEffort.cellLabel(strain: 60, scale: .whoop), ZoopNumber.decimal(12.6, digits: 1))
     }
 
     func testMissingStrainShowsDash() {
         // The empty cell uses the en-dash glyph the other workout-row cells use (row.avgHr etc.).
-        XCTAssertEqual(WorkoutsView.effortCellLabel(strain: nil, scale: .hundred), "\u{2013}")
-        XCTAssertEqual(WorkoutsView.effortCellLabel(strain: nil, scale: .whoop), "\u{2013}")
+        XCTAssertEqual(TrainingEffort.cellLabel(strain: nil, scale: .hundred), "\u{2013}")
+        XCTAssertEqual(TrainingEffort.cellLabel(strain: nil, scale: .whoop), "\u{2013}")
     }
 
     func testZeroStrainRendersZeroNotDash() {
         // A real captured 0 is data, not "missing", so it must show as a number, not the empty dash.
-        XCTAssertEqual(WorkoutsView.effortCellLabel(strain: 0, scale: .hundred), "0.0")
+        XCTAssertEqual(TrainingEffort.cellLabel(strain: 0, scale: .hundred), ZoopNumber.decimal(0, digits: 1))
     }
 }
