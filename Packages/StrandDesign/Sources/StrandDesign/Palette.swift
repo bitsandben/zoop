@@ -107,8 +107,6 @@ public enum StrandPalette {
     // label always reads. (The Liquid hero card USED to need these, but its `heroFill` is theme-aware as of
     // #1160, so the hero now uses the normal text* tokens.)
     public static let onDarkPrimary   = Color(hex: "#F4F6F8")
-    public static let onDarkSecondary = Color(hex: "#C8CFD8")
-    public static let onDarkTertiary  = Color(hex: "#8A94A4")
 
     // MARK: Liquid hero card surface (#1160/#1161)
     // Was pinned near-black in BOTH themes, which read as a broken dark block in Light mode (#1160) and
@@ -138,8 +136,6 @@ public enum StrandPalette {
         return Color(light: "#2F3A33" + a(opacity * 0.35), dark: "#000000" + a(opacity))
     }
 
-    // MARK: Glow — ambient bloom behind heroes / charts (additive on dark; faint warm on light)
-    public static let glowAmbient    = ZoopVisualStyle.mintGlow.opacity(0.28)
 
     // MARK: Accent — chrome anchor (links, selection, focus, generic accent). USER-SELECTABLE (mint /
     // WHOOP blue / custom) via `accentChoice` below, default mint (#1068). Only the chrome accent is
@@ -201,12 +197,6 @@ public enum StrandPalette {
     static let cZone3 = Color(light: "#CFA528", dark: "#F2C53D")
     static let cZone4 = Color(light: "#D87328", dark: "#EE8B3C")
     static let cZone5 = Color(light: "#CB3A2F", dark: "#E5483B")
-    // Stress: calm green → amber → red.
-    static let cStressStops: [Gradient.Stop] = [
-        .init(color: Color(light: "#2E9E4F", dark: "#46B45A"), location: 0.0),
-        .init(color: Color(light: "#CFA528", dark: "#F2C53D"), location: 0.5),
-        .init(color: Color(light: "#CB3A2F", dark: "#E5483B"), location: 1.0),
-    ]
 
     // MARK: Recovery / Charge gradient — the gold "Charge" colour world.
     // A single warm metal ramp: a deep bronze floor climbs through brand gold into a
@@ -298,9 +288,6 @@ public enum StrandPalette {
     public static let stressLow         = Color(light: "#5C8FB0", dark: "#6E9CBC", pastel: ("#7DB592", "#9FD6AF"))
     public static let stressMedium      = Color(light: "#4C7A12", dark: "#BFEB7B", pastel: ("#8C80D6", "#B9AFF0"))
     public static let stressHigh        = Color(light: "#B86A2A", dark: "#D9823E", pastel: ("#D27B97", "#F0A9BF"))
-    public static let stressLowMuted    = Color(light: "#A9C2D4", dark: "#3D5869", pastel: ("#CFE8D5", "#33503E"))
-    public static let stressMediumMuted = Color(light: "#B5D48C", dark: "#5F7A3A", pastel: ("#DCD6F7", "#3F3A63"))
-    public static let stressHighMuted   = Color(light: "#DDB592", dark: "#7A4C27", pastel: ("#F6D3DE", "#5A3846"))
 
     // MARK: Per-metric accents — HRV / SpO₂ / energy / risk. Classic leans the traditional hues (purple HRV, red risk).
     // Metric identities drawn from the redesign palette only.
@@ -367,10 +354,6 @@ public enum StrandPalette {
     /// Star tint for the scenic starfield (very faint on light; the hero suppresses stars there).
     public static let scenicStar       = Color(light: "#D8CDB6", dark: "#C8CFD8", pastel: ("#DCE2DA", "#C8D2CB"))
 
-    /// Frosted-card tint endpoints (white→warm on light; the accent wash sits over them).
-    public static let cardFillTop      = Color(light: "#FFFFFF", dark: "#15243C", pastel: ("#FFFFFF", "#202824"))
-    public static let cardFillBottom   = Color(light: "#FAF7F0", dark: "#0B1424", pastel: ("#F6F8F5", "#1D2521"))
-
     // MARK: - Titanium & Gold core tokens (NEW)
     //
     // The brand gold ramp (buttons, ring fills, FAB, active chrome) and the neutral
@@ -402,8 +385,6 @@ public enum StrandPalette {
     public static let titaniumMid   = Color(light: "#BBC2C9", dark: "#C9CFD4", pastel: ("#C9D2C7", "#B7C4BA"))
     public static let titaniumLow   = Color(light: "#98A0A8", dark: "#969DA4", pastel: ("#A9B5A8", "#8C9C91"))
     public static let titaniumDeep  = Color(light: "#6B737B", dark: "#6B737B", pastel: ("#7F8F84", "#6A7A70"))
-    /// 150° titanium ramp for tiles / avatars / icon plates.
-    public static let titaniumGradient = Gradient(colors: [titaniumTop, titaniumMid, titaniumLow, titaniumDeep])
 
 
     // MARK: - Themed (default chart style) values, parsed once

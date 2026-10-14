@@ -953,11 +953,6 @@ public final class BLEManager: NSObject, ObservableObject {
         puffinDeepBufferLog.appendOpticalPhase(phase)
     }
 
-    /// Flush and expose the passive deep-buffer experiment log for a user-initiated export.
-    func whoop5OpticalExperimentURL() -> URL? {
-        puffinDeepBufferLog.opticalExperimentURL()
-    }
-
     // MARK: CoreBluetooth
     private var central: CBCentralManager!
     private var peripheral: CBPeripheral?
@@ -2176,45 +2171,6 @@ public final class BLEManager: NSObject, ObservableObject {
     /// Light storage summary for the UI (decoded rows, raw batches, raw bytes). nil without a store.
     public func storageStats() async -> (decodedRows: Int, rawBatches: Int, rawBytes: Int)? {
         await collector?.storageStats()
-    }
-
-    /// Capture raw accelerometer (type-43 IMU) frames on demand for a bounded window, then stop.
-    /// Persists raw even when the global research toggle is off (that's the point: on-demand, not
-    /// 24/7). The Collector's window auto-expires at its deadline so a dropped stop can't leak raw.
-    public func captureRawAccel(seconds: TimeInterval = 30) {
-        guard !rawCaptureInFlight else {
-            log("Raw-accel capture: already in flight — ignoring")
-            return
-        }
-        rawCaptureInFlight = true
-        let secs = RawCaptureWindow.clamp(seconds)
-        collector?.beginRawCapture(seconds: secs)
-        // Hardware-verified on WHOOP 5/MG: opcode 106 alone acknowledges but does not start the
-        // producer. START_RAW_DATA must precede the two-byte realtime IMU selector.
-        send(.startRawData, payload: [0x01], writeType: .withResponse)
-        if selectedModel.deviceFamily == .whoop5 {
-            send(.toggleIMUMode, payload: [0x01, 0x01], writeType: .withResponse)
-        } else {
-            send(.toggleIMUMode, payload: [0x01], writeType: .withResponse)
-        }
-        log("Raw-accel capture: started for \(secs)s")
-        DispatchQueue.main.asyncAfter(deadline: .now() + secs) { [weak self] in
-            guard let self else { return }
-            // Only stop the raw stream if the 24/7 research toggle is OFF.  When it's ON, the
-            // continuous stream must keep running — we just flush/upload the bounded window we
-            // captured without halting the wider session.
-            if !UserDefaults.standard.bool(forKey: "enableRawCapture") {
-                self.send(.stopRawData, payload: [0x01], writeType: .withResponse)
-                if self.selectedModel.deviceFamily == .whoop5 {
-                    self.send(.toggleIMUMode, payload: [0x01, 0x00], writeType: .withResponse)
-                }
-            }
-            self.rawCaptureInFlight = false
-            Task { @MainActor in
-                await self.collector?.endRawCapture()
-            }
-            self.log("Raw-accel capture: stopped + flushed")
-        }
     }
 
     /// Start a manually stopped 5/MG raw-data session. Returns false when another capture is active.
@@ -3630,9 +3586,6 @@ public final class BLEManager: NSObject, ObservableObject {
         state.r22DisableReport = text
     }
 
-    /// Clear the #174 disable result (Settings card dismissed). Twin of Android clearR22DisableReport().
-    public func clearR22DisableReport() { state.r22DisableReport = nil }
-
     /// #174: one COMMAND_RESPONSE belonging to a disable run — either a `SET_FF_VALUE(120)` write ack or a
     /// `GET_FF_VALUE(128)` read-back. Guarded on a run being IN-FLIGHT so a stray byte match can never
     /// surface a result. Parsing — including the CRC gate — lives in the pure `DeviceConfigReadProbe`.
@@ -3811,9 +3764,6 @@ public final class BLEManager: NSObject, ObservableObject {
         state.ecgRawDataGate = report
         log("ECG gate (#891):\n\(report.render())")
     }
-
-    /// Clear the #891 result (Settings row dismissed / disconnect). Twin of Android clearEcgRawDataGate().
-    public func clearEcgRawDataGate() { state.ecgRawDataGate = nil }
 
     /// The write's own COMMAND_RESPONSE — recorded, never treated as proof (#891). Routed here from the
     /// frame router when a 119 reply lands while a write is being verified.

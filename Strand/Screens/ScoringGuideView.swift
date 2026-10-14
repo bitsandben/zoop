@@ -44,11 +44,6 @@ enum ScoreSection: String, CaseIterable, Identifiable {
         }
     }
 
-    /// The number shown inside the sample gauge (the 0–100 score the fraction maps to).
-    var sampleNumber: String {
-        "\(Int((sampleFraction * 100).rounded()))"
-    }
-
     /// The SF Symbol for the section header (heart/spark · flame · moon).
     var icon: String {
         switch self {

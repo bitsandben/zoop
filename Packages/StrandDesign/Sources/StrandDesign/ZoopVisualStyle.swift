@@ -132,21 +132,3 @@ public struct ZoopChromeSurface: View {
         }
     }
 }
-
-public extension View {
-    func noopPanel(
-        tint: Color? = nil,
-        cornerRadius: CGFloat = ZoopVisualStyle.cardRadius,
-        elevated: Bool = false,
-        surfaceOpacity: Double = 1
-    ) -> some View {
-        background {
-            ZoopPanelSurface(
-                tint: tint,
-                cornerRadius: cornerRadius,
-                elevated: elevated,
-                surfaceOpacity: surfaceOpacity
-            )
-        }
-    }
-}

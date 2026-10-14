@@ -1144,20 +1144,6 @@ private struct Checkline: View {
     }
 }
 
-private struct FieldRow: View {
-    let label: String
-    let value: String
-    var body: some View {
-        HStack {
-            Text(label).strandOverline()
-            Spacer()
-            Text(value)
-                .font(StrandFont.bodyNumber)
-                .foregroundStyle(StrandPalette.textPrimary)
-        }
-    }
-}
-
 private struct DisclosureToggle: View {
     @Binding var open: Bool
     let label: String

@@ -622,23 +622,6 @@ final class Repository: ObservableObject {
         widgetAnchor(days: days, logicalKey: logicalDayKey(now), localKey: localDayKey(now))
     }
 
-    /// #1051-shaped memo for the anchor resolve on the high-frequency live surfaces. Not @Published — pure
-    /// bookkeeping, never drives the UI (like `todayHistoryWideLoadedSeq`).
-    private var widgetAnchorMemo = WidgetAnchorMemo()
-
-    /// Memoized `widgetAnchor(days: self.days)` for the Live Activity's ~1-3 Hz `onReceive` closures, which
-    /// otherwise re-derive the anchor (two `DateFormatter` formats + up to two full-history scans) on every
-    /// live-HR tick. Recomputes only when `days` changes (`refreshSeq`) or the day rolls — byte-identical to
-    /// the static overload. Call THIS from the per-tick live surfaces; tests use the pure 3-arg overload.
-    func cachedWidgetAnchor(now: Date = Date()) -> DailyMetric? {
-        widgetAnchorMemo.resolve(
-            days: days,
-            seq: refreshSeq,
-            logicalKey: Self.logicalDayKey(now),
-            localKey: Self.localDayKey(now)
-        ) { Repository.widgetAnchor(days: $0, logicalKey: $1, localKey: $2) }
-    }
-
     /// The recovery-INDEPENDENT overnight-vitals carry (the durable fix for the v8 Today rollover blank):
     /// the freshest strictly-prior day that recorded any of HRV / resting HR / respiratory, so the recovery
     /// VITALS keep reading through the post-04:00 window before tonight's sleep is scored, WITHOUT being
@@ -1723,21 +1706,6 @@ final class Repository: ObservableObject {
         DismissedSleepSpans.windows(from: dismissedSleepSpans)
     }
 
-    /// The user's deleted-sleep windows for the "Deleted sleep windows" management list (#65 escape hatch):
-    /// each with its parsed window so the UI can render "d MMM, HH:mm-HH:mm" + an "Allow re-detection"
-    /// action. Ordered newest-first by end-time.
-    func dismissedSleepManagementWindows() -> [(start: Int, end: Int)] {
-        dismissedSleepWindows().sorted { $0.end > $1.end }
-    }
-
-    /// Remove a tombstone by its window (#65 "Allow re-detection" / expiry escape hatch): the night
-    /// regenerates from raw on the next `analyzeRecent` for a computed night. Imported nights cannot be
-    /// re-created (there is no raw to re-derive); the caller shows that honest caption.
-    func allowSleepReDetection(startTs: Int, endTs: Int) async {
-        dismissedSleepSpans = DismissedSleepSpans.removing(startTs: startTs, endTs: endTs,
-                                                           from: dismissedSleepSpans)
-    }
-
     /// Manually ADD a missed sleep session , typically a daytime NAP the detector didn't pick up (#508).
     /// Stages it from the raw streams over `[startTs, endTs]` (exactly the editing path's `restageFromRaw`),
     /// falling back to a single "awake" block when the strap has no dense data there yet , the post-sync
@@ -2688,18 +2656,6 @@ final class Repository: ObservableObject {
         }.map(\.id))
     }
 
-    func availableKeys(source: String) async -> [String] {
-        guard let store = await ensureStore() else { return [] }
-        // For the canonical WHOOP source, UNION the keys present under the active strap too, so a re-added
-        // strap's series keys still list alongside the canonical history's. Other sources read verbatim.
-        guard source == canonicalDeviceId, deviceId != canonicalDeviceId else {
-            return (try? await store.metricKeys(deviceId: source)) ?? []
-        }
-        var keys = Set<String>()
-        for id in importedReadIds { keys.formUnion((try? await store.metricKeys(deviceId: id)) ?? []) }
-        return keys.sorted()
-    }
-
     /// Native journal answers live under this dedicated source id. The journal table has no
     /// `source` column (PK is (deviceId, day, question)), so writing native answers under the
     /// imported `deviceId` would let a CSV re-import silently overwrite them , and clears could
@@ -2789,20 +2745,6 @@ final class Repository: ObservableObject {
             [JournalEntry(day: day, question: question, answeredYes: true, notes: notes,
                           numericValue: value)],
             deviceId: Self.journalDeviceId)
-    }
-
-    /// Per-question numeric series (question → [day: value]) over the imported ∪ native union, native
-    /// winning per (day, question). Only rows that carry a numericValue contribute, so a numeric
-    /// journal item ("caffeine mg", "alcohol units") becomes a daily series the effect ranker can
-    /// consume the same way it consumes any metric series. Behaviours logged only as yes/no never
-    /// appear here (nil numericValue), so this is additive and never perturbs the boolean effects.
-    func numericJournalSeries() async -> [String: [String: Double]] {
-        let entries = await journalEntries()
-        var out: [String: [String: Double]] = [:]
-        for e in entries {
-            if let v = e.numericValue { out[e.question, default: [:]][e.day] = v }
-        }
-        return out
     }
 
     /// Clear one native answer (never touches imported rows , scoped to the dedicated source id).

@@ -346,32 +346,6 @@ struct PatternsScreen: View {
         }
     }
 
-    private var effectsCard: some View {
-        PatternCard(icon: "wand.and.sparkles", title: "What moves your recovery",
-                    basis: "Days you logged each answer in the journal, against days you didn't.") {
-            VStack(spacing: 10) {
-                ForEach(patterns.effects) { e in
-                    HStack {
-                        Text(e.behavior)
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(StrandPalette.textPrimary)
-                            .lineLimit(1)
-                        Spacer()
-                        Text(String(format: "%+.0f%%", e.delta))
-                            .font(.system(size: 15, weight: .bold).monospacedDigit())
-                            .foregroundStyle(e.delta >= 0 ? StrandPalette.accent : StrandPalette.statusCritical)
-                    }
-                }
-            }
-            NavigationLink { InsightsHubView() } label: {
-                Text("All effects")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(StrandPalette.accent)
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
     private func bedtimeCard(_ w: PatternInsights.BedtimeWindow) -> some View {
         PatternCard(icon: "bed.double.fill", title: "Your best bedtime",
                     basis: "\(w.nightsInWindow) of \(w.nights) nights started in this window.") {
@@ -668,59 +642,6 @@ struct PatternLoadCard: View {
             }
             .frame(height: 14)
         }
-    }
-}
-#endif
-
-#if os(iOS)
-/// Home's look ahead: tonight's sleep need, tomorrow's recovery and training load side by side, with
-/// the week in numbers first on Sundays and Mondays, and a link to all patterns.
-struct HomePatternsCarousel: View {
-    static let cardWidth: CGFloat = 280
-    @EnvironmentObject private var repo: Repository
-    /// Reached WITHOUT observing: only the alarm is read, inside the load task, while the app model
-    /// publishes the smoothed heart rate every few seconds and re-ran this view mid-scroll for it.
-    private var model: AppModel? { AppModel.shared }
-    @StateObject private var patterns = PatternsModel()
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HomeSectionTitle(title: "Looking ahead") {
-                NavigationLink(value: TabRoute.patterns) {
-                    Text("All patterns")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(StrandPalette.accent)
-                }
-                .buttonStyle(.plain)
-            }
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 12) {
-                    if let t = patterns.tonight {
-                        PatternTonightCard(tonight: t) { Task { await patterns.loadQuick(repo: repo, alarm: model?.nextArmedStrapAlarm()) } }
-                            .frame(width: Self.cardWidth)
-                    }
-                    if let f = patterns.forecast {
-                        PatternCard(icon: "sunrise.fill", title: "Tomorrow morning",
-                                    basis: "If you sleep \(PatternsScreen.hours(f.plannedSleepHours * 60)).") {
-                            Text("\(Int(f.charge.rounded()))%")
-                                .font(StrandFont.display(40))
-                                .foregroundStyle(StrandPalette.recoveryColor(f.charge))
-                            Text("Expected recovery")
-                                .font(StrandFont.subhead)
-                                .foregroundStyle(StrandPalette.textSecondary)
-                        }
-                        .frame(width: Self.cardWidth)
-                    }
-                    if let a = patterns.acwr { PatternLoadCard(acwr: a).frame(width: Self.cardWidth) }
-                }
-                // One width and, through the fixed vertical size, one height for every card in the row.
-                .fixedSize(horizontal: false, vertical: true)
-                .scrollTargetLayout()
-            }
-            .scrollTargetBehavior(.viewAligned)
-            .scrollClipDisabled()
-        }
-        .task(id: repo.refreshSeq) { await patterns.loadQuick(repo: repo, alarm: model?.nextArmedStrapAlarm()) }
     }
 }
 #endif

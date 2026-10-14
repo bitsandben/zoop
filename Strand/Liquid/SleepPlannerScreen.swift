@@ -327,12 +327,6 @@ struct SleepPlannerScreen: View {
         return parts.joined(separator: ", ")
     }
 
-    static func weekdayTime(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.locale = AppLanguage.activeLocale
-        f.setLocalizedDateFormatFromTemplate("EEE jj:mm")
-        return f.string(from: date)
-    }
 }
 
 // MARK: - Time sheet

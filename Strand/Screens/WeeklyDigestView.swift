@@ -13,10 +13,7 @@ import Foundation
 // biggest movers, a strain-vs-recovery balance read, and 1–2 plain-English focal
 // points. No AI, no network — the engine is fully deterministic and unit-tested.
 //
-// Two surfaces are exposed so the orchestrator can wire whichever it wants:
-//   • `WeeklyDigestCard` — an embeddable card (drop into Today / Trends).
-//   • `WeeklyDigestView` — a full ScreenScaffold screen (for a sidebar `.digest`
-//      case). Both share `WeeklyDigestContent`, so they never drift.
+// The surface is `WeeklyDigestContent`, mounted by TrendsView and fed by `WeeklyDigestSource`.
 //
 // Framing is informational and non-clinical, consistent with the app DISCLAIMER.
 
@@ -55,62 +52,6 @@ enum WeeklyDigestSource {
     /// absent from the Rest series.
     private static func restScore(for d: DailyMetric) -> Double? {
         AnalyticsEngine.Rest.composite(daily: d)
-    }
-}
-
-// MARK: - Embeddable card
-
-/// The weekly digest as a single card (for Today / Trends). Renders nothing
-/// (an empty view) when there's no data this week, so it's safe to always place.
-struct WeeklyDigestCard: View {
-    @EnvironmentObject var repo: Repository
-
-    var body: some View {
-        let digest = WeeklyDigestSource.digest(from: repo.days, anchorDay: Repository.localDayKey(Date()))
-        if digest.isEmpty {
-            EmptyView()
-        } else {
-            // Content owns its own frosted cards (the domain score row + the signals
-            // card), so it's no longer wrapped in an outer ZoopCard — that would double
-            // the frost. The compact flag trims it to the three headline scores.
-            WeeklyDigestContent(digest: digest, compact: true)
-        }
-    }
-}
-
-// MARK: - Full screen
-
-/// The weekly digest as a full screen (for a sidebar `.digest` case).
-struct WeeklyDigestView: View {
-    @EnvironmentObject var repo: Repository
-
-    var body: some View {
-        ScreenScaffold(title: "Week in review",
-                       subtitle: "Your Monday-to-Sunday, read in one glance.",
-                       quietSubtitle: true,
-                       // PERF: chart-heavy column (per-score summary cards with gauges, the metric grid
-                       // and the focal-points list, all inside WeeklyDigestContent). The LazyVStack path
-                       // is byte-identical layout. The content is kept in its inner VStack(sectionGap=22)
-                       // for pixel-identical spacing (the scaffold stack is 20pt), so the win is partial
-                       // until those rows are promoted to direct children.
-                       lazy: true) {
-            if repo.days.isEmpty {
-                ComingSoon(what: repo.loaded
-                    ? "A weekly digest needs a few days of history. Wear your strap or import your WHOOP export in Data Sources."
-                    : "Loading your history…")
-            } else {
-                let digest = WeeklyDigestSource.digest(from: repo.days, anchorDay: Repository.localDayKey(Date()))
-                if digest.isEmpty {
-                    DataPendingNote(
-                        title: "No readings this week yet",
-                        message: "Once this week has a day or two of data, your week-in-review appears here.")
-                } else {
-                    VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
-                        WeeklyDigestContent(digest: digest, compact: false)
-                    }
-                }
-            }
-        }
     }
 }
 

@@ -482,24 +482,6 @@ final class AICoachEngine: ObservableObject {
         // sends. Local Custom servers still refresh on Connect.
     }
 
-    /// Forget the stored key.
-    func clearKey() {
-        AIKeyStore.clear()
-        // Same reasoning as `disconnect`: clearing the key returns the user to the setup screen, and
-        // Kotlin empties the transcript when it does. Leaving it meant a "clear my key" on Apple removed
-        // the credential and kept the conversation.
-        messages = []
-        conversationDay = nil
-        // The error belongs to the connection being retired, so it goes with it. Kotlin has cleared it
-        // here since the method existed and this side never did: harmless while only the chat rendered
-        // an error, and a visible defect the moment the setup card does too, because the card this
-        // returns to would open carrying "That API key was rejected" above an empty key field, reading
-        // as a verdict on the key about to be typed.
-        errorText = nil
-        keyRejected = false
-        objectWillChange.send()
-    }
-
     // MARK: Live model list
 
     /// Set a custom model id (any string). Adds it to the picker if it isn't already listed.
