@@ -463,17 +463,7 @@ public final class LiveState: ObservableObject {
         sensorSpeedKmh != nil || sensorCadence != nil || sensorPowerWatts != nil
     }
 
-    /// Pure, honest display strings for the additive in-workout sensor readout. Each returns nil when the
-    /// sensor hasn't sent that field (the UI then hides the tile rather than showing a fabricated value).
-    /// Units are the sensor's native ones, no unit-conversion guessing: speed km/h (the decode/derivation
-    /// unit), cadence per-minute (steps/min for a footpod, crank rpm for a bike sensor — both "/min", and
-    /// LiveState doesn't carry the kind, so the neutral honest label is used), power watts. Mirrors the
-    /// JVM-tested Kotlin `StandardHrSource.formatSensor*` so the two platforms read identically. `static`
-    /// so they're trivially unit-testable away from the @MainActor instance.
-    static func formatSpeedKmh(_ kmh: Double?) -> String? {
-        guard let kmh, kmh.isFinite, kmh >= 0 else { return nil }
-        return String(format: "%.1f", kmh)
-    }
+    /// Pure display strings for the in-workout sensor readout: nil when the sensor sent no value.
     static func formatCadence(_ perMin: Double?) -> String? {
         guard let perMin, perMin.isFinite, perMin >= 0 else { return nil }
         return String(Int(perMin.rounded()))

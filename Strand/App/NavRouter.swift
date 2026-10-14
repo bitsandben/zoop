@@ -88,16 +88,10 @@ final class NavRouter: ObservableObject {
     func openFusedRecord() { requestedDestination = .fusedRecord }
     /// Open the experimental Rhythm visualization (self-gates on its own consent).
     func openRhythm() { requestedDestination = .rhythm }
-    /// Open the Trends screen (where a "new data" reading deep-links).
-    func openTrends() { requestedDestination = .trends }
     /// Open the active workout: route to the Live surface AND raise the one-shot flag so `LiveView`
     /// presents the in-exercise screen even when the workout is already running, in one tap from the Today
     /// indicator card. The flag is consumed (and cleared) by `LiveView.consumeActiveWorkoutRequest()`.
     func openActiveWorkout() { presentActiveWorkout = true; requestedDestination = .activeWorkout }
-    /// Open a Live Session (silent guardian, beta). The Liquid Today entry presents the session screen
-    /// directly today; this route exists for deep-link parity so a future shell/inbox item can raise it
-    /// the same way as every other destination.
-    func openLiveSession() { requestedDestination = .liveSession }
     /// A journal day-offset (daysBack; -1 = Tomorrow) the Today journal widget deep-linked to, so tapping
     /// a SPECIFIC day's bar opens the journal at THAT day instead of always today (#656). InsightsView
     /// consumes it on appear and clears it back to nil. nil = open at today (the default).

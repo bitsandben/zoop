@@ -244,10 +244,6 @@ public final class ZoopMotionState: ObservableObject {
         reduceMotion || isLowPower || quietMotion || windowObscured
     }
 
-    /// The non-environment signals on their own, for an imperative (non-View) reader that supplies its
-    /// own Reduce Motion read — e.g. the decorative motion sensor deciding whether to start at all.
-    /// Views must use `poseStill(_:)` instead so they invalidate correctly.
-    public var poseStillIgnoringReduceMotion: Bool { isLowPower || quietMotion || windowObscured }
 }
 
 // MARK: - CountUpText

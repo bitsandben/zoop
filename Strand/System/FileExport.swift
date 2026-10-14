@@ -87,29 +87,6 @@ enum FileExport {
         #endif
     }
 
-    /// Export an existing file AND a block of text together as a matched pair (#510, raw capture plus the
-    /// strap log that produced it). Now a 2-entry case of `exportBundle`: both ride in one `.zip` so a
-    /// reporter saves them in a single gesture on every platform (the old macOS path opened two save
-    /// panels back-to-back; the bundle is one panel). The caller's text is already redacted by its sink;
-    /// the file's bytes are passed through unchanged here. If the source file is absent, falls back to a
-    /// single-entry bundle (just the text) so the tap is never a dead end.
-    ///
-    /// #646/#651: reading `src` off disk is staged on a detached task, same as `exportBundle`'s zip build,
-    /// so a multi-MB raw capture doesn't block the main actor before the share sheet / save panel appears.
-    @MainActor
-    static func exportPair(file src: URL, fileSuggestedName: String,
-                           text: String, textSuggestedName: String) async {
-        let zipName = timestampedName("noop-export", ext: "zip")
-        let entries = await Task.detached(priority: .userInitiated) { () -> [BundleEntry] in
-            var entries: [BundleEntry] = [BundleEntry(name: textSuggestedName, data: Data(text.utf8))]
-            if FileManager.default.fileExists(atPath: src.path), let fileData = try? Data(contentsOf: src) {
-                entries.insert(BundleEntry(name: fileSuggestedName, data: fileData), at: 0)
-            }
-            return entries
-        }.value
-        await exportBundle(entries: entries, suggestedName: zipName)
-    }
-
     #if os(iOS)
     /// Present `UIActivityViewController` and, once it closes, best-effort remove the URLs in
     /// `cleanup` so staged exports don't accumulate in `temporaryDirectory` across runs.

@@ -363,12 +363,6 @@ private extension View {
         }
     }
 
-    /// Native Liquid Glass search field chrome. iOS 26 uses `glassEffect`; macOS / older OS use a
-    /// raised solid surface (not a simulated glass stack).
-    @ViewBuilder
-    func nativeLiquidGlassSearchField() -> some View {
-        self.nativeLiquidGlassSearchChrome()
-    }
 }
 
 private extension View {

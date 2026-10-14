@@ -117,12 +117,4 @@ final class BehaviorStore: ObservableObject {
     /// not a silent cold-start.
     var didRecalibrateCharge: Bool { chargeBaselineEpoch > 0 }
 
-    /// Restart the ~4-night Charge build-up from `now`: re-anchor every baseline that feeds Charge
-    /// (HRV plus resting HR / respiration / skin temp) WITHOUT deleting any stored day. Delegates to
-    /// the single cross-platform source of truth so iOS, macOS and the Android twin stay in lockstep.
-    /// After calling this the next baseline computation re-seeds from tonight, so Today honestly shows
-    /// the calibrating/building state again. The caller is responsible for kicking a recompute + refresh.
-    func recalibrateChargeBaseline(now: Double = Date().timeIntervalSince1970) {
-        Baselines.recalibrateRecoveryBaselines(now: now, defaults: d)
-    }
 }
