@@ -502,7 +502,7 @@ private struct VitalPoint: Equatable {
     let source: DailyMetricSource
 }
 
-private extension DailyMetricSource {
+extension DailyMetricSource {
     /// Source precedence for a vital, highest first. Skin temp deliberately omits Apple Health — it
     /// has no 1:1 Apple equivalent for the strap's ±deviation reading, so an Apple absolute value must
     /// not stand in for it. localCache is always last (previews/tests).
