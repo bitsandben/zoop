@@ -13,9 +13,11 @@ public struct SquircleShape: Shape {
     public var cornerFraction: CGFloat
     public var smoothing: CGFloat
 
-    public init(cornerFraction: CGFloat = 0.46, smoothing: CGFloat = 0.36) {
-        self.cornerFraction = cornerFraction
-        self.smoothing = smoothing
+    /// The default corner: the concept's squircle, or a true circle under Pastel & Nature (half-side
+    /// corners with the 0.552 Bézier circle constant) for the softer look.
+    public init(cornerFraction: CGFloat? = nil, smoothing: CGFloat? = nil) {
+        self.cornerFraction = cornerFraction ?? (ZoopTheme.isPastel ? 0.5 : 0.46)
+        self.smoothing = smoothing ?? (ZoopTheme.isPastel ? 0.448 : 0.36)
     }
 
     public func path(in rect: CGRect) -> Path {
@@ -88,15 +90,23 @@ public struct SquircleRing: View {
         self.track = track
     }
 
+    /// The stroke a ring of `base` width draws: Pastel & Nature rings are a third thicker.
+    public static func themedLineWidth(_ base: CGFloat) -> CGFloat {
+        ZoopTheme.isPastel ? base * 1.35 : base
+    }
+
     public var body: some View {
+        let width = Self.themedLineWidth(lineWidth)
+        // Pastel & Nature: the default track takes a pale wash of the ring's own tint.
+        let trackColor = ZoopTheme.isPastel && track == ZoopVisualStyle.ringTrack ? tint.opacity(0.2) : track
         ZStack {
             SquircleShape()
-                .stroke(track, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round))
+                .stroke(trackColor, style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round))
             SquircleShape()
                 .trim(from: 0, to: CGFloat(min(max(fraction, 0), 1)))
-                .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round))
+                .stroke(tint, style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round))
         }
-        .padding(lineWidth / 2)
+        .padding(width / 2)
     }
 }
 

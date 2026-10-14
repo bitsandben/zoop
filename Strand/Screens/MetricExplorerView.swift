@@ -1112,7 +1112,7 @@ struct MetricDetailView: View {
                 // Custom background image (#custom-background) OVERRIDES the sky, full-bleed.
                 if backgroundStore.isActive {
                     BackgroundImageBackdrop()
-                } else if showDayCycleBackground {
+                } else if showDayCycleBackground && !ZoopTheme.isPastel {
                     LiquidSkyStatic(hour: nil, settleStrength: skyBehindCards ? 0.78 : 1)
                         .frame(maxWidth: .infinity)
                         .frame(height: skyBehindCards ? nil : 240, alignment: .top)

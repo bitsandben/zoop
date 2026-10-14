@@ -17,13 +17,20 @@ public enum StrandFont {
 
     // MARK: Family
 
+    /// The display face: SF Rounded under Pastel & Nature, the square default face otherwise.
+    /// Body copy never changes face; only numbers and headings follow the theme.
+    static var displayDesign: Font.Design { ZoopTheme.isPastel ? .rounded : .default }
+
     private static func roundedSystem(_ size: CGFloat, weight: Font.Weight) -> Font {
-        .system(size: size, weight: weight, design: .default)
+        .system(size: size, weight: weight, design: displayDesign)
     }
 
     /// Condensed numerals: the narrow, tall figure the reference uses for scores and readings.
+    /// Pastel & Nature uses the full-width rounded figure instead (SF Rounded has no condensed width).
     private static func numeralSystem(_ size: CGFloat, weight: Font.Weight) -> Font {
-        .system(size: size, weight: weight, design: .default).width(.condensed)
+        ZoopTheme.isPastel
+            ? .system(size: size, weight: weight, design: .rounded)
+            : .system(size: size, weight: weight, design: .default).width(.condensed)
     }
 
     // MARK: Scale (§9.2)
@@ -47,13 +54,13 @@ public enum StrandFont {
     }
 
     /// Title1 28 / Bold. Scales with Dynamic Type.
-    public static let title1 = Font.system(.title, design: .default, weight: .bold)
+    public static var title1: Font { Font.system(.title, design: displayDesign, weight: .bold) }
 
     /// Title2 22 / Semibold. Scales with Dynamic Type.
-    public static let title2 = Font.system(.title2, design: .default, weight: .bold)
+    public static var title2: Font { Font.system(.title2, design: displayDesign, weight: .bold) }
 
     /// Headline 17 / Semibold. Scales with Dynamic Type.
-    public static let headline = Font.system(.headline, design: .default, weight: .semibold)
+    public static var headline: Font { Font.system(.headline, design: displayDesign, weight: .semibold) }
 
     /// Body 15 / Regular. Scales with Dynamic Type.
     public static let body = Font.system(.body, design: .default, weight: .regular)
@@ -102,10 +109,10 @@ public enum StrandFont {
 
     /// Helvetica-Neue body number — for inline live values that should align. Scales with Dynamic
     /// Type alongside its sibling `body`/`caption` labels so a value and its label stay matched.
-    public static let bodyNumber = Font.system(.body, design: .default, weight: .medium).monospacedDigit()
+    public static var bodyNumber: Font { Font.system(.body, design: displayDesign, weight: .medium).monospacedDigit() }
 
     /// Helvetica-Neue caption number — for small live values (sparklines, chips). Scales with Dynamic Type.
-    public static let captionNumber = Font.system(.caption, design: .default, weight: .medium).monospacedDigit()
+    public static var captionNumber: Font { Font.system(.caption, design: displayDesign, weight: .medium).monospacedDigit() }
 
     /// Mono at an arbitrary size.
     public static func mono(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {

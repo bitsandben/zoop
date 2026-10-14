@@ -57,6 +57,13 @@ public struct BrandMark: View {
 
     // MARK: Deep-navy tile
 
+    // The disc and core: the near-black tile in Classic, a pale lavender disc (deep forest in dark)
+    // under Pastel & Nature, matching that theme's app icons.
+    static let tileTop = Color(light: "#1A1E24", dark: "#1A1E24", pastel: ("#E6E1FA", "#2A3530"))
+    static let tileBottom = Color(light: "#0E1116", dark: "#0E1116", pastel: ("#DCD6F7", "#1B2420"))
+    static let tileSheen = Color(light: "#2A2F37", dark: "#2A2F37", pastel: ("#FFFFFF", "#38433D"))
+    static let core = Color(light: "#FFFFFF", dark: "#FFFFFF", pastel: ("#5E52B0", "#EEF2EE"))
+
     /// The navy disc the gold mark sits on — a deep-navy vertical ramp (lifted at
     /// the top, deeper at the bottom) with a faint cool top sheen and a soft
     /// hairline rim, matching the app icon. No shadow — flat and clean.
@@ -64,7 +71,7 @@ public struct BrandMark: View {
         Circle()
             .fill(
                 LinearGradient(
-                    colors: [Color(hex: "#1A1E24"), Color(hex: "#0E1116")],
+                    colors: [BrandMark.tileTop, BrandMark.tileBottom],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -74,7 +81,7 @@ public struct BrandMark: View {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [Color(hex: "#2A2F37").opacity(0.5), .clear],
+                            colors: [BrandMark.tileSheen.opacity(0.5), .clear],
                             startPoint: .top,
                             endPoint: .center
                         )
@@ -100,7 +107,7 @@ public struct BrandMark: View {
             lineWidth: ringWidth
         )
         .stroke(
-            StrandPalette.chargeColor,
+            ZoopTheme.isPastel ? StrandPalette.restColor : StrandPalette.chargeColor,
             style: StrokeStyle(lineWidth: ringWidth, lineCap: .round)
         )
         .frame(width: ringDiameter, height: ringDiameter)
@@ -112,7 +119,7 @@ public struct BrandMark: View {
     /// open-ring + core-dot lock-up.
     private var coreDot: some View {
         Circle()
-            .fill(Color.white)
+            .fill(BrandMark.core)
             .frame(width: coreDiameter, height: coreDiameter)
     }
 }

@@ -559,7 +559,7 @@ struct HomeSectionTitle<Trailing: View>: View {
     var body: some View {
         HStack(alignment: .center) {
             Text(title)
-                .font(.system(size: 24, weight: .semibold))
+                .font(.system(size: 24, weight: .semibold, design: ZoopTheme.isPastel ? .rounded : .default))
                 .foregroundStyle(StrandPalette.textPrimary)
             Spacer(minLength: ZoopMetrics.space2)
             trailing()

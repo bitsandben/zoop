@@ -101,7 +101,8 @@ public enum AccentColor: String, CaseIterable, Identifiable, Sendable {
 
     public var label: String {
         switch self {
-        case .mint:      return String(localized: "Mint", bundle: .module)
+        // Under Pastel & Nature the brand accent resolves to lavender, so it is named for what it shows.
+        case .mint:      return ZoopTheme.isPastel ? String(localized: "Lavender", bundle: .module) : String(localized: "Mint", bundle: .module)
         case .whoopBlue: return String(localized: "WHOOP Blue", bundle: .module)
         case .custom:    return String(localized: "Custom", bundle: .module)
         }
@@ -177,7 +178,7 @@ public enum ThemePreset: String, CaseIterable, Identifiable, Sendable {
 
     public var label: String {
         switch self {
-        case .mint:     return String(localized: "Mint", bundle: .module)
+        case .mint:     return ZoopTheme.isPastel ? String(localized: "Lavender", bundle: .module) : String(localized: "Mint", bundle: .module)
         case .ocean:    return String(localized: "Ocean", bundle: .module)
         case .classic:  return String(localized: "Classic", bundle: .module)
         case .midnight: return String(localized: "Midnight", bundle: .module)

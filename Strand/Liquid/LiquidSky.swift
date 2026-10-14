@@ -234,7 +234,7 @@ struct LiquidScaffoldSky: View {
     var body: some View {
         if backgroundStore.isActive {
             BackgroundImageBackdrop()
-        } else if showDayCycleBackground {
+        } else if showDayCycleBackground && !ZoopTheme.isPastel {  // Pastel & Nature: plain sage canvas
             LiquidSkyStatic(hour: nil, settleStrength: skyBehindCards ? 0.78 : 1)
                 .frame(maxWidth: .infinity, maxHeight: skyBehindCards ? .infinity : nil)
                 .frame(height: skyBehindCards ? nil : height, alignment: .top)

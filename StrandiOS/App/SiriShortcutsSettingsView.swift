@@ -34,11 +34,11 @@ struct SiriShortcutsSettingsView: View {
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
                 SiriTipView(intent: SyncStrapIntent(), isVisible: .constant(true))
-                    .siriTipViewStyle(.dark)
+                    .siriTipViewStyle(ZoopTheme.isPastel ? .automatic : .dark)
                 SiriTipView(intent: BuzzStrapIntent(), isVisible: .constant(true))
-                    .siriTipViewStyle(.dark)
+                    .siriTipViewStyle(ZoopTheme.isPastel ? .automatic : .dark)
                 SiriTipView(intent: MarkMomentIntent(), isVisible: .constant(true))
-                    .siriTipViewStyle(.dark)
+                    .siriTipViewStyle(ZoopTheme.isPastel ? .automatic : .dark)
             }
         }
     }
@@ -59,6 +59,7 @@ struct SiriShortcutsSettingsView: View {
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
                 ShortcutsLink()
+                    .shortcutsLinkStyle(ZoopTheme.isPastel ? .automaticOutline : .automatic)
             }
         }
     }

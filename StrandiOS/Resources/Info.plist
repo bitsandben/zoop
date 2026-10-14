@@ -29,6 +29,20 @@
 				<key>UIPrerenderedIcon</key>
 				<false/>
 			</dict>
+			<key>AppIcon-PastelDark</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array/>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>AppIcon-PastelLight</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array/>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
 		</dict>
 	</dict>
 	<key>CFBundleIdentifier</key>

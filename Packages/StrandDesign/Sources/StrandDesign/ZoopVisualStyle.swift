@@ -9,29 +9,30 @@ import SwiftUI
 public enum ZoopVisualStyle {
     // Dark mode follows the supplied redesign concept: a flat near-black canvas with no gradient,
     // charcoal cards, black wells for icons, and the app icon's lime accent. Values are sampled from the concept.
-    public static let canvas = Color(light: "#F3F4F6", dark: "#0A0A0A")
-    public static let surface = Color(light: "#FFFFFF", dark: "#181818")
-    public static let surfaceTop = Color(light: "#FFFFFF", dark: "#202020")
-    public static let surfaceBottom = Color(light: "#F4F5F7", dark: "#161616")
-    public static let inset = Color(light: "#E8E9ED", dark: "#0A0A0A")
+    public static let canvas = Color(light: "#F3F4F6", dark: "#0A0A0A", pastel: ("#EEF1EC", "#161C19"))
+    public static let surface = Color(light: "#FFFFFF", dark: "#181818", pastel: ("#FFFFFF", "#202824"))
+    public static let surfaceTop = Color(light: "#FFFFFF", dark: "#202020", pastel: ("#FFFFFF", "#29322D"))
+    public static let surfaceBottom = Color(light: "#F4F5F7", dark: "#161616", pastel: ("#F6F8F5", "#1D2521"))
+    public static let inset = Color(light: "#E8E9ED", dark: "#0A0A0A", pastel: ("#E6EBE4", "#161C19"))
 
-    public static let border = Color(light: "#D8DAE0", dark: "#262626")
-    public static let borderHighlight = Color(light: "#FFFFFF", dark: "#303030")
-    public static let divider = Color(light: "#E4E5E9", dark: "#242424")
+    public static let border = Color(light: "#D8DAE0", dark: "#262626", pastel: ("#DCE2DA", "#2E3833"))
+    public static let borderHighlight = Color(light: "#FFFFFF", dark: "#303030", pastel: ("#FFFFFF", "#38433D"))
+    public static let divider = Color(light: "#E4E5E9", dark: "#242424", pastel: ("#E3E8E1", "#2A332E"))
 
-    public static let primaryText = Color(light: "#17181C", dark: "#F5F5F5")
-    public static let secondaryText = Color(light: "#555861", dark: "#8E8E8E")
-    public static let tertiaryText = Color(light: "#7D808A", dark: "#5E5E5E")
+    public static let primaryText = Color(light: "#17181C", dark: "#F5F5F5", pastel: ("#2F3A33", "#EEF2EE"))
+    public static let secondaryText = Color(light: "#555861", dark: "#8E8E8E", pastel: ("#7F8F84", "#A9B8AE"))
+    public static let tertiaryText = Color(light: "#7D808A", dark: "#5E5E5E", pastel: ("#9AA79E", "#7D8D83"))
 
-    public static let mint = Color(light: "#4C7A12", dark: "#BFEB7B")
-    public static let mintDeep = Color(light: "#3B5F0E", dark: "#8FBF4E")
-    public static let mintGlow = Color(light: "#5A8C1A", dark: "#BFEB7B")
+    public static let mint = Color(light: "#4C7A12", dark: "#BFEB7B", pastel: ("#5E52B0", "#B9AFF0"))
+    public static let mintDeep = Color(light: "#3B5F0E", dark: "#8FBF4E", pastel: ("#4A3F8F", "#9E92E6"))
+    public static let mintGlow = Color(light: "#5A8C1A", dark: "#BFEB7B", pastel: ("#6E62C4", "#D3CCF7"))
 
     /// The empty part of a score ring.
-    public static let ringTrack = Color(light: "#E2E4E8", dark: "#222222")
+    public static let ringTrack = Color(light: "#E2E4E8", dark: "#222222", pastel: ("#E8ECE6", "#2C3631"))
 
-    public static let cardRadius: CGFloat = 20
-    public static let compactRadius: CGFloat = 16
+    // Pastel & Nature rounds its cards a little further for the softer look.
+    public static var cardRadius: CGFloat { ZoopTheme.isPastel ? 24 : 20 }
+    public static var compactRadius: CGFloat { ZoopTheme.isPastel ? 18 : 16 }
     public static let pillRadius: CGFloat = 999
     public static let pagePadding: CGFloat = 16
     public static let cardPadding: CGFloat = 16

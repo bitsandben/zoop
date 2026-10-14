@@ -410,6 +410,18 @@ struct LiquidTodayView: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     scene
+                    #if os(iOS)
+                    // Pastel & Nature: a short, friendly greeting by first name (today only, when a name is set).
+                    if ZoopTheme.isPastel, selectedDayOffset == 0, let hello = pastelGreeting {
+                        Text(hello)
+                            .font(StrandFont.title2)
+                            .foregroundStyle(StrandPalette.textPrimary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .padding(.horizontal, 4)
+                            .accessibilityAddTraits(.isHeader)
+                    }
+                    #endif
                     // The strain/illness early-warning banner, dropped in the liquid Home rewrite. Liquid is
                     // the DEFAULT Today on both platforms (RootTabView.swift's liquidTodayEnabled = true,
                     // RootView.swift likewise), so while this was unmounted a RAISED health alert had no
@@ -581,7 +593,8 @@ struct LiquidTodayView: View {
                 }
                 // Day-cycle scene (#698): the sky only paints when the toggle is ON AND no custom image is
                 // active; off = the plain surfaceBase canvas above (parity with Android + classic TodayView).
-                else if showDayCycleBackground {
+                // Pastel & Nature draws no sky: its calm look is the plain sage canvas.
+                else if showDayCycleBackground && !ZoopTheme.isPastel {
                     // Reduce-motion (and low-power) users get the same sky posed still — no twinkle/breath.
                     // Also static until the first data load settles, so launch isn't fighting a live sky too.
                     // "Sky behind cards" (opt-in): fill the whole backdrop with a softer settle so the sky
@@ -2685,6 +2698,19 @@ struct LiquidTodayView: View {
     }
     #endif
 
+    #if os(iOS)
+    /// "Guten Morgen, Anna" — the profile's first name with a time-of-day salutation, or nil without a name.
+    private var pastelGreeting: String? {
+        let first = profile.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(separator: " ").first.map(String.init) ?? ""
+        guard !first.isEmpty else { return nil }
+        let h = Calendar.current.component(.hour, from: Date())
+        return h < 11 ? String(localized: "Good morning, \(first)")
+            : h < 18 ? String(localized: "Hello, \(first)")
+            : String(localized: "Good evening, \(first)")
+    }
+    #endif
+
     // Measured strap count ?: imported Apple Health count ?: motion estimate — the same precedence the
     // detail routing follows below, so the tapped-through source always matches the number shown (#377).
     private var stepCount: Double? {
@@ -3164,13 +3190,16 @@ private struct FlatScoreRing: View {
         return CGFloat(max(0, min(1, shown / maxValue)))
     }
 
-    private var lineWidth: CGFloat { max(6, diameter * 0.07) }
+    private var baseLineWidth: CGFloat { max(6, diameter * 0.07) }
+    /// The stroke `SquircleRing` actually draws (thicker under Pastel & Nature), so the target band
+    /// overlay below lines up with it.
+    private var lineWidth: CGFloat { SquircleRing.themedLineWidth(baseLineWidth) }
     private var numberSize: CGFloat { diameter * 0.36 }
 
     var body: some View {
         ZStack {
             // The concept's rounded-square ring, filled clockwise from the top centre.
-            SquircleRing(fraction: Double(fraction), tint: tint, lineWidth: lineWidth)
+            SquircleRing(fraction: Double(fraction), tint: tint, lineWidth: baseLineWidth)
             if let targetBand {
                 // Today's target, grey on the track beneath the filled arc.
                 SquircleShape()

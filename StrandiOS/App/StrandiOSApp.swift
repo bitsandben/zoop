@@ -41,6 +41,8 @@ struct StrandiOSApp: App {
     @AppStorage(AppearanceMode.storageKey) private var appearanceRaw = AppearanceMode.system.rawValue
     /// Chart data-colour style (Titanium / Classic throwback). Re-colours gauges + charts.
     @AppStorage(ChartStyle.storageKey) private var chartStyleRaw = ChartStyle.titanium.rawValue
+    /// The whole-app look (Classic / Pastel & Nature), applied with `.zoopTheme` below.
+    @AppStorage(ZoopTheme.storageKey) private var themeRaw = ZoopTheme.classic.rawValue
     /// Chrome accent colour (mint / WHOOP blue / custom). Chrome only — never the data colour worlds.
     @AppStorage(AccentColor.storageKey) private var accentRaw = AccentColor.mint.rawValue
     @AppStorage(AccentColor.customHexKey) private var accentCustomHex = AccentColor.defaultCustomHex
@@ -230,6 +232,7 @@ struct StrandiOSApp: App {
                 // Match SwiftUI format styles to the localization selected by the app's bundles. Language
                 // changes are process-wide on Apple and are applied after the documented reopen.
                 .environment(\.locale, AppLanguage.activeLocale)
+                .zoopTheme(themeRaw)
                 .chartStyle(chartStyleRaw)
                 .noopAccent(accentRaw, customHex: accentCustomHex)
                 // Dynamic Type now scales the prose/label roles (StrandFont). Cap the upper end so the

@@ -2633,7 +2633,7 @@ private struct SleepPerformanceNightScene: View {
     @AppStorage(SceneBackgroundPrefs.enabledKey) private var showDayCycleBackground = true
 
     var body: some View {
-        if showDayCycleBackground { nightScene } else { StrandPalette.surfaceBase }
+        if showDayCycleBackground && !ZoopTheme.isPastel { nightScene } else { StrandPalette.surfaceBase }
     }
 
     /// The bundled night scene (moonlit lake + procedural fallback). Shown only when the day-cycle

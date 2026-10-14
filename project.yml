@@ -263,6 +263,13 @@ targets:
             AppIcon-Navy:
               CFBundleIconFiles: []
               UIPrerenderedIcon: false
+            # Pastel & Nature icons (lavender loop on sage cream / on deep forest), recoloured from AppIcon.
+            AppIcon-PastelLight:
+              CFBundleIconFiles: []
+              UIPrerenderedIcon: false
+            AppIcon-PastelDark:
+              CFBundleIconFiles: []
+              UIPrerenderedIcon: false
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UISupportedInterfaceOrientations~ipad:

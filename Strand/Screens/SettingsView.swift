@@ -119,9 +119,11 @@ struct SettingsView: View {
     @AppStorage(UnitPrefs.trendChartStyleKey) private var trendChartStyleRaw = TrendChartStyle.line.rawValue
     @AppStorage(UnitPrefs.hrvWindowKey) private var hrvWindowRaw = HrvWindow.whole.rawValue
     @AppStorage(DayCycleMode.storageKey) private var dayCycleModeRaw = DayCycleMode.sleepOnset.rawValue
-    // Alternate app icon (iOS only) — false = Titanium (primary AppIcon), true = Blue Titanium
-    // ("AppIcon-Navy"). Display-only preference; the live switch goes through setAlternateIconName.
-    @AppStorage("appIcon.alt") private var useNavyIcon = false
+    // Alternate app icon (iOS only): the asset name of the chosen icon set, "" = the primary AppIcon.
+    // Display-only preference; the live switch goes through setAlternateIconName.
+    @AppStorage("appIcon.name") private var appIconName = ""
+    // The whole-app look (Classic / Pastel & Nature). Read by the iOS app root's `.zoopTheme`.
+    @AppStorage(ZoopTheme.storageKey) private var themeRaw = ZoopTheme.classic.rawValue
     // Light/Dark/System theme. Read by both app roots' .preferredColorScheme; default follows the OS.
     @AppStorage(AppearanceMode.storageKey) private var appearanceRaw = AppearanceMode.system.rawValue
     // App-owned copy language. Apple binds a bundle localization at process launch, so this writes the
@@ -1287,8 +1289,14 @@ struct SettingsView: View {
                     .tint(StrandPalette.accent)
                     .accessibilityLabel("Theme preset")
                 }
+                #if os(iOS)
                 rowDivider
-                FormRow(label: "Theme") {
+                designPicker
+                #endif
+                rowDivider
+                // "Theme" reads as "Design" in German, which the look picker above now owns; this row is
+                // only light / dark / system.
+                FormRow(label: "appearance.mode") {
                     Picker("Theme", selection: $appearanceRaw) {
                         ForEach(AppearanceMode.allCases) { mode in
                             Text(mode.label).tag(mode.rawValue)
@@ -1366,19 +1374,7 @@ struct SettingsView: View {
                 }
                 #if os(iOS)
                 rowDivider   // #79: separator before App icon (inside #if so macOS keeps a single divider)
-                FormRow(label: "App icon") {
-                    Picker("App icon", selection: $useNavyIcon) {
-                        Text("Default").tag(false)
-                        // The alternate set keeps its "AppIcon-Navy" asset name so a saved choice still
-                        // resolves; it now holds the light version of the squircle icon.
-                        Text("Light").tag(true)
-                    }
-                    .labelsHidden()
-                    .pickerStyle(.menu)
-                    .tint(StrandPalette.accent)
-                    .accessibilityLabel("App icon")
-                    .onChangeCompat(of: useNavyIcon) { applyAppIcon($0) }
-                }
+                appIconPicker
                 #endif
 
                 rowDivider
@@ -1408,6 +1404,8 @@ struct SettingsView: View {
                 }
                 .toggleStyle(.switch)
                 .tint(StrandPalette.accent)
+                // Pastel & Nature always uses its plain canvas, so the sky switches have nothing to change.
+                .disabled(ZoopTheme.resolve(themeRaw) == .pastel)
                 Text("Shows a soft sunrise, day, dusk and night scene behind the Today screen. Turn it off for a plain dark canvas. Your cards stay exactly as readable.")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
@@ -1425,7 +1423,7 @@ struct SettingsView: View {
                 }
                 .toggleStyle(.switch)
                 .tint(StrandPalette.accent)
-                .disabled(!showDayCycleBackground)
+                .disabled(!showDayCycleBackground || ZoopTheme.resolve(themeRaw) == .pastel)
                 Text("Extends the sky behind the whole Today screen, so lowering Card transparency lets it show through every card. Needs the day-cycle background on.")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
@@ -1485,19 +1483,130 @@ struct SettingsView: View {
     }
 
     #if os(iOS)
+    /// One selectable app icon: the alternate-icon set name (nil = primary) and the bundled thumbnail
+    /// (`StrandiOS/Resources/AltIcons/<thumbnail>@2x/@3x.png`).
+    private struct AppIconOption: Identifiable {
+        let iconName: String?
+        let thumbnail: String
+        let label: LocalizedStringKey
+        var id: String { iconName ?? "" }
+    }
+
+    private static let appIconOptions: [AppIconOption] = [
+        AppIconOption(iconName: nil, thumbnail: "ZoopDefault", label: "Default"),
+        // The alternate set keeps its "AppIcon-Navy" asset name so a saved choice still resolves; it
+        // holds the light version of the icon.
+        AppIconOption(iconName: "AppIcon-Navy", thumbnail: "ZoopLight", label: "appIcon.light"),
+        AppIconOption(iconName: "AppIcon-PastelLight", thumbnail: "PastelLight", label: "Pastel light"),
+        AppIconOption(iconName: "AppIcon-PastelDark", thumbnail: "PastelDark", label: "Pastel dark"),
+    ]
+
+    /// The Design choice (Classic / Pastel & Nature) as two tappable preview tiles.
+    private var designPicker: some View {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
+            Text("Design")
+                .font(StrandFont.body)
+                .foregroundStyle(StrandPalette.textPrimary)
+            HStack(spacing: ZoopMetrics.space3) {
+                ForEach(ZoopTheme.allCases) { theme in
+                    let selected = ZoopTheme.resolve(themeRaw) == theme
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) { themeRaw = theme.rawValue }
+                    } label: {
+                        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
+                            HStack(spacing: -6) {
+                                ForEach(Array(theme.swatches.enumerated()), id: \.offset) { _, c in
+                                    Circle().fill(c)
+                                        .frame(width: 24, height: 24)
+                                        .overlay(Circle().strokeBorder(StrandPalette.hairline, lineWidth: 1))
+                                }
+                            }
+                            Text(theme.label)
+                                .font(StrandFont.subhead.weight(.semibold))
+                                .foregroundStyle(StrandPalette.textPrimary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                        .padding(ZoopMetrics.space3)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(RoundedRectangle(cornerRadius: ZoopVisualStyle.compactRadius, style: .continuous)
+                            .fill(StrandPalette.surfaceInset))
+                        .overlay(RoundedRectangle(cornerRadius: ZoopVisualStyle.compactRadius, style: .continuous)
+                            .strokeBorder(selected ? StrandPalette.accent : .clear, lineWidth: 2))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text(theme.label))
+                    .accessibilityAddTraits(selected ? .isSelected : [])
+                }
+            }
+        }
+        .padding(.vertical, ZoopMetrics.space1)
+    }
+
+    /// The app-icon choice as a row of thumbnails.
+    private var appIconPicker: some View {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
+            Text("App icon")
+                .font(StrandFont.body)
+                .foregroundStyle(StrandPalette.textPrimary)
+            HStack(alignment: .top, spacing: ZoopMetrics.space2) {
+                ForEach(Self.appIconOptions) { option in
+                    let selected = appIconName == option.id
+                    Button { selectAppIcon(option.iconName) } label: {
+                        VStack(spacing: 6) {
+                            Group {
+                                if let img = UIImage(named: option.thumbnail) {
+                                    Image(uiImage: img).resizable()
+                                } else {
+                                    StrandPalette.surfaceInset
+                                }
+                            }
+                            .frame(width: 56, height: 56)
+                            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                .strokeBorder(StrandPalette.hairline, lineWidth: 1))
+                            .padding(3)
+                            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .strokeBorder(selected ? StrandPalette.accent : .clear, lineWidth: 2))
+                            Text(option.label)
+                                .font(StrandFont.caption)
+                                .foregroundStyle(selected ? StrandPalette.textPrimary : StrandPalette.textSecondary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text(option.label))
+                    .accessibilityAddTraits(selected ? .isSelected : [])
+                }
+            }
+        }
+        .padding(.vertical, ZoopMetrics.space1)
+        .onAppear {
+            // Mirror what iOS actually shows (also migrates the old on/off "appIcon.alt" preference).
+            appIconName = UIApplication.shared.alternateIconName ?? ""
+        }
+    }
+
+    private func selectAppIcon(_ name: String?) {
+        let previous = appIconName
+        appIconName = name ?? ""
+        applyAppIcon(name, revertTo: previous)
+    }
+
     /// Apply the alternate-icon choice. Runs on the main actor (UIKit requirement) and tolerates the
-    /// no-op cases (already-set, unsupported); on failure it surfaces the error and reverts the toggle
+    /// no-op cases (already-set, unsupported); on failure it surfaces the error and reverts the choice
     /// so the control never disagrees with what's actually on the Home Screen.
-    private func applyAppIcon(_ useNavy: Bool) {
+    private func applyAppIcon(_ target: String?, revertTo previous: String) {
         Task { @MainActor in
-            let target = useNavy ? "AppIcon-Navy" : nil
             // No-op if iOS already shows the requested icon (avoids a needless system prompt).
             guard UIApplication.shared.supportsAlternateIcons,
                   UIApplication.shared.alternateIconName != target else { return }
             do {
                 try await UIApplication.shared.setAlternateIconName(target)
             } catch {
-                useNavyIcon = !useNavy
+                appIconName = previous
                 backupAlertTitle = String(localized: "Couldn't change the app icon")
                 backupAlertMessage = error.localizedDescription
                 showBackupAlert = true
