@@ -33,11 +33,12 @@ struct NightDetailCard: View {
         let debt  = model.sleepDebt
 
         VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
-            SectionHeader("Night detail", overline: "Metrics")
-
             #if os(iOS)
+            SectionHeader("Sleep factors", overline: "Last night")
             // On iOS, Sleep Debt is the actionable summary for the section, so it leads at the
-            // full two-column width. The remaining six peer metrics keep the established 2 × 3 grid.
+            // full two-column width. Below it the factor grid gives each contributor a one-word
+            // verdict against the wearer's own baseline. Rest (the hero) and Respiratory (Night
+            // vitals) are already shown on this screen, so they are not repeated here.
             StatTile(
                 label: "Sleep Debt",
                 value: debt.latest.map { durationText($0) } ?? "—",
@@ -46,8 +47,9 @@ struct NightDetailCard: View {
                 sparkline: spark(debt.series),
                 sparkColor: StrandPalette.metricRose)
                 .frame(maxWidth: .infinity)
-            #endif
-
+            SleepFactorGrid(model: model)
+            #else
+            SectionHeader("Night detail", overline: "Metrics")
             LazyVGrid(columns: tileColumns, alignment: .leading, spacing: ZoopMetrics.gap) {
 
                 StatTile(
@@ -104,7 +106,6 @@ struct NightDetailCard: View {
                     sparkline: spark(resp.series),
                     sparkColor: StrandPalette.metricPurple)
 
-                #if !os(iOS)
                 // macOS keeps the original adaptive dashboard instead of stretching one
                 // phone-width summary tile across an unbounded desktop detail pane.
                 StatTile(
@@ -114,8 +115,8 @@ struct NightDetailCard: View {
                     accent: nightDetailDebtColor(debt.latest),
                     sparkline: spark(debt.series),
                     sparkColor: StrandPalette.metricRose)
-                #endif
             }
+            #endif
         }
     }
 

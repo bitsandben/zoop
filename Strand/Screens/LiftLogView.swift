@@ -36,6 +36,8 @@ struct LiftLogView: View {
     @State private var history: [LiftSessionRow] = []
     /// This week's fractional sets per muscle.
     @State private var weekCounts: [LiftMuscle: Double] = [:]
+    /// Estimated per-muscle recovery from the sessions still inside their recovery window.
+    @State private var recovery: [MuscleRecovery.Entry] = []
     /// The session whose detail sheet is open.
     @State private var viewing: SessionDetailTarget?
 
@@ -52,6 +54,7 @@ struct LiftLogView: View {
             VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
                 headerCard
                 programsSection
+                recoverySection
                 weekSection
                 historySection
             }
@@ -235,6 +238,67 @@ struct LiftLogView: View {
         return ordered.map { symbols[$0 - 1] }.joined(separator: " · ")
     }
 
+    // MARK: - Muscle recovery
+
+    /// Per-muscle recovery estimate (`MuscleRecovery`): hidden until a recent session touched a muscle.
+    @ViewBuilder
+    private var recoverySection: some View {
+        if !recovery.isEmpty {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
+                SectionHeader("Muscle recovery", overline: "Estimated")
+                ZoopCard {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
+                        LazyVGrid(columns: [GridItem(.flexible(), spacing: ZoopMetrics.space3),
+                                            GridItem(.flexible(), spacing: ZoopMetrics.space3)],
+                                  alignment: .leading, spacing: ZoopMetrics.space3) {
+                            ForEach(recovery, id: \.muscle) { recoveryCell($0) }
+                        }
+                        Text("Estimated from sets per muscle: 36 to 72 hours, longer after hard sessions.")
+                            .font(StrandFont.footnote)
+                            .foregroundStyle(StrandPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+        }
+    }
+
+    private func recoveryCell(_ e: MuscleRecovery.Entry) -> some View {
+        let color: Color = e.percentRecovered >= 90 ? StrandPalette.statusPositive
+            : (e.percentRecovered >= 50 ? StrandPalette.statusWarning : StrandPalette.statusCritical)
+        let filled = MuscleRecovery.filledSegments(percent: e.percentRecovered)
+        return VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
+            Text(e.muscle.displayName)
+                .font(StrandFont.caption)
+                .foregroundStyle(StrandPalette.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(verbatim: "\(e.percentRecovered)%")
+                    .font(StrandFont.number(22))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                Text("recovered")
+                    .font(StrandFont.caption)
+                    .foregroundStyle(StrandPalette.textTertiary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            HStack(spacing: 2) {
+                ForEach(0..<10, id: \.self) { i in
+                    RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                        .fill(i < filled ? color : StrandPalette.surfaceRaised)
+                        .frame(height: 6)
+                }
+            }
+            .accessibilityHidden(true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(ZoopMetrics.space3)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(StrandPalette.surfaceInset))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(String(localized: "\(e.muscle.displayName): \(e.percentRecovered) percent recovered"))
+    }
+
     // MARK: - This week, per muscle
 
     private var weekSection: some View {
@@ -388,6 +452,16 @@ struct LiftLogView: View {
         weekCounts = (try? await store.liftSetCounts(deviceId: repo.deviceId,
                                                       fromTs: now - 7 * 86_400,
                                                       toTs: now).fractional) ?? [:]
+        // Only sessions that can still be inside a recovery window are read set by set.
+        let cutoff = now - Int(MuscleRecovery.lookbackHours * 3600)
+        var recent: [MuscleRecovery.Session] = []
+        for row in history {
+            let end = row.endTs ?? row.startTs
+            guard end >= cutoff else { continue }
+            let sets = (try? await store.liftSets(sessionId: row.id)) ?? []
+            recent.append(MuscleRecovery.Session(endTs: end, sets: sets))
+        }
+        recovery = MuscleRecovery.entries(sessions: recent, now: now)
         loaded = true
     }
 }
