@@ -11,21 +11,24 @@ import WhoopStore
 //  • `TrainingLoadGaugeRow`: Cardio and Muscular load as two semicircle gauges with the optimal band
 //    (`TrainingLoadGauge`). On iOS it replaces the CTL/ATL `TrainingLoadCard` that sat on Trends.
 //  • `CumulativeTotalCard`: a total with a cumulative step line ending in a dot.
-//  • `StrengthSection`: this week's working sets and volume, plus the muscle-recovery grid (moved
-//    here from the Lift Log so it is shown once).
+//  • `StrengthSection`: this week's working sets and volume when there was lifting, plus the
+//    muscle-load card (`MuscleLoadCard.swift`) for any training.
 //
 // Kept out of `WorkoutsView.swift` so that screen's body stays inside the type-check budget.
 
-/// Everything the Workouts tab shows about lifting, loaded once per refresh.
+/// Everything the Workouts tab shows about lifting and muscle load, loaded once per refresh.
 struct LiftFitnessSnapshot: Equatable {
     /// Nil when there is no lift session in the last 180 days: the muscular gauge then hides.
     var muscular: TrainingLoadGauge.Reading?
     var week: TrainingLoadGauge.StrengthWeek
-    var recovery: [MuscleRecovery.Entry]
     /// (session end, working sets, volume kg) for the last 7 days, oldest first.
     var weekSessions: [WeekSession]
-    /// A lift session ended within the last 14 days: gates the Strength section.
+    /// A lift session ended within the last 14 days: gates the Strength totals.
     var hasRecentLifts: Bool
+    /// Per-muscle load from every workout (`MuscleLoad`); nil when nothing ended in the last 14 days.
+    var muscleLoad: MuscleLoad.Result?
+    /// The instant `muscleLoad` was computed at; its week boundaries hang off it.
+    var computedAt: Int
 
     struct WeekSession: Equatable {
         let endTs: Int
@@ -34,17 +37,18 @@ struct LiftFitnessSnapshot: Equatable {
     }
 
     static let empty = LiftFitnessSnapshot(muscular: nil, week: .init(workingSets: 0, volumeKg: 0),
-                                           recovery: [], weekSessions: [], hasRecentLifts: false)
+                                           weekSessions: [], hasRecentLifts: false,
+                                           muscleLoad: nil, computedAt: 0)
 
-    /// Read finished lift sessions (180 days) and the sets of the last 28 days.
-    static func load(repo: Repository, now: Date = Date()) async -> LiftFitnessSnapshot {
+    /// Read finished lift sessions (180 days) with the sets of the last 28 days, plus the workouts of
+    /// the last four weeks for the muscle-load model.
+    static func load(repo: Repository, hrMax: Int?, now: Date = Date()) async -> LiftFitnessSnapshot {
         guard let store = await repo.storeHandle() else { return .empty }
         let nowTs = Int(now.timeIntervalSince1970)
         let sessions = ((try? await store.liftSessions(deviceId: repo.deviceId,
                                                        fromTs: nowTs - 180 * 86_400,
                                                        toTs: nowTs)) ?? [])
             .filter { $0.endTs != nil }
-        guard let first = sessions.map(\.startTs).min() else { return .empty }
 
         let cal = Calendar.current
         let today = cal.startOfDay(for: now)
@@ -54,29 +58,47 @@ struct LiftFitnessSnapshot: Equatable {
         }
 
         var liftDays: [TrainingLoadGauge.LiftDay] = []
-        var recent: [MuscleRecovery.Session] = []
         var week: [WeekSession] = []
-        let recoveryCutoff = nowTs - Int(MuscleRecovery.lookbackHours * 3600)
+        var loadSessions: [MuscleLoad.Session] = []
+        var liftStarts = Set<Int>()
+        let loadDays = MuscleLoad.weeks * 7 + 1
+        let loadCutoff = nowTs - loadDays * 86_400
         for row in sessions {
             let end = row.endTs ?? row.startTs
             let ago = daysAgo(end)
-            guard ago < TrainingLoadGauge.chronicWindowDays || end >= recoveryCutoff else { continue }
+            guard ago < TrainingLoadGauge.chronicWindowDays || end >= loadCutoff else { continue }
             let sets = (try? await store.liftSets(sessionId: row.id)) ?? []
             let day = TrainingLoadGauge.LiftDay(daysAgo: ago, sets: sets)
             liftDays.append(day)
-            if end >= recoveryCutoff { recent.append(MuscleRecovery.Session(endTs: end, sets: sets)) }
+            if end >= loadCutoff {
+                loadSessions.append(.lift(sport: row.sport, startTs: row.startTs, endTs: end, sets: sets))
+                liftStarts.insert(row.startTs)
+            }
             if ago >= 0 && ago < TrainingLoadGauge.acuteWindowDays {
                 let w = TrainingLoadGauge.strengthWeek(sessions: [day])
                 week.append(WeekSession(endTs: end, sets: w.workingSets, volumeKg: w.volumeKg))
             }
         }
+
+        // Every other workout goes through its sport table. A logged lift shares its workout row's
+        // start, so that row is skipped: its sets already counted.
+        let restingHr = await MainActor.run { repo.days.last(where: { $0.restingHr != nil })?.restingHr }
+        for row in await repo.workoutRows(days: loadDays)
+        where row.endTs >= loadCutoff && !liftStarts.contains(row.startTs) {
+            loadSessions.append(.workout(row, hrMax: hrMax, restingHr: restingHr))
+        }
+
         let latestEnd = sessions.compactMap(\.endTs).max() ?? 0
+        let first = sessions.map(\.startTs).min()
         return LiftFitnessSnapshot(
-            muscular: TrainingLoadGauge.muscular(sessions: liftDays, historyDays: daysAgo(first) + 1),
+            muscular: first.flatMap {
+                TrainingLoadGauge.muscular(sessions: liftDays, historyDays: daysAgo($0) + 1)
+            },
             week: TrainingLoadGauge.strengthWeek(sessions: liftDays),
-            recovery: MuscleRecovery.entries(sessions: recent, now: nowTs),
             weekSessions: week.sorted { $0.endTs < $1.endTs },
-            hasRecentLifts: latestEnd >= nowTs - 14 * 86_400)
+            hasRecentLifts: latestEnd >= nowTs - 14 * 86_400,
+            muscleLoad: MuscleLoad.compute(sessions: loadSessions, now: nowTs),
+            computedAt: nowTs)
     }
 }
 
@@ -303,80 +325,25 @@ struct StrengthSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
-            SectionHeader("Strength", overline: "This week")
-            HStack(spacing: ZoopMetrics.gap) {
-                CumulativeTotalCard(
-                    title: "Working sets", value: "\(snapshot.week.workingSets)", unit: "",
-                    increments: snapshot.weekSessions.map { (Date(timeIntervalSince1970: TimeInterval($0.endTs)), Double($0.sets)) },
-                    tint: StrandPalette.effortColor)
-                CumulativeTotalCard(
-                    title: "Volume", value: volumeDisplay, unit: LiftFormat.weightUnit(unitSystem),
-                    increments: snapshot.weekSessions.map {
-                        (Date(timeIntervalSince1970: TimeInterval($0.endTs)),
-                         LiftFormat.display(fromKilograms: $0.volumeKg, system: unitSystem)) },
-                    tint: StrandPalette.effortColor)
-            }
-            if !snapshot.recovery.isEmpty {
-                MuscleRecoveryCard(entries: snapshot.recovery)
-            }
-        }
-    }
-}
-
-/// Per-muscle recovery estimate (`MuscleRecovery`) as a two-column grid of 10-segment bars.
-struct MuscleRecoveryCard: View {
-    let entries: [MuscleRecovery.Entry]
-
-    var body: some View {
-        ZoopCard {
-            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
-                Text("Muscle recovery").font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: ZoopMetrics.space3),
-                                    GridItem(.flexible(), spacing: ZoopMetrics.space3)],
-                          alignment: .leading, spacing: ZoopMetrics.space3) {
-                    ForEach(entries, id: \.muscle) { cell($0) }
-                }
-                Text("Estimated from sets per muscle: 36 to 72 hours, longer after hard sessions.")
-                    .font(StrandFont.footnote)
-                    .foregroundStyle(StrandPalette.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
-    private func cell(_ e: MuscleRecovery.Entry) -> some View {
-        let color: Color = e.percentRecovered >= 90 ? StrandPalette.statusPositive
-            : (e.percentRecovered >= 50 ? StrandPalette.statusWarning : StrandPalette.statusCritical)
-        let filled = MuscleRecovery.filledSegments(percent: e.percentRecovered)
-        return VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
-            Text(e.muscle.displayName)
-                .font(StrandFont.caption)
-                .foregroundStyle(StrandPalette.textSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(verbatim: "\(e.percentRecovered)%")
-                    .font(StrandFont.number(22))
-                    .foregroundStyle(StrandPalette.textPrimary)
-                Text("recovered")
-                    .font(StrandFont.caption)
-                    .foregroundStyle(StrandPalette.textTertiary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-            }
-            HStack(spacing: 2) {
-                ForEach(0..<10, id: \.self) { i in
-                    RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                        .fill(i < filled ? color : StrandPalette.surfaceRaised)
-                        .frame(height: 6)
+            if snapshot.hasRecentLifts {
+                SectionHeader("Strength", overline: "This week")
+                HStack(spacing: ZoopMetrics.gap) {
+                    CumulativeTotalCard(
+                        title: "Working sets", value: "\(snapshot.week.workingSets)", unit: "",
+                        increments: snapshot.weekSessions.map { (Date(timeIntervalSince1970: TimeInterval($0.endTs)), Double($0.sets)) },
+                        tint: StrandPalette.effortColor)
+                    CumulativeTotalCard(
+                        title: "Volume", value: volumeDisplay, unit: LiftFormat.weightUnit(unitSystem),
+                        increments: snapshot.weekSessions.map {
+                            (Date(timeIntervalSince1970: TimeInterval($0.endTs)),
+                             LiftFormat.display(fromKilograms: $0.volumeKg, system: unitSystem)) },
+                        tint: StrandPalette.effortColor)
                 }
             }
-            .accessibilityHidden(true)
+            if let load = snapshot.muscleLoad {
+                SectionHeader("Muscle load", overline: snapshot.hasRecentLifts ? nil : "This week")
+                MuscleLoadCard(result: load, computedAt: snapshot.computedAt)
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(ZoopMetrics.space3)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(StrandPalette.surfaceInset))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(String(localized: "\(e.muscle.displayName): \(e.percentRecovered) percent recovered"))
     }
 }
