@@ -260418,6 +260418,456 @@
         }
       },
       "extractionState" : "manual"
+    },
+    "What your nights show" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was deine Nächte zeigen"
+          }
+        }
+      }
+    },
+    "Insights appear after about two weeks of nights with a recovery score." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auswertungen erscheinen nach etwa zwei Wochen mit Nächten und Erholungswert."
+          }
+        }
+      }
+    },
+    "Falling asleep" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einschlafen"
+          }
+        }
+      }
+    },
+    "Sleep for recovery" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlaf für Erholung"
+          }
+        }
+      }
+    },
+    "Best bedtime" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beste Schlafenszeit"
+          }
+        }
+      }
+    },
+    "Regular bedtime" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regelmäßige Schlafenszeit"
+          }
+        }
+      }
+    },
+    "Weekend shift" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wochenend-Verschiebung"
+          }
+        }
+      }
+    },
+    "The median time from the start of the night to the first staged sleep over your last 30 nights, compared with the median of the last 7." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Median der Zeit vom Beginn der Nacht bis zum ersten erkannten Schlaf über deine letzten 30 Nächte, verglichen mit dem Median der letzten 7."
+          }
+        }
+      }
+    },
+    "Nights from the last 90 days are grouped by time asleep in 30-minute steps, each bar is the average recovery the next morning, and the shortest step within 5 points of the best one is named." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächte der letzten 90 Tage werden nach Schlafdauer in 30-Minuten-Stufen gruppiert, jeder Balken ist die durchschnittliche Erholung am nächsten Morgen, und genannt wird die kürzeste Stufe, die höchstens 5 Punkte unter der besten liegt."
+          }
+        }
+      }
+    },
+    "Nights from the last 90 days are grouped by bedtime in 30-minute steps, and each bar is the average recovery the next morning, counting steps with at least 3 nights." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächte der letzten 90 Tage werden nach Schlafenszeit in 30-Minuten-Stufen gruppiert, und jeder Balken ist die durchschnittliche Erholung am nächsten Morgen, gezählt werden Stufen mit mindestens 3 Nächten."
+          }
+        }
+      }
+    },
+    "Nights within 30 minutes of your median bedtime count as regular, and the bars compare the average recovery after regular and other nights over the last 90 days." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächte innerhalb von 30 Minuten um deine mittlere Schlafenszeit gelten als regelmäßig, und die Balken vergleichen die durchschnittliche Erholung nach regelmäßigen und übrigen Nächten der letzten 90 Tage."
+          }
+        }
+      }
+    },
+    "The midpoint between bedtime and wake time, averaged over nights before Saturday and Sunday and over the other nights of the last six weeks." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Mitte zwischen Schlafens- und Aufwachzeit, gemittelt über die Nächte vor Samstag und Sonntag und über die übrigen Nächte der letzten sechs Wochen."
+          }
+        }
+      }
+    },
+    "asleep" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "geschlafen"
+          }
+        }
+      }
+    },
+    "bedtime" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafenszeit"
+          }
+        }
+      }
+    },
+    "recovery points" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholungspunkte"
+          }
+        }
+      }
+    },
+    "later on weekends" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "später am Wochenende"
+          }
+        }
+      }
+    },
+    "earlier on weekends" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "früher am Wochenende"
+          }
+        }
+      }
+    },
+    "Over the last 7 nights you fell asleep %lld min faster than usual." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In den letzten 7 Nächten bist du %lld Min. schneller eingeschlafen als sonst."
+          }
+        }
+      }
+    },
+    "Over the last 7 nights you took %lld min longer than usual to fall asleep." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In den letzten 7 Nächten hast du %lld Min. länger zum Einschlafen gebraucht als sonst."
+          }
+        }
+      }
+    },
+    "Over the last 7 nights you fell asleep about as fast as usual." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In den letzten 7 Nächten bist du etwa so schnell eingeschlafen wie sonst."
+          }
+        }
+      }
+    },
+    "Your recovery barely changes with sleep length between %@ and %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Erholung ändert sich zwischen %1$@ und %2$@ Schlaf kaum."
+          }
+        }
+      }
+    },
+    "You recover best after about %@ of sleep." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du erholst dich am besten nach etwa %@ Schlaf."
+          }
+        }
+      }
+    },
+    "Your bedtime makes little difference to your recovery so far." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Schlafenszeit macht für deine Erholung bisher kaum einen Unterschied."
+          }
+        }
+      }
+    },
+    "Your best recoveries follow bedtimes between %@ and %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine beste Erholung folgt auf Schlafenszeiten zwischen %1$@ und %2$@."
+          }
+        }
+      }
+    },
+    "After nights within 30 min of your usual bedtime you recover %lld points better." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach Nächten innerhalb von 30 Min. um deine übliche Schlafenszeit erholst du dich um %lld Punkte besser."
+          }
+        }
+      }
+    },
+    "Nights away from your usual bedtime have recovered %lld points better so far." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächte abseits deiner üblichen Schlafenszeit haben bisher %lld Punkte bessere Erholung gebracht."
+          }
+        }
+      }
+    },
+    "A regular bedtime makes no clear difference to your recovery yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine regelmäßige Schlafenszeit macht für deine Erholung noch keinen klaren Unterschied."
+          }
+        }
+      }
+    },
+    "Your sleep timing stays steady between weekdays and weekends." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Schlafzeiten bleiben zwischen Wochentagen und Wochenende stabil."
+          }
+        }
+      }
+    },
+    "On weekends your sleep shifts %@ later than on weekdays." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Am Wochenende verschiebt sich dein Schlaf um %@ nach hinten."
+          }
+        }
+      }
+    },
+    "On weekends your sleep shifts %@ earlier than on weekdays." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Am Wochenende verschiebt sich dein Schlaf um %@ nach vorne."
+          }
+        }
+      }
+    },
+    "%lld h" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Std."
+          }
+        }
+      }
+    },
+    "How it's computed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So wird es berechnet"
+          }
+        }
+      }
+    },
+    "Typical" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Typisch"
+          }
+        }
+      }
+    },
+    "Last 7 nights" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte 7 Nächte"
+          }
+        }
+      }
+    },
+    "Best recovery" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beste Erholung"
+          }
+        }
+      }
+    },
+    "Usual bedtime" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übliche Schlafenszeit"
+          }
+        }
+      }
+    },
+    "Regular nights" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regelmäßige Nächte"
+          }
+        }
+      }
+    },
+    "Other nights" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übrige Nächte"
+          }
+        }
+      }
+    },
+    "Regular" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regelmäßig"
+          }
+        }
+      }
+    },
+    "Time to fall asleep over the last %lld nights" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einschlafzeit über die letzten %lld Nächte"
+          }
+        }
+      }
+    },
+    "Minutes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minuten"
+          }
+        }
+      }
+    },
+    "Bin" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stufe"
+          }
+        }
+      }
+    },
+    "Minutes from usual bedtime" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minuten von der üblichen Schlafenszeit"
+          }
+        }
+      }
+    },
+    "Tolerance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toleranz"
+          }
+        }
+      }
+    },
+    "Mid-sleep" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafmitte"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
