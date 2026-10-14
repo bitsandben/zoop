@@ -258847,6 +258847,86 @@
           }
         }
       }
+    },
+    "Peak HR" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Max. HF"
+          }
+        }
+      }
+    },
+    "Sleep factors" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlaffaktoren"
+          }
+        }
+      }
+    },
+    "Wake-ups" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufwachphasen"
+          }
+        }
+      }
+    },
+    "Muscle recovery" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muskelerholung"
+          }
+        }
+      }
+    },
+    "Estimated" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschätzt"
+          }
+        }
+      }
+    },
+    "recovered" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "erholt"
+          }
+        }
+      }
+    },
+    "%@: %lld percent recovered" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$lld Prozent erholt"
+          }
+        }
+      }
+    },
+    "Estimated from sets per muscle: 36 to 72 hours, longer after hard sessions." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschätzt aus den Sätzen pro Muskel: 36 bis 72 Stunden, nach harten Einheiten länger."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
