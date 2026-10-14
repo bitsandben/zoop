@@ -606,7 +606,7 @@ struct SleepView: View {
         let score = performanceScore(for: night)
         VStack(spacing: 0) {
             Text("Sleep")
-                .font(.system(size: 30, weight: .bold))
+                .font(StrandFont.ui(30, weight: .bold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .padding(.top, 6)
                 .accessibilityAddTraits(.isHeader)
@@ -810,10 +810,10 @@ struct SleepView: View {
                     Spacer(minLength: 8)
                     Button { addNap = AddNapSeed(forNight: night) } label: {
                         Image(systemName: "plus")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(StrandPalette.surfaceBase)
+                            .font(StrandFont.ui(16, weight: .semibold))
+                            .foregroundStyle(StrandPalette.primaryButtonText)
                             .frame(width: 36, height: 36)
-                            .background(SquircleShape().fill(StrandPalette.textPrimary))
+                            .background(SquircleShape().fill(StrandPalette.primaryButtonFill))
                     }
                     .buttonStyle(LiquidPressStyle())
                     .accessibilityLabel("Add a nap")
@@ -3258,11 +3258,11 @@ struct SleepTimeEditor: View {
 
             Button(action: attemptSave) {
                 Text(saving ? "Saving…" : "Save")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(StrandPalette.surfaceBase)
+                    .font(StrandFont.ui(17, weight: .semibold))
+                    .foregroundStyle(StrandPalette.primaryButtonText)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(SquircleShape().fill(StrandPalette.textPrimary))
+                    .background(SquircleShape().fill(StrandPalette.primaryButtonFill))
             }
             .buttonStyle(.plain)
             .disabled(saving || !canSave)
@@ -3271,7 +3271,7 @@ struct SleepTimeEditor: View {
             if onDelete != nil {
                 Button(role: .destructive) { confirmingDelete = true } label: {
                     Label(deleteLabel, systemImage: "trash")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(StrandFont.ui(16, weight: .semibold))
                         .foregroundStyle(StrandPalette.statusCritical)
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)

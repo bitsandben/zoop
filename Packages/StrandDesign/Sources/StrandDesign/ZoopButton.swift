@@ -65,8 +65,8 @@ struct ZoopButtonAppearance {
         case .primary:
             #if os(iOS)
             // The redesign's primary action is a white control with dark text.
-            fill = StrandPalette.textPrimary
-            label = StrandPalette.surfaceBase
+            fill = StrandPalette.primaryButtonFill
+            label = StrandPalette.primaryButtonText
             #else
             fill = StrandPalette.accent
             label = StrandPalette.goldDeepText   // designated crisp white for text on accent fills

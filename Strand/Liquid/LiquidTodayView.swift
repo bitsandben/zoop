@@ -925,7 +925,7 @@ struct LiquidTodayView: View {
         let items = todaysActivities
         VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
             Text("Today's activities")
-                .font(.system(size: 15, weight: .semibold))
+                .font(StrandFont.ui(15, weight: .semibold))
                 .foregroundStyle(StrandPalette.textPrimary)
             if items.isEmpty {
                 Text("Nothing recorded yet today")
@@ -988,9 +988,9 @@ struct LiquidTodayView: View {
         Button { router.requestQuickActions() } label: {
             Image(systemName: "plus")
                 .font(.system(size: 20, weight: .medium))
-                .foregroundStyle(StrandPalette.surfaceBase)
+                .foregroundStyle(StrandPalette.primaryButtonText)
                 .frame(width: 46, height: 46)
-                .background(SquircleShape().fill(StrandPalette.textPrimary))
+                .background(SquircleShape().fill(StrandPalette.primaryButtonFill))
                 .contentShape(SquircleShape())
         }
         .buttonStyle(LiquidPressStyle())
@@ -1001,7 +1001,7 @@ struct LiquidTodayView: View {
     private var personalizeButton: some View {
         Button { customizationDestination = .today } label: {
             Image(systemName: "pencil")
-                .font(.system(size: 16, weight: .semibold))
+                .font(StrandFont.ui(16, weight: .semibold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .frame(width: 40, height: 40)
                 .background(Circle().fill(StrandPalette.surfaceRaised))
@@ -1057,11 +1057,11 @@ struct LiquidTodayView: View {
                         Text(dayTitle)
                             .font(StrandFont.rounded(28))
                             .foregroundStyle(StrandPalette.textPrimary)
-                            .shadow(color: .black.opacity(0.4), radius: 10, y: 1)
+                            .shadow(color: StrandPalette.shadow(0.4), radius: 10, y: 1)
                         Text(dateLine)
                             .font(StrandFont.caption)
                             .foregroundStyle(StrandPalette.textSecondary)
-                            .shadow(color: .black.opacity(0.35), radius: 8, y: 1)
+                            .shadow(color: StrandPalette.shadow(0.35), radius: 8, y: 1)
                     }
                     .contentShape(Rectangle())
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -2035,19 +2035,19 @@ struct LiquidTodayView: View {
         // average under it and a chevron.
         let tile = HStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
+                .font(StrandFont.ui(15, weight: .semibold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .frame(width: 36, height: 36)
                 .background(Circle().fill(StrandPalette.surfaceBase))
             Text(label)
-                .font(.system(size: 15, weight: .semibold))
+                .font(StrandFont.ui(15, weight: .semibold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 1) {
                 Text(verbatim: displayValue)
-                    .font(.system(size: 18, weight: .bold))
+                    .font(StrandFont.ui(18, weight: .bold))
                     .foregroundStyle(StrandPalette.textPrimary)
                     .lineLimit(1)
                 if let line = caption ?? key.flatMap({ tileAverageLine($0, displayValue: displayValue, unit: unit) }) {
@@ -2977,7 +2977,7 @@ private struct LiquidWordmark: View {
                     .foregroundStyle(StrandPalette.textTertiary)
             }
         }
-        .shadow(color: .black.opacity(0.25), radius: 6, y: 1)
+        .shadow(color: StrandPalette.shadow(0.25), radius: 6, y: 1)
         .rotationEffect(.degrees(rot))
         .scaleEffect(x: scaleX, y: scaleY)
         .offset(x: dx)
@@ -3119,7 +3119,7 @@ private struct HeroScoreCell: View {
             VStack(spacing: 2) {
                 HStack(spacing: 5) {
                     Text(label)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(StrandFont.ui(16, weight: .semibold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold))
@@ -3145,7 +3145,7 @@ private struct HeroScoreCell: View {
                 #if os(iOS)
                 HStack(spacing: 5) {
                     Text(label)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(StrandFont.ui(16, weight: .semibold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold))
@@ -3441,7 +3441,7 @@ private struct LiquidAddButton: View {
     var body: some View {
         Button { router.requestQuickActions() } label: {
             Image(systemName: "plus")
-                .font(.system(size: 16, weight: .bold))
+                .font(StrandFont.ui(16, weight: .bold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .frame(
                     width: ZoopMetrics.compactControlSize,

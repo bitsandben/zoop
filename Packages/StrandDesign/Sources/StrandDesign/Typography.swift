@@ -53,6 +53,13 @@ public enum StrandFont {
         roundedSystem(size, weight: weight).monospacedDigit()
     }
 
+    /// A heading at a fixed size/weight in the theme's display face: the plain system face under
+    /// Classic (identical to `.system(size:weight:)`), SF Rounded under Pastel & Nature. Use for
+    /// titles and headlines that would otherwise hard-code `.system(size:weight:)`; body copy stays put.
+    public static func ui(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        roundedSystem(size, weight: weight)
+    }
+
     /// Title1 28 / Bold. Scales with Dynamic Type.
     public static var title1: Font { Font.system(.title, design: displayDesign, weight: .bold) }
 

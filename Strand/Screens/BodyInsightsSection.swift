@@ -338,7 +338,7 @@ struct BodyInsightCardView: View {
                         .frame(width: 34, height: 34)
                         .background(Circle().fill(StrandPalette.surfaceBase))
                     Text(card.title)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(StrandFont.ui(15, weight: .semibold))
                         .foregroundStyle(StrandPalette.textSecondary)
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.right")

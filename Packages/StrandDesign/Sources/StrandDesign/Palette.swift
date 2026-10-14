@@ -119,6 +119,25 @@ public enum StrandPalette {
     public static let heroFill   = Color(light: "FFFFFFD9", dark: "0D0E14CC", pastel: ("FFFFFFF2", "202824E6"))
     public static let heroBorder = Color(light: "0000001A", dark: "FFFFFF1C", pastel: ("2F3A3312", "FFFFFF14"))
 
+    // MARK: Primary pill controls
+    // The solid primary control ("+" beside My Day, Save / Start pills, ZoopButton .primary). Classic keeps
+    // the ink-on-canvas inversion (exactly textPrimary / surfaceBase); Pastel & Nature uses a soft lavender
+    // fill with deep lavender ink so the strongest control on a screen still reads gentle.
+    public static let primaryButtonFill = Color(classic: (light: "#17181C", dark: "#F5F5F5"),
+                                                pastel: (light: "#DCD6F7", dark: "#B9AFF0"))
+    public static let primaryButtonText = Color(classic: (light: "#F3F4F6", dark: "#0A0A0A"),
+                                                pastel: (light: "#4A3F8F", dark: "#221D45"))
+
+    // MARK: Decorative shadow
+    /// A decorative drop-shadow colour at `opacity`. Classic keeps plain black; Pastel & Nature light
+    /// uses a faint sage-ink tint at a third of the strength (black reads as dirt on the pale canvas),
+    /// pastel dark keeps black.
+    public static func shadow(_ opacity: Double) -> Color {
+        guard ZoopTheme.isPastel else { return .black.opacity(opacity) }
+        let a = { (v: Double) in String(format: "%02X", Int((min(1, max(0, v)) * 255).rounded())) }
+        return Color(light: "#2F3A33" + a(opacity * 0.35), dark: "#000000" + a(opacity))
+    }
+
     // MARK: Glow — ambient bloom behind heroes / charts (additive on dark; faint warm on light)
     public static let glowAmbient    = ZoopVisualStyle.mintGlow.opacity(0.28)
 

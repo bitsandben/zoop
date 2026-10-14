@@ -592,14 +592,14 @@ struct RootTabView: View {
                 // Workouts, Lift Log and Intervals live in the Training tab; Explore and Lab Book in Insights.
                 moreSection("Tools") {
                     MoreRow("Compare", "rectangle.split.2x1.fill", .compare, subtitle: "Metrics side by side")
-                    MoreRow("Rhythm", "waveform.path", .rhythm, subtitle: "Beat-to-beat timing")
+                    MoreRow("Rhythm", "waveform.path", .rhythm, subtitle: "Beat-to-beat timing", separator: false)
                 }
                 moreSection("Data") {
                     MoreRow("Data Sources", "externaldrive.fill", .dataSources, subtitle: "Where each number comes from")
                     MoreRow("Apple Health", "heart.fill", .appleHealth, subtitle: "Import and write-back")
                     MoreRow("Mi Band", "figure.walk.motion", .miBand, subtitle: "Steps and heart rate")
                     MoreRow("Backup & Sync", "externaldrive.fill.badge.icloud", .backupSync, subtitle: "Back up and restore")
-                    MoreRow("Shortcuts Export", "square.and.arrow.up.fill", .shortcutsExport, subtitle: "Send data to Shortcuts")
+                    MoreRow("Shortcuts Export", "square.and.arrow.up.fill", .shortcutsExport, subtitle: "Send data to Shortcuts", separator: false)
                 }
                 moreSection("Settings") {
                     MoreRow("Settings", "gearshape.fill", .settings, subtitle: "Profile, units and appearance")
@@ -608,7 +608,7 @@ struct RootTabView: View {
                     MoreRow("Power saving", "battery.25", .powerSaving, subtitle: "Ease the strap's battery")
                     MoreRow("Siri & Shortcuts", "mic.fill", .siriShortcuts, subtitle: "Voice and automation")
                     MoreRow("Test Centre", "stethoscope", .testCentre, subtitle: "Diagnostics and logs")
-                    MoreRow("Zoop Limitations", "list.bullet.rectangle", .noopLimitations, subtitle: "What is not measured yet")
+                    MoreRow("Zoop Limitations", "list.bullet.rectangle", .noopLimitations, subtitle: "What is not measured yet", separator: false)
                 }
             }
             // The rows push MoreDestination VALUES so a re-tap of the More tab can pop them off the
@@ -699,20 +699,27 @@ private struct MoreRow: View {
     let icon: String
     let route: MoreDestination
     let subtitle: LocalizedStringKey?
+    /// Draws the hairline under the row. The last row of a card passes false: the line sits inside the
+    /// card's bottom edge, so the clip does not hide it and it would run along the card's foot.
+    let separator: Bool
 
-    init(_ title: LocalizedStringKey, _ icon: String, _ route: MoreDestination, subtitle: LocalizedStringKey? = nil) {
+    init(_ title: LocalizedStringKey, _ icon: String, _ route: MoreDestination, subtitle: LocalizedStringKey? = nil,
+         separator: Bool = true) {
         self.title = title; self.icon = icon; self.route = route; self.subtitle = subtitle
+        self.separator = separator
     }
 
     var body: some View {
         NavigationLink(value: route) {
             ZoopIconRow(title, subtitle: subtitle, icon: icon)
                 .overlay(alignment: .bottom) {
-                    // Hairline between rows, inset to the text; the card clips the last one.
-                    Rectangle()
-                        .fill(StrandPalette.hairline)
-                        .frame(height: 1)
-                        .padding(.leading, 68)
+                    // Hairline between rows, inset to the text; none under a card's last row.
+                    if separator {
+                        Rectangle()
+                            .fill(StrandPalette.hairline)
+                            .frame(height: 1)
+                            .padding(.leading, 68)
+                    }
                 }
         }
         .buttonStyle(.plain)

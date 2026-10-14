@@ -48,7 +48,7 @@ struct HomeEnergyBankCard: View {
         VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
             HStack(spacing: 6) {
                 Text("Energy Bank")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(StrandFont.ui(15, weight: .semibold))
                     .foregroundStyle(StrandPalette.textPrimary)
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
@@ -190,7 +190,7 @@ struct EnergyBankScreen: View {
                 .font(StrandFont.caption)
                 .foregroundStyle(StrandPalette.textSecondary)
             Text(verbatim: value)
-                .font(.system(size: 20, weight: .semibold).monospacedDigit())
+                .font(StrandFont.ui(20, weight: .semibold).monospacedDigit())
                 .foregroundStyle(StrandPalette.textPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

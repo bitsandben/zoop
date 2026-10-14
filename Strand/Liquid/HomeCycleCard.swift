@@ -113,10 +113,10 @@ struct HomeCycleCard: View {
                     .fixedSize(horizontal: false, vertical: true)
                 Text("Log period")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(StrandPalette.surfaceBase)
+                    .foregroundStyle(StrandPalette.primaryButtonText)
                     .padding(.horizontal, 16)
                     .frame(height: 40)
-                    .background(Capsule().fill(StrandPalette.textPrimary))
+                    .background(Capsule().fill(StrandPalette.primaryButtonFill))
             }
         }
         .padding(16)

@@ -93,11 +93,11 @@ struct HomeMomentCard: View {
                 .fixedSize(horizontal: false, vertical: true)
             NavigationLink(value: TabRoute.breathe) {
                 Label("Breathe for 3 minutes", systemImage: "play.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(StrandPalette.surfaceBase)
+                    .font(StrandFont.ui(15, weight: .semibold))
+                    .foregroundStyle(StrandPalette.primaryButtonText)
                     .padding(.horizontal, 16)
                     .frame(height: 42)
-                    .background(Capsule().fill(StrandPalette.textPrimary))
+                    .background(Capsule().fill(StrandPalette.primaryButtonFill))
             }
             .buttonStyle(.plain)
         }
@@ -115,7 +115,7 @@ struct HomeMomentCard: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Sleep tonight")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(StrandFont.ui(17, weight: .semibold))
                     .foregroundStyle(StrandPalette.textPrimary)
                 Spacer()
                 Image(systemName: "chevron.right")
@@ -161,7 +161,7 @@ struct HomeMomentCard: View {
                 .frame(maxWidth: .infinity)
             }
             Text(alarm == nil ? "Set alarm" : "Edit alarm")
-                .font(.system(size: 15, weight: .semibold))
+                .font(StrandFont.ui(15, weight: .semibold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .frame(maxWidth: .infinity, minHeight: 46)
                 .background(Capsule().fill(StrandPalette.surfaceBase))
@@ -196,7 +196,7 @@ struct HomeMomentCard: View {
                 .frame(width: 34, height: 34)
                 .background(Circle().fill(StrandPalette.surfaceBase))
             Text(title)
-                .font(.system(size: 17, weight: .semibold))
+                .font(StrandFont.ui(17, weight: .semibold))
                 .foregroundStyle(StrandPalette.textPrimary)
         }
     }

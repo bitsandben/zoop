@@ -75,10 +75,10 @@ struct LogbookView: View {
             Text(String(localized: "Save logbook").uppercased())
                 .font(StrandFont.headline)
                 .tracking(1.2)
-                .foregroundStyle(StrandPalette.surfaceBase)
+                .foregroundStyle(StrandPalette.primaryButtonText)
                 .frame(maxWidth: .infinity)
                 .frame(height: ZoopMetrics.controlHeight + ZoopMetrics.space1)
-                .background(Capsule().fill(StrandPalette.textPrimary))
+                .background(Capsule().fill(StrandPalette.primaryButtonFill))
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)

@@ -1228,11 +1228,11 @@ private struct PrimaryButtonStyle: ButtonStyle {
             // The concept's primary control: a white pill with dark text.
             .frame(maxWidth: .infinity)
             .frame(height: 56)
-            .foregroundStyle(StrandPalette.surfaceBase)
+            .foregroundStyle(StrandPalette.primaryButtonText)
             .padding(.horizontal, 20)
             .background(
                 Capsule()
-                    .fill(StrandPalette.textPrimary.opacity(configuration.isPressed ? 0.85 : 1))
+                    .fill(StrandPalette.primaryButtonFill.opacity(configuration.isPressed ? 0.85 : 1))
             )
             .scaleEffect(configuration.isPressed ? 0.985 : 1)
             .animation(StrandMotion.interactive, value: configuration.isPressed)

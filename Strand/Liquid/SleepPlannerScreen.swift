@@ -82,10 +82,10 @@ struct SleepPlannerScreen: View {
             } label: {
                 Text("Turn on")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(StrandPalette.surfaceBase)
+                    .foregroundStyle(StrandPalette.primaryButtonText)
                     .padding(.horizontal, 14)
                     .frame(height: 34)
-                    .background(Capsule().fill(StrandPalette.textPrimary))
+                    .background(Capsule().fill(StrandPalette.primaryButtonFill))
             }
             .buttonStyle(.plain)
         }
@@ -381,9 +381,9 @@ struct AlarmTimeSheet: View {
             Button(action: save) {
                 Text("Save")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(StrandPalette.surfaceBase)
+                    .foregroundStyle(StrandPalette.primaryButtonText)
                     .frame(maxWidth: .infinity, minHeight: 54)
-                    .background(Capsule().fill(selected.isEmpty ? StrandPalette.textTertiary : StrandPalette.textPrimary))
+                    .background(Capsule().fill(selected.isEmpty ? StrandPalette.textTertiary : StrandPalette.primaryButtonFill))
             }
             .buttonStyle(.plain)
             .disabled(selected.isEmpty && originalDays.isEmpty)

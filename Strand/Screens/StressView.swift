@@ -784,7 +784,7 @@ private struct StressArchGauge: View {
                         .font(StrandFont.display(64))
                         .foregroundStyle(StrandPalette.textPrimary)
                     Text(bandTitle.capitalized)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(StrandFont.ui(17, weight: .semibold))
                         .foregroundStyle(StressRamp.color(score))
                 }
                 .padding(.bottom, 4)
@@ -826,7 +826,7 @@ private struct StressHeroGauge: View {
                     font: StrandFont.rounded(34, weight: .bold),
                     color: .white
                 )
-                .shadow(color: .black.opacity(0.5), radius: 6, y: 1)
+                .shadow(color: StrandPalette.shadow(0.5), radius: 6, y: 1)
                 Text("of 3")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textSecondary)

@@ -197,7 +197,7 @@ struct WorkoutsView: View {
     private func trainingLink(_ route: TabRoute, icon: String, label: LocalizedStringKey) -> some View {
         NavigationLink(value: route) {
             Image(systemName: icon)
-                .font(.system(size: 16, weight: .semibold))
+                .font(StrandFont.ui(16, weight: .semibold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .frame(width: 42, height: 42)
                 .background(ZoopPanelSurface(cornerRadius: 21))
@@ -909,7 +909,7 @@ struct WorkoutsView: View {
                             font: StrandFont.rounded(46),
                             color: StrandPalette.textPrimary
                         )
-                        .shadow(color: .black.opacity(0.5), radius: 6, y: 1)
+                        .shadow(color: StrandPalette.shadow(0.5), radius: 6, y: 1)
                         Text(effortScale == .whoop ? "of 21" : "of 100")
                             .font(StrandFont.caption)
                             .foregroundStyle(StrandPalette.textSecondary)
@@ -1191,7 +1191,7 @@ struct WorkoutsView: View {
                 // Identical header for every card.
                 HStack(spacing: 10) {
                     Image(systemName: sportIcon(g.sport))
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(StrandFont.ui(15, weight: .semibold))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.effortColor))
                         .frame(width: 22, alignment: .center)
                     Text(WorkoutSource.displaySport(g.sport))

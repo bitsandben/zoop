@@ -23,7 +23,7 @@ struct HomeMonitorTile<Footer: View>: View {
         VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
             HStack(spacing: 6) {
                 Text(name)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(StrandFont.ui(15, weight: .semibold))
                     .foregroundStyle(StrandPalette.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -180,14 +180,14 @@ struct HomeHealthMonitorRow: View {
         let allIn = !scored.isEmpty && inRange == scored.count
         HStack(spacing: 12) {
             Image(systemName: scored.isEmpty ? "minus" : (allIn ? "checkmark" : "exclamationmark"))
-                .font(.system(size: 15, weight: .bold))
+                .font(StrandFont.ui(15, weight: .bold))
                 .foregroundStyle(scored.isEmpty ? StrandPalette.textSecondary
                                  : (allIn ? StrandPalette.textPrimary : StrandPalette.statusWarning))
                 .frame(width: 36, height: 36)
                 .background(Circle().fill(StrandPalette.surfaceBase))
             VStack(alignment: .leading, spacing: 1) {
                 Text("Health monitor")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(StrandFont.ui(15, weight: .semibold))
                     .foregroundStyle(StrandPalette.textPrimary)
                 Text(scored.isEmpty ? String(localized: "No readings yet")
                      : (allIn ? String(localized: "Within range") : String(localized: "Outside range")))
@@ -197,7 +197,7 @@ struct HomeHealthMonitorRow: View {
             Spacer(minLength: 8)
             if !scored.isEmpty {
                 Text(String(localized: "\(inRange)/\(scored.count) metrics"))
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(StrandFont.ui(15, weight: .semibold))
                     .foregroundStyle(StrandPalette.textSecondary)
             }
             Image(systemName: "chevron.right")
@@ -221,7 +221,7 @@ struct HomeStressMonitorCard: View {
         VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Stress monitor")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(StrandFont.ui(15, weight: .semibold))
                     .foregroundStyle(StrandPalette.textPrimary)
                 Spacer()
                 if let score {
@@ -293,13 +293,13 @@ struct HomeActivityRow: View {
         let minutes = max(0, (item.end - item.start) / 60)
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 16, weight: .semibold))
+                .font(StrandFont.ui(16, weight: .semibold))
                 .foregroundStyle(StrandPalette.surfaceBase)
                 .frame(width: 44, height: 36)
                 .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(tint))
             VStack(alignment: .leading, spacing: 1) {
                 Text(item.title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(StrandFont.ui(15, weight: .semibold))
                     .foregroundStyle(StrandPalette.textPrimary)
                 if item.kind == .detected {
                     Text("Detected · tap to save")
@@ -313,7 +313,7 @@ struct HomeActivityRow: View {
                     .font(.system(size: 13, weight: .medium).monospacedDigit())
                     .foregroundStyle(StrandPalette.textSecondary)
                 Text("\(minutes / 60):\(String(format: "%02d", minutes % 60))")
-                    .font(.system(size: 15, weight: .bold).monospacedDigit())
+                    .font(StrandFont.ui(15, weight: .bold).monospacedDigit())
                     .foregroundStyle(StrandPalette.textPrimary)
             }
         }
@@ -369,7 +369,7 @@ private struct WeeklyCard<Content: View>: View {
         VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
             HStack {
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(StrandFont.ui(15, weight: .semibold))
                     .foregroundStyle(StrandPalette.textPrimary)
                 Spacer()
                 Image(systemName: "chevron.right")

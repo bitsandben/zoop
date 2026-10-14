@@ -914,7 +914,7 @@ private struct LiveHeartReadout: View {
                     if displayHR != nil {
                         CountUpNumber(value: shown, font: StrandFont.rounded(88, weight: .semibold))
                             .foregroundStyle(tint)
-                            .shadow(color: .black.opacity(0.4), radius: 6, y: 1)
+                            .shadow(color: StrandPalette.shadow(0.4), radius: 6, y: 1)
                     } else {
                         Text("—")
                             .font(StrandFont.rounded(88, weight: .semibold))

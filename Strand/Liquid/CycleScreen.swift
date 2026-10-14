@@ -205,9 +205,9 @@ struct CycleScreen: View {
                 Spacer()
                 Image(systemName: "plus")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(StrandPalette.surfaceBase)
+                    .foregroundStyle(StrandPalette.primaryButtonText)
                     .frame(width: 36, height: 36)
-                    .background(Circle().fill(StrandPalette.textPrimary))
+                    .background(Circle().fill(StrandPalette.primaryButtonFill))
             }
             .padding(14)
             .background(ZoopPanelSurface())

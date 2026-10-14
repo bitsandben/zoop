@@ -221,14 +221,14 @@ struct CoupledView: View {
                             format: { "\(Int($0.rounded()))%" },
                             font: StrandFont.number(48),
                             color: .white)
-                    .shadow(color: .black.opacity(0.5), radius: 6, y: 1)
+                    .shadow(color: StrandPalette.shadow(0.5), radius: 6, y: 1)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
             } else {
                 Text("—")
                     .font(StrandFont.number(48))
                     .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.5), radius: 6, y: 1)
+                    .shadow(color: StrandPalette.shadow(0.5), radius: 6, y: 1)
             }
             Text("RECOVERY")
                 .font(StrandFont.overline)
@@ -314,7 +314,7 @@ struct CoupledView: View {
                                 Text("—").font(StrandFont.number(34)).foregroundStyle(.white)
                             }
                         }
-                        .shadow(color: .black.opacity(0.5), radius: 6, y: 1)
+                        .shadow(color: StrandPalette.shadow(0.5), radius: 6, y: 1)
                         .lineLimit(1).minimumScaleFactor(0.5)
                         .allowsHitTesting(false)
                     }
@@ -419,7 +419,7 @@ struct CoupledView: View {
                                             format: { "\(Int($0.rounded()))" },
                                             font: StrandFont.number(24),
                                             color: .white)
-                                    .shadow(color: .black.opacity(0.5), radius: 6, y: 1)
+                                    .shadow(color: StrandPalette.shadow(0.5), radius: 6, y: 1)
                                     .allowsHitTesting(false)
                             }
                         }

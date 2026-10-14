@@ -84,7 +84,7 @@ struct HomeFitnessAgeCard: View {
             VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
                 HStack(spacing: 6) {
                     Text("Fitness Age")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(StrandFont.ui(15, weight: .semibold))
                         .foregroundStyle(StrandPalette.textPrimary)
                     Image(systemName: "chevron.right")
                         .font(.system(size: 13, weight: .semibold))
@@ -239,7 +239,7 @@ struct FitnessAgeScreen: View {
     private var howCalculated: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
             Text("How it's calculated")
-                .font(.system(size: 15, weight: .semibold))
+                .font(StrandFont.ui(15, weight: .semibold))
                 .foregroundStyle(StrandPalette.textPrimary)
             Text("An estimate from your fitness, heart, activity, body and sleep compared with people of your age and sex.")
                 .font(StrandFont.footnote)
@@ -256,7 +256,7 @@ struct FitnessAgeScreen: View {
         let shown = FitnessAgeFactor.allCases.filter { snapshot.contributions[$0] != nil }
         return VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
             Text("What shapes it")
-                .font(.system(size: 17, weight: .semibold))
+                .font(StrandFont.ui(17, weight: .semibold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .padding(.top, 6)
             VStack(spacing: 0) {
@@ -350,7 +350,7 @@ struct FitnessAgeScreen: View {
         let pts = snapshot.history.filter { $0.day >= cutoff }.compactMap { p in dayDate(p.day).map { (date: $0, value: p.value) } }
         return VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
             Text("Last 90 days")
-                .font(.system(size: 17, weight: .semibold))
+                .font(StrandFont.ui(17, weight: .semibold))
                 .foregroundStyle(StrandPalette.textPrimary)
             if pts.count >= 2 {
                 Chart {
@@ -421,7 +421,7 @@ struct FitnessAgeScreen: View {
             }
             HStack(spacing: ZoopMetrics.space4) {
                 Button("Open Settings") { showSettings = true }
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(StrandFont.ui(15, weight: .semibold))
                     .foregroundStyle(StrandPalette.textPrimary)
                 Spacer()
                 Button {
@@ -435,7 +435,7 @@ struct FitnessAgeScreen: View {
                 } label: {
                     if refreshing { ProgressView() } else { Text("Refresh") }
                 }
-                .font(.system(size: 15, weight: .semibold))
+                .font(StrandFont.ui(15, weight: .semibold))
                 .foregroundStyle(StrandPalette.textSecondary)
             }
         }
@@ -460,7 +460,7 @@ private struct FitnessAgeHero: View {
         let chrono = Double(chronoAge)
         VStack(spacing: ZoopMetrics.space1) {
             Text("Fitness Age")
-                .font(.system(size: 22, weight: .bold))
+                .font(StrandFont.ui(22, weight: .bold))
                 .foregroundStyle(StrandPalette.textPrimary)
             if let d = dayDate(day) {
                 Text("Week of \(d.formatted(.dateTime.day().month(.wide)))")
@@ -714,7 +714,7 @@ private struct FitnessFactorRow: View {
         HStack(alignment: .center, spacing: ZoopMetrics.space3) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(StrandFont.ui(15, weight: .semibold))
                     .foregroundStyle(StrandPalette.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -738,7 +738,7 @@ private struct FitnessFactorRow: View {
                 .frame(width: 64, height: 28)
             VStack(alignment: .trailing, spacing: 0) {
                 Text(verbatim: (years > 0 ? "+" : years < 0 ? "−" : "") + oneDecimal(abs(years)))
-                    .font(.system(size: 15, weight: .semibold).monospacedDigit())
+                    .font(StrandFont.ui(15, weight: .semibold).monospacedDigit())
                     .foregroundStyle(years < -0.05 ? StrandPalette.statusPositive
                                      : years > 0.05 ? StrandPalette.statusWarning : StrandPalette.textSecondary)
                 Text("years")

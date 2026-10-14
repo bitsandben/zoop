@@ -1383,12 +1383,12 @@ struct MetricDetailView: View {
                                 VStack(spacing: 2) {
                                     CountUpNumber(value: v, font: StrandFont.display(54))
                                         .foregroundStyle(StrandPalette.textPrimary)
-                                        .shadow(color: .black.opacity(0.5), radius: 6, y: 1)
+                                        .shadow(color: StrandPalette.shadow(0.5), radius: 6, y: 1)
                                     if !metric.unit.isEmpty {
                                         Text(metric.unit)
                                             .font(StrandFont.footnote)
                                             .foregroundStyle(.white.opacity(0.85))
-                                            .shadow(color: .black.opacity(0.5), radius: 4, y: 1)
+                                            .shadow(color: StrandPalette.shadow(0.5), radius: 4, y: 1)
                                     }
                                 }
                                 .allowsHitTesting(false)
