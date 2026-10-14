@@ -105,17 +105,17 @@ struct SleepWhySheet: View {
         let userStart = seed.userEdited && abs(seed.effectiveStartTs - ev.onsetTs) >= 60 ? seed.effectiveStartTs : nil
         let lo = min(ev.stillSinceTs, userStart ?? ev.stillSinceTs) - 30 * 60
         let hi = max(ev.onsetTs, userStart ?? ev.onsetTs) + 45 * 60
-        var markers = [Marker(ts: ev.stillSinceTs, label: String(localized: "Still"), color: StrandPalette.textTertiary)]
+        var markers = [SleepEvidenceMarker(ts: ev.stillSinceTs, label: String(localized: "Still"), color: StrandPalette.textTertiary)]
         if ev.onsetTs != ev.stillSinceTs {
-            markers.append(Marker(ts: ev.onsetTs, label: String(localized: "Fell asleep"), color: StrandPalette.restBright))
+            markers.append(SleepEvidenceMarker(ts: ev.onsetTs, label: String(localized: "Fell asleep"), color: StrandPalette.restBright))
         } else {
-            markers[0] = Marker(ts: ev.onsetTs, label: String(localized: "Fell asleep"), color: StrandPalette.restBright)
+            markers[0] = SleepEvidenceMarker(ts: ev.onsetTs, label: String(localized: "Fell asleep"), color: StrandPalette.restBright)
         }
         if let userStart {
-            markers.append(Marker(ts: userStart, label: String(localized: "You"), color: StrandPalette.textPrimary))
+            markers.append(SleepEvidenceMarker(ts: userStart, label: String(localized: "You"), color: StrandPalette.textPrimary))
         }
         return panel {
-            SleepPanelLabel("Falling asleep")
+            panelTitle("Falling asleep")
             Text(onsetSentence(ev))
                 .font(StrandFont.subhead)
                 .foregroundStyle(StrandPalette.textPrimary)
@@ -133,7 +133,7 @@ struct SleepWhySheet: View {
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textSecondary)
             }
-            EvidenceChart(evidence: ev, from: lo, to: hi, markers: markers)
+            SleepEvidenceChart(evidence: ev, from: lo, to: hi, markers: markers)
                 .frame(height: 170)
             legend(ev)
         }
@@ -163,18 +163,18 @@ struct SleepWhySheet: View {
     private func wakePanel(_ ev: SleepOnsetEvidence) -> some View {
         let lo = min(ev.stillUntilTs, seed.endTs) - 60 * 60
         let hi = max(ev.stillUntilTs, seed.endTs) + 30 * 60
-        var markers = [Marker(ts: seed.endTs, label: String(localized: "Awake"), color: StrandPalette.restBright)]
+        var markers = [SleepEvidenceMarker(ts: seed.endTs, label: String(localized: "Awake"), color: StrandPalette.restBright)]
         let refined = abs(seed.endTs - ev.stillUntilTs) > 120
         if refined, !seed.userEdited {
-            markers.insert(Marker(ts: ev.stillUntilTs, label: String(localized: "Moving"), color: StrandPalette.textTertiary), at: 0)
+            markers.insert(SleepEvidenceMarker(ts: ev.stillUntilTs, label: String(localized: "Moving"), color: StrandPalette.textTertiary), at: 0)
         }
         return panel {
-            SleepPanelLabel("Waking up")
+            panelTitle("Waking up")
             Text(wakeSentence(ev, refined: refined))
                 .font(StrandFont.subhead)
                 .foregroundStyle(StrandPalette.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
-            EvidenceChart(evidence: ev, from: lo, to: hi, markers: markers)
+            SleepEvidenceChart(evidence: ev, from: lo, to: hi, markers: markers)
                 .frame(height: 150)
         }
     }
@@ -226,7 +226,7 @@ struct SleepWhySheet: View {
         let learned = OnsetCorrectionLearning.learnedOffsetMin(corrections)
         return panel {
             HStack {
-                SleepPanelLabel("Detection")
+                panelTitle("Detection")
                 Spacer()
                 if applying { ProgressView().controlSize(.small) }
             }
@@ -309,109 +309,15 @@ struct SleepWhySheet: View {
     // MARK: Pieces
 
     private func panel<C: View>(@ViewBuilder _ content: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: ZoopMetrics.space3) { content() }
-            .padding(ZoopMetrics.cardInnerPadding)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(ZoopPanelSurface())
+        ContentCard { content() }
+    }
+
+    private func panelTitle(_ title: LocalizedStringKey) -> some View {
+        Text(title).font(ZoopType.headline).foregroundStyle(StrandPalette.textPrimary)
     }
 
     private func clock(_ ts: Int) -> String {
         AppClock.hourMinuteFormatter().string(from: Date(timeIntervalSince1970: TimeInterval(ts)))
-    }
-}
-
-// MARK: - Evidence chart
-
-private struct Marker: Hashable {
-    let ts: Int
-    let label: String
-    let color: Color
-}
-
-/// Per-minute heart rate over `[from, to]` with the night's sleeping and awake levels as dashed lines,
-/// wrist movement as faint bars along the floor, and labelled markers.
-private struct EvidenceChart: View {
-    let evidence: SleepOnsetEvidence
-    let from: Int
-    let to: Int
-    let markers: [Marker]
-
-    private struct Pt: Identifiable { let id: Int; let date: Date; let hr: Double?; let moving: Double? }
-
-    private var points: [Pt] {
-        let ev = evidence
-        let i0 = max(0, (from - ev.seriesStartTs) / 60)
-        let i1 = min(ev.minuteHR.count - 1, (to - ev.seriesStartTs) / 60)
-        guard i1 > i0 else { return [] }
-        return (i0...i1).map { i in
-            Pt(id: i, date: Date(timeIntervalSince1970: TimeInterval(ev.seriesStartTs + i * 60)),
-               hr: ev.minuteHR[i], moving: ev.minuteMoving[i])
-        }
-    }
-
-    var body: some View {
-        let pts = points
-        let hrs = pts.compactMap(\.hr)
-        let refs = [evidence.sleepLevelBpm, evidence.awakeBarBpm].compactMap { $0 }
-        let lo0 = (hrs + refs).min() ?? 40, hi0 = (hrs + refs).max() ?? 100
-        let pad = max(3, (hi0 - lo0) * 0.1)
-        let floor = lo0 - pad - (hi0 - lo0 + 2 * pad) * 0.3   // room for the movement bars
-        let hi = hi0 + pad
-        let barTop = lo0 - pad
-        Chart {
-            ForEach(pts) { p in
-                if let m = p.moving, m > 0 {
-                    RectangleMark(x: .value("Time", p.date), yStart: .value("Floor", floor),
-                                  yEnd: .value("Movement", floor + (barTop - floor) * min(1, m * 1.6)), width: 2)
-                        .foregroundStyle(StrandPalette.textTertiary.opacity(0.5))
-                }
-            }
-            ForEach(pts) { p in
-                if let hr = p.hr {
-                    LineMark(x: .value("Time", p.date), y: .value("Heart rate", hr))
-                        .foregroundStyle(StrandPalette.metricRose)
-                        .lineStyle(StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round))
-                        .interpolationMethod(.monotone)
-                }
-            }
-            if let level = evidence.sleepLevelBpm {
-                RuleMark(y: .value("Sleeping level", level))
-                    .foregroundStyle(StrandPalette.restBright)
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
-            }
-            if let bar = evidence.awakeBarBpm {
-                RuleMark(y: .value("Awake level", bar))
-                    .foregroundStyle(StrandPalette.metricRose.opacity(0.6))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
-            }
-            ForEach(markers, id: \.self) { m in
-                RuleMark(x: .value("Marker", Date(timeIntervalSince1970: TimeInterval(m.ts))))
-                    .foregroundStyle(m.color)
-                    .lineStyle(StrokeStyle(lineWidth: 1.5))
-                    .annotation(position: .top, spacing: 2) {
-                        Text(m.label)
-                            .font(StrandFont.caption.weight(.semibold))
-                            .foregroundStyle(m.color)
-                    }
-            }
-        }
-        .chartXScale(domain: Date(timeIntervalSince1970: TimeInterval(from))...Date(timeIntervalSince1970: TimeInterval(to)))
-        .chartYScale(domain: floor...hi)
-        .chartYAxis {
-            AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { v in
-                if let d = v.as(Double.self), d >= barTop {
-                    AxisGridLine().foregroundStyle(StrandPalette.hairline)
-                    AxisValueLabel().foregroundStyle(StrandPalette.textTertiary)
-                }
-            }
-        }
-        .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: 4)) { _ in
-                AxisValueLabel(format: .dateTime.hour().minute()).foregroundStyle(StrandPalette.textTertiary)
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("Heart rate and movement"))
     }
 }
 #endif
