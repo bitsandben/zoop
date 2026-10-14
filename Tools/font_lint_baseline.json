@@ -3,40 +3,44 @@
   "font": 1,
   "hex": 0
  },
+ "Strand/Features/FitnessAge/FitnessAgeFactorViews.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Features/FitnessAge/HomeFitnessAgeCard.swift": {
+  "font": 1,
+  "hex": 0
+ },
  "Strand/Features/Settings/SettingsAppearancePage.swift": {
   "font": 0,
   "hex": 1
  },
- "Strand/Liquid/CycleScreen.swift": {
-  "font": 13,
-  "hex": 0
- },
- "Strand/Liquid/EnergyBankViews.swift": {
+ "Strand/Features/Sleep/Components/SleepTimeEditor.swift": {
   "font": 2,
   "hex": 0
  },
- "Strand/Liquid/FitnessAgeViews.swift": {
-  "font": 5,
+ "Strand/Features/Stress/StressCheckInCard.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Liquid/CycleScreen.swift": {
+  "font": 6,
+  "hex": 0
+ },
+ "Strand/Liquid/EnergyBankViews.swift": {
+  "font": 1,
   "hex": 0
  },
  "Strand/Liquid/PatternsScreen.swift": {
-  "font": 26,
+  "font": 1,
   "hex": 0
  },
  "Strand/Liquid/SleepPlannerScreen.swift": {
-  "font": 24,
+  "font": 12,
   "hex": 0
  },
  "Strand/MenuBar/MenuBarContent.swift": {
   "font": 2,
-  "hex": 0
- },
- "Strand/Onboarding/OnboardingProfileSteps.swift": {
-  "font": 8,
-  "hex": 0
- },
- "Strand/Onboarding/OnboardingWizard.swift": {
-  "font": 19,
   "hex": 0
  },
  "Strand/Screens/AddDeviceWizard.swift": {
@@ -61,14 +65,6 @@
  },
  "Strand/Screens/BackupSyncView.swift": {
   "font": 2,
-  "hex": 0
- },
- "Strand/Screens/BodyClockDialCard.swift": {
-  "font": 1,
-  "hex": 0
- },
- "Strand/Screens/BodyInsightsSection.swift": {
-  "font": 4,
   "hex": 0
  },
  "Strand/Screens/BreathingView.swift": {
@@ -196,7 +192,7 @@
   "hex": 0
  },
  "Strand/Screens/MetricExplorerView.swift": {
-  "font": 8,
+  "font": 7,
   "hex": 0
  },
  "Strand/Screens/NotificationSettingsView.swift": {
@@ -227,10 +223,6 @@
   "font": 1,
   "hex": 0
  },
- "Strand/Screens/SleepView.swift": {
-  "font": 5,
-  "hex": 0
- },
  "Strand/Screens/SmartAlarmView.swift": {
   "font": 2,
   "hex": 0
@@ -239,24 +231,8 @@
   "font": 1,
   "hex": 0
  },
- "Strand/Screens/StressCheckInCard.swift": {
-  "font": 1,
-  "hex": 0
- },
- "Strand/Screens/StressDayHero.swift": {
-  "font": 1,
-  "hex": 0
- },
- "Strand/Screens/StressView.swift": {
-  "font": 1,
-  "hex": 0
- },
  "Strand/Screens/TodayView.swift": {
   "font": 27,
-  "hex": 0
- },
- "Strand/Screens/TrendViewerCard.swift": {
-  "font": 9,
   "hex": 0
  },
  "Strand/Screens/UpdatesInboxView.swift": {
@@ -279,20 +255,16 @@
   "font": 1,
   "hex": 0
  },
- "StrandTests/BodyClockDialLayoutTests.swift": {
-  "font": 1,
-  "hex": 0
- },
  "StrandiOS/App/CoachChatSheet.swift": {
-  "font": 22,
-  "hex": 0
- },
- "StrandiOS/App/CoachSettingsPage.swift": {
   "font": 14,
   "hex": 0
  },
- "StrandiOS/App/RootTabView.swift": {
+ "StrandiOS/App/CoachSettingsPage.swift": {
   "font": 5,
+  "hex": 0
+ },
+ "StrandiOS/App/RootTabView.swift": {
+  "font": 3,
   "hex": 0
  },
  "StrandiOSWidgets/CoachBriefWidget.swift": {
