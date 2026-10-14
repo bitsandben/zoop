@@ -45,7 +45,12 @@ struct HomeMomentCard: View {
     let strainTarget: String?
 
     @EnvironmentObject private var repo: Repository
-    @EnvironmentObject private var model: AppModel
+    /// The alarm settings this card reads, observed so an alarm change shows at once. The app model is
+    /// reached WITHOUT observing it: it publishes the smoothed heart rate every few seconds, which re-ran
+    /// this card (and its minute timeline) mid-scroll for a value it never shows. The minute timeline
+    /// re-reads the alarm anyway.
+    @EnvironmentObject private var behavior: BehaviorStore
+    private var model: AppModel? { AppModel.shared }
     @StateObject private var patterns = PatternsModel()
     /// Mean heart rate over the last ten minutes, or nil when the strap sent too little.
     @State private var recentHR: Double?
@@ -58,7 +63,7 @@ struct HomeMomentCard: View {
             }
         }
         .task(id: repo.refreshSeq) {
-            await patterns.loadQuick(repo: repo, alarm: model.nextArmedStrapAlarm())
+            await patterns.loadQuick(repo: repo, alarm: model?.nextArmedStrapAlarm())
         }
         .task {
             // Refresh the recent heart rate once a minute while Home is on screen.
@@ -108,7 +113,7 @@ struct HomeMomentCard: View {
     /// the right with its state, and a way into the planner.
     @ViewBuilder
     private func evening(now: Date) -> some View {
-        let alarm = model.nextArmedStrapAlarm(from: now)
+        let alarm = model?.nextArmedStrapAlarm(from: now)
         let t = patterns.tonight
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -175,7 +180,7 @@ struct HomeMomentCard: View {
     /// "Alarm on", or with a smart-wake window "From 06:20", or why it will not ring.
     private func alarmStatus(_ alarm: Date?) -> String {
         guard let alarm else {
-            return model.behavior.smartAlarmEnabled ? String(localized: "Not armed") : String(localized: "Alarm off")
+            return behavior.smartAlarmEnabled ? String(localized: "Not armed") : String(localized: "Alarm off")
         }
         let window = SmartWakeWindow.windowMinutes
         if window > 0 {

@@ -16,7 +16,15 @@ import UserNotifications
 struct StrandiOSApp: App {
     /// UIKit bridge for Home Screen quick actions. SwiftUI keeps ownership of the scene and window.
     @UIApplicationDelegateAdaptor(HomeScreenQuickActionAppDelegate.self) private var appDelegate
-    @StateObject private var model: AppModel
+    /// Held, NOT observed. `@StateObject` here made the whole Scene body re-evaluate on every AppModel
+    /// publish — `bpm` moves every few seconds while a strap streams — rebuilding this ~30-modifier root
+    /// chain (environment objects, locale, re-subscribed `onReceive`s) mid-scroll on every tab. Nothing in
+    /// the Scene body needs to re-render on model changes except the Shortcut-import alert, which follows
+    /// `pendingHealthImport` below. Views still observe the model via `.environmentObject(model)`.
+    @State private var model: AppModel
+    /// Mirror of `model.pendingShortcutHealthImport`, fed by `onReceive`, so the alert updates without the
+    /// Scene observing the whole model.
+    @State private var pendingHealthImport: ShortcutHealthImport.PendingImport?
     @StateObject private var health: HealthKitBridge
     /// The phone→watch link. Built + activated here so the watch app actually receives snapshots on a
     /// real device; without an owner that pushes it, the watch only ever shows placeholder data.
@@ -84,7 +92,7 @@ struct StrandiOSApp: App {
             Task { @MainActor in router?.open(target) }
         }
         let model = AppModel()
-        _model = StateObject(wrappedValue: model)
+        _model = State(initialValue: model)
         CoachBriefScheduler.register(generateBrief: { [weak coach = model.coach] in
             await coach?.generateBrief()
         }, log: { [weak model] line in
@@ -166,7 +174,7 @@ struct StrandiOSApp: App {
     /// the build failed again at the same modifier, which is why this one is here too.
     private var healthImportAlertPresented: Binding<Bool> {
         Binding(
-            get: { model.pendingShortcutHealthImport != nil },
+            get: { pendingHealthImport != nil },
             set: { showing in
                 if !showing { model.cancelPendingHealthImport() }
             }
@@ -190,7 +198,7 @@ struct StrandiOSApp: App {
     /// it is already struggling with.
     @ViewBuilder
     private var healthImportAlertMessage: some View {
-        if let pending = model.pendingShortcutHealthImport {
+        if let pending = pendingHealthImport {
             Text("A Shortcut wants to add \(pending.daysCount) days and \(pending.workoutsCount) workouts to the Apple Health import source.")
         } else {
             Text("A Shortcut wants to add data to the Apple Health import source.")
@@ -290,6 +298,7 @@ struct StrandiOSApp: App {
                         model.handleHealthImportURL(url)
                     }
                 }
+                .onReceive(model.$pendingShortcutHealthImport) { pendingHealthImport = $0 }
                 .alert("Import Apple Health data?", isPresented: healthImportAlertPresented) {
                     healthImportAlertButtons
                 } message: {

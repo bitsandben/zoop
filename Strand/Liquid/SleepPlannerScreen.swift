@@ -397,7 +397,9 @@ struct AlarmTimeSheet: View {
 /// suited you best, when the history shows one.
 struct SleepPlanEntryCard: View {
     @EnvironmentObject private var repo: Repository
-    @EnvironmentObject private var model: AppModel
+    /// Reached WITHOUT observing: only the alarm is read, inside the load task, while the app model
+    /// publishes the smoothed heart rate every few seconds and re-ran this view mid-scroll for it.
+    private var model: AppModel? { AppModel.shared }
     @StateObject private var patterns = PatternsModel()
 
     var body: some View {
@@ -434,7 +436,7 @@ struct SleepPlanEntryCard: View {
         }
         .buttonStyle(.plain)
         .task(id: repo.refreshSeq) {
-            await patterns.loadQuick(repo: repo, alarm: model.nextArmedStrapAlarm())
+            await patterns.loadQuick(repo: repo, alarm: model?.nextArmedStrapAlarm())
             await patterns.loadBedtime(repo: repo)
         }
     }
