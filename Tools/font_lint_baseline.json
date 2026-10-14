@@ -279,10 +279,6 @@
   "font": 27,
   "hex": 0
  },
- "Strand/Screens/TrainingCalendarCard.swift": {
-  "font": 7,
-  "hex": 0
- },
  "Strand/Screens/TrendViewerCard.swift": {
   "font": 9,
   "hex": 0
@@ -299,16 +295,8 @@
   "font": 1,
   "hex": 0
  },
- "Strand/Screens/WorkoutDetailView.swift": {
-  "font": 1,
-  "hex": 0
- },
  "Strand/Screens/WorkoutSelectionScreen.swift": {
   "font": 4,
-  "hex": 0
- },
- "Strand/Screens/WorkoutsView.swift": {
-  "font": 7,
   "hex": 0
  },
  "Strand/Screens/ZoopLimitationsView.swift": {
