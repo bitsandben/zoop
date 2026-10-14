@@ -68,16 +68,18 @@ public enum ChargeTerm: String, CaseIterable, Codable, Sendable {
     case hrv, rhr, sleep, resp, skinTemp
 }
 
-/// One morning's self-report.
+/// One morning's self-report. Every field is saved the moment it is tapped, so a check-in can be partial:
+/// symptoms without a face yet, or a face with no symptoms.
 public struct MorningCheckIn: Equatable, Codable, Sendable {
-    /// How recovered the wearer feels, 1 (exhausted) … 5 (fully recovered).
-    public var feeling: Int
+    /// How recovered the wearer feels, 1 (exhausted) … 5 (fully recovered), or nil while not answered.
+    /// Only mornings with a feeling count towards the calibration fit.
+    public var feeling: Int?
     public var headache: Bool
     public var soreness: Bool
     public var ill: Bool
     public var stress: Bool
 
-    public init(feeling: Int, headache: Bool = false, soreness: Bool = false,
+    public init(feeling: Int?, headache: Bool = false, soreness: Bool = false,
                 ill: Bool = false, stress: Bool = false) {
         self.feeling = feeling
         self.headache = headache
@@ -87,6 +89,9 @@ public struct MorningCheckIn: Equatable, Codable, Sendable {
     }
 
     public static let scale: ClosedRange<Int> = 1...5
+
+    /// True when nothing was answered: no feeling and no symptom.
+    public var isEmpty: Bool { feeling == nil && !headache && !soreness && !ill && !stress }
 
     /// Symptom load in z-units for `RecoveryScorer.recovery(symptomLoad:)`. Feeling ill weighs most since
     /// it is the strongest sign the body is fighting something; the others are ordinary morning burdens.

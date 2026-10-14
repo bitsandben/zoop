@@ -2037,11 +2037,11 @@ final class AppModel: ObservableObject {
         let rhr = signal({ $0.restingHr.map(Double.init) }, cfgKey: "resting_hr", illnessUp: true)
         let hrv = signal({ $0.avgHrv }, cfgKey: "hrv", illnessUp: false)
         let resp = signal({ $0.respRateBpm }, cfgKey: "resp", illnessUp: true)
-        // Skin-temp deviation: a stored °C delta. Build a small zero-centred state from its own recent
-        // spread so a +0.6 °C reads as a meaningful z without needing a separate baseline column.
+        // Skin-temp deviation: a stored °C delta, z-scored against a ~0.3 °C personal spread so it fires
+        // from about +0.6 °C. Imported nights carry an ABSOLUTE °C in the same column and are skipped
+        // (they used to read as a +100σ fever on every imported night).
         var skin: (IllnessSignalEngine.SignalReading, Bool)? = nil
-        if let recentSkin = rm({ $0.skinTempDevC }), let latestSkin = latest.skinTempDevC {
-            let z = min(recentSkin, latestSkin) / 0.3 // ~0.3 °C ≈ one personal spread
+        if let z = VitalBands.skinTempIllnessZ(recent: recent.map(\.skinTempDevC), latest: latest.skinTempDevC) {
             skin = (IllnessSignalEngine.SignalReading(zIllnessward: z), true)
         }
 
@@ -2080,7 +2080,7 @@ final class AppModel: ObservableObject {
             let percent = Int(((1 - r / b) * 100).rounded())
             labels["hrv"] = String(localized: "HRV −\(percent)%")
         }
-        if let r = latest.skinTempDevC, r > 0 {
+        if let r = latest.skinTempDevC, r > 0, !VitalBands.isAbsoluteSkinTemp(r) {
             // The value is STORED in °C but must be SHOWN in the reader's unit: this label welded "°C"
             // into the translated string, so a Fahrenheit user got "+0.7 °C" from the banner while every
             // other surface rendered the same night as "+1.3 Δ°F".

@@ -200,6 +200,9 @@ struct StrandiOSApp: App {
     var body: some Scene {
         WindowGroup {
             iOSRootView()
+                // Zoop: no vertical scroll bar anywhere in the app. Scroll views read this from the
+                // environment, so it reaches every screen and list without a per-screen modifier.
+                .scrollIndicators(.hidden, axes: .vertical)
                 .environmentObject(model)
                 .environmentObject(model.ble)   // #334: Today pull-to-sync reads BLEManager (no HR churn)
                 .environmentObject(model.live)

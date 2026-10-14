@@ -729,6 +729,7 @@ struct SleepView: View {
     /// editable + deletable with the SAME durable mechanism main sleep uses, plus an "Add nap" affordance.
     /// A nap is always its own session row (never folded into main sleep), so editing or adding one here
     /// never touches the night's main hypnogram and the awake daytime is never mislabelled as light sleep.
+    /// On iOS the card is drawn only for a day that has a nap; a missed nap is added from Home's "+" menu.
     @ViewBuilder
     private func napSection(_ night: Night) -> some View {
         // The day's main sleep is the bridged main-night GROUP (#561): a briefly-interrupted / biphasic
@@ -742,6 +743,12 @@ struct SleepView: View {
             .sorted { $0.effectiveStartTs < $1.effectiveStartTs }
         let mainMin = night.stages.total
         let napMin = naps.reduce(0.0) { $0 + Double($1.endTs - $1.effectiveStartTs) / 60.0 }
+        #if os(iOS)
+        let showCard = !naps.isEmpty
+        #else
+        let showCard = true
+        #endif
+        if showCard {
         ZoopCard(padding: ZoopMetrics.cardInnerPadding, tint: StrandPalette.restColor) {
             VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                 HStack {
@@ -776,6 +783,7 @@ struct SleepView: View {
                     }
                 }
             }
+        }
         }
     }
 
