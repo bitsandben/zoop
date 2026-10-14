@@ -60,15 +60,11 @@ private struct HealthSectionsStack: View {
     var body: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
             #if os(iOS)
-            // iOS follows the redesign's health monitor: the vitals lead, then skin temperature. Syncing
-            // runs on its own, so its status card closes the page rather than opening it.
-            VitalsSection()
-            // Fitness age lives on Home's card and its own screen. Not drawn here on iOS, each because
-            // another screen already says it: the Recovery contributors (Recovery's own breakdown), the
-            // Vitality score with a second "Body Age" (Fitness age), and live heart rate (Home's chart).
+            // iOS: the vitals are the Insights tab's tiles (one builder, so the two pages cannot disagree),
+            // followed by the skin-temperature suite (illness heads-up, body clock, cycle) that only this
+            // page shows. Sync status lives with the strap, the Lab Book link on the Insights tab.
+            BodyVitalsBlock()
             SkinTempSection()
-            HealthHubLinksSection()
-            SyncStatusSection()
             #else
             // Manual "Sync now" + honest sync status (#364). Its own view so the ~1Hz HR stream
             // doesn't re-render it; depends on `live` (connection/backfill state) + `model`.
@@ -134,31 +130,6 @@ private struct HealthFirstRunContent: View {
         }
     }
 }
-
-#if os(iOS)
-// MARK: - Insights tab pieces (iOS)
-
-/// The health-monitor body the iOS Insights tab places under its interpretations: the vitals grid,
-/// then skin temperature. The same leaves `HealthSectionsStack` draws, so the two never disagree.
-struct InsightsVitalsBlock: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
-            VitalsSection()
-            SkinTempSection()
-        }
-    }
-}
-
-/// The close of the iOS Insights tab: the Lab Book link, then strap sync status.
-struct InsightsFooterBlock: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
-            HealthHubLinksSection()
-            SyncStatusSection()
-        }
-    }
-}
-#endif
 
 // MARK: - Sync status + "Sync now" (#364)
 
