@@ -206,6 +206,8 @@ struct SleepModel {
     let restorative: Metric
     let respiratory: Metric
     let sleepDebt: Metric
+    /// Wake-ups per night (`DailyMetric.disturbances`) — read by the Sleep factor grid.
+    let wakeUps: Metric
 
     let typicalTotalMin: Double?
     let typicalDeepMin: Double?
@@ -578,6 +580,7 @@ extension SleepModel {
             restorative: restorativeSeries(days: inputs.days),
             respiratory: respiratorySeries(days: inputs.days),
             sleepDebt: sleepDebtSeries(days: inputs.days, importedSleep: inputs.importedSleep, napSleepMinByDay: napSleepMinByDay),
+            wakeUps: metric(days: inputs.days) { $0.disturbances.map(Double.init) },
             typicalTotalMin: typicalTotalMin(days: inputs.days),
             typicalDeepMin: typicalStageMin(days: inputs.days, \.deepMin),
             typicalRemMin: typicalStageMin(days: inputs.days, \.remMin),
