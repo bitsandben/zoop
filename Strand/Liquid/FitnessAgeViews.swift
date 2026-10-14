@@ -188,8 +188,9 @@ struct FitnessAgeDial: View {
 
 // MARK: - Screen
 
-/// The Fitness Age screen: the dial for the latest week, what it is, each factor with its trend, value,
-/// a sparkline and the years it adds or removes, and the weekly history.
+/// The Fitness Age screen: a full-bleed hero with the age, the dial for the latest week and how far it
+/// sits from your real age, then each factor with its trend, value, a sparkline and the years it adds
+/// or removes, the weekly history and how it is calculated.
 struct FitnessAgeScreen: View {
     @EnvironmentObject private var repo: Repository
     @EnvironmentObject private var profile: ProfileStore
@@ -201,22 +202,28 @@ struct FitnessAgeScreen: View {
     @State private var showSettings = false
 
     var body: some View {
-        ScreenScaffold(title: "Fitness Age") {
-            VStack(alignment: .leading, spacing: 14) {
-                if let latest = snapshot.latest, profile.age > 0 {
-                    hero(latest)
-                    Text("An estimate from your fitness, heart, activity, body and sleep compared with people of your age and sex.")
-                        .font(StrandFont.subhead)
-                        .foregroundStyle(StrandPalette.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(16)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(ZoopPanelSurface(cornerRadius: 20))
-                    factorsSection
-                    historySection(chrono: Double(profile.age))
-                } else if loaded {
-                    notReady
+        Group {
+            if let latest = snapshot.latest, profile.age > 0 {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        FitnessAgeHero(day: latest.day, value: latest.value, chronoAge: profile.age)
+                        VStack(alignment: .leading, spacing: 20) {
+                            factorsSection
+                            historySection(chrono: Double(profile.age))
+                            howCalculated
+                        }
+                        .padding(.horizontal, ZoopMetrics.screenHPadding)
+                        .padding(.top, ZoopMetrics.space2)
+                        .padding(.bottom, ZoopMetrics.tabBarClearance)
+                    }
                 }
+                .scrollIndicators(.hidden, axes: .vertical)
+                .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+                .background(StrandPalette.surfaceBase.ignoresSafeArea())
+            } else if loaded {
+                ScreenScaffold(title: "Fitness Age") { notReady }
+            } else {
+                StrandPalette.surfaceBase.ignoresSafeArea()
             }
         }
         .sheet(isPresented: $showSettings) { NavigationStack { SettingsView() } }
@@ -229,59 +236,41 @@ struct FitnessAgeScreen: View {
         loaded = true
     }
 
-    // MARK: Hero
-
-    private func hero(_ latest: (day: String, value: Double)) -> some View {
-        let chrono = Double(profile.age)
-        let delta = chrono - latest.value
-        return VStack(spacing: ZoopMetrics.space2) {
-            if let d = dayDate(latest.day) {
-                Text("Week of \(d.formatted(.dateTime.day().month(.wide)))")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textSecondary)
-            }
-            ZStack(alignment: .bottom) {
-                FitnessAgeDial(value: latest.value, chronoAge: chrono)
-                    .frame(height: 170)
-                VStack(spacing: 2) {
-                    Text(verbatim: oneDecimal(latest.value))
-                        .font(StrandFont.display(56))
-                        .foregroundStyle(StrandPalette.textPrimary)
-                    Text(fitnessAgeDeltaLine(fitnessAge: latest.value, chronoAge: profile.age))
-                        .font(StrandFont.subhead)
-                        .foregroundStyle(fitnessTint(delta: delta))
-                }
-            }
-            HStack {
-                Text(verbatim: oneDecimal(min(chrono - 5, latest.value - 1)))
-                Spacer()
-                Text("Your age \(profile.age)")
-                Spacer()
-                Text(verbatim: oneDecimal(max(chrono + 5, latest.value + 1)))
-            }
-            .font(StrandFont.footnote.monospacedDigit())
-            .foregroundStyle(StrandPalette.textTertiary)
+    private var howCalculated: some View {
+        VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
+            Text("How it's calculated")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(StrandPalette.textPrimary)
+            Text("An estimate from your fitness, heart, activity, body and sleep compared with people of your age and sex.")
+                .font(StrandFont.footnote)
+                .foregroundStyle(StrandPalette.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(16)
-        .frame(maxWidth: .infinity)
-        .background(ZoopPanelSurface(cornerRadius: 20))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: "\(String(localized: "Fitness Age")) \(oneDecimal(latest.value)), \(fitnessAgeDeltaLine(fitnessAge: latest.value, chronoAge: profile.age))"))
+        .padding(.horizontal, 4)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: Factors
 
     private var factorsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let shown = FitnessAgeFactor.allCases.filter { snapshot.contributions[$0] != nil }
+        return VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
             Text("What shapes it")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .padding(.top, 6)
-            ForEach(FitnessAgeFactor.allCases.filter { snapshot.contributions[$0] != nil }, id: \.self) { f in
-                FitnessFactorRow(title: title(f), value: valueText(f),
-                                 trend: FitnessTrend.of(lines[f] ?? [], lowerIsBetter: f == .restingHR || f == .body),
-                                 line: lines[f] ?? [], years: snapshot.contributions[f] ?? 0)
+            VStack(spacing: 0) {
+                ForEach(Array(shown.enumerated()), id: \.element) { i, f in
+                    if i > 0 {
+                        Rectangle().fill(StrandPalette.hairline).frame(height: 1).padding(.leading, 16)
+                    }
+                    FitnessFactorRow(title: title(f), value: valueText(f),
+                                     trend: FitnessTrend.of(lines[f] ?? [], lowerIsBetter: f == .restingHR || f == .body),
+                                     line: lines[f] ?? [], years: snapshot.contributions[f] ?? 0)
+                }
             }
+            .background(ZoopPanelSurface(cornerRadius: 20))
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             if snapshot.contributions[.vo2max] == nil {
                 Button { showSettings = true } label: {
                     Text("Add your waist in Settings or a VO₂max in Apple Health to include your fitness.")
@@ -456,6 +445,200 @@ struct FitnessAgeScreen: View {
     }
 }
 
+// MARK: - Hero
+
+/// The top of the Fitness Age screen, edge to edge under the status bar: a soft gradient with a slow star
+/// field, the title and week, the age counting in, the wide dial and how far it sits from your age.
+private struct FitnessAgeHero: View {
+    let day: String
+    let value: Double
+    let chronoAge: Int
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var shown: Double?
+
+    var body: some View {
+        let chrono = Double(chronoAge)
+        VStack(spacing: ZoopMetrics.space1) {
+            Text("Fitness Age")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(StrandPalette.textPrimary)
+            if let d = dayDate(day) {
+                Text("Week of \(d.formatted(.dateTime.day().month(.wide)))")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(StrandPalette.textSecondary)
+            }
+            ZStack(alignment: .bottom) {
+                FitnessAgeHeroDial(value: value, shown: shown ?? chrono, chronoAge: chrono)
+                    .aspectRatio(1.9, contentMode: .fit)
+                VStack(spacing: ZoopMetrics.space1) {
+                    FitnessCountingText(value: shown ?? chrono)
+                        .font(StrandFont.display(76).monospacedDigit())
+                        .foregroundStyle(StrandPalette.textPrimary)
+                    Text(fitnessAgeDeltaLine(fitnessAge: value, chronoAge: chronoAge))
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(fitnessTint(delta: chrono - value))
+                }
+                .padding(.bottom, 6)
+            }
+            .padding(.horizontal, 10)
+            .padding(.top, ZoopMetrics.space4)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, ZoopMetrics.space2)
+        .padding(.bottom, 36)
+        .background(alignment: .bottom) {
+            FitnessHeroBackdrop()
+                .padding(.top, -600)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: "\(String(localized: "Fitness Age")) \(oneDecimal(value)), \(fitnessAgeDeltaLine(fitnessAge: value, chronoAge: chronoAge))"))
+        .task(id: value) {
+            guard !reduceMotion else { shown = value; return }
+            shown = chrono
+            try? await Task.sleep(nanoseconds: 150_000_000)
+            withAnimation(.spring(duration: 1.4, bounce: 0.12)) { shown = value }
+        }
+    }
+}
+
+/// The age as it counts toward its value, one decimal.
+private struct FitnessCountingText: View, Animatable {
+    var value: Double
+    var animatableData: Double {
+        get { value }
+        set { value = newValue }
+    }
+
+    var body: some View {
+        Text(verbatim: oneDecimal(value))
+    }
+}
+
+/// The hero's background: a deep tint fading into the canvas, with a star field over it.
+private struct FitnessHeroBackdrop: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(stops: [
+                .init(color: StrandPalette.sleepDeep.opacity(0.42), location: 0),
+                .init(color: StrandPalette.sleepDeep.opacity(0.32), location: 0.55),
+                .init(color: StrandPalette.surfaceBase, location: 1),
+            ], startPoint: .top, endPoint: .bottom)
+            FitnessStarField()
+        }
+        .background(StrandPalette.surfaceBase)
+    }
+}
+
+/// Faint points drifting slowly sideways and twinkling, fading toward the bottom. Drawn at 20 fps in
+/// one Canvas; still when Reduce Motion is on.
+private struct FitnessStarField: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private struct Star { let x, y, size, phase, speed: Double }
+
+    private static let stars: [Star] = {
+        var seed: UInt64 = 0x5EED_F17A
+        func next() -> Double {
+            seed = seed &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+            return Double(seed >> 11) / Double(UInt64(1) << 53)
+        }
+        return (0..<90).map { _ in
+            Star(x: next(), y: next(), size: 0.6 + next() * 1.4, phase: next() * 2 * .pi, speed: 1 + next() * 3)
+        }
+    }()
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 20, paused: reduceMotion)) { timeline in
+            Canvas { ctx, size in
+                let t = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 100_000)
+                for s in Self.stars {
+                    var x = (s.x * size.width + t * s.speed).truncatingRemainder(dividingBy: size.width)
+                    if x < 0 { x += size.width }
+                    let y = s.y * size.height
+                    let fade = max(0, 1 - y / size.height * 1.15)
+                    let twinkle = 0.5 + 0.5 * sin(t * 0.7 + s.phase)
+                    let alpha = (0.15 + 0.45 * twinkle) * fade
+                    ctx.fill(Path(ellipseIn: CGRect(x: x, y: y, width: s.size, height: s.size)),
+                             with: .color(StrandPalette.textPrimary.opacity(alpha)))
+                }
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
+/// The wide hero dial: fine ticks over your age ±5 years (widened to fit the value), the two ends
+/// labelled along the arc, your age as a longer tick, the span to the fitness age tinted and a knob on
+/// `shown`, which animates toward `value` while the range stays fixed on `value`.
+private struct FitnessAgeHeroDial: View, Animatable {
+    let value: Double
+    var shown: Double
+    let chronoAge: Double
+
+    var animatableData: Double {
+        get { shown }
+        set { shown = newValue }
+    }
+
+    private var range: ClosedRange<Double> {
+        let lo = min(chronoAge - 5, value - 1), hi = max(chronoAge + 5, value + 1)
+        return lo...hi
+    }
+
+    var body: some View {
+        Canvas { ctx, size in
+            let knob: CGFloat = 22
+            let r = min(size.width / 2, size.height) - knob / 2 - 2
+            let center = CGPoint(x: size.width / 2, y: size.height - 2)
+            let span = range.upperBound - range.lowerBound
+            // The ticks leave room at each end for the range labels.
+            let endGap = 0.2
+            let a0 = Double.pi + endGap, a1 = 2 * Double.pi - endGap
+            func angle(_ v: Double) -> Double { a0 + (v - range.lowerBound) / span * (a1 - a0) }
+            func point(_ a: Double, _ radius: CGFloat) -> CGPoint {
+                CGPoint(x: center.x + radius * CGFloat(cos(a)), y: center.y + radius * CGFloat(sin(a)))
+            }
+            let tickLen: CGFloat = 18
+            let ticks = 110
+            let lo = min(shown, chronoAge), hi = max(shown, chronoAge)
+            let tint = fitnessTint(delta: chronoAge - value)
+            for i in 0...ticks {
+                let v = range.lowerBound + span * Double(i) / Double(ticks)
+                let a = angle(v)
+                var path = Path()
+                path.move(to: point(a, r - tickLen / 2))
+                path.addLine(to: point(a, r + tickLen / 2))
+                let inSpan = v >= lo && v <= hi
+                ctx.stroke(path, with: .color(inSpan ? tint : StrandPalette.textTertiary.opacity(0.45)), lineWidth: 1.2)
+            }
+            // Your age: a longer neutral tick.
+            var age = Path()
+            let aa = angle(chronoAge)
+            age.move(to: point(aa, r - tickLen / 2 - 7))
+            age.addLine(to: point(aa, r + tickLen / 2 + 3))
+            ctx.stroke(age, with: .color(StrandPalette.textSecondary), lineWidth: 2)
+            // The range ends, written along the arc.
+            for (v, a) in [(range.lowerBound, Double.pi + endGap / 2), (range.upperBound, 2 * Double.pi - endGap / 2)] {
+                let label = ctx.resolve(Text(verbatim: oneDecimal(v))
+                    .font(StrandFont.footnote.monospacedDigit().weight(.medium))
+                    .foregroundColor(StrandPalette.textTertiary))
+                var c = ctx
+                let p = point(a, r)
+                c.translateBy(x: p.x, y: p.y)
+                c.rotate(by: .radians(a + .pi / 2))
+                c.draw(label, at: .zero, anchor: .center)
+            }
+            // The knob on the value.
+            let k = point(angle(shown), r)
+            let rect = CGRect(x: k.x - knob / 2, y: k.y - knob / 2, width: knob, height: knob)
+            var shadow = ctx
+            shadow.addFilter(.shadow(color: StrandPalette.surfaceBase.opacity(0.6), radius: 6))
+            shadow.fill(Path(ellipseIn: rect), with: .color(StrandPalette.textPrimary))
+        }
+    }
+}
+
 // MARK: - Factor row
 
 /// Which way a factor's signal is moving, judged on its last 14 days against the 46 before.
@@ -508,6 +691,25 @@ private struct FitnessFactorRow: View {
     let line: [(day: String, value: Double)]
     let years: Double
 
+    private var trendLabel: some View {
+        HStack(spacing: 5) {
+            Image(systemName: trend.icon)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(trend.tint)
+            Text(trend.word)
+                .foregroundStyle(trend.tint)
+                .lineLimit(1)
+        }
+        .fixedSize()
+    }
+
+    private var valueLabel: some View {
+        Text(verbatim: value)
+            .foregroundStyle(StrandPalette.textSecondary)
+            .lineLimit(1)
+            .fixedSize()
+    }
+
     var body: some View {
         HStack(alignment: .center, spacing: ZoopMetrics.space3) {
             VStack(alignment: .leading, spacing: 4) {
@@ -516,27 +718,27 @@ private struct FitnessFactorRow: View {
                     .foregroundStyle(StrandPalette.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                HStack(spacing: 5) {
-                    Image(systemName: trend.icon)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(trend.tint)
-                    Text(trend.word)
-                        .foregroundStyle(trend.tint)
-                    Text(verbatim: "·")
-                        .foregroundStyle(StrandPalette.textTertiary)
-                    Text(verbatim: value)
-                        .foregroundStyle(StrandPalette.textSecondary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                // One line when it fits; otherwise the value drops under the trend instead of truncating.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 5) {
+                        trendLabel
+                        Text(verbatim: "·")
+                            .foregroundStyle(StrandPalette.textTertiary)
+                        valueLabel
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        trendLabel
+                        valueLabel
+                    }
                 }
                 .font(.system(size: 13, weight: .medium))
             }
             Spacer(minLength: 6)
             FitnessSparkline(points: line, tint: trend.tint)
-                .frame(width: 72, height: 30)
+                .frame(width: 64, height: 28)
             VStack(alignment: .trailing, spacing: 0) {
                 Text(verbatim: (years > 0 ? "+" : years < 0 ? "−" : "") + oneDecimal(abs(years)))
-                    .font(.system(size: 17, weight: .bold).monospacedDigit())
+                    .font(.system(size: 15, weight: .semibold).monospacedDigit())
                     .foregroundStyle(years < -0.05 ? StrandPalette.statusPositive
                                      : years > 0.05 ? StrandPalette.statusWarning : StrandPalette.textSecondary)
                 Text("years")
@@ -545,9 +747,9 @@ private struct FitnessFactorRow: View {
             }
             .frame(minWidth: 44, alignment: .trailing)
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .frame(minHeight: 64)
-        .background(ZoopPanelSurface(cornerRadius: 18))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: "\(title), \(trend.word), \(value), \(String(localized: "\(oneDecimal(years)) years"))"))
     }
