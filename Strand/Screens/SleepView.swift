@@ -3005,7 +3005,7 @@ private struct SleepFreshnessNote: View {
             syncing: live.backfilling,
             calculating: intelligence.computing || calculationQueued,
             syncedSinceDayStart: (live.lastSyncedAt ?? 0) >= start.timeIntervalSince1970,
-            syncFailed: live.lastSyncError != nil
+            syncFailed: live.syncStatus.isStalled
         )
         switch status {
         case .syncing:

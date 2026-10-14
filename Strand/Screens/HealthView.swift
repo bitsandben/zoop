@@ -212,27 +212,10 @@ private struct SyncStatusSection: View {
         }
     }
 
-    /// The status line above the button: an in-progress pill while syncing (with the live chunk count),
-    /// else a last-synced read-out, else an honest "not connected".
-    @ViewBuilder private var statusRow: some View {
-        if live.backfilling {
-            // Reuse the shared in-progress affordance so this matches every other "syncing history" surface.
-            SyncingHistoryNote(chunks: live.syncChunksThisSession)
-        } else if !live.connected {
-            StatePill("No strap connected", tone: .neutral, showsDot: false)
-        } else if let last = live.lastSyncedAt {
-            HStack(spacing: 8) {
-                StatePill("History synced", tone: .positive)
-                Text(relativeAgo(last))
-                    .font(StrandFont.footnote)
-                    .foregroundStyle(StrandPalette.textSecondary)
-            }
-        } else {
-            // Same condition as the button below it. Keyed on `bonded` this said "Ready to sync" directly
-            // above a DISABLED Sync now, on exactly the strap that cannot sync.
-            StatePill(live.historyReady ? "Ready to sync" : "Pairing…",
-                      tone: .accent, showsDot: true, pulsing: !live.historyReady)
-        }
+    /// The status line above the button, from the shared sync status. Pairing is keyed on `historyReady`,
+    /// the same condition as the button below it.
+    private var statusRow: some View {
+        SyncStatusLine(status: live.syncStatus)
     }
 
     private var helperText: String {

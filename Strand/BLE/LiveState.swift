@@ -548,11 +548,21 @@ public final class LiveState: ObservableObject {
     /// came — i.e. caught up). Drives the sync tile + the staleness nudge.
     @Published public var lastSyncedAt: TimeInterval?
 
-    /// Set when an offload ended abnormally (the idle watchdog fired — the strap went quiet mid-sync),
-    /// so a stalled history download isn't silent. Cleared by the next successful HISTORY_COMPLETE.
-    /// Process-local on purpose (mirrors Android, ed6a31d): the next connect / 15-min tick re-offloads
-    /// anyway, so persisting a stale error across launches would outlive its relevance.
-    @Published public var lastSyncError: String? = nil
+    /// What the last offload or the Bluetooth radio left for the user: a stalled history download, a
+    /// completed one with a caveat, or a radio that cannot be used. Cleared by the next clean
+    /// HISTORY_COMPLETE. Process-local on purpose (mirrors Android, ed6a31d): the next connect / 15-min
+    /// tick re-offloads anyway, so persisting a stale issue across launches would outlive its relevance.
+    /// Screens read it through `syncStatus`, which keeps the kinds apart.
+    @Published public var lastSyncIssue: SyncIssue? = nil
+    /// The issue's text alone, for readers that only print it.
+    public var lastSyncError: String? { lastSyncIssue?.message }
+
+    /// The single sync status every screen renders from.
+    var syncStatus: SyncStatus {
+        SyncStatus.resolve(SyncStatusInput(connected: connected, historyReady: historyReady,
+                                           backfilling: backfilling, chunks: syncChunksThisSession,
+                                           lastSyncedAt: lastSyncedAt, issue: lastSyncIssue))
+    }
 
     /// True while a historical offload session is running, so screens can say "Syncing strap
     /// history…" instead of presenting half-loaded data as final (#77).
@@ -569,7 +579,7 @@ public final class LiveState: ObservableObject {
     @Published public var syncChunksThisSession: Int = 0
 
     /// Undecodable HISTORICAL_DATA record frames seen this offload session whose raw bytes WERE
-    /// preserved to the on-device archive (#77 / #91). Drives the honest "saved on this Mac" sync
+    /// preserved to the on-device archive (#77 / #91). Drives the honest "saved on this device" sync
     /// status. Reset at session start.
     @Published public var rejectedFramesThisSession: Int = 0
     /// Undecodable record frames the archive could NOT preserve this session (the ~5 MB cap was

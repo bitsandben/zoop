@@ -805,33 +805,44 @@ struct LiquidTodayView: View {
         refreshing = true
         pullOutcome = nil
         Task {
+            let pullStartedAt = Date().timeIntervalSince1970
             // #334: a pull asks the strap for its stored history, not just a UI reload. syncNow() is
             // itself gated (connected + bonded + not already syncing).
             let canSync = ble.state.historyReady
             if canSync { ble.syncNow() }
-            await repo.refresh()
-            await load()
+            await reloadAfterRefresh()
+            var sawOffload = false
             if canSync {
                 // Keep the indicator up through the offload: give it a moment to start, then follow it
-                // until it ends (or a minute passes; the sync chip carries anything longer).
+                // until it ends (or a minute passes; the sync row carries anything longer).
                 var waited = 0
                 while !ble.state.backfilling && waited < 6 {
                     try? await Task.sleep(nanoseconds: 500_000_000); waited += 1
                 }
+                sawOffload = ble.state.backfilling
                 var running = 0
                 while ble.state.backfilling && running < 120 {
                     try? await Task.sleep(nanoseconds: 500_000_000); running += 1
                 }
-                await repo.refresh()
-                await load()
+                if sawOffload { await reloadAfterRefresh() }
             }
             withAnimation(.easeOut(duration: 0.25)) {
                 refreshing = false
-                pullOutcome = canSync ? (ble.state.lastSyncError == nil ? .synced : .interrupted) : .offline
+                pullOutcome = PullSyncOutcome.resolve(status: ble.state.syncStatus, sawOffload: sawOffload,
+                                                      pullStartedAt: pullStartedAt)
             }
             try? await Task.sleep(nanoseconds: 1_600_000_000)
             withAnimation(.easeOut(duration: 0.3)) { pullOutcome = nil }
         }
+    }
+
+    /// Refreshes the repository and reloads the day once. A refresh that published new caches bumps
+    /// `refreshSeq`, whose `.task(id:)` already reloads; only an unchanged refresh needs the explicit
+    /// load, for the intraday reads the repository caches do not cover.
+    private func reloadAfterRefresh() async {
+        let seq = repo.refreshSeq
+        await repo.refresh()
+        if repo.refreshSeq == seq { await load() }
     }
 
     // MARK: - Scene (sky title + controls + hero)
@@ -3248,24 +3259,11 @@ private struct FlatScoreRing: View {
 
 // MARK: - Scene controls (LiveState-isolated leaves)
 
-/// The liquid pull-to-refresh vessel + a "Syncing…" label. A pure gesture affordance: it answers "did my
-/// pull do anything", and nothing else.
-///
-/// It used to ALSO hold itself up for the whole of `live.backfilling`, because `ble.syncNow()` kicks off a
-/// BLE history offload that far outlives the local `refreshing` flag (which flips false ~350ms after the
-/// pull releases), and at the time the only other feedback was the easy-to-miss header `SyncStatusChip`.
-/// `LiquidBatteryButton` is now that feedback — an ambient, always-on-screen signal that carries a live
-/// chunk count — so the long tail belongs there and the vessel hands off to it instead of shadowing it.
-/// Two surfaces reporting one signal is what this replaces: a 64pt banner AND a morphing header, both
-/// running their own 60Hz clock (`LiquidVessel` has one too) for the same multi-hour offload.
-///
-/// No longer reads LiveState at all, so it is no longer an isolated leaf — there is nothing left to
-/// isolate it from.
-enum PullSyncOutcome { case synced, interrupted, offline }
-
 /// Pull-to-sync indicator: a squircle that draws itself as you pull, an arrow that turns over once a
 /// release will sync, a running arc with the strap's chunk count while the offload runs, and a short
-/// result line once it settles.
+/// result line once it settles. It answers "did my pull do anything": it follows the offload for at most
+/// a minute, and the Data Sources sync row carries anything longer. Reads LiveState only for the chunk
+/// count while the offload runs; the words come from `SyncStatus`.
 private struct LiquidRefreshIndicator: View {
     let pullY: CGFloat
     let pullThreshold: CGFloat
@@ -3290,9 +3288,9 @@ private struct LiquidRefreshIndicator: View {
                 }
                 .transition(.opacity)
             } else if let outcome {
-                Label(outcomeLine(outcome), systemImage: outcomeIcon(outcome))
+                Label(outcome.title, systemImage: outcome.symbol)
                     .font(StrandFont.caption.weight(.semibold))
-                    .foregroundStyle(outcome == .synced ? StrandPalette.accent : StrandPalette.textSecondary)
+                    .foregroundStyle(outcome == .upToDate ? StrandPalette.accent : StrandPalette.textSecondary)
                     .transition(.opacity.combined(with: .scale(scale: 0.9)))
             } else if pullY > 2 {
                 VStack(spacing: 8) {
@@ -3321,25 +3319,9 @@ private struct LiquidRefreshIndicator: View {
     }
 
     private var syncingLine: String {
-        guard live.backfilling else { return String(localized: "Updating…") }
-        let n = live.syncChunksThisSession
-        return n > 0 ? String(localized: "Syncing strap · \(n)") : String(localized: "Syncing strap…")
-    }
-
-    private func outcomeLine(_ o: PullSyncOutcome) -> String {
-        switch o {
-        case .synced: return String(localized: "Up to date")
-        case .interrupted: return String(localized: "Sync interrupted")
-        case .offline: return String(localized: "Strap not connected")
-        }
-    }
-
-    private func outcomeIcon(_ o: PullSyncOutcome) -> String {
-        switch o {
-        case .synced: return "checkmark.circle.fill"
-        case .interrupted: return "exclamationmark.circle"
-        case .offline: return "antenna.radiowaves.left.and.right.slash"
-        }
+        let status = live.syncStatus
+        if case .syncing = status { return status.title() }
+        return String(localized: "Updating…")
     }
 }
 
@@ -4127,21 +4109,20 @@ private extension View {
 private struct LiquidSyncStatusRow: View {
     @EnvironmentObject var live: LiveState
     var body: some View {
-        if live.backfilling {
-            row(String(localized: "Strap history"), value: chunks, tone: StrandPalette.accent)
-        } else if let ts = live.lastSyncedAt {
+        // The minute timeline keeps "Last sync N min ago" current while the card stays on screen.
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            let status = live.syncStatus
             row(String(localized: "Strap history"),
-                value: String(localized: "Synced \(relativeAgo(ts))"), tone: StrandPalette.textPrimary)
+                value: status.title(now: context.date.timeIntervalSince1970),
+                tone: tone(status))
         }
     }
 
-    /// "Syncing…" alone reads as a spinner that might be stuck; the chunk count is the cheapest available
-    /// proof that the drain is actually moving. Suppressed at zero — a session that has pulled nothing yet
-    /// should not claim "0 chunks pulled" as if that were progress.
-    private var chunks: String {
-        live.syncChunksThisSession > 0
-            ? String(localized: "Syncing… \(live.syncChunksThisSession) chunks")
-            : String(localized: "Syncing…")
+    private func tone(_ status: SyncStatus) -> Color {
+        switch status.tone {
+        case .warning, .accent: return status.tone.color
+        default: return StrandPalette.textPrimary
+        }
     }
 
     private func row(_ label: String, value: String, tone: Color) -> some View {
