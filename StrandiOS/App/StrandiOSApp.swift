@@ -304,6 +304,8 @@ struct StrandiOSApp: App {
                 .onOpenURL { url in
                     if url.host == "import-health" {
                         model.handleHealthImportURL(url)
+                    } else if let link = DeepLink(url: url) {
+                        router.pendingDeepLink = link
                     }
                 }
                 .onReceive(model.$pendingShortcutHealthImport) { pendingHealthImport = $0 }

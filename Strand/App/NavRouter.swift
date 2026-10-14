@@ -13,6 +13,18 @@ import Combine
 // itself (macOS sets the sidebar selection to `.devices`; iOS presents `DevicesView`). Each consumer
 // clears the request once it's handled so the same tap can fire again later. Injected at both app
 // roots (`StrandApp`, `StrandiOSApp`) as an `@EnvironmentObject`.
+/// A `zoop://<host>` link that lands on a tab or a screen. Shared so the URL parsing and the shell's
+/// routing agree on one list; the shell decides how each case is shown. Hosts other than these
+/// (`import-health`, ...) belong to other handlers and parse to nil here, so they are never swallowed.
+enum DeepLink: String, CaseIterable {
+    case today, recovery, sleep, stress, fasting, training, insights, sync
+
+    init?(url: URL) {
+        guard url.scheme?.lowercased() == "zoop", let host = url.host?.lowercased() else { return nil }
+        self.init(rawValue: host)
+    }
+}
+
 @MainActor
 final class NavRouter: ObservableObject {
     /// A top-level destination a screen can ask the shell to open. Deliberately minimal — the Devices
@@ -60,6 +72,10 @@ final class NavRouter: ObservableObject {
     /// The #238 "a workout just started" transition trigger never fires for a session that is already in
     /// flight, so this is the one path that re-opens the live workout for an existing session.
     @Published var presentActiveWorkout = false
+
+    /// A `zoop://` link waiting for the shell. Held (not fired) so a link that cold-launches the app
+    /// survives until the first-run gates are done and the shell exists to read it.
+    @Published var pendingDeepLink: DeepLink?
 
     /// A tapped notification's destination, or nil once the shell has handled it.
     @Published var notificationTarget: NotificationTarget?

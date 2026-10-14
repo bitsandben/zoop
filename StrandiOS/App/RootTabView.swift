@@ -125,36 +125,37 @@ struct RootTabView: View {
     @ViewBuilder private var tabShell: some View {
         if #available(iOS 18.0, *) {
             TabView(selection: nativeTabSelection) {
-                // Icon-only items, as in the concept; the name stays as the spoken label.
+                // Icon + text: an icon-only bar fails HIG legibility. The four German labels (Heute,
+                // Training, Einblicke, Mehr) are short enough for the compact bar on the smallest iPhone.
                 Tab(value: IOSTab.home) {
                     tabStack(todayTabRoot, path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home])
-                } label: { iconLabel("Home", "house") }
+                } label: { Label("zoop.tab.today", systemImage: "house") }
                 Tab(value: IOSTab.training) {
                     tabStack(WorkoutsView(asTrainingTab: true), path: $tabPaths[IOSTab.training],
                              scrollSignal: scrollTop[IOSTab.training])
-                } label: { iconLabel("Training", "figure.run") }
+                } label: { Label("zoop.tab.training", systemImage: "figure.run") }
                 Tab(value: IOSTab.insights) {
                     tabStack(InsightsTabView(), path: $tabPaths[IOSTab.insights], scrollSignal: scrollTop[IOSTab.insights])
-                } label: { iconLabel("Insights", "chart.line.uptrend.xyaxis") }
+                } label: { Label("zoop.tab.insights", systemImage: "chart.line.uptrend.xyaxis") }
                 Tab(value: IOSTab.more) {
                     moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more])
-                } label: { iconLabel("More", "line.3.horizontal") }
+                } label: { Label("zoop.tab.more", systemImage: "line.3.horizontal") }
                 // A role is what moves Coach into its own round button at the trailing end of the bar,
                 // apart from the four destinations. Hidden rather than left out when Coach is off, so
                 // the tab keeps its tag and path.
                 Tab(value: IOSTab.coach, role: Self.coachTabRole) {
                     // Never shown: selecting this tab opens `CoachChatSheet` instead (see `nativeTabSelection`).
                     Color.clear
-                } label: { iconLabel("Coach", "sparkles") }
+                } label: { Label("Coach", systemImage: "sparkles") }
                 .hidden(!coachEnabled)
             }
         } else {
             TabView(selection: nativeTabSelection) {
-                tab(todayTabRoot, "Home", "house", path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home]).tag(IOSTab.home)
-                tab(WorkoutsView(asTrainingTab: true), "Training", "figure.run", path: $tabPaths[IOSTab.training], scrollSignal: scrollTop[IOSTab.training]).tag(IOSTab.training)
-                tab(InsightsTabView(), "Insights", "chart.line.uptrend.xyaxis", path: $tabPaths[IOSTab.insights], scrollSignal: scrollTop[IOSTab.insights]).tag(IOSTab.insights)
+                tab(todayTabRoot, "zoop.tab.today", "house", path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home]).tag(IOSTab.home)
+                tab(WorkoutsView(asTrainingTab: true), "zoop.tab.training", "figure.run", path: $tabPaths[IOSTab.training], scrollSignal: scrollTop[IOSTab.training]).tag(IOSTab.training)
+                tab(InsightsTabView(), "zoop.tab.insights", "chart.line.uptrend.xyaxis", path: $tabPaths[IOSTab.insights], scrollSignal: scrollTop[IOSTab.insights]).tag(IOSTab.insights)
                 moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more])
-                    .tabItem { Label("More", systemImage: "line.3.horizontal") }
+                    .tabItem { Label("zoop.tab.more", systemImage: "line.3.horizontal") }
                     .tag(IOSTab.more)
                 if coachEnabled {
                     tab(CoachView(), "Coach", "sparkles", path: $tabPaths[IOSTab.coach], scrollSignal: scrollTop[IOSTab.coach]).tag(IOSTab.coach)
@@ -177,11 +178,6 @@ struct RootTabView: View {
             .padding(.bottom, 19)
             .ignoresSafeArea(.container, edges: .bottom)
             .sensoryFeedback(.impact(weight: .light), trigger: showCoach)
-    }
-
-    /// A tab item that shows only its glyph; the title is still read by VoiceOver.
-    private func iconLabel(_ title: LocalizedStringKey, _ icon: String) -> some View {
-        Image(systemName: icon).accessibilityLabel(Text(title))
     }
 
     /// iOS 27's prominent role draws a separate accented button; earlier releases separate the
@@ -337,6 +333,14 @@ struct RootTabView: View {
             if target == .autoWorkout { router.autoWorkoutSheetRequested = true }
             router.notificationTarget = nil
         }
+        // `zoop://today|recovery|sleep|...`: a warm link arrives through the change callback, a cold-launch
+        // link is already pending when the shell appears (see the `.onAppear` below).
+        .onChange(of: router.pendingDeepLink) { _, _ in
+            presentPendingDeepLinkIfPossible()
+        }
+        .onChange(of: homeScreenQuickActionsEnabled) { _, _ in
+            presentPendingDeepLinkIfPossible()
+        }
         // A screen's top-bar "+" routes here: open the quick-action sheet, then clear the flag.
         .onChange(of: router.quickActionsRequested) { _, req in
             if req {
@@ -348,6 +352,7 @@ struct RootTabView: View {
         // through the change callback. Both route through the same screens as the centre FAB.
         .onAppear {
             presentPendingHomeScreenQuickActionIfPossible()
+            presentPendingDeepLinkIfPossible()
         }
         .onChange(of: homeScreenQuickActions.pendingAction) { _, _ in
             presentPendingHomeScreenQuickActionIfPossible()
@@ -407,6 +412,36 @@ struct RootTabView: View {
             routedPillar = nil
             quickAction = destination
         }
+    }
+
+    /// Open the screen a `zoop://` link names, once the first-run gates are done (same rule as the Home
+    /// Screen quick actions: an external entry must not cover a mandatory gate). Screens that live on a
+    /// tab are pushed onto a FRESH stack of that tab, so the back button returns to its root and a link
+    /// never stacks on whatever the wearer had open. Sheets are dismissed first for the same reason.
+    private func presentPendingDeepLinkIfPossible() {
+        guard homeScreenQuickActionsEnabled, let link = router.pendingDeepLink else { return }
+        router.pendingDeepLink = nil
+        showCoach = false
+        quickAction = nil
+        routedPillar = nil
+        showDevices = false
+
+        let tab: Int
+        var path = NavigationPath()
+        switch link {
+        case .today: tab = IOSTab.home
+        // Recovery has no route of its own: its catalog entry resolves to `RecoveryScreen`.
+        case .recovery: tab = IOSTab.home; path.append(TabRoute.metric(HeroRingMetric.charge))
+        case .sleep: tab = IOSTab.home; path.append(TabRoute.sleep)
+        case .stress: tab = IOSTab.home; path.append(TabRoute.stress)
+        case .fasting: tab = IOSTab.home; path.append(TabRoute.fasting)
+        case .training: tab = IOSTab.training
+        case .insights: tab = IOSTab.insights
+        // Sync status lives with the strap, in the Devices manager.
+        case .sync: tab = selectedTab; showDevices = true
+        }
+        withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = tab }
+        if link != .sync { tabPaths[tab] = path }
     }
 
     /// A routed v5 pillar screen wrapped in its own nav stack + Done button (mirrors `quickScreen`).
@@ -579,7 +614,7 @@ struct RootTabView: View {
     // rows in a single grouped ZoopCard with hairline dividers — the same row idiom Settings/Health use.
     private func moreStack(path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
         NavigationStack(path: path) {
-            ScreenScaffold(title: "More", subtitle: "Everything else, one tap away",
+            ScreenScaffold(title: "zoop.tab.more", subtitle: "Everything else, one tap away",
                            quietSubtitle: true,
                            onRefresh: { await repo.refresh() },
                            topBackground: liquidScaffoldSky()) {
@@ -634,45 +669,16 @@ struct RootTabView: View {
     }
 }
 
+/// The screens the More list opens. Everything else the list once linked to is reached from a tab
+/// root, a card, the "+" menu or Settings, so only these three need a route here.
 private enum MoreDestination: Hashable {
-    case patterns, insightsHub, intelligence, coach, insights, explore, compare
-    case sleep, trends, live, workouts, liftLog, health, labBook, stress, breathe, intervals, rhythm
-    case fusedRecord, appleHealth, miBand, dataSources, backupSync, shortcutsExport, noopLimitations
-    case alarms, automations, testCentre, siriShortcuts, powerSaving, settings
+    case compare, rhythm, settings
 
     @ViewBuilder var destination: some View {
         switch self {
-        case .patterns:        PatternsScreen()
-        case .insightsHub:     InsightsHubView()
-        case .intelligence:    IntelligenceView()
-        case .coach:           CoachView()
-        case .insights:        InsightsView()
-        case .explore:         MetricExplorerView()
-        case .compare:         CompareView()
-        case .sleep:           SleepView()
-        case .trends:          TrendsView()
-        case .live:            LiveView()
-        case .workouts:        WorkoutsView()
-        case .liftLog:         LiftLogView()
-        case .health:          HealthView()
-        case .labBook:         LabBookView()
-        case .stress:          StressView()
-        case .breathe:         BreathingView()
-        case .intervals:       IntervalTimerView()
-        case .rhythm:          RhythmHost()
-        case .fusedRecord:     FusedRecordHost()
-        case .appleHealth:     AppleHealthView()
-        case .miBand:          XiaomiBandView()
-        case .dataSources:     DataSourcesView()
-        case .noopLimitations: ZoopLimitationsView()
-        case .backupSync:      BackupSyncView()
-        case .shortcutsExport: ShortcutExportSettingsView()
-        case .alarms:          SleepPlannerHost()
-        case .automations:     AutomationsView()
-        case .testCentre:      TestCentreView()
-        case .siriShortcuts:   SiriShortcutsSettingsView()
-        case .powerSaving:     PowerSavingView()
-        case .settings:        SettingsView()
+        case .compare:  CompareView()
+        case .rhythm:   RhythmHost()
+        case .settings: SettingsView()
         }
     }
 }
