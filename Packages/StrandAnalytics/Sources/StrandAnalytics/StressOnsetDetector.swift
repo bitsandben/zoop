@@ -1,7 +1,8 @@
 import Foundation
 
 // StressOnsetDetector.swift — the L3 closed-loop JITAI ("just-in-time adaptive intervention") detector.
-// Generalises the math currently inline in `AppModel.evaluateStress()` into an EDGE-triggered,
+// Generalises the math that used to be inline in the app's live R-R hook (now
+// `AppModel.feedStressOnsetDetector()`, which only feeds this detector) into an EDGE-triggered,
 // motion-gated, REPLAY-SAFE detector that decides — at the moment it matters — whether to offer a 60-s
 // guided breathing cue. PURE + DB-free, carrying its OWN de-dup state exactly like
 // `SedentaryDetector.evaluate`: the caller persists `nextState` and feeds it back, so a replayed window
@@ -9,7 +10,7 @@ import Foundation
 //
 // See docs/superpowers/specs/2026-06-19-v5-haptic-biofeedback-design.md (L3).
 //
-// WHAT IT GENERALISES (from AppModel.evaluateStress): a rolling clean-R-R buffer → a SLOW RMSSD baseline
+// WHAT IT GENERALISES (from the original inline hook): a rolling clean-R-R buffer → a SLOW RMSSD baseline
 // (the shipped 0.98/0.02 EMA) + a resting-HR band gate (55–100 bpm) + a `rmssd < baseline × 0.6` drop +
 // a once-per-15-min limiter + a single confirming buzz. What this engine ADDS, per spec:
 //   1. A FAST short-window RMSSD (the latest beats) vs the slow baseline — "fast dropped below baseline".
@@ -30,7 +31,7 @@ import Foundation
 
 public enum StressOnsetDetector {
 
-    // MARK: - Tunables (evaluateStress parity + the new fast/gate pieces)
+    // MARK: - Tunables (original inline-hook parity + the new fast/gate pieces)
 
     /// Slow-baseline EMA weight on the prior value (the shipped 0.98). New RMSSD gets `1 − this`.
     public static let baselineEmaAlpha: Double = 0.98
@@ -74,7 +75,7 @@ public enum StressOnsetDetector {
         /// Quiet-hours window, local minute-of-day [0,1440) (defaults 22:00 → 07:00).
         public var quietStartMinutes: Int
         public var quietEndMinutes: Int
-        /// Buzz strength (loops) for the confirming buzz — one light pulse, like evaluateStress.
+        /// Buzz strength (loops) for the confirming buzz — one light pulse, like the original inline hook.
         public var buzzLoops: Int
 
         public init(enabled: Bool = false,
@@ -216,7 +217,7 @@ public enum StressOnsetDetector {
                             nextState: state)
         }
 
-        // 3) Advance the slow baseline EMA (seed on first trusted value), exactly like evaluateStress.
+        // 3) Advance the slow baseline EMA (seed on first trusted value), exactly like the original inline hook.
         var next = state
         next.baselineRMSSD = state.baselineRMSSD == 0
             ? fast

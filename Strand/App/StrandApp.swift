@@ -60,7 +60,7 @@ struct StrandApp: App {
                 .environmentObject(router)
                 .environmentObject(UpdateStore.shared)
                 // v5 L3: the shared stress check-in nudge surface, so the Breathe screen's passive
-                // card observes the SAME instance the central detector (AppModel.evaluateStress) posts to.
+                // card observes the SAME instance the central detector (AppModel.feedStressOnsetDetector) posts to.
                 .environment(\.stressNudgeCenter, model.stressNudgeCenter)
                 .frame(minWidth: 1000, minHeight: 700)
                 .preferredColorScheme(AppearanceMode.resolve(appearanceRaw).colorScheme)

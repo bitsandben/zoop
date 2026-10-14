@@ -226,7 +226,7 @@ struct StrandiOSApp: App {
                 .environmentObject(UpdateStore.shared)
                 .environmentObject(liftSession)
                 // v5 L3: the shared stress check-in nudge surface, so the Breathe screen's passive
-                // card observes the SAME instance the central detector (AppModel.evaluateStress) posts to.
+                // card observes the SAME instance the central detector (AppModel.feedStressOnsetDetector) posts to.
                 .environment(\.stressNudgeCenter, model.stressNudgeCenter)
                 .preferredColorScheme(AppearanceMode.resolve(appearanceRaw).colorScheme)
                 // Match SwiftUI format styles to the localization selected by the app's bundles. Language

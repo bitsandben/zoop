@@ -15,17 +15,21 @@ struct StressDayHero: View {
     let hours: [DaytimeStress.HourPoint]
     /// Sleep spans (unix seconds) to shade on the curve.
     let sleeps: [(start: Int, end: Int)]
-    /// The morning's daily score, used only while the day has no intraday reading.
-    let fallbackScore: Double?
+    /// The morning's daily level, which the headline falls back to while the day has no scored hour.
+    let daily: DaytimeStress.Daily?
 
     @State private var scrubbed: DaytimeStress.HourPoint?
 
     private var points: [DaytimeStress.HourPoint] { hours.filter { $0.level != nil } }
     private var current: DaytimeStress.HourPoint? { points.last }
+    /// The same resolver the Home tile reads, so the hero and the tile show one number.
+    private var headline: Assessment<Double, DaytimeStress.HeadlineSource> {
+        DaytimeStress.headline(hours: hours, daily: daily)
+    }
 
     var body: some View {
         let shown = scrubbed ?? current
-        let value = shown?.level ?? fallbackScore
+        let value = scrubbed?.level ?? headline.value
         VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
             Text(headerLabel(shown))
                 .font(.system(size: 13, weight: .semibold))
@@ -126,8 +130,4 @@ struct StressDayHero: View {
     }
 }
 
-/// The current stress level from today's intraday curve: its latest scored point, or nil.
-func liveStressLevel(_ hours: [DaytimeStress.HourPoint]) -> Double? {
-    hours.last(where: { $0.level != nil })?.level
-}
 #endif

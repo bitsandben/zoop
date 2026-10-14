@@ -185,7 +185,7 @@ final class AppModel: ObservableObject {
     @Published var circadianPhase: CircadianEngine.PhaseEstimate?
 
     /// The L3 passive-nudge surface (haptic biofeedback "stress check-in"). The detector fires onto this
-    /// from `evaluateStress`; both app roots inject it into the environment so the Breathe screen's card
+    /// from `feedStressOnsetDetector`; both app roots inject it into the environment so the Breathe screen's card
     /// (and any host) surfaces the pending nudge. Owned here so the central hook can reach it. (v5 L3)
     let stressNudgeCenter = StressNudgeCenter()
 
@@ -838,7 +838,7 @@ final class AppModel: ObservableObject {
         let smoothed = vals.isEmpty ? nil : Int(vals[vals.count / 2].rounded())
         if bpm != smoothed { bpm = smoothed }
         captureWorkoutSample()
-        evaluateStress()
+        feedStressOnsetDetector()
     }
 
     // MARK: - Manual workout tracking
@@ -1139,7 +1139,9 @@ final class AppModel: ObservableObject {
     /// passive nudge to `stressNudgeCenter`. The detector carries replay-safe state (de-dup + slow
     /// baseline + rate limit), persisted via `BiofeedbackPrefs` so a relaunch can't re-fire. Honest /
     /// non-clinical: "stress" is an autonomic proxy vs the user's own baseline, never a diagnosis.
-    private func evaluateStress() {
+    /// This only feeds live R-R into the nudge trigger; it computes no stress level of its own. The
+    /// stress level the app shows comes from `DaytimeStress` alone.
+    private func feedStressOnsetDetector() {
         // Once per R-R packet. `ingestHR` runs from both the heart-rate and the R-R sink, so a packet reached
         // this once or twice, its intervals entered `rrBuf` as often, and the detector's slow baseline
         // advanced on every call rather than every packet.

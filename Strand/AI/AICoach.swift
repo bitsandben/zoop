@@ -960,7 +960,9 @@ final class AICoachEngine: ObservableObject {
         // way StressView does. Gated here under `dataConsent` (the caller only reaches buildFullContext()
         // with consent on), so it rides the SAME consent + text-only channel as the HRV/RHR summary, a
         // derived number, never raw R-R egress. Omitted when there aren't enough clean beats yet.
-        if let line = await stressIndexLine() { ctx += "\n\n" + line }
+        // Test Centre only: Baevsky SI is an alternate stress definition, and the coach must not quote a
+        // stress figure the user never sees in the app (that one comes from DaytimeStress).
+        if TestCentre.active(.stress), let line = await stressIndexLine() { ctx += "\n\n" + line }
         if includeOnDeviceSignals {
             let block = await onDeviceSignalsBlock()
             if !block.isEmpty { ctx += "\n\n" + block }

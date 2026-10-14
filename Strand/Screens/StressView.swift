@@ -183,6 +183,14 @@ struct StressView: View {
                                   includeTimeline: true)
         }
 
+        // Baevsky SI and LF/HF are alternate stress definitions, not the stress level the app reports
+        // (`DaytimeStress`). They stay as Test Centre instrumentation so no user sees two stress numbers.
+        guard TestCentre.active(.stress) else {
+            stressIndex = nil
+            freqHRV = nil
+            return
+        }
+
         // ADDITIVE advanced readouts, computed on-demand from the SAME `rr` (no extra fetch, no
         // DB / schema change, and no effect on the 0..3 score above). Each engine returns nil when
         // its own gate is not met (Baevsky needs >= 20 clean beats; freq-HRV needs >= 60 s span),
@@ -223,7 +231,7 @@ struct StressView: View {
             // Zoop iOS: one hero — the current level from today's intraday curve, large, with the curve
             // (scrubbable, sleep shaded) under it. Replaces the gauge, the separate timeline card and the
             // markers' Stress tile, which showed the morning's daily score as if it were the current state.
-            StressDayHero(hours: daytime?.timeline ?? [], sleeps: todaySleeps, fallbackScore: model.score)
+            StressDayHero(hours: daytime?.timeline ?? [], sleeps: todaySleeps, daily: model.daily)
                 .staggeredAppear(index: 0)
             #else
             // 1. HERO — the liquid stress-level vessel + band + one plain-English line, all in one card.
@@ -843,11 +851,12 @@ private struct StressHeroGauge: View {
 enum StressBand {
     case low, medium, high
 
+    /// The band boundaries belong to `DaytimeStress`, so every stress surface bands a level the same way.
     init(score: Double) {
-        switch score {
-        case ..<1.0: self = .low
-        case ..<2.0: self = .medium
-        default:     self = .high
+        switch DaytimeStress.Band(level: score) {
+        case .low:    self = .low
+        case .medium: self = .medium
+        case .high:   self = .high
         }
     }
 
@@ -921,9 +930,12 @@ private struct StressInputs: Equatable {
     }
 }
 
-// MARK: - Stress model (transparent: stored value OR z-score derivation)
+// MARK: - Stress model (the daily level from DaytimeStress, plus its copy)
 
+/// The Stress screen's daily level. The number, deltas and trend come from `DaytimeStress.daily`, the
+/// package's one stress resolver; this only adds the localized copy and chart dates.
 struct StressModel {
+    let daily: DaytimeStress.Daily
     let score: Double            // 0–3 (today)
     let band: StressBand
     let explanation: String
@@ -931,7 +943,7 @@ struct StressModel {
     let hrvToday: Double?
     let rhrDelta: Double?        // today − baseline mean (bpm)
     let hrvDelta: Double?        // today − baseline mean (ms)
-    let fullTrend: [TrendPoint]  // entire daily proxy history, oldest→newest
+    let fullTrend: [TrendPoint]  // entire daily history, oldest→newest
     let calmTimeValue: String    // e.g. "58%"
     let calmTimeCaption: String  // e.g. "of last 30 days"
     let usingStored: Bool        // true when today's value came from the stored series
@@ -950,136 +962,35 @@ struct StressModel {
     /// Build from oldest→newest daily metrics plus any stored "stress" series.
     /// Returns nil only when there is no usable signal at all.
     init?(days: [DailyMetric], stored: [(day: String, value: Double)]) {
-        // Stored values keyed by day, clamped to 0–3.
-        let storedByDay: [String: Double] = Dictionary(
-            stored.map { ($0.day, min(max($0.value, 0), 3)) },
-            uniquingKeysWith: { _, b in b }
-        )
-
-        // Carry (#543): today's own row is often vitals-less until the overnight is analyzed —
-        // especially right after an app update relaunches and re-runs the pass — so score the NEWEST
-        // day that actually carries usable signal (RHR/HRV, or a stored/imported stress value) instead of
-        // calibrating, the same last-night carry every other Today vital uses. The predicate mirrors the
-        // storedToday||derived gate below, so an imported stress-only latest day is still honored (not
-        // skipped). Falls back to the last row when no day has any signal (cold start).
-        guard let idx = days.lastIndex(where: {
-            $0.restingHr != nil || $0.avgHrv != nil || storedByDay[$0.day] != nil
-        }) ?? days.indices.last
-        else { return nil }   // no days at all
-        let today = days[idx]
-
-        // Baseline window: up to 30 days ending the day BEFORE the scored day, so it's measured
-        // against its own recent past rather than itself.
-        let baseline = idx > 0 ? Array(days[0..<idx].suffix(30)) : []
-
-        let rhrBase = baseline.compactMap { $0.restingHr }.map(Double.init)
-        let hrvBase = baseline.compactMap { $0.avgHrv }
-
-        let meanRHR = StressMath.mean(rhrBase)
-        let sdRHR   = StressMath.std(rhrBase, mean: meanRHR)
-        let meanHRV = StressMath.mean(hrvBase)
-        let sdHRV   = StressMath.std(hrvBase, mean: meanHRV)
-
-        let rhrT = today.restingHr.map(Double.init)
-        let hrvT = today.avgHrv
-
-        // Resolve today's score: prefer a stored value, else derive.
-        let derivedAvailable = (rhrT != nil && meanRHR != nil) || (hrvT != nil && meanHRV != nil)
-        let storedToday = storedByDay[today.day]
-        guard storedToday != nil || derivedAvailable else { return nil }
-
-        let derivedToday: Double? = derivedAvailable
-            ? StressMath.squash(StressMath.rawScore(
-                rhrToday: rhrT, meanRHR: meanRHR, sdRHR: sdRHR,
-                hrvToday: hrvT, meanHRV: meanHRV, sdHRV: sdHRV))
-            : nil
-
-        let s = storedToday ?? derivedToday ?? 1.5
-        self.usingStored = storedToday != nil
-        self.score = s
-        self.band = StressBand(score: s)
-        self.rhrToday = today.restingHr
-        self.hrvToday = hrvT
-        self.rhrDelta = (rhrT != nil && meanRHR != nil) ? (rhrT! - meanRHR!) : nil
-        self.hrvDelta = (hrvT != nil && meanHRV != nil) ? (hrvT! - meanHRV!) : nil
-
-        self.explanation = StressMath.explanation(
-            band: self.band,
-            rhrDelta: self.rhrDelta,
-            hrvDelta: self.hrvDelta,
-            usingStored: self.usingStored
-        )
-
-        // Full daily proxy history: stored value if present for the day, else the
-        // z-score derivation against the SAME baseline so the line is comparable.
-        var pts: [TrendPoint] = []
-        for d in days {
-            guard let date = Self.dayParser.date(from: d.day) else { continue }
-            if let v = storedByDay[d.day] {
-                pts.append(TrendPoint(date: date, value: v))
-                continue
-            }
-            let dRHR = d.restingHr.map(Double.init)
-            let dHRV = d.avgHrv
-            guard (dRHR != nil && meanRHR != nil) || (dHRV != nil && meanHRV != nil) else { continue }
-            let r = StressMath.rawScore(
-                rhrToday: dRHR, meanRHR: meanRHR, sdRHR: sdRHR,
-                hrvToday: dHRV, meanHRV: meanHRV, sdHRV: sdHRV
-            )
-            pts.append(TrendPoint(date: date, value: StressMath.squash(r)))
+        guard let daily = DaytimeStress.daily(days: days, stored: stored) else { return nil }
+        self.daily = daily
+        self.score = daily.level
+        self.band = StressBand(score: daily.level)
+        self.usingStored = daily.source == .stored
+        self.rhrToday = daily.restingHR
+        self.hrvToday = daily.hrv
+        self.rhrDelta = daily.restingHRDelta
+        self.hrvDelta = daily.hrvDelta
+        self.explanation = StressCopy.explanation(band: band, rhrDelta: daily.restingHRDelta,
+                                                  hrvDelta: daily.hrvDelta, usingStored: usingStored)
+        self.fullTrend = daily.trend.compactMap { p in
+            Self.dayParser.date(from: p.day).map { TrendPoint(date: $0, value: p.level) }
         }
-        self.fullTrend = pts
-
-        // "Calm time": share of the last 30 charted days that sat in the LOW band.
-        let recent = Array(pts.suffix(30))
-        if recent.isEmpty {
+        let calm = daily.calmDays
+        if calm.of == 0 {
             self.calmTimeValue = "—"
             self.calmTimeCaption = String(localized: "needs history")
         } else {
-            let calm = recent.filter { $0.value < 1.0 }.count
-            let pct = Int((Double(calm) / Double(recent.count) * 100).rounded())
+            let pct = Int((Double(calm.calm) / Double(calm.of) * 100).rounded())
             self.calmTimeValue = "\(pct)%"
-            self.calmTimeCaption = String(localized: "low-stress days · \(recent.count)d")
+            self.calmTimeCaption = String(localized: "low-stress days · \(calm.of)d")
         }
     }
 }
 
-// MARK: - Stress math (pure, testable helpers)
+// MARK: - Stress copy
 
-enum StressMath {
-    static func mean(_ xs: [Double]) -> Double? {
-        guard !xs.isEmpty else { return nil }
-        return xs.reduce(0, +) / Double(xs.count)
-    }
-
-    /// Population standard deviation; 0 when there's no spread.
-    static func std(_ xs: [Double], mean m: Double?) -> Double {
-        guard let m, xs.count > 1 else { return 0 }
-        let v = xs.map { ($0 - m) * ($0 - m) }.reduce(0, +) / Double(xs.count)
-        return v.squareRoot()
-    }
-
-    /// Combined autonomic z-score. RHR-up and HRV-down both push it positive.
-    static func rawScore(
-        rhrToday: Double?, meanRHR: Double?, sdRHR: Double,
-        hrvToday: Double?, meanHRV: Double?, sdHRV: Double
-    ) -> Double {
-        var sum = 0.0
-        if let r = rhrToday, let m = meanRHR, sdRHR > 0.0001 {
-            sum += (r - m) / sdRHR            // up = stress
-        }
-        if let h = hrvToday, let m = meanHRV, sdHRV > 0.0001 {
-            sum += (m - h) / sdHRV            // down = stress
-        }
-        return sum
-    }
-
-    /// Logistic squash of the raw z-sum onto 0–3 (baseline 0 → 1.5).
-    static func squash(_ raw: Double) -> Double {
-        let s = 3.0 / (1.0 + exp(-raw))
-        return min(max(s, 0), 3)
-    }
-
+enum StressCopy {
     static func explanation(band: StressBand, rhrDelta: Double?, hrvDelta: Double?, usingStored: Bool) -> String {
         let rhrUp = (rhrDelta ?? 0) > 1.0
         let rhrDn = (rhrDelta ?? 0) < -1.0
@@ -1413,7 +1324,7 @@ private struct StressPreviewHarness: View {
                                 Text(band.title).font(StrandFont.overline)
                                     .tracking(StrandFont.overlineTracking)
                                     .foregroundStyle(StressRamp.color(score))
-                                Text(StressMath.explanation(band: band, rhrDelta: 3, hrvDelta: -8, usingStored: false))
+                                Text(StressCopy.explanation(band: band, rhrDelta: 3, hrvDelta: -8, usingStored: false))
                                     .font(StrandFont.subhead)
                                     .foregroundStyle(StrandPalette.textSecondary)
                                     .fixedSize(horizontal: false, vertical: true)

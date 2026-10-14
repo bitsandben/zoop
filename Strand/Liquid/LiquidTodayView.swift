@@ -55,7 +55,7 @@ struct LiquidTodayView: View {
     @State private var restScore: Double?          // sleep_performance, day-keyed
     /// Input providers for the three scores, keyed by recovery / strain / sleep_performance.
     @State private var heroProviderByMetric: [String: ScoreInputProvider] = [:]
-    @State private var stress: Double?             // StressModel(...).score, 0–3
+    @State private var stressDaily: DaytimeStress.Daily?   // the morning's daily level (DaytimeStress.daily)
     /// The "not for me" choice that hides cycle features (shared with AppModel).
     @AppStorage(AppModel.cycleAwarenessHiddenKey) private var cycleCardHidden = false
     /// The recent workout whose detail sheet is open (iOS).
@@ -882,9 +882,7 @@ struct LiquidTodayView: View {
             }
             .buttonStyle(LiquidPressStyle())
             NavigationLink(value: TabRoute.stress) {
-                HomeStressMonitorTile(score: (selectedDayOffset == 0 ? liveStressLevel(hostedStressHours) : nil) ?? stress,
-                                      hours: hostedStressHours,
-                                      isLive: selectedDayOffset == 0 && liveStressLevel(hostedStressHours) != nil)
+                HomeStressMonitorTile(headline: stressHeadline, hours: hostedStressHours)
             }
             .buttonStyle(LiquidPressStyle())
         }
@@ -1494,7 +1492,7 @@ struct LiquidTodayView: View {
             RollingStepsAverageCard(day: selectedDayKey)
         case .stress:
             cardLink(.stress, title: card.title, sub: card.subtitle,
-                     value: stressText, tint: StrandPalette.accent, frac: fracOver(stress, 3))
+                     value: stressText, tint: StrandPalette.accent, frac: fracOver(stressHeadline.value, 3))
         case .fitnessAge:
             cardLink(.metric("fitness_age"), title: card.title, sub: card.subtitle,
                      // Bound symbol as on the Health hero (#2173), so a floored reading does not read
@@ -2428,7 +2426,7 @@ struct LiquidTodayView: View {
             todayValue: restByDay[selectedDayKey], lastDay: restSeries.last?.day,
             lastValue: restSeries.last?.value, isTodaySelected: selectedDayOffset == 0,
             todayKey: selectedDayKey)
-        // StressModel loops the full history to build its baseline — run it OFF the main actor so a big
+        // DaytimeStress.daily loops the full history to build its baseline — run it OFF the main actor so a big
         // history doesn't stutter the UI. Snapshot the inputs (value types) into the detached task.
         let storedStress = await stressA
         let daysSnapshot = repo.days
@@ -2482,7 +2480,7 @@ struct LiquidTodayView: View {
             "weight": weightSeries.filter { $0.day >= sparkCutoff && $0.day <= selectedDayKey },
         ]
         let newStress = await Task.detached(priority: .utility) {
-            StressModel(days: daysSnapshot, stored: storedStress)?.score
+            DaytimeStress.daily(days: daysSnapshot, stored: storedStress)
         }.value
         let newFitnessAge = (await fitA).last?.value   // history-wide latest banked (not day-scoped)
         let newVo2max = (await vo2A).last?.value        // #1391: latest banked VO₂max estimate
@@ -2600,7 +2598,7 @@ struct LiquidTodayView: View {
         restScore = newRestScore
         spo2CandidateByDay = newSpo2CandidateByDay
         kSparks = newKSparks
-        stress = newStress
+        stressDaily = newStress
         fitnessAge = newFitnessAge
         vo2max = newVo2max
         vitality = newVitality
@@ -2784,7 +2782,16 @@ struct LiquidTodayView: View {
         return unit.isEmpty ? n : "\(n) \(unit)"
     }
 
-    private var stressText: String { stress.map { String(Int($0.rounded())) } ?? String(localized: "Calibrating") }
+    /// Today's one stress number for both the monitor tile and the Stress card, from the package resolver.
+    /// A past day has no intraday curve here, so it reads the daily level only.
+    private var stressHeadline: Assessment<Double, DaytimeStress.HeadlineSource> {
+        DaytimeStress.headline(hours: selectedDayOffset == 0 ? hostedStressHours : [], daily: stressDaily)
+    }
+
+    private var stressText: String {
+        stressHeadline.value.map { $0.formatted(.number.precision(.fractionLength(1))) }
+            ?? String(localized: "Calibrating")
+    }
 
     private var sleepText: String {
         guard let m = displayDay?.totalSleepMin else { return "–" }

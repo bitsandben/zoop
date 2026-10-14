@@ -87,7 +87,7 @@ enum BiofeedbackPrefs {
     }
 
     /// Build the engine config from the persisted toggles, so the central L3 hook (Wave 3, in BLEManager's
-    /// existing evaluateStress call-site) reads one consistent config.
+    /// AppModel.feedStressOnsetDetector call-site) reads one consistent config.
     static func stressConfig() -> StressOnsetDetector.Config {
         StressOnsetDetector.Config(
             enabled: checkInEnabled,

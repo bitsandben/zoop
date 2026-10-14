@@ -123,11 +123,10 @@ public enum DaytimeStress {
     /// bucketing, the waking-hour filter, the squash curve, sustained-high, high-stress-minutes
     /// — is identical between modes; only the reference differs.
     ///
-    /// Relationship to the rest of the Stress screen (StressView.swift): the DAILY 0–3 score
-    /// (`StressModel`) already compares last night's NIGHTLY resting-HR/HRV to a plain trailing
-    /// 30-day mean/SD, computed locally in StressView (not via `Baselines`) — that's a
-    /// once-a-day number from SLEEP vitals. The Advanced HRV card (`StressIndex`,
-    /// `HRVFreqDomain`) is a today-only descriptive lens with no baseline at all. `.baselineRelative`
+    /// Relationship to the rest of the stress fact: the DAILY 0–3 level (`DaytimeStress.daily`)
+    /// compares last night's NIGHTLY resting-HR/HRV to a plain trailing 30-day mean/SD (not via
+    /// `Baselines`) — a once-a-day number from SLEEP vitals on this same squash. The Test Centre HRV
+    /// card (`StressIndex`, `HRVFreqDomain`) is a today-only descriptive lens with no baseline at all. `.baselineRelative`
     /// is neither: it's an HOURLY breakdown of TODAY from DAYTIME/waking-hours HR+RMSSD against a
     /// PERSONAL cross-day rolling baseline. Daytime HR runs warmer than nocturnal resting HR
     /// (posture, thermic effect), so it needs its OWN baseline (`daytime_hr`/`daytime_rmssd`,
@@ -268,14 +267,14 @@ public enum DaytimeStress {
                                          highStressMinutes: 0, hrOnlyFallback: false)
     }
 
-    // MARK: - Shared stress math (identical formula to the daily StressModel)
+    // MARK: - Shared stress math (the hourly curve and the daily level both use these)
 
     static func mean(_ xs: [Double]) -> Double? {
         guard !xs.isEmpty else { return nil }
         return xs.reduce(0, +) / Double(xs.count)
     }
 
-    /// Population standard deviation; 0 when there's no spread. (Matches StressMath.std.)
+    /// Population standard deviation; 0 when there's no spread.
     static func std(_ xs: [Double], mean m: Double?) -> Double {
         guard let m, xs.count > 1 else { return 0 }
         let v = xs.map { ($0 - m) * ($0 - m) }.reduce(0, +) / Double(xs.count)
@@ -296,8 +295,8 @@ public enum DaytimeStress {
         return sum
     }
 
-    /// Logistic squash of the raw z-sum onto 0–3 (baseline 0 → 1.5). Identical to
-    /// StressMath.squash, so an hourly point shares the daily score's scale and bands.
+    /// Logistic squash of the raw z-sum onto 0–3 (baseline 0 → 1.5). The daily level uses it too, so
+    /// an hourly point shares the daily level's scale and bands.
     static func squash(_ raw: Double) -> Double {
         let s = 3.0 / (1.0 + exp(-raw))
         return min(max(s, 0), 3)

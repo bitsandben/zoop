@@ -8,7 +8,7 @@ import WhoopStore
 //
 // The two tiles under the Home score rings: a vitals summary that taps through to the Health screen,
 // and the current stress level that taps through to Stress. Both read figures the destination screens
-// already compute (BodyVitalSigns, StressModel), so a tile and its screen cannot disagree.
+// already resolve (BodyVitalSigns, DaytimeStress.headline), so a tile and its screen cannot disagree.
 
 /// A Home monitor tile in the same language as the other Home cards: the tile's name with a chevron, a
 /// large tinted value, and a footer the tile fills (a band word, or the per-vital status strip).
@@ -126,11 +126,13 @@ struct HomeHealthMonitorTile: View {
 
 /// The current stress level on its 0–3 scale, tinted by its band, with the band named underneath.
 struct HomeStressMonitorTile: View {
-    let score: Double?
+    /// Resolved by `DaytimeStress.headline`, the same call the Stress screen's hero makes.
+    let headline: Assessment<Double, DaytimeStress.HeadlineSource>
     /// The day's hourly stress, drawn faintly behind the tile (the same series the Stress screen plots).
     var hours: [DaytimeStress.HourPoint] = []
-    /// False when `score` is the morning's daily value because today has no intraday reading yet.
-    var isLive: Bool = true
+
+    private var score: Double? { headline.value }
+    private var isLive: Bool { headline.reason == .currentHour }
 
     var body: some View {
         HomeMonitorTile(
