@@ -258987,6 +258987,226 @@
           }
         }
       }
+    },
+    "Sleep stages through the night" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafphasen im Verlauf der Nacht"
+          }
+        }
+      }
+    },
+    "%@: %@, %lld percent of the night, typically %lld to %lld percent" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@, %3$lld Prozent der Nacht, typisch %4$lld bis %5$lld Prozent"
+          }
+        }
+      }
+    },
+    "Highlights this stage on the sleep chart" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hebt diese Phase im Schlafdiagramm hervor"
+          }
+        }
+      }
+    },
+    "Time to fall asleep" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einschlafzeit"
+          }
+        }
+      }
+    },
+    "Time to fall asleep: %lld minutes, %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einschlafzeit: %1$lld Minuten, %2$@"
+          }
+        }
+      }
+    },
+    "Fast" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schnell"
+          }
+        }
+      }
+    },
+    "Late" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spät"
+          }
+        }
+      }
+    },
+    "Night signals" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nachtwerte"
+          }
+        }
+      }
+    },
+    "RR" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AF"
+          }
+        }
+      }
+    },
+    "rpm" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AZ/min"
+          }
+        }
+      }
+    },
+    "Heart rate during sleep" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenz im Schlaf"
+          }
+        }
+      }
+    },
+    "HRV during sleep" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV im Schlaf"
+          }
+        }
+      }
+    },
+    "Breathing rate during sleep" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atemfrequenz im Schlaf"
+          }
+        }
+      }
+    },
+    "Blood oxygen during sleep" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blutsauerstoff im Schlaf"
+          }
+        }
+      }
+    },
+    "Heart rate range" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenz-Spanne"
+          }
+        }
+      }
+    },
+    "HRV range" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV-Spanne"
+          }
+        }
+      }
+    },
+    "Breathing rate range" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atemfrequenz-Spanne"
+          }
+        }
+      }
+    },
+    "Blood oxygen range" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blutsauerstoff-Spanne"
+          }
+        }
+      }
+    },
+    "Sleep stages" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafphasen"
+          }
+        }
+      }
+    },
+    "%@ efficiency · %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ Effizienz · %2$@"
+          }
+        }
+      }
+    },
+    "%@ efficiency" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Effizienz"
+          }
+        }
+      }
+    },
+    "Sleep window" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafphase"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
