@@ -83,7 +83,7 @@ enum TodayBodyReadouts {
     /// Weight has no population range: with too few weigh-ins it reads typical and provisional.
     static func weight(latest: (day: String, kg: Double)?, earlier: [Double], selectedDay: String) -> MetricReadout {
         guard let latest else {
-            return MetricReadout(id: .weight, label: TodayCopy.weight, value: nil, unit: .kilograms,
+            return MetricReadout(id: .weight, label: TodayCopy.weight, value: nil, unit: .mass(UnitPrefs.currentMetricMassSystem()),
                                  verdict: .unavailable(.noData(since: nil)), meaning: TodayCopy.weightNoData)
         }
         let range = typicalRange(earlier, minCount: 3)
@@ -92,7 +92,7 @@ enum TodayBodyReadouts {
         if daysBetween(latest.day, selectedDay) > 14, let since = TodayLogic.dayKeyParser.date(from: latest.day) {
             confidence = .stale(since: since)
         }
-        return MetricReadout(id: .weight, label: TodayCopy.weight, value: latest.kg, unit: .kilograms,
+        return MetricReadout(id: .weight, label: TodayCopy.weight, value: latest.kg, unit: .mass(UnitPrefs.currentMetricMassSystem()),
                              typicalRange: range, verdict: word.verdict,
                              meaning: TodayCopy.vitalMeaning(.weight, word), confidence: confidence)
     }

@@ -93,12 +93,16 @@ struct MetricVerdictText: View {
     let readout: MetricReadout
     let presentation: MetricPresentation
     var font: Font = StrandFont.headline
+    /// Small container: the short unavailable wording, shrunk to fit on at most two lines.
+    var compact = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(verbatim: presentation.verdict)
+            Text(verbatim: compact ? presentation.compactVerdict : presentation.verdict)
                 .font(font)
                 .foregroundStyle(MetricStyle.verdictColor(readout))
+                .lineLimit(compact ? 2 : nil)
+                .minimumScaleFactor(compact ? 0.7 : 1)
                 .fixedSize(horizontal: false, vertical: true)
             if let note = presentation.confidenceNote {
                 Text(verbatim: note)

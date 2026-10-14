@@ -131,7 +131,7 @@ extension SleepReadouts {
                              SleepRangeConfig.spo2Population) { $0.spo2Pct })
         }
         if days.contains(where: { $0.skinTempDevC != nil }) {
-            out.append(vital(.skinTemperature, SleepStrings.skinTemp, .celsius, SleepRangeConfig.skinDeviation,
+            out.append(vital(.skinTemperature, SleepStrings.skinTemp, .temperatureDeviation(UnitPrefs.currentMetricTemperatureSystem()), SleepRangeConfig.skinDeviation,
                              SleepRangeConfig.skinPopulation) { $0.skinTempDevC })
         }
         return out

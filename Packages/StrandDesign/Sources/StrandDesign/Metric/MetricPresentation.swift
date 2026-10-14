@@ -13,6 +13,8 @@ public struct MetricPresentation: Equatable, Sendable {
     public let unit: String?
     /// The verdict word, or the unavailable reason that stands in for the number.
     public let verdict: String
+    /// Short form of `verdict` for small rings and tiles ("No data" for a long reason).
+    public let compactVerdict: String
     public let meaning: String
     /// "+8 ms vs. typical"; nil without a delta.
     public let delta: String?
@@ -29,7 +31,8 @@ public struct MetricPresentation: Equatable, Sendable {
         let unit = readout.unit
 
         label = text(readout.label)
-        verdict = text(readout.verdict.text)
+        verdict = text(readout.verdict.text(rangeIsPersonal: readout.rangeIsPersonal))
+        compactVerdict = text(readout.verdict.compactText)
         meaning = text(readout.meaning)
 
         if let value = readout.displayValue {

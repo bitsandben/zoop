@@ -56,4 +56,37 @@ final class MetricUnitTests: XCTestCase {
         XCTAssertEqual(MetricUnit.milliseconds.formatRange(48...58, locale: en), "48–58\(nbsp)ms")
         XCTAssertEqual(MetricUnit.celsius.formatRange(33.5...35.5, locale: de), "33,5–35,5\(nbsp)°C")
     }
+
+    func testImperialConversions() {
+        XCTAssertEqual(MetricUnit.mass(.imperial).format(75, locale: en), "165.3\(nbsp)lb")
+        XCTAssertEqual(MetricUnit.mass(.metric).format(75, locale: en), "75.0\(nbsp)kg")
+        XCTAssertEqual(MetricUnit.temperature(.imperial).format(36.4, locale: en), "97.5\(nbsp)°F")
+        // A difference scales by 9/5 with no +32 offset.
+        XCTAssertEqual(MetricUnit.fahrenheit.formatDelta(0.5, locale: en), "+0.9\(nbsp)°F")
+        XCTAssertEqual(MetricUnit.fahrenheit.formatRange(36...37, locale: en), "96.8–98.6\(nbsp)°F")
+    }
+
+    func testDeviationIsSigned() {
+        XCTAssertEqual(MetricUnit.celsiusDeviation.format(0.4, locale: de), "+0,4\(nbsp)°C")
+        XCTAssertEqual(MetricUnit.celsiusDeviation.format(-0.3, locale: en), "-0.3\(nbsp)°C")
+        XCTAssertEqual(MetricUnit.fahrenheitDeviation.format(0.5, locale: en), "+0.9\(nbsp)°F")
+    }
+
+    func testDurationAxisIsHoursAndMinutes() {
+        XCTAssertEqual(MetricUnit.duration.axisLabel(27_000, locale: en), "7h 30m")
+        XCTAssertEqual(MetricUnit.milliseconds.axisLabel(62, locale: en), "62")
+    }
+
+    func testPopulationRangeVerdictDoesNotSayYour() {
+        let r = MetricReadout(id: .hrv, label: "HRV", value: 80, unit: .milliseconds, typicalRange: 50...70,
+                              rangeIsPersonal: false, verdict: .above, meaning: "m")
+        XCTAssertEqual(MetricPresentation(r, locale: en).verdict, "Above the typical range")
+        XCTAssertTrue(MetricPresentation(r, locale: en).accessibilityValue.hasSuffix("Above the typical range"))
+    }
+
+    func testCompactEmptyStateIsShort() {
+        let r = MetricReadout(id: .hrv, label: "HRV", value: nil, unit: .milliseconds,
+                              verdict: .unavailable(.noData(since: nil)), meaning: "m")
+        XCTAssertEqual(MetricPresentation(r, locale: en).compactVerdict, "No data")
+    }
 }

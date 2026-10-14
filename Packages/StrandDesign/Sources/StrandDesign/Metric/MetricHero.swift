@@ -13,15 +13,18 @@ public struct MetricHero: View {
     @ScaledMetric(relativeTo: .title) private var unitSize: CGFloat = 22
 
     private let showsInfo: Bool
+    private let compact: Bool
 
-    public init(_ readout: MetricReadout) {
-        self.init(readout, showsInfo: true)
+    /// `compact` for small containers (rings, narrow cards): the empty state uses its short wording.
+    public init(_ readout: MetricReadout, compact: Bool = false) {
+        self.init(readout, showsInfo: true, compact: compact)
     }
 
     /// The explainer reuses the hero without the info affordance it was opened from.
-    init(_ readout: MetricReadout, showsInfo: Bool) {
+    init(_ readout: MetricReadout, showsInfo: Bool, compact: Bool = false) {
         self.readout = readout
         self.showsInfo = showsInfo
+        self.compact = compact
     }
 
     public var body: some View {
@@ -40,7 +43,7 @@ public struct MetricHero: View {
                 MetricVerdictText(readout: readout, presentation: p)
             } else {
                 // The reason takes the number's place: a dash is never a valid state.
-                MetricVerdictText(readout: readout, presentation: p, font: StrandFont.title2)
+                MetricVerdictText(readout: readout, presentation: p, font: StrandFont.title2, compact: compact)
             }
             Text(verbatim: p.meaning)
                 .font(StrandFont.body)
