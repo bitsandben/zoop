@@ -1,131 +1,142 @@
+#if os(iOS)
 import SwiftUI
+import Charts
 import StrandAnalytics
 import StrandDesign
 import WhoopStore
 
 // MARK: - Sleep night cards (Zoop, iOS)
 //
-// The Sleep screen's per-night pieces in the redesign: stage lanes, stage cells with a share ring and the
-// wearer's typical range, the time it took to fall asleep, and the overnight signal chart. Every number
-// comes from the displayed night's own stages or the shared `SleepModel`; the math lives in
-// `StrandAnalytics/SleepNightReadouts.swift`.
+// The Sleep screen's per-night pieces in the flat redesign, styled like Home's panels and the Stress
+// hero: a calm hypnogram with soft rounded stage bars, a four-column stage summary (time and share only;
+// the factor grid further down rates deep and REM, so nothing here grades them a second time), and the
+// overnight signal chart. Every number comes from the displayed night's own stages or its raw streams;
+// the math lives in StrandAnalytics.
 
 /// Minutes → "Xm" / "Yh Zm", identical to `SleepView.durationText`.
-private func nightDurationText(_ minutes: Double) -> String {
+func nightDurationText(_ minutes: Double) -> String {
     let m = max(0, Int(minutes.rounded()))
     if m < 60 { return String(localized: "\(m)m") }
     return String(localized: "\(m / 60)h \(m % 60)m")
 }
 
-// MARK: Stage lanes
+/// The panel header used across the night area: one quiet semibold line, as on the Stress hero.
+struct SleepPanelLabel: View {
+    let text: LocalizedStringKey
+    init(_ text: LocalizedStringKey) { self.text = text }
+    var body: some View {
+        Text(text)
+            .font(StrandFont.footnote.weight(.semibold))
+            .foregroundStyle(StrandPalette.textSecondary)
+    }
+}
 
-/// Four lanes (Awake, REM, Light, Deep) with a block wherever that stage occurred, and the night's start
-/// and end clock times underneath. Tapping a stage cell highlights its lane.
-struct SleepStageLanes: View {
+// MARK: Hypnogram
+
+/// One stepped hypnogram: Awake on top, Deep at the bottom, each stretch a soft rounded bar on its stage's
+/// row with a faint riser to the next, and the night's start and end underneath. A selected stage keeps
+/// its colour while the others recede.
+struct SleepFlatHypnogram: View {
     let intervals: [SleepInterval]
     let nightStart: Date
     var selected: SleepStage?
     var palette: SleepStagePalette = .noop
 
-    private static let order: [SleepStage] = [.awake, .rem, .light, .deep]
+    static let order: [SleepStage] = [.awake, .rem, .light, .deep]
+    private let labelWidth: CGFloat = 44
 
     var body: some View {
         let sorted = Hypnogram.displaySmoothed(intervals.sorted { $0.start < $1.start }, minDuration: 90)
         let origin = sorted.first?.start ?? 0
         let span = max(1, (sorted.map(\.end).max() ?? 1) - origin)
         VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
-            VStack(spacing: 6) {
-                ForEach(Self.order, id: \.self) { stage in
-                    lane(stage, intervals: sorted, origin: origin, span: span)
+            HStack(alignment: .top, spacing: ZoopMetrics.space2) {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Self.order, id: \.self) { stage in
+                        Text(stage.label)
+                            .font(StrandFont.caption)
+                            .foregroundStyle(selected == nil || selected == stage
+                                             ? StrandPalette.textSecondary : StrandPalette.textTertiary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .frame(maxHeight: .infinity, alignment: .center)
+                    }
+                }
+                .frame(width: labelWidth, alignment: .leading)
+                Canvas { ctx, size in
+                    draw(ctx, size: size, sorted: sorted, origin: origin, span: span)
                 }
             }
+            .frame(height: 132)
             HStack {
-                timeLabel(icon: "moon.fill", date: nightStart.addingTimeInterval(origin))
+                timeLabel(nightStart.addingTimeInterval(origin))
                 Spacer()
-                timeLabel(icon: "sun.max.fill", date: nightStart.addingTimeInterval(origin + span))
+                timeLabel(nightStart.addingTimeInterval(origin + span))
             }
-            .padding(.leading, 52)
+            .padding(.leading, labelWidth + ZoopMetrics.space2)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("Sleep stages through the night"))
     }
 
-    private func lane(_ stage: SleepStage, intervals: [SleepInterval], origin: TimeInterval,
-                      span: TimeInterval) -> some View {
-        let color = StrandPalette.sleepStageColor(stage, palette: palette)
-        let dimmed = selected != nil && selected != stage
-        return HStack(spacing: 8) {
-            Text(stage.label)
-                .font(StrandFont.caption)
-                .foregroundStyle(dimmed ? StrandPalette.textTertiary : StrandPalette.textSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                .frame(width: 44, alignment: .leading)
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 5, style: .continuous)
-                        .fill(StrandPalette.surfaceInset)
-                    ForEach(intervals.filter { $0.stage == stage }) { iv in
-                        let x0 = CGFloat((iv.start - origin) / span) * geo.size.width
-                        let w = max(2, CGFloat((iv.end - iv.start) / span) * geo.size.width)
-                        RoundedRectangle(cornerRadius: 3, style: .continuous)
-                            .fill(dimmed ? StrandPalette.textTertiary.opacity(0.4) : color)
-                            .frame(width: w, height: geo.size.height)
-                            .offset(x: x0)
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
-            }
-            .frame(height: 22)
+    private func draw(_ ctx: GraphicsContext, size: CGSize, sorted: [SleepInterval],
+                      origin: TimeInterval, span: TimeInterval) {
+        let rows = CGFloat(Self.order.count)
+        let rowH = size.height / rows
+        let barH = min(16, rowH * 0.55)
+        func rowIndex(_ s: SleepStage) -> CGFloat { CGFloat(Self.order.firstIndex(of: s) ?? 0) }
+        func midY(_ s: SleepStage) -> CGFloat { rowH * (rowIndex(s) + 0.5) }
+        func x(_ t: TimeInterval) -> CGFloat { CGFloat((t - origin) / span) * size.width }
+
+        // Faint row guides, so an empty row still reads as a row.
+        for s in Self.order {
+            var guide = Path()
+            guide.move(to: CGPoint(x: 0, y: midY(s)))
+            guide.addLine(to: CGPoint(x: size.width, y: midY(s)))
+            ctx.stroke(guide, with: .color(StrandPalette.hairline), lineWidth: 1)
+        }
+        // Risers between consecutive stretches.
+        for (a, b) in zip(sorted, sorted.dropFirst()) where a.stage != b.stage {
+            var riser = Path()
+            let xb = x(b.start)
+            riser.move(to: CGPoint(x: xb, y: midY(a.stage)))
+            riser.addLine(to: CGPoint(x: xb, y: midY(b.stage)))
+            ctx.stroke(riser, with: .color(StrandPalette.hairlineStrong), lineWidth: 1)
+        }
+        for iv in sorted {
+            let x0 = x(iv.start)
+            let w = max(3, x(iv.end) - x0)
+            let rect = CGRect(x: x0, y: midY(iv.stage) - barH / 2, width: w, height: barH)
+            let dimmed = selected != nil && selected != iv.stage
+            let color = StrandPalette.sleepStageColor(iv.stage, palette: palette)
+            ctx.fill(Path(roundedRect: rect, cornerRadius: min(barH / 2, w / 2), style: .continuous),
+                     with: .color(dimmed ? color.opacity(0.22) : color))
         }
     }
 
-    private func timeLabel(icon: String, date: Date) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon).font(.system(size: 10, weight: .semibold))
-            Text(AppClock.hourMinuteFormatter().string(from: date))
-        }
-        .font(StrandFont.captionNumber)
-        .foregroundStyle(StrandPalette.textTertiary)
+    private func timeLabel(_ date: Date) -> some View {
+        Text(AppClock.hourMinuteFormatter().string(from: date))
+            .font(StrandFont.captionNumber)
+            .foregroundStyle(StrandPalette.textTertiary)
     }
 }
 
-// MARK: Stage cells
+// MARK: Stage summary
 
-/// A 2×2 grid, one cell per stage: its name, time, share of the night and a squircle ring filled to that
-/// share. A thin outer arc marks the wearer's typical range (25th to 75th percentile, last 30 nights).
-struct StageShareCells: View {
+/// Four columns, one per stage: a colour dot and the name, the time, and the share of the night. Tapping a
+/// column highlights that stage on the hypnogram.
+struct SleepStageSummaryRow: View {
     let stages: Stages
-    let bands: StageShareBands.Bands
     var palette: SleepStagePalette = .noop
     @Binding var selected: SleepStage?
 
-    private static let order: [SleepStage] = [.awake, .rem, .light, .deep]
-
     var body: some View {
         let pct = StagePercentages.wholePercentages([stages.awake, stages.light, stages.deep, stages.rem])
-        VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: ZoopMetrics.space2),
-                                GridItem(.flexible(), spacing: ZoopMetrics.space2)],
-                      spacing: ZoopMetrics.space2) {
-                ForEach(Self.order, id: \.self) { stage in
-                    cell(stage, percent: percent(stage, pct))
-                }
-            }
-            if hasAnyBand {
-                HStack(spacing: 6) {
-                    Capsule().fill(StrandPalette.textSecondary).frame(width: 12, height: 3)
-                    Text("Typical range")
-                }
-                .font(StrandFont.caption)
-                .foregroundStyle(StrandPalette.textTertiary)
-                .accessibilityHidden(true)
+        HStack(alignment: .top, spacing: ZoopMetrics.space2) {
+            ForEach(SleepFlatHypnogram.order, id: \.self) { stage in
+                column(stage, percent: percent(stage, pct))
             }
         }
-    }
-
-    private var hasAnyBand: Bool {
-        bands.awake != nil || bands.light != nil || bands.deep != nil || bands.rem != nil
     }
 
     private func minutes(_ s: SleepStage) -> Double {
@@ -134,15 +145,6 @@ struct StageShareCells: View {
         case .light: return stages.light
         case .deep:  return stages.deep
         case .rem:   return stages.rem
-        }
-    }
-
-    private func band(_ s: SleepStage) -> ClosedRange<Double>? {
-        switch s {
-        case .awake: return bands.awake
-        case .light: return bands.light
-        case .deep:  return bands.deep
-        case .rem:   return bands.rem
         }
     }
 
@@ -156,151 +158,49 @@ struct StageShareCells: View {
         }
     }
 
-    private func cell(_ stage: SleepStage, percent: Int) -> some View {
-        let color = StrandPalette.sleepStageColor(stage, palette: palette)
-        let share = stages.total > 0 ? min(1, max(0, minutes(stage) / stages.total)) : 0
+    private func column(_ stage: SleepStage, percent: Int) -> some View {
         let isSelected = selected == stage
         let dimmed = selected != nil && !isSelected
-        let typical = band(stage)
-        return HStack(alignment: .center, spacing: ZoopMetrics.space2) {
-            VStack(alignment: .leading, spacing: 2) {
+        return VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 5) {
+                Circle()
+                    .fill(StrandPalette.sleepStageColor(stage, palette: palette))
+                    .frame(width: 7, height: 7)
                 Text(stage.label)
                     .font(StrandFont.caption)
-                    .foregroundStyle(StrandPalette.textSecondary)
-                Text(nightDurationText(minutes(stage)))
-                    .font(StrandFont.number(19))
-                    .foregroundStyle(StrandPalette.textPrimary)
+                    .foregroundStyle(isSelected ? StrandPalette.textPrimary : StrandPalette.textSecondary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Text("\(percent)%")
-                    .font(StrandFont.captionNumber)
-                    .foregroundStyle(color)
+                    .minimumScaleFactor(0.75)
             }
-            Spacer(minLength: 4)
-            ZStack {
-                SquircleShape().stroke(StrandPalette.hairline, lineWidth: 4)
-                SquircleShape().trim(from: 0, to: share)
-                    .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                if let typical {
-                    SquircleShape().trim(from: typical.lowerBound, to: max(typical.upperBound, typical.lowerBound + 0.01))
-                        .stroke(StrandPalette.textSecondary, style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                        .padding(-5)
-                }
-            }
-            .frame(width: 38, height: 38)
-            .padding(5)
-            .accessibilityHidden(true)
+            Text(nightDurationText(minutes(stage)))
+                .font(StrandFont.number(17))
+                .foregroundStyle(StrandPalette.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(verbatim: "\(percent)%")
+                .font(StrandFont.captionNumber)
+                .foregroundStyle(StrandPalette.textTertiary)
         }
-        .padding(ZoopMetrics.space3)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(StrandPalette.surfaceInset))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-            .stroke(isSelected ? StrandPalette.hairlineStrong : Color.clear, lineWidth: 1.5))
-        .opacity(dimmed ? 0.55 : 1)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .opacity(dimmed ? 0.45 : 1)
         .contentShape(Rectangle())
         .onTapGesture {
             withAnimation(StrandMotion.fade) { selected = isSelected ? nil : stage }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityText(stage, percent: percent, typical: typical))
+        .accessibilityLabel("\(stage.label): \(nightDurationText(minutes(stage))), \(percent)%")
         .accessibilityHint("Highlights this stage on the sleep chart")
-        .accessibilityAddTraits(.isButton)
-    }
-
-    private func accessibilityText(_ stage: SleepStage, percent: Int, typical: ClosedRange<Double>?) -> String {
-        let d = nightDurationText(minutes(stage))
-        if let typical {
-            let lo = Int((typical.lowerBound * 100).rounded()), hi = Int((typical.upperBound * 100).rounded())
-            return String(localized: "\(stage.label): \(d), \(percent) percent of the night, typically \(lo) to \(hi) percent")
-        }
-        return "\(stage.label): \(d), \(percent)%"
-    }
-}
-
-// MARK: Sleep latency
-
-/// How long the night took to fall asleep, on a Fast / Normal / Late track. Only drawn when the night has
-/// a staged timeline to measure it from.
-struct SleepLatencyCard: View {
-    let minutes: Double
-
-    var body: some View {
-        let band = SleepLatency.band(minutes: minutes)
-        let fraction = SleepLatency.trackFraction(minutes: minutes)
-        ZoopCard(padding: ZoopMetrics.cardInnerPadding) {
-            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Time to fall asleep").strandOverline()
-                    Spacer()
-                    Text(Self.bandText(band))
-                        .font(StrandFont.subhead.weight(.semibold))
-                        .foregroundStyle(Self.bandColor(band))
-                }
-                Text("\(Int(minutes.rounded())) min")
-                    .font(StrandFont.number(28))
-                    .foregroundStyle(StrandPalette.textPrimary)
-                GeometryReader { geo in
-                    let w = geo.size.width
-                    let fastEnd = w * CGFloat(SleepLatency.fastBelowMin / SleepLatency.trackMaxMin)
-                    let lateStart = w * CGFloat(SleepLatency.lateAboveMin / SleepLatency.trackMaxMin)
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(StrandPalette.surfaceInset).frame(height: 6)
-                        // Zone edges as hairline ticks, so the three labels below line up with the track.
-                        ForEach([fastEnd, lateStart], id: \.self) { x in
-                            Rectangle().fill(StrandPalette.hairlineStrong)
-                                .frame(width: 1, height: 10)
-                                .position(x: x, y: geo.size.height / 2)
-                        }
-                        Circle()
-                            .fill(Self.bandColor(band))
-                            .frame(width: 16, height: 16)
-                            .overlay(Circle().stroke(StrandPalette.surfaceBase, lineWidth: 3))
-                            .position(x: min(max(8, w * CGFloat(fraction)), w - 8), y: geo.size.height / 2)
-                    }
-                }
-                .frame(height: 16)
-                GeometryReader { geo in
-                    let w = geo.size.width
-                    let fastEnd = w * CGFloat(SleepLatency.fastBelowMin / SleepLatency.trackMaxMin)
-                    let lateStart = w * CGFloat(SleepLatency.lateAboveMin / SleepLatency.trackMaxMin)
-                    ZStack(alignment: .topLeading) {
-                        Text(Self.bandText(.fast)).position(x: fastEnd / 2, y: 8)
-                        Text(Self.bandText(.normal)).position(x: (fastEnd + lateStart) / 2, y: 8)
-                        Text(Self.bandText(.late)).position(x: (lateStart + w) / 2, y: 8)
-                    }
-                    .font(StrandFont.caption)
-                    .foregroundStyle(StrandPalette.textTertiary)
-                }
-                .frame(height: 16)
-                .accessibilityHidden(true)
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(String(localized: "Time to fall asleep: \(Int(minutes.rounded())) minutes, \(Self.bandText(band))"))
-    }
-
-    static func bandText(_ b: SleepLatency.Band) -> String {
-        switch b {
-        case .fast:   return String(localized: "Fast")
-        case .normal: return String(localized: "Normal")
-        case .late:   return String(localized: "Late")
-        }
-    }
-
-    static func bandColor(_ b: SleepLatency.Band) -> Color {
-        switch b {
-        case .fast, .normal: return StrandPalette.statusPositive
-        case .late:          return StrandPalette.statusWarning
-        }
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }
 }
 
 // MARK: Night signal chart
 
-/// The night's heart rate, HRV, breathing rate or blood oxygen as a curve across the sleep window, with
-/// a tile row to switch metric. Tiles appear only for metrics with a plausible stream for this night.
-/// The 30-night comparison numbers stay in `NightVitalsCard`; this card is the curve. Heart rate shows
-/// its night average (Night vitals carries resting HR, a different fact); the other three show the
-/// curve's low to high, so no number here repeats a Night vitals tile.
+/// The night's heart rate, HRV, breathing rate or blood oxygen across the sleep window, drawn like the
+/// Stress hero: one quiet label, the number large, a smooth line over a soft fill, scrub to read a moment.
+/// Text tabs switch metric; a metric appears only when this night has a plausible stream for it. Heart
+/// rate leads with its night average (Night vitals carries resting HR, a different fact); the others with
+/// the curve's low to high, so no number here repeats a Night vitals tile.
 struct NightSignalCard: View {
     @EnvironmentObject private var repo: Repository
     let startTs: Int
@@ -308,6 +208,7 @@ struct NightSignalCard: View {
 
     @State private var series: [NightSignal.Metric: [TrendPoint]] = [:]
     @State private var selected: NightSignal.Metric = .heartRate
+    @State private var scrubbed: TrendPoint?
 
     private var key: String { "\(startTs)-\(endTs)-\(repo.refreshSeq)" }
 
@@ -320,19 +221,19 @@ struct NightSignalCard: View {
             let metrics = available
             if let metric = metrics.contains(selected) ? selected : metrics.first,
                let points = series[metric] {
-                ZoopCard(padding: ZoopMetrics.cardInnerPadding) {
-                    VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
-                        Text("Night signals").strandOverline()
-                        headline(metric, points: points)
-                        chart(metric, points: points)
-                            .frame(height: 150)
-                        if metrics.count > 1 {
-                            HStack(spacing: ZoopMetrics.space2) {
-                                ForEach(metrics, id: \.self) { m in tile(m, active: m == metric) }
-                            }
-                        }
+                VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
+                    HStack(alignment: .firstTextBaseline) {
+                        SleepPanelLabel("Night signals")
+                        Spacer(minLength: ZoopMetrics.space2)
+                        if metrics.count > 1 { tabs(metrics, active: metric) }
                     }
+                    headline(metric, points: points)
+                    chart(metric, points: points)
+                        .frame(height: 170)
                 }
+                .padding(ZoopMetrics.cardInnerPadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(ZoopPanelSurface())
             }
         }
         .task(id: key) { await load() }
@@ -363,99 +264,119 @@ struct NightSignalCard: View {
 
     // MARK: Pieces
 
+    private func tabs(_ metrics: [NightSignal.Metric], active: NightSignal.Metric) -> some View {
+        HStack(spacing: ZoopMetrics.space3) {
+            ForEach(metrics, id: \.self) { m in
+                Button {
+                    scrubbed = nil
+                    withAnimation(StrandMotion.fade) { selected = m }
+                } label: {
+                    Text(Self.short(m))
+                        .font(StrandFont.footnote.weight(m == active ? .semibold : .regular))
+                        .foregroundStyle(m == active ? StrandPalette.textPrimary : StrandPalette.textTertiary)
+                        .frame(minHeight: 28)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Self.title(m))
+                .accessibilityAddTraits(m == active ? .isSelected : [])
+            }
+        }
+    }
+
     @ViewBuilder
     private func headline(_ m: NightSignal.Metric, points: [TrendPoint]) -> some View {
         let values = points.map(\.value)
-        VStack(alignment: .leading, spacing: 2) {
-            if m == .heartRate, let avg = NightSignal.mean(values) {
-                Text(verbatim: "\(Self.format(avg, m)) \(Self.unit(m))")
-                    .font(StrandFont.number(28))
+        HStack(alignment: .firstTextBaseline, spacing: ZoopMetrics.space2) {
+            if let s = scrubbed {
+                Text(Self.format(s.value, m))
+                    .font(StrandFont.display(44))
                     .foregroundStyle(StrandPalette.textPrimary)
-                Text("Average heart rate").strandOverline()
+                Text(verbatim: Self.unit(m))
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(StrandPalette.textTertiary)
+                Text(s.date.formatted(date: .omitted, time: .shortened))
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(StrandPalette.textSecondary)
+            } else if m == .heartRate, let avg = NightSignal.mean(values) {
+                Text(Self.format(avg, m))
+                    .font(StrandFont.display(44))
+                    .foregroundStyle(StrandPalette.textPrimary)
+                Text(verbatim: Self.unit(m))
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(StrandPalette.textTertiary)
+                Text("average")
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(StrandPalette.textSecondary)
             } else if let lo = values.min(), let hi = values.max() {
-                Text(verbatim: "\(Self.format(lo, m))–\(Self.format(hi, m)) \(Self.unit(m))")
-                    .font(StrandFont.number(28))
+                Text(verbatim: "\(Self.format(lo, m))–\(Self.format(hi, m))")
+                    .font(StrandFont.display(44))
                     .foregroundStyle(StrandPalette.textPrimary)
-                Text(Self.rangeCaption(m)).strandOverline()
+                Text(verbatim: Self.unit(m))
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(StrandPalette.textTertiary)
+                Text("range")
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(StrandPalette.textSecondary)
             }
         }
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
         .accessibilityElement(children: .combine)
     }
 
     private func chart(_ m: NightSignal.Metric, points: [TrendPoint]) -> some View {
         let color = Self.color(m)
-        let t0 = Double(startTs), t1 = Double(max(endTs, startTs + 1))
         let values = points.map(\.value)
         let smooth = NightSignal.smoothed(values, window: 7)
         let lo0 = values.min() ?? 0, hi0 = values.max() ?? 1
         let pad = max((hi0 - lo0) * 0.12, Self.minPad(m))
         let lo = lo0 - pad, hi = hi0 + pad
-        let grid = Self.gridValues(lo: lo, hi: hi)
-        return VStack(spacing: ZoopMetrics.space1) {
-            Canvas { ctx, size in
-                let plotW = size.width - 30
-                func x(_ d: Date) -> CGFloat { CGFloat((d.timeIntervalSince1970 - t0) / (t1 - t0)) * plotW }
-                func y(_ v: Double) -> CGFloat { size.height * (1 - CGFloat((v - lo) / max(0.0001, hi - lo))) }
-                for g in grid {
-                    var line = Path()
-                    line.move(to: CGPoint(x: 0, y: y(g)))
-                    line.addLine(to: CGPoint(x: plotW, y: y(g)))
-                    ctx.stroke(line, with: .color(StrandPalette.hairline),
-                               style: StrokeStyle(lineWidth: 1, dash: [3, 4]))
-                    ctx.draw(Text(verbatim: Self.gridFormat(g, m))
-                                .font(StrandFont.caption)
-                                .foregroundColor(StrandPalette.textTertiary),
-                             at: CGPoint(x: size.width - 2, y: y(g)), anchor: .trailing)
-                }
-                for p in points {
-                    let c = CGPoint(x: x(p.date), y: y(p.value))
-                    ctx.fill(Path(ellipseIn: CGRect(x: c.x - 1.5, y: c.y - 1.5, width: 3, height: 3)),
-                             with: .color(color.opacity(0.35)))
-                }
-                var path = Path()
-                var prev: Date?
-                for (i, p) in points.enumerated() {
-                    let c = CGPoint(x: x(p.date), y: y(smooth[i]))
-                    if let prev, p.date.timeIntervalSince(prev) <= 20 * 60 { path.addLine(to: c) } else { path.move(to: c) }
-                    prev = p.date
-                }
-                ctx.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+        let indexed = Array(points.enumerated())
+        return Chart {
+            ForEach(indexed, id: \.offset) { i, p in
+                AreaMark(x: .value("Time", p.date), yStart: .value("Low", lo), yEnd: .value("Value", smooth[i]))
+                    .foregroundStyle(LinearGradient(colors: [color.opacity(0.22), .clear],
+                                                    startPoint: .top, endPoint: .bottom))
+                    .interpolationMethod(.monotone)
+                LineMark(x: .value("Time", p.date), y: .value("Value", smooth[i]))
+                    .foregroundStyle(color)
+                    .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                    .interpolationMethod(.monotone)
             }
-            HStack {
-                timeLabel(icon: "moon.fill", ts: startTs)
-                Spacer()
-                timeLabel(icon: "sun.max.fill", ts: endTs)
+            if let s = scrubbed {
+                RuleMark(x: .value("Selected", s.date))
+                    .foregroundStyle(StrandPalette.textPrimary.opacity(0.5))
+                PointMark(x: .value("Selected", s.date), y: .value("Value", s.value))
+                    .symbol { Circle().fill(color).frame(width: 10, height: 10) }
             }
-            .padding(.trailing, 30)
+        }
+        .chartYScale(domain: lo...hi)
+        .chartYAxis {
+            AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { _ in
+                AxisGridLine().foregroundStyle(StrandPalette.hairline)
+                AxisValueLabel().foregroundStyle(StrandPalette.textTertiary)
+            }
+        }
+        .chartXAxis {
+            AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                AxisValueLabel(format: .dateTime.hour()).foregroundStyle(StrandPalette.textTertiary)
+            }
+        }
+        .chartOverlay { proxy in
+            GeometryReader { geo in
+                let plot = proxy.plotRectCompat(in: geo)
+                Color.clear
+                    .contentShape(Rectangle())
+                    .zoopChartScrub(onChange: { location in
+                        let x = min(max(location.x, plot.minX), plot.maxX) - plot.minX
+                        guard let d: Date = proxy.value(atX: x) else { return }
+                        scrubbed = points.min { abs($0.date.timeIntervalSince(d)) < abs($1.date.timeIntervalSince(d)) }
+                    }, onEnd: { scrubbed = nil })
+            }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(Self.title(m)))
-    }
-
-    private func tile(_ m: NightSignal.Metric, active: Bool) -> some View {
-        Button {
-            withAnimation(StrandMotion.fade) { selected = m }
-        } label: {
-            Text(Self.short(m))
-                .font(StrandFont.subhead.weight(.semibold))
-                .foregroundStyle(active ? StrandPalette.textPrimary : StrandPalette.textTertiary)
-                .frame(maxWidth: .infinity, minHeight: 40)
-                .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(active ? StrandPalette.hairlineStrong : StrandPalette.hairline, lineWidth: active ? 1.5 : 1))
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(Self.title(m))
-        .accessibilityAddTraits(active ? .isSelected : [])
-    }
-
-    private func timeLabel(icon: String, ts: Int) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon).font(.system(size: 10, weight: .semibold))
-            Text(AppClock.hourMinuteFormatter().string(from: Date(timeIntervalSince1970: TimeInterval(ts))))
-        }
-        .font(StrandFont.captionNumber)
-        .foregroundStyle(StrandPalette.textTertiary)
     }
 
     // MARK: Metric metadata
@@ -478,15 +399,6 @@ struct NightSignalCard: View {
         }
     }
 
-    static func rangeCaption(_ m: NightSignal.Metric) -> String {
-        switch m {
-        case .heartRate:       return String(localized: "Heart rate range")
-        case .hrv:             return String(localized: "HRV range")
-        case .respiratoryRate: return String(localized: "Breathing rate range")
-        case .spo2:            return String(localized: "Blood oxygen range")
-        }
-    }
-
     static func unit(_ m: NightSignal.Metric) -> String {
         switch m {
         case .heartRate:       return "bpm"
@@ -498,17 +410,11 @@ struct NightSignalCard: View {
 
     static func format(_ v: Double, _ m: NightSignal.Metric) -> String {
         switch m {
-        case .respiratoryRate, .heartRate:
-            return v.formatted(.number.precision(.fractionLength(1))
-                .locale(AppLanguage.activeLocale))
-        case .hrv, .spo2:
+        case .respiratoryRate:
+            return v.formatted(.number.precision(.fractionLength(1)).locale(AppLanguage.activeLocale))
+        case .heartRate, .hrv, .spo2:
             return "\(Int(v.rounded()))"
         }
-    }
-
-    /// Gridline labels: whole numbers, except breathing rate.
-    static func gridFormat(_ v: Double, _ m: NightSignal.Metric) -> String {
-        m == .respiratoryRate ? format(v, m) : "\(Int(v.rounded()))"
     }
 
     static func color(_ m: NightSignal.Metric) -> Color {
@@ -526,10 +432,5 @@ struct NightSignalCard: View {
         case .respiratoryRate, .spo2: return 0.5
         }
     }
-
-    /// Three evenly spaced gridline values inside the padded range.
-    private static func gridValues(lo: Double, hi: Double) -> [Double] {
-        let step = (hi - lo) / 4
-        return [lo + step, lo + 2 * step, lo + 3 * step]
-    }
 }
+#endif

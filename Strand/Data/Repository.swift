@@ -1790,6 +1790,25 @@ final class Repository: ObservableObject {
     /// Extracted from `editSleepTimes` so the post-sync self-heal reuses the exact density gate +
     /// staging. Stages OFF the main actor , Repository is `@MainActor` and a multi-hour window is tens of
     /// thousands of samples, which would otherwise freeze the UI.
+    /// The onset evidence for a night (Sleep → "Why this sleep?"): what the HR-confirmed onset rule saw
+    /// and decided, under the wearer's CURRENT detection settings, rebuilt from the raw streams by
+    /// `SleepStager.explainOnset`. nil when the window has no raw gravity (an imported night, or raw that
+    /// has not synced yet). `startTs` is the night's detected start, `endTs` its end.
+    func sleepOnsetEvidence(startTs: Int, endTs: Int) async -> SleepOnsetEvidence? {
+        guard let store = await ensureStore(), endTs > startTs else { return nil }
+        // Hours either side so the gravity-still run the night was built from is rebuilt whole.
+        let lo = startTs - 6 * 3_600, hi = endTs + 2 * 3_600
+        let grav = (try? await store.gravitySamples(deviceId: deviceId, from: lo, to: hi, limit: 400_000)) ?? []
+        guard grav.count >= 2 else { return nil }
+        let hr = (try? await store.hrSamples(deviceId: deviceId, from: lo, to: hi, limit: 400_000)) ?? []
+        let tuning = SleepOnsetPrefs.tuning
+        let tz = TimeZone.current.secondsFromGMT(for: Date(timeIntervalSince1970: TimeInterval(startTs)))
+        return await Task.detached(priority: .userInitiated) {
+            SleepStager.explainOnset(hr: hr, gravity: grav, sessionStart: startTs, sessionEnd: endTs,
+                                     tzOffsetSeconds: tz, tuning: tuning)
+        }.value
+    }
+
     private func restageFromRaw(start: Int, end: Int) async -> String? {
         guard let store = await ensureStore() else { return nil }
         let lo = start - 3_600, hi = end + 3_600

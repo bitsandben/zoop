@@ -110,6 +110,10 @@ struct SleepView: View {
     /// straight from the foundation `MainNightReason` for the displayed night's blocks — never
     /// re-derived here — so the explainer says exactly what the selector decided. (spec 2026-06-20 C1)
     @State private var showMainSleepWhy = false
+    #if os(iOS)
+    /// Non-nil while the "Why this sleep?" evidence sheet is open for the displayed night (iOS).
+    @State private var whySeed: SleepWhySeed?
+    #endif
     /// The stable detected key of the nap whose "why this is a nap" popover is open, or nil. Keyed by
     /// the nap's own `startTs` so one popover shows at a time even with several nap rows. (C1)
     @State private var napWhyStartTs: Int?
@@ -272,6 +276,13 @@ struct SleepView: View {
                                 coverage: coverageLo...max(edit.wakeTs, coverageLo + 1),
                                 suppressesReDetection: !edit.userEdited,
                                 onSave: { newBedTs, newWakeTs in
+                    // Learn from a moved START of a main night (never a nap): the gap between the
+                    // detected start and the one the wearer set. No-op while learning is off.
+                    if edit.isMainNight, newBedTs != edit.bedTs {
+                        SleepOnsetPrefs.recordCorrection(nightKey: edit.detectedStartTs,
+                                                         detectedStartTs: edit.detectedStartTs,
+                                                         correctedStartTs: newBedTs)
+                    }
                     await repo.editSleepTimes(detectedStartTs: edit.detectedStartTs, oldEndTs: edit.wakeTs,
                                               storedStagesJSON: edit.stagesJSON,
                                               newStartTs: newBedTs, newEndTs: newWakeTs)
@@ -303,6 +314,18 @@ struct SleepView: View {
                     hiddenSectionsRaw: $sleepHiddenSectionsRaw
                 )
             }
+            #if os(iOS)
+            .sheet(item: $whySeed) { seed in
+                SleepWhySheet(seed: seed,
+                              loadEvidence: {
+                                  await repo.sleepOnsetEvidence(startTs: seed.detectedStartTs, endTs: seed.endTs)
+                              },
+                              applySettings: {
+                                  await intelligence.analyzeRecent()
+                                  await repo.refresh()
+                              })
+            }
+            #endif
             .sheet(item: $addNap) { seed in
                 SleepTimeEditor(bedTs: seed.bedTs, wakeTs: seed.wakeTs,
                                 title: "Add a nap",
@@ -504,12 +527,9 @@ struct SleepView: View {
         case .stages:
             hero(model)
             #if os(iOS)
-            // Bevel-style night readouts under the stages: time to fall asleep, then the overnight
-            // curves. Both read the DISPLAYED night, so ◀/▶ moves them with the hypnogram.
+            // The overnight curves under the stages. Reads the DISPLAYED night, so ◀/▶ moves it with the
+            // hypnogram. Time to fall asleep is a line in the sleep-window panel.
             if let night = displayedNight(model) {
-                if let latency = sleepLatencyMinutes(night) {
-                    SleepLatencyCard(minutes: latency)
-                }
                 NightSignalCard(startTs: night.session.effectiveStartTs, endTs: night.session.endTs)
             }
             #endif
@@ -925,11 +945,12 @@ struct SleepView: View {
             : String(localized: "\(durationText(night.timeInBed)) in bed · \(efficiencyText(night)) efficiency")
         VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
             #if os(iOS)
-            // Time in bed now leads the sleep-window card above, so the subtitle keeps only efficiency.
-            iosStageCard(s, night: night, intervals: intervals, bands: bands,
-                         subtitle: isPersisted
-                            ? String(localized: "\(efficiencyText(night)) efficiency · \(stageCaption)")
-                            : String(localized: "\(efficiencyText(night)) efficiency"))
+            // Time in bed and efficiency lead the sleep-window panel above; the stage panel only says how
+            // the stages were made.
+            iosStageCard(s, night: night, intervals: intervals,
+                         caption: isPersisted
+                            ? (repo.activeDeviceIsOura ? String(localized: "From the ring") : String(localized: "Approximate"))
+                            : nil)
             #else
             if intervals.count >= 2 {
                 // #sleep-chart-style (Settings → Appearance): Classic keeps the per-stage timeline ROWS
@@ -961,9 +982,11 @@ struct SleepView: View {
             // (≥2-segment) hypnogram so the strip aligns with a genuine timeline; the proportional stage-bar
             // fallback has no timeline to anchor to. Placed OUTSIDE the fixed-height ChartCard so it doesn't
             // clip the hypnogram. Honest empty state inside `motionStrip` when no group fragment has motion.
+            #if !os(iOS)
             if intervals.count >= 2 {
                 motionStrip(night)
             }
+            #endif
             // H9 — when the engine's Rest confidence flags this night's staging as low-confidence (a
             // high-efficiency night whose deep+REM share is implausibly low → a likely staging miss, not
             // a real night with no restorative sleep), say so honestly under the breakdown rather than
@@ -1027,58 +1050,71 @@ struct SleepView: View {
     }
 
     #if os(iOS)
-    /// The iOS stage card, after Bevel: the stage lanes (or the stepped hypnogram for Filled/Ribbon), then
-    /// one cell per stage with its share ring and typical range. The cells replace the per-stage rows and
-    /// the separate "Stages vs typical" card; the sleeping-HR trace moved to the Night signals card.
+    /// The iOS stage panel, flat like Home and Stress: one hypnogram of soft rounded stage bars (or the
+    /// stepped Filled/Ribbon chart when chosen in Settings), the night's movement on the same timeline,
+    /// then one column per stage with its time and share. Deep and REM are rated in the factor grid
+    /// further down, so this panel does not grade them again.
     @ViewBuilder
-    private func iosStageCard(_ s: Stages, night: Night, intervals: [SleepInterval],
-                              bands: StageShareBands.Bands, subtitle: String) -> some View {
+    private func iosStageCard(_ s: Stages, night: Night, intervals: [SleepInterval], caption: String?) -> some View {
         let chartStyle = SleepChartStyle.resolve(sleepChartStyleRaw)
         let palette: SleepStagePalette = chartStyle == .classic ? .noop : chartStyle.stagePalette
-        ZoopCard(tint: StrandPalette.restColor) {
-            VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
-                VStack(alignment: .leading, spacing: ZoopMetrics.spaceHalf) {
-                    Text("Sleep stages").strandOverline()
-                    Text(subtitle)
-                        .font(StrandFont.footnote)
+        VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
+            HStack(alignment: .firstTextBaseline) {
+                SleepPanelLabel("Sleep stages")
+                Spacer(minLength: ZoopMetrics.space2)
+                if let caption {
+                    Text(caption)
+                        .font(StrandFont.caption)
                         .foregroundStyle(StrandPalette.textTertiary)
                 }
-                if intervals.count >= 2 {
-                    if chartStyle == .classic {
-                        SleepStageLanes(intervals: intervals, nightStart: night.onsetDate,
-                                        selected: selectedStage, palette: palette)
-                    } else {
-                        Hypnogram(
-                            intervals: intervals,
-                            height: ZoopMetrics.chartHeight,
-                            showsStageAxis: false,
-                            showsHover: true,
-                            nightStart: night.onsetDate,
-                            showsTimeAxis: true,
-                            filled: chartStyle.isFilled,
-                            stagePalette: palette
-                        )
-                        .frame(height: ZoopMetrics.chartHeight)
-                    }
+            }
+            if intervals.count >= 2 {
+                if chartStyle == .classic {
+                    SleepFlatHypnogram(intervals: intervals, nightStart: night.onsetDate,
+                                       selected: selectedStage, palette: palette)
                 } else {
-                    // Imported nights carry totals only: a proportional bar, decoded by the cells below.
-                    GeometryReader { geo in
-                        let total = max(1, s.total)
-                        HStack(spacing: 2) {
-                            ForEach([SleepStage.deep, .light, .rem, .awake], id: \.self) { st in
-                                Rectangle()
-                                    .fill(StrandPalette.sleepStageColor(st, palette: palette))
-                                    .frame(width: max(0, CGFloat(stageMinutes(st, in: s) / total) * geo.size.width))
-                            }
+                    Hypnogram(
+                        intervals: intervals,
+                        height: ZoopMetrics.chartHeight,
+                        showsStageAxis: false,
+                        showsHover: true,
+                        nightStart: night.onsetDate,
+                        showsTimeAxis: true,
+                        filled: chartStyle.isFilled,
+                        stagePalette: palette
+                    )
+                    .frame(height: ZoopMetrics.chartHeight)
+                }
+                // Movement on the same timeline (normalised to this night's peak), only when stored.
+                if night.motionEpochs.count >= 2 {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
+                        Text("Movement")
+                            .font(StrandFont.caption)
+                            .foregroundStyle(StrandPalette.textTertiary)
+                        MotionTrace(epochs: night.motionEpochs, height: 26, tint: StrandPalette.textTertiary)
+                    }
+                    .padding(.leading, chartStyle == .classic ? 52 : 0)
+                }
+            } else {
+                // Imported nights carry totals only: a proportional bar, decoded by the columns below.
+                GeometryReader { geo in
+                    let total = max(1, s.total)
+                    HStack(spacing: 3) {
+                        ForEach([SleepStage.deep, .light, .rem, .awake], id: \.self) { st in
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(StrandPalette.sleepStageColor(st, palette: palette))
+                                .frame(width: max(0, CGFloat(stageMinutes(st, in: s) / total) * geo.size.width - 3))
                         }
                     }
-                    .frame(height: 28)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .accessibilityHidden(true)
                 }
-                StageShareCells(stages: s, bands: bands, palette: palette, selected: $selectedStage)
+                .frame(height: 16)
+                .accessibilityHidden(true)
             }
+            SleepStageSummaryRow(stages: s, palette: palette, selected: $selectedStage)
         }
+        .padding(ZoopMetrics.cardInnerPadding)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ZoopPanelSurface())
     }
     #endif
 
@@ -1324,54 +1360,75 @@ struct SleepView: View {
     }
 
     #if os(iOS)
-    /// Bevel's top block: the sleep window as one line (with the edit pencil), then time in bed and sleep
-    /// duration side by side over a hairline. The stage card below no longer repeats time in bed.
+    /// The night's summary panel, flat like Home and Stress: the sleep window large with the edit pencil,
+    /// time in bed / sleep duration / efficiency side by side, how long falling asleep took, and the way
+    /// into "Why this sleep?", which shows the evidence for the start and end and holds the detection
+    /// settings. The stage panel below repeats none of these.
     @ViewBuilder
     private func iosSleepWindowCard(_ night: Night) -> some View {
         let hasStages = night.stages.total > 0
-        ZoopCard(padding: ZoopMetrics.cardInnerPadding, tint: StrandPalette.restColor) {
-            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
-                HStack(spacing: ZoopMetrics.space2) {
-                    Image(systemName: "moon.zzz.fill")
-                        .font(StrandFont.subhead)
-                        .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
-                        .accessibilityHidden(true)
-                    Text("Sleep window")
-                        .font(StrandFont.subhead)
-                        .foregroundStyle(StrandPalette.textSecondary)
-                    Spacer(minLength: 8)
-                    Text(verbatim: "\(night.onsetText) – \(night.wakeText)")
-                        .font(StrandFont.number(17))
-                        .foregroundStyle(StrandPalette.textPrimary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                    wakeEditButton(night)
-                }
-                .accessibilityElement(children: .combine)
-                if hasStages {
-                    Divider().overlay(StrandPalette.hairline)
-                    HStack(spacing: 0) {
-                        splitCell(label: "Time in bed", value: durationText(night.timeInBed))
-                        Rectangle().fill(StrandPalette.hairline).frame(width: 1, height: 44)
-                        splitCell(label: "Sleep duration", value: durationText(night.stages.asleep))
-                            .padding(.leading, ZoopMetrics.space4)
-                    }
-                }
-                if mainSleepReasonText(night) != nil {
-                    Divider().overlay(StrandPalette.hairline)
-                    mainSleepFooter(night)
+        VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
+            HStack(alignment: .center, spacing: ZoopMetrics.space2) {
+                SleepPanelLabel("Sleep window")
+                Spacer(minLength: 8)
+                wakeEditButton(night)
+            }
+            Text(verbatim: "\(night.onsetText) – \(night.wakeText)")
+                .font(StrandFont.display(40))
+                .foregroundStyle(StrandPalette.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            if hasStages {
+                HStack(alignment: .top, spacing: ZoopMetrics.space2) {
+                    splitCell(label: "Time in bed", value: durationText(night.timeInBed))
+                    splitCell(label: "Sleep duration", value: durationText(night.stages.asleep))
+                    splitCell(label: "Efficiency", value: efficiencyText(night))
                 }
             }
+            if let latency = sleepLatencyMinutes(night), latency >= 1 {
+                Text("Fell asleep in \(Int(latency.rounded())) min")
+                    .font(StrandFont.footnote)
+                    .foregroundStyle(StrandPalette.textSecondary)
+            }
+            if let target = night.editTarget {
+                Divider().overlay(StrandPalette.hairline)
+                Button {
+                    whySeed = SleepWhySeed(detectedStartTs: target.startTs,
+                                           effectiveStartTs: target.effectiveStartTs,
+                                           endTs: target.endTs,
+                                           userEdited: target.userEdited,
+                                           mainSleepReason: night.sourceBlocks.count > 1 ? mainSleepReasonText(night) : nil)
+                } label: {
+                    HStack(spacing: ZoopMetrics.space2) {
+                        Text("Why this sleep?")
+                            .font(StrandFont.subhead)
+                            .foregroundStyle(StrandPalette.textPrimary)
+                        Spacer(minLength: 8)
+                        Image(systemName: "chevron.right")
+                            .font(StrandFont.footnote.weight(.semibold))
+                            .foregroundStyle(StrandPalette.textTertiary)
+                    }
+                    .frame(minHeight: 32)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(LiquidPressStyle())
+                .accessibilityHint("Shows the heart rate and movement behind this night's start and end")
+            }
         }
+        .padding(ZoopMetrics.cardInnerPadding)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ZoopPanelSurface())
     }
 
     private func splitCell(label: LocalizedStringKey, value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
                 .font(StrandFont.caption)
-                .foregroundStyle(StrandPalette.textSecondary)
+                .foregroundStyle(StrandPalette.textTertiary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
             Text(value)
-                .font(StrandFont.number(26))
+                .font(StrandFont.number(20))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
@@ -1511,7 +1568,8 @@ struct SleepView: View {
                                     bedTs: target.effectiveStartTs,
                                     wakeTs: target.endTs,
                                     stagesJSON: target.stagesJSON,
-                                    userEdited: isEdited)
+                                    userEdited: isEdited,
+                                    isMainNight: true)
             } label: {
                 Image(systemName: isEdited ? "pencil.circle.fill" : "pencil.circle")
                     .font(StrandFont.headline)
@@ -2342,6 +2400,15 @@ struct SleepView: View {
                             .foregroundStyle(StrandPalette.textPrimary)
                     }
                     Spacer(minLength: ZoopMetrics.space2)
+                    #if os(iOS)
+                    // Plain text on the flat redesign: no capsule around the date span.
+                    Text(trailing)
+                        .font(StrandFont.footnote)
+                        .foregroundStyle(StrandPalette.textSecondary)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .padding(.bottom, 2)
+                    #else
                     Text(trailing)
                         .font(StrandFont.caption.weight(.semibold))
                         .foregroundStyle(StrandPalette.textSecondary)
@@ -2358,6 +2425,7 @@ struct SleepView: View {
                                 }
                         )
                         .padding(.bottom, 1)
+                    #endif
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -3010,6 +3078,9 @@ private struct WakeEdit: Identifiable {
     /// never re-detected), so the editor's delete-confirm copy must NOT promise re-detection suppression
     /// for it. Mirrors the undo-banner branch (#65 banner/confirm honesty).
     let userEdited: Bool
+    /// True for the night's main block (the window panel's pencil), whose start edits teach the onset
+    /// offset. A nap edit never does.
+    var isMainNight: Bool = false
     var id: Int { detectedStartTs }
 }
 
