@@ -9,7 +9,7 @@ import Foundation
 // days before symptoms. Zoop re-derives the PATTERN, transparently, against the user's OWN rolling
 // baseline — never a population cutoff.
 //
-// This replaces the blunt 2-of-4 threshold rule in AppModel.evaluateIllness with:
+// This replaces the blunt 2-of-4 threshold rule the app layer used to apply with:
 //   • a calibrated 0–100 composite anomaly score (so the surface can read "mild" vs "strong"),
 //   • a minimum-corroboration gate (≥ 2 signals) so a single noisy night never fires,
 //   • EXPLICIT confounder suppression cross-checked against the same-day journal tags
