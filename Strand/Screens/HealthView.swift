@@ -65,8 +65,8 @@ private struct HealthSectionsStack: View {
             // closes the page rather than opening it.
             VitalsSection()
             RecoveryContributorsSection()
-            VitalitySection()
-            // Fitness age lives on Home's card and its own screen.
+            // Fitness age lives on Home's card and its own screen. The Vitality score with its own
+            // "Body Age" is not drawn here: two different ages from two models read as a contradiction.
             SkinTempSection()
             HealthHubLinksSection()
             // Live heart rate sits low on the page: it is a live readout, not a summary.
