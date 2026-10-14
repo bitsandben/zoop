@@ -280,6 +280,9 @@ private struct DevicesContent: View {
             if !removedDevices.isEmpty { removedSection }
 
             whoopFirstFooter
+
+            OnboardingReplayButton()
+                .frame(maxWidth: .infinity)
         }
         // Add a device — guided, branching wizard (asks the device TYPE first, then runs the right
         // scan/register path: WHOOP present-scan for WHOOP families, StandardHRSource for HR straps).

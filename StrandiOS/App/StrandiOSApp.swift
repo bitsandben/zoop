@@ -392,11 +392,11 @@ struct StrandiOSApp: App {
 }
 
 /// iOS root — the `RootTabView` shell with the first-run onboarding/pairing wizard overlaid until
-/// complete, the Terms acknowledgment gate over everything until the current version is accepted, and
-/// a "What's New" changelog sheet shown automatically after an update.
+/// complete (it carries the Terms step for a fresh install), the standalone Terms gate when an onboarded
+/// install meets new terms, and a "What's New" changelog sheet shown automatically after an update.
 ///
-/// This mirrors the macOS `ContentView` (same `@AppStorage` keys, same gate ordering) but swaps the
-/// excluded `RootView()` sidebar for `RootTabView()`. The shared `OnboardingWizard`, `TermsGateView`,
+/// This mirrors the macOS `ContentView` (same `@AppStorage` keys) but swaps the excluded `RootView()`
+/// sidebar for `RootTabView()`, and lets onboarding open with a welcome screen before the terms. The shared `OnboardingWizard`, `TermsGateView`,
 /// `WhatsNewView`, `AppChangelog`, and `Terms` symbols all compile into the iOS target unchanged.
 private struct iOSRootView: View {
     @AppStorage("zoop.onboarded") private var onboarded = false
@@ -442,9 +442,10 @@ private struct iOSRootView: View {
                 .transition(.opacity)
                 .zIndex(1)
             }
-            // Terms acknowledgment gate — over EVERYTHING (before onboarding/pairing/Bluetooth) until
-            // the current terms version is accepted; re-appears if the terms materially change.
-            if acceptedTerms != Terms.currentVersion && !demoBypass {
+            // Terms acknowledgment gate for an onboarded install whose accepted version is behind (the
+            // terms materially changed). A fresh install accepts the same text as onboarding step 2,
+            // which comes before device choice and pairing, so it is never paired unaccepted either.
+            if onboarded && acceptedTerms != Terms.currentVersion && !demoBypass {
                 TermsGateView(onAccept: {
                     // Keep any external action behind the gate while the accepted-terms change decides
                     // whether What's New must present next. This write must precede acceptedTerms.
