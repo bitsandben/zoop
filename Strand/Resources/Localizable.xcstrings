@@ -261848,6 +261848,16 @@
           }
         }
       }
+    },
+    "How it's calculated" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So wird es berechnet"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
