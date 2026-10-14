@@ -541,6 +541,7 @@ enum DemoScreens {
         case "devicescatalog": return AnyView(DeviceCardCatalog())
         case "onboarding": return AnyView(OnboardingWizard(onFinished: {}))
         case "fitnessage": return AnyView(NavigationStack { FitnessAgeScreen() })
+        case "fasting": return AnyView(FastingScreen())
         case "vitality": return AnyView(VitalityDemoScreen())
         case "addwizard": return AnyView(AddWizardDemoHost())
         // Oura onboarding: the Add-device wizard deep-linked straight to the Oura factory-reset-and-adopt

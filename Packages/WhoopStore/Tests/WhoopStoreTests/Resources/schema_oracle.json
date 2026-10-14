@@ -48,7 +48,8 @@
     "v44-ppg-waveform-base-code",
     "v45-rr-source-index",
     "v46-lift-log",
-    "v47-rr-whoop5-fill"
+    "v47-rr-whoop5-fill",
+    "v48-fasting-session"
   ],
   "divergenceReasons": {
     "android-orphan-synced-column": "REAL COLUMN DRIFT: `synced` exists on Android only. GRDB's v10 note is explicit that stepSample gets no `synced` column ('unused; see StreamStore'), and v12's ppgHrSample never had one either; the Room entities copied the flag from the older per-second entities. Nothing reads it on Android \u2014 the per-row upload flag belongs to an upload path that does not exist there \u2014 so it is dead width, not divergent data. Removing it needs a Room table rebuild.",
@@ -627,6 +628,66 @@
         "kind"
       ],
       "indices": []
+    },
+    "fastingSession": {
+      "platform": "ios_only",
+      "reason": "User-logged fasting windows (GRDB v48, Zoop 2.0 WP-10). The Zoop fork develops iOS only; no Room twin.",
+      "columns": [
+        {
+          "name": "id",
+          "affinity": "TEXT",
+          "notNull": false,
+          "default": null
+        },
+        {
+          "name": "startTs",
+          "affinity": "INTEGER",
+          "notNull": true,
+          "default": null
+        },
+        {
+          "name": "endTs",
+          "affinity": "INTEGER",
+          "notNull": false,
+          "default": null
+        },
+        {
+          "name": "goalSec",
+          "affinity": "INTEGER",
+          "notNull": true,
+          "default": null
+        },
+        {
+          "name": "planId",
+          "affinity": "TEXT",
+          "notNull": true,
+          "default": null
+        },
+        {
+          "name": "note",
+          "affinity": "TEXT",
+          "notNull": false,
+          "default": null
+        },
+        {
+          "name": "source",
+          "affinity": "TEXT",
+          "notNull": true,
+          "default": null
+        }
+      ],
+      "primaryKey": [
+        "id"
+      ],
+      "indices": [
+        {
+          "name": "idx_fastingSession_startTs",
+          "unique": false,
+          "columns": [
+            "startTs"
+          ]
+        }
+      ]
     },
     "gravitySample": {
       "platform": "both",

@@ -149,6 +149,14 @@ struct NOOPShortcuts: AppShortcutsProvider {
                     ],
                     shortTitle: "Ask Coach",
                     systemImageName: "sparkles")
+        AppShortcut(intent: StartFastIntent(),
+                    phrases: ["Start a fast in \(.applicationName)", "Start fasting with \(.applicationName)"],
+                    shortTitle: "Start Fast",
+                    systemImageName: "timer")
+        AppShortcut(intent: EndFastIntent(),
+                    phrases: ["End my fast in \(.applicationName)", "Stop fasting with \(.applicationName)"],
+                    shortTitle: "End Fast",
+                    systemImageName: "fork.knife")
     }
 }
 #endif

@@ -51,6 +51,8 @@ enum TabRoute: Hashable {
     case energyBank
     /// The fitness age and what shapes it (iOS).
     case fitnessAge
+    /// The fasting timer, plan and history (iOS).
+    case fasting
 }
 
 /// The detail screen for one catalog metric. Fitness age has its own screen on iOS, so every route to
@@ -135,6 +137,12 @@ extension View {
             case .fitnessAge:
                 #if os(iOS)
                 FitnessAgeScreen()
+                #else
+                EmptyView()
+                #endif
+            case .fasting:
+                #if os(iOS)
+                FastingScreen()
                 #else
                 EmptyView()
                 #endif
