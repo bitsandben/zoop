@@ -20,13 +20,7 @@ import WhoopStore
 // range that does. The hero always shows the latest available point + "as of <date>".
 
 // yyyy-MM-dd → Date, fixed UTC / en_US_POSIX (per task spec).
-private let strandDayParser: DateFormatter = {
-    let f = DateFormatter()
-    f.locale = Locale(identifier: "en_US_POSIX")
-    f.timeZone = TimeZone(identifier: "UTC")
-    f.dateFormat = "yyyy-MM-dd"
-    return f
-}()
+private let strandDayParser: DateFormatter = DayKeyFormat.utc
 
 private func parseDay(_ day: String) -> Date? { strandDayParser.date(from: day) }
 

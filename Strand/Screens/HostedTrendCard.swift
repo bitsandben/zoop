@@ -11,13 +11,7 @@ import WhoopStore
 enum HostedTrendData {
 
     /// Day strings are banked as `yyyy-MM-dd` in UTC; parsing them any other way shifts every point.
-    private static let dayParser: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let dayParser: DateFormatter = DayKeyFormat.utc
 
     /// The metric's points for the smallest window at or wider than `selected` that holds any data,
     /// and the window it settled on.

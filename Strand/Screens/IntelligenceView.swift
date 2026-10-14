@@ -112,13 +112,7 @@ struct IntelligenceView: View {
         return intelligence.results.filter { $0.day >= cutoff }
     }
 
-    private static let dayFmt: DateFormatter = {
-        let f = DateFormatter()
-        f.calendar = Calendar(identifier: .gregorian)
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let dayFmt: DateFormatter = DayKeyFormat.local
 
     /// Evening forecast of tomorrow-morning Charge from tonight's known levers. Anchored to
     /// the recent Charge baseline, nudged by today's Effort vs your norm and how much sleep

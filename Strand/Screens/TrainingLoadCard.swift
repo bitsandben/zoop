@@ -22,13 +22,7 @@ struct TrainingLoadCard: View {
     let days: [DailyMetric]
 
     // yyyy-MM-dd → Date (en_US_POSIX, UTC) — same keying TrendsView uses so the x-axis matches.
-    private static let dayParser: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let dayParser: DateFormatter = DayKeyFormat.utc
 
     /// `internal` (not `private`): `TrainingLoadChart` (its own file) plots these.
     struct Row: Identifiable {

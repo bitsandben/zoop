@@ -1942,10 +1942,7 @@ final class HealthKitBridge: ObservableObject {
     // `nonisolated` so the HealthKit query completion handlers — which HealthKit invokes on a private
     // background queue (a nonisolated context) — can label day buckets without a main-actor-isolation
     // warning. They only read a thread-safe DateFormatter, so this is safe off the main actor.
-    nonisolated private static let dayFormatter: DateFormatter = {
-        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"; f.timeZone = TimeZone.current; return f
-    }()
+    nonisolated private static let dayFormatter: DateFormatter = DayKeyFormat.local
     nonisolated private static func dayString(_ date: Date) -> String { dayFormatter.string(from: date) }
     nonisolated private static func date(from day: String) -> Date? { dayFormatter.date(from: day) }
 }

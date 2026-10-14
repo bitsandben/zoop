@@ -11,13 +11,7 @@ import StrandDesign
 
 /// Converts the store's "yyyy-MM-dd" days to whole day numbers and back.
 enum CycleDays {
-    private static let formatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let formatter: DateFormatter = DayKeyFormat.utc
 
     static func number(_ day: String) -> Int? {
         formatter.date(from: day).map { Int(($0.timeIntervalSince1970 / 86_400).rounded(.down)) }

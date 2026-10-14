@@ -52,7 +52,7 @@ struct StagesVsTypicalCard: View {
             guard let typical, typical > 0 else { return "" }
             let diff = last - typical
             let sign = diff >= 0 ? "+" : "−"
-            return String(localized: "\(sign)\(durationText(abs(diff))) vs typ")
+            return String(localized: "\(sign)\(ZoopDuration.text(minutes: abs(diff))) vs typ")
         }()
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -68,7 +68,7 @@ struct StagesVsTypicalCard: View {
                     .font(StrandFont.captionNumber)
                     .foregroundStyle(color)
                 Spacer()
-                Text(durationText(last)).font(StrandFont.captionNumber).foregroundStyle(StrandPalette.textPrimary)
+                Text(ZoopDuration.text(minutes: last)).font(StrandFont.captionNumber).foregroundStyle(StrandPalette.textPrimary)
                 if !deltaText.isEmpty {
                     Text(deltaText)
                         .font(StrandFont.footnote)
@@ -109,18 +109,13 @@ struct StagesVsTypicalCard: View {
     /// Whole-string VoiceOver label for a stage row: one key per variant, never a stitched tail fragment.
     private func stageRowAccessibilityLabel(label: String, last: Double, sharePct: Int, typical: Double?) -> String {
         if let typical, typical > 0 {
-            return String(localized: "\(label): \(durationText(last)) last night, \(sharePct) percent of the night, typical \(durationText(typical))")
+            return String(localized: "\(label): \(ZoopDuration.text(minutes: last)) last night, \(sharePct) percent of the night, typical \(ZoopDuration.text(minutes: typical))")
         }
-        return String(localized: "\(label): \(durationText(last)) last night, \(sharePct) percent of the night")
+        return String(localized: "\(label): \(ZoopDuration.text(minutes: last)) last night, \(sharePct) percent of the night")
     }
 
     /// Minutes → "Xm" / "Yh Zm" (verbatim of `SleepView.durationText`). Kept local to the card so it renders
     /// identically whether hosted in Today or shown in the Sleep tab.
-    private func durationText(_ minutes: Double) -> String {
-        let m = Swift.max(0, Int(minutes.rounded()))
-        if m < 60 { return String(localized: "\(m)m") }
-        return String(localized: "\(m / 60)h \(m % 60)m")
-    }
 }
 
 /// 45° diagonal-hatch fill used by the stage rows' "typical" context track (verbatim of the former

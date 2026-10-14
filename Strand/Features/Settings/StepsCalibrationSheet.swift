@@ -173,7 +173,7 @@ struct StepsCalibrationSheet: View {
                                                   sampleDays: profile.stepsCalibrationSampleDays,
                                                   confidence: profile.stepsCalibrationConfidence,
                                                   manual: profile.stepsManualCoefficient > 0)
-        let dayParser = DateFormatter(); dayParser.locale = Locale(identifier: "en_US_POSIX"); dayParser.dateFormat = "yyyy-MM-dd"
+        let dayParser = DayKeyFormat.local
         let calendar = Calendar.current
         var rows: [StepsComparisonRow] = []
         var motions: [Double] = []

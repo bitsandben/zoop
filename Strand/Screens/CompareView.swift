@@ -16,13 +16,7 @@ import WhoopStore
 // compatible Apple Health, PR#196); everything else is derived in-view.
 
 // yyyy-MM-dd → Date, fixed UTC / en_US_POSIX (per task spec).
-private let compareDayParser: DateFormatter = {
-    let f = DateFormatter()
-    f.locale = Locale(identifier: "en_US_POSIX")
-    f.timeZone = TimeZone(identifier: "UTC")
-    f.dateFormat = "yyyy-MM-dd"
-    return f
-}()
+private let compareDayParser: DateFormatter = DayKeyFormat.utc
 
 private func parseCompareDay(_ day: String) -> Date? { compareDayParser.date(from: day) }
 

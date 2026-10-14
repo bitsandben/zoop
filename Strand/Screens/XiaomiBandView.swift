@@ -55,13 +55,7 @@ struct XiaomiBandView: View {
         "stress", "vitality",
     ]
 
-    private static let dayParser: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let dayParser: DateFormatter = DayKeyFormat.utc
     private static let spanFormatter: DateFormatter = {
         let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "d MMM yyyy"; return f
     }()
@@ -166,9 +160,9 @@ struct XiaomiBandView: View {
             .chart("Blood oxygen", "spo2", cyanGradient, 90...100, { String(format: "%.0f%%", locale: AppLanguage.activeLocale, $0) }),
             .hypnogram,
             .header("Sleep", "Rest"),
-            .chart("Time asleep", "sleep_total_min", purpleGradient, 240...600, { durationString($0) }),
-            .chart("Deep sleep", "sleep_deep_min", purpleGradient, 0...180, { durationString($0) }),
-            .chart("REM sleep", "sleep_rem_min", purpleGradient, 0...180, { durationString($0) }),
+            .chart("Time asleep", "sleep_total_min", purpleGradient, 240...600, { ZoopDuration.text(minutes: $0) }),
+            .chart("Deep sleep", "sleep_deep_min", purpleGradient, 0...180, { ZoopDuration.text(minutes: $0) }),
+            .chart("REM sleep", "sleep_rem_min", purpleGradient, 0...180, { ZoopDuration.text(minutes: $0) }),
             .chart("Sleep score", "sleep_score", accentGradient, 0...100, { "\(Int($0.rounded()))" }),
             .header("Activity & Energy", "Movement"),
             .chart("Steps", "steps", cyanGradient, 0...12000, { intString($0) }),
@@ -274,9 +268,9 @@ struct XiaomiBandView: View {
                 ChartCard(
                     title: "Stage breakdown",
                     subtitle: night.efficiency.map { eff in
-                        String(localized: "\(durationString(Double(night.endTs - night.startTs) / 60)) in bed · \(Int(eff.rounded()))% efficiency")
-                    } ?? String(localized: "\(durationString(Double(night.endTs - night.startTs) / 60)) in bed"),
-                    trailing: durationString(s.asleepMin),
+                        String(localized: "\(ZoopDuration.text(minutes: Double(night.endTs - night.startTs) / 60)) in bed · \(Int(eff.rounded()))% efficiency")
+                    } ?? String(localized: "\(ZoopDuration.text(minutes: Double(night.endTs - night.startTs) / 60)) in bed"),
+                    trailing: ZoopDuration.text(minutes: s.asleepMin),
                     height: ZoopMetrics.chartHeight,
                     tint: StrandPalette.restColor,
                     chart: {
@@ -288,10 +282,10 @@ struct XiaomiBandView: View {
                     },
                     footer: {
                         ChartFooter([
-                            ("REM", durationString(s.rem)),
-                            ("Deep", durationString(s.deep)),
-                            ("Light", durationString(s.light)),
-                            ("Awake", durationString(s.awake)),
+                            ("REM", ZoopDuration.text(minutes: s.rem)),
+                            ("Deep", ZoopDuration.text(minutes: s.deep)),
+                            ("Light", ZoopDuration.text(minutes: s.light)),
+                            ("Awake", ZoopDuration.text(minutes: s.awake)),
                         ])
                     })
             }
@@ -345,7 +339,7 @@ struct XiaomiBandView: View {
             statTile(key: "rhr", label: "Resting HR", accent: StrandPalette.metricRose, unit: "bpm",
                      fmt: { "\(Int($0.rounded()))" })
             statTile(key: "sleep_total_min", label: "Sleep avg", accent: StrandPalette.metricPurple,
-                     aggregate: .mean, fmt: { durationString($0) })
+                     aggregate: .mean, fmt: { ZoopDuration.text(minutes: $0) })
             statTile(key: "sleep_score", label: "Sleep score", accent: StrandPalette.accent,
                      fmt: { "\(Int($0.rounded()))" })
             statTile(key: "spo2", label: "Blood oxygen", accent: StrandPalette.metricCyan, unit: "%",
@@ -565,9 +559,4 @@ struct XiaomiBandView: View {
         return "\(n)"
     }
 
-    private func durationString(_ minutes: Double) -> String {
-        let total = Int(minutes.rounded())
-        let h = total / 60, m = total % 60
-        return h > 0 ? String(localized: "\(h)h \(m)m") : String(localized: "\(m)m")
-    }
 }

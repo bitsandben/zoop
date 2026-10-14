@@ -564,11 +564,7 @@ struct RecoveryCalibrationView: View {
 struct RecoveryInsightCard: View {
     /// "Mo., 6. Okt." for a stored "yyyy-MM-dd" day key; the key itself when it does not parse.
     static func nightLabel(_ day: String) -> String {
-        let f = DateFormatter()
-        f.calendar = Calendar(identifier: .gregorian)
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        guard let d = f.date(from: day) else { return day }
+        guard let d = DayKeyFormat.local.date(from: day) else { return day }
         return d.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).locale(AppLanguage.activeLocale))
     }
 
