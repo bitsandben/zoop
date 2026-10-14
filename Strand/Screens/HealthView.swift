@@ -135,6 +135,31 @@ private struct HealthFirstRunContent: View {
     }
 }
 
+#if os(iOS)
+// MARK: - Insights tab pieces (iOS)
+
+/// The health-monitor body the iOS Insights tab places under its interpretations: the vitals grid,
+/// then skin temperature. The same leaves `HealthSectionsStack` draws, so the two never disagree.
+struct InsightsVitalsBlock: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
+            VitalsSection()
+            SkinTempSection()
+        }
+    }
+}
+
+/// The close of the iOS Insights tab: the Lab Book link, then strap sync status.
+struct InsightsFooterBlock: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
+            HealthHubLinksSection()
+            SyncStatusSection()
+        }
+    }
+}
+#endif
+
 // MARK: - Sync status + "Sync now" (#364)
 
 /// Manual "Sync now" control + honest sync status, mirroring the Android Sync-now button. Its own view

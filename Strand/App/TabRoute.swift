@@ -29,6 +29,9 @@ enum TabRoute: Hashable {
     case metricSourced(key: String, source: String)
     case metricExplorer
     case workouts
+    /// The gym log and the interval timer, opened from the iOS Training tab's header.
+    case liftLog
+    case intervals
     case dataSources
     case stress
     case sleep
@@ -89,6 +92,8 @@ extension View {
                 }
             case .metricExplorer: MetricExplorerView()
             case .workouts: WorkoutsView()
+            case .liftLog: LiftLogView()
+            case .intervals: IntervalTimerView()
             case .dataSources: DataSourcesView()
             case .stress: StressView()
             case .sleep: SleepView()

@@ -2,20 +2,26 @@
 import SwiftUI
 import StrandDesign
 
-/// Tab tags for the iPhone bar: Home, Health, Trends, More, and Coach as the separate round button.
-/// Coach keeps its own tag when the master switch hides it, so More does not inherit Coach's
+/// Tab tags for the iPhone bar: Home, Training, Insights, More, and Coach as the separate round
+/// button. Coach keeps its own tag when the master switch hides it, so More does not inherit Coach's
 /// navigation path.
 private enum IOSTab {
     static let home = 0
-    static let health = 1
+    static let training = 1
     static let coach = 2
     static let more = 3
-    static let trends = 4
+    static let insights = 4
     static let count = 5
 }
 
+/// The Insights tab root: the interpretations, the health monitor's vitals and the trend history on one
+/// page. It is Trends in its tab form, so the history charts are defined once.
+private struct InsightsTabView: View {
+    var body: some View { TrendsView(asInsightsTab: true) }
+}
+
 /// iOS navigation shell. macOS uses a `NavigationSplitView` sidebar (`RootView`); on iPhone the
-/// natural analogue is a `TabView` with Home, Health, AI Coach, and everything else under More.
+/// natural analogue is a `TabView` with Home, Training, Insights, More, and the AI Coach button.
 /// Every screen is the same `StrandDesign`-built view the macOS app uses.
 struct RootTabView: View {
     /// #1841: shared with Android by NAME and meaning, not by storage — the two platforms keep their own
@@ -129,12 +135,13 @@ struct RootTabView: View {
                 Tab(value: IOSTab.home) {
                     tabStack(todayTabRoot, path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home])
                 } label: { iconLabel("Home", "house") }
-                Tab(value: IOSTab.health) {
-                    tabStack(HealthView(), path: $tabPaths[IOSTab.health], scrollSignal: scrollTop[IOSTab.health])
-                } label: { iconLabel("Health", "heart") }
-                Tab(value: IOSTab.trends) {
-                    tabStack(TrendsView(), path: $tabPaths[IOSTab.trends], scrollSignal: scrollTop[IOSTab.trends])
-                } label: { iconLabel("Trends", "chart.xyaxis.line") }
+                Tab(value: IOSTab.training) {
+                    tabStack(WorkoutsView(asTrainingTab: true), path: $tabPaths[IOSTab.training],
+                             scrollSignal: scrollTop[IOSTab.training])
+                } label: { iconLabel("Training", "figure.run") }
+                Tab(value: IOSTab.insights) {
+                    tabStack(InsightsTabView(), path: $tabPaths[IOSTab.insights], scrollSignal: scrollTop[IOSTab.insights])
+                } label: { iconLabel("Insights", "chart.line.uptrend.xyaxis") }
                 Tab(value: IOSTab.more) {
                     moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more])
                 } label: { iconLabel("More", "line.3.horizontal") }
@@ -150,8 +157,8 @@ struct RootTabView: View {
         } else {
             TabView(selection: nativeTabSelection) {
                 tab(todayTabRoot, "Home", "house", path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home]).tag(IOSTab.home)
-                tab(HealthView(), "Health", "heart", path: $tabPaths[IOSTab.health], scrollSignal: scrollTop[IOSTab.health]).tag(IOSTab.health)
-                tab(TrendsView(), "Trends", "chart.xyaxis.line", path: $tabPaths[IOSTab.trends], scrollSignal: scrollTop[IOSTab.trends]).tag(IOSTab.trends)
+                tab(WorkoutsView(asTrainingTab: true), "Training", "figure.run", path: $tabPaths[IOSTab.training], scrollSignal: scrollTop[IOSTab.training]).tag(IOSTab.training)
+                tab(InsightsTabView(), "Insights", "chart.line.uptrend.xyaxis", path: $tabPaths[IOSTab.insights], scrollSignal: scrollTop[IOSTab.insights]).tag(IOSTab.insights)
                 moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more])
                     .tabItem { Label("More", systemImage: "line.3.horizontal") }
                     .tag(IOSTab.more)
@@ -300,8 +307,9 @@ struct RootTabView: View {
                 showCoach = true
                 router.requestedDestination = nil
             case .trends:
-                withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = IOSTab.trends }
-                tabPaths[IOSTab.trends] = NavigationPath()
+                // Trends lives inside the Insights tab now; land on its root.
+                withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = IOSTab.insights }
+                tabPaths[IOSTab.insights] = NavigationPath()
                 router.requestedDestination = nil
             case .activeWorkout:
                 // The Today active-workout indicator opens Live through the quick-action Live sheet; once
@@ -579,17 +587,11 @@ struct RootTabView: View {
                            onRefresh: { await repo.refresh() },
                            topBackground: liquidScaffoldSky()) {
                 MoreDeviceHeader()
-                // Zoop: only what no card, ring or the "+" menu already opens. Sleep, Stress, Live, Breathe and
-                // Patterns are reached from Home; What Moves You from the Recovery detail and the Logbook.
-                moreSection("Training") {
-                    MoreRow("Workouts", "figure.run", .workouts, subtitle: "Sessions, zones and routes")
-                    MoreRow("Lift Log", "dumbbell.fill", .liftLog, subtitle: "Programs and sets")
-                    MoreRow("Intervals", "timer", .intervals, subtitle: "Haptic interval timer")
-                }
+                // Zoop: only what no tab, card, ring or the "+" menu already opens. Sleep, Stress, Live, Breathe
+                // and Patterns are reached from Home; What Moves You from the Recovery detail and the Logbook.
+                // Workouts, Lift Log and Intervals live in the Training tab; Explore and Lab Book in Insights.
                 moreSection("Tools") {
-                    MoreRow("Explore", "square.grid.2x2.fill", .explore, subtitle: "Every metric, every range")
                     MoreRow("Compare", "rectangle.split.2x1.fill", .compare, subtitle: "Metrics side by side")
-                    MoreRow("Lab Book", "books.vertical.fill", .labBook, subtitle: "Experiments on yourself")
                     MoreRow("Rhythm", "waveform.path", .rhythm, subtitle: "Beat-to-beat timing")
                 }
                 moreSection("Data") {

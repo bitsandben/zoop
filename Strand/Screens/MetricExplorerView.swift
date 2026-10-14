@@ -481,6 +481,19 @@ struct MetricExplorerView: View {
     /// hint in the header, never gating the rows: the catalog is static, so every row's label/icon/unit
     /// must paint immediately even before any series read returns (#199).
     @State private var probing = true
+    /// iOS: the search field's text. Rows filter by their localized title (or category name).
+    @State private var query = ""
+
+    /// The catalog rows for one category, narrowed by the search text when there is one.
+    private func visibleMetrics(in category: String) -> [MetricDescriptor] {
+        let all = MetricCatalog.inCategory(category)
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty else { return all }
+        if MetricCatalog.categoryDisplayName(category).localizedStandardContains(q) { return all }
+        return all.filter { $0.title.localizedStandardContains(q) }
+    }
+
+    private var isSearching: Bool { !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
     var body: some View {
         #if os(macOS)
@@ -492,6 +505,8 @@ struct MetricExplorerView: View {
         // tapping a metric bounce straight back to the More list (#199) — so use the ambient stack; the
         // rows push their detail with a direct closure-based NavigationLink (#38).
         exploreScaffold
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always),
+                        prompt: Text("Search metrics"))
             .task(id: repo.refreshSeq) { await probeEmptiness(refreshSeq: repo.refreshSeq) }
         #endif
     }
@@ -509,7 +524,7 @@ struct MetricExplorerView: View {
             // A quiet, non-blocking hint while the empty-dot probe runs its first pass. The rows below
             // render in full immediately regardless — this only reassures during the scan, and never
             // leaves the screen reading as a bare/empty list before the probe lands (#199).
-            if probing {
+            if probing && !isSearching {
                 HStack(spacing: 8) {
                     ProgressView().controlSize(.small)
                     Text("Scanning your data…")
@@ -521,21 +536,30 @@ struct MetricExplorerView: View {
             // The headline tap-through (#575): a full-day, full-resolution, zoomable timeline. Sits above
             // the per-metric catalog because it's a different kind of view — every second of one day rather
             // than one number per day. Closure-based NavigationLink, matching the metric rows below (#38/#199).
-            NavigationLink {
-                FullDayChartView()
-            } label: {
-                deepTimelineRow
+            if !isSearching {
+                NavigationLink {
+                    FullDayChartView()
+                } label: {
+                    deepTimelineRow
+                }
+                // Liquid press language: the settle-inward LiquidPressStyle (the same physical response the
+                // Today / batch-1 cards use), replacing the classic StrandPressableButtonStyle.
+                .buttonStyle(LiquidPressStyle())
+                #if os(iOS)
+                .simultaneousGesture(TapGesture().onEnded { StrandHaptic.selection.play() })
+                #endif
+                .padding(.bottom, ZoopMetrics.sectionGap - 20)
             }
-            // Liquid press language: the settle-inward LiquidPressStyle (the same physical response the
-            // Today / batch-1 cards use), replacing the classic StrandPressableButtonStyle.
-            .buttonStyle(LiquidPressStyle())
-            #if os(iOS)
-            .simultaneousGesture(TapGesture().onEnded { StrandHaptic.selection.play() })
-            #endif
-            .padding(.bottom, ZoopMetrics.sectionGap - 20)
+
+            if isSearching && MetricCatalog.categories.allSatisfy({ visibleMetrics(in: $0).isEmpty }) {
+                Text("No metric matches that search.")
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(StrandPalette.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
             ForEach(MetricCatalog.categories, id: \.self) { category in
-                let metrics = MetricCatalog.inCategory(category)
+                let metrics = visibleMetrics(in: category)
                 if !metrics.isEmpty {
                     VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                         // Localized at the render site only; `category` itself stays the raw

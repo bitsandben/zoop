@@ -52,6 +52,14 @@ struct TrendsView: View {
 
     @State private var range: Range = .quarter
 
+    /// iOS: true when this screen is the Insights tab root, which folds the health monitor (vitals,
+    /// skin temperature, Lab Book, sync) around the trend charts. Always false on macOS.
+    let asInsightsTab: Bool
+
+    init(asInsightsTab: Bool = false) {
+        self.asInsightsTab = asInsightsTab
+    }
+
     // #436 — shareable offline trends report (PDF over a date range). The sheet owns its
     // own range picker; this just presents it with the loaded history.
     @State private var showingReport = false
@@ -296,7 +304,7 @@ struct TrendsView: View {
     }
 
     private var scaffold: some View {
-        ScreenScaffold(title: "Trends", subtitle: "The thread of you over time.",
+        ScreenScaffold(title: asInsightsTab ? "Insights" : "Trends", subtitle: "The thread of you over time.",
                        quietSubtitle: true,
                        // PERF (scroll): lazy column — byte-identical layout (LazyVStack == eager VStack
                        // alignment/spacing/header). The content is one inner eager VStack, so the staggered
@@ -308,6 +316,9 @@ struct TrendsView: View {
                 ComingSoon(what: repo.loaded
                     ? "Trends need history to draw. Import your WHOOP export in Data Sources to see weeks, months and years instantly."
                     : "Loading your history…")
+                #if os(iOS)
+                if asInsightsTab { InsightsFooterBlock() }
+                #endif
             } else {
                 // Reuse the resolved windows until the data, range, or loaded Rest series changes.
                 // An unrelated Repository publication must not re-filter five years of history.
@@ -316,6 +327,9 @@ struct TrendsView: View {
                     // The main card list ripples in once on appear (Reduce-Motion safe).
                     Group {
                         #if os(iOS)
+                        // Insights sections mount here: the interpretations lead the Insights tab.
+                        // The Insights tab then shows the body's latest vitals before the history.
+                        if asInsightsTab { InsightsVitalsBlock() }
                         // The metric trend viewer leads: pick a metric and a window, read the average
                         // and its change, then the longer charts follow. iOS shows no week-in-review
                         // digest or score trio: the viewer and the charts below already carry those values.
@@ -349,6 +363,12 @@ struct TrendsView: View {
                             .staggeredAppear(index: 6)
                         exportReportRow
                             .staggeredAppear(index: 7)
+                        #if os(iOS)
+                        if asInsightsTab {
+                            allMetricsLink
+                            InsightsFooterBlock()
+                        }
+                        #endif
                     }
                 }
             }
@@ -876,6 +896,18 @@ struct TrendsView: View {
     }
 
     private var sparsePlaceholder: some View { TrendsSparsePlaceholder() }
+
+    #if os(iOS)
+    /// The Insights tab's way into every catalog metric (the explorer, with search).
+    private var allMetricsLink: some View {
+        NavigationLink(value: TabRoute.metricExplorer) {
+            ZoopIconRow("Show all metrics", subtitle: "Every metric, every range", icon: "square.grid.2x2.fill")
+                .background(ZoopPanelSurface())
+                .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+    #endif
 
     /// The idle header subtitle of a small multiple on iOS: it names the trailing figure (the window
     /// mean) so the card's header reads the same way before and during a scrub, when it names the day.
