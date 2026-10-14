@@ -194,3 +194,36 @@ final class FitnessAgeEngineTests: XCTestCase {
         XCTAssertEqual(FitnessAgeEngine.nightsUntilReady(rhrDays: 7), 0)
     }
 }
+
+final class FitnessAgeLeversTests: XCTestCase {
+
+    private func inputs(vo2: Double? = 40, rhr: Double = 60, activity: Double? = 5,
+                        sleep: Double? = 0.8, bmi: Double? = 23) -> FitnessAgeInputs {
+        FitnessAgeInputs(chronoAge: 40, sex: "male", restingHR: rhr, vo2max: vo2, vo2Source: .measured,
+                         rmssd: 45, activityIndex: activity, bmi: bmi, sleepConsistency: sleep)
+    }
+
+    func testLeversAreSortedAndPositive() {
+        let ranked = FitnessAgeLevers.rank(inputs())
+        XCTAssertFalse(ranked.isEmpty)
+        XCTAssertEqual(ranked.map(\.yearsSaved), ranked.map(\.yearsSaved).sorted(by: >))
+        XCTAssertTrue(ranked.allSatisfy { $0.yearsSaved >= FitnessAgeLevers.minimumYears })
+    }
+
+    func testMissingInputsGiveNoLever() {
+        let kinds = FitnessAgeLevers.rank(inputs(vo2: nil, activity: nil, sleep: nil, bmi: nil)).map(\.kind)
+        XCTAssertEqual(kinds, [.restingHeartRate])
+    }
+
+    func testHealthyBMIIsNotALever() {
+        XCTAssertFalse(FitnessAgeLevers.rank(inputs(bmi: 23)).contains { $0.kind == .bodyComposition })
+        XCTAssertTrue(FitnessAgeLevers.rank(inputs(bmi: 29)).contains { $0.kind == .bodyComposition })
+    }
+
+    func testSavingMatchesTheEngineOffset() {
+        // Resting HR -3 bpm: only that factor moves, by 3 · 0.155/0.296 years before weighting.
+        let x = inputs(vo2: nil, activity: nil, sleep: nil, bmi: nil)
+        let lever = FitnessAgeLevers.rank(x).first { $0.kind == .restingHeartRate }
+        XCTAssertEqual(lever?.yearsSaved ?? 0, 3 * 0.155 / 0.296 * (0.20 / 0.35), accuracy: 0.01)
+    }
+}
