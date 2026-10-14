@@ -104,7 +104,7 @@ enum RecoveryContributors {
             // "typical" band around zero and no delta repeats the value.
             return row.skinTempDevC.map { dev in
                 let band = RecoveryScorer.skinTempTypicalBandC
-                return Reading(value: dev, unit: .celsius, range: -band...band, delta: nil,
+                return Reading(value: dev, unit: .temperatureDeviation(UnitPrefs.currentMetricTemperatureSystem()), range: -band...band, delta: nil,
                                verdict: .vital(dev, typicalRange: -band...band), confidence: .solid,
                                nights: baselines.hrv.nValid)
             }

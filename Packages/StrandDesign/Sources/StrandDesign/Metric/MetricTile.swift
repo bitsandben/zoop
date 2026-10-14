@@ -35,7 +35,8 @@ public struct MetricTile: View {
                 MetricRangeBar(readout)
             }
             Spacer(minLength: 0)
-            MetricVerdictText(readout: readout, presentation: p, font: StrandFont.subhead.weight(.semibold))
+            MetricVerdictText(readout: readout, presentation: p, font: StrandFont.subhead.weight(.semibold),
+                              compact: true)
         }
         .padding(Self.padding)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

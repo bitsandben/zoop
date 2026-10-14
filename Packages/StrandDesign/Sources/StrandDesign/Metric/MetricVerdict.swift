@@ -25,6 +25,23 @@ public enum MetricVerdict: Equatable, Sendable {
     /// Bands a 0–100 score; see `ScoreBand.init(score:)`.
     public static func score(_ value: Double) -> MetricVerdict { .score(ScoreBand(score: value)) }
 
+    /// Wording against a range. A population / age-norm range is not "yours", so above/below say
+    /// "typical range" there.
+    public func text(rangeIsPersonal: Bool) -> LocalizedStringResource {
+        guard !rangeIsPersonal else { return text }
+        switch self {
+        case .above: return MetricStrings.verdictAboveTypical
+        case .below: return MetricStrings.verdictBelowTypical
+        default: return text
+        }
+    }
+
+    /// Short wording for small rings and tiles; only the unavailable states differ.
+    public var compactText: LocalizedStringResource {
+        if case .unavailable(let reason) = self { return reason.compactText }
+        return text
+    }
+
     public var text: LocalizedStringResource {
         switch self {
         case .typical: return MetricStrings.verdictTypical
@@ -76,6 +93,14 @@ public enum UnavailableReason: Equatable, Sendable {
     case calibrating(nightsLeft: Int)
     /// No data in the window; `since` is the last sample, nil if there never was one.
     case noData(since: Date?)
+
+    /// One or two short words that fit a ring or half-width tile.
+    public var compactText: LocalizedStringResource {
+        switch self {
+        case .calibrating: return MetricStrings.calibratingCompact
+        case .noData: return MetricStrings.noDataCompact
+        }
+    }
 
     public var text: LocalizedStringResource {
         switch self {

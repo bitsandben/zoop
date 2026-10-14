@@ -11,6 +11,8 @@ enum MetricStrings {
     // Verdicts
     static let verdictTypical = LocalizedStringResource("zoop.metric.verdict.typical", defaultValue: "Typical", bundle: .main)
     static let verdictAbove = LocalizedStringResource("zoop.metric.verdict.above", defaultValue: "Above your range", bundle: .main)
+    static let verdictAboveTypical = LocalizedStringResource("zoop.metric.verdict.aboveTypical", defaultValue: "Above the typical range", bundle: .main)
+    static let verdictBelowTypical = LocalizedStringResource("zoop.metric.verdict.belowTypical", defaultValue: "Below the typical range", bundle: .main)
     static let verdictBelow = LocalizedStringResource("zoop.metric.verdict.below", defaultValue: "Below your range", bundle: .main)
     static let scoreHigh = LocalizedStringResource("zoop.metric.verdict.score.high", defaultValue: "High", bundle: .main)
     static let scoreMedium = LocalizedStringResource("zoop.metric.verdict.score.medium", defaultValue: "Medium", bundle: .main)
@@ -22,6 +24,8 @@ enum MetricStrings {
 
     // Data state
     static let noDataYet = LocalizedStringResource("zoop.metric.state.noData", defaultValue: "No data yet", bundle: .main)
+    static let noDataCompact = LocalizedStringResource("zoop.metric.state.noData.compact", defaultValue: "No data", bundle: .main)
+    static let calibratingCompact = LocalizedStringResource("zoop.metric.state.calibrating.compact", defaultValue: "Calibrating", bundle: .main)
     static func nightsLeft(_ nights: Int) -> LocalizedStringResource {
         LocalizedStringResource("zoop.metric.state.nightsLeft", defaultValue: "\(nights) more nights", bundle: .main)
     }
@@ -66,6 +70,12 @@ enum MetricStrings {
     }
     static func celsiusSpoken(_ v: String) -> LocalizedStringResource {
         LocalizedStringResource("zoop.metric.unit.celsius.spoken", defaultValue: "\(v) degrees Celsius", bundle: .main)
+    }
+    static func fahrenheitSpoken(_ v: String) -> LocalizedStringResource {
+        LocalizedStringResource("zoop.metric.unit.fahrenheit.spoken", defaultValue: "\(v) degrees Fahrenheit", bundle: .main)
+    }
+    static func poundsSpoken(_ v: String) -> LocalizedStringResource {
+        LocalizedStringResource("zoop.metric.unit.lb.spoken", defaultValue: "\(v) pounds", bundle: .main)
     }
     static func kilogramsSpoken(_ v: String) -> LocalizedStringResource {
         LocalizedStringResource("zoop.metric.unit.kg.spoken", defaultValue: "\(v) kilograms", bundle: .main)

@@ -1,5 +1,6 @@
 import Foundation
 import StrandAnalytics
+import StrandDesign
 
 // MARK: - Unit system preference
 //
@@ -113,6 +114,20 @@ enum UnitPrefs {
     static func currentEffortDisplayFactor() -> Double {
         let raw = UserDefaults.standard.string(forKey: effortScaleKey) ?? ""
         return raw == EffortScale.whoop.rawValue ? 0.21 : 1.0
+    }
+
+    /// The persisted choices as `MetricUnit` display systems, for readout builders that run outside a
+    /// view and so cannot hold `@AppStorage`. Values stay SI; only the shown unit changes.
+    static func currentMetricMassSystem() -> MetricUnit.System {
+        let raw = UserDefaults.standard.string(forKey: systemKey) ?? ""
+        return UnitSystem(rawValue: raw) == .imperial ? .imperial : .metric
+    }
+
+    static func currentMetricTemperatureSystem() -> MetricUnit.System {
+        let defaults = UserDefaults.standard
+        let system = UnitSystem(rawValue: defaults.string(forKey: systemKey) ?? "") ?? .metric
+        let unit = resolveTemperature(system: system, override: defaults.string(forKey: temperatureKey) ?? "")
+        return unit == .fahrenheit ? .imperial : .metric
     }
 
     /// Resolve temperature, following body measurements when no explicit override is set.
