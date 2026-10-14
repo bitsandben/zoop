@@ -260868,6 +260868,546 @@
           }
         }
       }
+    },
+    "What your body shows" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was dein Körper zeigt"
+          }
+        }
+      }
+    },
+    "After your hardest days, your recovery is back to normal by the next morning." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach deinen härtesten Tagen ist deine Erholung schon am nächsten Morgen wieder normal."
+          }
+        }
+      }
+    },
+    "After your hardest days, your recovery often takes over a week to get back to normal." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach deinen härtesten Tagen braucht deine Erholung oft über eine Woche, bis sie wieder normal ist."
+          }
+        }
+      }
+    },
+    "After your hardest days, your recovery takes about %lld days to get back to normal." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach deinen härtesten Tagen braucht deine Erholung etwa %lld Tage, bis sie wieder normal ist."
+          }
+        }
+      }
+    },
+    "Average recovery per weekday over the last 26 weeks; a day is named only when it stood out in most weeks." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durchschnittliche Erholung je Wochentag der letzten 26 Wochen; ein Tag wird nur genannt, wenn er in den meisten Wochen heraussticht."
+          }
+        }
+      }
+    },
+    "Based on %lld days." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basierend auf %lld Tagen."
+          }
+        }
+      }
+    },
+    "Bounce-back" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholungszeit"
+          }
+        }
+      }
+    },
+    "Day 0" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag 0"
+          }
+        }
+      }
+    },
+    "Each day's effort against the next morning's recovery over the last 180 days, as a straight-line fit." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belastung jedes Tages gegen die Erholung am nächsten Morgen der letzten 180 Tage, als Ausgleichsgerade."
+          }
+        }
+      }
+    },
+    "Each night is compared with the 30 days before it; a run counts nights at least half a standard deviation away." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Nacht wird mit den 30 Tagen davor verglichen; eine Serie zählt Nächte, die mindestens eine halbe Standardabweichung abweichen."
+          }
+        }
+      }
+    },
+    "Effort and recovery" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belastung und Erholung"
+          }
+        }
+      }
+    },
+    "From %lld days with enough heart-rate data." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus %lld Tagen mit genug Herzfrequenzdaten."
+          }
+        }
+      }
+    },
+    "HRV trend" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV-Verlauf"
+          }
+        }
+      }
+    },
+    "Hard days barely move your next-morning recovery." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harte Tage bewegen deine Erholung am nächsten Morgen kaum."
+          }
+        }
+      }
+    },
+    "Hard days hit your next-morning recovery hard." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harte Tage drücken deine Erholung am nächsten Morgen deutlich."
+          }
+        }
+      }
+    },
+    "Hard days lower your next-morning recovery noticeably." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harte Tage senken deine Erholung am nächsten Morgen spürbar."
+          }
+        }
+      }
+    },
+    "Heart-rate zone time of your workouts in the last four weeks; zones 1–2 count as easy, 3–5 as hard." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenzzonen deiner Workouts der letzten vier Wochen; Zone 1–2 gilt als locker, 3–5 als hart."
+          }
+        }
+      }
+    },
+    "Hourly stress of your last 14 days, averaged for each hour of the day." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stündlicher Stress deiner letzten 14 Tage, gemittelt je Tagesstunde."
+          }
+        }
+      }
+    },
+    "Last 7 days: %lld bpm, your normal: %lld bpm." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte 7 Tage: %lld bpm, dein Normalwert: %lld bpm."
+          }
+        }
+      }
+    },
+    "Last 7 days: %lld ms, your normal: %lld ms." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte 7 Tage: %lld ms, dein Normalwert: %lld ms."
+          }
+        }
+      }
+    },
+    "Most of your training is easy, close to an 80/20 split." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Training ist überwiegend locker, nah an einer 80/20-Verteilung."
+          }
+        }
+      }
+    },
+    "Most of your training time is hard, in zones 3 to 5." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Großteil deiner Trainingszeit ist hart, in Zone 3 bis 5."
+          }
+        }
+      }
+    },
+    "Resting HR trend" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhepuls-Verlauf"
+          }
+        }
+      }
+    },
+    "Stress timing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stress im Tagesverlauf"
+          }
+        }
+      }
+    },
+    "Training intensity" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trainingsintensität"
+          }
+        }
+      }
+    },
+    "Weekday rhythm" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wochenrhythmus"
+          }
+        }
+      }
+    },
+    "Your HRV has been above your normal for %lld days." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine HRV liegt seit %lld Tagen über deinem Normalwert."
+          }
+        }
+      }
+    },
+    "Your HRV has been below your normal for %lld days." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine HRV liegt seit %lld Tagen unter deinem Normalwert."
+          }
+        }
+      }
+    },
+    "Your HRV has run higher than usual this week." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine HRV war diese Woche höher als sonst."
+          }
+        }
+      }
+    },
+    "Your HRV has run lower than usual this week." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine HRV war diese Woche niedriger als sonst."
+          }
+        }
+      }
+    },
+    "Your HRV is right at your normal." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine HRV liegt in deinem normalen Bereich."
+          }
+        }
+      }
+    },
+    "Your hardest fifth of days, each compared with the median recovery of the 30 days before it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein anstrengendstes Fünftel der Tage, jeweils verglichen mit dem Median deiner Erholung der 30 Tage davor."
+          }
+        }
+      }
+    },
+    "Your resting heart rate has been above your normal for %lld days." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Ruhepuls liegt seit %lld Tagen über deinem Normalwert."
+          }
+        }
+      }
+    },
+    "Your resting heart rate has been below your normal for %lld days." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Ruhepuls liegt seit %lld Tagen unter deinem Normalwert."
+          }
+        }
+      }
+    },
+    "Your resting heart rate has run higher than usual this week." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Ruhepuls war diese Woche höher als sonst."
+          }
+        }
+      }
+    },
+    "Your resting heart rate has run lower than usual this week." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Ruhepuls war diese Woche niedriger als sonst."
+          }
+        }
+      }
+    },
+    "Your resting heart rate is right at your normal." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Ruhepuls liegt in deinem normalen Bereich."
+          }
+        }
+      }
+    },
+    "Your stress usually peaks around %@ and is lowest around %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Stress ist meist gegen %@ am höchsten und gegen %@ am niedrigsten."
+          }
+        }
+      }
+    },
+    "Your training leans easy but carries a lot of hard time." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Training ist eher locker, enthält aber viel harte Zeit."
+          }
+        }
+      }
+    },
+    "%lld hard days measured." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld harte Tage gemessen."
+          }
+        }
+      }
+    },
+    "%lld hard days measured; the next morning sits %lld points below normal on average." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld harte Tage gemessen; am nächsten Morgen liegt die Erholung im Schnitt %lld Punkte unter normal."
+          }
+        }
+      }
+    },
+    "%@ averages %lld, the other days %lld." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ liegt im Schnitt bei %lld, die übrigen Tage bei %lld."
+          }
+        }
+      }
+    },
+    "%@ is usually your strongest recovery day." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist meist dein stärkster Erholungstag."
+          }
+        }
+      }
+    },
+    "%@ is usually your weakest recovery day." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist meist dein schwächster Erholungstag."
+          }
+        }
+      }
+    },
+    "%lld workouts with %lld minutes of zone time." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Workouts mit %lld Minuten Zonenzeit."
+          }
+        }
+      }
+    },
+    "day" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag"
+          }
+        }
+      }
+    },
+    "days" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tage"
+          }
+        }
+      }
+    },
+    "easy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "locker"
+          }
+        }
+      }
+    },
+    "peak" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spitze"
+          }
+        }
+      }
+    },
+    "pts per 10 effort" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pkt. je 10 Belastung"
+          }
+        }
+      }
+    },
+    "pts per effort point" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pkt. je Belastungspunkt"
+          }
+        }
+      }
+    },
+    "pts vs. other days" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pkt. ggü. anderen Tagen"
+          }
+        }
+      }
+    },
+    "vs. normal" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ggü. normal"
+          }
+        }
+      }
+    },
+    "Opens details" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet Details"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
