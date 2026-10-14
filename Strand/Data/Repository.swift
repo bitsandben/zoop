@@ -873,8 +873,8 @@ final class Repository: ObservableObject {
     /// tail refreshes don't each detonate a full Today reload. The "one consistent publish per refresh"
     /// guarantee is kept: on a real change every prop + the seq are assigned in ONE main-actor batch.
     /// Monotonic ordering token (#review): refresh() now suspends on an off-actor merge between the store
-    /// reads and the publish, so two overlapping refresh() calls (e.g. a 120-day backfill refresh and the
-    /// 4000-day analyze-tail refresh) could resume + publish OUT OF ORDER, an older stale merge clobbering a
+    /// reads and the publish, so two overlapping refresh() calls (e.g. a post-sync refresh and the
+    /// analyze-tail refresh) could resume + publish OUT OF ORDER, an older stale merge clobbering a
     /// newer one. Each call captures the token at entry and only publishes if it is still the latest. Not
     /// @Published (pure ordering, never drives the UI); race-free since Repository is @MainActor.
     private var refreshGen = 0
