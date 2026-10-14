@@ -98,6 +98,74 @@ public enum VitalBands {
     public static let skinTempDeviationCfg = MetricCfg(
         minVal: -8.0, maxVal: 8.0, floorSpread: 0.3, halfLifeB: 14.0, halfLifeS: 21.0)
 
+    // MARK: - Skin temp banding (own median, real-deviation gate)
+
+    /// Valid nights of the SAME kind (absolute vs deviation) needed before skin temp can read out of
+    /// range. Below this the tile never warns.
+    public static let skinTempMinNights = 7
+    /// Trailing calendar entries (nights, gaps included) the personal median looks back over, so a
+    /// baseline from months ago never judges tonight.
+    public static let skinTempLookbackNights = 60
+    /// Smallest distance from the personal median (°C) that can read out of range, however steady the
+    /// history is. A rock-steady wrist would otherwise flag a 0.3 °C wobble.
+    public static let skinTempMinDeltaC = 0.8
+    /// Floor on the robust spread (°C), so a near-constant history doesn't shrink the band to nothing.
+    public static let skinTempSigmaFloorC = 0.3
+
+    /// Band a nightly skin temperature against the wearer's OWN recent median.
+    ///
+    /// Skin temp does not use `band(value:history:populationRange:cfg:)`. That path fell back to a fixed
+    /// 33–36 °C population range until 14 trusted nights existed, and the strap's absolute reading is not
+    /// a population-comparable number: a WHOOP 4.0 absolute is the device's worn ADC anchored to 33.0 °C,
+    /// and a 5.0/MG wrist commonly sits at 31–33 °C. A perfectly steady temperature therefore read
+    /// "Outside range" night after night. Here:
+    /// - fewer than `skinTempMinNights` matching nights in the lookback → in range (no warning);
+    /// - otherwise out of range only when |value − median| ≥ max(`skinTempMinDeltaC`, `sigmaK` · σ),
+    ///   with σ = max(`skinTempSigmaFloorC`, 1.4826 · MAD) over the trailing matching nights.
+    /// Values outside the physically plausible bounds are still out of range.
+    ///
+    /// - Parameter history: nightly values oldest→newest EXCLUDING the displayed night, calendar-padded
+    ///   with nil for unworn nights; mixed absolute/deviation entries are filtered to the value's kind.
+    public static func skinTempBand(value: Double?, history: [Double?]) -> Result {
+        guard let value else { return Result(band: .noData, basis: .population, nights: 0) }
+        let absolute = isAbsoluteSkinTemp(value)
+        let cfg = absolute ? Baselines.metricCfg["skin_temp"]! : skinTempDeviationCfg
+        let nights = skinTempHistory(matching: value, in: Array(history.suffix(skinTempLookbackNights)))
+            .compactMap { $0 }
+            .filter { cfg.minVal <= $0 && $0 <= cfg.maxVal }
+        guard cfg.minVal <= value && value <= cfg.maxVal else {
+            return Result(band: .outOfRange, basis: .population, nights: nights.count)
+        }
+        guard nights.count >= skinTempMinNights else {
+            return Result(band: .inRange, basis: .population, nights: nights.count)
+        }
+        let center = median(nights)
+        let mad = median(nights.map { abs($0 - center) })
+        let sigma = max(skinTempSigmaFloorC, 1.4826 * mad)
+        let threshold = max(skinTempMinDeltaC, sigmaK * sigma)
+        return Result(band: abs(value - center) >= threshold ? .outOfRange : .inRange,
+                      basis: .personal, nights: nights.count)
+    }
+
+    /// Illness-ward z for the skin-temp signal from recent nightly DEVIATIONS (°C), or nil when there is
+    /// no deviation to read. Imported nights store an ABSOLUTE °C in the same column; those are skipped,
+    /// since dividing ~33 °C by a 0.3 °C spread raised the skin signal on every imported night. The
+    /// smaller of the recent mean and the latest night is used, so one warm night alone does not fire.
+    public static func skinTempIllnessZ(recent: [Double?], latest: Double?) -> Double? {
+        guard let latest, !isAbsoluteSkinTemp(latest) else { return nil }
+        let devs = recent.compactMap { $0 }.filter { !isAbsoluteSkinTemp($0) }
+        guard !devs.isEmpty else { return nil }
+        let mean = devs.reduce(0, +) / Double(devs.count)
+        return min(mean, latest) / skinTempDeviationCfg.floorSpread
+    }
+
+    static func median(_ xs: [Double]) -> Double {
+        let s = xs.sorted()
+        guard !s.isEmpty else { return 0 }
+        let n = s.count
+        return n % 2 == 1 ? s[n / 2] : (s[n / 2 - 1] + s[n / 2]) / 2
+    }
+
     // MARK: - Calendar padding
 
     /// Calendar-align (day, value) rows keyed "yyyy-MM-dd" into a nightly series with nil for

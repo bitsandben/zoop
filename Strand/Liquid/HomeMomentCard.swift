@@ -6,24 +6,22 @@ import StrandDesign
 // MARK: - Home moment card
 //
 // One card at the top of My Day that says what matters right now. High stress in the last hour wins
-// (with a breathing session one tap away); in the evening it is the night ahead (alarm, bedtime,
-// reminder); in the morning it is how hard today can be. Outside those it draws nothing.
+// (with a breathing session one tap away); otherwise it is the night ahead (alarm, bedtime). Recovery
+// is not repeated here: the rings above already show it.
 
 enum HomeMoment: Equatable {
     case breathe(level: Double)
     case evening
-    case morning(recovery: Double)
 
     /// Stress level (0–3) from which an hour counts as high.
     static let highStress = 2.0
 
-    /// The moment for `now`: stress that is high right now between 08:00 and 23:00, else the morning
-    /// from 05:00 to 11:00 when today's recovery is known, else the night ahead.
+    /// The moment for `now`: stress that is high right now between 08:00 and 23:00, else the night ahead.
     ///
     /// "Right now" means the hour in progress scores high AND the last ten minutes of heart rate
     /// (`recentHR`) still sit at or above that hour's mean, so one tense moment earlier in the hour does
     /// not keep the card up once the body has settled.
-    static func pick(now: Date, hours: [DaytimeStress.HourPoint], recovery: Double?, recentHR: Double?,
+    static func pick(now: Date, hours: [DaytimeStress.HourPoint], recentHR: Double?,
                      calendar: Calendar = .current) -> HomeMoment? {
         let h = calendar.component(.hour, from: now)
         let nowTs = Int(now.timeIntervalSince1970)
@@ -33,16 +31,12 @@ enum HomeMoment: Equatable {
            let recent = recentHR, let hourMean = current.meanHR, recent >= hourMean {
             return .breathe(level: level)
         }
-        if (5..<11).contains(h), let r = recovery { return .morning(recovery: r) }
         return .evening
     }
 }
 
 struct HomeMomentCard: View {
     let hours: [DaytimeStress.HourPoint]
-    let recovery: Double?
-    /// Today's strain target in the user's Effort scale, e.g. "Target 4–10", from the hero.
-    let strainTarget: String?
 
     @EnvironmentObject private var repo: Repository
     /// The alarm settings this card reads, observed so an alarm change shows at once. The app model is
@@ -57,7 +51,7 @@ struct HomeMomentCard: View {
 
     var body: some View {
         TimelineView(.everyMinute) { ctx in
-            if let moment = HomeMoment.pick(now: ctx.date, hours: hours, recovery: recovery, recentHR: recentHR) {
+            if let moment = HomeMoment.pick(now: ctx.date, hours: hours, recentHR: recentHR) {
                 content(moment, now: ctx.date)
                     .transition(.opacity)
             }
@@ -81,7 +75,6 @@ struct HomeMomentCard: View {
         switch moment {
         case .breathe(let level): breathe(level)
         case .evening: evening(now: now)
-        case .morning(let r): morning(r)
         }
     }
 
@@ -189,48 +182,6 @@ struct HomeMomentCard: View {
         return String(localized: "Alarm on")
     }
 
-    // MARK: Morning
-
-    private func morning(_ r: Double) -> some View {
-        let line: String
-        switch r {
-        case 67...: line = String(localized: "You're recovered. A hard day suits you.")
-        case 34..<67: line = String(localized: "A moderate day suits you.")
-        default: line = String(localized: "Keep today light. Easy movement helps more than a hard session.")
-        }
-        return NavigationLink(value: TabRoute.coupled) {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    header(icon: "sunrise.fill", title: "Today", tint: StrandPalette.textPrimary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(StrandPalette.textTertiary)
-                }
-                HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text("\(Int(r.rounded()))%")
-                        .font(StrandFont.display(36))
-                        .foregroundStyle(StrandPalette.recoveryColor(r))
-                    Text("Recovery")
-                        .font(StrandFont.subhead)
-                        .foregroundStyle(StrandPalette.textSecondary)
-                    Spacer()
-                    if let strainTarget {
-                        Text(strainTarget)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(StrandPalette.textSecondary)
-                    }
-                }
-                Text(line)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .cardChrome()
-        }
-        .buttonStyle(.plain)
-    }
-
     // MARK: Pieces
 
     private func header(icon: String, title: LocalizedStringKey, tint: Color) -> some View {
@@ -246,37 +197,11 @@ struct HomeMomentCard: View {
         }
     }
 
-    private func row(icon: String, text: String, detail: String, accent: Bool) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(accent ? StrandPalette.accent : StrandPalette.textPrimary)
-                .frame(width: 20)
-            Text(text)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(accent ? StrandPalette.accent : StrandPalette.textPrimary)
-            Spacer()
-            Text(detail)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(StrandPalette.textSecondary)
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(StrandPalette.textTertiary)
-        }
-        .contentShape(Rectangle())
-    }
-
     static func time(_ date: Date) -> String {
         let f = DateFormatter()
         f.locale = AppLanguage.activeLocale
         f.setLocalizedDateFormatFromTemplate("jj:mm")
         return f.string(from: date)
-    }
-
-    /// "in 9 h 20 min" for the alarm, resolved against the same clock the card picked its moment with.
-    static func until(_ date: Date, from now: Date) -> String {
-        let minutes = max(0, Int(date.timeIntervalSince(now) / 60))
-        return String(localized: "in \(minutes / 60) h \(minutes % 60) min")
     }
 }
 

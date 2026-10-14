@@ -80,13 +80,17 @@ enum RecoveryCalibrationStore {
         let soreness = await series(sorenessKey)
         let ill = await series(illKey)
         let stress = await series(stressKey)
+        // A day counts once ANY field was answered (each tap is saved on its own); a day whose answers were
+        // all tapped off again reads as unanswered.
         var out: [String: MorningCheckIn] = [:]
-        for (day, v) in feeling {
-            out[day] = MorningCheckIn(feeling: Int(v.rounded()),
-                                      headache: (headache[day] ?? 0) > 0.5,
-                                      soreness: (soreness[day] ?? 0) > 0.5,
-                                      ill: (ill[day] ?? 0) > 0.5,
-                                      stress: (stress[day] ?? 0) > 0.5)
+        let days = Set(feeling.keys).union(headache.keys).union(soreness.keys).union(ill.keys).union(stress.keys)
+        for day in days {
+            let c = MorningCheckIn(feeling: feeling[day].map { Int($0.rounded()) },
+                                   headache: (headache[day] ?? 0) > 0.5,
+                                   soreness: (soreness[day] ?? 0) > 0.5,
+                                   ill: (ill[day] ?? 0) > 0.5,
+                                   stress: (stress[day] ?? 0) > 0.5)
+            if !c.isEmpty { out[day] = c }
         }
         return out
     }
@@ -113,13 +117,15 @@ enum RecoveryCalibrationStore {
         let nights = (try? await store.dailyMetrics(deviceId: computedId, from: first, to: last)) ?? []
         var samples: [CalibrationSample] = []
         for d in nights {
-            guard let c = checkIns[d.day], let hrv = d.avgHrv, let rhr = d.restingHr else { continue }
+            // Only mornings that rated the feeling pair with a night; symptom-only mornings still feed the
+            // symptom load through `checkIns`.
+            guard let feeling = checkIns[d.day]?.feeling, let hrv = d.avgHrv, let rhr = d.restingHr else { continue }
             let z = RecoveryCalibration.termZScores(
                 hrv: hrv, rhr: Double(rhr), resp: d.respRateBpm, hrvBaseline: hrvBase,
                 rhrBaseline: baselines.restingHR, respBaseline: baselines.resp,
                 sleepPerf: scoring.sleepTerm(d), skinTempDev: d.skinTempDevC)
             guard !z.isEmpty else { continue }
-            samples.append(CalibrationSample(day: d.day, feeling: Double(c.feeling), termZ: z))
+            samples.append(CalibrationSample(day: d.day, feeling: Double(feeling), termZ: z))
         }
         let result = RecoveryCalibration.fit(samples)
         save(result)
@@ -156,17 +162,19 @@ extension Repository {
         return await RecoveryCalibrationStore.checkIns(store: store)
     }
 
-    /// Save (or overwrite) the day's check-in. One row per key per local day.
+    /// Save (or overwrite) the day's check-in, partial or not. One row per key per local day; the feeling
+    /// row is written only once a face was picked.
     func saveMorningCheckIn(day: String, _ c: MorningCheckIn) async {
-        guard MorningCheckIn.scale.contains(c.feeling), let store = await storeHandle() else { return }
+        if let f = c.feeling, !MorningCheckIn.scale.contains(f) { return }
+        guard let store = await storeHandle() else { return }
         let S = RecoveryCalibrationStore.self
-        let rows = [
-            MetricPoint(day: day, key: S.feelingKey, value: Double(c.feeling)),
+        var rows = [
             MetricPoint(day: day, key: S.headacheKey, value: c.headache ? 1 : 0),
             MetricPoint(day: day, key: S.sorenessKey, value: c.soreness ? 1 : 0),
             MetricPoint(day: day, key: S.illKey, value: c.ill ? 1 : 0),
             MetricPoint(day: day, key: S.stressKey, value: c.stress ? 1 : 0),
         ]
+        if let f = c.feeling { rows.append(MetricPoint(day: day, key: S.feelingKey, value: Double(f))) }
         _ = try? await store.upsertMetricSeries(rows, deviceId: S.deviceId)
     }
 

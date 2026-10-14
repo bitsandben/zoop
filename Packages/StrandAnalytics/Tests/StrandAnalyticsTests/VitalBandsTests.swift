@@ -97,4 +97,66 @@ final class VitalBandsTests: XCTestCase {
         let rows: [(day: String, value: Double?)] = [("not-a-date", 1.0), ("2026-06-01", 50.0)]
         XCTAssertEqual(VitalBands.calendarSeries(rows), [50.0])
     }
+
+    // MARK: - Skin temp
+
+    // THE MOTIVATING CASE: a steady 32.4 °C strap absolute used to read "Outside range" against the
+    // 33-36 °C population fallback. Steady against its own history it must read in range.
+    func testSkinTempSteadyAbsoluteBelowPopulationRangeReadsInRange() {
+        let hist: [Double?] = (0..<20).map { 32.4 + ($0 % 2 == 0 ? 0.05 : -0.05) }
+        let r = VitalBands.skinTempBand(value: 32.4, history: hist)
+        XCTAssertEqual(r.band, .inRange)
+        XCTAssertEqual(r.basis, .personal)
+    }
+
+    func testSkinTempTooLittleHistoryNeverWarns() {
+        let r = VitalBands.skinTempBand(value: 31.0, history: [32.4, 32.5, 32.3])
+        XCTAssertEqual(r.band, .inRange)
+        XCTAssertEqual(r.nights, 3)
+        // A deviation with no history either.
+        XCTAssertEqual(VitalBands.skinTempBand(value: 0.9, history: []).band, .inRange)
+    }
+
+    func testSkinTempSmallWobbleOnConstantHistoryStaysInRange() {
+        let hist: [Double?] = Array(repeating: 33.0, count: 20)
+        // MAD is 0, so the floors decide: max(0.8, 2 x 0.3) = 0.8 °C.
+        XCTAssertEqual(VitalBands.skinTempBand(value: 33.5, history: hist).band, .inRange)
+        XCTAssertEqual(VitalBands.skinTempBand(value: 33.79, history: hist).band, .inRange)
+        XCTAssertEqual(VitalBands.skinTempBand(value: 33.85, history: hist).band, .outOfRange)
+        XCTAssertEqual(VitalBands.skinTempBand(value: 32.0, history: hist).band, .outOfRange)
+    }
+
+    func testSkinTempNoisyHistoryWidensTheBand() {
+        // Alternating ±0.6 °C around 33: MAD 0.6 → σ ≈ 0.89 → threshold ≈ 1.78 °C.
+        let hist: [Double?] = (0..<20).map { $0 % 2 == 0 ? 33.6 : 32.4 }
+        XCTAssertEqual(VitalBands.skinTempBand(value: 34.5, history: hist).band, .inRange)
+        XCTAssertEqual(VitalBands.skinTempBand(value: 35.0, history: hist).band, .outOfRange)
+    }
+
+    func testSkinTempIgnoresOtherKindAndOldNights() {
+        // 10 deviation nights + gaps; the absolute value sees no matching history → no warning.
+        let devs: [Double?] = Array(repeating: 0.1, count: 10)
+        XCTAssertEqual(VitalBands.skinTempBand(value: 30.0, history: devs).nights, 0)
+        // Steady history that ended more than the lookback ago no longer judges tonight.
+        let old: [Double?] = Array(repeating: 33.0, count: 10) + Array(repeating: nil, count: 60)
+        let r = VitalBands.skinTempBand(value: 35.0, history: old)
+        XCTAssertEqual(r.band, .inRange)
+        XCTAssertEqual(r.nights, 0)
+    }
+
+    func testSkinTempImplausibleIsOutOfRange() {
+        XCTAssertEqual(VitalBands.skinTempBand(value: 45.0, history: []).band, .outOfRange)
+        XCTAssertEqual(VitalBands.skinTempBand(value: nil, history: [33.0]).band, .noData)
+    }
+
+    func testSkinTempIllnessZSkipsAbsoluteNights() {
+        XCTAssertNil(VitalBands.skinTempIllnessZ(recent: [33.4, 33.5], latest: 33.5))
+        XCTAssertNil(VitalBands.skinTempIllnessZ(recent: [nil], latest: nil))
+        // Mixed recent window: only the deviations count; min(mean 0.6, latest 0.6) / 0.3 = 2.
+        XCTAssertEqual(try XCTUnwrap(VitalBands.skinTempIllnessZ(recent: [33.4, 0.6], latest: 0.6)),
+                       2.0, accuracy: 1e-9)
+        // A steady deviation near zero stays near zero.
+        XCTAssertEqual(try XCTUnwrap(VitalBands.skinTempIllnessZ(recent: [0.0, 0.03], latest: 0.03)),
+                       0.05, accuracy: 1e-9)
+    }
 }

@@ -67,7 +67,8 @@ enum RecoveryCalibrationCopy {
         if c.soreness { symptoms.append(String(localized: "Sore muscles")) }
         if c.ill { symptoms.append(String(localized: "Feeling ill")) }
         if c.stress { symptoms.append(String(localized: "Stressed")) }
-        var parts = ["\(c.feeling)/5", feelingLabel(c.feeling)]
+        var parts: [String] = []
+        if let f = c.feeling { parts += ["\(f)/5", feelingLabel(f)] }
         if !symptoms.isEmpty { parts.append(symptoms.joined(separator: ", ")) }
         return parts.joined(separator: " · ")
     }
@@ -122,16 +123,17 @@ struct RecoveryCalibrationInviteCard: View {
 
 // MARK: - Morning check-in sheet
 
-/// The morning question as a bottom sheet: five faces for how recovered the wearer feels, a grid of
-/// symptom tiles, and Save. Used for the automatic morning prompt and for editing from the Recovery
-/// detail; it preloads the day's stored answer when there is one.
+/// The morning question as a bottom sheet: five faces for how recovered the wearer feels and a grid of
+/// symptom tiles. Every tap is saved straight away, so there is no Save button; the sheet closes by swipe
+/// or the close button, and Recovery is re-scored once on close. Used for the automatic morning prompt
+/// and for editing from the Recovery detail; it preloads the day's stored answer when there is one.
 struct MorningCheckInSheet: View {
     @EnvironmentObject var repo: Repository
     @EnvironmentObject var intelligence: IntelligenceEngine
     @Environment(\.dismiss) private var dismiss
 
     var day: String = Repository.dayString(Date())
-    /// Called after the answer is stored and Recovery re-scored.
+    /// Called after each tap is stored, with the day's answer so far.
     var onSaved: (MorningCheckIn) -> Void = { _ in }
 
     @State private var feeling: Int?
@@ -139,16 +141,32 @@ struct MorningCheckInSheet: View {
     @State private var soreness = false
     @State private var ill = false
     @State private var stress = false
-    @State private var saving = false
+    /// True once anything was tapped in this sheet, so closing it re-scores Recovery and a late load
+    /// cannot overwrite a fresh tap.
+    @State private var changed = false
+    /// The last queued write; each save waits for it so rapid taps land in order.
+    @State private var saveTask: Task<Void, Never>?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: ZoopMetrics.space6) {
-                VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
-                    Text("Good morning").strandOverline()
-                    Text("How do you feel this morning?")
-                        .font(StrandFont.title2).foregroundStyle(StrandPalette.textPrimary)
-                        .fixedSize(horizontal: false, vertical: true)
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
+                        Text("Good morning").strandOverline()
+                        Text("How do you feel this morning?")
+                            .font(StrandFont.title2).foregroundStyle(StrandPalette.textPrimary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: ZoopMetrics.space3)
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(StrandPalette.textSecondary)
+                            .frame(width: 34, height: 34)
+                            .background(Circle().fill(StrandPalette.surfaceInset))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Close"))
                 }
                 faces
                 VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
@@ -163,19 +181,11 @@ struct MorningCheckInSheet: View {
                         symptomTile("Stressed", systemImage: "cloud.bolt.rain", isOn: $stress)
                     }
                 }
-                VStack(spacing: ZoopMetrics.space2) {
-                    if saving {
-                        ProgressView().tint(StrandPalette.accent).frame(maxWidth: .infinity)
-                    } else {
-                        ZoopButton("Save", systemImage: "checkmark", fullWidth: true) { save() }
-                            .disabled(feeling == nil)
-                    }
-                    Text(RecoveryCalibrationCopy.phaseLine(RecoveryCalibrationStore.lastResult))
-                        .font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                Text(RecoveryCalibrationCopy.phaseLine(RecoveryCalibrationStore.lastResult))
+                    .font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.horizontal, ZoopMetrics.screenPadding)
             .padding(.top, ZoopMetrics.space6)
@@ -183,6 +193,7 @@ struct MorningCheckInSheet: View {
         }
         .background(StrandPalette.surfaceBase.ignoresSafeArea())
         .task { await load() }
+        .onDisappear { rescoreIfChanged() }
     }
 
     private var faces: some View {
@@ -205,6 +216,7 @@ struct MorningCheckInSheet: View {
         let shape = RoundedRectangle(cornerRadius: ZoopVisualStyle.compactRadius, style: .continuous)
         return Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { feeling = v }
+            persist()
         } label: {
             Text(verbatim: RecoveryCalibrationCopy.feelingFace(v))
                 .font(.system(size: 34))
@@ -226,6 +238,7 @@ struct MorningCheckInSheet: View {
         let shape = RoundedRectangle(cornerRadius: ZoopVisualStyle.compactRadius, style: .continuous)
         return Button {
             withAnimation(.easeOut(duration: 0.15)) { isOn.wrappedValue.toggle() }
+            persist()
         } label: {
             VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 HStack {
@@ -252,22 +265,31 @@ struct MorningCheckInSheet: View {
     }
 
     private func load() async {
-        guard let a = await repo.morningCheckIn(day: day) else { return }
+        guard let a = await repo.morningCheckIn(day: day), !changed else { return }
         feeling = a.feeling; headache = a.headache; soreness = a.soreness; ill = a.ill; stress = a.stress
     }
 
-    private func save() {
-        guard let feeling, !saving else { return }
+    /// Store the answer as it stands after a tap. Writes are chained so they land in tap order.
+    private func persist() {
+        changed = true
         let c = MorningCheckIn(feeling: feeling, headache: headache, soreness: soreness, ill: ill, stress: stress)
-        saving = true
-        Task {
+        let previous = saveTask
+        saveTask = Task {
+            await previous?.value
             await repo.saveMorningCheckIn(day: day, c)
-            // Re-score so today's symptoms and the refreshed personal weights reach the Recovery ring.
+            onSaved(c)
+        }
+    }
+
+    /// Re-score once when the sheet closes, so today's symptoms and the refreshed personal weights reach
+    /// the Recovery ring without a full analysis pass on every tap.
+    private func rescoreIfChanged() {
+        guard changed else { return }
+        let pending = saveTask
+        Task {
+            await pending?.value
             await intelligence.analyzeRecent()
             await repo.refresh()
-            saving = false
-            onSaved(c)
-            dismiss()
         }
     }
 }
@@ -286,9 +308,14 @@ struct MorningCheckInSummaryRow: View {
         ZoopCard {
             HStack(spacing: ZoopMetrics.space3) {
                 if let answer {
-                    Text(verbatim: RecoveryCalibrationCopy.feelingFace(answer.feeling))
-                        .font(.system(size: 26))
-                        .accessibilityHidden(true)
+                    Group {
+                        if let f = answer.feeling {
+                            Text(verbatim: RecoveryCalibrationCopy.feelingFace(f)).font(.system(size: 26))
+                        } else {
+                            Image(systemName: "sun.horizon").foregroundStyle(StrandPalette.accent)
+                        }
+                    }
+                    .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: ZoopMetrics.spaceHalf) {
                         Text("Morning check-in").font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
                         Text(verbatim: RecoveryCalibrationCopy.summary(answer))
@@ -317,7 +344,7 @@ struct MorningCheckInSummaryRow: View {
         }
         .task { await reload() }
         .sheet(isPresented: $showSheet) {
-            MorningCheckInSheet(day: today) { answer = $0 }
+            MorningCheckInSheet(day: today) { answer = $0.isEmpty ? nil : $0 }
                 .presentationDetents([.medium, .large])
                 .opaqueSheetBackground()
                 .presentationDragIndicator(.visible)
@@ -513,7 +540,7 @@ struct RecoveryCalibrationView: View {
                     HStack {
                         Text(verbatim: row.day).font(StrandFont.captionNumber).foregroundStyle(StrandPalette.textTertiary)
                         Spacer()
-                        Text(verbatim: "\(row.felt.feeling)/5").font(StrandFont.bodyNumber).foregroundStyle(StrandPalette.textPrimary)
+                        Text(verbatim: row.felt.feeling.map { "\($0)/5" } ?? "–").font(StrandFont.bodyNumber).foregroundStyle(StrandPalette.textPrimary)
                         if row.felt.symptomLoad > 0 {
                             Image(systemName: "exclamationmark.circle").font(.system(size: 12))
                                 .foregroundStyle(StrandPalette.textTertiary)

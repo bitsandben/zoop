@@ -238,8 +238,7 @@ enum BodyVitalSigns {
         }
 
         // Skin temp is bimodal: CSV imports store ABSOLUTE °C, the on-device pipeline a ±°C DEVIATION —
-        // partition the history to the displayed value's kind and pick the matching config + population
-        // fallback (±0.6 °C mirrors the illness watch's flag threshold).
+        // the banding partitions the history to the displayed value's kind.
         //
         // #1636: resolve the DISPLAYED night first — the freshest that carries either reading — then
         // lead with its absolute if it has one. Asking "does the row I am already showing have an
@@ -265,12 +264,10 @@ enum BodyVitalSigns {
         let skinSeries = skinAbsRow != nil ? skinAbsPoints : skinPoints
         let skinResult: VitalBands.Result
         if let skin {
-            skinResult = VitalBands.band(
-                value: skin,
-                history: VitalBands.skinTempHistory(matching: skin, in: history(before: skinRow?.day, skinSeries)),
-                populationRange: skinIsAbsolute ? 33...36 : (-0.6)...0.6,
-                cfg: skinIsAbsolute ? Baselines.metricCfg["skin_temp"]! : VitalBands.skinTempDeviationCfg
-            )
+            // Judged against the wearer's own recent median only; no population range (see
+            // `VitalBands.skinTempBand` for why a steady strap temperature used to read out of range).
+            skinResult = VitalBands.skinTempBand(value: skin,
+                                                 history: history(before: skinRow?.day, skinSeries))
         } else {
             skinResult = VitalBands.Result(band: .noData, basis: .population, nights: 0)
         }

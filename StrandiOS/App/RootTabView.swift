@@ -42,6 +42,7 @@ struct RootTabView: View {
     let homeScreenQuickActionsEnabled: Bool
 
     @EnvironmentObject private var repo: Repository
+    @EnvironmentObject private var intelligence: IntelligenceEngine
     /// Cross-screen navigation requests (e.g. Live → "Manage devices"). Devices isn't a tab — it lives
     /// behind the More list — so a request presents it as a sheet, matching the quick-action screens.
     @EnvironmentObject private var router: NavRouter
@@ -196,6 +197,8 @@ struct RootTabView: View {
 
     var body: some View {
         tabShell
+        // Zoop: no vertical scroll bar on any tab or the sheets this shell presents.
+        .scrollIndicators(.hidden, axes: .vertical)
         .overlay(alignment: .bottomTrailing) {
             if coachEnabled, #available(iOS 18.0, *) { coachButton }
         }
@@ -471,7 +474,7 @@ struct RootTabView: View {
                     withAnimation(Self.sheetEase) { quickAction = picked }
                 }
             }
-            .presentationDetents([.height(344)])
+            .presentationDetents([.height(404)])
             .opaqueSheetBackground()
             .presentationDragIndicator(.hidden)
         case .live:
@@ -482,6 +485,18 @@ struct RootTabView: View {
             quickScreen(LogbookView(onClose: { quickAction = nil }))
         case .breathe:
             quickScreen(BreathingView())
+        case .nap:
+            // The Sleep tab's own "Add a nap" editor, seeded with a half hour that ended a few minutes ago.
+            let end = Int(Date().timeIntervalSince1970) - 10 * 60
+            SleepTimeEditor(bedTs: end - 30 * 60, wakeTs: end,
+                            title: "Add a nap",
+                            blurb: "Saved as its own session, apart from the night.",
+                            bedLabel: "Nap started", wakeLabel: "Nap ended") { startTs, endTs in
+                await repo.addManualNap(startTs: startTs, endTs: endTs)
+                // Re-score so the day's aggregates pick up the new session, exactly like the Sleep tab.
+                await intelligence.analyzeRecent()
+                await repo.refresh()
+            }
         }
     }
 
@@ -761,7 +776,7 @@ private struct MoreDeviceHeader: View {
 /// The destinations the centre FAB can present. `.menu` is the action sheet itself; the rest
 /// route to existing screens. `Identifiable` so it drives `.sheet(item:)`.
 private enum QuickAction: Int, Identifiable {
-    case menu, live, workout, journal, breathe
+    case menu, live, workout, journal, breathe, nap
     var id: Int { rawValue }
 }
 
@@ -793,6 +808,7 @@ private struct QuickActionSheet: View {
                 row("Start workout", icon: "figure.run", tint: StrandPalette.effortColor) { onPick(.workout) }
                 row("Fill in logbook", icon: "square.and.pencil", tint: StrandPalette.accent) { onPick(.journal) }
                 row("Breathe", icon: "wind", tint: StrandPalette.restColor) { onPick(.breathe) }
+                row("Add nap", icon: "bed.double.fill", tint: StrandPalette.restColor) { onPick(.nap) }
             }
             .padding(.horizontal, 16)
 

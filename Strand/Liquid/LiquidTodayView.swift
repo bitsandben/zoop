@@ -449,8 +449,7 @@ struct LiquidTodayView: View {
                             if selectedDayOffset == 0 { RecoveryCalibrationInviteCard() }
                             HomeSectionTitle(title: "My Day") { myDayAddButton }
                             if selectedDayOffset == 0 {
-                                HomeMomentCard(hours: hostedStressHours, recovery: chargeDisplay.pct,
-                                               strainTarget: strainTargetCaption)
+                                HomeMomentCard(hours: hostedStressHours)
                             }
                             todaysActivitiesCard
                             // The cycle follows the day for anyone it applies to, unless they hid it.
@@ -546,6 +545,8 @@ struct LiquidTodayView: View {
         // brings Today's scroll behaviour in line with the rest of the app without touching the
         // vertical pull-to-refresh gesture above.
         .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+        // Zoop: no scroll bar along the right edge while scrolling.
+        .scrollIndicators(.hidden, axes: .vertical)
         #endif
         .onPreferenceChange(PullOffsetKey.self) { y in
             // iOS 18+ reads the overscroll from the scroll geometry below; the probe is the iOS 17 path.
@@ -848,15 +849,6 @@ struct LiquidTodayView: View {
                                       isLive: selectedDayOffset == 0 && liveStressLevel(hostedStressHours) != nil)
             }
             .buttonStyle(LiquidPressStyle())
-        }
-    }
-
-    /// Today's strain target on the chosen Effort scale ("Target 4–10"), the same band the hero ring draws.
-    private var strainTargetCaption: String? {
-        CoupledView.optimalStrainRange(recovery: chargeDisplay.pct).map { b in
-            let lo = effortScale == .whoop ? b.lowerBound : Int((Double(b.lowerBound) * 100 / 21).rounded())
-            let hi = effortScale == .whoop ? b.upperBound : Int((Double(b.upperBound) * 100 / 21).rounded())
-            return String(localized: "Target \(lo)–\(hi)")
         }
     }
 

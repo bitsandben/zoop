@@ -71,6 +71,19 @@ final class ChargePersonalWeightingTests: XCTestCase {
                           score(MorningCheckIn(feeling: 3, headache: true).symptomLoad))
     }
 
+    /// Each tap is saved on its own, so a check-in can be partial. Symptoms without a face still carry
+    /// their load; an all-off answer counts as unanswered; old JSON with a plain Int still decodes.
+    func testPartialCheckInsCountOnlyWhatWasAnswered() throws {
+        let symptomsOnly = MorningCheckIn(feeling: nil, headache: true)
+        XCTAssertFalse(symptomsOnly.isEmpty)
+        XCTAssertEqual(symptomsOnly.symptomLoad, 1.0)
+        XCTAssertTrue(MorningCheckIn(feeling: nil).isEmpty)
+        XCTAssertFalse(MorningCheckIn(feeling: 4).isEmpty)
+        let legacy = Data(#"{"feeling":4,"headache":false,"soreness":true,"ill":false,"stress":false}"#.utf8)
+        let decoded = try JSONDecoder().decode(MorningCheckIn.self, from: legacy)
+        XCTAssertEqual(decoded, MorningCheckIn(feeling: 4, soreness: true))
+    }
+
     func testWeightedNightHrvFavoursDeepAndLateWindowsAndDropsWake() {
         let start = 0, end = 4 * 300
         let windows = [
