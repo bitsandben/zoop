@@ -263195,6 +263195,2257 @@
           }
         }
       }
+    },
+    "zoop.sleep.meaning.score.high" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast den Schlaf bekommen, den dein Körper gebraucht hat."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You got the sleep your body asked for."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.score.medium" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordentlicher Schlaf, mit Luft bei Dauer oder Qualität."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decent sleep, with room in duration or quality."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.score.low" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurzer oder unruhiger Schlaf, mach heute etwas langsamer."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Short or broken sleep, so take it easier today."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.duration.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etwa so lang, wie du sonst schläfst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About as long as you usually sleep."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.efficiency.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast deinen üblichen Anteil der Nacht geschlafen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You spent your usual share of the night asleep."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.deep.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiefschlaf in deinem üblichen Bereich."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deep sleep in your usual range."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.rem.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REM-Schlaf in deinem üblichen Bereich."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REM sleep in your usual range."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.light.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leichtschlaf in deinem üblichen Bereich."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Light sleep in your usual range."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.awake.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine übliche Wachzeit in der Nacht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your usual time awake during the night."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.hrv.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Nervensystem hat sich über Nacht wie gewohnt erholt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your nervous system recovered as usual overnight."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.rhr.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Herz hat wie gewohnt geruht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your heart rested as usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.resp.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atmung in deinem üblichen Bereich."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breathing in your usual range."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.spo2.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blutsauerstoff in deinem üblichen Bereich."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blood oxygen in your usual range."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.skin.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hauttemperatur nahe an deinem Ausgangswert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skin temperature close to your baseline."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.duration.above" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Länger, als du sonst schläfst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Longer than you usually sleep."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.efficiency.above" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weniger Wachzeit im Bett als sonst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Less time awake in bed than usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.deep.above" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr Tiefschlaf als sonst, gut für die körperliche Erholung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More deep sleep than usual, good for physical repair."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.rem.above" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr REM-Schlaf als sonst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More REM sleep than usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.light.above" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr Leichtschlaf als sonst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More light sleep than usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.awake.above" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Länger wach als sonst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More time awake than usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.hrv.above" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Nervensystem hat sich über Nacht gut erholt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your nervous system recovered well overnight."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.rhr.above" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Höher als sonst, dein Körper arbeitet womöglich noch."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Higher than usual, so your body may still be working."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.resp.above" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schnellere Atmung als sonst; beobachte es, falls es anhält."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faster breathing than usual; watch it if it lasts."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.spo2.above" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr Blutsauerstoff als sonst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Higher blood oxygen than usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.skin.above" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wärmer als sonst; Krankheit oder dein Zyklus können das bewirken."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warmer than usual; illness or your cycle can do this."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.duration.below" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kürzer, als du sonst schläfst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shorter than you usually sleep."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.efficiency.below" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr Wachzeit im Bett als sonst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More time awake in bed than usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.deep.below" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weniger Tiefschlaf als sonst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Less deep sleep than usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.rem.below" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weniger REM-Schlaf als sonst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Less REM sleep than usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.light.below" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weniger Leichtschlaf als sonst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Less light sleep than usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.awake.below" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kürzer wach als sonst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Less time awake than usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.hrv.below" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niedriger als sonst; Stress, Alkohol oder Krankheit können das bewirken."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lower than usual; stress, alcohol or illness can do this."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.rhr.below" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niedriger als sonst, ein Zeichen guter Erholung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lower than usual, a sign of good recovery."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.resp.below" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langsamere Atmung als sonst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slower breathing than usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.spo2.below" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weniger Blutsauerstoff als sonst; prüfe den Sitz des Armbands."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lower blood oxygen than usual; check the strap fit."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.skin.below" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kühler als sonst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cooler than usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.explain.deep" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Tiefschlaf erledigt der Körper den Großteil seiner körperlichen Erholung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deep, slow-wave sleep is when the body does most of its physical repair."
+          }
+        }
+      }
+    },
+    "zoop.sleep.explain.rem" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REM-Schlaf unterstützt Gedächtnis und Stimmung und wird gegen Morgen länger."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REM sleep supports memory and mood, and grows longer towards morning."
+          }
+        }
+      }
+    },
+    "zoop.sleep.explain.light" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leichtschlaf verbindet die anderen Phasen und füllt etwa die Hälfte einer Nacht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Light sleep links the other stages and fills about half of a night."
+          }
+        }
+      }
+    },
+    "zoop.sleep.explain.awake" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wachzeit zwischen dem Einschlafen und dem Aufstehen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time awake between falling asleep and getting up."
+          }
+        }
+      }
+    },
+    "zoop.sleep.explain.score" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie gut die Nacht deinen Schlafbedarf gedeckt hat, von 0 bis 100, aus Dauer, Effizienz, Tief- und REM-Schlaf und Timing."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How well the night met your sleep need, from 0 to 100, weighing duration, efficiency, deep and REM sleep, and timing."
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.score" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlaf-Kompositwert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep composite"
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.score.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafdauer gegenüber Bedarf 45 %, Effizienz 20 %, Anteil Tief- und REM-Schlaf 20 %, Timing 15 %."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time asleep against need 45 %, efficiency 20 %, deep and REM share 20 %, timing 15 %."
+          }
+        }
+      }
+    },
+    "zoop.sleep.explain.duration" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Zeit, die du tatsächlich geschlafen hast, ohne Wachzeit im Bett."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time actually asleep, without the time you lay awake."
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.duration" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phasensummen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stage totals"
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.duration.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leicht-, Tief- und REM-Minuten über den Hauptschlaf und die mit ihm verbundenen Abschnitte addiert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Light, deep and REM minutes added up over the main sleep and the fragments bridged into it."
+          }
+        }
+      }
+    },
+    "zoop.sleep.explain.efficiency" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Anteil deiner Zeit im Bett, den du geschlafen hast."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The share of your time in bed that you spent asleep."
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.efficiency" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlaf ÷ Zeit im Bett"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asleep ÷ time in bed"
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.efficiency.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafminuten geteilt durch die Minuten vom Einschlafen bis zum Aufwachen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep minutes divided by the minutes from falling asleep to waking up."
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.stages" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Staging aus Herzfrequenz und Bewegung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart-rate and movement staging"
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.stages.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede 30 Sekunden werden aus Herzfrequenz, HRV und Bewegung geschätzt; die Übereinstimmung mit einem Schlaflabor ist mäßig."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each 30 seconds is estimated from heart rate, HRV and movement; agreement with a sleep lab is moderate."
+          }
+        }
+      }
+    },
+    "zoop.sleep.explain.debt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlaf, der dir in den letzten 14 Nächten zum Bedarf gefehlt hat; ältere Nächte zählen weniger."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep missed against your need over the last 14 nights, with older nights counting less."
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.debt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gewichtetes Schlafkonto"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weighted sleep ledger"
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.debt.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Nacht trägt 55 % des Defizits weiter, unter zehn Minuten wird auf null gesetzt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each night carries 55 % of the shortfall forward, and under ten minutes clears to zero."
+          }
+        }
+      }
+    },
+    "zoop.sleep.explain.regularity" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie ähnlich sich deine Schlaf- und Wachzeiten von Tag zu Tag sind, von 0 bis 100."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How alike your sleep and wake times are from one day to the next, from 0 to 100."
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.regularity" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlaf-Regelmäßigkeitsindex (SRI)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep Regularity Index"
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.regularity.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Wahrscheinlichkeit, 24 Stunden später im selben Zustand zu sein, schlafend oder wach, über die letzten 14 Tage."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The chance of being in the same state, asleep or awake, 24 hours apart over the last 14 days."
+          }
+        }
+      }
+    },
+    "zoop.sleep.explain.hrv" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Schwankung zwischen Herzschlägen im Schlaf; höher bedeutet meist bessere Erholung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The variation between heartbeats during sleep; higher usually means better recovery."
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.hrv" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächtlicher RMSSD"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nightly RMSSD"
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.hrv.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quadratisches Mittel der aufeinanderfolgenden Schlag-zu-Schlag-Differenzen in ungestörten Schlafabschnitten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Root mean square of successive beat-to-beat differences over clean sleep windows."
+          }
+        }
+      }
+    },
+    "zoop.sleep.explain.rhr" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine niedrigste stabile Herzfrequenz im Schlaf."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your lowest steady heart rate while asleep."
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.rhr" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafpuls-Minimum"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleeping heart-rate floor"
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.rhr.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die niedrigste anhaltende Herzfrequenz während des Hauptschlafs."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The lowest sustained heart rate across the main sleep."
+          }
+        }
+      }
+    },
+    "zoop.sleep.explain.resp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atemzüge pro Minute im Schlaf."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breaths per minute while asleep."
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.resp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respiratorische Sinusarrhythmie"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respiratory sinus arrhythmia"
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.resp.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Atemfrequenz wird aus dem Rhythmus gelesen, den sie in den Schlagabständen hinterlässt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breathing rate read from the rhythm it leaves in the beat-to-beat intervals."
+          }
+        }
+      }
+    },
+    "zoop.sleep.explain.spo2" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durchschnittliche Sauerstoffsättigung deines Blutes im Schlaf."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average oxygen saturation of your blood during sleep."
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.spo2" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verhältnis von rotem zu infrarotem Licht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Red and infrared light ratio"
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.spo2.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Durchschnitt der Rot- und Infrarot-Lichtwerte des Armbands, während du geschlafen hast."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The average of the strap's red and infrared light readings while you slept."
+          }
+        }
+      }
+    },
+    "zoop.sleep.explain.skin" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie weit deine Hauttemperatur im Schlaf von deinem eigenen Ausgangswert entfernt lag."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How far your skin temperature sat from your own baseline during sleep."
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.skin" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächtliche Abweichung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nightly deviation"
+          }
+        }
+      }
+    },
+    "zoop.sleep.method.skin.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Getragene Hauttemperatur im Bett, verglichen mit deinem gleitenden Ausgangswert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Worn, in-bed skin temperature compared with your rolling baseline."
+          }
+        }
+      }
+    },
+    "zoop.sleep.contrib.duration" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafdauer gegenüber Bedarf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time asleep against need"
+          }
+        }
+      }
+    },
+    "zoop.sleep.contrib.efficiency" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effizienz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Efficiency"
+          }
+        }
+      }
+    },
+    "zoop.sleep.contrib.restorative" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anteil Tief- und REM-Schlaf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deep and REM share"
+          }
+        }
+      }
+    },
+    "zoop.sleep.label.score" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafwert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep score"
+          }
+        }
+      }
+    },
+    "zoop.sleep.label.duration" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschlafen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time asleep"
+          }
+        }
+      }
+    },
+    "zoop.sleep.label.efficiency" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effizienz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Efficiency"
+          }
+        }
+      }
+    },
+    "zoop.sleep.label.deep" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiefschlaf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deep"
+          }
+        }
+      }
+    },
+    "zoop.sleep.label.rem" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REM"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REM"
+          }
+        }
+      }
+    },
+    "zoop.sleep.label.light" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leichtschlaf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Light"
+          }
+        }
+      }
+    },
+    "zoop.sleep.label.awake" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wach"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Awake"
+          }
+        }
+      }
+    },
+    "zoop.sleep.label.debt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafschuld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep debt"
+          }
+        }
+      }
+    },
+    "zoop.sleep.label.regularity" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regelmäßigkeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regularity"
+          }
+        }
+      }
+    },
+    "zoop.sleep.label.hrv" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV"
+          }
+        }
+      }
+    },
+    "zoop.sleep.label.rhr" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhepuls"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resting heart rate"
+          }
+        }
+      }
+    },
+    "zoop.sleep.label.resp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atemfrequenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breathing rate"
+          }
+        }
+      }
+    },
+    "zoop.sleep.label.spo2" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blutsauerstoff"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blood oxygen"
+          }
+        }
+      }
+    },
+    "zoop.sleep.label.skin" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hauttemperatur"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skin temperature"
+          }
+        }
+      }
+    },
+    "zoop.sleep.card.timeline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nachtverlauf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Night timeline"
+          }
+        }
+      }
+    },
+    "zoop.sleep.card.stages" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phasen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stages"
+          }
+        }
+      }
+    },
+    "zoop.sleep.card.rhythm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schuld und Rhythmus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Debt and rhythm"
+          }
+        }
+      }
+    },
+    "zoop.sleep.card.vitals" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nachtwerte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Night vitals"
+          }
+        }
+      }
+    },
+    "zoop.sleep.card.naps" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nickerchen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naps"
+          }
+        }
+      }
+    },
+    "zoop.sleep.card.current" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stand heute"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As of today"
+          }
+        }
+      }
+    },
+    "zoop.sleep.nav.lastNight" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Nacht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last night"
+          }
+        }
+      }
+    },
+    "zoop.sleep.nav.nightsAgo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld night ago"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld nights ago"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Vor %lld Nacht"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Vor %lld Nächten"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "zoop.sleep.nav.previous" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorherige Nacht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous night"
+          }
+        }
+      }
+    },
+    "zoop.sleep.nav.next" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächste Nacht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next night"
+          }
+        }
+      }
+    },
+    "zoop.sleep.nav.noEarlier" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine frühere Nacht gespeichert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No earlier night stored yet."
+          }
+        }
+      }
+    },
+    "zoop.sleep.edit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafzeiten bearbeiten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit sleep times"
+          }
+        }
+      }
+    },
+    "zoop.sleep.edited" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafzeiten bearbeiten (bearbeitet)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit sleep times (edited)"
+          }
+        }
+      }
+    },
+    "zoop.sleep.why" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warum dieser Schlaf?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Why this sleep?"
+          }
+        }
+      }
+    },
+    "zoop.sleep.why.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt Herzfrequenz und Bewegung hinter Beginn und Ende dieser Nacht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows the heart rate and movement behind this night's start and end"
+          }
+        }
+      }
+    },
+    "zoop.sleep.timeline.hr" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart rate"
+          }
+        }
+      }
+    },
+    "zoop.sleep.timeline.movement" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewegung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Movement"
+          }
+        }
+      }
+    },
+    "zoop.sleep.timeline.noStages" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für diese Nacht wurden keine Schlafphasen aufgezeichnet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No stage data was recorded for this night."
+          }
+        }
+      }
+    },
+    "zoop.sleep.timeline.estimated" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Phasen sind aus Herzfrequenz und Bewegung geschätzt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stages are estimated from heart rate and movement."
+          }
+        }
+      }
+    },
+    "zoop.sleep.timeline.ring" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Phasen sind die Rohklassifikation des Rings, daher mehr Wachzeit als in der Oura-App."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stages are the ring's raw classification, so expect more awake time than in the Oura app."
+          }
+        }
+      }
+    },
+    "zoop.sleep.timeline.imported" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importierte Summen; der Verlauf ist daraus gezeichnet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imported totals; the timeline is drawn from them."
+          }
+        }
+      }
+    },
+    "zoop.sleep.timeline.a11y" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hypnogramm: %1$@ Schlaf von %2$@ im Bett"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hypnogram: %1$@ asleep of %2$@ in bed"
+          }
+        }
+      }
+    },
+    "zoop.sleep.caveat.lowConfidence.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geringe Sicherheit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Low confidence"
+          }
+        }
+      }
+    },
+    "zoop.sleep.caveat.lowConfidence.text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Viel Schlaf, aber kaum Tief- oder REM-Schlaf, eher ein Schätzfehler."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lots of sleep but almost no deep or REM, which is more likely an estimate miss."
+          }
+        }
+      }
+    },
+    "zoop.sleep.caveat.incomplete.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Möglicherweise unvollständig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "May be incomplete"
+          }
+        }
+      }
+    },
+    "zoop.sleep.caveat.incomplete.text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über Nacht wurde wenig Bewegung aufgezeichnet, daher kann die Gesamtzeit zu kurz sein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Little movement was recorded overnight, so the total may read short."
+          }
+        }
+      }
+    },
+    "zoop.sleep.caveat.partial.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teilweise aufgezeichnet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partly recorded"
+          }
+        }
+      }
+    },
+    "zoop.sleep.caveat.partial.text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phasendaten decken %lld %% dieser Nacht ab."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stage data covers %lld %% of this night."
+          }
+        }
+      }
+    },
+    "zoop.sleep.nap.add" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nickerchen hinzufügen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a nap"
+          }
+        }
+      }
+    },
+    "zoop.sleep.nap.edit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nickerchen-Zeiten bearbeiten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit nap times"
+          }
+        }
+      }
+    },
+    "zoop.sleep.debt.none" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Schlafschuld: Deine letzten zwei Wochen haben deinen Bedarf von %@ gedeckt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No sleep debt: your last two weeks covered your need of %@."
+          }
+        }
+      }
+    },
+    "zoop.sleep.debt.some" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plane heute Nacht etwa %@ ein, um sie abzubauen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aim for about %@ tonight to start paying it back."
+          }
+        }
+      }
+    },
+    "zoop.sleep.debt.chart" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte 14 Nächte gegenüber deinem Bedarf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last 14 nights against your need"
+          }
+        }
+      }
+    },
+    "zoop.sleep.regularity.high" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gleichmäßige Schlafzeiten; deine Schlafmitte liegt im Schnitt bei %@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steady sleep times; your midpoint averages %@."
+          }
+        }
+      }
+    },
+    "zoop.sleep.regularity.medium" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Schlafzeiten schwanken etwas; Schlafmitte um %@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your sleep times vary somewhat; midpoint around %@."
+          }
+        }
+      }
+    },
+    "zoop.sleep.regularity.low" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Schlafzeiten schwanken stark; Schlafmitte um %@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your sleep times vary a lot; midpoint around %@."
+          }
+        }
+      }
+    },
+    "zoop.sleep.regularity.pending" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für die Regelmäßigkeit braucht es etwa eine Woche getragener Nächte."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regularity needs about a week of nights worn."
+          }
+        }
+      }
+    },
+    "zoop.sleep.meaning.unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trage das Armband nachts, um diesen Wert zu sehen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wear the strap overnight to see this value."
+          }
+        }
+      }
+    },
+    "zoop.sleep.range.reason" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Bereich ist dein gewichteter Durchschnitt der letzten Nächte ± eine Standardabweichung (Halbwertszeit 14 Nächte)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your range is your weighted average of recent nights ± one standard deviation (14-night half-life)."
+          }
+        }
+      }
+    },
+    "zoop.sleep.range.population" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bis vier Nächte aufgezeichnet sind, zeigt der Bereich typische Werte Erwachsener."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Until four nights are recorded, the range shown is a typical adult range."
+          }
+        }
+      }
+    },
+    "zoop.sleep.score.imported" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Wert dieser Nacht stammt aus deinem WHOOP-Import."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This night's score comes from your WHOOP import."
+          }
+        }
+      }
+    },
+    "zoop.sleep.insights.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was deine Nächte zeigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What your nights show"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
