@@ -258927,6 +258927,16 @@
           }
         }
       }
+    },
+    "Your strap isn't taking the alarm. Charge and reconnect it, and keep a phone alarm until it does." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Strap übernimmt den Wecker nicht. Lade ihn und verbinde ihn neu, und stell dir bis dahin einen Handywecker."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

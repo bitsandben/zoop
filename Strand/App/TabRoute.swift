@@ -83,7 +83,13 @@ extension View {
             case .hydration: HydrationView()
             case .coupled: CoupledView()
             case .breathe: BreathingView()
-            case .alarms: SmartAlarmView()
+            case .alarms:
+                // iOS: one alarm screen everywhere, the planner Home opens too.
+                #if os(iOS)
+                SleepPlannerHost()
+                #else
+                SmartAlarmView()
+                #endif
             case .sleepPlanner:
                 #if os(iOS)
                 SleepPlannerHost()

@@ -436,7 +436,7 @@ struct RootTabView: View {
                 // `AICoachEngine.pendingPrompt`); this keeps the switch exhaustive and falls back to Coach if
                 // it ever reaches the host.
                 case .coach: CoachView()
-                case .alarms: SmartAlarmView()
+                case .alarms: SleepPlannerHost()
                 }
             }
             // The Trends/Today fallbacks above emit TabRoute value pushes (#198), which need a
@@ -677,7 +677,7 @@ private enum MoreDestination: Hashable {
         case .noopLimitations: ZoopLimitationsView()
         case .backupSync:      BackupSyncView()
         case .shortcutsExport: ShortcutExportSettingsView()
-        case .alarms:          SmartAlarmView()
+        case .alarms:          SleepPlannerHost()
         case .automations:     AutomationsView()
         case .testCentre:      TestCentreView()
         case .siriShortcuts:   SiriShortcutsSettingsView()

@@ -19,6 +19,8 @@ struct SleepPlannerScreen: View {
     @AppStorage(SleepGoal.storageKey) private var goalRaw = SleepGoal.peak.rawValue
     @AppStorage(SmartWakeWindow.windowKey) private var windowMinutes = 0
     @AppStorage(PuffinExperiment.defaultsKey) private var whoop5AlarmUnlocked = false
+    /// Consecutive arms the strap answered with a different time (written by the alarm path).
+    @AppStorage("alarm.rejectStreak") private var alarmRejectStreak = 0
     @State private var editing: AlarmGroup?
     @State private var overrides = WindDownNudge.perDayWakeOverrides
 
@@ -33,6 +35,7 @@ struct SleepPlannerScreen: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 if needsUnlock { unlockBanner }
+                if behavior.smartAlarmEnabled && alarmRejectStreak >= 2 { rejectedBanner }
                 if let t = patterns.tonight { tonightCard(t) }
                 goalPicker
                 alarmCard
@@ -86,6 +89,22 @@ struct SleepPlannerScreen: View {
             }
             .buttonStyle(.plain)
         }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(StrandPalette.surfaceRaised))
+    }
+
+    /// The strap keeps storing a different time than the one sent, so its alarm will not fire.
+    private var rejectedBanner: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 18))
+                .foregroundStyle(StrandPalette.statusWarning)
+            Text("Your strap isn't taking the alarm. Charge and reconnect it, and keep a phone alarm until it does.")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(StrandPalette.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(StrandPalette.surfaceRaised))
     }
