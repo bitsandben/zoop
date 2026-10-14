@@ -367,6 +367,17 @@ final class AppModel: ObservableObject {
             // Keep the battery night-guard's learned bedtime warm off the same signal (throttled inside).
             self.refreshHabitualMidsleep()
         }.store(in: &hrCancellables)
+        // The good-morning check is held while data is in flight; run it again once the offload, the
+        // pending-history flag and the scoring pass have all settled. `receive(on:)` runs it after the
+        // values are assigned, not inside their willSet.
+        Publishers.CombineLatest3(live.$backfilling, live.$historyPendingSync, intelligence.$computing)
+            .map { !$0 && !$1 && !$2 }
+            .removeDuplicates()
+            .dropFirst()
+            .filter { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.evaluateGoodMorning() }
+            .store(in: &hrCancellables)
         // Re-arm the strap's firmware alarm once the connection has SETTLED — not the instant it (re)bonds.
         // A smart-alarm time changed while the strap was away never reached it , the send is gated on bond
         // , so the strap kept the OLD time and fired at it (#59).
@@ -2144,7 +2155,10 @@ final class AppModel: ObservableObject {
     }
 
     /// Zoop: the once-a-day good-morning notification with the night's Recovery (see GoodMorningNotifier).
+    /// Held while history is still arriving or being scored: the message posts once a day and is never
+    /// corrected, so it must not announce a Recovery computed from a partial overnight offload.
     func evaluateGoodMorning() {
+        guard !live.backfilling, !live.historyPendingSync, !intelligence.computing else { return }
         guard let row = repo.today else { return }
         let nightEnd = repo.sleeps.map(\.endTs).max()
         GoodMorningNotifier.onDayUpdate(today: Repository.localDayKey(Date()), recovery: row.recovery,
