@@ -993,61 +993,119 @@ public enum SleepStager {
     /// The run's start moved forward to HR-confirmed sleep onset, or `p.start` unchanged when the
     /// evidence for a waking lead is not clear (see the block comment above). Never returns a start
     /// that would leave the run at/below `minSleepMin`. Pure + deterministic.
-    static func hrConfirmedOnset(_ p: Period, hr: [HRSample], grav: [GravitySample]) -> Int {
-        let spanS = p.end - p.start
-        guard spanS > 0 else { return p.start }
-        let minutes = spanS / 60 + 1
-        // Per-minute HR medians across the run.
-        var hrBuckets = [[Double]](repeating: [], count: minutes)
-        for s in hr where s.ts >= p.start && s.ts <= p.end && s.bpm > 0 {
-            hrBuckets[(s.ts - p.start) / 60].append(Double(s.bpm))
-        }
-        let minuteHR: [Double?] = hrBuckets.map { $0.isEmpty ? nil : HRVAnalyzer.median($0) }
-        let covered = minuteHR.compactMap { $0 }
-        guard covered.count >= onsetTrimMinHRMinutes else { return p.start }
-        guard let level = percentile(covered, onsetTrimSleepLevelPct * 100), level > 0 else { return p.start }
-        let sleepBand = max(level * onsetTrimSleepBandMult, level + onsetTrimSleepBandMinBpm)
-        let awakeBar = max(level * onsetTrimAwakeMult, level + onsetTrimAwakeMinDeltaBpm)
+    static func hrConfirmedOnset(_ p: Period, hr: [HRSample], grav: [GravitySample],
+                                 thresholds: OnsetTrimThresholds = .standard) -> Int {
+        onsetDecision(p, hr: hr, grav: grav, thresholds: thresholds).onsetTs
+    }
 
-        // Per-minute stillness: a minute is MOVING when more than (1 − stillFraction) of its gravity
-        // deltas reach the still threshold. No gravity in a minute → still (the run was built from still
-        // gravity; silence here is a sparse stream, not movement).
+    /// Per-minute HR medians across `[start, end]` (nil where a minute has no sample).
+    static func minuteHRMedians(start: Int, end: Int, hr: [HRSample]) -> [Double?] {
+        guard end > start else { return [] }
+        let minutes = (end - start) / 60 + 1
+        var buckets = [[Double]](repeating: [], count: minutes)
+        for s in hr where s.ts >= start && s.ts <= end && s.bpm > 0 {
+            buckets[(s.ts - start) / 60].append(Double(s.bpm))
+        }
+        return buckets.map { $0.isEmpty ? nil : HRVAnalyzer.median($0) }
+    }
+
+    /// Per-minute share of gravity deltas at/above the still threshold across `[start, end]`, or nil for
+    /// a minute without gravity. `grav` must be sorted by ts.
+    static func minuteMovingFraction(start: Int, end: Int, grav: [GravitySample]) -> [Double?] {
+        guard end > start else { return [] }
+        let minutes = (end - start) / 60 + 1
         var moveCount = [Int](repeating: 0, count: minutes)
         var gravCount = [Int](repeating: 0, count: minutes)
         var prev: GravitySample? = nil
         for g in grav {
             defer { prev = g }
-            guard g.ts >= p.start && g.ts <= p.end, let q = prev else { continue }
+            guard g.ts >= start && g.ts <= end, let q = prev else { continue }
             let dx = q.x - g.x, dy = q.y - g.y, dz = q.z - g.z
-            let m = (g.ts - p.start) / 60
+            let m = (g.ts - start) / 60
             gravCount[m] += 1
             if (dx * dx + dy * dy + dz * dz).squareRoot() >= gravityStillThresholdG { moveCount[m] += 1 }
         }
-        let still: [Bool] = (0..<minutes).map { m in
-            gravCount[m] == 0 || Double(moveCount[m]) / Double(gravCount[m]) <= (1.0 - stillFraction)
+        return (0..<minutes).map { m in
+            gravCount[m] == 0 ? nil : Double(moveCount[m]) / Double(gravCount[m])
         }
+    }
 
-        let w = onsetTrimWindowMin
+    /// The whole onset rule, returning what it decided and the numbers it decided on. `hrConfirmedOnset`
+    /// reads `.onsetTs`; the Sleep screen's "Why this sleep?" sheet reads the rest through
+    /// `explainOnset`, so the explanation can never drift from the rule.
+    static func onsetDecision(_ p: Period, hr: [HRSample], grav: [GravitySample],
+                              thresholds t: OnsetTrimThresholds) -> OnsetDecision {
+        var out = OnsetDecision(onsetTs: p.start, outcome: .sparseHR)
+        guard p.end - p.start > 0 else { return out }
+        let minuteHR = minuteHRMedians(start: p.start, end: p.end, hr: hr)
+        let minutes = minuteHR.count
+        let covered = minuteHR.compactMap { $0 }
+        guard covered.count >= t.minHRMinutes else { return out }
+        guard let level = percentile(covered, t.sleepLevelPct * 100), level > 0 else { return out }
+        let sleepBand = max(level * t.sleepBandMult, level + t.sleepBandMinBpm)
+        let awakeBar = max(level * t.awakeMult, level + t.awakeMinDeltaBpm)
+        out.sleepLevelBpm = level
+        out.sleepBandBpm = sleepBand
+        out.awakeBarBpm = awakeBar
+
+        // A minute is MOVING when more than (1 − stillFraction) of its gravity deltas reach the still
+        // threshold. No gravity in a minute → still (the run was built from still gravity; silence here
+        // is a sparse stream, not movement).
+        let moving = minuteMovingFraction(start: p.start, end: p.end, grav: grav)
+        let still: [Bool] = moving.map { f in f.map { $0 <= (1.0 - stillFraction) } ?? true }
+
+        let w = t.windowMin
         let lastStart = minutes - w
-        guard lastStart > onsetTrimMinLeadMin else { return p.start }
+        out.outcome = .settledPromptly
+        guard lastStart > t.minLeadMin else { return out }
         var onsetMin: Int? = nil
         for m in 0...lastStart {
             let winHR = minuteHR[m..<(m + w)].compactMap { $0 }
             guard winHR.count * 2 >= w else { continue }
             let stillFrac = Double(still[m..<(m + w)].filter { $0 }.count) / Double(w)
-            guard stillFrac >= onsetTrimStillFrac, HRVAnalyzer.median(winHR) <= sleepBand else { continue }
+            guard stillFrac >= t.stillFrac, HRVAnalyzer.median(winHR) <= sleepBand else { continue }
             // The window's median is at the sleeping level; onset is its first minute that is itself in
             // the band (a median can qualify while the first half of the window is still awake-high).
             onsetMin = (m..<(m + w)).first { minuteHR[$0].map { $0 <= sleepBand } ?? false } ?? m
             break
         }
-        guard let onset = onsetMin, onset >= onsetTrimMinLeadMin else { return p.start }
+        guard let onset = onsetMin else { out.outcome = .neverSettled; return out }
+        out.settledTs = p.start + onset * 60
+        guard onset >= t.minLeadMin else { return out }
         // The lead must look AWAKE: dense enough HR and a median clearly above the sleeping level.
         let leadHR = minuteHR[0..<onset].compactMap { $0 }
-        guard leadHR.count * 2 >= onset, HRVAnalyzer.median(leadHR) >= awakeBar else { return p.start }
+        if !leadHR.isEmpty { out.leadMedianBpm = HRVAnalyzer.median(leadHR) }
+        guard leadHR.count * 2 >= onset, HRVAnalyzer.median(leadHR) >= awakeBar else {
+            out.outcome = .leadAtSleepingLevel
+            return out
+        }
         let newStart = p.start + onset * 60
-        guard p.end - newStart > minSleepMin * 60 else { return p.start }
-        return newStart
+        guard p.end - newStart > minSleepMin * 60 else { out.outcome = .tooShortToTrim; return out }
+        out.onsetTs = newStart
+        out.outcome = .trimmed
+        return out
+    }
+
+    /// What `onsetDecision` concluded, with the numbers behind it (bpm values nil when not reached).
+    struct OnsetDecision: Equatable {
+        var onsetTs: Int
+        var outcome: SleepOnsetEvidence.Outcome
+        var sleepLevelBpm: Double? = nil
+        var sleepBandBpm: Double? = nil
+        var awakeBarBpm: Double? = nil
+        var leadMedianBpm: Double? = nil
+        /// First minute that sat in the sleeping band inside a still, sleeping-HR window (nil if none).
+        var settledTs: Int? = nil
+    }
+
+    /// The learned personal offset applied to a run's HR-confirmed onset: moved by `offsetMin`, never
+    /// before the moment the wrist went still (`runStart`), never leaving the run at/below `minSleepMin`.
+    /// Zero offset returns `onsetTs` unchanged. Pure.
+    public static func applyingOnsetOffset(onsetTs: Int, runStart: Int, runEnd: Int, offsetMin: Int) -> Int {
+        guard offsetMin != 0 else { return onsetTs }
+        let latest = runEnd - minSleepMin * 60 - 60
+        guard latest >= onsetTs else { return max(runStart, min(onsetTs, onsetTs + offsetMin * 60)) }
+        return min(max(onsetTs + offsetMin * 60, runStart), latest)
     }
 
     // MARK: - Motion-corroborated wake (elevated-but-flat-HR nights)
@@ -1432,6 +1490,7 @@ public enum SleepStager {
                                    bandSleepState: [(ts: Int, state: Int)] = [],
                                    useSleepStagerV2: Bool = false,
                                    sleepHRBaseline: Double? = nil,
+                                   onsetTuning: SleepOnsetTuning = .standard,
                                    traceSink: ((String) -> Void)? = nil) -> [SleepSession] {
         // Sleep & Rest test mode only: when a trace is requested we MUST run the live ladder, not a
         // memoized result, so each gate verdict is emitted for THIS night. The trace is side-effect-
@@ -1442,7 +1501,8 @@ public enum SleepStager {
             return detectSleepUncached(hr: hr, rr: rr, resp: resp, gravity: gravity,
                                        tzOffsetSeconds: tzOffsetSeconds, wristOff: wristOff,
                                        bandSleepState: bandSleepState, useSleepStagerV2: useSleepStagerV2,
-                                       sleepHRBaseline: sleepHRBaseline, traceSink: traceSink)
+                                       sleepHRBaseline: sleepHRBaseline, onsetTuning: onsetTuning,
+                                       traceSink: traceSink)
         }
         // v7.0.2 perf (#707): the single heaviest analytics call — it sorts the dense full-day gravity
         // stream (~tens of thousands of samples for a worn day), builds the gravity-delta/still spine, and
@@ -1464,12 +1524,14 @@ public enum SleepStager {
             wristOff: StreamFingerprint.of(wristOff, ts: { $0.start }, quant: { $0.end }),
             band: StreamFingerprint.of(bandSleepState, ts: { $0.ts }, quant: { $0.state }),
             v2: useSleepStagerV2,
-            sleepHRBaseline: sleepHRBaseline)
+            sleepHRBaseline: sleepHRBaseline,
+            onsetTuning: onsetTuning)
         return detectSleepCache.value(key) {
             detectSleepUncached(hr: hr, rr: rr, resp: resp, gravity: gravity,
                                 tzOffsetSeconds: tzOffsetSeconds, wristOff: wristOff,
                                 bandSleepState: bandSleepState, useSleepStagerV2: useSleepStagerV2,
-                                sleepHRBaseline: sleepHRBaseline, traceSink: nil)
+                                sleepHRBaseline: sleepHRBaseline, onsetTuning: onsetTuning,
+                                traceSink: nil)
         }
     }
 
@@ -1480,6 +1542,7 @@ public enum SleepStager {
         let wristOff: StreamFingerprint; let band: StreamFingerprint
         let v2: Bool
         let sleepHRBaseline: Double?
+        let onsetTuning: SleepOnsetTuning
     }
     /// ≈ the number of distinct days in a scoring window; FIFO-evicted, holds only small session arrays.
     private static let detectSleepCache = AnalyticsMemoCache<DetectKey, [SleepSession]>(capacity: 40)
@@ -1494,6 +1557,7 @@ public enum SleepStager {
                                             bandSleepState: [(ts: Int, state: Int)],
                                             useSleepStagerV2: Bool,
                                             sleepHRBaseline: Double? = nil,
+                                            onsetTuning: SleepOnsetTuning = .standard,
                                             traceSink: ((String) -> Void)? = nil) -> [SleepSession] {
         let grav = gravity.sorted { $0.ts < $1.ts }
         if grav.count < 2 { return [] }
@@ -1659,11 +1723,19 @@ public enum SleepStager {
             }
             // HR-confirmed onset: cut a leading stretch of quiet-but-awake time (sofa, reading) whose HR
             // never came down to the night's sleeping level. No-op unless the evidence is clear.
-            let onsetStart = hrConfirmedOnset(p, hr: hrS, grav: grav)
+            // Zoop: the thresholds follow the wearer's strictness setting (`.standard` is the shipped
+            // rule), and a learned personal offset moves an OVERNIGHT onset, never before the moment the
+            // wrist went still. Both no-ops at their defaults.
+            let ruleOnset = hrConfirmedOnset(p, hr: hrS, grav: grav, thresholds: onsetTuning.thresholds)
+            let onsetStart = isDaytimeCenter(p, tzOffsetSeconds: tzOffsetSeconds)
+                ? ruleOnset
+                : applyingOnsetOffset(onsetTs: ruleOnset, runStart: p.start, runEnd: p.end,
+                                      offsetMin: onsetTuning.personalOffsetMin)
             if onsetStart != p.start {
                 traceSink?(GateTrace.runLine(index: runIndex, startTs: p.start, endTs: p.end,
                     verdict: .kept, gate: "hrOnsetTrim",
-                    detail: "trimmedMin=\((onsetStart - p.start) / 60) onsetTs=\(onsetStart)"))
+                    detail: "trimmedMin=\((onsetStart - p.start) / 60) onsetTs=\(onsetStart)"
+                        + (onsetTuning == .standard ? "" : " tuning=\(onsetTuning.signature) ruleOnsetTs=\(ruleOnset)")))
             }
             let p = Period(stage: p.stage, start: onsetStart, end: p.end)
             // Daytime false-sleep guard (#90): a window centered in the local daytime band

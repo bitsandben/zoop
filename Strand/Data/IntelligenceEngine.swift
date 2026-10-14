@@ -926,7 +926,9 @@ final class IntelligenceEngine: ObservableObject {
         // Zoop: the recipe tag rides on the watermark so an app update that changes scoring re-scores once
         // even when no new raw data landed. An empty fingerprint stays empty (the gates read it as unknown).
         let fingerprint = (try? await store.analysisFingerprint()) ?? ""
-        let wmKey = fingerprint.isEmpty ? "" : fingerprint + "|" + Self.scoringRecipe
+        // The sleep-onset tuning rides along too, so a strictness change or a newly learned offset is
+        // never skipped as "nothing changed" (empty signature for the default keeps existing watermarks).
+        let wmKey = fingerprint.isEmpty ? "" : fingerprint + "|" + Self.scoringRecipe + SleepOnsetPrefs.tuning.signature
         // #1538: read the stored watermark ONCE for both gates and the attribution line below. There is no
         // suspension point between them, so the three reads this replaces could not disagree — but the log
         // line asserting `newData` and the gate deciding whether to run must be the SAME comparison by
@@ -1165,6 +1167,10 @@ final class IntelligenceEngine: ObservableObject {
         let useSleepStagerV2Global = PuffinExperiment.experimentalSleepV2Enabled
         let useMotionAwareWakeGlobal = PuffinExperiment.motionAwareWakeEnabled
         let useAlarmAnchoredWakeGlobal = PuffinExperiment.alarmAnchoredWakeEnabled
+        // Sleep-onset strictness + the offset learned from the wearer's start-time corrections. Global,
+        // so it folds into the "scoringRecipe" signature field below (empty for the default, so an
+        // untouched install keeps its cached days) and every cached night re-detects when it moves.
+        let onsetTuningGlobal = SleepOnsetPrefs.tuning
         // Cache eligibility for the whole pass: never reuse while a Test-Centre trace is active (a cached
         // scan carries no fresh gate trace). Owner-level eligibility (registered WHOOP) is checked per day.
         // #1575: an active trace no longer disables reuse. Swift was already safe by construction here —
@@ -1221,7 +1227,7 @@ final class IntelligenceEngine: ObservableObject {
             // window of days scored by a recipe the user just turned off, with nothing to explain it.
             "\(effortMethodGlobal)",
             dayCycleMode.rawValue,
-            Self.scoringRecipe,
+            Self.scoringRecipe + (onsetTuningGlobal.signature.isEmpty ? "" : "+" + onsetTuningGlobal.signature),
         ].joined(separator: "|")
         // Drop the whole cache on a config change, then snapshot it into a Sendable `let` for the detached
         // loop (the engine is @MainActor; the loop can't touch `self`). The loop returns the updated cache
@@ -1661,7 +1667,8 @@ final class IntelligenceEngine: ObservableObject {
                                                      // ring buffer isn't flooded; every night keeps the summary.
                                                      hrvWindowDetail: dayStart == nowLocalMidnight,
                                                      deepHrvWindow: deepHrvWindow,
-                                                     effortMethod: effortMethodGlobal)
+                                                     effortMethod: effortMethodGlobal,
+                                                     onsetTuning: onsetTuningGlobal)
                 dayScoreSeconds += Date().timeIntervalSince(tScore0)
                 // #195: whole-night HRV cleaning-pipeline summary for the always-on strap log, so a "reads ~2x
                 // too high" report is triageable without the HRV test mode: RMSSD vs SDNN (rmssd >> sdnn =
