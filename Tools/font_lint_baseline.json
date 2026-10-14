@@ -1,0 +1,370 @@
+{
+ "Strand/Data/RollingStepsAverage.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Liquid/CycleScreen.swift": {
+  "font": 13,
+  "hex": 0
+ },
+ "Strand/Liquid/EnergyBankViews.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Liquid/FitnessAgeViews.swift": {
+  "font": 5,
+  "hex": 0
+ },
+ "Strand/Liquid/HomeCycleCard.swift": {
+  "font": 6,
+  "hex": 0
+ },
+ "Strand/Liquid/HomeDetectedWorkoutSheet.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Liquid/HomeMomentCard.swift": {
+  "font": 6,
+  "hex": 0
+ },
+ "Strand/Liquid/HomeMonitorTiles.swift": {
+  "font": 13,
+  "hex": 0
+ },
+ "Strand/Liquid/HomeNapDetail.swift": {
+  "font": 3,
+  "hex": 0
+ },
+ "Strand/Liquid/LiquidTodayView.swift": {
+  "font": 21,
+  "hex": 0
+ },
+ "Strand/Liquid/PatternsScreen.swift": {
+  "font": 27,
+  "hex": 0
+ },
+ "Strand/Liquid/SleepPlannerScreen.swift": {
+  "font": 24,
+  "hex": 0
+ },
+ "Strand/MenuBar/MenuBarContent.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Onboarding/OnboardingProfileSteps.swift": {
+  "font": 8,
+  "hex": 0
+ },
+ "Strand/Onboarding/OnboardingWizard.swift": {
+  "font": 19,
+  "hex": 0
+ },
+ "Strand/Screens/AddDeviceWizard.swift": {
+  "font": 5,
+  "hex": 0
+ },
+ "Strand/Screens/AppleHealthView.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/AppleWatchAboutView.swift": {
+  "font": 4,
+  "hex": 0
+ },
+ "Strand/Screens/AppleWatchSetupView.swift": {
+  "font": 5,
+  "hex": 0
+ },
+ "Strand/Screens/AutoWorkoutCard.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Screens/BackupSyncView.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Screens/BodyClockDialCard.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/BodyInsightsSection.swift": {
+  "font": 4,
+  "hex": 0
+ },
+ "Strand/Screens/BreathingView.swift": {
+  "font": 5,
+  "hex": 0
+ },
+ "Strand/Screens/ChargeBreakdownFormat.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Screens/CoachLauncherSheet.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/CoachSettingsView.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/CoachView.swift": {
+  "font": 5,
+  "hex": 0
+ },
+ "Strand/Screens/CompareView.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/CoupledView.swift": {
+  "font": 4,
+  "hex": 0
+ },
+ "Strand/Screens/DataSourcesView.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Screens/DevicesView.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Screens/FullDayChartView.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/FusedRecordView.swift": {
+  "font": 1,
+  "hex": 1
+ },
+ "Strand/Screens/HRVSnapshotView.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/HealthAlertBanner.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/HealthView.swift": {
+  "font": 7,
+  "hex": 0
+ },
+ "Strand/Screens/HowZoopWorksView.swift": {
+  "font": 3,
+  "hex": 0
+ },
+ "Strand/Screens/HydrationView.swift": {
+  "font": 5,
+  "hex": 0
+ },
+ "Strand/Screens/InsightsHubView.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Screens/InsightsView.swift": {
+  "font": 3,
+  "hex": 0
+ },
+ "Strand/Screens/JournalLogCard.swift": {
+  "font": 5,
+  "hex": 0
+ },
+ "Strand/Screens/JournalReminderCard.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Screens/LabBookView.swift": {
+  "font": 5,
+  "hex": 0
+ },
+ "Strand/Screens/LiftExercisePicking.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Screens/LiftLiveReadouts.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/LiftLogView.swift": {
+  "font": 3,
+  "hex": 0
+ },
+ "Strand/Screens/LiftProgramEditorSheet.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/LiftProgramItemSheet.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/LiftSessionBar.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Screens/LiftSessionEditSheet.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Screens/LiftSessionView.swift": {
+  "font": 5,
+  "hex": 0
+ },
+ "Strand/Screens/LiveWorkoutView.swift": {
+  "font": 3,
+  "hex": 0
+ },
+ "Strand/Screens/ManualWorkoutSheet.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/MetricExplorerView.swift": {
+  "font": 8,
+  "hex": 0
+ },
+ "Strand/Screens/NotificationSettingsView.swift": {
+  "font": 3,
+  "hex": 0
+ },
+ "Strand/Screens/RecoveryCalibrationView.swift": {
+  "font": 9,
+  "hex": 0
+ },
+ "Strand/Screens/RhythmView.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/ScoringGuideView.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Screens/ScreenScaffold.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/SettingsView.swift": {
+  "font": 21,
+  "hex": 1
+ },
+ "Strand/Screens/SkinTempCardsView.swift": {
+  "font": 6,
+  "hex": 0
+ },
+ "Strand/Screens/SleepFactorGrid.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/SleepView.swift": {
+  "font": 5,
+  "hex": 0
+ },
+ "Strand/Screens/SmartAlarmView.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Screens/StagesCard.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/StressCheckInCard.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/StressDayHero.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/StressView.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/TodayView.swift": {
+  "font": 27,
+  "hex": 0
+ },
+ "Strand/Screens/TrainingCalendarCard.swift": {
+  "font": 7,
+  "hex": 0
+ },
+ "Strand/Screens/TrendViewerCard.swift": {
+  "font": 9,
+  "hex": 0
+ },
+ "Strand/Screens/UpdatesInboxView.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "Strand/Screens/WeeklyDigestView.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/WhatsNewView.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/WorkoutDetailView.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "Strand/Screens/WorkoutSelectionScreen.swift": {
+  "font": 4,
+  "hex": 0
+ },
+ "Strand/Screens/WorkoutsView.swift": {
+  "font": 7,
+  "hex": 0
+ },
+ "Strand/Screens/ZoopLimitationsView.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "StrandTests/BodyClockDialLayoutTests.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "StrandiOS/App/CoachChatSheet.swift": {
+  "font": 22,
+  "hex": 0
+ },
+ "StrandiOS/App/CoachSettingsPage.swift": {
+  "font": 14,
+  "hex": 0
+ },
+ "StrandiOS/App/RootTabView.swift": {
+  "font": 5,
+  "hex": 0
+ },
+ "StrandiOSWidgets/CoachBriefWidget.swift": {
+  "font": 8,
+  "hex": 0
+ },
+ "StrandiOSWidgets/HeartRateWidget.swift": {
+  "font": 8,
+  "hex": 0
+ },
+ "StrandiOSWidgets/StressWidget.swift": {
+  "font": 8,
+  "hex": 0
+ },
+ "StrandiOSWidgets/ZoopWidget.swift": {
+  "font": 4,
+  "hex": 0
+ },
+ "ZoopWatch/WatchBreatheView.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "ZoopWatch/WatchGlanceView.swift": {
+  "font": 3,
+  "hex": 0
+ },
+ "ZoopWatch/WatchIntervalView.swift": {
+  "font": 1,
+  "hex": 0
+ },
+ "ZoopWatch/WatchWorkoutView.swift": {
+  "font": 4,
+  "hex": 0
+ },
+ "ZoopWatchComplications/ZoopWatchComplication.swift": {
+  "font": 4,
+  "hex": 0
+ }
+}
