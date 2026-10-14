@@ -41,6 +41,11 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
     /// non-tab screen keep their exact prior scroll behaviour.
     @Environment(\.scrollToTopSignal) private var scrollToTopSignal
 
+    /// True only for the root content of a primary tab (set by the tab shell), which hides the system bar
+    /// and still draws its large title in-content. Every other scaffold is a pushed or sheet screen and
+    /// takes its title from the navigation bar instead.
+    @Environment(\.zoopIsTabRoot) private var isTabRoot
+
     var body: some View {
         ScrollViewReader { proxy in
         ScrollView {
@@ -86,6 +91,9 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
             .ignoresSafeArea()
         }
         .modifier(RefreshableIfNeeded(onRefresh: onRefresh))
+        #if os(iOS)
+        .modifier(ScaffoldNavTitle(title: isTabRoot ? nil : title))
+        #endif
         #if os(macOS)
         // The mac window toolbar's default vibrant material washed the top of the liquid day-of-sky WHITE
         // (the scroll-under-titlebar blend). Hide it so the sky reads edge-to-edge and dark, like iOS.
@@ -108,21 +116,32 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
     @ViewBuilder private var column: some View {
         if lazy {
             LazyVStack(alignment: .leading, spacing: 20) {
-                if title != nil || subtitle != nil { header }
+                if showsHeader { header }
                 content()
             }
         } else {
             VStack(alignment: .leading, spacing: 20) {
-                if title != nil || subtitle != nil { header }
+                if showsHeader { header }
                 content()
             }
         }
     }
 
+    /// iOS pushed screens get their title from the navigation bar (`zoopPushedScreen`), so the in-content
+    /// header disappears there; a non-quiet subtitle is kept on its own. Tab roots and macOS draw it all.
+    private var showsHeader: Bool {
+        #if os(iOS)
+        if isTabRoot { return title != nil || subtitle != nil }
+        return subtitle != nil && showsSubtitle
+        #else
+        return title != nil || subtitle != nil
+        #endif
+    }
+
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                if let title {
+                if let title, titleInContent {
                     // iOS uses the redesign's large sentence-case title, matching Home's section titles.
                     // macOS keeps the 28pt face the cohesion pass locked to the liquid home.
                     #if os(iOS)
@@ -138,6 +157,14 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
             Spacer(minLength: 0)
             trailing()
         }
+    }
+
+    private var titleInContent: Bool {
+        #if os(iOS)
+        isTabRoot
+        #else
+        true
+        #endif
     }
 
     /// Taglines stay on macOS. On iOS they drop when the screen opts in, so a date or a subpage
@@ -288,3 +315,37 @@ extension EnvironmentValues {
         set { self[ScrollToTopSignalKey.self] = newValue }
     }
 }
+
+// MARK: - Pushed-screen title (Zoop 2.0 header rules)
+
+private struct TabRootKey: EnvironmentKey { static let defaultValue = false }
+
+extension EnvironmentValues {
+    /// Set to true on a primary tab's root content only (not inherited by screens pushed onto the stack).
+    var zoopIsTabRoot: Bool {
+        get { self[TabRootKey.self] }
+        set { self[TabRootKey.self] = newValue }
+    }
+}
+
+extension View {
+    /// Pushed screens carry their title in the navigation bar, inline, so no content ever sits under the
+    /// floating back button; the scroll content starts below the bar.
+    @ViewBuilder
+    func zoopPushedScreen(title: LocalizedStringKey) -> some View {
+        #if os(iOS)
+        self.navigationTitle(title).navigationBarTitleDisplayMode(.inline)
+        #else
+        self
+        #endif
+    }
+}
+
+#if os(iOS)
+private struct ScaffoldNavTitle: ViewModifier {
+    let title: LocalizedStringKey?
+    func body(content: Content) -> some View {
+        if let title { content.zoopPushedScreen(title: title) } else { content }
+    }
+}
+#endif

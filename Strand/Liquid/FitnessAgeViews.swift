@@ -220,6 +220,7 @@ struct FitnessAgeScreen: View {
                 .scrollIndicators(.hidden, axes: .vertical)
                 .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
                 .background(StrandPalette.surfaceBase.ignoresSafeArea())
+                .zoopPushedScreen(title: "Fitness Age")
             } else if loaded {
                 ScreenScaffold(title: "Fitness Age") { notReady }
             } else {
@@ -459,9 +460,6 @@ private struct FitnessAgeHero: View {
     var body: some View {
         let chrono = Double(chronoAge)
         VStack(spacing: ZoopMetrics.space1) {
-            Text("Fitness Age")
-                .font(StrandFont.ui(22, weight: .bold))
-                .foregroundStyle(StrandPalette.textPrimary)
             if let d = dayDate(day) {
                 Text("Week of \(d.formatted(.dateTime.day().month(.wide)))")
                     .font(.system(size: 14, weight: .medium))
