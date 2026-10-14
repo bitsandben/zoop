@@ -103,6 +103,9 @@ struct TrainingLoadGaugeRow: View {
                 LoadGaugeCard(title: "Cardio", unit: "Effort", reading: cardioScaled, decimals: 1)
                 if let muscular {
                     LoadGaugeCard(title: "Muscular", unit: "Sets", reading: muscular, decimals: 0)
+                } else {
+                    // Keep the cardio gauge at half width; alone at full width it read oversized.
+                    Color.clear.frame(maxWidth: .infinity, maxHeight: 1)
                 }
             }
             Text("This week compared with your own norm.")
