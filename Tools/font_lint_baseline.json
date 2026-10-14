@@ -3,6 +3,10 @@
   "font": 1,
   "hex": 0
  },
+ "Strand/Features/Settings/SettingsAppearancePage.swift": {
+  "font": 0,
+  "hex": 1
+ },
  "Strand/Liquid/CycleScreen.swift": {
   "font": 13,
   "hex": 0
@@ -238,10 +242,6 @@
  "Strand/Screens/ScreenScaffold.swift": {
   "font": 1,
   "hex": 0
- },
- "Strand/Screens/SettingsView.swift": {
-  "font": 21,
-  "hex": 1
  },
  "Strand/Screens/SkinTempCardsView.swift": {
   "font": 6,

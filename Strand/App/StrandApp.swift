@@ -10,6 +10,8 @@ struct StrandApp: App {
         // #1008: pin the pre-change Overnight-only default for existing installs before
         // anything reads it. Idempotent; a no-op on fresh installs and after the first launch.
         PuffinExperiment.migrateContinuousHrvOvernightDefault()
+        // Zoop 2.0: clear preferences whose Settings controls were removed, so none is stuck on.
+        SettingsMigration.run()
         #if DEBUG
         // DEBUG-only promo-screenshot harness: when launched with `--demo-hour <Int>`, pin the Today
         // screen to that hour's day-cycle scene + a plausible per-hour stat frame. Runs synchronously

@@ -61,6 +61,8 @@ struct StrandiOSApp: App {
         // #1008: pin the pre-change Overnight-only default for existing installs before
         // anything reads it. Idempotent; a no-op on fresh installs and after the first launch.
         PuffinExperiment.migrateContinuousHrvOvernightDefault()
+        // Zoop 2.0: clear preferences whose Settings controls were removed, so none is stuck on.
+        SettingsMigration.run()
         #if DEBUG
         // DEBUG-only promo-screenshot harness: when launched with `--demo-hour <Int>`, pin Today to that
         // hour's day-cycle scene + a per-hour stat frame. No-op (active stays nil) when the arg is absent.
@@ -556,6 +558,9 @@ enum DemoScreens {
         // + self-service pairing guidance, screenshot-able WITHOUT reproducing the bond refusal on real
         // hardware.
         case "bondrefused": return AnyView(BondRefusedDemoScreen())
+        // `settings.<page>` (profile, strap, appearance, …) opens one Settings page directly.
+        case let name where name.hasPrefix("settings."):
+            return SettingsPage(rawValue: String(name.dropFirst("settings.".count))).map { AnyView($0.destination) }
         default:         return nil
         }
     }

@@ -266096,6 +266096,1128 @@
           }
         }
       }
+    },
+    "zoop.settings.profile.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil & Ziele"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile & goals"
+          }
+        }
+      }
+    },
+    "zoop.settings.profile.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Körper, Puls, Einheiten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Body, heart rate, units"
+          }
+        }
+      }
+    },
+    "zoop.settings.strap.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbindung, Akku, Wecker"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connection, power, alarms"
+          }
+        }
+      }
+    },
+    "zoop.settings.notifications.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benachrichtigungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications"
+          }
+        }
+      }
+    },
+    "zoop.settings.notifications.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinweise und Erinnerungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alerts and reminders"
+          }
+        }
+      }
+    },
+    "zoop.settings.appearance.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Darstellung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appearance"
+          }
+        }
+      }
+    },
+    "zoop.settings.appearance.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Design, Hell & Dunkel, Symbol"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Design, light & dark, icon"
+          }
+        }
+      }
+    },
+    "zoop.settings.features.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach, Logbuch, Tracker"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach, logbook, trackers"
+          }
+        }
+      }
+    },
+    "zoop.settings.data.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sicherung, Health, Speicher"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup, Health, storage"
+          }
+        }
+      }
+    },
+    "zoop.settings.advanced.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testzentrum, Experimente"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test Centre, experiments"
+          }
+        }
+      }
+    },
+    "zoop.settings.about.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version, Hilfe, Updates"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version, help, updates"
+          }
+        }
+      }
+    },
+    "zoop.settings.more.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil, Strap, Daten und mehr"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile, strap, data and more"
+          }
+        }
+      }
+    },
+    "zoop.settings.group.body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Körper"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Body"
+          }
+        }
+      }
+    },
+    "zoop.settings.group.heartRate" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart rate"
+          }
+        }
+      }
+    },
+    "zoop.settings.group.dayAndSteps" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag & Schritte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day & steps"
+          }
+        }
+      }
+    },
+    "zoop.settings.group.capture" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV-Erfassung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV capture"
+          }
+        }
+      }
+    },
+    "zoop.settings.group.charts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagramme"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charts"
+          }
+        }
+      }
+    },
+    "zoop.settings.group.coachAndLogbook" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach & Logbuch"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach & logbook"
+          }
+        }
+      }
+    },
+    "zoop.settings.group.tracking" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tracking"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tracking"
+          }
+        }
+      }
+    },
+    "zoop.settings.group.sources" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quellen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sources"
+          }
+        }
+      }
+    },
+    "zoop.settings.group.experiments" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Experimente"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Experiments"
+          }
+        }
+      }
+    },
+    "zoop.settings.auto" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto"
+          }
+        }
+      }
+    },
+    "zoop.settings.profile.footer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daraus berechnet Zoop Herzfrequenzzonen, Kalorien und Erholungs-Baselines."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These power your heart-rate zones, calories and recovery baselines."
+          }
+        }
+      }
+    },
+    "zoop.settings.profile.photoNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optional, und es verlässt dieses Gerät nie."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optional, and it never leaves this device."
+          }
+        }
+      }
+    },
+    "zoop.settings.profile.waistNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optional: macht VO₂max genauer; in Höhe des Nabels messen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optional: makes VO₂max more accurate; measure at the navel."
+          }
+        }
+      }
+    },
+    "zoop.settings.zones.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lege fest, bei welchem Puls jede Zone beginnt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set the heart rate where each zone begins."
+          }
+        }
+      }
+    },
+    "zoop.settings.units.footer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändert nur die Anzeige; deine Daten werden immer gleich gespeichert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only changes how values are shown; your data is stored the same way."
+          }
+        }
+      }
+    },
+    "zoop.settings.dayCycle.midnight" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Tag läuft von Mitternacht bis Mitternacht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Days run from midnight to midnight."
+          }
+        }
+      }
+    },
+    "zoop.settings.dayCycle.sleep" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein neuer Tag beginnt mit deinem Hauptschlaf."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A new day starts when your main sleep begins."
+          }
+        }
+      }
+    },
+    "zoop.settings.steps.tickNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zählerimpulse pro Schritt; lass 1,0 stehen, außer deine WHOOP-5/MG-Schritte sind zu hoch."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Counter ticks per step; leave at 1.0 unless your WHOOP 5/MG steps run high."
+          }
+        }
+      }
+    },
+    "zoop.settings.steps.estimateNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WHOOP-4.0-Schritte werden aus Bewegung geschätzt und an deinem Telefon kalibriert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WHOOP 4.0 steps are estimated from motion and calibrated to your phone."
+          }
+        }
+      }
+    },
+    "zoop.settings.streak.value %lld %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld Tage · längste %2$lld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld days · longest %2$lld"
+          }
+        }
+      }
+    },
+    "zoop.settings.strap.battery %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %%"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%%"
+          }
+        }
+      }
+    },
+    "zoop.settings.strap.batteryCharging %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %% · lädt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% · charging"
+          }
+        }
+      }
+    },
+    "zoop.settings.strap.paired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Strap ist gekoppelt und sendet Daten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your strap is paired and sending data."
+          }
+        }
+      }
+    },
+    "zoop.settings.strap.liveOnly" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Live-Puls läuft, aber ohne vollständige Kopplung fehlen Bewegung, Temperatur, Sync und Wecker."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live heart rate works, but without full pairing there is no motion, temperature, sync or alarm."
+          }
+        }
+      }
+    },
+    "zoop.settings.strap.keepAwakeNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hält den Bildschirm wach, solange der Verlauf synchronisiert, und kostet etwas Akku."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keeps the screen awake while history syncs, at a small battery cost."
+          }
+        }
+      }
+    },
+    "zoop.settings.strap.continuousHrvNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überträgt ständig Schlag-zu-Schlag-Daten für eine bessere nächtliche HRV; braucht mehr Strap-Akku."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streams beat-to-beat data all the time for better overnight HRV; uses more strap battery."
+          }
+        }
+      }
+    },
+    "zoop.settings.strap.overnightNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überträgt nur in den Ruhezeiten und halbiert ungefähr den Akkuverbrauch."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only streams during quiet hours, roughly halving the battery cost."
+          }
+        }
+      }
+    },
+    "zoop.settings.appearance.motionNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hält Anzeigen und Himmel still und schaltet den Neigungssensor aus."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Holds gauges and the sky still and switches off the tilt sensor."
+          }
+        }
+      }
+    },
+    "zoop.settings.appearance.languageNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffne Zoop neu, damit eine neue Sprache gilt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reopen Zoop to apply a new language."
+          }
+        }
+      }
+    },
+    "zoop.settings.features.coachNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schaltet den KI-Coach, seine Heute-Karte und das tägliche Briefing; dein Schlüssel bleibt erhalten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turns the AI coach, its Today card and the daily brief on or off; your key is kept."
+          }
+        }
+      }
+    },
+    "zoop.settings.features.checkIn" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morgen-Check-in"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morning check-in"
+          }
+        }
+      }
+    },
+    "zoop.settings.features.logbookNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt auf Heute eine Karte, die dich ans Logbuch erinnert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows a Today card reminding you to fill in your logbook."
+          }
+        }
+      }
+    },
+    "zoop.settings.features.hydrationNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fügt ein Trink-Logbuch mit einem Tagesziel hinzu, das sich nach deiner Belastung richtet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds a drink log with a daily goal that follows your effort."
+          }
+        }
+      }
+    },
+    "zoop.settings.features.autoDetectNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlägt ein Workout vor, wenn dein Puls länger erhöht bleibt; gespeichert wird nur mit dir."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suggests saving a workout when your heart rate stays raised; nothing is saved without you."
+          }
+        }
+      }
+    },
+    "zoop.settings.features.keepScreenNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lässt den Bildschirm an, während du ein Workout aufzeichnest."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keeps the screen on while you record a workout."
+          }
+        }
+      }
+    },
+    "zoop.settings.data.backupNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import ersetzt die Daten auf diesem Gerät; die Datei ist ein unverschlüsseltes ZIP, bewahre sie sicher auf."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import replaces the data on this device; the file is an unencrypted zip, so keep it somewhere you trust."
+          }
+        }
+      }
+    },
+    "zoop.settings.advanced.rawCsvNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Rohdaten-Export schreibt die letzten 24 Stunden dekodierter Sensordaten als CSV auf dieses Gerät."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The raw export writes the last 24 hours of decoded sensor data to a CSV on this device."
+          }
+        }
+      }
+    },
+    "zoop.settings.advanced.renameNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändert den Bluetooth-Namen deines WHOOP 4.0; er gilt nach dem Neustart des Straps."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changes the Bluetooth name of your WHOOP 4.0; it applies after the strap restarts."
+          }
+        }
+      }
+    },
+    "zoop.settings.advanced.experimentsNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andere Arten, deine gespeicherten Daten auszuwerten; sie senden nie etwas an den Strap."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alternative ways of scoring your stored data; they never send anything to the strap."
+          }
+        }
+      }
+    },
+    "zoop.settings.exp.sleepV2Note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Standard-Einteilung; aus nutzt für künftige Nächte die ältere V1."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The default stager; off falls back to the older V1 for future nights."
+          }
+        }
+      }
+    },
+    "zoop.settings.exp.motionWakeNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Macht Wachphasen ohne Aufstehen wieder zu Leichtschlaf."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turns wake blocks without getting up back into light sleep."
+          }
+        }
+      }
+    },
+    "zoop.settings.exp.alarmWakeNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beendet die Nacht, wenn dein Puls nach dem Strap-Wecker ansteigt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ends the night when your heart rate rises after the strap alarm."
+          }
+        }
+      }
+    },
+    "zoop.settings.exp.banisterNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewertet Belastung exponentiell, damit kurze harte Sätze mehr zählen; berechnet den Verlauf neu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scores Effort on an exponential curve so short, hard sets count more; re-scores your history."
+          }
+        }
+      }
+    },
+    "zoop.settings.exp.hrvWindowNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Tiefschlaf ergibt niedrigere Werte wie bei WHOOP; ein Wechsel berechnet die letzten Nächte neu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deep sleep only reads lower and matches WHOOP; switching re-scores recent nights."
+          }
+        }
+      }
+    },
+    "zoop.settings.exp.spo2Note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt eine ungeprüfte SpO₂-Schätzung des Straps, wenn kein kalibrierter Wert vorliegt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows an unverified strap SpO₂ estimate when no calibrated reading exists."
+          }
+        }
+      }
+    },
+    "zoop.settings.exp.ouraAllDayNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lässt deinen Ring den ganzen Tag den Puls messen, auf Kosten des Ring-Akkus."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keeps your ring measuring heart rate through the day, at a ring battery cost."
+          }
+        }
+      }
+    },
+    "zoop.settings.exp.liveSessionsNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geführte Workouts, bei denen der Strap nur zum Korrigieren vibriert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guided workouts where the strap only buzzes to correct course."
+          }
+        }
+      }
+    },
+    "zoop.settings.about.version" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version"
+          }
+        }
+      }
+    },
+    "zoop.settings.about.autoCheckNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einmal am Tag fragt Zoop GitHub nach der neuesten Versionsnummer; über dich wird nichts gesendet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once a day Zoop asks GitHub for the latest version number; nothing about you is sent."
+          }
+        }
+      }
+    },
+    "zoop.settings.about.sideloadNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Build ist per Sideload installiert und muss mit einer kostenlosen Apple-ID alle 7 Tage neu signiert werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This build is sideloaded and needs re-signing every 7 days on a free Apple ID."
+          }
+        }
+      }
+    },
+    "zoop.settings.about.unlockNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entsperre dein iPhone nach einem Neustart einmal, damit Zoop neue Daten schreiben kann."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After a restart, unlock your iPhone once so Zoop can write new data."
+          }
+        }
+      }
+    },
+    "zoop.settings.about.backgroundNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS kann Bluetooth im Hintergrund pausieren, lass Zoop für den ersten langen Sync geöffnet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS may pause Bluetooth in the background, so keep Zoop open for a long first sync."
+          }
+        }
+      }
+    },
+    "zoop.settings.about.disclaimer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoop ist ein unabhängiges Projekt, nicht die WHOOP-App und kein Medizinprodukt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoop is an independent project, not the WHOOP app, and not a medical device."
+          }
+        }
+      }
+    },
+    "zoop.settings.profile.waist" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taille"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waist"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
