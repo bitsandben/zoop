@@ -482,7 +482,7 @@ struct RootTabView: View {
                     withAnimation(Self.sheetEase) { quickAction = picked }
                 }
             }
-            .presentationDetents([.height(404)])
+            .presentationDetents([.height(458)])
             .opaqueSheetBackground()
             .presentationDragIndicator(.hidden)
         case .live:
@@ -493,6 +493,8 @@ struct RootTabView: View {
             quickScreen(LogbookView(onClose: { quickAction = nil }))
         case .breathe:
             quickScreen(BreathingView())
+        case .fasting:
+            quickScreen(FastingScreen())
         case .nap:
             // The Sleep tab's own "Add a nap" editor, seeded with a half hour that ended a few minutes ago.
             let end = Int(Date().timeIntervalSince1970) - 10 * 60
@@ -788,7 +790,7 @@ private struct MoreDeviceHeader: View {
 /// The destinations the centre FAB can present. `.menu` is the action sheet itself; the rest
 /// route to existing screens. `Identifiable` so it drives `.sheet(item:)`.
 private enum QuickAction: Int, Identifiable {
-    case menu, live, workout, journal, breathe, nap
+    case menu, live, workout, journal, breathe, nap, fasting
     var id: Int { rawValue }
 }
 
@@ -821,6 +823,7 @@ private struct QuickActionSheet: View {
                 row("Fill in logbook", icon: "square.and.pencil", tint: StrandPalette.accent) { onPick(.journal) }
                 row("Breathe", icon: "wind", tint: StrandPalette.restColor) { onPick(.breathe) }
                 row("Add nap", icon: "bed.double.fill", tint: StrandPalette.restColor) { onPick(.nap) }
+                row("zoop.fasting.title", icon: "timer", tint: StrandPalette.metricCyan) { onPick(.fasting) }
             }
             .padding(.horizontal, 16)
 

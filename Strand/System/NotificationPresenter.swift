@@ -41,6 +41,7 @@ final class NotificationPresenter: NSObject, UNUserNotificationCenterDelegate {
         // The detected workout opens its Save / Not a workout sheet on Home; the move reminder opens Home.
         case id == "auto-workout": return .autoWorkout
         case id == "inactivity-nudge": return .home
+        case id.hasPrefix("fasting-goal"): return .route(.fasting)
         default: return nil
         }
     }

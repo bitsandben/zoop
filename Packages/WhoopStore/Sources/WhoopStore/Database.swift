@@ -1103,6 +1103,31 @@ extension WhoopStore {
         migrator.registerMigration("v47-rr-whoop5-fill") { db in
             try db.execute(sql: WhoopStore.whoop5RrFillMigrationSQL)
         }
+        // v48-fasting-session (Zoop 2.0 WP-10): user-logged fasting windows. Additive, one new table.
+        //
+        //   • Not deviceId-keyed: a fast is the person's, not a strap's, so switching or deleting a strap
+        //     must not take the fasting log with it (the coachMessage precedent).
+        //   • `endTs` NULL means the fast is running. At most one open row is an app-level rule
+        //     (`FastingEngine.validate` rejects overlaps), not a schema constraint, so a backdated edit
+        //     can be validated as a whole before it is written.
+        //   • `goalSec` is the goal when the fast started, so a later plan change does not rewrite
+        //     whether an old fast met its goal. `planId` is the `FastingPlan.id` it came from.
+        //   • `source` records the entry path ("app" | "shortcut") for diagnostics only.
+        //
+        // iOS-only by fork scope: pinned in schema_oracle.json as `ios_only`, no Room twin.
+        migrator.registerMigration("v48-fasting-session") { db in
+            try db.create(table: "fastingSession", options: [.ifNotExists]) { t in
+                t.column("id", .text).primaryKey()
+                t.column("startTs", .integer).notNull()     // unix seconds
+                t.column("endTs", .integer)                 // unix seconds; NULL while running
+                t.column("goalSec", .integer).notNull()
+                t.column("planId", .text).notNull()
+                t.column("note", .text)
+                t.column("source", .text).notNull()
+            }
+            try db.create(index: "idx_fastingSession_startTs", on: "fastingSession",
+                          columns: ["startTs"], options: [.ifNotExists])
+        }
         return migrator
     }
 }
