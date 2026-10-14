@@ -307,7 +307,7 @@ struct CoupledView: View {
                         Group {
                             if let s = dayStrain21 {
                                 CountUpText(value: s,
-                                            format: { String(format: "%.1f", $0) },
+                                            format: { ZoopNumber.decimal($0, digits: 1) },
                                             font: StrandFont.number(34),
                                             color: .white)
                             } else {

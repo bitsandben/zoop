@@ -209,9 +209,9 @@ struct HRVSnapshotView: View {
         case .idle:
             return "—"
         case .capturing:
-            return runningRMSSD.map { String(format: "%.0f", $0) } ?? "…"
+            return runningRMSSD.map { ZoopNumber.decimal($0, digits: 0) } ?? "…"
         case .done:
-            return result?.rmssd.map { String(format: "%.0f", $0) } ?? "—"
+            return result?.rmssd.map { ZoopNumber.decimal($0, digits: 0) } ?? "—"
         }
     }
 

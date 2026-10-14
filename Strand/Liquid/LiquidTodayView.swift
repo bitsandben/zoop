@@ -1877,7 +1877,7 @@ struct LiquidTodayView: View {
         let separator: Character? = displayValue.first(where: { $0 == "." || $0 == "," })
         let number: String
         if let separator, abs(mean) < 100 {
-            number = String(format: "%.1f", mean).replacingOccurrences(of: ".", with: String(separator))
+            number = ZoopNumber.decimal(mean, digits: 1).replacingOccurrences(of: ".", with: String(separator))
         } else {
             number = Int(mean.rounded()).formatted(.number.locale(AppLanguage.activeLocale))
         }

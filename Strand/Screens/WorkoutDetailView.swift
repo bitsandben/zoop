@@ -685,7 +685,7 @@ struct WorkoutDetailView: View {
                         VStack(spacing: 0) {
                             // The session's Effort contribution ticks up to its value — the Zoop signature.
                             CountUpText(value: displayValue,
-                                        format: { String(format: "%.1f", $0) },
+                                        format: { ZoopNumber.decimal($0, digits: 1) },
                                         font: StrandFont.rounded(28),
                                         color: StrandPalette.textPrimary)
                                 .shadow(color: StrandPalette.shadow(0.5), radius: 5, y: 1)

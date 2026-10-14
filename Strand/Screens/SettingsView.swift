@@ -611,7 +611,7 @@ struct SettingsView: View {
                 // variable increment (fine near 1.0, coarse up top) so high values stay reachable.
                 FormRow(label: "Step calibration") {
                     HStack(spacing: 10) {
-                        Text(String(format: "%.1f", profile.stepTicksPerStep))
+                        Text(ZoopNumber.decimal(profile.stepTicksPerStep, digits: 1))
                             .font(StrandFont.bodyNumber)
                             .foregroundStyle(StrandPalette.textPrimary)
                             .frame(minWidth: 44, alignment: .trailing)
@@ -621,7 +621,7 @@ struct SettingsView: View {
                             profile.stepTicksPerStep = ProfileStore.steppedStepScale(profile.stepTicksPerStep, up: false)
                         }
                             .labelsHidden()
-                            .accessibilityLabel("Step calibration, \(String(format: "%.1f", profile.stepTicksPerStep)) counter ticks per step")
+                            .accessibilityLabel("Step calibration, \(ZoopNumber.decimal(profile.stepTicksPerStep, digits: 1)) counter ticks per step")
                     }
                 }
                 Text("Counter ticks per step. Leave at 1.0 unless your steps run high. On a WHOOP 5/MG they can run very high (10× or more), so this goes up to 30. Walk a known 1,000 steps and divide Zoop's count by the real count to get your value.")
@@ -875,7 +875,7 @@ struct SettingsView: View {
         )
         return HStack(spacing: ZoopMetrics.space2) {
             HStack(alignment: .firstTextBaseline, spacing: ZoopMetrics.space1) {
-                Text(String(format: "%.0f", lb.wrappedValue))
+                Text(ZoopNumber.decimal(lb.wrappedValue, digits: 0))
                     .font(StrandFont.bodyNumber)
                     .foregroundStyle(StrandPalette.textPrimary)
                     .frame(width: ZoopMetrics.formValueColumnWidth, alignment: .center)
@@ -919,7 +919,7 @@ struct SettingsView: View {
         let set = waistCm.wrappedValue > 0
         return HStack(spacing: ZoopMetrics.space2) {
             HStack(alignment: .firstTextBaseline, spacing: ZoopMetrics.space1) {
-                Text(set ? String(format: "%.0f", waistCm.wrappedValue) : String(localized: "Not set"))
+                Text(set ? ZoopNumber.decimal(waistCm.wrappedValue, digits: 0) : String(localized: "Not set"))
                     .font(StrandFont.bodyNumber)
                     .foregroundStyle(set ? StrandPalette.textPrimary : StrandPalette.textTertiary)
                     .frame(minWidth: ZoopMetrics.formValueColumnWidth, alignment: .center)
@@ -3365,7 +3365,7 @@ struct StepsCalibrationSheet: View {
                     let coeff = profile.stepsManualCoefficient > 0
                         ? profile.stepsManualCoefficient : profile.stepsCalibrationCoefficient
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text(String(format: "%.1f", coeff))
+                        Text(ZoopNumber.decimal(coeff, digits: 1))
                             .font(StrandFont.number(30))
                             .foregroundStyle(StrandPalette.accent)
                         Text("steps per motion unit")
@@ -3454,7 +3454,7 @@ struct StepsCalibrationSheet: View {
                             Text(Self.grouped(row.actual))
                                 .font(StrandFont.captionNumber).foregroundStyle(StrandPalette.textPrimary)
                                 .frame(width: 64, alignment: .trailing)
-                            Text(String(format: "%+.0f%%", row.errorPct))
+                            Text(String(format: "%+.0f%%", locale: AppLanguage.activeLocale, row.errorPct))
                                 .font(StrandFont.captionNumber)
                                 .foregroundStyle(abs(row.errorPct) <= 15
                                                  ? StrandPalette.metricCyan : StrandPalette.statusWarning)
@@ -3485,7 +3485,7 @@ struct StepsCalibrationSheet: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(draftManual > 0 ? String(format: "%.1f", draftManual) : String(localized: "Auto"))
+                    Text(draftManual > 0 ? ZoopNumber.decimal(draftManual, digits: 1) : String(localized: "Auto"))
                         .font(StrandFont.number(24))
                         .foregroundStyle(draftManual > 0 ? StrandPalette.accent : StrandPalette.textSecondary)
                     Text(draftManual > 0 ? "steps / motion unit" : "fit from your phone")
@@ -3506,7 +3506,7 @@ struct StepsCalibrationSheet: View {
                 }
                 .tint(StrandPalette.accent)
                 .accessibilityValue(draftManual > 0
-                                    ? "\(String(format: "%.1f", draftManual)) steps per motion unit"
+                                    ? "\(ZoopNumber.decimal(draftManual, digits: 1)) steps per motion unit"
                                     : "Automatic")
 
                 // Live preview: a typical recent day re-estimated at the draft coefficient.

@@ -525,7 +525,7 @@ private struct DevicesContent: View {
         }
     }
 
-    private func compareValue(_ v: Double?) -> String { v.map { String(format: "%.0f", $0) } ?? "—" }
+    private func compareValue(_ v: Double?) -> String { v.map { ZoopNumber.decimal($0, digits: 0) } ?? "—" }
 
     // Copy held in LocalizedStringKey vars (like `metricLabel`) — still localizable, but not scanned as an
     // inline Text literal by the i18n gate.

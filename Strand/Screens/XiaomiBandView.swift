@@ -163,7 +163,7 @@ struct XiaomiBandView: View {
             .chart("Resting heart rate", "rhr", roseGradient, 40...90, { "\(Int($0.rounded())) bpm" }),
             .chart("Average heart rate", "avg_hr", roseGradient, 50...110, { "\(Int($0.rounded())) bpm" }),
             .chart("Peak heart rate", "max_hr", roseGradient, 80...170, { "\(Int($0.rounded())) bpm" }),
-            .chart("Blood oxygen", "spo2", cyanGradient, 90...100, { String(format: "%.0f%%", $0) }),
+            .chart("Blood oxygen", "spo2", cyanGradient, 90...100, { String(format: "%.0f%%", locale: AppLanguage.activeLocale, $0) }),
             .hypnogram,
             .header("Sleep", "Rest"),
             .chart("Time asleep", "sleep_total_min", purpleGradient, 240...600, { durationString($0) }),
@@ -349,7 +349,7 @@ struct XiaomiBandView: View {
             statTile(key: "sleep_score", label: "Sleep score", accent: StrandPalette.accent,
                      fmt: { "\(Int($0.rounded()))" })
             statTile(key: "spo2", label: "Blood oxygen", accent: StrandPalette.metricCyan, unit: "%",
-                     fmt: { String(format: "%.0f", $0) })
+                     fmt: { ZoopNumber.decimal($0, digits: 0) })
             statTile(key: "stress", label: "Stress avg", accent: StrandPalette.metricAmber,
                      aggregate: .mean, fmt: { "\(Int($0.rounded()))" })
             statTile(key: "avg_hr", label: "Avg HR", accent: StrandPalette.metricRose, unit: "bpm",

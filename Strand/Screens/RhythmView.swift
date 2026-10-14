@@ -609,7 +609,7 @@ struct RhythmView: View {
     /// A 0…1 fraction rendered as a whole-number percent (normalised RMSSD / ectopic fraction).
     private func percent(_ value: Double?) -> String {
         guard let value else { return "—" }
-        return String(format: "%.0f%%", value * 100)
+        return String(format: "%.0f%%", locale: AppLanguage.activeLocale, value * 100)
     }
 }
 

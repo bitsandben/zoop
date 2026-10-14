@@ -418,7 +418,7 @@ struct TrendsReportPage: View {
     }
 
     func round1Text(_ x: Double) -> String {
-        String(format: "%.1f", (x * 10).rounded() / 10)
+        String(format: "%.1f", locale: AppLanguage.activeLocale, (x * 10).rounded() / 10)
     }
 
     /// "Jun 15" from "2026-06-15", via a pure ISO parse (no Calendar/locale). Reuses the

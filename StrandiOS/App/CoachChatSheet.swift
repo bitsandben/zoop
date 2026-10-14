@@ -597,7 +597,7 @@ private struct CoachSetup: View {
                         .font(.system(size: 30, weight: .bold))
                         .foregroundStyle(StrandPalette.textPrimary)
                     Text(picked == nil
-                         ? "Coach runs on an AI provider with your own key. The key stays in this phone's Keychain."
+                         ? String(localized: "Coach runs on an AI provider with your own key. The key stays in this phone's Keychain.")
                          : keyHint)
                         .font(StrandFont.body)
                         .foregroundStyle(StrandPalette.textSecondary)
@@ -665,11 +665,8 @@ private struct CoachSetup: View {
                         Spacer()
                         if p == .openRouter {
                             Text("Free")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(StrandPalette.goldDeepText)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Capsule().fill(StrandPalette.accent))
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(StrandPalette.accent)
                         }
                         Image(systemName: "chevron.right")
                             .font(.system(size: 13, weight: .semibold))

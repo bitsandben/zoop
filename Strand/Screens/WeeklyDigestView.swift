@@ -469,7 +469,7 @@ struct WeeklyDigestContent: View {
         }
     }
 
-    private func fmt1(_ x: Double) -> String { String(format: "%.1f", x) }
+    private func fmt1(_ x: Double) -> String { ZoopNumber.decimal(x, digits: 1) }
 }
 
 // MARK: - Rough-comparison chip contract (#463, testable mirror of Android)

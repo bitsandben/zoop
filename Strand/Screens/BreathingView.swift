@@ -441,7 +441,7 @@ private struct BreathingContent: View {
     }
 
     private static func secondsText(_ ms: Int) -> String {
-        ms % 1000 == 0 ? "\(ms / 1000)" : String(format: "%.1f", Double(ms) / 1000.0)
+        ms % 1000 == 0 ? "\(ms / 1000)" : String(format: "%.1f", locale: AppLanguage.activeLocale, Double(ms) / 1000.0)
     }
 
     // MARK: - Duration
@@ -696,13 +696,13 @@ private struct BreathingContent: View {
                         caption: live.worn ? String(localized: "Live") : String(localized: "Strap not worn"))
 
             readoutTile(label: String(localized: "HRV (RMSSD)"),
-                        value: rmssd.map { String(format: "%.0f", $0) } ?? "—",
+                        value: rmssd.map { ZoopNumber.decimal($0, digits: 0) } ?? "—",
                         unit: "ms",
                         accent: StrandPalette.metricPurple,
                         caption: rrBuffer.isEmpty ? String(localized: "Waiting for R-R") : String(localized: "Last \(rrBuffer.count) beats"))
 
             readoutTile(label: String(localized: "Pace"),
-                        value: selectedBpm > 0 ? String(format: "%.1f", selectedBpm) : "—",
+                        value: selectedBpm > 0 ? ZoopNumber.decimal(selectedBpm, digits: 1) : "—",
                         unit: "br/min",
                         accent: StrandPalette.restBright,
                         caption: paceCaption)
@@ -714,12 +714,12 @@ private struct BreathingContent: View {
             let cycle = 60.0 / (lockedBpm ?? ResonanceEngine.fallbackBpm)
             let inn = cycle * BreathPacer.defaultInhaleFraction
             let out = cycle * (1 - BreathPacer.defaultInhaleFraction)
-            return String(format: "%.0f / %.0fs", inn, out)
+            return String(format: "%.0f / %.0fs", locale: AppLanguage.activeLocale, inn, out)
         }
         guard let proto = selectedProtocol, !proto.stages.isEmpty else {
             return isGuided ? String(localized: "Guided timer") : "—"
         }
-        let parts = proto.stages.map { String(format: "%.1f", Double($0.durationMs) / 1000.0) }
+        let parts = proto.stages.map { String(format: "%.1f", locale: AppLanguage.activeLocale, Double($0.durationMs) / 1000.0) }
         return parts.joined(separator: " · ") + "s"
     }
 
@@ -878,7 +878,7 @@ private struct BreathingContent: View {
         let mean = sessionRmssdSum / Double(sessionRmssdCount)
         let pct = Int(((mean - base) / base * 100).rounded())
         let pctStr = String(format: "%+d%%", pct)
-        let peakStr = String(format: "%.0f", sessionRmssdPeak)
+        let peakStr = ZoopNumber.decimal(sessionRmssdPeak, digits: 0)
         let core = String(localized: "\(pctStr) vs start · peak \(peakStr) ms")
         endedOutcome = core
         lastStoredOutcome = core
@@ -1403,7 +1403,7 @@ private struct ResonanceModeView: View {
 
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     CountUpText(value: result.lockedBpm,
-                                format: { String(format: "%.1f", $0) },
+                                format: { ZoopNumber.decimal($0, digits: 1) },
                                 font: StrandFont.number(40),
                                 color: StrandPalette.restBright)
                     Text("br/min")
@@ -1439,7 +1439,7 @@ private struct ResonanceModeView: View {
                 }
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     CountUpText(value: bpm,
-                                format: { String(format: "%.1f", $0) },
+                                format: { ZoopNumber.decimal($0, digits: 1) },
                                 font: StrandFont.number(34),
                                 color: StrandPalette.restBright)
                     Text("br/min")
@@ -1464,7 +1464,7 @@ private struct ResonanceModeView: View {
             Text("RSA RESPONSE BY PACE").strandOverline()
             ForEach(scores, id: \.bpm) { s in
                 HStack(spacing: 8) {
-                    Text(String(format: "%.1f", s.bpm))
+                    Text(ZoopNumber.decimal(s.bpm, digits: 1))
                         .font(StrandFont.captionNumber)
                         .foregroundStyle(StrandPalette.textSecondary)
                         .frame(width: 34, alignment: .leading)
@@ -1473,7 +1473,7 @@ private struct ResonanceModeView: View {
                     LiquidTube(frac: (s.rsaAmplitude ?? 0) / max(maxRsa, 0.0001),
                                tint: StrandPalette.restBright.opacity(s.scored ? 1 : 0.35),
                                height: 8, animated: false)
-                    Text(s.rsaAmplitude.map { String(format: "%.1f", $0) } ?? "—")
+                    Text(s.rsaAmplitude.map { ZoopNumber.decimal($0, digits: 1) } ?? "—")
                         .font(StrandFont.captionNumber)
                         .foregroundStyle(s.scored ? StrandPalette.textSecondary : StrandPalette.textTertiary)
                         .frame(width: 34, alignment: .trailing)
@@ -1487,8 +1487,8 @@ private struct ResonanceModeView: View {
 
     private func rsaTextSummary(_ scores: [ResonanceEngine.PaceScore]) -> String {
         scores.map { s in
-            let v = s.rsaAmplitude.map { String(format: "%.1f", $0) } ?? String(localized: "unscored")
-            return String(localized: "\(String(format: "%.1f", s.bpm)) breaths per minute: \(v)")
+            let v = s.rsaAmplitude.map { ZoopNumber.decimal($0, digits: 1) } ?? String(localized: "unscored")
+            return String(localized: "\(ZoopNumber.decimal(s.bpm, digits: 1)) breaths per minute: \(v)")
         }.joined(separator: ", ")
     }
 
@@ -1606,7 +1606,7 @@ private struct CalmModeView: View {
                         Text("target")
                             .font(StrandFont.footnote)
                             .foregroundStyle(StrandPalette.textTertiary)
-                        Text(controller.calmTargetBpm.map { String(format: "%.0f", $0) } ?? "—")
+                        Text(controller.calmTargetBpm.map { ZoopNumber.decimal($0, digits: 0) } ?? "—")
                             .font(StrandFont.number(22))
                             .foregroundStyle(StrandPalette.restBright)
                     }
