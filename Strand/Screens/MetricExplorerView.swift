@@ -303,7 +303,7 @@ enum ExploreRangeGating {
 /// One windowed reading behind a vital's detail chart: its day ("YYYY-MM-DD"), the value, and the RAW
 /// source id it came from (a strap id, the "-zoop" computed sibling, "apple-health", or "health-connect").
 /// The readings TABLE and the "N readings" caption both derive from this ONE windowed list, so they can
-/// never disagree; the raw source maps to a human label via `TodayView.provenanceDisplayLabel` — the SAME
+/// never disagree; the raw source maps to a human label via `TodayLogic.provenanceDisplayLabel` — the SAME
 /// resolver Today uses, so no source vocabulary is invented. Swift twin of Android's `VitalReading`.
 struct VitalReading: Equatable {
     let day: String
@@ -352,7 +352,7 @@ let vo2MaxAttributionPrefix = "vo2max-estimator:"
 /// an Oura-only or WHOOP-4.0-only install with the toggle ON saw nothing here past the last calibrated
 /// import, even though the Key Metrics tile right next to it showed a real number). Same
 /// prefix-token idiom as `vo2MaxAttributionSource` just below, so the existing readings-table plumbing
-/// needs no new machinery — only `TodayView.provenanceDisplayLabel` gains one more case.
+/// needs no new machinery — only `TodayLogic.provenanceDisplayLabel` gains one more case.
 let spo2CandidateAttributionSource = "spo2-candidate-estimate"
 
 /// A display-source token that keeps the existing readings-table plumbing while naming the estimator.
@@ -406,7 +406,7 @@ struct VitalReadingRow: Equatable {
 /// the "N readings" caption shows, guaranteeing the two never drift. Each row pairs the reading's DAY
 /// (these vital series carry one aggregated reading per night, so a row's "time" is its localized calendar
 /// date; the date always shows since a charted window spans 2+ days) with the model's own `format`ted
-/// value + `unit` and the source label from `TodayView.provenanceDisplayLabel` (a strap id → "Whoop", its
+/// value + `unit` and the source label from `TodayLogic.provenanceDisplayLabel` (a strap id → "Whoop", its
 /// "-zoop" sibling → "On-device", "apple-health" → "Apple Health", "health-connect" → "Health Connect").
 /// `strapDeviceId` is the active strap id the resolver needs. Byte-identical projection to Android's
 /// `vitalReadingRows`.
@@ -417,7 +417,7 @@ func vitalReadingRows(readings: [VitalReading], unit: String, strapDeviceId: Str
         return VitalReadingRow(
             time: vitalReadingDateLabel(reading.day, now: now),
             value: unit.isEmpty ? value : "\(value) \(unit)",
-            source: TodayView.provenanceDisplayLabel(rawSource: reading.source, deviceId: strapDeviceId)
+            source: TodayLogic.provenanceDisplayLabel(rawSource: reading.source, deviceId: strapDeviceId)
         )
     }
 }
@@ -1722,7 +1722,7 @@ struct MetricDetailView: View {
     /// The per-reading breakdown below the stats, so the provenance behind the trend is visible — whether
     /// each reading came from the WHOOP strap, a Health Connect / Apple Health import, or the on-device
     /// pipeline — not just the "N readings" caption. Rows derive from the SAME `windowed` slice the caption
-    /// counts (so the two never disagree), NEWEST FIRST, and reuse `TodayView.provenanceDisplayLabel` for
+    /// counts (so the two never disagree), NEWEST FIRST, and reuse `TodayLogic.provenanceDisplayLabel` for
     /// the source words. Swift twin of Android's `VitalReadingsTable`.
     @ViewBuilder
     private func readingsTable(windowed: [(day: String, value: Double)]) -> some View {

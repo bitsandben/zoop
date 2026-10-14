@@ -19,32 +19,8 @@
   "font": 5,
   "hex": 0
  },
- "Strand/Liquid/HomeCycleCard.swift": {
-  "font": 6,
-  "hex": 0
- },
- "Strand/Liquid/HomeDetectedWorkoutSheet.swift": {
-  "font": 2,
-  "hex": 0
- },
- "Strand/Liquid/HomeMomentCard.swift": {
-  "font": 6,
-  "hex": 0
- },
- "Strand/Liquid/HomeMonitorTiles.swift": {
-  "font": 13,
-  "hex": 0
- },
- "Strand/Liquid/HomeNapDetail.swift": {
-  "font": 3,
-  "hex": 0
- },
- "Strand/Liquid/LiquidTodayView.swift": {
-  "font": 21,
-  "hex": 0
- },
  "Strand/Liquid/PatternsScreen.swift": {
-  "font": 27,
+  "font": 26,
   "hex": 0
  },
  "Strand/Liquid/SleepPlannerScreen.swift": {

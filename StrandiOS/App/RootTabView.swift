@@ -79,17 +79,11 @@ struct RootTabView: View {
     @State private var tabPaths: [NavigationPath] = Array(repeating: NavigationPath(), count: IOSTab.count)
     /// One scroll-to-top token per tab. Bumped when the user re-taps the active tab while it's ALREADY
     /// at its root — the other half of the iOS convention #197/#198 left unserved (an at-root re-tap was
-    /// a no-op). Threaded into each tab's root via `\.scrollToTopSignal`; ScreenScaffold / LiquidTodayView
+    /// a no-op). Threaded into each tab's root via `\.scrollToTopSignal`; ScreenScaffold / TodayScreen
     /// scroll to their top anchor when their tab's token changes.
     @State private var scrollTop: [Int] = Array(repeating: 0, count: IOSTab.count)
-    /// V8 liquid redesign is the default Today; the Settings toggle lets a user fall back to the classic
-    /// Today if they prefer it (keyed identically to the SettingsView toggle). Default ON.
-    @AppStorage("zoop.liquidTodayEnabled") private var liquidTodayEnabled = true
-
-    /// The Today tab root, honouring the liquid/classic preference.
-    @ViewBuilder private var todayTabRoot: some View {
-        if liquidTodayEnabled { LiquidTodayView() } else { TodayView() }
-    }
+    /// The Today tab root.
+    private var todayTabRoot: some View { TodayScreen() }
 
     /// Native tab selection binding. SwiftUI sends taps on the already-selected item through the
     /// setter, which lets the system tab bar retain the app's refresh / pop-to-root / scroll-to-top
@@ -435,7 +429,7 @@ struct RootTabView: View {
                 case .activeWorkout: LiveView()
                 // .liveSession routes to the Today tab (handled above — its Start entry owns the cover);
                 // this keeps the switch exhaustive and falls back to Today if it ever reaches the host.
-                case .liveSession: LiquidTodayView()
+                case .liveSession: TodayScreen()
                 // .journal opens through the quick-action Logbook sheet (handled above); this keeps the
                 // switch exhaustive and falls back to the Logbook if it ever reaches here.
                 case .journal: LogbookView(onClose: { routedPillar = nil })
@@ -574,7 +568,7 @@ struct RootTabView: View {
                 .tabRouteDestinations()
         }
         // Drive this tab's root scroll-to-top on an at-root re-tap (#198 follow-up); read by ScreenScaffold
-        // / LiquidTodayView inside. Only THIS tab's token changes on its reselect, so the others don't scroll.
+        // / TodayScreen inside. Only THIS tab's token changes on its reselect, so the others don't scroll.
         .environment(\.scrollToTopSignal, scrollSignal)
     }
 

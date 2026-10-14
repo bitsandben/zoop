@@ -296,7 +296,7 @@ struct DataPendingNote: View {
 
 /// An incrementing token the iOS tab shell bumps when the user re-taps the ALREADY-at-root active tab,
 /// to scroll that tab's root screen to the top (the other half of the iOS tab convention #197/#198 left
-/// unserved — an at-root re-tap is otherwise a no-op). `ScreenScaffold` and `LiquidTodayView` observe it
+/// unserved — an at-root re-tap is otherwise a no-op). `ScreenScaffold` and `TodayScreen` observe it
 /// and scroll to their top anchor when it changes. Default 0 is never bumped outside the tab shell, so
 /// macOS (sidebar, no tab re-tap) and every non-tab screen are completely unaffected.
 /// Zero-height scroll-to-top target id. File scope, not a `static` on `ScreenScaffold` — the latter is

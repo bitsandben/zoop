@@ -16,12 +16,12 @@ final class StressPersonalBaselineSurfaceTests: XCTestCase {
         let detail = try source("Strand/Screens/StressView.swift")
         let producer = try source("Strand/Data/StressDayCurve.swift")
         let today = try source("Strand/Screens/TodayView.swift")
-        let liquidToday = try source("Strand/Liquid/LiquidTodayView.swift")
+        let todayLoader = try source("Strand/Features/Today/TodayLoader.swift")
 
         XCTAssertTrue(detail.contains("let mode = await DaytimeStressMode.selected("))
         XCTAssertTrue(producer.contains("let mode = await DaytimeStressMode.selected("))
         XCTAssertTrue(producer.contains("tzOffsetSeconds: tz, mode: mode,"))
-        for body in [today, liquidToday] {
+        for body in [today, todayLoader] {
             XCTAssertTrue(body.contains(
                 "personalBaseline: PuffinExperiment.stressPersonalBaselineEnabled"
             ))

@@ -76,16 +76,16 @@ class StressHasOneResolver(unittest.TestCase):
     def test_daily_level_comes_from_the_package(self) -> None:
         stress_view = strip_comments(read(ROOT / "Strand/Screens/StressView.swift"))
         self.assertIn("DaytimeStress.daily(days: days, stored: stored)", stress_view)
-        today = strip_comments(read(ROOT / "Strand/Liquid/LiquidTodayView.swift"))
+        today = strip_comments(read(ROOT / "Strand/Features/Today/TodayLoader.swift"))
         self.assertIn("DaytimeStress.daily(", today)
 
     def test_headline_surfaces_ask_the_one_resolver(self) -> None:
         # The Stress hero and the Home tile/card show "stress now"; both must resolve it through
         # DaytimeStress.headline rather than choosing between hourly and daily themselves.
-        for rel in ("Strand/Screens/StressDayHero.swift", "Strand/Liquid/LiquidTodayView.swift"):
+        for rel in ("Strand/Screens/StressDayHero.swift", "Strand/Features/Today/TodayLoader.swift"):
             self.assertIn("DaytimeStress.headline(", strip_comments(read(ROOT / rel)), rel)
-        tiles = strip_comments(read(ROOT / "Strand/Liquid/HomeMonitorTiles.swift"))
-        self.assertIn("let headline: Assessment<Double, DaytimeStress.HeadlineSource>", tiles)
+        readouts = strip_comments(read(ROOT / "Strand/Features/Today/TodayReadouts+Body.swift"))
+        self.assertIn("_ headline: Assessment<Double, DaytimeStress.HeadlineSource>", readouts)
 
     def test_alternate_stress_definitions_are_test_centre_only(self) -> None:
         stress_view = strip_comments(read(ROOT / "Strand/Screens/StressView.swift"))

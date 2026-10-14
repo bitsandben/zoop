@@ -1,16 +1,16 @@
 import XCTest
 @testable import Strand
 
-/// Pins the Liquid Today strap-battery ring's truth table (A3/B2,
+/// Pins the Today status line's strap-battery truth table (A3/B2,
 /// docs/bugs/2026-07-15-strap-battery-backfill-observability.md).
 ///
 /// The three inputs are independent live signals with independent sources, so the interesting cases are
 /// the MIXED ones — charge % without a charging bit, a charging bit without a charge %, and a % that
 /// outlived its link. Each of the three regressions below shipped, and each was visible on a wearer's
 /// phone during a real strap incident. `resolve` is pure, so all of it pins with no strap and no BLE.
-final class LiquidBatteryDisplayTests: XCTestCase {
+final class StrapBatteryDisplayTests: XCTestCase {
 
-    private typealias Display = LiquidTodayView.StrapBatteryDisplay
+    private typealias Display = StrapBatteryDisplay
 
     // MARK: - A3: "charging" must not be hostage to "charge %"
 

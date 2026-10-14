@@ -74,7 +74,7 @@ struct CoupledView: View {
     /// calibrating gate, so a cold-start install could carry a value Today refuses. Reported on Android,
     /// but the defect was identical here: the twins agreed with each other and were both wrong.
     private var carriedRecoveryDay: DailyMetric? {
-        TodayView.lastScoredRecoveryDay(
+        TodayLogic.lastScoredRecoveryDay(
             days: repo.days, selectedDayKey: todayKey,
             isToday: true,   // the Coupled view has no day selector; it is always today
             todayScored: day?.recovery != nil,
@@ -237,7 +237,7 @@ struct CoupledView: View {
             // Not on iOS: a second verdict under the Recovery ring could disagree with it (a green
             // Recovery over "Rest"), and Recovery is the one readiness read there.
             #if !os(iOS)
-            if let word = TodayView.readinessWord(readinessLevel) {
+            if let word = TodayLogic.readinessWord(readinessLevel) {
                 readinessPill(word)
                     .padding(.top, 2)
             }
@@ -252,7 +252,7 @@ struct CoupledView: View {
     @ViewBuilder
     private var heroCaption: some View {
         if isCarryingRecovery, let prior = carriedRecoveryDay {
-            Text(TodayView.carriedCaption(priorDayKey: prior.day, todayKey: todayKey))
+            Text(TodayLogic.carriedCaption(priorDayKey: prior.day, todayKey: todayKey))
                 .font(StrandFont.footnote)
                 .foregroundStyle(StrandPalette.textTertiary)
         } else if recovery == nil, let banked = calibrationNights {
