@@ -271363,6 +271363,3251 @@
           }
         }
       }
+    },
+    "zoop.body.shows.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was dein Körper zeigt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What your body shows"
+          }
+        }
+      }
+    },
+    "zoop.body.shows.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch fällt nichts auf. Trag den Strap weiter, dann erscheinen hier Deutungen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing stands out yet. Keep wearing the strap and readings appear here."
+          }
+        }
+      }
+    },
+    "zoop.body.vitals.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vitalwerte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vitals"
+          }
+        }
+      }
+    },
+    "zoop.body.vitals.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Nacht im Vergleich zu deinem üblichen Bereich, mit den letzten 30 Tagen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last night against your usual range, with the last 30 days."
+          }
+        }
+      }
+    },
+    "zoop.body.vitals.allTypical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Vitalwerte liegen in deinem üblichen Bereich."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All your vitals are in your usual range."
+          }
+        }
+      }
+    },
+    "zoop.body.vitals.oneOutside" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ liegt außerhalb deines üblichen Bereichs, die übrigen Werte sind typisch."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is outside your usual range; the other vitals are typical."
+          }
+        }
+      }
+    },
+    "zoop.body.vitals.severalOutside" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Werte liegen außerhalb deines Bereichs; Training, Alkohol, Hitze oder ein Infekt können das bewirken."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld vitals are outside your range; training, alcohol, heat or an infection can do this."
+          }
+        }
+      }
+    },
+    "zoop.body.vitals.notRecent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine aktuelle Nacht; trag den Strap im Schlaf, dann wird der Wert aktuell."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No recent night; wear the strap to sleep to update it."
+          }
+        }
+      }
+    },
+    "zoop.body.vitals.never" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von deinem Strap oder Importen noch nicht gemessen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not measured yet by your strap or imports."
+          }
+        }
+      }
+    },
+    "zoop.body.trends.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlauf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trends"
+          }
+        }
+      }
+    },
+    "zoop.body.trends.metric" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metric"
+          }
+        }
+      }
+    },
+    "zoop.body.trends.window" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeitraum"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Period"
+          }
+        }
+      }
+    },
+    "zoop.body.trends.recovery" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recovery"
+          }
+        }
+      }
+    },
+    "zoop.body.trends.strain" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belastung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strain"
+          }
+        }
+      }
+    },
+    "zoop.body.trends.windowDays" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Tag"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Tage"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld days"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "zoop.body.trends.tooFew" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zu wenige Werte in den letzten %lld Tagen für einen Verlauf."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Too few values in the last %lld days to show a trend."
+          }
+        }
+      }
+    },
+    "zoop.body.trends.noClearChange" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durchschnitt %1$@, kein klarer Unterschied zu den %2$lld Tagen davor."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average %1$@, no clear change from the %2$lld days before."
+          }
+        }
+      }
+    },
+    "zoop.body.trends.higher" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durchschnitt %1$@, %2$@ höher als in den %3$lld Tagen davor."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average %1$@, %2$@ higher than the %3$lld days before."
+          }
+        }
+      }
+    },
+    "zoop.body.trends.lower" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durchschnitt %1$@, %2$@ niedriger als in den %3$lld Tagen davor."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average %1$@, %2$@ lower than the %3$lld days before."
+          }
+        }
+      }
+    },
+    "zoop.body.trends.averageOnly" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durchschnitt %1$@ in den letzten %2$lld Tagen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average %1$@ over the last %2$lld days."
+          }
+        }
+      }
+    },
+    "zoop.body.trends.inRange" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band: dein üblicher Bereich. Gestrichelt: Durchschnitt des Zeitraums. %1$lld von %2$lld Tagen im Bereich."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band: your usual range. Dashed: this period's average. %1$lld of %2$lld days in range."
+          }
+        }
+      }
+    },
+    "zoop.body.trends.bandPending" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein üblicher Bereich erscheint nach vier Tagen mit Wert. Gestrichelt: Durchschnitt des Zeitraums."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your usual range appears after four days with a value. Dashed: this period's average."
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muster"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Patterns"
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zusammenhänge in deinen eigenen Tagen, keine Ursachen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Associations in your own days, not causes."
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.outcome" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gemessen an"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Measured on"
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.habits.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für diesen Wert gibt es noch zu wenige Tage mit und ohne Gewohnheit."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not enough days with and without a habit for this metric yet."
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.pending.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Braucht mehr Daten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Needs more data"
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.pending.habits" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gewohnheiten: Beantworte das Logbuch ein paar Wochen lang, mit Ja- und Nein-Tagen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Habits: answer the logbook for a few weeks, with yes and no days."
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.pending.weekday" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wochentage: acht Wochen mit Erholungswerten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekdays: eight weeks of recovery values."
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.pending.evening" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abendstress: zwei Wochen Abende mit angelegtem Strap."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evening stress: two weeks of evenings with the strap on."
+          }
+        }
+      }
+    },
+    "zoop.body.outcome.recovery" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recovery"
+          }
+        }
+      }
+    },
+    "zoop.body.outcome.hrv" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV"
+          }
+        }
+      }
+    },
+    "zoop.body.outcome.sleep" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlaf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep"
+          }
+        }
+      }
+    },
+    "zoop.body.outcome.rhr" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhepuls"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resting HR"
+          }
+        }
+      }
+    },
+    "zoop.body.possessive.recovery" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "deine Erholung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your recovery"
+          }
+        }
+      }
+    },
+    "zoop.body.possessive.hrv" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "deine HRV"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your HRV"
+          }
+        }
+      }
+    },
+    "zoop.body.possessive.sleep" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dein Schlafwert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your sleep score"
+          }
+        }
+      }
+    },
+    "zoop.body.possessive.rhr" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dein Ruhepuls"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your resting heart rate"
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.with" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With"
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.without" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Without"
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.withVsWithout" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mit vs. ohne, %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "with vs. without, %@"
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.lag.sameDay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "am selben Tag"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "same day"
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.lag.nextMorning" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "am nächsten Morgen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "next morning"
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.lag.afterDays" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nach %lld Tagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "after %lld days"
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.sample" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld Tage mit, %2$lld ohne"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld days with, %2$lld without"
+          }
+        }
+      }
+    },
+    "zoop.body.links.allMetrics" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Metriken"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All metrics"
+          }
+        }
+      }
+    },
+    "zoop.body.links.allMetrics.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Metrik und jeden Zeitraum durchsuchen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search every metric and range"
+          }
+        }
+      }
+    },
+    "zoop.body.links.labBook" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laborbuch"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lab book"
+          }
+        }
+      }
+    },
+    "zoop.body.links.labBook.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blutwerte, Blutdruck, Körpermaße"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blood values, blood pressure, body measures"
+          }
+        }
+      }
+    },
+    "zoop.body.links.report" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlaufsbericht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trends report"
+          }
+        }
+      }
+    },
+    "zoop.body.links.report.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als einseitiges PDF exportieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export a one-page PDF"
+          }
+        }
+      }
+    },
+    "zoop.body.sheet.whatItIs" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was es ist"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What it is"
+          }
+        }
+      }
+    },
+    "zoop.body.sheet.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie es berechnet wird"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How it is computed"
+          }
+        }
+      }
+    },
+    "zoop.body.sheet.dataUsed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwendete Daten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data used"
+          }
+        }
+      }
+    },
+    "zoop.body.sheet.confidence" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlässlichkeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confidence"
+          }
+        }
+      }
+    },
+    "zoop.body.sheet.confidence.solid" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solide"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solid"
+          }
+        }
+      }
+    },
+    "zoop.body.sheet.confidence.building" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch im Aufbau"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Still building"
+          }
+        }
+      }
+    },
+    "zoop.body.sheet.done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fertig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        }
+      }
+    },
+    "zoop.body.a11y.opensExplainer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet die Erklärung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the explanation"
+          }
+        }
+      }
+    },
+    "zoop.body.sample.reason" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basiert auf %1$lld; ab %2$lld gilt es als solide."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Based on %1$lld; from %2$lld on it counts as solid."
+          }
+        }
+      }
+    },
+    "zoop.body.sample.days" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Tag"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Tage"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld days"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "zoop.body.sample.weeks" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Woche"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Wochen"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld week"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld weeks"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "zoop.body.sample.workouts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Training"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Trainings"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld workout"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld workouts"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "zoop.body.sample.evenings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Abend"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Abende"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld evening"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld evenings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "zoop.body.sample.hardDays" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld harter Tag"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld harte Tage"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld hard day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld hard days"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "zoop.body.sample.readings30" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Messwert in 30 Tagen"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Messwerte in 30 Tagen"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld reading in 30 days"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld readings in 30 days"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "zoop.body.verdict.strong" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stark"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strong"
+          }
+        }
+      }
+    },
+    "zoop.body.verdict.noticeable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spürbar"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noticeable"
+          }
+        }
+      }
+    },
+    "zoop.body.verdict.little" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gering"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Little"
+          }
+        }
+      }
+    },
+    "zoop.body.verdict.quick" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schnell"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick"
+          }
+        }
+      }
+    },
+    "zoop.body.verdict.slow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langsam"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slow"
+          }
+        }
+      }
+    },
+    "zoop.body.verdict.mostlyEasy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überwiegend locker"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostly easy"
+          }
+        }
+      }
+    },
+    "zoop.body.verdict.mixed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gemischt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mixed"
+          }
+        }
+      }
+    },
+    "zoop.body.verdict.mostlyHard" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überwiegend hart"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostly hard"
+          }
+        }
+      }
+    },
+    "zoop.body.verdict.clearPattern" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klares Muster"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear pattern"
+          }
+        }
+      }
+    },
+    "zoop.body.verdict.weakPattern" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwaches Muster"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weak pattern"
+          }
+        }
+      }
+    },
+    "zoop.body.verdict.clearDifference" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klarer Unterschied"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear difference"
+          }
+        }
+      }
+    },
+    "zoop.body.verdict.noClearDifference" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein klarer Unterschied"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No clear difference"
+          }
+        }
+      }
+    },
+    "zoop.body.hrv.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV-Verlauf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV trend"
+          }
+        }
+      }
+    },
+    "zoop.body.rhr.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhepuls-Verlauf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resting heart rate trend"
+          }
+        }
+      }
+    },
+    "zoop.body.hrv.belowStreak" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine HRV liegt seit %lld Tagen unter deinem Normalwert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your HRV has been below your normal for %lld days."
+          }
+        }
+      }
+    },
+    "zoop.body.hrv.aboveStreak" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine HRV liegt seit %lld Tagen über deinem Normalwert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your HRV has been above your normal for %lld days."
+          }
+        }
+      }
+    },
+    "zoop.body.hrv.lowerWeek" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine HRV war diese Woche niedriger als üblich."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your HRV has run lower than usual this week."
+          }
+        }
+      }
+    },
+    "zoop.body.hrv.higherWeek" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine HRV war diese Woche höher als üblich."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your HRV has run higher than usual this week."
+          }
+        }
+      }
+    },
+    "zoop.body.rhr.belowStreak" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Ruhepuls liegt seit %lld Tagen unter deinem Normalwert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your resting heart rate has been below your normal for %lld days."
+          }
+        }
+      }
+    },
+    "zoop.body.rhr.aboveStreak" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Ruhepuls liegt seit %lld Tagen über deinem Normalwert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your resting heart rate has been above your normal for %lld days."
+          }
+        }
+      }
+    },
+    "zoop.body.rhr.lowerWeek" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Ruhepuls war diese Woche niedriger als üblich."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your resting heart rate has run lower than usual this week."
+          }
+        }
+      }
+    },
+    "zoop.body.rhr.higherWeek" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Ruhepuls war diese Woche höher als üblich."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your resting heart rate has run higher than usual this week."
+          }
+        }
+      }
+    },
+    "zoop.body.direction.comparison" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "letzte 7 Tage vs. die 30 Tage davor"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "last 7 days vs. the 30 days before"
+          }
+        }
+      }
+    },
+    "zoop.body.hrv.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ob sich deine nächtliche HRV in den letzten Tagen von deinem eigenen Normalwert entfernt hat."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Whether your nightly HRV has drifted away from your own normal over the last days."
+          }
+        }
+      }
+    },
+    "zoop.body.rhr.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ob sich dein Ruhepuls im Schlaf in den letzten Tagen von deinem eigenen Normalwert entfernt hat."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Whether your sleeping heart rate has drifted away from your own normal over the last days."
+          }
+        }
+      }
+    },
+    "zoop.body.direction.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rollender Vergleich"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rolling comparison"
+          }
+        }
+      }
+    },
+    "zoop.body.direction.method.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Nacht wird mit den 30 Tagen davor verglichen; gezählt werden Nächte mindestens eine halbe Standardabweichung entfernt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each night is compared with the 30 days before it; a run counts nights at least half a standard deviation away."
+          }
+        }
+      }
+    },
+    "zoop.body.direction.data" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte 7 Tage: %1$@. Dein Normalwert: %2$@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last 7 days: %1$@. Your normal: %2$@."
+          }
+        }
+      }
+    },
+    "zoop.body.sensitivity.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belastung und Erholung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effort and recovery"
+          }
+        }
+      }
+    },
+    "zoop.body.sensitivity.strong" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harte Tage drücken deine Erholung am nächsten Morgen stark."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hard days hit your next-morning recovery hard."
+          }
+        }
+      }
+    },
+    "zoop.body.sensitivity.noticeable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harte Tage senken deine Erholung am nächsten Morgen spürbar."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hard days lower your next-morning recovery noticeably."
+          }
+        }
+      }
+    },
+    "zoop.body.sensitivity.little" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harte Tage verändern deine Erholung am nächsten Morgen kaum."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hard days barely move your next-morning recovery."
+          }
+        }
+      }
+    },
+    "zoop.body.sensitivity.per10" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholungspunkte je 10 Belastung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "recovery points per 10 strain"
+          }
+        }
+      }
+    },
+    "zoop.body.sensitivity.perPoint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholungspunkte je Belastungspunkt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "recovery points per strain point"
+          }
+        }
+      }
+    },
+    "zoop.body.sensitivity.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie stark ein härterer Tag deine Erholung am nächsten Morgen meist senkt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How much a harder day tends to lower your recovery the next morning."
+          }
+        }
+      }
+    },
+    "zoop.body.sensitivity.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geradenanpassung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Straight-line fit"
+          }
+        }
+      }
+    },
+    "zoop.body.sensitivity.method.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Belastung jedes Tages gegen die Erholung am nächsten Morgen, über die letzten 180 Tage."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each day's strain against the next morning's recovery over the last 180 days."
+          }
+        }
+      }
+    },
+    "zoop.body.sensitivity.data" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Tage mit Belastung und Erholung am nächsten Morgen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld days with both strain and next-morning recovery."
+          }
+        }
+      }
+    },
+    "zoop.body.bounce.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rückkehr zur Form"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bounce-back"
+          }
+        }
+      }
+    },
+    "zoop.body.bounce.nextMorning" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach deinen härtesten Tagen ist deine Erholung am nächsten Morgen wieder normal."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After your hardest days, your recovery is back to normal by the next morning."
+          }
+        }
+      }
+    },
+    "zoop.body.bounce.days" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach deinen härtesten Tagen braucht deine Erholung etwa %lld Tage, bis sie wieder normal ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After your hardest days, your recovery takes about %lld days to get back to normal."
+          }
+        }
+      }
+    },
+    "zoop.body.bounce.overWeek" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach deinen härtesten Tagen braucht deine Erholung oft über eine Woche, bis sie wieder normal ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After your hardest days, your recovery often takes over a week to get back to normal."
+          }
+        }
+      }
+    },
+    "zoop.body.bounce.overSeven" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "> 7 Tage"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "> 7 days"
+          }
+        }
+      }
+    },
+    "zoop.body.bounce.comparison" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bis die Erholung wieder bei deinem Normalwert ist"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "until recovery is back at your normal"
+          }
+        }
+      }
+    },
+    "zoop.body.bounce.hardDay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag 0"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day 0"
+          }
+        }
+      }
+    },
+    "zoop.body.bounce.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie lange deine Erholung nach einem harten Tag braucht, bis sie wieder normal ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How long your recovery needs to get back to normal after a hard day."
+          }
+        }
+      }
+    },
+    "zoop.body.bounce.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mittlere Rückkehrzeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Median return time"
+          }
+        }
+      }
+    },
+    "zoop.body.bounce.method.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein härtestes Fünftel der Tage, jeweils verglichen mit der mittleren Erholung der 30 Tage davor."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your hardest fifth of days, each compared with the median recovery of the 30 days before it."
+          }
+        }
+      }
+    },
+    "zoop.body.bounce.data" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld harte Tage; der nächste Morgen liegt im Schnitt %2$lld Punkte unter dem Normalwert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld hard days; the next morning sits %2$lld points below normal on average."
+          }
+        }
+      }
+    },
+    "zoop.body.zones.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trainingsintensität"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Training intensity"
+          }
+        }
+      }
+    },
+    "zoop.body.zones.mostlyEasy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Training ist überwiegend locker, nah an einer 80/20-Verteilung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Most of your training is easy, close to an 80/20 split."
+          }
+        }
+      }
+    },
+    "zoop.body.zones.mixed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Training ist eher locker, enthält aber viel harte Zeit."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your training leans easy but carries a lot of hard time."
+          }
+        }
+      }
+    },
+    "zoop.body.zones.mostlyHard" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Großteil deiner Trainingszeit ist hart, in den Zonen 3 bis 5."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Most of your training time is hard, in zones 3 to 5."
+          }
+        }
+      }
+    },
+    "zoop.body.zones.easyShare" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "der Zonenzeit locker (Zone 1–2)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "of zone time easy (zones 1–2)"
+          }
+        }
+      }
+    },
+    "zoop.body.zones.hardShare" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "der Zonenzeit hart (Zone 3–5)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "of zone time hard (zones 3–5)"
+          }
+        }
+      }
+    },
+    "zoop.body.zones.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie sich deine Trainingszeit auf lockere und harte Herzfrequenzzonen verteilt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How your workout time splits between easy and hard heart-rate zones."
+          }
+        }
+      }
+    },
+    "zoop.body.zones.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anteil der Zonenzeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zone time share"
+          }
+        }
+      }
+    },
+    "zoop.body.zones.method.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenzzonen deiner Trainings der letzten vier Wochen; Zone 1–2 gilt als locker, 3–5 als hart."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart-rate zone time of your workouts in the last four weeks; zones 1–2 count as easy, 3–5 as hard."
+          }
+        }
+      }
+    },
+    "zoop.body.zones.data" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld Trainings mit %2$lld Minuten Zonenzeit."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld workouts with %2$lld minutes of zone time."
+          }
+        }
+      }
+    },
+    "zoop.body.stressTiming.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stress im Tagesverlauf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stress timing"
+          }
+        }
+      }
+    },
+    "zoop.body.stressTiming.meaning" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Stress ist meist gegen %1$@ am höchsten und gegen %2$@ am niedrigsten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your stress usually peaks around %1$@ and is lowest around %2$@."
+          }
+        }
+      }
+    },
+    "zoop.body.stressTiming.comparison" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spitzenstunde; am ruhigsten gegen %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "peak hour; calmest around %@"
+          }
+        }
+      }
+    },
+    "zoop.body.stressTiming.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wann am Tag dein Stresslevel meist steigt und wieder sinkt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When in the day your stress level tends to rise and settle."
+          }
+        }
+      }
+    },
+    "zoop.body.stressTiming.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stundenmittel"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hourly average"
+          }
+        }
+      }
+    },
+    "zoop.body.stressTiming.method.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stündlicher Stress deiner letzten 14 Tage zwischen 7 und 23 Uhr, je Stunde gemittelt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hourly stress of your last 14 days between 07:00 and 23:00, averaged for each hour."
+          }
+        }
+      }
+    },
+    "zoop.body.stressTiming.data" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Tage mit genug Herzfrequenzdaten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld days with enough heart-rate data."
+          }
+        }
+      }
+    },
+    "zoop.body.hrr.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenz-Erholung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart-rate recovery"
+          }
+        }
+      }
+    },
+    "zoop.body.hrr.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Puls sinkt nach dem Training zügig, ein Zeichen guter Fitness."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your heart rate drops quickly after training, a sign of good fitness."
+          }
+        }
+      }
+    },
+    "zoop.body.hrr.low" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Puls sinkt nach dem Training langsam; Hitze oder Müdigkeit können das bewirken."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your heart rate drops slowly after training; heat or fatigue can do this."
+          }
+        }
+      }
+    },
+    "zoop.body.hrr.comparison" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abfall nach einer Minute, letztes Training; Durchschnitt %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "drop after one minute, last workout; average %@"
+          }
+        }
+      }
+    },
+    "zoop.body.hrr.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie stark dein Puls in der ersten Minute nach einem harten Training fällt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How far your heart rate falls in the first minute after a hard workout."
+          }
+        }
+      }
+    },
+    "zoop.body.hrr.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenz-Erholung nach einer Minute"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One-minute heart-rate recovery"
+          }
+        }
+      }
+    },
+    "zoop.body.hrr.method.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Höchster Puls am Trainingsende minus Median eine Minute später; 12 Schläge oder weniger gelten als niedrig."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peak heart rate at the end of the workout minus the median one minute later; 12 bpm or less counts as low."
+          }
+        }
+      }
+    },
+    "zoop.body.habit.higher" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An Tagen mit „%1$@“ war %2$@ um %3$@ höher."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On days with “%1$@”, %2$@ was %3$@ higher."
+          }
+        }
+      }
+    },
+    "zoop.body.habit.lower" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An Tagen mit „%1$@“ war %2$@ um %3$@ niedriger."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On days with “%1$@”, %2$@ was %3$@ lower."
+          }
+        }
+      }
+    },
+    "zoop.body.habit.noClear" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An Tagen mit „%1$@“ zeigte %2$@ keinen klaren Unterschied."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On days with “%1$@”, %2$@ showed no clear difference."
+          }
+        }
+      }
+    },
+    "zoop.body.habit.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie sich ein Wert zwischen Tagen mit Ja und Tagen mit Nein im Logbuch unterscheidet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How a metric differs between days you answered yes and days you answered no in the logbook."
+          }
+        }
+      }
+    },
+    "zoop.body.habit.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welch-t-Test und Cohens d"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welch's t-test and Cohen's d"
+          }
+        }
+      }
+    },
+    "zoop.body.habit.method.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ja-Tage gegen Nein-Tage bei der stärksten von drei Verzögerungen; klar heißt p < 0,05 bei je mindestens 5 Tagen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yes days against no days at the strongest of three lags; clear means p < 0.05 with at least 5 days each."
+          }
+        }
+      }
+    },
+    "zoop.body.habit.data" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit: %1$@ (%2$lld Tage). Ohne: %3$@ (%4$lld Tage). Effektstärke d = %5$@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With: %1$@ (%2$lld days). Without: %3$@ (%4$lld days). Effect size d = %5$@."
+          }
+        }
+      }
+    },
+    "zoop.body.habit.confidence" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Viele Gewohnheiten werden gleichzeitig geprüft und noch nicht dafür korrigiert; ein einzelner klarer Befund kann Zufall sein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Many habits are tested at once and not yet corrected for that, so a single clear result can still be chance."
+          }
+        }
+      }
+    },
+    "zoop.body.habit.name.alcohol" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alkohol"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alcohol"
+          }
+        }
+      }
+    },
+    "zoop.body.habit.name.lateCaffeine" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Später Koffein"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Late caffeine"
+          }
+        }
+      }
+    },
+    "zoop.body.habit.name.screen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bildschirm im Bett"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screen in bed"
+          }
+        }
+      }
+    },
+    "zoop.body.habit.name.lateMeal" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spätes Essen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Late meal"
+          }
+        }
+      }
+    },
+    "zoop.body.habit.name.stress" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stress"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stress"
+          }
+        }
+      }
+    },
+    "zoop.body.habit.name.sauna" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauna"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauna"
+          }
+        }
+      }
+    },
+    "zoop.body.habit.name.sharedBed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geteiltes Bett"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shared bed"
+          }
+        }
+      }
+    },
+    "zoop.body.habit.name.ill" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Krank gefühlt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feeling ill"
+          }
+        }
+      }
+    },
+    "zoop.body.habit.name.magnesium" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Magnesium"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Magnesium"
+          }
+        }
+      }
+    },
+    "zoop.body.habit.name.reading" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lesen vor dem Schlaf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading before bed"
+          }
+        }
+      }
+    },
+    "zoop.body.weekday.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wochentage"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekdays"
+          }
+        }
+      }
+    },
+    "zoop.body.weekday.weakest" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist meist dein schwächster Erholungstag."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is usually your weakest recovery day."
+          }
+        }
+      }
+    },
+    "zoop.body.weekday.strongest" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist meist dein stärkster Erholungstag."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is usually your strongest recovery day."
+          }
+        }
+      }
+    },
+    "zoop.body.weekday.none" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Wochentag sticht bei deiner Erholung heraus."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No weekday stands out in your recovery."
+          }
+        }
+      }
+    },
+    "zoop.body.weekday.comparison" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durchschnitt %1$@ vs. %2$@ an anderen Tagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "average %1$@ vs. %2$@ on other days"
+          }
+        }
+      }
+    },
+    "zoop.body.weekday.spread" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Punkte zwischen bestem und schwächstem Wochentag"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "points between best and weakest weekday"
+          }
+        }
+      }
+    },
+    "zoop.body.weekday.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ob ein Wochentag regelmäßig höhere oder niedrigere Erholung bringt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Whether one day of the week regularly brings higher or lower recovery."
+          }
+        }
+      }
+    },
+    "zoop.body.weekday.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wochentagsmittel und Beständigkeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekday average and consistency"
+          }
+        }
+      }
+    },
+    "zoop.body.weekday.method.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mittlere Erholung je Wochentag über 26 Wochen; ein Tag wird nur genannt, wenn er 8 Punkte abweicht und in den meisten Wochen heraussticht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average recovery per weekday over 26 weeks; a day is named only when it is 8 points off and stood out in most weeks."
+          }
+        }
+      }
+    },
+    "zoop.body.evening.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abendstress und Tiefschlaf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evening stress and deep sleep"
+          }
+        }
+      }
+    },
+    "zoop.body.evening.less" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach stressigen Abenden schläfst du weniger tief."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After stressful evenings you get less deep sleep."
+          }
+        }
+      }
+    },
+    "zoop.body.evening.more" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach stressigen Abenden hast du sogar mehr Tiefschlaf."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After stressful evenings you get more deep sleep, not less."
+          }
+        }
+      }
+    },
+    "zoop.body.evening.noClear" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abendlicher Stress verändert deinen Tiefschlaf kaum."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evening stress barely changes your deep sleep."
+          }
+        }
+      }
+    },
+    "zoop.body.evening.comparison" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiefschlaf, stressige vs. ruhige Abende"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "deep sleep, stressful vs. calm evenings"
+          }
+        }
+      }
+    },
+    "zoop.body.evening.stressful" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stressig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stressful"
+          }
+        }
+      }
+    },
+    "zoop.body.evening.calm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calm"
+          }
+        }
+      }
+    },
+    "zoop.body.evening.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ob auf einen stressigen Abend weniger Tiefschlaf folgt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Whether a stressful evening is followed by less deep sleep."
+          }
+        }
+      }
+    },
+    "zoop.body.evening.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oberes gegen unteres Drittel"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Top third vs. bottom third"
+          }
+        }
+      }
+    },
+    "zoop.body.evening.method.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abende von 17 bis 23 Uhr über vier Wochen, stressigstes gegen ruhigstes Drittel; unter 10 Minuten gilt als kein klarer Unterschied."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evenings from 17:00 to 23:00 over four weeks, most against least stressful third; under 10 minutes counts as no clear difference."
+          }
+        }
+      }
+    },
+    "zoop.body.evening.data" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiefschlaf nach stressigen Abenden: %1$@; nach ruhigen: %2$@; %3$lld Abende."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deep sleep after stressful evenings: %1$@; after calm ones: %2$@; %3$lld evenings."
+          }
+        }
+      }
+    },
+    "zoop.body.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einblicke"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insights"
+          }
+        }
+      }
+    },
+    "zoop.body.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einblicke brauchen Verlauf. Trag den Strap oder importiere deinen WHOOP-Export unter Datenquellen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insights need history. Wear the strap or import your WHOOP export in Data Sources."
+          }
+        }
+      }
+    },
+    "zoop.body.loading" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Verlauf wird geladen …"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading your history…"
+          }
+        }
+      }
+    },
+    "zoop.body.patterns.habits" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gewohnheiten aus deinem Logbuch"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Habits from your logbook"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
