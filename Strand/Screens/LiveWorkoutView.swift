@@ -209,7 +209,7 @@ struct LiveWorkoutView: View {
         // was removed from the glanceable layout. Reuse the same localized "of %@" caption as Today /
         // Week-in-review, and format the spoken value like the on-screen CountUpText.
         let valueText = effortScale == .whoop
-            ? String(format: "%.1f", displayEffort)
+            ? ZoopNumber.decimal(displayEffort, digits: 1)
             : "\(Int(displayEffort.rounded()))"
         let scaleCaption = String(localized: "of \(UnitFormatter.effortScaleMax(effortScale))")
         let effortAccessibilityLabel = "\(String(localized: "Effort")) \(valueText) \(scaleCaption)"
@@ -217,7 +217,7 @@ struct LiveWorkoutView: View {
             CountUpText(value: displayEffort,
                         format: { value in
                             effortScale == .whoop
-                                ? String(format: "%.1f", value)
+                                ? ZoopNumber.decimal(value, digits: 1)
                                 : "\(Int(value.rounded()))"
                         },
                         font: StrandFont.rounded(56, weight: .semibold),

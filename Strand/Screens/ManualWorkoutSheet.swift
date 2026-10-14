@@ -104,7 +104,7 @@ struct ManualWorkoutSheet: View {
     private static func distanceEntryString(_ meters: Double, system: UnitSystem) -> String {
         let km = meters / 1000.0
         let value = system == .imperial ? km * UnitFormatter.milesPerKilometer : km
-        var s = String(format: "%.2f", value)
+        var s = ZoopNumber.decimal(value, digits: 2)
         while s.hasSuffix("0") { s.removeLast() }
         if s.hasSuffix(".") { s.removeLast() }
         return s

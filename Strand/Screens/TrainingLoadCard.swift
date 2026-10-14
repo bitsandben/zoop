@@ -96,8 +96,8 @@ struct TrainingLoadCard: View {
     private static let established = TrainingLoadEngine.Configuration.standard.establishedDays
     private static let minimum = TrainingLoadEngine.Configuration.standard.minimumDays
 
-    private func fmt(_ v: Double) -> String { String(format: "%.1f", v) }
-    private func signed(_ v: Double) -> String { String(format: "%+.1f", v) }
+    private func fmt(_ v: Double) -> String { ZoopNumber.decimal(v, digits: 1) }
+    private func signed(_ v: Double) -> String { String(format: "%+.1f", locale: AppLanguage.activeLocale, v) }
 
     var body: some View {
         let tl = result

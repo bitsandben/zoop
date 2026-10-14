@@ -47,7 +47,7 @@ struct TrainingLoadChart: View {
         return rows.min(by: { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) })
     }
 
-    private func fmt(_ v: Double) -> String { String(format: "%.1f", v) }
+    private func fmt(_ v: Double) -> String { ZoopNumber.decimal(v, digits: 1) }
 
     private static let tooltipDateFormatter: DateFormatter = {
         let f = DateFormatter()

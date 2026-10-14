@@ -631,7 +631,7 @@ struct CompareView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(p.a.metric.title) versus \(p.b.metric.title), r equals \(String(format: "%.2f", p.r)), \(p.n) days")
+        .accessibilityLabel("\(p.a.metric.title) versus \(p.b.metric.title), r equals \(ZoopNumber.decimal(p.r, digits: 2)), \(p.n) days")
     }
 
     // MARK: - Insight language
@@ -652,7 +652,7 @@ struct CompareView: View {
     }
 
     private func signedR(_ r: Double) -> String {
-        (r >= 0 ? "+" : "−") + String(format: "%.2f", abs(r))
+        (r >= 0 ? "+" : "−") + String(format: "%.2f", locale: AppLanguage.activeLocale, abs(r))
     }
 
     private func strengthWord(_ r: Double) -> String {

@@ -299,7 +299,7 @@ enum BodyVitalSigns {
                 label: String(localized: "Breathing rate"),
                 unit: "rpm",
                 value: respRow?.value,
-                format: { String(format: "%.1f", $0) },
+                format: { ZoopNumber.decimal($0, digits: 1) },
                 banding: VitalBands.band(
                     value: respRow?.value,
                     history: history(before: respRow?.day, respPoints),
@@ -317,7 +317,7 @@ enum BodyVitalSigns {
                 label: String(localized: "Blood oxygen"),
                 unit: "%",
                 value: spo2Row?.value,
-                format: { String(format: "%.0f", $0) },
+                format: { ZoopNumber.decimal($0, digits: 0) },
                 // Population-only on purpose: an absolute <95% floor is meaningful regardless of
                 // personal baseline (no "spo2" MetricCfg exists).
                 banding: VitalBands.band(
@@ -355,7 +355,7 @@ enum BodyVitalSigns {
                 label: String(localized: "Raw SpO₂"),
                 unit: "ADC",
                 value: spo2rawRow?.value,
-                format: { String(format: "%.0f", $0) },
+                format: { ZoopNumber.decimal($0, digits: 0) },
                 // Unbanded on purpose: this is the WHOOP 4.0 raw PPG ADC mean, device/placement-dependent
                 // with no clinical range — NOT a calibrated blood-oxygen %. Banding over the full u16 span
                 // just keeps the tile cyan (never "off range") while `stateText` labels it uncalibrated, so

@@ -1063,7 +1063,7 @@ struct InsightsView: View {
         let deltaText: String = {
             let arrow = e.delta > 0 ? "↑" : (e.delta < 0 ? "↓" : "→")
             if let pct = e.pctChange { return "\(arrow) \(Int(abs(pct).rounded()))%" }
-            return "\(arrow) \(String(format: "%.1f", abs(e.delta)))"
+            return "\(arrow) \(String(format: "%.1f", locale: AppLanguage.activeLocale, abs(e.delta)))"
         }()
         // Build the plain-English sentence ONCE and reuse it for both the visible
         // copy and the accessibility label (was computed twice per card).
@@ -1124,7 +1124,7 @@ struct InsightsView: View {
                     Text("Effect size").strandOverline()
                     Spacer()
                     HStack(spacing: 6) {
-                        Text(String(format: "d = %.2f", e.cohensD))
+                        Text(String(format: "d = %.2f", locale: AppLanguage.activeLocale, e.cohensD))
                             .font(StrandFont.captionNumber)
                             .foregroundStyle(tintColor)
                         Text(effectMagnitudeWord(e.cohensD))
@@ -1137,8 +1137,8 @@ struct InsightsView: View {
         .accessibilityElement(children: .combine)
         // Whole-string key per variant (never a concatenated localized tail on an a11y label).
         .accessibilityLabel(e.significant
-            ? String(localized: "\(sentence) Cohen's d \(String(format: "%.2f", e.cohensD)). Statistically significant.")
-            : String(localized: "\(sentence) Cohen's d \(String(format: "%.2f", e.cohensD)). Exploratory, not yet significant."))
+            ? String(localized: "\(sentence) Cohen's d \(ZoopNumber.decimal(e.cohensD, digits: 2)). Statistically significant.")
+            : String(localized: "\(sentence) Cohen's d \(ZoopNumber.decimal(e.cohensD, digits: 2)). Exploratory, not yet significant."))
     }
 
     // MARK: - Metric relationships section
@@ -1178,7 +1178,7 @@ struct InsightsView: View {
         let accent: Color = costing ? StrandPalette.statusCritical
             : (lifting ? StrandPalette.statusPositive : StrandPalette.chargeColor)
         let scoreState: ScoreState = cost.confidence == .solid ? .solid : .building
-        let pointsLabel = String(format: "%@%.0f", cost.delta >= 0 ? "−" : "+", abs(cost.delta))
+        let pointsLabel = String(format: "%@%.0f", locale: AppLanguage.activeLocale, cost.delta >= 0 ? "−" : "+", abs(cost.delta))
 
         return ZoopCard(tint: accent) {
             VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
@@ -1319,7 +1319,7 @@ struct InsightsView: View {
                     .font(StrandFont.headline)
                     .foregroundStyle(StrandPalette.textPrimary)
                 Spacer()
-                Text(String(format: "r = %+.2f", r))
+                Text(String(format: "r = %+.2f", locale: AppLanguage.activeLocale, r))
                     .font(StrandFont.number(16))
                     .foregroundStyle(strength)
                 StatePill(rel.corr.pApprox < 0.05 ? "p < 0.05" : "n.s.",
@@ -1412,7 +1412,7 @@ struct InsightsView: View {
         let r = rel.corr.r
         let dir = r > 0 ? String(localized: "positive") : (r < 0 ? String(localized: "negative") : String(localized: "flat"))
         let strength = strengthWord(r)
-        return String(localized: "\(strength.capitalizedFirst) \(dir) relationship (r = \(String(format: "%.2f", r)), n = \(rel.corr.n)).")
+        return String(localized: "\(strength.capitalizedFirst) \(dir) relationship (r = \(ZoopNumber.decimal(r, digits: 2)), n = \(rel.corr.n)).")
     }
 }
 
@@ -1453,7 +1453,7 @@ private struct RBar: View {
         .overlay(alignment: .center) {
             if hovering {
                 ChartTooltip(
-                    value: String(format: "r = %+.2f", r),
+                    value: String(format: "r = %+.2f", locale: AppLanguage.activeLocale, r),
                     label: label,
                     accent: color
                 )

@@ -550,7 +550,7 @@ struct TrendsView: View {
                         // Charge/Rest vessels regardless of the displayed Effort unit.
                         pipScoreRow(label: Self.scoreLabel("Effort", ios: "Strain"), value: display, range: 0...maxV,
                                     tint: StrandPalette.effortColor, frac: v / 100,
-                                    format: { oneDecimal ? String(format: "%.1f", $0) : "\(Int($0.rounded()))" })
+                                    format: { oneDecimal ? ZoopNumber.decimal($0, digits: 1) : "\(Int($0.rounded()))" })
                     }
                     if let v = restAvg {
                         pipScoreRow(label: Self.scoreLabel("Rest", ios: "Sleep"), value: v, range: 0...100,

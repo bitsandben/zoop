@@ -664,7 +664,7 @@ private struct RecoveryContributorsSection: View {
                 label: "Respiratory",
                 strength: lowerIsBetter(latest?.respRateBpm, base: respBase),
                 word: word(lowerIsBetter(latest?.respRateBpm, base: respBase)),
-                detail: latest?.respRateBpm.map { String(format: "%.1f rpm", $0) } ?? "—",
+                detail: latest?.respRateBpm.map { String(format: "%.1f rpm", locale: AppLanguage.activeLocale, $0) } ?? "—",
                 tint: StrandPalette.sleepLight),       // respiratory shares the blue world
         ]
     }
@@ -968,7 +968,7 @@ private struct FitnessAgeSection: View {
                     if let vo2 = vo2max {
                         VStack(alignment: .trailing, spacing: 2) {
                             Text("VO₂max").strandOverline()
-                            Text(String(format: "%.0f", vo2))
+                            Text(ZoopNumber.decimal(vo2, digits: 0))
                                 .font(StrandFont.number(30))
                                 .foregroundStyle(StrandPalette.metricCyan)
                             Text("ml/kg/min")

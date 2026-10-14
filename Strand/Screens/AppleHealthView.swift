@@ -498,13 +498,13 @@ struct AppleHealthView: View {
                      fmt: { "\(Int($0.rounded()))" })
             statTile(key: "vo2max", label: "VO₂ Max",
                      accent: StrandPalette.accent, unit: "ml/kg",
-                     fmt: { String(format: "%.1f", $0) })
+                     fmt: { ZoopNumber.decimal($0, digits: 1) })
             statTile(key: "weight", label: "Weight",
                      accent: StrandPalette.accent,
                      fmt: { massLabel($0) })
             statTile(key: "body_fat", label: "Body Fat",
                      accent: StrandPalette.metricAmber, unit: "%",
-                     fmt: { String(format: "%.1f", $0) })
+                     fmt: { ZoopNumber.decimal($0, digits: 1) })
             statTile(key: "lean_mass", label: "Lean Mass",
                      accent: StrandPalette.accent,
                      fmt: { massLabel($0) })
@@ -578,10 +578,10 @@ struct AppleHealthView: View {
                       fmt: { "\(Int($0.rounded())) ms" })
             chartCard(title: "Blood oxygen", key: "spo2",
                       gradient: cyanGradient, fallback: 90...100,
-                      fmt: { String(format: "%.1f%%", $0) })
+                      fmt: { String(format: "%.1f%%", locale: AppLanguage.activeLocale, $0) })
             chartCard(title: "Respiratory rate", key: "resp_rate",
                       gradient: accentGradient, fallback: 10...22,
-                      fmt: { String(format: "%.1f rpm", $0) })
+                      fmt: { String(format: "%.1f rpm", locale: AppLanguage.activeLocale, $0) })
         }
     }
 
@@ -607,13 +607,13 @@ struct AppleHealthView: View {
                       fmt: { massLabel($0) })
             chartCard(title: "Body fat", key: "body_fat",
                       gradient: amberGradient, fallback: 8...35,
-                      fmt: { String(format: "%.1f%%", $0) })
+                      fmt: { String(format: "%.1f%%", locale: AppLanguage.activeLocale, $0) })
             chartCard(title: "Lean body mass", key: "lean_mass",
                       gradient: accentGradient, fallback: 40...80,
                       fmt: { massLabel($0) })
             chartCard(title: "BMI", key: "bmi",
                       gradient: purpleGradient, fallback: 16...35,
-                      fmt: { String(format: "%.1f", $0) })
+                      fmt: { ZoopNumber.decimal($0, digits: 1) })
         }
     }
 

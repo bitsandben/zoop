@@ -525,7 +525,7 @@ enum LabBookFormat {
     /// both are pinned by the same expected strings in `LabBookFormatTests` / `LabValueFormatTest`.
     static func plain(_ v: Double) -> String {
         guard v.isFinite else { return "—" }
-        var s = String(format: "%.3f", v)
+        var s = ZoopNumber.decimal(v, digits: 3)
         while s.hasSuffix("0") { s.removeLast() }
         if s.hasSuffix(".") { s.removeLast() }
         return s == "-0" ? "0" : s
@@ -967,7 +967,7 @@ enum LabBookSignals {
     }
 
     static func signedR(_ r: Double) -> String {
-        (r >= 0 ? "+" : "−") + String(format: "%.2f", abs(r))
+        (r >= 0 ? "+" : "−") + String(format: "%.2f", locale: AppLanguage.activeLocale, abs(r))
     }
 
     static func strengthWord(_ r: Double) -> String {

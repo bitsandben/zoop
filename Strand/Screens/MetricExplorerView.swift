@@ -1654,7 +1654,7 @@ struct MetricDetailView: View {
                          accent: StrandPalette.textPrimary)
                 StatTile(label: "Δ vs prev", value: deltaText ?? "—",
                          caption: deltaCaption, accent: StrandPalette.textPrimary,
-                         delta: cmp.pctChange.map { "\($0 >= 0 ? "+" : "")\(String(format: "%.1f", $0))%" },
+                         delta: cmp.pctChange.map { "\($0 >= 0 ? "+" : "")\(ZoopNumber.decimal($0, digits: 1))%" },
                          deltaColor: deltaColor)
                 StatTile(label: "Latest", value: latestPoint.map { fmt($0.value) } ?? "—",
                          caption: latestCaption(windowed: windowed, effectiveRange: effectiveRange), accent: accent)
@@ -1682,7 +1682,7 @@ struct MetricDetailView: View {
                      caption: latestCaption(windowed: windowed, effectiveRange: effectiveRange), accent: accent)
             StatTile(label: "Δ vs prev", value: deltaText ?? "—",
                      caption: deltaCaption, accent: StrandPalette.textPrimary,
-                     delta: cmp.pctChange.map { "\($0 >= 0 ? "+" : "")\(String(format: "%.1f", $0))%" },
+                     delta: cmp.pctChange.map { "\($0 >= 0 ? "+" : "")\(ZoopNumber.decimal($0, digits: 1))%" },
                      deltaColor: deltaColor)
         }
         #endif
@@ -1897,7 +1897,7 @@ struct MetricDetailView: View {
                 LiquidTube(frac: min(abs(row.r), 1.0), tint: color, height: 8, animated: false)
                     .frame(width: 64)
                     .accessibilityHidden(true)
-                Text("\(row.r >= 0 ? "+" : "−")\(String(format: "%.2f", abs(row.r)))")
+                Text("\(row.r >= 0 ? "+" : "−")\(String(format: "%.2f", locale: AppLanguage.activeLocale, abs(row.r)))")
                     .font(StrandFont.number(15))
                     .foregroundStyle(color)
                     .frame(width: 52, alignment: .trailing)
@@ -1905,7 +1905,7 @@ struct MetricDetailView: View {
         }
         .padding(.vertical, 10)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(row.metric.title), correlation \(String(format: "%.2f", row.r)), \(row.n) days")
+        .accessibilityLabel("\(row.metric.title), correlation \(ZoopNumber.decimal(row.r, digits: 2)), \(row.n) days")
     }
 
     // MARK: Helpers

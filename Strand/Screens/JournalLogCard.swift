@@ -644,6 +644,6 @@ private struct NumericLogField: View {
     }
 
     private static func format(_ v: Double) -> String {
-        v == v.rounded() ? String(Int(v)) : String(format: "%.1f", v)
+        v == v.rounded() ? String(Int(v)) : ZoopNumber.decimal(v, digits: 1)
     }
 }

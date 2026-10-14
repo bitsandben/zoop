@@ -357,7 +357,7 @@ struct PatternsScreen: View {
                             .foregroundStyle(StrandPalette.textPrimary)
                             .lineLimit(1)
                         Spacer()
-                        Text(String(format: "%+.0f%%", e.delta))
+                        Text(String(format: "%+.0f%%", locale: AppLanguage.activeLocale, e.delta))
                             .font(.system(size: 15, weight: .bold).monospacedDigit())
                             .foregroundStyle(e.delta >= 0 ? StrandPalette.accent : StrandPalette.statusCritical)
                     }
@@ -420,7 +420,7 @@ struct PatternsScreen: View {
     private func stressCard(_ s: PatternInsights.SplitEffect) -> some View {
         PatternCard(icon: "bolt.heart.fill", title: "Evening stress and deep sleep",
                     basis: "\(s.n) evenings between 17:00 and 23:00 over the last four weeks.") {
-            Text(String(format: "%+.0f min", s.delta))
+            Text(String(format: "%+.0f min", locale: AppLanguage.activeLocale, s.delta))
                 .font(StrandFont.display(40))
                 .foregroundStyle(s.delta < 0 ? StrandPalette.statusCritical : StrandPalette.accent)
             Text(String(localized: "Deep sleep after your most stressful evenings, against your calmest: \(Int(s.highMean.rounded())) min vs \(Int(s.lowMean.rounded())) min."))
@@ -507,11 +507,11 @@ struct PatternsScreen: View {
                             .foregroundStyle(StrandPalette.textPrimary)
                         Spacer()
                         if m.thisWeek.n > 0 {
-                            Text(String(format: "%.0f", m.thisWeek.mean))
+                            Text(ZoopNumber.decimal(m.thisWeek.mean, digits: 0))
                                 .font(.system(size: 15, weight: .bold).monospacedDigit())
                                 .foregroundStyle(StrandPalette.textPrimary)
                         }
-                        Text(String(format: "%+.0f", m.wowDelta))
+                        Text(String(format: "%+.0f", locale: AppLanguage.activeLocale, m.wowDelta))
                             .font(.system(size: 13, weight: .semibold).monospacedDigit())
                             .foregroundStyle(m.wowGoodness > 0 ? StrandPalette.accent
                                              : m.wowGoodness < 0 ? StrandPalette.statusCritical : StrandPalette.textSecondary)
@@ -644,7 +644,7 @@ struct PatternLoadCard: View {
         PatternCard(icon: "gauge.with.dots.needle.67percent", title: "Training load",
                     basis: "Last 7 days of strain against the last 4 weeks. 0.8 to 1.3 is the usual safe range.") {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Text(String(format: "%.2f", acwr))
+                Text(ZoopNumber.decimal(acwr, digits: 2))
                     .font(StrandFont.display(40))
                     .foregroundStyle(StrandPalette.textPrimary)
                 Text(state.0)

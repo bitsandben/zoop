@@ -183,7 +183,7 @@ enum ChargeBreakdownFormat {
     /// Pure + unit-tested.
     static func skinTempDeviationLabel(_ rel: SkinTempRelative) -> String {
         let sign = rel.deviationC >= 0 ? "+" : ""
-        return String(localized: "\(sign)\(String(format: "%.1f", rel.deviationC)) C vs your normal")
+        return String(localized: "\(sign)\(ZoopNumber.decimal(rel.deviationC, digits: 1)) C vs your normal")
     }
 
     /// The plain-English tier word for the relative skin-temp marker. Pure.

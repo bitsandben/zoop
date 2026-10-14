@@ -127,7 +127,7 @@ struct NightDetailCard: View {
     }
 
     private func rrValue(_ v: Double?) -> String {
-        v.map { String(format: "%.1f", $0) } ?? "—"
+        v.map { ZoopNumber.decimal($0, digits: 1) } ?? "—"
     }
 
     /// #1946: a carried prior-day value is stamped "Carried · <date>" instead of "vs typical", so it
