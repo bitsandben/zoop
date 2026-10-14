@@ -871,6 +871,8 @@ private struct BreathingContent: View {
 
     private func captureOutcome() {
         guard sessionSeconds >= 120 else { return }
+        // The Stress screen asks "Were you stressed?" once, so the answer can tune the nudge threshold.
+        StressLabelLog().markSessionFinished()
         guard let base = baselineRmssd, base > 0, sessionRmssdCount > 0 else {
             endedOutcome = "—"
             return

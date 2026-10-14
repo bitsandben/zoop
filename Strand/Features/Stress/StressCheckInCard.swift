@@ -57,7 +57,6 @@ struct StressCheckInCard: View {
                             .accessibilityHidden(true)
                         Text("Stress check-in").strandOverline()
                         Spacer()
-                        StatePill("Passive", tone: .neutral, showsDot: true)
                     }
 
                     Text("Your HRV dipped while you were still. Want a minute to breathe?")
