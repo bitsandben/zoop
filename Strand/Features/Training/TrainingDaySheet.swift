@@ -85,7 +85,7 @@ struct TrainingDaySheet: View {
         #endif
     }
 
-    private var showsPlan: Bool { !day.planned.isEmpty && day.isToday }
+    private var showsPlan: Bool { !day.planned.isEmpty && (day.isToday || day.isFuture) }
 
     private func workoutRow(_ row: WorkoutRow) -> some View {
         // The detail pushes inside the sheet's own stack, so closing the sheet returns to the page.

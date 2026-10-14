@@ -21,6 +21,8 @@ struct TrainingWeek {
         let effort: Double?
         let planned: [LiftProgramRow]
         let isToday: Bool
+        /// Only the month calendar builds days after today; the week window ends on it.
+        var isFuture = false
         var id: Date { date }
     }
 

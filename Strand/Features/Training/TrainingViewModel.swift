@@ -35,6 +35,7 @@ final class TrainingViewModel: ObservableObject {
         didSet { if scope == .archived { Task { await expandWindow() } } }
     }
     @Published var sportFilter: String?
+    @Published var searchText = ""
     @Published var sourceFilter: WorkoutSource?
 
     /// The add/edit form: `.some(nil)` adds a workout, `.some(row)` edits one, `nil` is closed.
@@ -66,7 +67,7 @@ final class TrainingViewModel: ObservableObject {
     private let isPreview: Bool
     private var windowDays: Int?
     private var effortByDay: [String: Double] = [:]
-    private var programs: [LiftProgramRow] = []
+    private(set) var programs: [LiftProgramRow] = []
     private var plan = TrainingPlan()
 
     init(previewRows: [WorkoutRow]? = nil) {
@@ -138,7 +139,7 @@ final class TrainingViewModel: ObservableObject {
 
     // MARK: Session list
 
-    var filter: WorkoutFilter { WorkoutFilter(sport: sportFilter, sourceClass: sourceFilter) }
+    var filter: WorkoutFilter { WorkoutFilter(sport: sportFilter, sourceClass: sourceFilter, search: searchText) }
 
     /// The rows the list shows: filtered, then cut to Current or Archived.
     var visibleRows: [WorkoutRow] { TrainingScope.rows(filter.apply(rows), scope: scope) }
