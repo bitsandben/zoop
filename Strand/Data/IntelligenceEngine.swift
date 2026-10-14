@@ -42,10 +42,12 @@ final class IntelligenceEngine: ObservableObject {
     /// #899-A re-arm: a `force: true` recompute (a post-backfill rescore AppModel kicks off after a sync)
     /// that arrives while an idle-tick pass already holds the `computing` lock would otherwise be SILENTLY
     /// dropped, so a freshly-synced night intermittently never gets re-scored until the next cycle and Today
-    /// falls back to the last scored day. Instead the dropped force sets this flag; the in-flight pass's
-    /// `defer` re-invokes `analyzeRecent(force: true)` ONCE when it clears. A single re-arm (the flag is
-    /// cleared BEFORE the re-invoke) bounds it to one extra pass , no recompute storm.
-    private var pendingForcedRescore = false
+    /// falls back to the last scored day. Instead the dropped force is queued here; the in-flight pass's
+    /// `defer` re-invokes `analyzeRecent` ONCE when it clears. A single re-arm (the queue is cleared BEFORE
+    /// the re-invoke) bounds it to one extra pass , no recompute storm. The queue keeps the callers' gate:
+    /// a follow-up owed only to fingerprint-gated callers stays gated, so it cannot turn an unchanged
+    /// post-offload or resume into an unconditional full pass.
+    private var pendingRescore: QueuedRescore?
     /// Uptime the pass holding `computing` started at, and how many days it covers; nil when none is running.
     private var runningPassStart: UInt64?
     private var runningPassDays = 0
@@ -875,11 +877,14 @@ final class IntelligenceEngine: ObservableObject {
             if force {
                 // Said once per running pass, not per trigger: a pass that holds the lock for hours otherwise
                 // turns every post-offload re-score into a silent no-op, and the log shows syncs but no scores.
-                if !pendingForcedRescore, let started = runningPassStart {
+                if pendingRescore == nil, let started = runningPassStart {
                     let heldFor = Int(Double(DispatchTime.now().uptimeNanoseconds &- started) / 1_000_000_000)
                     diagnosticSink?("re-score: queued behind a \(runningPassDays)-day pass running for \(heldFor) s", nil)
                 }
-                pendingForcedRescore = true
+                pendingRescore = QueuedRescore.merge(
+                    pendingRescore, unconditional: !skipIfUnchanged,
+                    label: QueuedRescore.triggerName(force: true, skipIfUnchanged: skipIfUnchanged,
+                                                     label: triggerLabel))
             }
             return
         }
@@ -892,13 +897,15 @@ final class IntelligenceEngine: ObservableObject {
         defer {
             computing = false
             runningPassStart = nil
-            if pendingForcedRescore {
-                pendingForcedRescore = false
+            if let queued = pendingRescore {
+                pendingRescore = nil
                 // A forced update queued during the upgrade repair owes a normal recent pass,
                 // not another full-history repair (#2606). Its completion belongs to this pass.
                 let followUpDays = preserveUnscoredHistory ? 21 : maxDays
                 Task {
-                    await self.analyzeRecent(maxDays: followUpDays, force: true)
+                    await self.analyzeRecent(maxDays: followUpDays, force: true,
+                                             skipIfUnchanged: !queued.unconditional,
+                                             triggerLabel: queued.label)
                 }
             }
         }
@@ -974,7 +981,7 @@ final class IntelligenceEngine: ObservableObject {
         // caller opting in; the #1538 resume now opts in too when its debt came from a completed
         // pass, and labelling it post-offload would put the investigation on the wrong caller for
         // the second time in this area.
-        let trigger = triggerLabel ?? (!force ? "idle" : (skipIfUnchanged ? "post-offload" : "forced"))
+        let trigger = QueuedRescore.triggerName(force: force, skipIfUnchanged: skipIfUnchanged, label: triggerLabel)
         let hadNew = wmKey.isEmpty || storedWatermark != wmKey
         diagnosticSink?("re-score: trigger=\(trigger) "
                         + "newData=\(hadNew ? "yes" : "no (nothing changed since last run)")", nil)
@@ -3103,7 +3110,7 @@ final class IntelligenceEngine: ObservableObject {
             // matching the Android one-re-pass bound; the budget restores once a pass heals nothing.
             if !healRearmedThisCycle {
                 healRearmedThisCycle = true
-                pendingForcedRescore = true
+                pendingRescore = QueuedRescore.merge(pendingRescore, unconditional: true, label: "dedup-heal")
             }
         } else {
             healRearmedThisCycle = false
