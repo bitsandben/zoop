@@ -641,22 +641,16 @@ private struct DeviceSyncStatusCard: View {
     @EnvironmentObject private var live: LiveState
 
     var body: some View {
+        let status = live.syncStatus
         switch SyncChipState.resolve(live: live) {
-        case .syncing(let chunks, _):
+        case .syncing, .synced:
+            let line = [status.syncLine(lastSyncedAt: live.lastSyncedAt), status.detail]
+                .compactMap { $0 }.joined(separator: "\n")
             statusCard(
-                systemImage: "arrow.triangle.2.circlepath",
-                detail: chunks > 0
-                    ? String(localized: "Syncing… \(chunks) chunks")
-                    : String(localized: "Syncing…"),
-                tint: StrandPalette.accent,
-                accessibility: String(localized: "Syncing strap history, \(chunks) chunks")
-            )
-        case .synced(let agoText):
-            statusCard(
-                systemImage: "checkmark.circle.fill",
-                detail: String(localized: "Synced \(agoText) ago"),
-                tint: StrandPalette.statusPositive,
-                accessibility: String(localized: "Strap history synced \(agoText) ago")
+                systemImage: symbol(status),
+                detail: line,
+                tint: status.tone.color,
+                accessibility: line
             )
         case .experimentalLive:
             statusCard(
@@ -667,6 +661,14 @@ private struct DeviceSyncStatusCard: View {
             )
         case .hidden:
             EmptyView()
+        }
+    }
+
+    private func symbol(_ status: SyncStatus) -> String {
+        switch status.tone {
+        case .warning, .critical: return "exclamationmark.circle"
+        case .accent: return "arrow.triangle.2.circlepath"
+        default: return "checkmark.circle.fill"
         }
     }
 

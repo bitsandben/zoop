@@ -1154,7 +1154,7 @@ private struct LiveSignalTrustRail: View {
     }
 
     private var syncDetail: String {
-        if let err = live.lastSyncError { return err }
+        if let detail = live.syncStatus.detail { return detail }
         if live.backfilling { return String(localized: "\(live.decodedChunksThisSession) decoded, \(live.consoleChunksThisSession) console") }
         return live.lastSyncedAt == nil ? String(localized: "No completed offload yet") : String(localized: "Last offload completed")
     }

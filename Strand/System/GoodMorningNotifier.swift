@@ -40,28 +40,35 @@ enum GoodMorningNotifier {
         return (String(localized: "Good morning"), body)
     }
 
-    /// Evaluate and post. Safe to call on every days republish. The day marker advances only after an
-    /// authorized post.
+    /// Evaluate and post. Safe to call on every refresh. The day is marked before the asynchronous
+    /// permission check, so two evaluations in one turn cannot both post; the mark is rolled back when
+    /// notifications are not allowed, so the morning is still announced once they are.
     static func onDayUpdate(today: String, recovery: Double?, sleepMinutes: Double?, nightEndTs: Int?,
                             now: Date = Date()) {
         let d = UserDefaults.standard
         let cal = Calendar.current
         let ended = nightEndTs.map { cal.isDate(Date(timeIntervalSince1970: TimeInterval($0)), inSameDayAs: now)
                                      && TimeInterval($0) <= now.timeIntervalSince1970 } ?? false
+        let previousDay = d.string(forKey: lastDayKey)
         guard shouldPost(enabled: isEnabled, recovery: recovery, nightEndedToday: ended,
                          hour: cal.component(.hour, from: now),
-                         lastPostedDay: d.string(forKey: lastDayKey), today: today),
+                         lastPostedDay: previousDay, today: today),
               let recovery else { return }
+        d.set(today, forKey: lastDayKey)
         let copy = copy(recovery: recovery, sleepMinutes: sleepMinutes)
         let center = UNUserNotificationCenter.current()
         center.getNotificationSettings { settings in
-            guard settings.authorizationStatus == .authorized else { return }
+            guard settings.authorizationStatus == .authorized else {
+                if UserDefaults.standard.string(forKey: lastDayKey) == today {
+                    UserDefaults.standard.set(previousDay, forKey: lastDayKey)
+                }
+                return
+            }
             let content = UNMutableNotificationContent()
             content.title = copy.title
             content.body = copy.body
             content.sound = .default
             center.add(UNNotificationRequest(identifier: "good-morning", content: content, trigger: nil))
-            UserDefaults.standard.set(today, forKey: lastDayKey)
         }
     }
 }

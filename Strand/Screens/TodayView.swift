@@ -5646,8 +5646,7 @@ private struct BackfillFlagBridge: View {
     }
 }
 
-/// Honest strap-sync outcome row for the Data Sources card (ports the Android Live line, ed6a31d): the
-/// stalled-offload error when the last one died, else "History synced N ago". Hidden while an offload
+/// Strap-sync status row for the Data Sources card, rendered from `SyncStatus`. Hidden while an offload
 /// runs, the SyncingHistoryNote already says so. The `TimelineView` re-renders the relative label each
 /// minute. Owns the `LiveState` observation (scroll-stutter isolation).
 private struct StrapSyncRow: View {
@@ -5656,26 +5655,12 @@ private struct StrapSyncRow: View {
         if !live.backfilling {
             TimelineView(.periodic(from: .now, by: 60)) { context in
                 HStack(alignment: .top, spacing: 10) {
-                    SourceBadge("Strap sync",
-                                tint: live.lastSyncError != nil ? StrandPalette.statusWarning
-                                    : live.lastSyncedAt != nil ? StrandPalette.accent
-                                    : StrandPalette.textTertiary)
+                    Text("Strap sync")
+                        .font(StrandFont.footnote)
+                        .foregroundStyle(StrandPalette.textSecondary)
                     Spacer()
-                    if let error = live.lastSyncError {
-                        Text(error)
-                            .font(StrandFont.captionNumber)
-                            .foregroundStyle(StrandPalette.statusWarning)
-                            .multilineTextAlignment(.trailing)
-                            .fixedSize(horizontal: false, vertical: true)
-                    } else if let at = live.lastSyncedAt {
-                        Text("History synced \(relativeAgo(at, now: context.date.timeIntervalSince1970))")
-                            .font(StrandFont.captionNumber)
-                            .foregroundStyle(StrandPalette.textSecondary)
-                    } else {
-                        Text("Not synced yet")
-                            .font(StrandFont.captionNumber)
-                            .foregroundStyle(StrandPalette.textTertiary)
-                    }
+                    SyncStatusLine(status: live.syncStatus, now: context.date.timeIntervalSince1970)
+                        .multilineTextAlignment(.trailing)
                 }
             }
         }

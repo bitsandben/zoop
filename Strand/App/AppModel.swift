@@ -356,14 +356,28 @@ final class AppModel: ObservableObject {
         }
         // HR-zone haptic coaching watches the smoothed bpm.
         $bpm.sink { [weak self] hr in self?.coachZone(hr) }.store(in: &hrCancellables)
-        // Illness/strain early-warning recomputes when the daily history changes.
-        repo.$days.sink { [weak self] days in
-            self?.evaluateIllness(days)
-            self?.evaluateStrainTarget()
-            self?.evaluateGoodMorning()
+        // Illness/strain early-warning recomputes when the daily history changes. Keyed on `refreshSeq`,
+        // which `refresh` bumps only after every cache is assigned: a `$days` sink runs before `days` is
+        // set and while `sleeps` still holds the previous publish, so it evaluated one refresh late.
+        repo.$refreshSeq.sink { [weak self] _ in
+            guard let self else { return }
+            self.evaluateIllness(self.repo.days)
+            self.evaluateStrainTarget()
+            self.evaluateGoodMorning()
             // Keep the battery night-guard's learned bedtime warm off the same signal (throttled inside).
-            self?.refreshHabitualMidsleep()
+            self.refreshHabitualMidsleep()
         }.store(in: &hrCancellables)
+        // The good-morning check is held while data is in flight; run it again once the offload, the
+        // pending-history flag and the scoring pass have all settled. `receive(on:)` runs it after the
+        // values are assigned, not inside their willSet.
+        Publishers.CombineLatest3(live.$backfilling, live.$historyPendingSync, intelligence.$computing)
+            .map { !$0 && !$1 && !$2 }
+            .removeDuplicates()
+            .dropFirst()
+            .filter { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.evaluateGoodMorning() }
+            .store(in: &hrCancellables)
         // Re-arm the strap's firmware alarm once the connection has SETTLED — not the instant it (re)bonds.
         // A smart-alarm time changed while the strap was away never reached it , the send is gated on bond
         // , so the strap kept the OLD time and fired at it (#59).
@@ -749,7 +763,9 @@ final class AppModel: ObservableObject {
 
     private func refreshAfterCompletedBackfill() async {
         live.append(log: "Backfill: refreshing dashboard cache from completed sync")
-        await repo.refresh(days: 120)
+        // The full default window: the caches hold the whole history, and a shorter read would publish
+        // as a "change" that truncates every long-window card until some later refresh restores it.
+        await repo.refresh()
         // Score the freshly-offloaded raw data RIGHT NOW rather than waiting for the next 15-minute
         // analyzeRecent tick , otherwise a just-synced night's Charge / Effort / Rest can take up to
         // 15 minutes to appear on a strap-only (no-import) dashboard. analyzeRecent no-ops if a tick is
@@ -2139,7 +2155,10 @@ final class AppModel: ObservableObject {
     }
 
     /// Zoop: the once-a-day good-morning notification with the night's Recovery (see GoodMorningNotifier).
+    /// Held while history is still arriving or being scored: the message posts once a day and is never
+    /// corrected, so it must not announce a Recovery computed from a partial overnight offload.
     func evaluateGoodMorning() {
+        guard !live.backfilling, !live.historyPendingSync, !intelligence.computing else { return }
         guard let row = repo.today else { return }
         let nightEnd = repo.sleeps.map(\.endTs).max()
         GoodMorningNotifier.onDayUpdate(today: Repository.localDayKey(Date()), recovery: row.recovery,
@@ -2147,7 +2166,7 @@ final class AppModel: ObservableObject {
     }
 
     /// Re-run the illness watch over the cached history. Called when the Automations toggle
-    /// flips , the repo.$days sink only fires on data changes, so a flip would otherwise wait
+    /// flips , the repo.$refreshSeq sink only fires on data changes, so a flip would otherwise wait
     /// for the next refresh.
     func reevaluateIllness() {
         evaluateIllness(repo.days)

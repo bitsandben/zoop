@@ -20,6 +20,16 @@ enum WorkoutDetectedNotifier {
     /// re-announced one workout after nearly every sync.
     static let sameWorkoutToleranceSec = 30 * 60
 
+    /// A candidate whose heart rate ended more recently than this may still be running: the detector
+    /// only sees the data synced so far. Announcing it would store a truncated window as the workout
+    /// Home offers to save, so it waits for a later sync.
+    static let settleSec = 10 * 60
+
+    /// Pure, testable: whether a candidate has been over long enough to announce.
+    static func isSettled(endSec: Int, now: Int) -> Bool {
+        now - endSec >= settleSec
+    }
+
     /// Pure, testable decision: notify only for a candidate not already announced.
     static func shouldNotify(enabled: Bool, candidateStart: Int?, lastNotifiedStart: Int?) -> Bool {
         guard enabled, let candidateStart else { return false }
@@ -34,25 +44,32 @@ enum WorkoutDetectedNotifier {
                 String(localized: "\(w.durationMin) min from \(start), average \(w.avgBpm) bpm. Open Zoop to save it."))
     }
 
-    /// Posts at most one notification per candidate. The marker advances only after an authorized post,
-    /// so a candidate found while notifications are off is still announced once they are allowed.
-    static func onSyncCompleted(candidate: DetectedWorkout?, enabled: Bool) {
+    /// Posts at most one notification per candidate. The marker is set before the asynchronous
+    /// permission check, so two syncs landing together cannot both post, and rolled back when
+    /// notifications are not allowed, so the candidate is still announced once they are.
+    static func onSyncCompleted(candidate: DetectedWorkout?, enabled: Bool, now: Date = Date()) {
         let d = UserDefaults.standard
         let last = d.object(forKey: lastStartKey) as? Int
         guard shouldNotify(enabled: enabled, candidateStart: candidate?.startSec, lastNotifiedStart: last),
-              let w = candidate else { return }
+              let w = candidate, isSettled(endSec: w.endSec, now: Int(now.timeIntervalSince1970)) else { return }
+        d.set(w.startSec, forKey: lastStartKey)
         let copy = copy(for: w)
         let center = UNUserNotificationCenter.current()
         center.getNotificationSettings { settings in
-            guard settings.authorizationStatus == .authorized else { return }
+            let d = UserDefaults.standard
+            guard settings.authorizationStatus == .authorized else {
+                if d.object(forKey: lastStartKey) as? Int == w.startSec {
+                    if let last { d.set(last, forKey: lastStartKey) } else { d.removeObject(forKey: lastStartKey) }
+                }
+                return
+            }
             let content = UNMutableNotificationContent()
             content.title = copy.title
             content.body = copy.body
             content.sound = .default
             center.add(UNNotificationRequest(identifier: "auto-workout", content: content, trigger: nil))
-            UserDefaults.standard.set(w.startSec, forKey: lastStartKey)
             // Home shows exactly this workout until it is saved or dismissed, whatever later scans find.
-            UserDefaults.standard.set(Repository.encodePendingAutoWorkout(w), forKey: Repository.pendingAutoWorkoutKey)
+            d.set(Repository.encodePendingAutoWorkout(w), forKey: Repository.pendingAutoWorkoutKey)
         }
     }
 }

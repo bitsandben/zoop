@@ -242,12 +242,10 @@ struct SyncingHistoryNote: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            StatePill("Syncing strap history…", tone: .accent, pulsing: true)
-            if chunks > 0 {
-                Text("\(chunks) chunks pulled")
-                    .font(StrandFont.footnote)
-                    .foregroundStyle(StrandPalette.textSecondary)
-            }
+            ConnectionDot(tone: .accent, pulsing: true, size: 6)
+            Text(SyncStatus.syncing(chunks: chunks).title())
+                .font(StrandFont.footnote.weight(.medium))
+                .foregroundStyle(StrandPalette.textSecondary)
         }
     }
 }

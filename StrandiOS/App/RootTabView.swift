@@ -737,16 +737,17 @@ private struct MoreDeviceHeader: View {
 
     private var status: String {
         guard live.connected else { return String(localized: "Not connected") }
+        // Same readiness the sync status uses, so this header and the Health sync row agree.
+        guard live.historyReady else { return String(localized: "Pairing…") }
         if let pct = live.batteryPct {
             return String(localized: "Connected · \(Int(pct.rounded()))%")
         }
         return String(localized: "Connected")
     }
 
+    /// The connection state is the line above, so this one says only where the sync is.
     private var syncLine: String {
-        guard let t = live.lastSyncedAt else { return String(localized: "Not synced yet") }
-        let when = Date(timeIntervalSince1970: t).formatted(.relative(presentation: .named))
-        return String(localized: "Last sync \(when)")
+        live.syncStatus.syncLine(lastSyncedAt: live.lastSyncedAt)
     }
 
     var body: some View {
@@ -757,7 +758,7 @@ private struct MoreDeviceHeader: View {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         Circle()
-                            .fill(live.connected ? StrandPalette.accent : StrandPalette.textTertiary)
+                            .fill(live.connected && live.historyReady ? StrandPalette.accent : StrandPalette.textTertiary)
                             .frame(width: 8, height: 8)
                         Text(status)
                             .font(.system(size: 17, weight: .semibold))
