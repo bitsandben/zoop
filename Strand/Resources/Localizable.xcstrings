@@ -270241,6 +270241,788 @@
           }
         }
       }
+    },
+    "zoop.stress.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stress"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stress"
+          }
+        }
+      }
+    },
+    "zoop.stress.label.now" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jetzt · %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Now · %@"
+          }
+        }
+      }
+    },
+    "zoop.stress.label.at" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At %@"
+          }
+        }
+      }
+    },
+    "zoop.stress.label.morning" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute Morgen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This morning"
+          }
+        }
+      }
+    },
+    "zoop.stress.meaning.low" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhig: Puls und HRV liegen auf oder über deinem üblichen Niveau."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calm: your heart rate and HRV are at or better than your usual level."
+          }
+        }
+      }
+    },
+    "zoop.stress.meaning.medium" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine normale Aktivierung für einen Tag auf den Beinen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A normal amount of activation for a day on your feet."
+          }
+        }
+      }
+    },
+    "zoop.stress.meaning.high" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Körper ist aktivierter als sonst. Langsames Atmen kann helfen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your body is more activated than usual. Slow breathing can bring it down."
+          }
+        }
+      }
+    },
+    "zoop.stress.meaning.none" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trage den Tracker über den Tag, dann füllt sich die Kurve."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wear your strap through the day and the curve fills in."
+          }
+        }
+      }
+    },
+    "zoop.stress.curve.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Kurve füllt sich, während der Tracker deinen Puls über den Tag aufzeichnet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The curve fills in as the strap records your heart rate through the day."
+          }
+        }
+      }
+    },
+    "zoop.stress.curve.sleep" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schraffiert: Schlaf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shaded: sleep"
+          }
+        }
+      }
+    },
+    "zoop.stress.card.today" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today"
+          }
+        }
+      }
+    },
+    "zoop.stress.today.highest" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Höchster Wert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Highest"
+          }
+        }
+      }
+    },
+    "zoop.stress.today.lowest" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niedrigster Wert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lowest"
+          }
+        }
+      }
+    },
+    "zoop.stress.today.average" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durchschnitt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average"
+          }
+        }
+      }
+    },
+    "zoop.stress.today.timeHigh" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeit auf hohem Niveau"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time in high"
+          }
+        }
+      }
+    },
+    "zoop.stress.card.trend" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlauf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trend"
+          }
+        }
+      }
+    },
+    "zoop.stress.trend.week" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "7 Tage"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "7 days"
+          }
+        }
+      }
+    },
+    "zoop.stress.trend.month" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 Tage"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 days"
+          }
+        }
+      }
+    },
+    "zoop.stress.trend.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für einen Verlauf fehlen noch ein paar Tage mit Schlafdaten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Needs a few more days of sleep data before a trend shows."
+          }
+        }
+      }
+    },
+    "zoop.stress.trend.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein üblicher Bereich"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your typical range"
+          }
+        }
+      }
+    },
+    "zoop.stress.curve.a11y" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stress im Tagesverlauf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stress through today"
+          }
+        }
+      }
+    },
+    "zoop.stress.trend.a11y" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Täglicher Stressverlauf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily stress trend"
+          }
+        }
+      }
+    },
+    "zoop.stress.card.breathe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atmen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breathe"
+          }
+        }
+      }
+    },
+    "zoop.stress.breathe.high" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Stress war zuletzt hoch. Zwei Minuten langsames Atmen können ihn senken."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your stress has been high. Two minutes of slow breathing can bring it down."
+          }
+        }
+      }
+    },
+    "zoop.stress.breathe.calm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwei Minuten langsames Atmen, wann immer du magst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Two minutes of slow breathing, whenever you want it."
+          }
+        }
+      }
+    },
+    "zoop.stress.breathe.start" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atmen starten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start breathing"
+          }
+        }
+      }
+    },
+    "zoop.stress.breathe.done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fertig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        }
+      }
+    },
+    "zoop.stress.ask.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warst du gestresst?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Were you stressed?"
+          }
+        }
+      }
+    },
+    "zoop.stress.ask.body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Antwort bleibt auf diesem Gerät und hilft Zoop abzustimmen, wann es Atmen vorschlägt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your answer stays on this device and tunes when Zoop suggests breathing."
+          }
+        }
+      }
+    },
+    "zoop.stress.ask.yes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ja"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yes"
+          }
+        }
+      }
+    },
+    "zoop.stress.ask.no" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nein"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No"
+          }
+        }
+      }
+    },
+    "zoop.stress.explain.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie aktiviert dein Körper ist, von 0 (ruhig) bis 3 (hoch). Es ist ein Hinweis von deinem Herzen, keine Messung dessen, wie du dich fühlst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How activated your body is, from 0 (calm) to 3 (high). It is a hint from your heart, not a measurement of how you feel."
+          }
+        }
+      }
+    },
+    "zoop.stress.explain.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puls und HRV im Vergleich zu deiner Basis"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart rate and HRV against your baseline"
+          }
+        }
+      }
+    },
+    "zoop.stress.explain.method.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Stunde ohne Training wird mit deiner eigenen Basis verglichen. Ein höherer Puls und eine niedrigere HRV erhöhen den Wert. Auch Haltung, Koffein und Alkohol verändern die HRV."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each hour you are not exercising is compared with your own baseline. A higher heart rate and a lower HRV raise the score. Posture, caffeine and alcohol also move HRV."
+          }
+        }
+      }
+    },
+    "zoop.stress.explain.method.hronly" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Stunde ohne Training wird mit deiner eigenen Basis verglichen. Ein höherer Puls erhöht den Wert. Die HRV am Handgelenk ist tagsüber noch zu unruhig, um zu zählen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each hour you are not exercising is compared with your own baseline. A higher heart rate raises the score. Wrist HRV is too noisy by day to count yet."
+          }
+        }
+      }
+    },
+    "zoop.stress.explain.confidence" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der stündliche Stresswert ist nur an einer Person geprüft, nimm ihn als Hinweis."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hourly stress is validated against one person only, so treat it as a hint."
+          }
+        }
+      }
+    },
+    "zoop.stress.explain.calibrating" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein üblicher Bereich braucht etwa eine Woche an Tagen. Bis dahin steht 1 bis 2 dafür."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your typical range needs about a week of days. Until then 1 to 2 stands in for it."
+          }
+        }
+      }
+    },
+    "zoop.stress.contributor.rhr" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhepuls"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resting heart rate"
+          }
+        }
+      }
+    },
+    "zoop.stress.contributor.hrv" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV"
+          }
+        }
+      }
+    },
+    "zoop.stress.contributor.higher" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Höher als üblich"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Higher than your usual"
+          }
+        }
+      }
+    },
+    "zoop.stress.contributor.lower" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niedriger als üblich"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lower than your usual"
+          }
+        }
+      }
+    },
+    "zoop.stress.contributor.near" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahe am Üblichen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Near your usual"
+          }
+        }
+      }
+    },
+    "zoop.stress.loading" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Puls wird gelesen…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading your heart rate…"
+          }
+        }
+      }
+    },
+    "zoop.stress.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch kein Stressverlauf. Trage den Tracker oder importiere deinen WHOOP-Export unter Datenquellen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No stress history yet. Wear your strap or import your WHOOP export in Data Sources."
+          }
+        }
+      }
+    },
+    "zoop.stress.advanced.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erweiterte HRV (Test Centre)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Advanced HRV (Test Centre)"
+          }
+        }
+      }
+    },
+    "zoop.stress.today.levelAt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ um %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ at %@"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
