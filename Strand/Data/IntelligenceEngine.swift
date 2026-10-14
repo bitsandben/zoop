@@ -575,41 +575,142 @@ final class IntelligenceEngine: ObservableObject {
         return fmt.string(from: sat)
     }
 
-    /// Assess Fitness Age readiness from `gateDays` (the merged last-7 the readiness card counts) and, when
-    /// ready, build the fitness_age (+ optional vo2max) points for `satKey`. Empty when not ready. The
-    /// SINGLE source of the gate + compute , shared by the recompute pass and the manual "refresh Fitness
-    /// Age" button so the two can never drift. Profile passed as primitives (no cross-actor object read).
-    /// Mirrors the Android `IntelligenceEngine.fitnessAgeRows`.
+    /// Assess Fitness Age readiness from the last 7 of `gateDays` and, when ready, build the fitness_age
+    /// points for `satKey`: the age, each factor's weighted years, the inputs it was scored on, and the
+    /// VO₂max estimate. `gateDays` is the merged history up to `satKey` (up to 30 days; the baselines are
+    /// 30-day medians). Empty when not ready. The SINGLE source of the gate + compute, shared by the
+    /// recompute pass, the manual "refresh Fitness Age" button and the history backfill. Profile passed as
+    /// primitives (no cross-actor object read).
     static func fitnessAgeRows(
         gateDays: [DailyMetric], age: Int, sex: String, waistCm: Double, heightCm: Double, weightKg: Double,
-        computedId: String, satKey: String,
+        computedId: String, satKey: String, measuredVO2: Double? = nil, bodyFatPct: Double? = nil,
     ) -> [MetricPoint] {
-        let rhrs = gateDays.compactMap { $0.restingHr }.map(Double.init)
-        let strains = gateDays.compactMap { $0.strain }.filter { $0 >= 30 }
+        let window = Array(gateDays.sorted { $0.day < $1.day }.suffix(30))
+        let last7 = window.suffix(7)
+        let rhrs = window.compactMap { $0.restingHr }.map(Double.init)
+        let strains = window.compactMap { $0.strain }.filter { $0 >= 30 }
         let meanStrain = strains.isEmpty ? 0 : strains.reduce(0, +) / Double(strains.count)
+        let activeDaysPerWeek = Int((Double(strains.count) * 7 / Double(max(window.count, 7))).rounded())
         let waist: Double? = waistCm > 0 ? waistCm : nil
         let ready = FitnessAgeEngine.assessReadiness(
             hasAge: age > 0, hasSex: !sex.isEmpty,
-            rhrDays: rhrs.count, activityDays: gateDays.compactMap { $0.strain }.count,
+            rhrDays: last7.compactMap { $0.restingHr }.count, activityDays: last7.compactMap { $0.strain }.count,
             hasHeightWeight: heightCm > 0 && weightKg > 0, hasWaist: waist != nil)
-        guard ready.canCompute,
-              let res = FitnessAgeEngine.compute(
-                age: Double(age), sex: sex,
-                restingHR: medianOf(rhrs),
-                paIndex: FitnessAgeEngine.physicalActivityIndexFromStrain(
-                    activeDaysPerWeek: strains.count, meanActiveStrain: meanStrain),
-                waistCm: waist) else { return [] }
+        guard ready.canCompute, !rhrs.isEmpty else { return [] }
+        let rhr = medianOf(rhrs)
+        let pai = FitnessAgeEngine.physicalActivityIndexFromStrain(
+            activeDaysPerWeek: activeDaysPerWeek, meanActiveStrain: meanStrain)
+        let hrvs = window.compactMap { $0.avgHrv }.filter { $0 > 0 }
+        let nights = window.compactMap { $0.totalSleepMin }.map { $0 / 60 }.filter { $0 > 0 }
+        let bmi: Double? = heightCm > 0 && weightKg > 0
+            ? FitnessAgeEngine.bmi(weightKg: weightKg, heightCm: heightCm) : nil
+        let nes: Double? = waist.map {
+            FitnessAgeEngine.estimateVO2max(age: Double(age), sex: sex, waistCm: $0, restingHR: rhr, paIndex: pai)
+        }
+        // A measured VO₂max (Apple Health) wins over the Nes estimate; the HR-only Uth estimate is never
+        // used for the age because resting HR already has its own factor.
+        let vo2ForAge = measuredVO2 ?? nes
+        let inputs = FitnessAgeInputs(
+            chronoAge: Double(age), sex: sex, restingHR: rhr,
+            vo2max: vo2ForAge, vo2Source: measuredVO2 != nil ? .measured : .nesEstimate,
+            rmssd: hrvs.isEmpty ? nil : medianOf(hrvs), activityIndex: pai,
+            bmi: bmi, bodyFatPct: bodyFatPct,
+            sleepConsistency: VitalityEngine.sleepConsistency(nightlyHours: nights))
+        guard let res = FitnessAgeEngine.compute(inputs) else { return [] }
         var rows = [MetricPoint(day: satKey, key: "fitness_age", value: res.fitnessAge)]
-        // #1391: offer a VO₂max even without a waist. res.vo2max is the Nes 2011 waist-based estimate (nil
-        // when no waist is set). Fall back to the Uth 2004 HR-ratio estimate (15.3·HRmax/RHR — waist-free,
-        // the SAME formula the calorie path already uses), so any user past the age+RHR fitness-age gate gets
-        // a (rougher) VO₂max instead of a blank. HRmax via the shared Tanaka estimator (no HR history here →
-        // age-predicted); RHR = the same median the Nes value used. Both persist under "vo2max_est"; the card
-        // labels it "Estimated". Mirrors the Android twin.
-        let vo2 = res.vo2max
-            ?? Calories.vo2maxFor(hrmax: StrainScorer.estimateHRmax([], age: Double(age)).0, restingHR: medianOf(rhrs))
+        for (factor, years) in res.contributions {
+            rows.append(MetricPoint(day: satKey, key: factor.contributionKey, value: years))
+        }
+        if let v = vo2ForAge {
+            rows.append(MetricPoint(day: satKey, key: FitnessAgeFactor.vo2max.inputKey, value: v))
+            rows.append(MetricPoint(day: satKey, key: FitnessAgeKeys.vo2Measured, value: measuredVO2 != nil ? 1 : 0))
+        }
+        rows.append(MetricPoint(day: satKey, key: FitnessAgeFactor.restingHR.inputKey, value: rhr))
+        if let r = inputs.rmssd { rows.append(MetricPoint(day: satKey, key: FitnessAgeFactor.hrv.inputKey, value: r)) }
+        rows.append(MetricPoint(day: satKey, key: FitnessAgeFactor.activity.inputKey, value: pai))
+        if let bf = bodyFatPct { rows.append(MetricPoint(day: satKey, key: FitnessAgeKeys.bodyFat, value: bf)) }
+        else if let b = bmi { rows.append(MetricPoint(day: satKey, key: FitnessAgeKeys.bmi, value: b)) }
+        if let c = inputs.sleepConsistency {
+            rows.append(MetricPoint(day: satKey, key: FitnessAgeFactor.sleep.inputKey, value: c))
+        }
+        // #1391: offer a VO₂max even without a waist. Nes 2011 waist-based estimate when a waist is set,
+        // else the Uth 2004 HR-ratio estimate (15.3·HRmax/RHR, the SAME formula the calorie path uses) with
+        // the shared Tanaka HRmax. Both persist under "vo2max_est"; the card labels it "Estimated".
+        let vo2 = nes
+            ?? Calories.vo2maxFor(hrmax: StrainScorer.estimateHRmax([], age: Double(age)).0, restingHR: rhr)
         if let v = vo2 { rows.append(MetricPoint(day: satKey, key: "vo2max_est", value: v)) }
         return rows
+    }
+
+    /// The Apple Health inputs of a fitness age ending on `endDay`: the 30-day median measured VO₂max and
+    /// the latest body fat of the last 180 days. Pure, so the backfill can slice one fetched series.
+    static func fitnessHealthInputs(
+        vo2: [(day: String, value: Double)], bodyFat: [(day: String, value: Double)], endDay: String
+    ) -> (vo2: Double?, bodyFat: Double?) {
+        let from30 = shiftDay(endDay, by: -29), from180 = shiftDay(endDay, by: -179)
+        let v = vo2.filter { $0.day >= from30 && $0.day <= endDay && $0.value > 0 }.map(\.value)
+        let bf = bodyFat.filter { $0.day >= from180 && $0.day <= endDay && $0.value > 0 }
+            .max { $0.day < $1.day }?.value
+        return (v.isEmpty ? nil : medianOf(v), bf)
+    }
+
+    /// "yyyy-MM-dd" moved by whole days in the gregorian calendar.
+    nonisolated static func shiftDay(_ day: String, by days: Int) -> String {
+        var cal = Calendar(identifier: .gregorian); cal.timeZone = TimeZone(identifier: "UTC")!
+        let fmt = DateFormatter(); fmt.calendar = cal; fmt.timeZone = cal.timeZone
+        fmt.locale = Locale(identifier: "en_US_POSIX"); fmt.dateFormat = "yyyy-MM-dd"
+        guard let d = fmt.date(from: day), let s = cal.date(byAdding: .day, value: days, to: d) else { return day }
+        return fmt.string(from: s)
+    }
+
+    /// The measured VO₂max and body-fat series the fitness age reads (Apple Health, ~1 year).
+    private func fitnessHealthSeries() async -> (vo2: [(day: String, value: Double)], bodyFat: [(day: String, value: Double)]) {
+        let vo2 = await repo.resolvedSeries(key: "vo2max", source: "apple-health", days: 400).points
+            .map { (day: $0.day, value: $0.value) }
+        let bf = await repo.resolvedSeries(key: "body_fat", source: "apple-health", days: 400).points
+            .map { (day: $0.day, value: $0.value) }
+        return (vo2, bf)
+    }
+
+    /// Fitness age rows for `satKey` from the merged daily history, the profile and Apple Health.
+    private func fitnessAgeRows(satKey: String, days: [DailyMetric],
+                                health: (vo2: [(day: String, value: Double)], bodyFat: [(day: String, value: Double)])) -> [MetricPoint] {
+        let extra = Self.fitnessHealthInputs(vo2: health.vo2, bodyFat: health.bodyFat, endDay: satKey)
+        return Self.fitnessAgeRows(
+            gateDays: days, age: profile.age, sex: profile.sex, waistCm: profile.waistCm,
+            heightCm: profile.heightCm, weightKg: profile.weightKg, computedId: deviceId + "-zoop",
+            satKey: satKey, measuredVO2: extra.vo2, bodyFatPct: extra.bodyFat)
+    }
+
+    /// One-shot rewrite of the last 26 weekly fitness ages with the multi-marker model, so the history
+    /// chart and the per-factor rows have a past to show. Reads stored dailies only; flagged so it runs once.
+    func runFitnessAgeBackfillIfNeeded(weeks: Int = 26) async {
+        let flag = "zoop.fitnessAge.multiMarker.v1.done"
+        guard !UserDefaults.standard.bool(forKey: flag), profile.age > 0 else { return }
+        guard let store = await repo.storeHandle() else { return }
+        let tzOffset = TimeZone.current.secondsFromGMT()
+        let now = Int(Date().timeIntervalSince1970)
+        let today = AnalyticsEngine.dayString(Self.midnightLocal(now, offsetSec: tzOffset), offsetSec: tzOffset)
+        let lastSat = Self.saturdayKey(onOrBefore: today)
+        let firstSat = Self.shiftDay(lastSat, by: -7 * (weeks - 1))
+        let all = await repo.dailyMetrics(fromDay: Self.shiftDay(firstSat, by: -29), toDay: today)
+            .sorted { $0.day < $1.day }
+        let health = await fitnessHealthSeries()
+        var rows: [MetricPoint] = []
+        for w in 0..<weeks {
+            let sat = Self.shiftDay(firstSat, by: 7 * w)
+            // The current week refines to today; past weeks end on their Saturday.
+            let end = w == weeks - 1 ? today : sat
+            let from = Self.shiftDay(end, by: -29)
+            rows += fitnessAgeRows(satKey: sat, days: all.filter { $0.day >= from && $0.day <= end },
+                                   health: health)
+        }
+        guard !rows.isEmpty else { return }
+        do {
+            try await store.persistMetricSeriesWithProvenance(
+                points: rows.filter { $0.key != "vo2max_est" }, provenance: [], deviceId: deviceId + "-zoop")
+            UserDefaults.standard.set(true, forKey: flag)
+        } catch {}
     }
 
     /// Method metadata for a newly computed VO₂max point. Empty when `points` contains no VO₂max value.
@@ -631,7 +732,7 @@ final class IntelligenceEngine: ObservableObject {
     /// (`fitnessAgeRows`) + date/window logic as the recompute pass, so it reads exactly what the readiness
     /// card shows. Light + works offline (stored data only). Returns true if a value was written. Mirrors
     /// the Android `recomputeFitnessAgeOnly`.
-    func recomputeFitnessAgeOnly(maxDays: Int = 21) async -> Bool {
+    func recomputeFitnessAgeOnly(maxDays: Int = 30) async -> Bool {
         guard let store = await repo.storeHandle() else { return false }
         let computedId = deviceId + "-zoop"
         let now = Int(Date().timeIntervalSince1970)
@@ -639,12 +740,9 @@ final class IntelligenceEngine: ObservableObject {
         let nowLocalMidnight = Self.midnightLocal(now, offsetSec: tzOffset)
         let newestDay = AnalyticsEngine.dayString(nowLocalMidnight, offsetSec: tzOffset)
         let oldestDay = AnalyticsEngine.dayString(nowLocalMidnight - (maxDays - 1) * 86_400, offsetSec: tzOffset)
-        let gate7 = Array((await repo.dailyMetrics(fromDay: oldestDay, toDay: newestDay))
-            .sorted { $0.day < $1.day }.suffix(7))
-        let rows = Self.fitnessAgeRows(
-            gateDays: gate7, age: profile.age, sex: profile.sex, waistCm: profile.waistCm,
-            heightCm: profile.heightCm, weightKg: profile.weightKg, computedId: computedId,
-            satKey: Self.saturdayKey(onOrBefore: newestDay))
+        let window = await repo.dailyMetrics(fromDay: oldestDay, toDay: newestDay)
+        let rows = fitnessAgeRows(satKey: Self.saturdayKey(onOrBefore: newestDay), days: window,
+                                  health: await fitnessHealthSeries())
         if !rows.isEmpty {
             try? await store.persistMetricSeriesWithProvenance(
                 points: rows,
@@ -2525,7 +2623,8 @@ final class IntelligenceEngine: ObservableObject {
         // accumulated view the readiness card + dashboard read (incl. IMPORTED Apple Health / Health Connect
         // resting HR, which the engine's computed-only `dailies` never carries). Captured here so the
         // Fitness Age gate can't be undercut by this pass's own scoring/eviction. Windowed to the range.
-        let faPriorDaily = await repo.dailyMetrics(fromDay: oldestDay, toDay: newestDay)
+        // 30 days back: the fitness age reads 30-day baselines, wider than the re-score window.
+        let faPriorDaily = await repo.dailyMetrics(fromDay: Self.shiftDay(newestDay, by: -29), toDay: newestDay)
 
         // Score provenance is metric-specific and lives outside dayOwnership (which remains solely a
         // resolver override). Persist scores + provenance atomically so a failed write can never label an
@@ -2616,10 +2715,11 @@ final class IntelligenceEngine: ObservableObject {
         }
         markPostLoopPhase("persist")
         // ── Fitness Age (Phase 2) , weekly, keyed to the week's Saturday ────────────────────────────
-        // Roll the last 7 computed days into the Nes/HUNT inputs and upsert a weekly Fitness Age (+ an
-        // optional VO₂max when a waist is set) under the same "-zoop" source. Idempotent on the Saturday
-        // key, so the number refines through the week and finalises on Saturday. Engine = FitnessAgeEngine
-        // (StrandAnalytics), fully unit-tested; the body term cancels so the headline needs no body metric.
+        // Roll the last 30 days (resting-HR / HRV baselines, activity, sleep regularity) plus the profile and
+        // Apple Health VO₂max / body fat into the multi-marker model and upsert a weekly Fitness Age, its
+        // per-factor years and inputs, and the VO₂max estimate under the same "-zoop" source. Idempotent on
+        // the Saturday key, so the number refines through the week and finalises on Saturday. Engine =
+        // FitnessAgeEngine (StrandAnalytics), fully unit-tested.
         let fa7 = dailies.sorted { $0.day < $1.day }.suffix(7)
         let faRHRs = fa7.compactMap { $0.restingHr }.map(Double.init)
         // The Fitness Age gate + compute read the PERSISTED/MERGED last-7 days , the SAME history the
@@ -2635,11 +2735,9 @@ final class IntelligenceEngine: ObservableObject {
         var faGateByDay: [String: DailyMetric] = [:]
         for d in faPriorDaily { faGateByDay[d.day] = d }
         for d in dailies { faGateByDay[d.day] = d }
-        let faGate7 = Array(faGateByDay.values.sorted { $0.day < $1.day }.suffix(7))
-        let faPts = Self.fitnessAgeRows(
-            gateDays: faGate7, age: profile.age, sex: profile.sex, waistCm: profile.waistCm,
-            heightCm: profile.heightCm, weightKg: profile.weightKg, computedId: computedId,
-            satKey: IntelligenceEngine.saturdayKey(onOrBefore: newestDay))
+        let faGate30 = Array(faGateByDay.values.sorted { $0.day < $1.day }.suffix(30))
+        let faPts = fitnessAgeRows(satKey: IntelligenceEngine.saturdayKey(onOrBefore: newestDay),
+                                   days: faGate30, health: await fitnessHealthSeries())
         if !faPts.isEmpty {
             try? await store.persistMetricSeriesWithProvenance(
                 points: faPts,

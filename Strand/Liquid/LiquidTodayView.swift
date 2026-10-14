@@ -473,6 +473,9 @@ struct LiquidTodayView: View {
                         case .keyMetrics:
                             #if os(iOS)
                             HomeSectionTitle(title: "My Dashboard") { personalizeButton }
+                            // Fitness age is weekly, so it shows on every day of the pager.
+                            NavigationLink(value: TabRoute.fitnessAge) { HomeFitnessAgeCard() }
+                                .buttonStyle(LiquidPressStyle())
                             #endif
                             keyMetricsSection
                         case .workouts:
@@ -2106,7 +2109,7 @@ struct LiquidTodayView: View {
             if let metric = detailMetric ?? key.flatMap({ key in
                 MetricCatalog.all.first(where: { $0.key == key })
             }) {
-                NavigationLink { MetricDetailView(metric: metric) } label: { tile }
+                NavigationLink { metricDetailDestination(metric) } label: { tile }
                     .buttonStyle(.plain)
             } else {
                 tile

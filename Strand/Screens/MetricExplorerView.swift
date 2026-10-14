@@ -550,7 +550,7 @@ struct MetricExplorerView: View {
                                     // against TWO registered destinations and double-pushed — the detail
                                     // flashed then popped straight back (#38).
                                     NavigationLink {
-                                        MetricDetailView(metric: metric)
+                                        metricDetailDestination(metric)
                                     } label: {
                                         MetricRow(metric: metric,
                                                   isEmpty: emptyByID[metric.id] ?? false)

@@ -21,37 +21,6 @@ final class FitnessAgeEngineTests: XCTestCase {
         XCTAssertEqual(FitnessAgeEngine.bmi(weightKg: 80, heightCm: 178), 25.249, accuracy: 1e-3)
     }
 
-    // MARK: - Fitness Age (self-consistent Nes; waist cancels, so only age/sex/RHR/PA needed)
-
-    func testFitnessAgeReferenceFitPersonEqualsChronoAge() {
-        // RHR 65 + PAI 5 = the reference peer → Fitness Age == chronological age exactly.
-        XCTAssertEqual(FitnessAgeEngine.fitnessAge(age: 40, sex: "male", restingHR: 65, paIndex: 5),
-                       40.0, accuracy: 1e-9)
-        XCTAssertEqual(FitnessAgeEngine.fitnessAge(age: 55, sex: "female", restingHR: 65, paIndex: 5),
-                       55.0, accuracy: 1e-9)
-    }
-
-    func testFitnessAgeFitterIsYounger() {
-        // Man 40, RHR 50, PAI 10: 40 + (0.155·(−15) − 0.226·5)/0.296 = 28.33
-        XCTAssertEqual(FitnessAgeEngine.fitnessAge(age: 40, sex: "male", restingHR: 50, paIndex: 10),
-                       28.33, accuracy: 0.05)
-    }
-
-    func testFitnessAgeUnfitterIsOlder() {
-        // Man 40, RHR 80, PAI 2: 40 + (0.155·15 − 0.226·(−3))/0.296 = 50.15
-        XCTAssertEqual(FitnessAgeEngine.fitnessAge(age: 40, sex: "male", restingHR: 80, paIndex: 2),
-                       50.15, accuracy: 0.05)
-    }
-
-    func testFitnessAgeClampsToRange() {
-        // Extremely unfit, older → clamps to 80.
-        XCTAssertEqual(FitnessAgeEngine.fitnessAge(age: 75, sex: "male", restingHR: 120, paIndex: 0),
-                       80, accuracy: 1e-9)
-        // Extremely fit, young → clamps to 20.
-        XCTAssertEqual(FitnessAgeEngine.fitnessAge(age: 25, sex: "male", restingHR: 35, paIndex: 15),
-                       20, accuracy: 1e-9)
-    }
-
     // MARK: - PA-index reconstruction (HUNT1 PA-Q buckets)
 
     func testPAIndexSedentary() {
@@ -84,30 +53,85 @@ final class FitnessAgeEngineTests: XCTestCase {
             activeDaysPerWeek: 4, meanActiveStrain: 60), 5.0, accuracy: 1e-9)
     }
 
-    // MARK: - compute (full result + gates)
+    // MARK: - Multi-marker fitness age
 
-    func testComputeReferencePersonExactAge() {
-        let r = FitnessAgeEngine.compute(age: 40, sex: "male", restingHR: 65, paIndex: 5)
+    private func age(_ x: FitnessAgeInputs) -> Double { FitnessAgeEngine.compute(x)!.fitnessAge }
+
+    func testFitThirtyYearOldIsYounger() {
+        let x = FitnessAgeInputs(chronoAge: 30, sex: "male", restingHR: 52, vo2max: 50, rmssd: 80)
+        XCTAssertLessThan(age(x), 30)
+        XCTAssertLessThan(age(x), 25)
+    }
+
+    func testUnfitThirtyYearOldIsOlder() {
+        let x = FitnessAgeInputs(chronoAge: 30, sex: "male", restingHR: 75, vo2max: 32, rmssd: 30)
+        XCTAssertGreaterThan(age(x), 30)
+        XCTAssertGreaterThan(age(x), 35)
+    }
+
+    func testAveragePeerIsAboutTheirAge() {
+        // FRIEND median VO₂max at 45, reference resting HR, HRV at the age norm, PA-index 5.
+        let x = FitnessAgeInputs(chronoAge: 45, sex: "male", restingHR: 65, vo2max: 37.8,
+                                 rmssd: VitalityEngine.rmssdNorm(forAge: 45), activityIndex: 5, bmi: 23)
+        XCTAssertEqual(age(x), 45, accuracy: 0.1)
+    }
+
+    func testMissingOptionalInputsStillWorks() {
+        let r = FitnessAgeEngine.compute(FitnessAgeInputs(chronoAge: 40, sex: "female", restingHR: 58))
         XCTAssertNotNil(r)
-        XCTAssertEqual(r!.fitnessAge, 40.0, accuracy: 1e-9)
-        XCTAssertEqual(r!.deltaYears, 0.0, accuracy: 1e-9)
-        XCTAssertNil(r!.vo2max)               // no waist → no VO₂max display
-        XCTAssertEqual(r!.bandYears, 5.0, accuracy: 1e-9)
-        XCTAssertFalse(r!.lowerConfidence)
+        XCTAssertEqual(Set(r!.contributions.keys), [.restingHR])
+        XCTAssertLessThan(r!.fitnessAge, 40)
+        XCTAssertNil(FitnessAgeEngine.compute(FitnessAgeInputs(chronoAge: 40, sex: "male", restingHR: 0)))
     }
 
-    func testComputeWithWaistFillsVO2max() {
-        let r = FitnessAgeEngine.compute(age: 40, sex: "male", restingHR: 65, paIndex: 5, waistCm: 90)
-        XCTAssertEqual(r!.vo2max!, 46.275, accuracy: 1e-3)
+    func testMonotonicInVO2max() {
+        var last = Double.infinity
+        for v in stride(from: 20.0, through: 65.0, by: 2.5) {
+            let a = age(FitnessAgeInputs(chronoAge: 40, sex: "male", restingHR: 62, vo2max: v, rmssd: 40))
+            XCTAssertLessThanOrEqual(a, last, "VO₂max \(v)")
+            last = a
+        }
+        // Strictly younger across the unclamped middle of the range.
+        XCTAssertLessThan(age(FitnessAgeInputs(chronoAge: 40, sex: "male", restingHR: 62, vo2max: 45)),
+                          age(FitnessAgeInputs(chronoAge: 40, sex: "male", restingHR: 62, vo2max: 40)))
     }
 
-    func testComputeNonBinaryFlagsLowerConfidence() {
-        let r = FitnessAgeEngine.compute(age: 40, sex: "nonbinary", restingHR: 60, paIndex: 6)
-        XCTAssertTrue(r!.lowerConfidence)
+    func testBoundedToFifteenYears() {
+        let fit = FitnessAgeEngine.compute(FitnessAgeInputs(chronoAge: 40, sex: "male", restingHR: 38,
+                                                            vo2max: 75, rmssd: 150, activityIndex: 15))!
+        XCTAssertEqual(fit.fitnessAge, 25, accuracy: 1e-9)
+        XCTAssertTrue(fit.bounded)
+        let unfit = FitnessAgeEngine.compute(FitnessAgeInputs(chronoAge: 40, sex: "male", restingHR: 100,
+                                                              vo2max: 15, rmssd: 8, activityIndex: 0, bmi: 40))!
+        XCTAssertLessThanOrEqual(unfit.fitnessAge, 55)
+        XCTAssertGreaterThan(unfit.fitnessAge, 50)
     }
 
-    func testComputeNilWhenNoRHR() {
-        XCTAssertNil(FitnessAgeEngine.compute(age: 40, sex: "male", restingHR: 0, paIndex: 7.5))
+    func testContributionsSumToTheOffset() {
+        let x = FitnessAgeInputs(chronoAge: 36, sex: "female", restingHR: 60, vo2max: 34, rmssd: 45,
+                                 activityIndex: 7, bodyFatPct: 26, sleepConsistency: 0.85)
+        let r = FitnessAgeEngine.compute(x)!
+        XCTAssertFalse(r.bounded)
+        XCTAssertEqual(36 + r.contributions.values.reduce(0, +), r.fitnessAge, accuracy: 0.05)
+        XCTAssertEqual(r.contributions.count, 6)
+    }
+
+    func testOneDecimal() {
+        let r = FitnessAgeEngine.compute(FitnessAgeInputs(chronoAge: 33, sex: "male", restingHR: 61, rmssd: 52))!
+        XCTAssertEqual(r.fitnessAge * 10, (r.fitnessAge * 10).rounded(), accuracy: 1e-9)
+    }
+
+    func testVO2NormScalesDiffer() {
+        // The Nes estimate is read against HUNT norms, which sit higher than FRIEND's.
+        XCTAssertGreaterThan(FitnessAgeEngine.vo2Norm(age: 40, sex: "male", source: .nesEstimate),
+                             FitnessAgeEngine.vo2Norm(age: 40, sex: "male", source: .measured))
+        // vo2Age inverts vo2Norm.
+        let n = FitnessAgeEngine.vo2Norm(age: 52, sex: "female", source: .measured)
+        XCTAssertEqual(FitnessAgeEngine.vo2Age(n, sex: "female", source: .measured), 52, accuracy: 1e-9)
+    }
+
+    func testNonBinaryFlagsLowerConfidence() {
+        XCTAssertTrue(FitnessAgeEngine.compute(FitnessAgeInputs(chronoAge: 40, sex: "nonbinary", restingHR: 60))!.lowerConfidence)
     }
 
     // MARK: - Readiness checklist
@@ -140,7 +164,7 @@ final class FitnessAgeEngineTests: XCTestCase {
         // Missing body metrics never blocks the headline — they sit under the VO₂max role.
         let body = r.items.first { $0.key == "bodyMetrics" }!
         XCTAssertEqual(body.status, .missing)
-        XCTAssertEqual(body.role, .unlocksVO2max)
+        XCTAssertEqual(body.role, .drivesAge)
         XCTAssertFalse(body.required)
     }
 
@@ -168,24 +192,5 @@ final class FitnessAgeEngineTests: XCTestCase {
     func testNightsUntilReadyZeroAtOrAboveFloor() {
         XCTAssertEqual(FitnessAgeEngine.nightsUntilReady(rhrDays: 4), 0)
         XCTAssertEqual(FitnessAgeEngine.nightsUntilReady(rhrDays: 7), 0)
-    }
-
-    func testContributionsSumToTheFitnessAgeOffset() {
-        for sex in ["male", "female", "nonbinary"] {
-            for (rhr, pai) in [(52.0, 9.0), (65.0, 5.0), (74.0, 2.5), (58.0, 0.0)] {
-                let c = FitnessAgeEngine.contributionYears(sex: sex, restingHR: rhr, paIndex: pai)
-                let fa = FitnessAgeEngine.fitnessAge(age: 40, sex: sex, restingHR: rhr, paIndex: pai)
-                XCTAssertEqual(40 + c.restingHR + c.activity, fa, accuracy: 1e-9, "\(sex) \(rhr) \(pai)")
-            }
-        }
-    }
-
-    func testContributionSigns() {
-        let fit = FitnessAgeEngine.contributionYears(sex: "male", restingHR: 50, paIndex: 10)
-        XCTAssertLessThan(fit.restingHR, 0)   // low resting HR makes you younger
-        XCTAssertLessThan(fit.activity, 0)    // more activity makes you younger
-        let ref = FitnessAgeEngine.contributionYears(sex: "female", restingHR: 65, paIndex: 5)
-        XCTAssertEqual(ref.restingHR, 0, accuracy: 1e-12)
-        XCTAssertEqual(ref.activity, 0, accuracy: 1e-12)
     }
 }

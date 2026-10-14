@@ -46,6 +46,19 @@ enum TabRoute: Hashable {
     case sleepPlanner
     /// Today's Energy Bank estimate (iOS).
     case energyBank
+    /// The fitness age and what shapes it (iOS).
+    case fitnessAge
+}
+
+/// The detail screen for one catalog metric. Fitness age has its own screen on iOS, so every route to
+/// its catalog entry lands there instead of on the generic metric detail.
+@ViewBuilder
+func metricDetailDestination(_ metric: MetricDescriptor) -> some View {
+    #if os(iOS)
+    if metric.key == "fitness_age" { FitnessAgeScreen() } else { MetricDetailView(metric: metric) }
+    #else
+    MetricDetailView(metric: metric)
+    #endif
 }
 
 extension View {
@@ -61,7 +74,7 @@ extension View {
                 // catch-all vitals surface. (Pre-#198 Trends fell back to the Explorer instead —
                 // unified here rather than carrying two never-taken branches.)
                 if let m = MetricCatalog.all.first(where: { $0.key == key }) {
-                    MetricDetailView(metric: m)
+                    metricDetailDestination(m)
                 } else {
                     HealthView()
                 }
@@ -70,7 +83,7 @@ extension View {
                 // then Health, so a stale route can never dead-end.
                 if let m = MetricCatalog.metric(key: key, source: source)
                     ?? MetricCatalog.all.first(where: { $0.key == key }) {
-                    MetricDetailView(metric: m)
+                    metricDetailDestination(m)
                 } else {
                     HealthView()
                 }
@@ -111,6 +124,12 @@ extension View {
             case .energyBank:
                 #if os(iOS)
                 EnergyBankScreen()
+                #else
+                EmptyView()
+                #endif
+            case .fitnessAge:
+                #if os(iOS)
+                FitnessAgeScreen()
                 #else
                 EmptyView()
                 #endif

@@ -66,7 +66,7 @@ private struct HealthSectionsStack: View {
             VitalsSection()
             RecoveryContributorsSection()
             VitalitySection()
-            FitnessAgeSection()
+            // Fitness age lives on Home's card and its own screen.
             SkinTempSection()
             HealthHubLinksSection()
             // Live heart rate sits low on the page: it is a live readout, not a summary.
@@ -989,12 +989,6 @@ private struct FitnessAgeSection: View {
                 .font(StrandFont.footnote)
                 .foregroundStyle(StrandPalette.textTertiary)
 
-            #if os(iOS)
-            // What the number is made of: the same two inputs, aggregated the same way as the weekly
-            // computation, each with the years it moves the age.
-            FitnessAgeContributors(days: Array(repo.days.suffix(7)), sex: profile.sex)
-            #endif
-
             Divider().overlay(StrandPalette.hairline)
 
             // The honest disclosure: what we have / what we still need, grouped by what it unlocks.
@@ -1528,112 +1522,6 @@ private struct LiquidVitalTile: View {
     }
 }
 
-#if os(iOS)
-/// The two inputs behind Fitness Age as WHOOP-style rows: the reading, a scale with the reference
-/// marked, and how many years it adds or removes. The two rows sum to the gap to your real age.
-private struct FitnessAgeContributors: View {
-    let days: [DailyMetric]
-    let sex: String
-
-    private var restingHR: Double? {
-        let v = days.compactMap(\.restingHr).map(Double.init).sorted()
-        guard !v.isEmpty else { return nil }
-        return v.count % 2 == 1 ? v[v.count / 2] : (v[v.count / 2 - 1] + v[v.count / 2]) / 2
-    }
-    private var activeStrains: [Double] { days.compactMap(\.strain).filter { $0 >= 30 } }
-    private var paIndex: Double {
-        let st = activeStrains
-        let mean = st.isEmpty ? 0 : st.reduce(0, +) / Double(st.count)
-        return FitnessAgeEngine.physicalActivityIndexFromStrain(activeDaysPerWeek: st.count, meanActiveStrain: mean)
-    }
-
-    var body: some View {
-        if let rhr = restingHR {
-            let c = FitnessAgeEngine.contributionYears(sex: sex, restingHR: rhr, paIndex: paIndex)
-            VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
-                Text("What shapes it")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textPrimary)
-                row(title: "Resting heart rate",
-                    value: "\(Int(rhr.rounded())) bpm",
-                    detail: String(localized: "7-day median · reference 65"),
-                    position: (rhr - 40) / 40, reference: 25.0 / 40, lowerIsBetter: true,
-                    years: c.restingHR)
-                row(title: "Activity",
-                    value: String(localized: "\(activeStrains.count) active days"),
-                    detail: String(localized: "last 7 days · index \(paIndex.formatted(.number.precision(.fractionLength(1)))) of 15"),
-                    position: paIndex / 15, reference: 5.0 / 15, lowerIsBetter: false,
-                    years: c.activity)
-            }
-        }
-    }
-
-    private func row(title: LocalizedStringKey, value: String, detail: String,
-                     position: Double, reference: Double, lowerIsBetter: Bool, years: Double) -> some View {
-        let younger = years < -0.05, older = years > 0.05
-        let tint = younger ? StrandPalette.statusPositive : (older ? StrandPalette.statusWarning : StrandPalette.textSecondary)
-        return HStack(alignment: .center, spacing: ZoopMetrics.space4) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textSecondary)
-                Text(value)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(StrandPalette.textPrimary)
-                scale(position: position, reference: reference, lowerIsBetter: lowerIsBetter)
-                Text(detail)
-                    .font(StrandFont.footnote)
-                    .foregroundStyle(StrandPalette.textTertiary)
-            }
-            VStack(alignment: .trailing, spacing: 0) {
-                Text((years > 0 ? "+" : "") + years.formatted(.number.precision(.fractionLength(1))))
-                    .font(StrandFont.display(26))
-                    .foregroundStyle(tint)
-                Text("years")
-                    .font(StrandFont.footnote)
-                    .foregroundStyle(StrandPalette.textSecondary)
-            }
-            .frame(minWidth: 64, alignment: .trailing)
-        }
-    }
-
-    /// A segmented scale from worse (orange) to better (lime), the reference tick below and your
-    /// reading as a marker above.
-    private func scale(position: Double, reference: Double, lowerIsBetter: Bool) -> some View {
-        GeometryReader { geo in
-            let w = geo.size.width
-            let segments = 10
-            let x = CGFloat(min(max(position, 0), 1)) * w
-            let rx = CGFloat(min(max(reference, 0), 1)) * w
-            ZStack(alignment: .topLeading) {
-                HStack(spacing: 2) {
-                    ForEach(0..<segments, id: \.self) { i in
-                        let f = Double(i) / Double(segments - 1)
-                        let good = lowerIsBetter ? 1 - f : f
-                        Capsule()
-                            .fill(StrandPalette.sample(stops: [
-                                .init(color: StrandPalette.statusWarning, location: 0),
-                                .init(color: StrandPalette.textTertiary, location: 0.5),
-                                .init(color: StrandPalette.statusPositive, location: 1)], at: good))
-                            .frame(height: 5)
-                    }
-                }
-                .offset(y: 9)
-                Image(systemName: "arrowtriangle.down.fill")
-                    .font(.system(size: 9))
-                    .foregroundStyle(StrandPalette.textPrimary)
-                    .position(x: x, y: 3)
-                Image(systemName: "arrowtriangle.up.fill")
-                    .font(.system(size: 7))
-                    .foregroundStyle(StrandPalette.textTertiary)
-                    .position(x: rx, y: 20)
-            }
-        }
-        .frame(height: 24)
-    }
-}
-#endif
-
 // MARK: - Skin-temperature suite (v5: illness heads-up · body clock · cycle awareness)
 
 /// The v5 skin-temperature section: the confounder-suppressed illness "heads-up", the body-clock
@@ -1832,9 +1720,9 @@ struct VitalityDemoScreen: View {
 
 /// The symbol a stored Fitness Age needs when it is sitting on a reporting bound (#2173).
 ///
-/// `FitnessAgeEngine` clamps to [minAge, maxAge], so every model output below 20 is stored as
-/// exactly 20.0 and every output above 80 as exactly 80.0. A reader cannot tell either from a
-/// genuine 20 or 80, and the number looks as exact as every other number on the screen, which is
+/// `FitnessAgeEngine` clamps to [minAge, maxAge] (18…90), so every model output below 18 is stored as
+/// exactly 18.0 and every output above 90 as exactly 90.0. A reader cannot tell either from a
+/// genuine 18 or 90, and the number looks as exact as every other number on the screen, which is
 /// what makes a floored reading read like a sync or scoring fault rather than the end of the scale.
 ///
 /// Decided from the value rather than carried out of the engine, matching the Kotlin twin. The

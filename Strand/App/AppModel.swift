@@ -499,6 +499,8 @@ final class AppModel: ObservableObject {
             // history and repair sleep rejected by unmatched WRIST_OFF in one pass. Both persisted flags
             // describe that shared pass; either pending flag triggers it.
             await self.intelligence.runEffortRescoreIfNeeded()
+            // One-shot: rewrite the recent weekly fitness ages with the multi-marker model.
+            await self.intelligence.runFitnessAgeBackfillIfNeeded()
             while !Task.isCancelled {
                 // #547 RE-POLLUTION: a sync since the last tick may have armed a re-heal (its ingest gate
                 // dropped bad-clock records). `runTimestampHealIfNeeded` honours the pending flag even after
