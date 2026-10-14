@@ -60,17 +60,14 @@ private struct HealthSectionsStack: View {
     var body: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.sectionGap) {
             #if os(iOS)
-            // iOS follows the redesign's health monitor: the vitals lead, then live heart rate, what
-            // drives recovery, and the longer-range ages. Syncing runs on its own, so its status card
-            // closes the page rather than opening it.
+            // iOS follows the redesign's health monitor: the vitals lead, then skin temperature. Syncing
+            // runs on its own, so its status card closes the page rather than opening it.
             VitalsSection()
-            RecoveryContributorsSection()
-            // Fitness age lives on Home's card and its own screen. The Vitality score with its own
-            // "Body Age" is not drawn here: two different ages from two models read as a contradiction.
+            // Fitness age lives on Home's card and its own screen. Not drawn here on iOS, each because
+            // another screen already says it: the Recovery contributors (Recovery's own breakdown), the
+            // Vitality score with a second "Body Age" (Fitness age), and live heart rate (Home's chart).
             SkinTempSection()
             HealthHubLinksSection()
-            // Live heart rate sits low on the page: it is a live readout, not a summary.
-            HeartRateSection()
             SyncStatusSection()
             #else
             // Manual "Sync now" + honest sync status (#364). Its own view so the ~1Hz HR stream

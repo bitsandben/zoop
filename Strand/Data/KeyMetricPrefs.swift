@@ -59,10 +59,11 @@ enum KeyMetric: String, CaseIterable, Identifiable {
         .bloodOxygen, .respiratory, .steps, .weight, .calories,
     ]
 
-    /// The tiles the dashboard offers. iOS leaves out Recovery, Effort and Sleep: Home's rings show them.
+    /// The tiles the dashboard offers. iOS keeps only what Home shows nowhere else: the rings carry
+    /// Recovery, Effort and Sleep, and the Health monitor tile carries the overnight vitals.
     static var offered: [KeyMetric] {
         #if os(iOS)
-        defaultOrder.filter { ![.charge, .effort, .rest].contains($0) }
+        [.steps, .calories, .weight]
         #else
         defaultOrder
         #endif

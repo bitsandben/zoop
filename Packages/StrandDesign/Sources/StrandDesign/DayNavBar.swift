@@ -189,6 +189,12 @@ public struct DayNavBar: View {
             // #840 — iPad popover needs an explicit size or the graphical picker clips. Safe on macOS 13
             // and iPhone (the popover/sheet sizes to this); avoids the macOS 13.3-only compact-adaptation API.
             .frame(minWidth: 320, minHeight: 360)
+            #if os(iOS)
+            // iPhone: a compact popover under the day pill instead of a full-height sheet that left the
+            // calendar floating in empty space.
+            .tint(StrandPalette.accent)
+            .modifier(CompactPopoverOnPhone())
+            #endif
     }
 
     private var blockShape: RoundedRectangle { RoundedRectangle(cornerRadius: 14, style: .continuous) }
@@ -206,5 +212,20 @@ public struct DayNavBar: View {
         #endif
     }
 
+}
+#endif
+
+#if os(iOS)
+/// Keeps a popover a popover on iPhone (iOS 16.4+), where it otherwise adapts to a full-height sheet.
+private struct CompactPopoverOnPhone: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16.4, *) {
+            content
+                .presentationCompactAdaptation(.popover)
+                .presentationBackground(StrandPalette.surfaceRaised)
+        } else {
+            content
+        }
+    }
 }
 #endif
