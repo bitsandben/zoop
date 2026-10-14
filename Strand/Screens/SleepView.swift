@@ -499,14 +499,41 @@ struct SleepView: View {
             #endif
         case .stages:
             hero(model)
+            #if os(iOS)
+            // Bevel-style night readouts under the stages: time to fall asleep, then the overnight
+            // curves. Both read the DISPLAYED night, so ◀/▶ moves them with the hypnogram.
+            if let night = displayedNight(model) {
+                if let latency = sleepLatencyMinutes(night) {
+                    SleepLatencyCard(minutes: latency)
+                }
+                NightSignalCard(startTs: night.session.effectiveStartTs, endTs: night.session.endTs)
+            }
+            #endif
             // Zoop: the night's own vitals beside the previous 30 nights.
             NightVitalsCard(day: dailyRow(for: heroNight(model)), history: repo.days)
         case .bodyClock:       bodyClockDial(model)
         case .nightDetail:     NightDetailCard(model: model)
         case .sleepDebt:       SleepDebtLedgerCard(model: model)
-        case .stagesVsTypical: StagesVsTypicalCard(model: model)
+        case .stagesVsTypical:
+            // iOS folds the typical comparison into the stage cells under the hypnogram (each cell's
+            // ring carries the typical range), so a second per-stage card would repeat it.
+            #if !os(iOS)
+            StagesVsTypicalCard(model: model)
+            #endif
         case .asleepDuration:  durationTrend(model)
         }
+    }
+
+    /// The night the stage card is showing with real stages, or nil for a stage-less stub.
+    private func displayedNight(_ model: SleepModel) -> Night? {
+        if nightOffset == 0 { return model.isStubNight ? nil : model.night }
+        return navNight
+    }
+
+    /// Minutes from the night's start to its first staged sleep, or nil without a staged timeline.
+    private func sleepLatencyMinutes(_ night: Night) -> Double? {
+        guard let segs = night.realSegments, segs.count >= 2 else { return nil }
+        return SleepLatency.minutes(segments: segs.map { ($0.start, $0.end, $0.stage != .awake) })
     }
 
     /// The 24 h dial (#1680), or nothing at all.
@@ -580,6 +607,8 @@ struct SleepView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(String(localized: "Sleep performance \(Int(score.rounded())) of 100, \(sleepScoreWord(score))"))
             } else {
+                // iOS: sleep duration already leads the sleep-window card, so the hero does not repeat it.
+                #if !os(iOS)
                 VStack(spacing: ZoopMetrics.space1) {
                     CountUpText(
                         value: night.stages.asleep,
@@ -594,6 +623,7 @@ struct SleepView: View {
                 .padding(.top, 14)
                 .padding(.bottom, 4)
                 .accessibilityElement(children: .combine)
+                #endif
             }
 
             // iOS drops the provenance badge under the score, as Home does under its rings.
@@ -696,12 +726,12 @@ struct SleepView: View {
             if nightOffset == 0, !model.isStubNight {
                 nightNavHeader(trailing: model.night.spanLabel)
                 sleepWindowRow(model.night)
-                stageCard(model.night, intervals: model.intervals)
+                stageCard(model.night, intervals: model.intervals, bands: model.stageShareBands)
                 napSection(model.night)
             } else if let night = navNight {
                 nightNavHeader(trailing: night.spanLabel)
                 sleepWindowRow(night)
-                stageCard(night, intervals: night.intervals)
+                stageCard(night, intervals: night.intervals, bands: model.stageShareBands)
                 napSection(night)
             } else if let session = sessionRow(at: nightOffset) {
                 // Stage-less stub purely to reuse Night's date/time formatting.
@@ -877,7 +907,7 @@ struct SleepView: View {
     /// reconstruct, else the proportional stage bar. Intervals are passed in so offset 0
     /// uses the memoized `model.intervals` rather than re-deriving them. (#160)
     @ViewBuilder
-    private func stageCard(_ night: Night, intervals: [SleepInterval]) -> some View {
+    private func stageCard(_ night: Night, intervals: [SleepInterval], bands: StageShareBands.Bands) -> some View {
         let s = night.stages
         let isPersisted = (night.realSegments?.count ?? 0) >= 2
         // An Oura night's stages are the ring's RAW on-device SleepNet classification (decoded off the 0x49
@@ -890,6 +920,13 @@ struct SleepView: View {
             ? String(localized: "\(durationText(night.timeInBed)) in bed · \(efficiencyText(night)) efficiency · \(stageCaption)")
             : String(localized: "\(durationText(night.timeInBed)) in bed · \(efficiencyText(night)) efficiency")
         VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
+            #if os(iOS)
+            // Time in bed now leads the sleep-window card above, so the subtitle keeps only efficiency.
+            iosStageCard(s, night: night, intervals: intervals, bands: bands,
+                         subtitle: isPersisted
+                            ? String(localized: "\(efficiencyText(night)) efficiency · \(stageCaption)")
+                            : String(localized: "\(efficiencyText(night)) efficiency"))
+            #else
             if intervals.count >= 2 {
                 // #sleep-chart-style (Settings → Appearance): Classic keeps the per-stage timeline ROWS
                 // (ryanAtriumAi #988) — hatched track = the whole night, solid segments = when that stage
@@ -914,6 +951,7 @@ struct SleepView: View {
                     footer: { stageBreakdownRows(s) }
                 )
             }
+            #endif
             // #407 — subordinate movement/restlessness trace UNDER the hypnogram, on the SAME timeline, for
             // the SAME main-night GROUP blocks the hero resolved (mergeDay's group). Shown only for a real
             // (≥2-segment) hypnogram so the strip aligns with a genuine timeline; the proportional stage-bar
@@ -956,11 +994,14 @@ struct SleepView: View {
         }
         // WHOOP top-chart data (ryanAtriumAi #988): 1-min sleeping-HR buckets for THIS night, reloaded
         // only when the displayed night changes (same `.task(id:)` pattern the other per-night loads use).
+        // iOS draws the overnight curve in `NightSignalCard`, which loads its own series.
+        #if !os(iOS)
         .task(id: night.session.startTs) {
             nightHR = await repo.hrBuckets(from: night.session.startTs,
                                            to: night.session.endTs,
                                            bucketSeconds: 60)
         }
+        #endif
     }
 
     /// The detailed timeline has a variable-height insight footer, so forcing it into a fixed-height
@@ -980,6 +1021,62 @@ struct SleepView: View {
             }
         }
     }
+
+    #if os(iOS)
+    /// The iOS stage card, after Bevel: the stage lanes (or the stepped hypnogram for Filled/Ribbon), then
+    /// one cell per stage with its share ring and typical range. The cells replace the per-stage rows and
+    /// the separate "Stages vs typical" card; the sleeping-HR trace moved to the Night signals card.
+    @ViewBuilder
+    private func iosStageCard(_ s: Stages, night: Night, intervals: [SleepInterval],
+                              bands: StageShareBands.Bands, subtitle: String) -> some View {
+        let chartStyle = SleepChartStyle.resolve(sleepChartStyleRaw)
+        let palette: SleepStagePalette = chartStyle == .classic ? .noop : chartStyle.stagePalette
+        ZoopCard(tint: StrandPalette.restColor) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
+                VStack(alignment: .leading, spacing: ZoopMetrics.spaceHalf) {
+                    Text("Sleep stages").strandOverline()
+                    Text(subtitle)
+                        .font(StrandFont.footnote)
+                        .foregroundStyle(StrandPalette.textTertiary)
+                }
+                if intervals.count >= 2 {
+                    if chartStyle == .classic {
+                        SleepStageLanes(intervals: intervals, nightStart: night.onsetDate,
+                                        selected: selectedStage, palette: palette)
+                    } else {
+                        Hypnogram(
+                            intervals: intervals,
+                            height: ZoopMetrics.chartHeight,
+                            showsStageAxis: false,
+                            showsHover: true,
+                            nightStart: night.onsetDate,
+                            showsTimeAxis: true,
+                            filled: chartStyle.isFilled,
+                            stagePalette: palette
+                        )
+                        .frame(height: ZoopMetrics.chartHeight)
+                    }
+                } else {
+                    // Imported nights carry totals only: a proportional bar, decoded by the cells below.
+                    GeometryReader { geo in
+                        let total = max(1, s.total)
+                        HStack(spacing: 2) {
+                            ForEach([SleepStage.deep, .light, .rem, .awake], id: \.self) { st in
+                                Rectangle()
+                                    .fill(StrandPalette.sleepStageColor(st, palette: palette))
+                                    .frame(width: max(0, CGFloat(stageMinutes(st, in: s) / total) * geo.size.width))
+                            }
+                        }
+                    }
+                    .frame(height: 28)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .accessibilityHidden(true)
+                }
+                StageShareCells(stages: s, bands: bands, palette: palette, selected: $selectedStage)
+            }
+        }
+    }
+    #endif
 
     /// #sleep-chart-style — the WHOOP-style single stepped hypnogram (Filled = each stage banded down to
     /// the baseline, Ribbon = a slim band at each stage level), with the per-stage breakdown rows below as
@@ -1215,6 +1312,73 @@ struct SleepView: View {
     /// first were effectively hidden. The header now carries just the date span.
     @ViewBuilder
     private func sleepWindowRow(_ night: Night) -> some View {
+        #if os(iOS)
+        iosSleepWindowCard(night)
+        #else
+        legacySleepWindowRow(night)
+        #endif
+    }
+
+    #if os(iOS)
+    /// Bevel's top block: the sleep window as one line (with the edit pencil), then time in bed and sleep
+    /// duration side by side over a hairline. The stage card below no longer repeats time in bed.
+    @ViewBuilder
+    private func iosSleepWindowCard(_ night: Night) -> some View {
+        let hasStages = night.stages.total > 0
+        ZoopCard(padding: ZoopMetrics.cardInnerPadding, tint: StrandPalette.restColor) {
+            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) {
+                HStack(spacing: ZoopMetrics.space2) {
+                    Image(systemName: "moon.zzz.fill")
+                        .font(StrandFont.subhead)
+                        .foregroundStyle(StrandPalette.icon(StrandPalette.restColor))
+                        .accessibilityHidden(true)
+                    Text("Sleep window")
+                        .font(StrandFont.subhead)
+                        .foregroundStyle(StrandPalette.textSecondary)
+                    Spacer(minLength: 8)
+                    Text(verbatim: "\(night.onsetText) – \(night.wakeText)")
+                        .font(StrandFont.number(17))
+                        .foregroundStyle(StrandPalette.textPrimary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    wakeEditButton(night)
+                }
+                .accessibilityElement(children: .combine)
+                if hasStages {
+                    Divider().overlay(StrandPalette.hairline)
+                    HStack(spacing: 0) {
+                        splitCell(label: "Time in bed", value: durationText(night.timeInBed))
+                        Rectangle().fill(StrandPalette.hairline).frame(width: 1, height: 44)
+                        splitCell(label: "Sleep duration", value: durationText(night.stages.asleep))
+                            .padding(.leading, ZoopMetrics.space4)
+                    }
+                }
+                if mainSleepReasonText(night) != nil {
+                    Divider().overlay(StrandPalette.hairline)
+                    mainSleepFooter(night)
+                }
+            }
+        }
+    }
+
+    private func splitCell(label: LocalizedStringKey, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(StrandFont.caption)
+                .foregroundStyle(StrandPalette.textSecondary)
+            Text(value)
+                .font(StrandFont.number(26))
+                .foregroundStyle(StrandPalette.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+    #endif
+
+    @ViewBuilder
+    private func legacySleepWindowRow(_ night: Night) -> some View {
         // A frosted Rest-tinted card (was a flat surfaceRaised block) so the window row sits in the
         // same colour world as the rest of the screen. Bevel treatment — content unchanged.
         ZoopCard(padding: ZoopMetrics.cardInnerPadding, tint: StrandPalette.restColor) {
@@ -1245,7 +1409,10 @@ struct SleepView: View {
         HStack(spacing: 10) {
             // C4 — provenance. Dynamic String into the badge slot, so wrap in "\()" (the
             // String vs LocalizedStringKey SwiftUI footgun) to show it verbatim, not as a lookup key.
+            // iOS drops provenance chips across the redesign (the hero already does).
+            #if !os(iOS)
             SourceBadge("\(nightSource(night))", tint: StrandPalette.restColor)
+            #endif
             Spacer(minLength: 8)
             if mainSleepReasonText(night) != nil {
                 Button { showMainSleepWhy.toggle() } label: {

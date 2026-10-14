@@ -213,6 +213,9 @@ struct SleepModel {
     let typicalDeepMin: Double?
     let typicalRemMin: Double?
     let typicalLightMin: Double?
+    /// Each stage's typical share of time in bed (25th to 75th percentile, trailing 30 nights), read by
+    /// the stage cells' typical-range arc.
+    let stageShareBands: StageShareBands.Bands
 
     let trendPoints: [TrendPoint]
 
@@ -585,6 +588,10 @@ extension SleepModel {
             typicalDeepMin: typicalStageMin(days: inputs.days, \.deepMin),
             typicalRemMin: typicalStageMin(days: inputs.days, \.remMin),
             typicalLightMin: typicalStageMin(days: inputs.days, \.lightMin),
+            stageShareBands: StageShareBands.bands(inputs.days.suffix(30).map {
+                StageShareBands.Night(lightMin: $0.lightMin, deepMin: $0.deepMin,
+                                      remMin: $0.remMin, efficiency: $0.efficiency)
+            }),
             trendPoints: durationTrendPoints(days: inputs.days),
             sleepDebtLedger: debtLedger(days: inputs.days, napSleepMinByDay: napSleepMinByDay))
     }
