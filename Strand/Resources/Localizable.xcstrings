@@ -259207,6 +259207,146 @@
           }
         }
       }
+    },
+    "%@ years younger than your age" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Jahre jünger als dein Alter"
+          }
+        }
+      }
+    },
+    "%@ years older than your age" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Jahre älter als dein Alter"
+          }
+        }
+      }
+    },
+    "%@ years" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Jahre"
+          }
+        }
+      }
+    },
+    "Week of %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Woche vom %@"
+          }
+        }
+      }
+    },
+    "Your age %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Alter %lld"
+          }
+        }
+      }
+    },
+    "VO₂max (estimated)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VO₂max (geschätzt)"
+          }
+        }
+      }
+    },
+    "Resting HR baseline" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhepuls-Baseline"
+          }
+        }
+      }
+    },
+    "HRV baseline" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV-Baseline"
+          }
+        }
+      }
+    },
+    "Improving" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbessert sich"
+          }
+        }
+      }
+    },
+    "Worsening" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschlechtert sich"
+          }
+        }
+      }
+    },
+    "Index %@ of 15" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Index %@ von 15"
+          }
+        }
+      }
+    },
+    "A line appears after a second week." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Linie erscheint ab der zweiten Woche."
+          }
+        }
+      }
+    },
+    "An estimate from your fitness, heart, activity, body and sleep compared with people of your age and sex." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Schätzung aus Fitness, Herz, Aktivität, Körper und Schlaf im Vergleich mit Menschen deines Alters und Geschlechts."
+          }
+        }
+      }
+    },
+    "Add your waist in Settings or a VO₂max in Apple Health to include your fitness." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trag deinen Taillenumfang in den Einstellungen oder eine VO₂max in Apple Health ein, damit deine Fitness einfließt."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
