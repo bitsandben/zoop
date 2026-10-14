@@ -4,17 +4,19 @@ import WhoopProtocol
 
 final class RestSubScoreTraceTests: XCTestCase {
     func testRestSubScoreLine() {
-        // 8 h TST, 0.92 efficiency, 50% restorative, neutral consistency, 1 night-group fragment.
+        // 8 h TST, 0.92 efficiency, 50% restorative, no consistency signal (the term is omitted and
+        // printed as consist=-1), 1 night-group fragment.
         let line = AnalyticsEngine.Rest.subScoreLine(
             tstSeconds: 8 * 3600, inBedSeconds: 8 * 3600 / 0.92, efficiency: 0.92,
             restorativeSeconds: 4 * 3600, needHours: 8.0, consistency: nil,
             deepSeconds: 1 * 3600, groupFragments: 1, groupInBedSeconds: 8 * 3600 / 0.92)
         XCTAssertTrue(line.hasPrefix("rest "), line)
-        XCTAssertTrue(line.contains("wDur=0.5"))
+        XCTAssertTrue(line.contains("wDur=0.45"))
         XCTAssertTrue(line.contains("wEff=0.2"))
         XCTAssertTrue(line.contains("wRestor=0.2"))
-        XCTAssertTrue(line.contains("wConsist=0.1"))
+        XCTAssertTrue(line.contains("wConsist=0.15"))
         XCTAssertTrue(line.contains("group=1"))
+        XCTAssertTrue(line.contains("consist=-1.0"), line)
         XCTAssertFalse(line.contains("\u{2014}"))
     }
 

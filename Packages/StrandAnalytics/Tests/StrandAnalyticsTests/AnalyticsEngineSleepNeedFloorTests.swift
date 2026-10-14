@@ -28,12 +28,15 @@ final class AnalyticsEngineSleepNeedFloorTests: XCTestCase {
     }
 
     func testSleepNeedUsesPointOneHourFloorAtAndAcrossBoundary() throws {
+        // Values re-pinned for the Zoop 2026-10 Rest recipe (convex duration, mapped efficiency,
+        // consistency omitted when unknown); the floor behaviour under test is unchanged: every need
+        // at/below 0.1 h scores identically and 0.101 h is the first to differ.
         let cases: [(need: Double, expectedRest: Double)] = [
-            (-1.0, 29.17),
-            (0.0, 29.17),
-            (0.099, 29.17),
-            (0.1, 29.17),
-            (0.101, 29.13),
+            (-1.0, 24.8),
+            (0.0, 24.8),
+            (0.099, 24.8),
+            (0.1, 24.8),
+            (0.101, 24.78),
         ]
 
         let actual = try cases.map { try rest(sleepNeedHours: $0.need) }

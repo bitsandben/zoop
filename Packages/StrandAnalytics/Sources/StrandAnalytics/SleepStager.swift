@@ -950,6 +950,106 @@ public enum SleepStager {
         return medHR <= effBaseline * mult
     }
 
+    // MARK: - HR-confirmed sleep onset (Zoop: "it said I went to bed at 22:08, it was ~23:00")
+
+    // A gravity-still run begins the moment the wrist goes quiet, which is also the moment someone sits
+    // down on the sofa to read or watch TV. The 15-minute / 70%-still stillness window happily absorbs a
+    // page turn or a reach for a glass every few minutes, so the whole quiet evening became the start of
+    // the night: shown as bedtime, and fed into the Rest score's duration term (where the stager scored
+    // those still epochs as sleep) or its efficiency term (where it scored them wake). `confirmSleepWithHR` cannot
+    // catch it either, because it judges the run's MEDIAN HR and an hour of sofa time is a minority of an
+    // eight-hour run.
+    //
+    // The rule: the night starts at the first SUSTAINED stretch that is both still and at the night's
+    // SLEEPING heart rate. A leading stretch whose HR stays clearly at a waking level is quiet
+    // wakefulness, not sleep, and is cut from the session. Deliberately conservative: it only trims
+    // when the leading stretch is long (≥ `onsetTrimMinLeadMin`), clearly above the sleeping level
+    // (both ×`onsetTrimAwakeMult` and +`onsetTrimAwakeMinDeltaBpm`), and the HR coverage is dense
+    // enough to judge. A flat-HR night, an HR-sparse night or a night whose HR falls promptly is left
+    // byte-identical. APPROXIMATE: this is not validated against PSG or against WHOOP's onset.
+
+    /// Length (minutes) of the still, sleeping-HR stretch that marks sleep onset.
+    public static let onsetTrimWindowMin: Int = 20
+    /// Percentile (0–1) of the run's per-minute HR that defines its SLEEPING level.
+    public static let onsetTrimSleepLevelPct: Double = 0.20
+    /// The onset stretch's median HR must sit at/below `level × this` (or `level + onsetTrimSleepBandMinBpm`,
+    /// whichever is higher) — "back down at the sleeping level", not merely lower than the evening.
+    public static let onsetTrimSleepBandMult: Double = 1.12
+    /// Absolute floor (bpm) for the sleeping band above the level, so a very low sleeper's band is not
+    /// narrower than ordinary minute-to-minute HR noise.
+    public static let onsetTrimSleepBandMinBpm: Double = 5
+    /// The trimmed lead's median HR must be at/above `level × this` — clearly a waking HR.
+    public static let onsetTrimAwakeMult: Double = 1.20
+    /// … and at least this many bpm above the sleeping level.
+    public static let onsetTrimAwakeMinDeltaBpm: Double = 8
+    /// The shortest lead (minutes) worth trimming; anything shorter is ordinary sleep latency.
+    public static let onsetTrimMinLeadMin: Int = 10
+    /// Fraction of the onset stretch's minutes that must be still (minutes without gravity count as
+    /// still: the run itself was already built from still gravity).
+    public static let onsetTrimStillFrac: Double = 0.80
+    /// Minimum HR-covered minutes in the run before the rule judges anything.
+    public static let onsetTrimMinHRMinutes: Int = 60
+
+    /// The run's start moved forward to HR-confirmed sleep onset, or `p.start` unchanged when the
+    /// evidence for a waking lead is not clear (see the block comment above). Never returns a start
+    /// that would leave the run at/below `minSleepMin`. Pure + deterministic.
+    static func hrConfirmedOnset(_ p: Period, hr: [HRSample], grav: [GravitySample]) -> Int {
+        let spanS = p.end - p.start
+        guard spanS > 0 else { return p.start }
+        let minutes = spanS / 60 + 1
+        // Per-minute HR medians across the run.
+        var hrBuckets = [[Double]](repeating: [], count: minutes)
+        for s in hr where s.ts >= p.start && s.ts <= p.end && s.bpm > 0 {
+            hrBuckets[(s.ts - p.start) / 60].append(Double(s.bpm))
+        }
+        let minuteHR: [Double?] = hrBuckets.map { $0.isEmpty ? nil : HRVAnalyzer.median($0) }
+        let covered = minuteHR.compactMap { $0 }
+        guard covered.count >= onsetTrimMinHRMinutes else { return p.start }
+        guard let level = percentile(covered, onsetTrimSleepLevelPct * 100), level > 0 else { return p.start }
+        let sleepBand = max(level * onsetTrimSleepBandMult, level + onsetTrimSleepBandMinBpm)
+        let awakeBar = max(level * onsetTrimAwakeMult, level + onsetTrimAwakeMinDeltaBpm)
+
+        // Per-minute stillness: a minute is MOVING when more than (1 − stillFraction) of its gravity
+        // deltas reach the still threshold. No gravity in a minute → still (the run was built from still
+        // gravity; silence here is a sparse stream, not movement).
+        var moveCount = [Int](repeating: 0, count: minutes)
+        var gravCount = [Int](repeating: 0, count: minutes)
+        var prev: GravitySample? = nil
+        for g in grav {
+            defer { prev = g }
+            guard g.ts >= p.start && g.ts <= p.end, let q = prev else { continue }
+            let dx = q.x - g.x, dy = q.y - g.y, dz = q.z - g.z
+            let m = (g.ts - p.start) / 60
+            gravCount[m] += 1
+            if (dx * dx + dy * dy + dz * dz).squareRoot() >= gravityStillThresholdG { moveCount[m] += 1 }
+        }
+        let still: [Bool] = (0..<minutes).map { m in
+            gravCount[m] == 0 || Double(moveCount[m]) / Double(gravCount[m]) <= (1.0 - stillFraction)
+        }
+
+        let w = onsetTrimWindowMin
+        let lastStart = minutes - w
+        guard lastStart > onsetTrimMinLeadMin else { return p.start }
+        var onsetMin: Int? = nil
+        for m in 0...lastStart {
+            let winHR = minuteHR[m..<(m + w)].compactMap { $0 }
+            guard winHR.count * 2 >= w else { continue }
+            let stillFrac = Double(still[m..<(m + w)].filter { $0 }.count) / Double(w)
+            guard stillFrac >= onsetTrimStillFrac, HRVAnalyzer.median(winHR) <= sleepBand else { continue }
+            // The window's median is at the sleeping level; onset is its first minute that is itself in
+            // the band (a median can qualify while the first half of the window is still awake-high).
+            onsetMin = (m..<(m + w)).first { minuteHR[$0].map { $0 <= sleepBand } ?? false } ?? m
+            break
+        }
+        guard let onset = onsetMin, onset >= onsetTrimMinLeadMin else { return p.start }
+        // The lead must look AWAKE: dense enough HR and a median clearly above the sleeping level.
+        let leadHR = minuteHR[0..<onset].compactMap { $0 }
+        guard leadHR.count * 2 >= onset, HRVAnalyzer.median(leadHR) >= awakeBar else { return p.start }
+        let newStart = p.start + onset * 60
+        guard p.end - newStart > minSleepMin * 60 else { return p.start }
+        return newStart
+    }
+
     // MARK: - Motion-corroborated wake (elevated-but-flat-HR nights)
 
     // Both stagers call "wake" primarily off HR / HR-variability, and the HR-led session confirmation
@@ -1557,6 +1657,15 @@ public enum SleepStager {
                     detail: "offWristFrac=\(round2(offFrac)) max=\(maxOffWristSleepFraction)"))
                 continue
             }
+            // HR-confirmed onset: cut a leading stretch of quiet-but-awake time (sofa, reading) whose HR
+            // never came down to the night's sleeping level. No-op unless the evidence is clear.
+            let onsetStart = hrConfirmedOnset(p, hr: hrS, grav: grav)
+            if onsetStart != p.start {
+                traceSink?(GateTrace.runLine(index: runIndex, startTs: p.start, endTs: p.end,
+                    verdict: .kept, gate: "hrOnsetTrim",
+                    detail: "trimmedMin=\((onsetStart - p.start) / 60) onsetTs=\(onsetStart)"))
+            }
+            let p = Period(stage: p.stage, start: onsetStart, end: p.end)
             // Daytime false-sleep guard (#90): a window centered in the local daytime band
             // must clear a stricter bar (≥daytimeMinSleepMin AND a real resting-HR dip).
             // Overnight windows skip this entirely. restingHR is computed here (reused below).
