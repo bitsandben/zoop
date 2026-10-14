@@ -316,6 +316,8 @@ struct TrendsView: View {
                     // The main card list ripples in once on appear (Reduce-Motion safe).
                     Group {
                         #if os(iOS)
+                        // Zoop: interpretations of the history lead for now; draws nothing until one exists.
+                        BodyInsightsSection()
                         // The metric trend viewer leads: pick a metric and a window, read the average
                         // and its change, then the longer charts follow. iOS shows no week-in-review
                         // digest or score trio: the viewer and the charts below already carry those values.
