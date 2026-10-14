@@ -234,10 +234,14 @@ struct CoupledView: View {
                 .font(StrandFont.overline)
                 .tracking(StrandFont.overlineTracking)
                 .foregroundStyle(sampled)
+            // Not on iOS: a second verdict under the Recovery ring could disagree with it (a green
+            // Recovery over "Rest"), and Recovery is the one readiness read there.
+            #if !os(iOS)
             if let word = TodayView.readinessWord(readinessLevel) {
                 readinessPill(word)
                     .padding(.top, 2)
             }
+            #endif
         }
         .padding(.horizontal, 24)
     }

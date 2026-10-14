@@ -1742,12 +1742,6 @@ struct TodayView: View {
                                 .foregroundStyle(StrandPalette.textPrimary)
                                 .accessibilityLabel("Readiness: \(levelWord(r.level)). \(headline)")
                             Spacer()
-                            if let acwr = r.acwr {
-                                Text("load \(String(format: "%.2f", locale: AppLanguage.activeLocale, acwr))")
-                                    .font(StrandFont.captionNumber)
-                                    .foregroundStyle(StrandPalette.textTertiary)
-                                    .help("Acute (7-day) vs chronic (28-day) training load. 0.8–1.3 is the sweet spot.")
-                            }
                         }
                         // #1405: mark this as a DIFFERENT axis from the home Synthesis word (the Charge-%
                         // band). Stated where the two get compared, so "Primed" here vs "Steady" there
@@ -1831,7 +1825,6 @@ struct TodayView: View {
         case "hrv": return String(localized: "HRV")
         case "rhr": return String(localized: "Resting HR")
         case "respRate": return String(localized: "Respiratory rate")
-        case "acwr": return String(localized: "Training load")
         case "monotony": return String(localized: "Training variety")
         default: return key
         }
@@ -1844,28 +1837,12 @@ struct TodayView: View {
             let valueText = readinessNumber(value, decimals: decimals)
             let baselineText = readinessNumber(baseline, decimals: decimals)
             return String(localized: "\(valueText) vs \(baselineText) \(unit)")
-        case .trainingLoad(let acute, let chronic):
-            let acuteText = readinessNumber(acute, decimals: 1)
-            let chronicText = readinessNumber(chronic, decimals: 1)
-            return String(localized: "7d \(acuteText) / 28d \(chronicText)")
         case .monotony(let value):
             return String(localized: "monotony \(readinessNumber(value, decimals: 1))")
         }
     }
 
     private func readinessDetailText(_ signal: ReadinessEngine.Signal) -> String {
-        if signal.key == "acwr", let evidence = signal.evidenceData,
-           case .trainingLoad(let acute, let chronic) = evidence {
-            let ratio = readinessNumber(chronic > 0 ? acute / chronic : 0, decimals: 2)
-            switch signal.flag {
-            case .good: return String(localized: "in the sweet spot (acute:chronic \(ratio))")
-            case .bad: return String(localized: "spiking (acute:chronic \(ratio)) - higher injury risk")
-            case .watch: return acute < chronic
-                ? String(localized: "ramping down (acute:chronic \(ratio)) - room to build")
-                : String(localized: "building fast (acute:chronic \(ratio)) - watch fatigue")
-            case .neutral: return String(localized: "in the sweet spot (acute:chronic \(ratio))")
-            }
-        }
         switch (signal.key, signal.flag) {
         case ("hrv", .good): return String(localized: "above your baseline - well recovered")
         case ("hrv", .neutral), ("rhr", .neutral): return String(localized: "in your normal range")

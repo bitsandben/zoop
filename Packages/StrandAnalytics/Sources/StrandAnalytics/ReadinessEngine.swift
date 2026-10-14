@@ -13,10 +13,11 @@ import WhoopStore
 /// - **Resting-HR drift** — elevated resting HR vs baseline is a classic overtraining / illness
 ///   signal (Lamberts et al. 2004).
 /// - **Respiratory-rate drift** — a rise in sleeping respiratory rate is an early illness signal.
-/// - **Training Stress Balance (ACWR)** — acute (7-day) vs chronic (28-day) strain. The 0.8–1.3
-///   band is the "sweet spot"; >1.5 is associated with higher injury risk (Gabbett 2016).
 /// - **Training monotony** — mean/SD of daily strain over a week; high monotony (low variety) is
 ///   associated with higher strain and illness (Foster 1998).
+///
+/// The acute:chronic workload ratio (ACWR) was removed: it is criticised as a statistical artefact
+/// (Impellizzeri 2020/2021), and training load is reported once, by `TrainingLoadEngine` (CTL/ATL/TSB).
 ///
 /// Not medical advice. These are approximations from a consumer strap; they describe trends in
 /// *your own* data, nothing more.
@@ -39,12 +40,11 @@ public enum ReadinessEngine {
     /// Locale-free numeric evidence. Clients format and localize it at the display boundary.
     public enum Evidence: Sendable, Equatable {
         case metric(value: Double, baseline: Double, unit: String, decimals: Int)
-        case trainingLoad(acute: Double, chronic: Double)
         case monotony(Double)
     }
 
     public struct Signal: Sendable, Equatable {
-        public let key: String      // "hrv" | "rhr" | "respRate" | "acwr" | "monotony"
+        public let key: String      // "hrv" | "rhr" | "respRate" | "monotony"
         public let label: String    // short human label
         public let evidence: String?
         public let evidenceData: Evidence?
@@ -62,18 +62,16 @@ public enum ReadinessEngine {
         public let headline: String
         public let summary: String
         public let signals: [Signal]
-        /// Acute:chronic workload ratio (nil if not enough strain history).
-        public let acwr: Double?
         /// Foster training monotony over the last week (nil if not enough strain history).
         public let monotony: Double?
         /// How much history backs this read (HRV/RHR baseline density) — so the card can show
         /// calibrating / building / solid instead of a confident number off a 7-night baseline.
         public let confidence: ScoreConfidence
         public init(level: Level, headline: String, summary: String,
-                    signals: [Signal], acwr: Double?, monotony: Double?,
+                    signals: [Signal], monotony: Double?,
                     confidence: ScoreConfidence = .calibrating) {
             self.level = level; self.headline = headline; self.summary = summary
-            self.signals = signals; self.acwr = acwr; self.monotony = monotony
+            self.signals = signals; self.monotony = monotony
             self.confidence = confidence
         }
     }
@@ -82,9 +80,8 @@ public enum ReadinessEngine {
 
     private static let baselineWindow = 30   // days for HRV / RHR / RR baselines
     private static let minBaseline    = 7    // need at least this many baseline nights
-    private static let acuteWindow    = 7
-    private static let chronicWindow  = 28
-    private static let minChronic     = 14   // need at least this much strain history for ACWR
+    private static let monotonyWindow = 7
+    private static let minStrainDays  = 14   // strain history needed before monotony is read
 
     // MARK: Entry point
 
@@ -139,7 +136,7 @@ public enum ReadinessEngine {
             return Readiness(level: .insufficient,
                              headline: "Readiness",
                              summary: "Wear the strap for a few nights and your readiness read will appear here.",
-                             signals: [], acwr: nil, monotony: nil)
+                             signals: [], monotony: nil)
         }
         let history = sorted.filter { $0.day < latest.day }   // everything before today
 
@@ -200,20 +197,12 @@ public enum ReadinessEngine {
             }
         }
 
-        // Training Stress Balance (ACWR) + monotony --------------------------
+        // Training monotony ---------------------------------------------------
         let strainSeries = sorted.compactMap { $0.strain }
-        var acwr: Double? = nil
         var monotony: Double? = nil
-        if strainSeries.count >= minChronic {
-            let acute = mean(Array(strainSeries.suffix(acuteWindow)))!
-            let chronic = mean(Array(strainSeries.suffix(chronicWindow)))!
-            if chronic > 0 {
-                let ratio = acute / chronic
-                acwr = ratio
-                signals.append(acwrSignal(ratio, acute: acute, chronic: chronic))
-            }
+        if strainSeries.count >= minStrainDays {
             // Foster monotony over the last week of strain.
-            let week = Array(strainSeries.suffix(acuteWindow))
+            let week = Array(strainSeries.suffix(monotonyWindow))
             if week.count >= 4, let sd = sampleSD(week), sd > 0, let m = mean(week) {
                 let mono = m / sd
                 monotony = mono
@@ -227,7 +216,7 @@ public enum ReadinessEngine {
         }
 
         let (level, headline, summary) = synthesize(signals: signals,
-                                                    hasHistory: !history.isEmpty || acwr != nil)
+                                                    hasHistory: !history.isEmpty)
         // RD-confidence: surface how much history backs the read (HRV baseline density, the primary
         // readiness driver). A read off a 7-night baseline must not look as certain as one off the full
         // 30-night window. Insufficient reads carry .calibrating.
@@ -236,7 +225,7 @@ public enum ReadinessEngine {
                                                    baselineNights: hrvBaselineNights,
                                                    fullWindow: baselineWindow)
         return Readiness(level: level, headline: headline, summary: summary,
-                         signals: signals, acwr: acwr, monotony: monotony,
+                         signals: signals, monotony: monotony,
                          confidence: confidence)
     }
 
@@ -288,33 +277,6 @@ public enum ReadinessEngine {
                       detail: text, flag: flag)
     }
 
-    private static func acwrSignal(_ ratio: Double, acute: Double, chronic: Double) -> Signal {
-        let pct = String(format: "%.2f", ratio)
-        let evidence = "7d \(String(format: "%.1f", acute)) / 28d \(String(format: "%.1f", chronic))"
-        switch ratio {
-        case ..<0.8:
-            return Signal(key: "acwr", label: "Training load",
-                evidence: evidence,
-                evidenceData: .trainingLoad(acute: acute, chronic: chronic),
-                detail: "ramping down (acute:chronic \(pct)) - room to build", flag: .watch)
-        case 0.8..<1.3:
-            return Signal(key: "acwr", label: "Training load",
-                evidence: evidence,
-                evidenceData: .trainingLoad(acute: acute, chronic: chronic),
-                detail: "in the sweet spot (acute:chronic \(pct))", flag: .good)
-        case 1.3..<1.5:
-            return Signal(key: "acwr", label: "Training load",
-                evidence: evidence,
-                evidenceData: .trainingLoad(acute: acute, chronic: chronic),
-                detail: "building fast (acute:chronic \(pct)) - watch fatigue", flag: .watch)
-        default:
-            return Signal(key: "acwr", label: "Training load",
-                evidence: evidence,
-                evidenceData: .trainingLoad(acute: acute, chronic: chronic),
-                detail: "spiking (acute:chronic \(pct)) - higher injury risk", flag: .bad)
-        }
-    }
-
     private static func evidence(value: Double, baseline: Double, unit: String, decimals: Int) -> String {
         "\(format(value, decimals: decimals)) vs \(format(baseline, decimals: decimals)) \(unit)"
     }
@@ -336,13 +298,12 @@ public enum ReadinessEngine {
         let watch = signals.filter { $0.flag == .watch }
         let good = signals.filter { $0.flag == .good }
         let recoveryDown = signals.contains { ["hrv", "rhr", "respRate"].contains($0.key) && ($0.flag == .bad) }
-        let loadHigh = signals.contains { $0.key == "acwr" && $0.flag == .bad }
 
-        if bad.count >= 2 || (recoveryDown && loadHigh) {
+        if bad.count >= 2 {
             return (.rundown, "Run down",
                     "Several signals are down at once. Treat today as recovery - easy movement, real sleep tonight.")
         }
-        if recoveryDown || loadHigh || bad.count >= 1 {
+        if recoveryDown || bad.count >= 1 {
             return (.strained, "Strained",
                     "One of your signals is flagging. You can train, but keep it controlled and bank the recovery.")
         }

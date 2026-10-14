@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import StrandAnalytics
 
 // MARK: - "Your cards" customisable dashboard (WHOOP "My Dashboard")
 //
@@ -141,12 +142,21 @@ enum DashboardCard: String, CaseIterable, Identifiable {
     /// The default set when the user hasn't customised the dashboard: the original Stress / Fitness age /
     /// Vitality trio plus HRV + Resting HR (per the task's "sensible default"). Cards with no value yet
     /// simply render "—", so the default set is safe on a fresh install.
-    static let defaultSelection: [DashboardCard] = [
-        .stress, .fitnessAge, .vitality, .hrv, .restingHr,
-    ]
+    static var defaultSelection: [DashboardCard] {
+        [.stress, .fitnessAge, .vitality, .hrv, .restingHr].filter(\.isOffered)
+    }
 
     /// Canonical order used to list the disabled remainder in the editor.
-    static let canonicalOrder: [DashboardCard] = allCases
+    static var canonicalOrder: [DashboardCard] { allCases.filter(\.isOffered) }
+
+    /// Whether the card can be shown at all. On iOS Vitality ("Body age") is a second age number beside
+    /// Fitness age, so it is Test Centre instrumentation (Longevity domain) rather than a user card.
+    var isOffered: Bool {
+        #if os(iOS)
+        if self == .vitality { return TestCentre.active(.longevity) }
+        #endif
+        return true
+    }
 }
 
 /// Display-only persistence for the "Your cards" dashboard selection. Holds an ORDERED list of the enabled
@@ -195,7 +205,7 @@ enum DashboardCardPrefs {
         var seen = Set<DashboardCard>()
         var result: [DashboardCard] = []
         for token in ids {
-            if let c = DashboardCard(rawValue: token), seen.insert(c).inserted {
+            if let c = DashboardCard(rawValue: token), c.isOffered, seen.insert(c).inserted {
                 result.append(c)
             }
         }

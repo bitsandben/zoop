@@ -31,13 +31,12 @@ final class ReadinessTrainingLoadTests: XCTestCase {
         XCTAssertNotNil(paired.trainingLoad.tsb)
     }
 
-    func testExistingAcwrAndMonotonyRemainOwnedByReadiness() {
+    func testMonotonyRemainsOwnedByReadiness() {
         let days = (1...28).map { day in
             metric(day: day, strain: day <= 21 ? 5 : Double(12 + day % 3))
         }
         let paired = ReadinessEngine.evaluateWithTrainingLoad(days: days)
 
-        XCTAssertNotNil(paired.readiness.acwr)
         XCTAssertNotNil(paired.readiness.monotony)
         XCTAssertTrue(paired.trainingLoad.isAvailable)
         XCTAssertEqual(paired.trainingLoad.endDay, "2026-01-28")

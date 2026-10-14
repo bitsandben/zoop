@@ -5,7 +5,7 @@ public extension ReadinessEngine {
     ///
     /// The training-load result is deliberately OUTSIDE the Readiness synthesis. CTL/ATL/TSB do not
     /// change `readiness.level`, signals, confidence, or any headline score; they are contextual trends
-    /// for charts and explanations. This keeps the existing ACWR/monotony behavior intact and makes any
+    /// for charts and explanations. This keeps the existing monotony behavior intact and makes any
     /// future decision to feed training-load state into a score an explicit, separately validated change.
     struct TrainingLoadAnalysis: Sendable, Equatable {
         public let readiness: Readiness

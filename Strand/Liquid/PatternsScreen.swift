@@ -35,7 +35,6 @@ final class PatternsModel: ObservableObject {
 
     @Published var tonight: Tonight?
     @Published var forecast: RecoveryForecast?
-    @Published var acwr: Double?
     @Published var effects: [Effect] = []
     @Published var hrr: HRRStats?
     @Published var windDown: WindDownStats?
@@ -91,7 +90,6 @@ final class PatternsModel: ObservableObject {
                                                recentEffort: days.compactMap(\.strain),
                                                todayEffort: today?.strain,
                                                plannedSleepHours: sleepNeed.totalMin / 60)
-        acwr = ReadinessEngine.evaluate(days: days).acwr
         let weekdayValues: [(weekday: Int, value: Double)] = days.suffix(180).compactMap { d in
             guard let r = d.recovery, let date = Self.date(d.day) else { return nil }
             let wd = Calendar(identifier: .iso8601).component(.weekday, from: date)
@@ -627,53 +625,10 @@ struct PatternTonightCard: View {
         return parts.joined(separator: " · ")
     }
 }
-
-struct PatternLoadCard: View {
-    let acwr: Double
-
-    private var state: (String, Color) {
-        switch acwr {
-        case ..<0.8: return (String(localized: "Below your usual"), StrandPalette.stressLow)
-        case ..<1.3: return (String(localized: "In your range"), StrandPalette.accent)
-        case ..<1.5: return (String(localized: "Building fast"), StrandPalette.restColor)
-        default: return (String(localized: "Too much, too soon"), StrandPalette.statusCritical)
-        }
-    }
-
-    var body: some View {
-        PatternCard(icon: "gauge.with.dots.needle.67percent", title: "Training load",
-                    basis: "Last 7 days of strain against the last 4 weeks. 0.8 to 1.3 is the usual safe range.") {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Text(ZoopNumber.decimal(acwr, digits: 2))
-                    .font(StrandFont.display(40))
-                    .foregroundStyle(StrandPalette.textPrimary)
-                Text(state.0)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(state.1)
-            }
-            GeometryReader { g in
-                let frac = min(1, max(0, (acwr - 0.4) / 1.4))
-                ZStack(alignment: .leading) {
-                    HStack(spacing: 3) {
-                        Capsule().fill(StrandPalette.stressLow).frame(width: g.size.width * 0.29)
-                        Capsule().fill(StrandPalette.accent).frame(width: g.size.width * 0.35)
-                        Capsule().fill(StrandPalette.restColor).frame(width: g.size.width * 0.14)
-                        Capsule().fill(StrandPalette.statusCritical)
-                    }
-                    .frame(height: 6)
-                    Circle().fill(StrandPalette.textPrimary)
-                        .frame(width: 14, height: 14)
-                        .offset(x: g.size.width * frac - 7)
-                }
-            }
-            .frame(height: 14)
-        }
-    }
-}
 #endif
 
 #if os(iOS)
-/// Home's look ahead: tonight's sleep need, tomorrow's recovery and training load side by side, with
+/// Home's look ahead: tonight's sleep need and tomorrow's recovery side by side, with
 /// the week in numbers first on Sundays and Mondays, and a link to all patterns.
 struct HomePatternsCarousel: View {
     static let cardWidth: CGFloat = 280
@@ -711,7 +666,6 @@ struct HomePatternsCarousel: View {
                         }
                         .frame(width: Self.cardWidth)
                     }
-                    if let a = patterns.acwr { PatternLoadCard(acwr: a).frame(width: Self.cardWidth) }
                 }
                 // One width and, through the fixed vertical size, one height for every card in the row.
                 .fixedSize(horizontal: false, vertical: true)
