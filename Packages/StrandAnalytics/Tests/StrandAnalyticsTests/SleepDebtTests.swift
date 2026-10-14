@@ -176,4 +176,36 @@ final class SleepDebtTests: XCTestCase {
         XCTAssertEqual(SleepDebt.round1(-0.04), 0.0, accuracy: 1e-9)
         XCTAssertEqual(SleepDebt.round1(-0.25), -0.3, accuracy: 1e-9)
     }
+
+    // MARK: - Need tonight
+
+    func testNeedTonightAddsStrainAndTheLedgerDebt() {
+        let n = SleepDebt.needTonight(baseNeedMin: 480, strain21: 15, debtMin: 45)
+        XCTAssertEqual(n.strainMin, 20)
+        XCTAssertEqual(n.debtMin, 45)
+        XCTAssertEqual(n.totalMin, 545)
+        // Calm day, no debt: the base need alone.
+        XCTAssertEqual(SleepDebt.needTonight(baseNeedMin: 480, strain21: 8, debtMin: 0).totalMin, 480)
+        XCTAssertEqual(SleepDebt.needTonight(baseNeedMin: 480, strain21: nil, debtMin: 0).strainMin, 0)
+    }
+
+    func testNeedTonightBoundsTheDebtRepayment() {
+        let n = SleepDebt.needTonight(baseNeedMin: 480, strain21: 21, debtMin: 400)
+        XCTAssertEqual(n.debtMin, SleepDebt.maxDebtRepayPerNightMin)
+        XCTAssertEqual(n.strainMin, 44)
+        XCTAssertEqual(n.totalMin, 480 + 44 + 120)
+    }
+
+    /// The debt asked back tonight is the ledger's own estimate, so the plan and the debt figure agree:
+    /// a run of short nights against an 8 h need recovers exactly the debt the ledger reports.
+    func testNeedTonightAsksBackTheLedgerEstimate() {
+        // One night: 0.55 × (480 − slept). Three nights compound through the carry.
+        for (short, nights, expectedDebt) in [(420.0, 1, 33.0), (400.0, 1, 44.0), (420.0, 3, 61.1)] {
+            let series = (1...nights).map { (day: "2026-06-0\($0)", totalSleepMin: Optional(short)) }
+            let ledger = SleepDebt.ledger(series: series, needHours: 8)
+            XCTAssertEqual(ledger.magnitudeMin, expectedDebt, accuracy: 0.05)
+            let need = SleepDebt.needTonight(baseNeedMin: 480, strain21: nil, debtMin: ledger.magnitudeMin)
+            XCTAssertEqual(need.debtMin, ledger.magnitudeMin)
+        }
+    }
 }

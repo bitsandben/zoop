@@ -25,7 +25,7 @@ enum WindDownNudge {
         // Empty / no entry for a day = that day uses the default `wakeMinutes`, so the feature is purely
         // additive (no override → exactly the old single-time behaviour).
         static let perDayWake = "windDown.perDayWakeMinutes"
-        // Zoop: follow tonight's computed sleep need (`PatternInsights.sleepNeedTonight`) instead of the
+        // Zoop: follow tonight's computed sleep need (`SleepDebt.needTonight`) instead of the
         // fixed setting. Default on; the need is refreshed whenever Home or Patterns recomputes it.
         static let followsNeed = "zoop.windDown.followsSleepNeed"
         static let tonightNeed = "zoop.windDown.tonightNeedMinutes"

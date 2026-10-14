@@ -164,6 +164,37 @@ public enum SleepDebt {
         return SleepDebtLedger(balanceMin: round1(-debt), nights: nights, needMin: needMin)
     }
 
+    // MARK: - Need tonight
+
+    /// Tonight's sleep need and what it is made of, in minutes.
+    public struct NeedTonight: Equatable, Sendable {
+        public let totalMin: Double
+        public let baseMin: Double
+        public let strainMin: Double
+        public let debtMin: Double
+    }
+
+    /// Strain (0–21 scale) above this adds sleep need.
+    public static let strainFreeUpTo: Double = 10.0
+    /// Extra minutes per strain point above `strainFreeUpTo`, so a maximal day asks ~45 min more.
+    public static let minutesPerStrainPoint: Double = 4.0
+    /// Most debt asked back in one night. Without a bound a long run of short nights would ask for an
+    /// impossible night; the rest of the estimate stays on the ledger for the nights after.
+    public static let maxDebtRepayPerNightMin: Double = 120.0
+
+    /// Tonight's need: the base need, a strain add-on, and the ledger's current debt estimate.
+    ///
+    /// The debt part is the ledger's own estimate (already the 55 % carry), because this model's
+    /// promise is that sleeping base need plus the estimate clears it; asking back a different share
+    /// here would make the plan and the debt figure disagree. `debtMin` is the ledger magnitude (≥ 0),
+    /// `strain21` today's strain on the 0–21 scale (nil when unknown).
+    public static func needTonight(baseNeedMin: Double, strain21: Double?, debtMin: Double) -> NeedTonight {
+        let strainMin = max(0, ((strain21 ?? 0) - strainFreeUpTo) * minutesPerStrainPoint)
+        let debtPart = min(maxDebtRepayPerNightMin, max(0, debtMin))
+        return NeedTonight(totalMin: baseNeedMin + strainMin + debtPart, baseMin: baseNeedMin,
+                           strainMin: strainMin, debtMin: debtPart)
+    }
+
     /// Round to 1 decimal place (the ledger is reported in whole/near-whole minutes;
     /// 1 dp keeps Σ stable without trailing float noise). Mirrors the Kotlin rounding.
     static func round1(_ v: Double) -> Double { (v * 10.0).rounded() / 10.0 }

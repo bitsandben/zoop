@@ -8,7 +8,6 @@ import WhoopProtocol
 //
 // - bedtimeWindow: which half-hour of falling asleep is followed by the best recovery.
 // - weekdayPattern: how a value differs by day of the week.
-// - sleepNeedTonight: tonight's sleep need from the base need, today's strain and the sleep debt.
 // - splitEffect: the mean outcome on the highest third of days for some driver against the lowest third.
 // - windDown: how long after falling asleep the heart rate settles, and by how much it drops.
 
@@ -70,32 +69,6 @@ public enum PatternInsights {
               let worst = means.min(by: { $0.value < $1.value })?.key else { return nil }
         let all = values.map(\.value)
         return WeekdayPattern(means: means, overall: mean(all), best: best, worst: worst)
-    }
-
-    // MARK: Sleep need
-
-    public struct SleepNeed: Equatable, Sendable {
-        public let totalMin: Double
-        public let baseMin: Double
-        public let strainMin: Double
-        public let debtMin: Double
-    }
-
-    /// Strain above this (0–21 scale) adds sleep need.
-    static let strainFreeUpTo = 10.0
-    /// Extra minutes per strain point above `strainFreeUpTo`.
-    static let minutesPerStrainPoint = 4.0
-    /// Share of the outstanding debt asked back in one night, and the most asked back.
-    static let debtRepayShare = 0.25
-    static let debtRepayCapMin = 60.0
-
-    /// `baseNeedMin` is the personal nightly need, `strain` today's strain on the 0–21 scale (nil when
-    /// unknown), `debtMin` the outstanding sleep debt in minutes (0 or more).
-    public static func sleepNeedTonight(baseNeedMin: Double, strain: Double?, debtMin: Double) -> SleepNeed {
-        let strainMin = max(0, ((strain ?? 0) - strainFreeUpTo) * minutesPerStrainPoint)
-        let debtPart = min(debtRepayCapMin, max(0, debtMin) * debtRepayShare)
-        return SleepNeed(totalMin: baseNeedMin + strainMin + debtPart, baseMin: baseNeedMin,
-                         strainMin: strainMin, debtMin: debtPart)
     }
 
     // MARK: Time in bed

@@ -16,7 +16,7 @@ import WhoopStore
 @MainActor
 final class PatternsModel: ObservableObject {
     struct Tonight: Equatable {
-        let need: PatternInsights.SleepNeed; let bedtime: Int?; let wake: Int?
+        let need: SleepDebt.NeedTonight; let bedtime: Int?; let wake: Int?
         /// The armed strap alarm the wake time came from, when there is one.
         var alarm: Date? = nil
         /// Minutes in bed for the chosen goal, and the goal itself (share of the need).
@@ -56,8 +56,8 @@ final class PatternsModel: ObservableObject {
         let need = SleepModel.debtNeedMin(days: days)
         let ledger = SleepModel.debtLedger(days: days, napSleepMinByDay: [:])
         let strain21 = today?.strain.map { $0 * 0.21 }
-        let sleepNeed = PatternInsights.sleepNeedTonight(baseNeedMin: need, strain: strain21,
-                                                         debtMin: ledger.isDebt ? ledger.magnitudeMin : 0)
+        let sleepNeed = SleepDebt.needTonight(baseNeedMin: need, strain21: strain21,
+                                              debtMin: ledger.isDebt ? ledger.magnitudeMin : 0)
         // Time in bed for the chosen goal, from the recent share of time in bed spent asleep.
         let effs = days.suffix(14).compactMap(\.efficiency)
         let eff = effs.isEmpty ? nil : effs.reduce(0, +) / Double(effs.count)
