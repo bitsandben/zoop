@@ -356,13 +356,16 @@ final class AppModel: ObservableObject {
         }
         // HR-zone haptic coaching watches the smoothed bpm.
         $bpm.sink { [weak self] hr in self?.coachZone(hr) }.store(in: &hrCancellables)
-        // Illness/strain early-warning recomputes when the daily history changes.
-        repo.$days.sink { [weak self] days in
-            self?.evaluateIllness(days)
-            self?.evaluateStrainTarget()
-            self?.evaluateGoodMorning()
+        // Illness/strain early-warning recomputes when the daily history changes. Keyed on `refreshSeq`,
+        // which `refresh` bumps only after every cache is assigned: a `$days` sink runs before `days` is
+        // set and while `sleeps` still holds the previous publish, so it evaluated one refresh late.
+        repo.$refreshSeq.sink { [weak self] _ in
+            guard let self else { return }
+            self.evaluateIllness(self.repo.days)
+            self.evaluateStrainTarget()
+            self.evaluateGoodMorning()
             // Keep the battery night-guard's learned bedtime warm off the same signal (throttled inside).
-            self?.refreshHabitualMidsleep()
+            self.refreshHabitualMidsleep()
         }.store(in: &hrCancellables)
         // Re-arm the strap's firmware alarm once the connection has SETTLED — not the instant it (re)bonds.
         // A smart-alarm time changed while the strap was away never reached it , the send is gated on bond
@@ -2149,7 +2152,7 @@ final class AppModel: ObservableObject {
     }
 
     /// Re-run the illness watch over the cached history. Called when the Automations toggle
-    /// flips , the repo.$days sink only fires on data changes, so a flip would otherwise wait
+    /// flips , the repo.$refreshSeq sink only fires on data changes, so a flip would otherwise wait
     /// for the next refresh.
     func reevaluateIllness() {
         evaluateIllness(repo.days)
