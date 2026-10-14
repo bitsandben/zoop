@@ -261408,6 +261408,26 @@
           }
         }
       }
+    },
+    "Search metrics" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metriken suchen"
+          }
+        }
+      }
+    },
+    "No metric matches that search." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Metrik passt zu dieser Suche."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

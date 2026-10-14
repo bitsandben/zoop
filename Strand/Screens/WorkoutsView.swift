@@ -167,13 +167,46 @@ struct WorkoutsView: View {
         let id = UUID()
     }
 
-    init(previewRows: [WorkoutRow]? = nil) {
+    /// iOS: true when this screen is the Training tab root, whose header opens the Lift Log and the
+    /// interval timer. Off wherever Workouts is pushed or shown in a sheet.
+    private let asTrainingTab: Bool
+
+    init(previewRows: [WorkoutRow]? = nil, asTrainingTab: Bool = false) {
+        self.asTrainingTab = asTrainingTab
         _allRows = State(initialValue: previewRows ?? [])
         _loaded = State(initialValue: previewRows != nil)
         // Preview-seeded rows are treated as the full history (nil window) so the preview path never pages.
         _loadedWindowDays = State(initialValue: previewRows != nil ? nil : Self.firstPaintWindowDays)
         usesPreviewRows = previewRows != nil
     }
+
+    /// The Training tab header's two round buttons: Lift Log and Intervals. Empty elsewhere, and on
+    /// macOS, where both have their own sidebar rows.
+    @ViewBuilder private var trainingLinks: some View {
+        #if os(iOS)
+        if asTrainingTab {
+            HStack(spacing: 10) {
+                trainingLink(.liftLog, icon: "dumbbell.fill", label: "Lift Log")
+                trainingLink(.intervals, icon: "timer", label: "Intervals")
+            }
+        }
+        #endif
+    }
+
+    #if os(iOS)
+    private func trainingLink(_ route: TabRoute, icon: String, label: LocalizedStringKey) -> some View {
+        NavigationLink(value: route) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(StrandPalette.textPrimary)
+                .frame(width: 42, height: 42)
+                .background(ZoopPanelSurface(cornerRadius: 21))
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(label))
+    }
+    #endif
 
     var body: some View {
         // Compute the windowed (unscoped) rows ONCE per body evaluation and thread them into both the
@@ -184,7 +217,7 @@ struct WorkoutsView: View {
         let resolved = effectiveRange
         let unscopedRows = sessions(for: resolved)
         let trendRows = recoveryTrendRows(from: unscopedRows)
-        return ScreenScaffold(title: "Workouts", subtitle: "Every session, threaded together.",
+        return ScreenScaffold(title: asTrainingTab ? "Training" : "Workouts", subtitle: "Every session, threaded together.",
                                quietSubtitle: true,
                        onRefresh: { await repo.refresh() },
                        // PERF: the column ends in the full "All Sessions" log (the breakdown grid, the
@@ -194,7 +227,8 @@ struct WorkoutsView: View {
                        lazy: true,
                        // The day-of-sky liquid backdrop, matching Today / Health / Sleep / Trends: a fixed,
                        // full-bleed time-of-day sky behind the scroll content (it does not scroll).
-                       topBackground: liquidScaffoldSky()) {
+                       topBackground: liquidScaffoldSky(),
+                       trailing: { trainingLinks }) {
             if allRows.isEmpty {
                 VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                     ComingSoon(what: loaded
