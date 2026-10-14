@@ -88,8 +88,8 @@ struct TodayCustomizationSheet: View {
             hidden: fullSectionOrder.filter { hiddenSectionSet.contains($0) }
         )
         let metrics = EditableLayoutDraft(
-            visible: KeyMetricPrefs.decodeEnabled(keyMetricsRaw.wrappedValue),
-            allItems: KeyMetric.defaultOrder
+            visible: KeyMetricPrefs.decodeEnabled(keyMetricsRaw.wrappedValue).filter { KeyMetric.offered.contains($0) },
+            allItems: KeyMetric.offered
         )
         let cards = EditableLayoutDraft(
             visible: DashboardCardPrefs.decodeEnabled(dashboardCardsRaw.wrappedValue),
@@ -202,8 +202,8 @@ struct TodayCustomizationSheet: View {
             )
         case .keyMetrics:
             keyMetricDraft = EditableLayoutDraft(
-                visible: KeyMetric.defaultOrder,
-                allItems: KeyMetric.defaultOrder
+                visible: KeyMetric.offered,
+                allItems: KeyMetric.offered
             )
             detailed = false
             windowDays = 14

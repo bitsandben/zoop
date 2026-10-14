@@ -58,6 +58,15 @@ enum KeyMetric: String, CaseIterable, Identifiable {
         .charge, .effort, .rest, .hrv, .restingHr,
         .bloodOxygen, .respiratory, .steps, .weight, .calories,
     ]
+
+    /// The tiles the dashboard offers. iOS leaves out Recovery, Effort and Sleep: Home's rings show them.
+    static var offered: [KeyMetric] {
+        #if os(iOS)
+        defaultOrder.filter { ![.charge, .effort, .rest].contains($0) }
+        #else
+        defaultOrder
+        #endif
+    }
 }
 
 /// Display-only persistence for the Key-Metrics layout. Holds an ORDERED list of the enabled tiles; a
