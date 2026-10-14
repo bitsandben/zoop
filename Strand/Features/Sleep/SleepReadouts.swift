@@ -43,7 +43,9 @@ enum SleepReadouts {
         var points = Array(history.suffix(29))
         if let tonight, !tonight.day.isEmpty { points.append(tonight) }
         let trend = points.map { MetricExplanation.TrendPoint(date: date($0.day), value: $0.value) }
-        let window = trend.first.flatMap { first in trend.last.map { DateInterval(start: first.date, end: $0.date) } }
+        // The window is everything the range was folded from, not just the 30 days the chart draws.
+        let firstDay = history.first.map { date($0.day) } ?? trend.first?.date
+        let window = firstDay.flatMap { first in trend.last.map { DateInterval(start: first, end: max(first, $0.date)) } }
         let copy = SleepExplanations.copy(id)
         return MetricExplanation(
             whatItIs: copy.whatItIs, method: copy.method,
