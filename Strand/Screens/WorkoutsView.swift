@@ -271,7 +271,7 @@ struct WorkoutsView: View {
                 summarySection(rows: windowRows, effectiveRange: resolved, groups: groups)
                 heatmapSection()
                 #if os(iOS)
-                if lift.hasRecentLifts {
+                if lift.hasRecentLifts || lift.muscleLoad != nil {
                     StrengthSection(snapshot: lift, unitSystem: UnitSystem(rawValue: unitSystemRaw) ?? .metric)
                 }
                 #endif
@@ -306,7 +306,7 @@ struct WorkoutsView: View {
             cardioLoad = TrainingLoadGauge.cardio(days: repo.days.map {
                 TrainingLoadEngine.DailyLoad(day: $0.day, load: $0.strain)
             })
-            lift = await LiftFitnessSnapshot.load(repo: repo)
+            lift = await LiftFitnessSnapshot.load(repo: repo, hrMax: profile.hrMax)
             #endif
         }
         .onAppear {
