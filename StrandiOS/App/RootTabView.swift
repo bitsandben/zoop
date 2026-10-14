@@ -595,21 +595,11 @@ struct RootTabView: View {
                     MoreRow("Compare", "rectangle.split.2x1.fill", .compare, subtitle: "Metrics side by side")
                     MoreRow("Rhythm", "waveform.path", .rhythm, subtitle: "Beat-to-beat timing", separator: false)
                 }
-                moreSection("Data") {
-                    MoreRow("Data Sources", "externaldrive.fill", .dataSources, subtitle: "Where each number comes from")
-                    MoreRow("Apple Health", "heart.fill", .appleHealth, subtitle: "Import and write-back")
-                    MoreRow("Mi Band", "figure.walk.motion", .miBand, subtitle: "Steps and heart rate")
-                    MoreRow("Backup & Sync", "externaldrive.fill.badge.icloud", .backupSync, subtitle: "Back up and restore")
-                    MoreRow("Shortcuts Export", "square.and.arrow.up.fill", .shortcutsExport, subtitle: "Send data to Shortcuts", separator: false)
-                }
+                // Data, alarms, automations, power saving, Siri, Test Centre and Limitations each have one
+                // home now, inside Settings (Zoop 2.0 §3.9), so the More list no longer repeats them.
                 moreSection("Settings") {
-                    MoreRow("Settings", "gearshape.fill", .settings, subtitle: "Profile, units and appearance")
-                    MoreRow("Alarms", "alarm.fill", .alarms, subtitle: "Strap alarm and wind-down")
-                    MoreRow("Automations", "wand.and.stars", .automations, subtitle: "Alerts and reminders")
-                    MoreRow("Power saving", "battery.25", .powerSaving, subtitle: "Ease the strap's battery")
-                    MoreRow("Siri & Shortcuts", "mic.fill", .siriShortcuts, subtitle: "Voice and automation")
-                    MoreRow("Test Centre", "stethoscope", .testCentre, subtitle: "Diagnostics and logs")
-                    MoreRow("Zoop Limitations", "list.bullet.rectangle", .noopLimitations, subtitle: "What is not measured yet", separator: false)
+                    MoreRow("Settings", "gearshape.fill", .settings, subtitle: "zoop.settings.more.subtitle",
+                            separator: false)
                 }
             }
             .environment(\.zoopIsTabRoot, true)
