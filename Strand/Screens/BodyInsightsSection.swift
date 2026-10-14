@@ -270,8 +270,9 @@ struct BodyInsightCard: Identifiable, Equatable {
             icon: "figure.run",
             title: String(localized: "Training intensity"),
             headline: headline,
-            number: "\(Int((z.easyShare * 100).rounded()))%",
-            unit: String(localized: "easy"),
+            // The big number is the share the headline talks about, so the two never seem to disagree.
+            number: "\(Int(((z.style == .mostlyHard ? 1 - z.easyShare : z.easyShare) * 100).rounded()))%",
+            unit: z.style == .mostlyHard ? String(localized: "hard") : String(localized: "easy"),
             tint: StrandPalette.effortColor,
             visual: .zones(z.minutes),
             figures: String(localized: "\(z.sessions) workouts with \(Int(z.totalMinutes.rounded())) minutes of zone time."),

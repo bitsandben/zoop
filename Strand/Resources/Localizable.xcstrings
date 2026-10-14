@@ -261858,6 +261858,226 @@
           }
         }
       }
+    },
+    "Shoulders" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schultern"
+          }
+        }
+      }
+    },
+    "Abs and core" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bauch/Rumpf"
+          }
+        }
+      }
+    },
+    "Little work" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenig belastet"
+          }
+        }
+      }
+    },
+    "High load" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stark belastet"
+          }
+        }
+      }
+    },
+    "Muscle load" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muskelbelastung"
+          }
+        }
+      }
+    },
+    "body.front" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorne"
+          }
+        }
+      }
+    },
+    "body.back" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinten"
+          }
+        }
+      }
+    },
+    "%lld%% recovered" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %% erholt"
+          }
+        }
+      }
+    },
+    "%@: %@, %lld percent recovered" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@, %3$lld Prozent erholt"
+          }
+        }
+      }
+    },
+    "No training in the last 7 days." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Training in den letzten 7 Tagen."
+          }
+        }
+      }
+    },
+    "This week's load was spread evenly across your muscles." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Belastung dieser Woche war gleichmäßig auf deine Muskeln verteilt."
+          }
+        }
+      }
+    },
+    "%@ loaded mostly %@; your legs got little work this week." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ belastete vor allem %2$@; die Beine kamen diese Woche kaum zum Einsatz."
+          }
+        }
+      }
+    },
+    "%@ loaded mostly %@; your upper body got little work this week." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ belastete vor allem %2$@; der Oberkörper kam diese Woche kaum zum Einsatz."
+          }
+        }
+      }
+    },
+    "%@ loaded mostly %@; your core got little work this week." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ belastete vor allem %2$@; der Rumpf kam diese Woche kaum zum Einsatz."
+          }
+        }
+      }
+    },
+    "%@ loaded mostly %@ this week." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ belastete diese Woche vor allem %2$@."
+          }
+        }
+      }
+    },
+    "Most of this week's load went to %@; your legs got little work." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die meiste Belastung dieser Woche ging auf %@; die Beine kamen kaum zum Einsatz."
+          }
+        }
+      }
+    },
+    "Most of this week's load went to %@; your upper body got little work." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die meiste Belastung dieser Woche ging auf %@; der Oberkörper kam kaum zum Einsatz."
+          }
+        }
+      }
+    },
+    "Most of this week's load went to %@; your core got little work." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die meiste Belastung dieser Woche ging auf %@; der Rumpf kam kaum zum Einsatz."
+          }
+        }
+      }
+    },
+    "Most of this week's load went to %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die meiste Belastung dieser Woche ging auf %@."
+          }
+        }
+      }
+    },
+    "Estimated from each sport's typical muscle use, duration and intensity." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschätzt aus der typischen Muskelarbeit jeder Sportart, Dauer und Intensität."
+          }
+        }
+      }
+    },
+    "Bars compare each week with the four-week average; the line marks that average." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Balken vergleichen jede Woche mit dem Vierwochenschnitt, den die Linie markiert."
+          }
+        }
+      }
+    },
+    "hard" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hart"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
