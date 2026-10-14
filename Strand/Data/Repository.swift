@@ -981,7 +981,15 @@ final class Repository: ObservableObject {
         // Merge + sort OFF the main actor (FIX 3): the figures build, the two O(n log n) daily/sleep merges,
         // the source-row sort, and the freshness counts are all pure over the rows just read, so they run in
         // a detached task and the main actor stays free for SwiftUI during a deep-history refresh.
-        let merged: MergedCaches = await Task.detached(priority: .utility) {
+        //
+        // The diff against the published caches runs there too: comparing thousands of days and vital
+        // rows is as costly as the merge, and most refreshes change nothing. The snapshot cannot go stale
+        // before the publish below, because only `refresh` assigns these caches and the generation guard
+        // drops every refresh but the newest.
+        let wasLoaded = loaded
+        let current = (days: days, chargeBaselines: chargeBaselines, sleeps: sleeps,
+                       importedSleep: importedSleep, vitalRows: vitalRows, freshness: freshness)
+        let (merged, unchanged): (MergedCaches, Bool) = await Task.detached(priority: .utility) {
             var fig: [String: ImportedSleepFigures] = [:]
             for p in perf { fig[p.day, default: ImportedSleepFigures()].performancePct = p.value }
             for p in cons { fig[p.day, default: ImportedSleepFigures()].consistencyPct = p.value }
@@ -992,7 +1000,7 @@ final class Repository: ObservableObject {
             // and IntelligenceEngine re-keys the computed DAILY row from it; collect those edited days so the
             // merge lets the computed row's SLEEP fields win there (imports still win on every un-edited day).
             let editedDays = Self.userEditedDays(compSleep)
-            return MergedCaches(
+            let merged = MergedCaches(
                 importedSleep: fig,
                 days: Self.mergeActivityFileSteps(
                     into: Self.mergeDaily(imported: imported, computed: computed, userEditedDays: editedDays),
@@ -1007,23 +1015,24 @@ final class Repository: ObservableObject {
                 vitalRows: Self.sourceRows(imported: imported, computed: computed, apple: apple),
                 freshness: Self.computeFreshness(imported: imported, computed: computed, apple: apple,
                                                  importedSleeps: impSleep, computedSleeps: compSleep))
+            // Byte-identical caches after the first load: skip the re-publish and the `refreshSeq` bump
+            // entirely. Assigning an equal value to an @Published prop still fires objectWillChange, so
+            // the skip must cover the assignments too. This is what stops the analyze-tail's burst of
+            // refresh() calls each re-firing TodayView.loadAll().
+            let unchanged = wasLoaded
+                && merged.days == current.days
+                && merged.chargeBaselines == current.chargeBaselines
+                && merged.sleeps == current.sleeps
+                && merged.importedSleep == current.importedSleep
+                && merged.vitalRows == current.vitalRows
+                && merged.freshness == current.freshness
+            return (merged, unchanged)
         }.value
 
         // Generation guard (#review): if a newer refresh() started while this one merged off-actor, drop
         // this now-stale result so it can't clobber the newer caches or re-fire loadAll out of order.
         guard myGen == refreshGen else { return }
 
-        // DIFF before publishing (FIX 3): if this refresh produced byte-identical caches AND we've already
-        // loaded once, skip the re-publish and the `refreshSeq` bump entirely , assigning an equal value to
-        // an @Published prop still fires objectWillChange, so the skip must cover the assignments too. This
-        // is what stops the analyze-tail's burst of refresh() calls each re-firing TodayView.loadAll().
-        let unchanged = loaded
-            && merged.days == days
-            && merged.chargeBaselines == chargeBaselines
-            && merged.sleeps == sleeps
-            && merged.importedSleep == importedSleep
-            && merged.vitalRows == vitalRows
-            && merged.freshness == freshness
         guard !unchanged else { return }
 
         // One consistent publish per refresh: assign every cache, flip `loaded`, then bump `refreshSeq` so
