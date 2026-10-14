@@ -108,7 +108,7 @@ struct AutoWorkoutCard: View {
 
     private func reload() async {
         guard autoDetectEnabled else { candidate = nil; return }
-        let next = await repo.autoDetectCandidate()
+        let next = await repo.homeAutoWorkoutCandidate()
         // A fresh scan resets the session guard so a NEW window can surface after one is handled.
         if next != candidate { handledThisSession = false }
         candidate = next

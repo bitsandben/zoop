@@ -38,8 +38,9 @@ final class NotificationPresenter: NSObject, UNUserNotificationCenterDelegate {
         case id == "illness-watch": return .route(.health)
         case id == "good-morning": return .route(.metric(HeroRingMetric.charge))
         case id.hasPrefix("battery-"): return .route(.dataSources)
-        // The detected-workout card (Save / Not a workout) and the move reminder both live on Home.
-        case id == "auto-workout", id == "inactivity-nudge": return .home
+        // The detected workout opens its Save / Not a workout sheet on Home; the move reminder opens Home.
+        case id == "auto-workout": return .autoWorkout
+        case id == "inactivity-nudge": return .home
         default: return nil
         }
     }
@@ -68,8 +69,10 @@ final class NotificationPresenter: NSObject, UNUserNotificationCenterDelegate {
     }
 }
 
-/// What a tapped notification opens: Home itself, or a screen pushed on the Home stack.
+/// What a tapped notification opens: Home itself, the detected-workout sheet on Home, or a screen pushed
+/// on the Home stack.
 enum NotificationTarget: Equatable {
     case home
+    case autoWorkout
     case route(TabRoute)
 }

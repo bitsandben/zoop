@@ -6,9 +6,10 @@ import StrandAnalytics
 //
 // The auto-detect suggestion used to surface only when Today was on screen, so a workout found by a
 // background sync waited unseen until the next app open. After each completed sync the same detector
-// runs (`Repository.autoDetectCandidate`), and a new candidate posts one notification pointing at the
-// Home card, where Save and "Not a workout" live. Nothing is saved from here: the suggestion-only
-// promise in Settings still holds.
+// runs (`Repository.autoDetectCandidate`), and a new candidate posts one notification. Tapping it opens
+// the workout's sheet on Home, where Save and "Not a workout" live, and the announced candidate is stored
+// so Home shows exactly that workout until it is answered. Nothing is saved from here: the
+// suggestion-only promise in Settings still holds.
 
 enum WorkoutDetectedNotifier {
     /// The start of the last candidate a notification was posted for, so each one notifies once.
@@ -50,6 +51,8 @@ enum WorkoutDetectedNotifier {
             content.sound = .default
             center.add(UNNotificationRequest(identifier: "auto-workout", content: content, trigger: nil))
             UserDefaults.standard.set(w.startSec, forKey: lastStartKey)
+            // Home shows exactly this workout until it is saved or dismissed, whatever later scans find.
+            UserDefaults.standard.set(Repository.encodePendingAutoWorkout(w), forKey: Repository.pendingAutoWorkoutKey)
         }
     }
 }

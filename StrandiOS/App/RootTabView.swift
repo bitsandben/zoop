@@ -329,6 +329,7 @@ struct RootTabView: View {
             var path = NavigationPath()
             if case .route(let route) = target { path.append(route) }
             tabPaths[IOSTab.home] = path
+            if target == .autoWorkout { router.autoWorkoutSheetRequested = true }
             router.notificationTarget = nil
         }
         // A screen's top-bar "+" routes here: open the quick-action sheet, then clear the flag.

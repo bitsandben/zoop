@@ -67,6 +67,10 @@ final class NavRouter: ObservableObject {
     /// Open what a tapped notification is about (see `NotificationPresenter.target(forIdentifier:)`).
     func open(_ target: NotificationTarget) { notificationTarget = target }
 
+    /// One-shot: Home presents the detected-workout sheet, then clears this. Raised by the shell when the
+    /// "Workout detected" notification is tapped.
+    @Published var autoWorkoutSheetRequested = false
+
     /// Ask the shell to open the quick-action sheet (Live HR · workout · journal · breathe).
     func requestQuickActions() { quickActionsRequested = true }
 

@@ -96,9 +96,11 @@ struct LiquidTodayView: View {
     // share one computation rather than scoring the day three times.
     @State private var hostedStressHours: [DaytimeStress.HourPoint] = []
     /// The auto-detected, not yet saved workout shown in Today's activities (iOS), and the one whose
-    /// Save / Not a workout choice is open.
+    /// Save / Not a workout sheet is open.
     @State private var detectedWorkout: DetectedWorkout?
-    @State private var detectedPrompt: DetectedWorkout?
+    #if os(iOS)
+    @State private var detectedSheet: HomeDetectedTarget?
+    #endif
     @State private var hostedStressActivityMaskedHours = 0
 
     // sheets / expanders
@@ -629,26 +631,23 @@ struct LiquidTodayView: View {
             HomeNapTimeEditor(nap: target.session)
                 .opaqueSheetBackground()
         }
+        // The announced workout (if a notification posted one) or a fresh scan: the same one the
+        // notification named, so Home never fails to show what it announced.
         .task(id: repo.refreshSeq) {
-            detectedWorkout = PuffinExperiment.autoDetectWorkoutsEnabled ? await repo.autoDetectCandidate() : nil
+            detectedWorkout = PuffinExperiment.autoDetectWorkoutsEnabled ? await repo.homeAutoWorkoutCandidate() : nil
+            presentRequestedDetectedWorkout()
         }
-        .confirmationDialog(Text("Save this workout?"),
-                            isPresented: Binding(get: { detectedPrompt != nil }, set: { if !$0 { detectedPrompt = nil } }),
-                            titleVisibility: .visible, presenting: detectedPrompt) { d in
-            Button("Save it") {
-                Task {
-                    _ = await repo.saveDetectedWorkout(d)
-                    detectedWorkout = nil
-                    await repo.refresh()
-                }
+        // A tapped "Workout detected" notification opens its sheet here.
+        .onChange(of: router.autoWorkoutSheetRequested) { _, requested in
+            guard requested else { return }
+            Task {
+                detectedWorkout = PuffinExperiment.autoDetectWorkoutsEnabled ? await repo.homeAutoWorkoutCandidate() : nil
+                presentRequestedDetectedWorkout()
             }
-            Button("Not a workout", role: .destructive) {
-                repo.dismissDetectedSuggestion(d)
-                detectedWorkout = nil
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: { d in
-            Text("\(d.durationMin) min, average \(d.avgBpm) bpm")
+        }
+        .sheet(item: $detectedSheet) { target in
+            HomeDetectedWorkoutSheet(workout: target.workout) { detectedWorkout = nil }
+                .opaqueSheetBackground()
         }
         // The stress tile's current level: re-read today's intraday curve every two minutes while Home
         // is open, so it follows the day instead of holding the morning's value.
@@ -857,6 +856,15 @@ struct LiquidTodayView: View {
         }
     }
 
+    /// Consume a "Workout detected" notification tap: open the sheet for the loaded candidate. The request
+    /// waits (stays raised) until the first load has run, so a cold launch from the notification still opens.
+    private func presentRequestedDetectedWorkout() {
+        guard router.autoWorkoutSheetRequested else { return }
+        router.autoWorkoutSheetRequested = false
+        guard let d = detectedWorkout else { return }
+        detectedSheet = HomeDetectedTarget(workout: d)
+    }
+
     /// Today's activities under "My Day": the sleeps that ended on the selected day (the night and any
     /// naps) and that day's workouts, newest last, each with its times and duration.
     private var todaysActivities: [HomeActivity] {
@@ -903,7 +911,7 @@ struct LiquidTodayView: View {
             }
             ForEach(items) { item in
                 if let d = item.detected {
-                    Button { detectedPrompt = d } label: { HomeActivityRow(item: item) }
+                    Button { detectedSheet = HomeDetectedTarget(workout: d) } label: { HomeActivityRow(item: item) }
                         .buttonStyle(LiquidPressStyle())
                 } else if let w = item.workout {
                     Button { workoutDetail = HomeWorkoutTarget(row: w) } label: { HomeActivityRow(item: item) }

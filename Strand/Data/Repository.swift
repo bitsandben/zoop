@@ -3200,10 +3200,17 @@ final class Repository: ObservableObject {
         detectedDismissedTokens: [String]
     ) -> DetectedWorkout? {
         let exact = Set(autoDismissedTokens)
+        // Zoop: a dismissed window also suppresses a re-run whose edges moved a little (a "Not a workout"
+        // answer otherwise came back a sync later as a slightly different span).
+        let autoSpans: [(start: Int, end: Int)] = autoDismissedTokens.compactMap { token in
+            let parts = token.split(separator: ":").compactMap { Int($0) }
+            return parts.count == 2 ? (parts[0], parts[1]) : nil
+        }
         let legacy = WorkoutSource.parseDismissedSpans(detectedDismissedTokens)
         return candidates
             .filter { candidate in
                 !exact.contains(autoDetectToken(candidate))
+                    && !autoSpans.contains { candidate.startSec <= $0.end && $0.start <= candidate.endSec }
                     && !legacy.contains { span in
                         candidate.startSec < span.end && span.start < candidate.endSec
                     }
@@ -3249,11 +3256,12 @@ final class Repository: ObservableObject {
     /// candidate to suggest , newest first , that is NOT already saved and NOT previously dismissed.
     /// Returns nil when the toggle is off, there's nothing to suggest, or detection finds nothing.
     /// PURE READ: never writes a workout. The window scans from `daysBack` days ago to now.
-    /// `requireMotion`: return nothing unless the strap banked enough wrist movement to confirm the bout.
-    /// The background notifier passes true: after a sync the heart rate lands before the ~15-minute gravity
-    /// offload, so an HR-only candidate was announced and then vanished from Home once the movement data
-    /// arrived and showed no exercise.
-    func autoDetectCandidate(daysBack: Int = 2, requireMotion: Bool = false) async -> DetectedWorkout? {
+    /// Zoop: every candidate passes `AutoWorkoutGate` (mandatory wrist-movement confirmation, at least
+    /// 15 minutes, an average of 40 % of heart-rate reserve above resting, 50 % when it starts within an
+    /// hour of waking). Getting up, showering and walking around the house kept being offered as workouts.
+    /// With no movement data there is no suggestion, so the heart rate landing before the ~15-minute
+    /// gravity offload can never announce a bout that vanishes once the movement arrives.
+    func autoDetectCandidate(daysBack: Int = 2) async -> DetectedWorkout? {
         guard PuffinExperiment.autoDetectWorkoutsEnabled else { return nil }
         let now = Int(Date().timeIntervalSince1970)
         let from = now - daysBack * 86_400
@@ -3268,13 +3276,10 @@ final class Repository: ObservableObject {
         let saved = await workoutRows()
         let savedSpans = saved.map { SavedWorkoutSpan(startSec: $0.startTs, endSec: $0.endTs) }
 
-        // Workouts & GPS test mode: the published 12-minute result remains byte-identical. Aggregate,
-        // local-only comparisons include that 12-minute baseline plus the 10- and 15-minute alternatives.
-        // Shadow candidates are compared only with manual/imported labels; legacy detector rows are not
-        // ground truth. No shadow output can mutate the DB, visible card, daily scores or anything off-device.
-        let candidates: [DetectedWorkout]
+        // Workouts & GPS test mode: local-only trace and shadow comparisons, logged beside the shipped
+        // result. They never choose the suggestion; the gated path below always does.
         if TestCentre.active(.workouts), workoutsLog != nil {
-            let (results, trace) = AutoWorkoutDetector.detectTrace(
+            let (_, trace) = AutoWorkoutDetector.detectTrace(
                 hr: hr, restingBpm: restingBpm, motion: nil, savedSpans: savedSpans,
                 minimumSustainedMinutes: AutoWorkoutDetector.minSustainedMin,
                 path: "autoDetect")
@@ -3292,24 +3297,71 @@ final class Repository: ObservableObject {
                 hr: hr, restingBpm: restingBpm, motion: nil, savedSpans: labelledSpans) {
                 emitWorkouts(line)
             }
-            candidates = results
-        } else {
-            // Zoop: a raised heart rate alone (stress, heat, a hot shower) kept being offered as a workout.
-            // Confirm with wrist movement whenever the strap banked enough of it, and only offer sessions
-            // that are clearly exercise: at least 15 minutes, averaging 35 bpm or more above resting.
-            let gravity = await gravitySamplesUnion(from: from, to: now, limit: 200_000)
-            let motion = gravity.count >= 600 ? AutoWorkoutDetector.motionPoints(gravity) : nil
-            if requireMotion && motion == nil { return nil }
-            let floor = (restingBpm ?? AutoWorkoutDetector.defaultRestingHR) + 35
-            candidates = AutoWorkoutDetector.detect(hr: hr, restingBpm: restingBpm,
-                                                    motion: motion, savedSpans: savedSpans,
-                                                    minimumSustainedMinutes: AutoWorkoutDetector.minSustainedMin)
-                .filter { $0.durationMin >= 15 && $0.avgBpm >= floor }
         }
+
+        let gravity = await gravitySamplesUnion(from: from, to: now, limit: 200_000)
+        guard gravity.count >= 600 else { return nil }
+        let motion = AutoWorkoutDetector.motionPoints(gravity)
+        // Every sleep that could sit just before a candidate: the night and naps, both sources.
+        var sleepSpans = sleeps.map { AutoWorkoutGate.SleepSpan(startSec: $0.effectiveStartTs, endSec: $0.endTs) }
+        sleepSpans += (await allSleepSessions(days: daysBack + 1))
+            .map { AutoWorkoutGate.SleepSpan(startSec: $0.effectiveStartTs, endSec: $0.endTs) }
+        let hrMax = AutoWorkoutGate.hrMax(
+            profileHRMax: strainProfile?.hrMax,
+            age: UserDefaults.standard.object(forKey: "profile.age") as? Int)
+        let candidates = AutoWorkoutGate.detect(hr: hr, restingBpm: restingBpm, hrMax: hrMax,
+                                                motion: motion, sleeps: sleepSpans, savedSpans: savedSpans)
+        emitWorkouts("autoDetect gate: hrMax=\(Int(hrMax)) rest=\(restingBpm.map(String.init) ?? "nil") "
+                     + "sleeps=\(sleepSpans.count) kept=\(candidates.count)")
         return Self.selectAutoDetectCandidate(
             candidates,
             autoDismissedTokens: autoDetectDismissedSpans,
             detectedDismissedTokens: dismissedDetectedSpans)
+    }
+
+    // MARK: Announced candidate (Zoop)
+    //
+    // The notification and Home must show the same workout. The detector re-runs on every refresh and its
+    // window edges move as more data lands, so Home re-deriving its own candidate could disagree with, or
+    // lose, the one a notification announced. The announced candidate is stored when the notification
+    // posts, and Home shows it until it is saved or dismissed.
+
+    /// The candidate the last notification announced ("start:end:avg:peak:min").
+    nonisolated static let pendingAutoWorkoutKey = "zoop.autoWorkout.pending"
+
+    nonisolated static func encodePendingAutoWorkout(_ w: DetectedWorkout) -> String {
+        "\(w.startSec):\(w.endSec):\(w.avgBpm):\(w.peakBpm):\(w.durationMin)"
+    }
+
+    nonisolated static func decodePendingAutoWorkout(_ s: String?) -> DetectedWorkout? {
+        guard let parts = s?.split(separator: ":").compactMap({ Int($0) }), parts.count == 5,
+              parts[1] > parts[0] else { return nil }
+        return DetectedWorkout(startSec: parts[0], endSec: parts[1], avgBpm: parts[2],
+                               peakBpm: parts[3], durationMin: parts[4])
+    }
+
+    /// The suggestion Home shows: the announced candidate while it is still open, else a fresh scan.
+    func homeAutoWorkoutCandidate() async -> DetectedWorkout? {
+        guard PuffinExperiment.autoDetectWorkoutsEnabled else { return nil }
+        let d = UserDefaults.standard
+        if let pending = Self.decodePendingAutoWorkout(d.string(forKey: Self.pendingAutoWorkoutKey)) {
+            let now = Int(Date().timeIntervalSince1970)
+            let saved = await workoutRows()
+            let stillOpen = pending.endSec >= now - 3 * 86_400
+                && !saved.contains { pending.startSec <= $0.endTs && $0.startTs <= pending.endSec }
+                && Self.selectAutoDetectCandidate([pending], autoDismissedTokens: autoDetectDismissedSpans,
+                                                  detectedDismissedTokens: dismissedDetectedSpans) != nil
+            if stillOpen { return pending }
+            d.removeObject(forKey: Self.pendingAutoWorkoutKey)
+        }
+        return await autoDetectCandidate()
+    }
+
+    /// Forget the announced candidate once the user has answered it (or one overlapping it).
+    private func clearPendingAutoWorkout(overlapping w: DetectedWorkout) {
+        let d = UserDefaults.standard
+        guard let p = Self.decodePendingAutoWorkout(d.string(forKey: Self.pendingAutoWorkoutKey)) else { return }
+        if p.startSec <= w.endSec && w.startSec <= p.endSec { d.removeObject(forKey: Self.pendingAutoWorkoutKey) }
     }
 
     /// SAVE a suggested window as a manual-style "Workout" (generic sport , we don't claim a sport we
@@ -3324,6 +3376,7 @@ final class Repository: ObservableObject {
                                                      sport: "Workout", avgHr: w.avgBpm,
                                                      energyKcal: nil) else { return false }
         await saveManualWorkout(row)
+        clearPendingAutoWorkout(overlapping: w)
         return true
     }
 
@@ -3331,6 +3384,7 @@ final class Repository: ObservableObject {
     /// Prunes the stored list on every add (drop spans older than ~30 days + hard-cap to 200 most-recent)
     /// so it can never grow unbounded. Byte-mirrored in the Android `AutoWorkoutPrefs.dismiss`.
     func dismissDetectedSuggestion(_ w: DetectedWorkout) {
+        clearPendingAutoWorkout(overlapping: w)
         let token = Self.autoDetectToken(w)
         var spans = autoDetectDismissedSpans
         guard !spans.contains(token) else { return }

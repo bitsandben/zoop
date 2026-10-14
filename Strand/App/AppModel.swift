@@ -771,7 +771,7 @@ final class AppModel: ObservableObject {
         await refreshV5Signals()
         // A workout found in the fresh data is announced now rather than waiting for Today to be opened.
         if PuffinExperiment.autoDetectWorkoutsEnabled {
-            WorkoutDetectedNotifier.onSyncCompleted(candidate: await repo.autoDetectCandidate(requireMotion: true),
+            WorkoutDetectedNotifier.onSyncCompleted(candidate: await repo.autoDetectCandidate(),
                                                    enabled: true)
         }
         #if os(iOS)
