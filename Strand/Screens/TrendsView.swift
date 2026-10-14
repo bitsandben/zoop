@@ -340,8 +340,11 @@ struct TrendsView: View {
                         // Long-horizon training load (CTL/ATL/TSB). Uses the FULL history, not the
                         // range window — chronic load is inherently a 42-day horizon. Self-hides its
                         // chart behind an honest "needs N more days" state until enough history exists.
+                        // iOS shows training load as the Cardio / Muscular gauges on Workouts instead.
+                        #if !os(iOS)
                         TrainingLoadCard(days: repo.days)
                             .staggeredAppear(index: 5)
+                        #endif
                         yearStrip
                             .staggeredAppear(index: 6)
                         exportReportRow

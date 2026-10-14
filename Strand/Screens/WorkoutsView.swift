@@ -75,6 +75,13 @@ struct WorkoutsView: View {
     /// rows. Empty until loaded / when there's no daily-calorie data (the heatmap then hides itself).
     @State private var dailyKcal: [String: Double] = [:]
 
+    #if os(iOS)
+    /// Cardio load gauge, from the full daily-Effort history (`TrainingLoadGauge.cardio`). Nil until loaded.
+    @State private var cardioLoad: TrainingLoadGauge.Reading?
+    /// Lifting figures for the Muscular gauge and the Strength section.
+    @State private var lift: LiftFitnessSnapshot = .empty
+    #endif
+
     /// Local `yyyy-MM-dd` formatter for the heatmap's day keys + "today" anchor (matches the stored keys).
     private static let dayFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -222,8 +229,18 @@ struct WorkoutsView: View {
                 rangeBar(rows: windowRows, effectiveRange: resolved)
                 if let postLogNote { postLogBanner(postLogNote) }
                 effortHero(rows: windowRows, effectiveRange: resolved, groups: groups)
+                #if os(iOS)
+                if let cardioLoad {
+                    TrainingLoadGaugeRow(cardio: cardioLoad, muscular: lift.muscular, effortScale: effortScale)
+                }
+                #endif
                 summarySection(rows: windowRows, effectiveRange: resolved, groups: groups)
                 heatmapSection()
+                #if os(iOS)
+                if lift.hasRecentLifts {
+                    StrengthSection(snapshot: lift, unitSystem: UnitSystem(rawValue: unitSystemRaw) ?? .metric)
+                }
+                #endif
                 breakdownSection(groups: groups, rows: windowRows)
                 if let z = zonesSummary {
                     zonesSection(z, totalSessions: windowRows.count)
@@ -251,6 +268,12 @@ struct WorkoutsView: View {
             let metrics = await repo.dailyMetrics(fromDay: Self.dayFormatter.string(from: fromDate), toDay: toDay)
             dailyKcal = Dictionary(metrics.compactMap { m in m.activeKcalEst.map { (m.day, $0) } },
                                    uniquingKeysWith: max)
+            #if os(iOS)
+            cardioLoad = TrainingLoadGauge.cardio(days: repo.days.map {
+                TrainingLoadEngine.DailyLoad(day: $0.day, load: $0.strain)
+            })
+            lift = await LiftFitnessSnapshot.load(repo: repo)
+            #endif
         }
         .onAppear {
             // Preview-seeded rows skip `.task`; still choose a range that has data.
@@ -1064,11 +1087,27 @@ struct WorkoutsView: View {
         let totalKmRaw = distancesM.reduce(0, +) / 1000.0
         let modal = modalSport(from: groups)
 
-        return LazyVGrid(columns: tileColumns, alignment: .leading, spacing: ZoopMetrics.gap) {
+        return VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
+        #if os(iOS)
+        // iOS: time and calories as cumulative step lines through the window (they replace the two
+        // StatTiles below, so each total is shown once).
+        HStack(spacing: ZoopMetrics.gap) {
+            CumulativeTotalCard(
+                title: "Total Time", value: oneDecimal(totalTimeH), unit: "h",
+                increments: rows.compactMap { r in r.durationS.map { (Date(timeIntervalSince1970: TimeInterval(r.startTs)), $0 / 3600) } },
+                tint: StrandPalette.textPrimary)
+            CumulativeTotalCard(
+                title: "Total Calories", value: grouped(totalKcal), unit: "kcal",
+                increments: rows.compactMap { r in r.energyKcal.map { (Date(timeIntervalSince1970: TimeInterval(r.startTs)), $0) } },
+                tint: StrandPalette.metricAmber)
+        }
+        #endif
+        LazyVGrid(columns: tileColumns, alignment: .leading, spacing: ZoopMetrics.gap) {
             StatTile(label: "Total Workouts",
                      value: "\(totalCount)",
                      caption: effectiveRange.caption,
                      accent: StrandPalette.effortColor)
+            #if !os(iOS)
             StatTile(label: "Total Time",
                      value: String(localized: "\(oneDecimal(totalTimeH))h"),
                      caption: String(localized: "active"),
@@ -1077,6 +1116,7 @@ struct WorkoutsView: View {
                      value: grouped(totalKcal),
                      caption: "kcal",
                      accent: StrandPalette.metricAmber)
+            #endif
             StatTile(label: "Total Distance",
                      value: distancesM.isEmpty ? "–" : UnitFormatter.distanceFromKilometers(totalKmRaw, system: distanceUnitSystem),
                      caption: String(localized: "covered"),
@@ -1087,6 +1127,7 @@ struct WorkoutsView: View {
                          ? (modal.count == 1 ? String(localized: "1 session") : String(localized: "\(modal.count) sessions"))
                          : nil,
                      accent: StrandPalette.textPrimary)
+        }
         }
     }
 
