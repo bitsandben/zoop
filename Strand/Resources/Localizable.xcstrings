@@ -270241,6 +270241,1247 @@
           }
         }
       }
+    },
+    "zoop.fitnessage.explain.vo2" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie viel Sauerstoff dein Körper bei voller Belastung nutzen kann. Sie ist der stärkste Einzelwert für Fitness und zählt am meisten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How much oxygen your body can use at full effort. It is the strongest single marker of fitness and counts most."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.vo2" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alter, in dem ein Gleichaltriger zu dir passt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Age at which a peer matches you"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.vo2.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Alter, in dem ein typischer Mensch deine VO₂max hat, minus dein Alter. Gemessene Werte nutzen FRIEND-Normen, Schätzungen die HUNT-Normen, auf denen sie beruhen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The age at which a typical person has your VO₂max, minus your age. Measured values use FRIEND norms, estimates the HUNT norms they were fitted on."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.explain.rhr" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Puls in Ruhe über die letzten 30 Tage. Ein fitteres Herz braucht weniger Schläge."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your heart rate at rest over the last 30 days. A fitter heart needs fewer beats."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.rhr" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abstand von 65 bpm"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance from 65 bpm"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.rhr.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeder bpm über oder unter 65 verschiebt dein Alter um etwa ein halbes Jahr, mit dem Ruhepuls-Gewicht des HUNT-Modells."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each bpm above or below 65 moves your age by about half a year, at the resting-heart-rate weight of the HUNT model."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.explain.hrv" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Schlag-zu-Schlag-Schwankung deines Herzens in der Nacht. Höhere Werte gehen mit einem fitteren, ruhigeren Körper einher."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The beat-to-beat variation of your heart at night. Higher values go with a fitter, calmer body."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.hrv" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abstand von der Norm für dein Alter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance from the norm for your age"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.hrv.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein nächtlicher RMSSD über 30 Tage gegen den typischen Wert für dein Alter auf Log-Skala; eine Streuung entspricht etwa 6 Jahren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your 30-day nightly RMSSD against the typical value for your age on a log scale; one spread is about 6 years."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.explain.activity" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie oft und wie intensiv du dich in einer typischen Woche bewegst, auf einer Skala von 0 bis 15."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How often and how hard you move in a typical week, on a scale from 0 to 15."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.activity" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HUNT-Aktivitätsindex"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HUNT activity index"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.activity.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktive Tage pro Woche mal die Intensität dieser Tage, gelesen gegen eine mäßig aktive Referenz von 5; jeder Punkt entspricht etwa 0,76 Jahren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active days per week times how hard those days were, read against a moderately active reference of 5; each point is about 0.76 years."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.explain.bodyfat" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Anteil deines Gewichts, der Fett ist, von deiner Waage oder aus Apple Health."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The share of your weight that is fat, from your scale or Apple Health."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.bodyfat" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abstand von einer Referenz je Geschlecht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance from a sex reference"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.bodyfat.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeder Punkt über oder unter 20 % (Männer) bzw. 28 % (Frauen) verschiebt dein Alter um etwa ein Drittel Jahr."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each point above or below 20 % (men) or 28 % (women) moves your age by about a third of a year."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.explain.bmi" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Gewicht im Verhältnis zur Größe. Ein grober Ersatz, bis ein Körperfett-Wert vorliegt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your weight against your height. It is a rough stand-in until a body-fat reading exists."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.bmi" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abstand von 18,5 bis 25"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance from 18.5 to 25"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.bmi.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Innerhalb von 18,5 bis 25 kommt nichts dazu; jede Einheit außerhalb gibt etwa 0,8 Jahre dazu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inside 18.5 to 25 adds nothing; each unit outside it adds about 0.8 years."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.explain.sleep" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie ähnlich deine Schlafdauer von Nacht zu Nacht ist. Gleichmäßiger Schlaf geht mit besserer Gesundheit einher."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How similar your sleep length is from night to night. Steady sleep goes with better health."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.sleep" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abstand von 80 % Regelmäßigkeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance from 80 % regularity"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.sleep.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regelmäßigkeit von Nacht zu Nacht gegen 80 %; der Faktor ist klein und auf 3 Jahre in jede Richtung begrenzt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Night-to-night regularity against 80 %; the factor is small and capped at 3 years either way."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fitnessalter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fitness Age"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.openSettings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen öffnen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Settings"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.refresh" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktualisieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refresh"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.week" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Woche vom %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Week of %@"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.band" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schätzung, ± %@ Jahre"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estimate, ± %@ years"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.hero.a11y" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fitnessalter %1$@, %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fitness Age %1$@, %2$@"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.delta.same" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etwa so alt wie du"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About the same as your age"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.delta.younger" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Jahre jünger als dein Alter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ years younger than your age"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.delta.older" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Jahre älter als dein Alter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ years older than your age"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.factors.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was es formt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What shapes it"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.factors.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trag in den Einstellungen deinen Taillenumfang oder in Apple Health eine VO₂max ein, damit deine Fitness einfließt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add your waist in Settings or a VO₂max in Apple Health to include your fitness."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.label.vo2" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VO₂max"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VO₂max"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.label.vo2est" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VO₂max (geschätzt)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VO₂max (estimated)"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.label.rhr" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhepuls-Basis"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resting heart rate baseline"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.label.hrv" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV-Basis"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV baseline"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.label.activity" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivität"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activity"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.label.bodyfat" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Körperfett"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Body fat"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.label.bmi" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BMI"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BMI"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.label.sleep" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafregelmäßigkeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep regularity"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.row.years" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ J."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ yrs"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.row.years.spoken" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Jahre"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ years"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.meaning.removes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nimmt etwa %@ Jahre von deinem Fitnessalter."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takes about %@ years off your fitness age."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.meaning.adds" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gibt deinem Fitnessalter etwa %@ Jahre dazu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds about %@ years to your fitness age."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.meaning.neutral" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hat kaum Einfluss auf dein Fitnessalter."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Has almost no effect on your fitness age."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.trend.improving" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Besser"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Improving"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.trend.worsening" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlechter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Worsening"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.trend.steady" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stabil"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steady"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.lever.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hebel"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lever"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.lever.none" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine einzelne Änderung sticht heraus: Deine Faktoren liegen nah an ihrem Referenzwert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No single change stands out: your factors sit close to their reference."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.lever.footnote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Was-wäre-wenn aus demselben Modell wie deine Zahl, keine Vorhersage. Hebel überlappen sich, ihre Jahre addieren sich nicht, und deine 30-Tage-Mittel brauchen etwa 8 Wochen, um zu folgen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A what-if from the same model as your number, not a prediction. Levers overlap, so their years do not add up, and your 30-day averages need about 8 weeks to follow."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.lever.aerobic.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aerobe Fitness"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aerobic fitness"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.lever.rhr.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhepuls"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resting heart rate"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.lever.activity.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wöchentliche Aktivität"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekly activity"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.lever.sleep.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafregelmäßigkeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep regularity"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.lever.body.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Körperzusammensetzung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Body composition"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.lever.aerobic.text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit einer um %1$@ höheren VO₂max läge dein Fitnessalter laut Modell etwa %2$@ Jahre niedriger."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With a VO₂max %1$@ higher, the model puts your fitness age about %2$@ years lower."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.lever.rhr.text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit einem um %1$@ niedrigeren Ruhepuls läge dein Fitnessalter laut Modell etwa %2$@ Jahre niedriger."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With a resting heart rate %1$@ lower, the model puts your fitness age about %2$@ years lower."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.lever.activity.text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit einem um %1$@ höheren Aktivitätsindex läge dein Fitnessalter laut Modell etwa %2$@ Jahre niedriger."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With your activity index %1$@ higher, the model puts your fitness age about %2$@ years lower."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.lever.sleep.text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit einer um %1$@ höheren Schlafregelmäßigkeit läge dein Fitnessalter laut Modell etwa %2$@ Jahre niedriger."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With your sleep regularity %1$@ higher, the model puts your fitness age about %2$@ years lower."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.lever.body.text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit %1$@ weniger beim Körpermaß läge dein Fitnessalter laut Modell etwa %2$@ Jahre niedriger."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With %1$@ less on the body measure, the model puts your fitness age about %2$@ years lower."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.history.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte 90 Tage"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last 90 days"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.history.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Linie erscheint nach der zweiten Woche."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A line appears after a second week."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.history.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das schattierte Band zeigt die ± %@ Jahre, um die diese Schätzung abweichen kann."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The shaded band is the ± %@ years this estimate can be off."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.vo2.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VO₂max im Verlauf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VO₂max over time"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.vo2.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Linie erscheint, sobald es zwei VO₂max-Werte gibt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A line appears once there are two VO₂max values."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.vo2.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das schattierte Band ist typisch für Menschen innerhalb von 5 Jahren um dein Alter."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The shaded band is typical for people within 5 years of your age."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Methode"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Method"
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.blend" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sechs Faktoren, jeweils in Jahre älter oder jünger als eine typische Person deines Alters und Geschlechts umgerechnet und gemischt. Die VO₂max zählt mit 40 % am meisten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Six factors, each turned into years older or younger than a typical person of your age and sex, then blended. VO₂max counts most at 40 %."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.cadence" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Eingaben sind 30-Tage-Mittelwerte, und die Zahl wird einmal pro Woche geschrieben, deshalb bewegt sie sich langsam."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inputs are 30-day middle values and the number is written once a week, so it moves slowly."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.method.sources" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basiert auf Nes et al. 2011 und 2013, Kaminsky et al. 2015 und Kodama et al. 2009. Eine Schätzung zur Richtungskontrolle, keine medizinische Messung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Based on Nes et al. 2011 and 2013, Kaminsky et al. 2015 and Kodama et al. 2009. An estimate for tracking direction, not a medical measurement."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.confidence.weekly" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beurteilt über einen 30-Tage-Mittelwert und wöchentlich aktualisiert, eine auffällige Nacht verschiebt ihn kaum."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Judged on a 30-day middle value and updated weekly, so one odd night barely moves it."
+          }
+        }
+      }
+    },
+    "zoop.fitnessage.confidence.vo2est" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschätzt aus Alter, Taille, Ruhepuls und Aktivität, nicht gemessen. Typischer Fehler ± %@ ml/kg/min."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estimated from age, waist, resting heart rate and activity, not measured. Typical error ± %@ ml/kg/min."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
