@@ -341,7 +341,6 @@ struct StrengthSection: View {
                 }
             }
             if let load = snapshot.muscleLoad {
-                SectionHeader("Muscle load", overline: snapshot.hasRecentLifts ? nil : "This week")
                 MuscleLoadCard(result: load, computedAt: snapshot.computedAt)
             }
         }
