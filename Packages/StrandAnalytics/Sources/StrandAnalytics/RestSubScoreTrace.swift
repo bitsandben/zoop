@@ -107,21 +107,16 @@ extension AnalyticsEngine.Rest {
                                     restorativeSeconds: Double, needHours: Double,
                                     consistency: Double?, deepSeconds: Double?,
                                     groupFragments: Int, groupInBedSeconds: Double) -> String {
-        func clamp01(_ x: Double) -> Double { max(0.0, min(1.0, x)) }
         func r2(_ x: Double) -> Double { (x * 100.0).rounded() / 100.0 }
 
-        let needSeconds = max(needHours, 0.1) * 3600.0
-        let durationScore = clamp01(tstSeconds / needSeconds)
-        let efficiencyScore = clamp01(efficiency)
-        let deepFactor: Double = {
-            guard let deep = deepSeconds, tstSeconds > 0, deepShareTarget > 0 else { return 1.0 }
-            let adequacy = clamp01((deep / tstSeconds) / deepShareTarget)
-            return deepFloorFactor + (1.0 - deepFloorFactor) * adequacy
-        }()
-        let restorativeScore = tstSeconds > 0
-            ? clamp01((restorativeSeconds / tstSeconds) / restorativeTarget) * deepFactor
-            : 0.0
-        let consistencyScore = clamp01(consistency ?? neutralConsistency)
+        // The SAME sub-scores `composite` weighs (shared `terms`), so the line cannot drift from it.
+        let t = AnalyticsEngine.Rest.terms(
+            tstSeconds: tstSeconds, efficiency: efficiency, restorativeSeconds: restorativeSeconds,
+            needHours: needHours, consistency: consistency, deepSeconds: deepSeconds)
+        let durationScore = t.duration, efficiencyScore = t.efficiency
+        let restorativeScore = t.restorative, deepFactor = t.deepFactor
+        // -1 = no regularity signal: the term is omitted and the other weights renormalised.
+        let consistencyScore = t.consistency ?? -1
         let composite = AnalyticsEngine.Rest.composite(
             tstSeconds: tstSeconds, inBedSeconds: inBedSeconds, efficiency: efficiency,
             restorativeSeconds: restorativeSeconds, needHours: needHours,

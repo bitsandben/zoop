@@ -110,7 +110,9 @@ final class IntelligenceEngine: ObservableObject {
     /// raw data, so the per-day cache and the idle-tick watermark both stop serving the old recipe.
     /// v1: WHOOP-style weighted overnight HRV and sleep sufficiency as Charge's sleep term.
     /// v2: the stricter daytime (nap) bar runs 08:00-21:00 instead of 11:00-20:00.
-    nonisolated static let scoringRecipe = "zoop-charge-v2"
+    /// v3: HR-confirmed sleep onset (a quiet evening at waking HR is no longer the start of the night)
+    ///     and the spread-out Rest recipe, so the recent nights are re-detected and re-scored.
+    nonisolated static let scoringRecipe = "zoop-charge-v3"
 
     /// Which config field(s) moved between two signatures, for the `configDropped` tally.
     ///

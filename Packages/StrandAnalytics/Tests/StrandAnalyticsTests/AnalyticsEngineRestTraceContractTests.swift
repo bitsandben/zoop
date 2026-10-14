@@ -36,10 +36,13 @@ final class AnalyticsEngineRestTraceContractTests: XCTestCase {
 
     func testPositiveSleepKeepsExactRestTrace() {
         let result = analyze(stage: "light", efficiency: 1.0)
-        XCTAssertEqual(result.0.restScore, 28.13)
+        // Rest recipe (Zoop 2026-10): duration (0.5 h / 8 h)^1.5, mapped efficiency, and no
+        // consistency signal → the term is omitted (consist=-1) and the weights renormalised.
+        // (0.45·0.015625 + 0.2·1 + 0.2·0) / 0.85 = 24.36.
+        XCTAssertEqual(result.0.restScore, 24.36)
         XCTAssertEqual(result.1.filter { $0.hasPrefix("rest ") }, [
-            "rest composite=28.13 dur=0.06*wDur=0.5 eff=1.0*wEff=0.2 "
-                + "restor=0.0*wRestor=0.2 deepFactor=0.5 consist=0.5*wConsist=0.1 "
+            "rest composite=24.36 dur=0.02*wDur=0.45 eff=1.0*wEff=0.2 "
+                + "restor=0.0*wRestor=0.2 deepFactor=0.5 consist=-1.0*wConsist=0.15 "
                 + "group=1 groupInBedMin=30",
         ])
     }

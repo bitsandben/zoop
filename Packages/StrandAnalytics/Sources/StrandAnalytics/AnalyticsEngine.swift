@@ -1165,24 +1165,38 @@ public enum AnalyticsEngine {
 
     // MARK: - Rest composite (Charge/Effort/Rest)
 
-    /// The 0–100 Rest score. Composite of four published-sleep-quality components:
-    ///   - duration vs personal need (0.50): hours asleep ÷ need, clamped to 1.0.
-    ///   - efficiency (0.20): asleep / in-bed, already in [0,1].
+    /// The 0–100 Rest score (the Sleep ring / Sleep screen number). Composite of four components:
+    ///   - duration vs personal need (0.45): hours asleep ÷ need, clamped to 1.0, then raised to
+    ///     `durationExponent` (1.5) so a short night costs more than linearly (6 h of 8 h → 0.65).
+    ///   - efficiency (0.20): asleep / in-bed mapped onto [`efficiencyFloor`, `efficiencyFull`]
+    ///     (65% → 0, 95% → 1), NOT the raw ratio.
     ///   - restorative share (0.20): (deep + REM) ÷ asleep, clamped to a 0.50 target
-    ///     (≈50% deep+REM is "full marks"; healthy adults sit ~40–50%).
-    ///   - consistency (0.10): sleep/wake regularity in [0,1]; a single day carries no
-    ///     regularity signal, so the caller supplies it from history — nil → neutral 0.5.
-    /// All sub-scores clamp to [0,1]; the weighted sum scales to [0,100]. Kept
-    /// dependency-free + constant-explicit so the Kotlin mirror is byte-identical.
+    ///     (≈50% deep+REM is "full marks"; healthy adults sit ~40–50%), scaled by deep adequacy.
+    ///   - consistency (0.15): duration regularity across recent nights and/or how far this night's
+    ///     midsleep sat from the wearer's habitual midsleep (`timingConsistency`). When the caller has
+    ///     NEITHER signal the term is left out and the other three weights are renormalised, so an
+    ///     unknown regularity neither earns nor costs points.
+    /// All sub-scores clamp to [0,1]; the weighted sum scales to [0,100].
+    ///
+    /// Why this changed (Zoop, 2026-10): the previous recipe (duration 0.50 linear, RAW efficiency
+    /// 0.20, restorative 0.20, consistency 0.10 defaulting to a free neutral 0.5) parked almost every
+    /// night in the 85–95 band. Raw efficiency of a detected window is rarely below ~0.90, so that
+    /// term paid ~18–20 of its 20 points on any night; the restorative term saturates for most
+    /// stagings; the neutral consistency handed out 5 points unconditionally; and a linear duration
+    /// term only took ~6 points off a 7 h night. The wearer saw "~95 every night". The new mapping
+    /// spends the efficiency and duration terms where nights actually differ: a 5.5 h night in 8.2 h
+    /// in bed now reads ~50, a full efficient night near need ~88–92, and the same night slept three
+    /// hours off the usual schedule loses most of the consistency term.
     ///
     /// DEEP-sleep honesty (Reddit HRV/sleep report): pooling deep+REM let a night with normal REM
     /// but almost no DEEP still earn near-full restorative credit (so Rest read 95+ with little deep).
     /// When the caller supplies the DEEP split (`deepSeconds`), the restorative sub-score is scaled by
     /// a gentle deep-adequacy factor: full credit once deep ≥ `deepShareTarget` (~13% of asleep is the
-    /// healthy floor), ramping to `deepFloorFactor` (0.5 — never zeroed) as deep → 0. So a near-zero-deep
-    /// night loses up to half the 0.20 restorative term (~10 pts) — honest, not tanking, no fabricated
-    /// stages. Deep unknown (`deepSeconds == nil`, e.g. an imported night with only a pooled total) →
-    /// factor 1.0, identical to the prior pooled behaviour.
+    /// healthy floor), ramping to `deepFloorFactor` (0.5 — never zeroed) as deep → 0. Deep unknown
+    /// (`deepSeconds == nil`, e.g. an imported night with only a pooled total) → factor 1.0.
+    ///
+    /// APPROXIMATE and unvalidated against a reference device: the constants are chosen to spread
+    /// realistic nights, not fitted to WHOOP's (unpublished) sleep score.
     public enum Rest {
         /// Default personal sleep need (hours) before the caller refines it.
         public static let defaultNeedHours: Double = 8.0
@@ -1194,13 +1208,22 @@ public enum AnalyticsEngine {
         /// The most the restorative term is scaled down by when deep is ~absent — half, never zero,
         /// so a low-deep night reads honestly without the whole night tanking.
         public static let deepFloorFactor: Double = 0.5
-        /// Neutral consistency when the caller supplies no regularity signal.
-        public static let neutralConsistency: Double = 0.5
+        /// Exponent on the asleep ÷ need ratio. >1 makes the duration term convex: the last half hour
+        /// short of need costs little, two hours short costs a lot (0.75 → 0.65, 0.6875 → 0.57).
+        public static let durationExponent: Double = 1.5
+        /// Sleep efficiency at/below which the efficiency term scores 0.
+        public static let efficiencyFloor: Double = 0.65
+        /// Sleep efficiency at/above which the efficiency term scores 1.
+        public static let efficiencyFull: Double = 0.95
+        /// Midsleep deviation from the habitual midsleep (minutes) still scored as fully on time.
+        public static let timingToleranceMin: Double = 30
+        /// Midsleep deviation (minutes) at/after which the timing term scores 0.
+        public static let timingZeroMin: Double = 180
 
-        public static let wDuration: Double = 0.50
+        public static let wDuration: Double = 0.45
         public static let wEfficiency: Double = 0.20
         public static let wRestorative: Double = 0.20
-        public static let wConsistency: Double = 0.10
+        public static let wConsistency: Double = 0.15
 
         /// Minimum trailing nights before a personal sleep-need estimate is trusted; below this the
         /// population default is used (cold-start honesty — never learn a need from a few nights).
@@ -1242,21 +1265,47 @@ public enum AnalyticsEngine {
             return min(max(q, floor), maxNeedHours)
         }
 
-        /// Build the composite. `tstSeconds` = total sleep time, `restorativeSeconds` = deep+REM
-        /// seconds, `deepSeconds` = deep-stage seconds (nil → no deep-adequacy adjustment, pooled
-        /// behaviour). Returns a value in [0,100].
-        public static func composite(tstSeconds: Double,
-                                     inBedSeconds: Double,
-                                     efficiency: Double,
-                                     restorativeSeconds: Double,
-                                     needHours: Double,
-                                     consistency: Double?,
-                                     deepSeconds: Double? = nil) -> Double {
-            func clamp01(_ x: Double) -> Double { max(0.0, min(1.0, x)) }
+        /// The four sub-scores (each in [0,1]) behind `composite`, plus the consistency term actually
+        /// used (nil when the caller supplied no regularity signal and the term is left out). ONE
+        /// definition shared by `composite` and the test-mode `subScoreLine`, so they cannot diverge.
+        public struct Terms: Equatable {
+            public let duration: Double
+            public let efficiency: Double
+            public let restorative: Double
+            public let deepFactor: Double
+            public let consistency: Double?
+        }
 
+        /// Timing consistency in [0,1] from how far a night's midsleep sat from the wearer's habitual
+        /// midsleep. Circular over 24 h (23:30 vs 00:30 is one hour, not 23). Within
+        /// `timingToleranceMin` → 1; at/after `timingZeroMin` → 0; linear between.
+        public static func timingConsistency(midsleepSec: Int, habitualMidsleepSec: Int) -> Double {
+            let day = 86_400
+            var d = abs((midsleepSec - habitualMidsleepSec) % day)
+            if d > day / 2 { d = day - d }
+            return timingConsistency(deviationMin: Double(d) / 60.0)
+        }
+
+        /// `timingConsistency` from a deviation already expressed in minutes (sign ignored).
+        public static func timingConsistency(deviationMin: Double) -> Double {
+            let dev = abs(deviationMin)
+            if dev <= timingToleranceMin { return 1.0 }
+            if dev >= timingZeroMin { return 0.0 }
+            return 1.0 - (dev - timingToleranceMin) / (timingZeroMin - timingToleranceMin)
+        }
+
+        /// The sub-scores `composite` weighs. See `Rest` for what each term means.
+        public static func terms(tstSeconds: Double,
+                                 efficiency: Double,
+                                 restorativeSeconds: Double,
+                                 needHours: Double,
+                                 consistency: Double?,
+                                 deepSeconds: Double? = nil,
+                                 timingConsistency: Double? = nil) -> Terms {
+            func clamp01(_ x: Double) -> Double { max(0.0, min(1.0, x)) }
             let needSeconds = max(needHours, 0.1) * 3600.0
-            let durationScore = clamp01(tstSeconds / needSeconds)
-            let efficiencyScore = clamp01(efficiency)
+            let duration = pow(clamp01(tstSeconds / needSeconds), durationExponent)
+            let eff = clamp01((efficiency - efficiencyFloor) / (efficiencyFull - efficiencyFloor))
             // Deep-adequacy factor in [deepFloorFactor, 1]: 1.0 once deep ≥ target share, ramping
             // down to the floor as deep → 0. nil deep (unknown split) ⇒ 1.0 (no adjustment).
             let deepFactor: Double = {
@@ -1264,17 +1313,43 @@ public enum AnalyticsEngine {
                 let adequacy = clamp01((deep / tstSeconds) / deepShareTarget)
                 return deepFloorFactor + (1.0 - deepFloorFactor) * adequacy
             }()
-            let restorativeScore = tstSeconds > 0
+            let restorative = tstSeconds > 0
                 ? clamp01((restorativeSeconds / tstSeconds) / restorativeTarget) * deepFactor
                 : 0.0
-            let consistencyScore = clamp01(consistency ?? neutralConsistency)
+            // Consistency: the mean of whichever regularity signals the caller has (duration
+            // regularity across nights, timing vs the habitual midsleep). Neither → nil (term omitted).
+            let signals = [consistency, timingConsistency].compactMap { $0 }.map(clamp01)
+            let cons: Double? = signals.isEmpty ? nil : signals.reduce(0, +) / Double(signals.count)
+            return Terms(duration: duration, efficiency: eff, restorative: restorative,
+                         deepFactor: deepFactor, consistency: cons)
+        }
 
-            let weighted = wDuration * durationScore
-                + wEfficiency * efficiencyScore
-                + wRestorative * restorativeScore
-                + wConsistency * consistencyScore
-            // weighted is in [0,1] (weights sum to 1). Scale to [0,100] and round to 2dp.
-            return (weighted * 10000.0).rounded() / 100.0
+        /// Build the composite. `tstSeconds` = total sleep time, `restorativeSeconds` = deep+REM
+        /// seconds, `deepSeconds` = deep-stage seconds (nil → no deep-adequacy adjustment, pooled
+        /// behaviour). `consistency` = duration regularity across recent nights, `timingConsistency`
+        /// = `timingConsistency(midsleepSec:habitualMidsleepSec:)`; with neither, the consistency
+        /// weight is redistributed over the other three terms. `inBedSeconds` is kept for call-site
+        /// stability (efficiency already carries it). Returns a value in [0,100], 2 dp.
+        public static func composite(tstSeconds: Double,
+                                     inBedSeconds: Double,
+                                     efficiency: Double,
+                                     restorativeSeconds: Double,
+                                     needHours: Double,
+                                     consistency: Double?,
+                                     deepSeconds: Double? = nil,
+                                     timingConsistency: Double? = nil) -> Double {
+            let t = terms(tstSeconds: tstSeconds, efficiency: efficiency,
+                          restorativeSeconds: restorativeSeconds, needHours: needHours,
+                          consistency: consistency, deepSeconds: deepSeconds,
+                          timingConsistency: timingConsistency)
+            var weighted = wDuration * t.duration + wEfficiency * t.efficiency + wRestorative * t.restorative
+            var totalWeight = wDuration + wEfficiency + wRestorative
+            if let c = t.consistency {
+                weighted += wConsistency * c
+                totalWeight += wConsistency
+            }
+            let score = totalWeight > 0 ? weighted / totalWeight : 0
+            return (score * 10000.0).rounded() / 100.0
         }
 
         /// Sleep sufficiency in [0, 1]: asleep time ÷ personal sleep need, capped at 1. This is WHOOP's

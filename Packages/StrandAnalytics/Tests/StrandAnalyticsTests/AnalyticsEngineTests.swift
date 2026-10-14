@@ -379,12 +379,13 @@ final class AnalyticsEngineTests: XCTestCase {
     }
 
     func testRestCompositeDurationDominatedAndClamped() {
-        // Duration term alone: 8 h asleep vs 8 h need → 1.0 × 0.50 weight = 50, all other
-        // sub-scores 0. Confirms the 0.50 duration weight and that over-need clamps at 1.0.
+        // Duration term alone: 8 h asleep vs 8 h need → 1.0 × 0.45 weight = 45, all other
+        // sub-scores 0 (consistency 0.0 supplied, so all four weights apply). Confirms the 0.45
+        // duration weight and that over-need clamps at 1.0.
         let r = AnalyticsEngine.Rest.composite(
             tstSeconds: 8 * 3600, inBedSeconds: 99_999, efficiency: 0.0,
             restorativeSeconds: 0.0, needHours: 8.0, consistency: 0.0)
-        XCTAssertEqual(r, 50.0, accuracy: 1e-9)
+        XCTAssertEqual(r, 45.0, accuracy: 1e-9)
         // Sleeping well over need does not push duration past 1.0.
         let over = AnalyticsEngine.Rest.composite(
             tstSeconds: 12 * 3600, inBedSeconds: 12 * 3600, efficiency: 1.0,
@@ -392,16 +393,89 @@ final class AnalyticsEngineTests: XCTestCase {
         XCTAssertEqual(over, 100.0, accuracy: 1e-9)
     }
 
-    func testRestCompositeNilConsistencyIsNeutral() {
-        // A single day carries no regularity signal → nil consistency scores the neutral 0.5.
+    func testRestCompositeNilConsistencyIsOmitted() {
+        // A single day carries no regularity signal → the consistency term is LEFT OUT and the other
+        // three weights renormalised (it used to score a free neutral 0.5, which handed every night
+        // points it had not earned). 4 h of 8 h → 0.5^1.5 = 0.35355; eff 0.8 → (0.8-0.65)/0.30 = 0.5;
+        // restorative 1 h/4 h = 25% of a 50% target → 0.5. (0.45·0.35355 + 0.2·0.5 + 0.2·0.5) / 0.85.
         let withNil = AnalyticsEngine.Rest.composite(
             tstSeconds: 4 * 3600, inBedSeconds: 5 * 3600, efficiency: 0.8,
             restorativeSeconds: 1 * 3600, needHours: 8.0, consistency: nil)
-        let withHalf = AnalyticsEngine.Rest.composite(
+        XCTAssertEqual(withNil, 42.25, accuracy: 1e-9)
+        let regular = AnalyticsEngine.Rest.composite(
             tstSeconds: 4 * 3600, inBedSeconds: 5 * 3600, efficiency: 0.8,
-            restorativeSeconds: 1 * 3600, needHours: 8.0, consistency: 0.5)
-        XCTAssertEqual(withNil, withHalf, accuracy: 1e-9)
-        XCTAssertEqual(withNil, 56.0, accuracy: 1e-9)
+            restorativeSeconds: 1 * 3600, needHours: 8.0, consistency: 1.0)
+        let irregular = AnalyticsEngine.Rest.composite(
+            tstSeconds: 4 * 3600, inBedSeconds: 5 * 3600, efficiency: 0.8,
+            restorativeSeconds: 1 * 3600, needHours: 8.0, consistency: 0.0)
+        XCTAssertGreaterThan(regular, withNil)
+        XCTAssertLessThan(irregular, withNil)
+    }
+
+    // MARK: - Rest composite spread (Zoop: "my sleep score is always ~95")
+
+    /// A short night — 5.5 h asleep out of 8.2 h in bed — must read clearly poor, well below 70.
+    /// Under the old recipe it scored ~69 (linear duration 0.69·50 + raw efficiency 0.67·20 +
+    /// restorative 0.8·20 + a free neutral consistency 5), i.e. "Fair" for a badly short night.
+    func testRestShortNightLandsWellBelow70() {
+        let tst = 5.5 * 3600, inBed = 8.2 * 3600
+        let r = AnalyticsEngine.Rest.composite(
+            tstSeconds: tst, inBedSeconds: inBed, efficiency: tst / inBed,
+            restorativeSeconds: 0.40 * tst, needHours: 8.0, consistency: nil,
+            deepSeconds: 0.16 * tst)
+        XCTAssertLessThan(r, 60, "5.5 h of 8.2 h in bed scored \(r)")
+        // Even at the usual time with perfect regularity it stays below 70.
+        let onTime = AnalyticsEngine.Rest.composite(
+            tstSeconds: tst, inBedSeconds: inBed, efficiency: tst / inBed,
+            restorativeSeconds: 0.40 * tst, needHours: 8.0, consistency: 1.0,
+            deepSeconds: 0.16 * tst, timingConsistency: 1.0)
+        XCTAssertLessThan(onTime, 70, "5.5 h of 8.2 h in bed (regular) scored \(onTime)")
+    }
+
+    /// A full, efficient night close to need, slept at the usual time, lands 85–95: good, not
+    /// automatically maxed.
+    func testRestFullEfficientNightLands85To95() {
+        let tst = 7.6 * 3600, inBed = 8.2 * 3600
+        let r = AnalyticsEngine.Rest.composite(
+            tstSeconds: tst, inBedSeconds: inBed, efficiency: tst / inBed,
+            restorativeSeconds: 0.38 * tst, needHours: 8.0, consistency: 0.9,
+            deepSeconds: 0.16 * tst, timingConsistency: 1.0)
+        XCTAssertGreaterThanOrEqual(r, 85, "full night scored \(r)")
+        XCTAssertLessThanOrEqual(r, 95, "full night scored \(r)")
+        // Without any regularity signal (the persisted daily path) it stays in the same band.
+        let daily = AnalyticsEngine.Rest.composite(
+            tstSeconds: tst, inBedSeconds: inBed, efficiency: tst / inBed,
+            restorativeSeconds: 0.38 * tst, needHours: 8.0, consistency: nil,
+            deepSeconds: 0.16 * tst)
+        XCTAssertGreaterThanOrEqual(daily, 85, "full night (no regularity) scored \(daily)")
+        XCTAssertLessThanOrEqual(daily, 95, "full night (no regularity) scored \(daily)")
+    }
+
+    /// The SAME night slept 2.5 h later than the habitual midsleep scores lower than at the usual time.
+    func testRestIrregularLateNightScoresBelowUsualTime() {
+        let tst = 7.6 * 3600, inBed = 8.2 * 3600
+        let habitual = 3 * 3600                       // usual midsleep 03:00 local
+        func score(midsleep: Int) -> Double {
+            AnalyticsEngine.Rest.composite(
+                tstSeconds: tst, inBedSeconds: inBed, efficiency: tst / inBed,
+                restorativeSeconds: 0.38 * tst, needHours: 8.0, consistency: 0.9,
+                deepSeconds: 0.16 * tst,
+                timingConsistency: AnalyticsEngine.Rest.timingConsistency(
+                    midsleepSec: midsleep, habitualMidsleepSec: habitual))
+        }
+        let usual = score(midsleep: habitual + 10 * 60)
+        let late = score(midsleep: habitual + 150 * 60)
+        XCTAssertLessThan(late, usual - 4, "late \(late) vs usual \(usual)")
+    }
+
+    func testTimingConsistencyIsCircularAndBanded() {
+        typealias R = AnalyticsEngine.Rest
+        XCTAssertEqual(R.timingConsistency(deviationMin: 20), 1.0)
+        XCTAssertEqual(R.timingConsistency(deviationMin: 180), 0.0)
+        XCTAssertEqual(R.timingConsistency(deviationMin: 105), 0.5, accuracy: 1e-9)
+        // 23:30 vs 00:30 is one hour apart across midnight, not 23 hours.
+        XCTAssertEqual(R.timingConsistency(midsleepSec: 23 * 3600 + 1800, habitualMidsleepSec: 1800),
+                       R.timingConsistency(deviationMin: 60), accuracy: 1e-9)
     }
 
     func testAnalyzeDayPopulatesRestAndConfidence() {
