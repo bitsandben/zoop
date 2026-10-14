@@ -58,7 +58,14 @@ enum TabRoute: Hashable {
 @ViewBuilder
 func metricDetailDestination(_ metric: MetricDescriptor) -> some View {
     #if os(iOS)
-    if metric.key == "fitness_age" { FitnessAgeScreen() } else { MetricDetailView(metric: metric) }
+    // Recovery has its own screen (Zoop 2.0); every route to its catalog entry lands there.
+    if metric.key == "fitness_age" {
+        FitnessAgeScreen()
+    } else if metric.key == HeroRingMetric.charge {
+        RecoveryScreen()
+    } else {
+        MetricDetailView(metric: metric)
+    }
     #else
     MetricDetailView(metric: metric)
     #endif

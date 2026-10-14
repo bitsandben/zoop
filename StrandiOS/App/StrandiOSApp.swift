@@ -540,6 +540,8 @@ enum DemoScreens {
         case "devices":  return AnyView(DevicesView())
         case "devicescatalog": return AnyView(DeviceCardCatalog())
         case "onboarding": return AnyView(OnboardingWizard(onFinished: {}))
+        case "recovery": return AnyView(RecoveryDemoHost(nights: 40, scale: 0.62))
+        case "recoverycalibrating": return AnyView(RecoveryDemoHost(nights: 2, scale: 0.8))
         case "fitnessage": return AnyView(NavigationStack { FitnessAgeScreen() })
         case "vitality": return AnyView(VitalityDemoScreen())
         case "addwizard": return AnyView(AddWizardDemoHost())
