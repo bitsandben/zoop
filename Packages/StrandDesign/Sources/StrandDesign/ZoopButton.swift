@@ -62,10 +62,19 @@ struct ZoopButtonAppearance {
             border = nil
             usesPanelSurface = false
         case .secondary:
+            #if os(iOS)
+            // The panel surface is the card colour, so on a card the button vanished; its own fill and
+            // hairline keep it visible on cards and canvas alike.
+            fill = StrandPalette.secondaryButtonFill
+            label = StrandPalette.secondaryButtonText
+            border = StrandPalette.secondaryButtonBorder
+            usesPanelSurface = false
+            #else
             fill = nil
             label = StrandPalette.textPrimary
             border = nil
             usesPanelSurface = true
+            #endif
         case .tertiary:
             fill = nil
             #if os(iOS)

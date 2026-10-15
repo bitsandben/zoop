@@ -237,6 +237,8 @@ struct StrandiOSApp: App {
                 .zoopTheme(themeRaw)
                 .chartStyle(chartStyleRaw)
                 .noopAccent(accentRaw, customHex: accentCustomHex)
+                // The theme accent, not the system blue, for every control and UIKit-presented sheet.
+                .zoopWindowTint(key: themeRaw + accentRaw + accentCustomHex + appearanceRaw)
                 // Dynamic Type now scales the prose/label roles (StrandFont). Cap the upper end so the
                 // fixed-geometry tiles/gauges stay legible at the largest accessibility sizes rather than
                 // clipping; the common Larger-Text range still scales fully.

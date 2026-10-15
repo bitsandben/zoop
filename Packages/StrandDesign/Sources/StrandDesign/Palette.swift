@@ -93,6 +93,15 @@ public enum StrandPalette {
     public static let primaryButtonText = Color(classic: (light: "#F3F4F6", dark: "#0A0A0A"),
                                                 pastel: (light: "#4A3F8F", dark: "#221D45"))
 
+    /// Secondary buttons: a fill that stands off the card surface (`surfaceRaised`) in all four looks,
+    /// plus a hairline edge so the control still reads on the canvas.
+    public static let secondaryButtonFill = Color(classic: (light: "#E9EAEE", dark: "#2B2B2B"),
+                                                  pastel: (light: "#ECE9FA", dark: "#343F39"))
+    public static let secondaryButtonBorder = Color(classic: (light: "#D3D5DB", dark: "#3A3A3A"),
+                                                    pastel: (light: "#D5CFF3", dark: "#46524B"))
+    public static let secondaryButtonText = Color(classic: (light: "#17181C", dark: "#F5F5F5"),
+                                                  pastel: (light: "#3F3582", dark: "#EEF2EE"))
+
     // MARK: Decorative shadow
     /// A decorative drop-shadow colour at `opacity`. Classic keeps black; Pastel & Nature light uses a faint sage-ink tint at a third of the strength.
     public static func shadow(_ opacity: Double) -> Color {

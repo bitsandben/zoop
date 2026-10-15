@@ -624,6 +624,8 @@ struct RootTabView: View {
         // TabRoute values, registered here ONCE per stack (a double registration double-pushes, #38).
         NavigationStack(path: path) {
             view
+                // The bar's white selection tint stops here: controls inside the tab use the theme accent.
+                .tint(StrandPalette.accent)
                 .environment(\.zoopIsTabRoot, true)
                 .background(StrandPalette.surfaceBase.ignoresSafeArea())
                 .toolbar(.hidden, for: .navigationBar)
@@ -660,6 +662,7 @@ struct RootTabView: View {
                             separator: false)
                 }
             }
+            .tint(StrandPalette.accent)
             .environment(\.zoopIsTabRoot, true)
             // The rows push MoreDestination VALUES so a re-tap of the More tab can pop them off the
             // bound path (#135/#198). Each destination keeps the per-screen wrapper the rows used to

@@ -586,7 +586,7 @@ public struct ZoopPrimaryButtonStyle: ButtonStyle {
     }
 }
 
-/// Secondary: inset well + 1px white-12 border + primary text. Quieter than gold.
+/// Secondary: the shared secondary-button fill + hairline (visible on cards in both themes). Quieter than gold.
 public struct ZoopSecondaryButtonStyle: ButtonStyle {
     public init() {}
     public func makeBody(configuration: Configuration) -> some View {
@@ -594,11 +594,11 @@ public struct ZoopSecondaryButtonStyle: ButtonStyle {
         let shape = RoundedRectangle(cornerRadius: 13, style: .continuous)
         return configuration.label
             .font(StrandFont.body.weight(.semibold))
-            .foregroundStyle(StrandPalette.textPrimary)
+            .foregroundStyle(StrandPalette.secondaryButtonText)
             .padding(.vertical, 11).padding(.horizontal, 18)
             .frame(maxWidth: .infinity)
-            .background(shape.fill(StrandPalette.surfaceInset))
-            .overlay(shape.strokeBorder(StrandPalette.hairline, lineWidth: 1))
+            .background(shape.fill(StrandPalette.secondaryButtonFill))
+            .overlay(shape.strokeBorder(StrandPalette.secondaryButtonBorder, lineWidth: 1))
             .opacity(pressed ? 0.82 : 1)
             .scaleEffect(pressed ? 0.98 : 1)
             .animation(StrandMotion.interactive, value: pressed)
