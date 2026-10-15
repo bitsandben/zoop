@@ -1,27 +1,19 @@
 import Foundation
 import WhoopStore
 
-/// Memoizes `Repository.widgetAnchor` across the high-frequency live-HR path (#1051-shaped).
+/// Memoizes `Repository.widgetAnchor` across the high-frequency live-HR path.
 ///
-/// The Live Activity's `$heartRate` / `$connected` `onReceive` closures in `StrandiOSApp` resolve the
-/// widget anchor on EVERY live tick (~1-3 Hz). Each `widgetAnchor` call re-derives today's anchor row:
-/// two `DateFormatter` formats to build the day keys plus up to two full-history `days.last(where:)`
-/// scans that grow with years of stored rows — all on the MainActor, and BEFORE the live heart rate banner's
-/// own 2 s push throttle, so that throttle never saves it.
-///
-/// The anchor only changes when `days` changes (tracked by `Repository.refreshSeq`, bumped on every
-/// `days` assignment) or when the local/logical day rolls. Keying the memo on `(seq, logicalKey, localKey)`
-/// makes it exactly behavior-preserving: a streaming tick reuses the last row, and the anchor is recomputed
-/// precisely once per data refresh or day-roll. Same `refreshSeq`-keyed idiom as `todayHistoryWideLoadedSeq`.
-///
-/// Pure given the `compute` it is handed, so it is unit-tested without a live `Repository` — the twin of
-/// Android's `NotifyDayStateCache` (#1051). Held as a `Repository` stored property and only ever touched on
-/// the MainActor, so the plain `mutating` cache needs no locking.
+/// The Live Activity's `$heartRate` / `$connected` closures resolve the anchor on EVERY live tick
+/// (~1-3 Hz), each time re-deriving two day keys and up to two full-history `days.last(where:)` scans on
+/// the MainActor, before the banner's own 2 s throttle can help. The anchor only changes when `days`
+/// changes (`Repository.refreshSeq`) or the local/logical day rolls, so keying on
+/// `(seq, logicalKey, localKey)` is behavior-preserving. Pure given `compute`, so unit-testable; only
+/// touched on the MainActor, so no locking (#1051).
 struct WidgetAnchorMemo {
     private var cached: (seq: Int, logicalKey: String, localKey: String, row: DailyMetric?)?
 
-    /// Return the anchor for `(seq, logicalKey, localKey)`, recomputing via `compute` only when that key
-    /// differs from the last one. `compute` is the pure `Repository.widgetAnchor(days:logicalKey:localKey:)`.
+    /// Returns the anchor for `(seq, logicalKey, localKey)`, recomputing via `compute` only when the key
+    /// differs from the last one.
     mutating func resolve(
         days: [DailyMetric],
         seq: Int,

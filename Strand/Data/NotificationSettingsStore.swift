@@ -76,9 +76,7 @@ struct AppAlertPref: Codable {
 
 // MARK: - Store
 
-/// Notification → wrist-alert preferences, persisted in UserDefaults.
-/// When the (forthcoming) on-device notification watcher ships it will read these prefs via a
-/// shared App Group suite (set up at that point); for now they back this screen's own state.
+/// Notification to wrist-alert preferences, persisted in UserDefaults.
 @MainActor
 final class NotificationSettingsStore: ObservableObject {
     @Published var masterEnabled: Bool      { didSet { d.set(masterEnabled, forKey: K.master) } }
@@ -117,10 +115,8 @@ final class NotificationSettingsStore: ObservableObject {
 
         apps = NotificationSettingsStore.sharedApps
 
-        // Seed a default pref for any newly-discovered app (default OFF; opt-in).
-        // We intentionally do NOT prune prefs for apps that are no longer installed: they are tiny,
-        // bounded by the static catalog, and a temporarily-uninstalled app keeps its pattern across
-        // a reinstall. All consumers iterate `apps`, never the raw `prefs` dict.
+        // Seed a default pref (OFF, opt-in) for newly-discovered apps. Prefs for uninstalled apps are kept
+        // (tiny, bounded by the static catalog) so a reinstall keeps its pattern; consumers iterate `apps`.
         var seeded = prefs
         for app in apps where seeded[app.id] == nil {
             seeded[app.id] = AppAlertPref(enabled: false, pattern: app.category.defaultPattern)
@@ -152,9 +148,8 @@ final class NotificationSettingsStore: ObservableObject {
 
     // MARK: Discovery
 
-    /// Resolved once per process. The scan touches LaunchServices + decodes icons, so caching it
-    /// avoids re-running on every navigation back to the screen (the view's @StateObject is rebuilt
-    /// each visit). Lazily initialised on first access (here, from the MainActor init).
+    /// Resolved once per process: the scan touches LaunchServices and decodes icons, and the view's
+    /// @StateObject is rebuilt each visit.
     static let sharedApps: [NotifApp] = NotificationSettingsStore.discoverApps()
 
     /// Catalog of notification-capable apps (name, category, candidate bundle ids, fallback glyph).
@@ -170,9 +165,7 @@ final class NotificationSettingsStore: ObservableObject {
             ("Slack",             .messaging, ["com.tinyspeck.slackmacgap"],                          "message.fill"),
             ("Telegram",          .messaging, ["ru.keepcoder.Telegram", "org.telegram.desktop"],      "paperplane.fill"),
             ("Signal",            .messaging, ["org.whispersystems.signal-desktop"],                  "message.fill"),
-            // Teams notifications in the shade are overwhelmingly chats, @-mentions and channel
-            // activity, which read as messages. Group it under Messaging with the chat glyph rather
-            // than Meetings so the buzz pattern and icon match what actually arrives.
+            // Teams notifications are mostly chats and mentions, so group under Messaging with the chat glyph.
             ("Microsoft Teams",   .messaging, ["com.microsoft.teams2", "com.microsoft.teams"],        "message.fill"),
             ("Zoom",              .meetings,  ["us.zoom.xos"],                                        "video.fill"),
             ("FaceTime",          .meetings,  ["com.apple.FaceTime"],                                 "video.fill"),

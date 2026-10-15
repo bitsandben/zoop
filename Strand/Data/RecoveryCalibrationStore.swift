@@ -2,16 +2,15 @@ import Foundation
 import StrandAnalytics
 import WhoopStore
 
-// MARK: - Recovery calibration (Zoop)
+// MARK: - Recovery calibration
 //
-// Morning check-ins ("how recovered do you feel?" 1–5 plus symptom toggles) and the personal Charge
-// weighting learned from them (`RecoveryCalibration`, StrandAnalytics). Storage mirrors `MoodStore`: the
-// answers live in the metric-series tall table under a DEDICATED source id, one row per key per local
-// day, so imports can never clobber them and an edit is a plain overwrite. Fully offline; nothing exists
-// until the wearer turns calibration on and answers.
+// Morning check-ins (felt recovery 1-5 plus symptom toggles) and the personal Charge weighting
+// learned from them (`RecoveryCalibration`). Like `MoodStore`, answers live in the metric-series
+// tall table under a DEDICATED source id, one row per key per local day, so imports can't clobber
+// them. Nothing exists until the wearer turns calibration on and answers.
 
-/// How pass 2 of the re-score composes Charge: the personal sleep need, the (possibly calibrated)
-/// weights and the reported check-ins. `.standard` is the uncalibrated recipe.
+/// How pass 2 of the re-score composes Charge: sleep need, (possibly calibrated) weights and the
+/// reported check-ins. `.standard` is the uncalibrated recipe.
 struct ChargeScoring: Codable, Sendable {
     var needHours: Double
     var weights: ChargeWeights
@@ -20,7 +19,7 @@ struct ChargeScoring: Codable, Sendable {
     static let standard = ChargeScoring(needHours: AnalyticsEngine.Rest.defaultNeedHours,
                                         weights: .standard, checkIns: [:])
 
-    /// Charge's sleep term: asleep time ÷ personal need (see `AnalyticsEngine.Rest.sufficiency`).
+    /// Charge's sleep term: asleep time / personal need (see `AnalyticsEngine.Rest.sufficiency`).
     func sleepTerm(_ daily: DailyMetric) -> Double? {
         AnalyticsEngine.Rest.sufficiency(daily: daily, needHours: needHours)
     }
@@ -44,16 +43,15 @@ enum RecoveryCalibrationStore {
 
     /// Whether the wearer turned calibration on (Settings or setup).
     static let enabledKey = "zoop.recoveryCalibration.enabled"
-    /// The Home invite was dismissed with "Not now" (it also hides once calibration is on).
+    /// The Home invite was dismissed with "Not now".
     static let inviteDismissedKey = "zoop.recoveryCalibration.inviteDismissed"
     /// The last fit, JSON-encoded `RecoveryCalibrationResult`, written by every re-score.
     static let resultKey = "zoop.recoveryCalibration.result"
 
     static var isEnabled: Bool { UserDefaults.standard.bool(forKey: enabledKey) }
 
-    /// The recipe the most recent re-score used, persisted so a screen that re-derives the Charge
-    /// breakdown scores its rows with the same need, weights and symptoms as the stored headline, even
-    /// when this launch has not re-scored yet. `.standard` before the first pass ever.
+    /// The recipe the latest re-score used, persisted so a screen re-deriving the Charge breakdown
+    /// scores rows with the same need, weights and symptoms as the stored headline.
     @MainActor static var lastScoring: ChargeScoring = {
         guard let data = UserDefaults.standard.data(forKey: scoringKey),
               let s = try? JSONDecoder().decode(ChargeScoring.self, from: data) else { return .standard }
@@ -80,8 +78,7 @@ enum RecoveryCalibrationStore {
         let soreness = await series(sorenessKey)
         let ill = await series(illKey)
         let stress = await series(stressKey)
-        // A day counts once ANY field was answered (each tap is saved on its own); a day whose answers were
-        // all tapped off again reads as unanswered.
+        // A day counts once ANY field was answered; a day tapped fully off again reads as unanswered.
         var out: [String: MorningCheckIn] = [:]
         let days = Set(feeling.keys).union(headache.keys).union(soreness.keys).union(ill.keys).union(stress.keys)
         for day in days {
@@ -95,9 +92,8 @@ enum RecoveryCalibrationStore {
         return out
     }
 
-    /// The Charge recipe for one re-score pass. With calibration off this is the standard recipe on the
-    /// personal sleep need. With it on, the check-ins are paired with the persisted nights, the personal
-    /// weights are fitted and the fit is banked for the UI.
+    /// The Charge recipe for one re-score pass: the standard recipe when calibration is off; when on,
+    /// check-ins are paired with persisted nights, weights fitted, and the fit banked for the UI.
     static func scoring(store: WhoopStore, computedId: String,
                         baselines: AnalyticsEngine.ProfileBaselines,
                         needHours: Double) async -> ChargeScoring {
@@ -117,8 +113,7 @@ enum RecoveryCalibrationStore {
         let nights = (try? await store.dailyMetrics(deviceId: computedId, from: first, to: last)) ?? []
         var samples: [CalibrationSample] = []
         for d in nights {
-            // Only mornings that rated the feeling pair with a night; symptom-only mornings still feed the
-            // symptom load through `checkIns`.
+            // Only mornings that rated the feeling pair with a night; symptom-only mornings still feed `checkIns`.
             guard let feeling = checkIns[d.day]?.feeling, let hrv = d.avgHrv, let rhr = d.restingHr else { continue }
             let z = RecoveryCalibration.termZScores(
                 hrv: hrv, rhr: Double(rhr), resp: d.respRateBpm, hrvBaseline: hrvBase,
@@ -162,8 +157,7 @@ extension Repository {
         return await RecoveryCalibrationStore.checkIns(store: store)
     }
 
-    /// Save (or overwrite) the day's check-in, partial or not. One row per key per local day; the feeling
-    /// row is written only once a face was picked.
+    /// Saves (or overwrites) the day's check-in, partial or not; the feeling row is written only once a face was picked.
     func saveMorningCheckIn(day: String, _ c: MorningCheckIn) async {
         if let f = c.feeling, !MorningCheckIn.scale.contains(f) { return }
         guard let store = await storeHandle() else { return }
