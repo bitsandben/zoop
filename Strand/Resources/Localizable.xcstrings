@@ -284813,6 +284813,1502 @@
           }
         }
       }
+    },
+    "zoop.mindful.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Achtsamkeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mindfulness"
+          }
+        }
+      }
+    },
+    "zoop.mindful.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yoga, Meditation und Atmen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yoga, meditation and breathing"
+          }
+        }
+      }
+    },
+    "zoop.mindful.effect.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was es bewirkt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What it does"
+          }
+        }
+      }
+    },
+    "zoop.mindful.effect.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puls, HRV und Stress rund ums Üben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart rate, HRV and stress around your practice"
+          }
+        }
+      }
+    },
+    "zoop.mindful.recent.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Einheiten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent sessions"
+          }
+        }
+      }
+    },
+    "zoop.mindful.empty.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Achtsamkeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No mindfulness yet"
+          }
+        }
+      }
+    },
+    "zoop.mindful.empty.message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yoga, Meditation und Atemübungen erscheinen hier, mit ihrer Wirkung auf Puls und Stress."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yoga, meditation and breathing show up here, with their effect on heart rate and stress."
+          }
+        }
+      }
+    },
+    "zoop.mindful.action.meditate" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meditieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meditate"
+          }
+        }
+      }
+    },
+    "zoop.mindful.action.breathe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atmen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breathe"
+          }
+        }
+      }
+    },
+    "zoop.mindful.minutes.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte 7 Tage"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last 7 days"
+          }
+        }
+      }
+    },
+    "zoop.mindful.days.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übungstage"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practice days"
+          }
+        }
+      }
+    },
+    "zoop.mindful.hrDrop.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulsabfall beim Üben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart rate drop"
+          }
+        }
+      }
+    },
+    "zoop.mindful.hrvChange.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV beim Üben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV during practice"
+          }
+        }
+      }
+    },
+    "zoop.mindful.stress.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stress danach"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stress afterwards"
+          }
+        }
+      }
+    },
+    "zoop.mindful.rhr.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhepuls nach Übungstagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resting HR after practice days"
+          }
+        }
+      }
+    },
+    "zoop.mindful.hrvNight.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nacht-HRV nach Übungstagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Night HRV after practice days"
+          }
+        }
+      }
+    },
+    "zoop.mindful.minutes.none" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Übung in den letzten 7 Tagen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No practice in the last 7 days yet."
+          }
+        }
+      }
+    },
+    "zoop.mindful.minutes.above" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr Übung als in einer normalen Woche."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More practice than in a normal week."
+          }
+        }
+      }
+    },
+    "zoop.mindful.minutes.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etwa so viel wie in einer normalen Woche."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About as much as in a normal week."
+          }
+        }
+      }
+    },
+    "zoop.mindful.minutes.below" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weniger als sonst; schon ein paar Minuten zählen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Less than usual; a few minutes already count."
+          }
+        }
+      }
+    },
+    "zoop.mindful.days.streak" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du übst seit %lld Tagen in Folge."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have practised %lld days in a row."
+          }
+        }
+      }
+    },
+    "zoop.mindful.days.meaning" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regelmäßige kurze Einheiten zählen meist mehr als lange."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regular short sessions tend to matter more than long ones."
+          }
+        }
+      }
+    },
+    "zoop.mindful.effect.needSessions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Braucht 3 Einheiten ab 5 Minuten mit Pulsdaten; bisher %lld."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Needs 3 sessions of 5+ minutes with heart data; %lld so far."
+          }
+        }
+      }
+    },
+    "zoop.mindful.hrDrop.clear" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Puls kommt beim Üben deutlich zur Ruhe (%lld Einheiten)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your heart clearly settles while you practise (%lld sessions)."
+          }
+        }
+      }
+    },
+    "zoop.mindful.hrDrop.none" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch kein klarer Pulsabfall (%lld Einheiten)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No clear heart-rate drop yet (%lld sessions)."
+          }
+        }
+      }
+    },
+    "zoop.mindful.hrDrop.rises" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Puls steigt beim Üben eher, etwa bei bewegtem Yoga."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your heart rate rises while practising, as in dynamic yoga."
+          }
+        }
+      }
+    },
+    "zoop.mindful.trend.deeper" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuletzt kommst du tiefer zur Ruhe als in deinen ersten Einheiten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lately you settle deeper than in your first sessions."
+          }
+        }
+      }
+    },
+    "zoop.mindful.trend.shallower" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuletzt kommst du weniger tief zur Ruhe als in deinen ersten Einheiten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lately you settle less deeply than in your first sessions."
+          }
+        }
+      }
+    },
+    "zoop.mindful.hrv.up" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine HRV steigt beim Üben (%lld Einheiten)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your HRV rises while you practise (%lld sessions)."
+          }
+        }
+      }
+    },
+    "zoop.mindful.hrv.flat" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine klare HRV-Änderung beim Üben (%lld Einheiten)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No clear HRV change while practising (%lld sessions)."
+          }
+        }
+      }
+    },
+    "zoop.mindful.hrv.down" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine HRV sinkt beim Üben (%lld Einheiten)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your HRV falls while practising (%lld sessions)."
+          }
+        }
+      }
+    },
+    "zoop.mindful.stress.calmer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach %1$lld von %2$lld Einheiten war dein Stress niedriger."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stress was lower afterwards in %1$lld of %2$lld sessions."
+          }
+        }
+      }
+    },
+    "zoop.mindful.stress.need" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Braucht 3 Einheiten mit Stressstunden davor und danach; bisher %lld."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Needs 3 sessions with stress hours before and after; %lld so far."
+          }
+        }
+      }
+    },
+    "zoop.mindful.contrast.need" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Braucht je 5 Nächte mit und ohne Übung; bisher %1$lld und %2$lld."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Needs 5 nights each with and without practice; %1$lld and %2$lld so far."
+          }
+        }
+      }
+    },
+    "zoop.mindful.contrast.better" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächte nach dem Üben sehen besser aus (%1$lld vs. %2$lld Nächte)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nights after practice look better (%1$lld vs %2$lld nights)."
+          }
+        }
+      }
+    },
+    "zoop.mindful.contrast.worse" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächte nach dem Üben sehen schlechter aus (%1$lld vs. %2$lld Nächte)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nights after practice look worse (%1$lld vs %2$lld nights)."
+          }
+        }
+      }
+    },
+    "zoop.mindful.contrast.none" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch kein klarer Unterschied (%1$lld vs. %2$lld Nächte)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No clear difference yet (%1$lld vs %2$lld nights)."
+          }
+        }
+      }
+    },
+    "zoop.mindful.kind.meditation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meditation"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meditation"
+          }
+        }
+      }
+    },
+    "zoop.mindful.kind.yoga" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yoga"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yoga"
+          }
+        }
+      }
+    },
+    "zoop.mindful.kind.breathing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atmen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breathing"
+          }
+        }
+      }
+    },
+    "zoop.mindful.kind.pilates" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilates"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilates"
+          }
+        }
+      }
+    },
+    "zoop.mindful.kind.stretching" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dehnen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stretching"
+          }
+        }
+      }
+    },
+    "zoop.mindful.kind.taichi" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tai-Chi"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tai chi"
+          }
+        }
+      }
+    },
+    "zoop.mindful.source.app" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoop"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoop"
+          }
+        }
+      }
+    },
+    "zoop.mindful.source.workout" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout"
+          }
+        }
+      }
+    },
+    "zoop.mindful.source.health" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health"
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.minutes.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minuten Yoga, Meditation, Atmen, Pilates, Dehnen und Tai-Chi in den letzten 7 Tagen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minutes of yoga, meditation, breathing, pilates, stretching and tai chi in the last 7 days."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.minutes.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gleitende 7-Tage-Summe"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rolling 7-day total"
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.minutes.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überlappende Einheiten aus App, Workouts und Apple Health zählen einmal; dein Bereich ist die mittlere Hälfte deiner früheren Wochen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overlapping sessions from the app, workouts and Apple Health count once; your range is the middle half of your earlier weeks."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.days.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tage der letzten 7 mit mindestens einer Einheit ab einer Minute."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Days in the last 7 with at least one session of a minute or more."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.days.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übungstage und Serie"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practice days and streak"
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.days.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Serie zählt Tage in Folge bis heute, oder bis gestern, wenn du heute noch nicht geübt hast."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The streak counts days in a row ending today, or yesterday if you have not practised yet today."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.hrDrop.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie stark dein Puls beim Üben sinkt: die Entspannungsreaktion."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How far your heart rate falls during practice: the relaxation response."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.hrDrop.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorher gegen beruhigt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Before vs settled"
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.hrDrop.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mittlerer Puls in der zweiten Hälfte jeder Einheit gegen die 10 Minuten davor (oder ihre ersten 3 Minuten); unter 1,5 bpm gilt als keine klare Änderung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mean HR in the second half of each session against the 10 minutes before it (or its first 3 minutes); a drop under 1.5 bpm counts as no clear change."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.observational" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beobachtet in deinen eigenen Daten, keine kontrollierte Studie; auch Haltung und Bewegung ändern den Puls."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Observed in your own data, not a controlled study; posture and movement also change heart rate."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.hrv.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie sich deine Herzratenvariabilität (RMSSD) beim Üben verändert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How your heart-rate variability (RMSSD) changes during practice."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.hrv.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RMSSD vorher gegen beruhigt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RMSSD before vs settled"
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.hrv.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereinigte Schlag-zu-Schlag-Abstände vom Band, gleiche Fenster wie beim Pulsabfall; unter 5 % gilt als keine klare Änderung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cleaned beat-to-beat intervals from the strap, same windows as the heart-rate drop; under 5 % counts as no clear change."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.hrv.reason" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langsames Atmen hebt RMSSD schon selbst, ein Teil des Anstiegs ist also die Atmung, nicht nur Ruhe."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slow breathing itself raises RMSSD, so part of the rise is the breathing, not only calm."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.stress.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Änderung deines Stresslevels (0 bis 3) von den Stunden vor einer Einheit zu den Stunden danach."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The change in your stress level (0 to 3) from the hours before a session to the hours after it."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.stress.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stündlicher Stress, je 2 Std."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hourly stress, 2 h each side"
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.stress.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutzt die stündliche Stresslesung des Tages; nur volle Stunden ganz vor oder nach der Einheit zählen, kurze Abstände entfallen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uses the day's hourly stress read; only whole hours fully before or after the session count, so short gaps are skipped."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.rhr.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mittlerer Ruhepuls in Nächten nach Übungstagen; die Differenz ist der Abstand zu anderen Nächten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mean resting heart rate in nights after practice days; the delta is the gap to other nights."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.hrvNight.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mittlere Nacht-HRV nach Übungstagen; die Differenz ist der Abstand zu anderen Nächten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mean night HRV after practice days; the delta is the gap to other nights."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.contrast.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übungsnächte gegen andere Nächte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practice nights vs other nights"
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.contrast.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte 60 Tage; ein Unterschied zählt nur mit 5+ Nächten je Gruppe und einem Abstand über dem doppelten Standardfehler."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last 60 days; a difference counts only with 5+ nights per group and a gap over twice its standard error."
+          }
+        }
+      }
+    },
+    "zoop.mindful.explain.contrast.reason" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übungstage können sich auch anders unterscheiden, das zeigt also ein Muster, keine Ursache."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Days you practise may differ in other ways too, so this shows a pattern, not a cause."
+          }
+        }
+      }
+    },
+    "zoop.meditation.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meditation"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meditation"
+          }
+        }
+      }
+    },
+    "zoop.meditation.close" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        }
+      }
+    },
+    "zoop.meditation.ready" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setz dich bequem hin und lass deinen Atem ruhig werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sit comfortably and let your breath settle."
+          }
+        }
+      }
+    },
+    "zoop.meditation.sitting" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spür deinen Atem; schweifen die Gedanken ab, kehr zurück."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notice your breath; when your mind wanders, come back."
+          }
+        }
+      }
+    },
+    "zoop.meditation.done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gut gemacht. Die Einheit ist gespeichert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Well done. The session is saved."
+          }
+        }
+      }
+    },
+    "zoop.meditation.length" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dauer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Length"
+          }
+        }
+      }
+    },
+    "zoop.meditation.intervalBells" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klangschale alle 5 Minuten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bell every 5 minutes"
+          }
+        }
+      }
+    },
+    "zoop.meditation.drone" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sanfter Klangteppich"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soft drone"
+          }
+        }
+      }
+    },
+    "zoop.meditation.volume" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lautstärke"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume"
+          }
+        }
+      }
+    },
+    "zoop.meditation.start" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        }
+      }
+    },
+    "zoop.meditation.end" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "End"
+          }
+        }
+      }
+    },
+    "zoop.breathe.sound.bowl" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klangschale"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Singing bowl"
+          }
+        }
+      }
+    },
+    "zoop.breathe.sound.gong" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sanfter Gong"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soft gong"
+          }
+        }
+      }
+    },
+    "zoop.breathe.sound.beep" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signalton"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beep"
+          }
+        }
+      }
+    },
+    "zoop.breathe.sound.haptics" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Haptik"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptics only"
+          }
+        }
+      }
+    },
+    "zoop.breathe.sound.off" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Töne aus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sounds off"
+          }
+        }
+      }
+    },
+    "zoop.breathe.sound.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klang"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sound"
+          }
+        }
+      }
+    },
+    "zoop.breathe.sound.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Klang bei jedem Atemzug · folgt dem Stummschalter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A cue on each breath · respects silent mode"
+          }
+        }
+      }
+    },
+    "zoop.breathe.sound.drone" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sanfter Klangteppich"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soft drone"
+          }
+        }
+      }
+    },
+    "zoop.breathe.sound.volume" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lautstärke"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
