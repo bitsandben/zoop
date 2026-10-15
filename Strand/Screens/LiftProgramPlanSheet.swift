@@ -10,6 +10,9 @@ struct LiftProgramPlanSheet: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage(TrainingPlan.storageKey) private var planRaw = ""
     @State private var days: Set<Int> = []
+    @State private var items: [LiftProgramItemRow] = []
+    @State private var lines: [LiftProgressionAdvisor.Line] = []
+    @EnvironmentObject private var repo: Repository
 
     var body: some View {
         NavigationStack {
@@ -27,6 +30,7 @@ struct LiftProgramPlanSheet: View {
                     }
                 }
                 .padding(.top, 4)
+                nextTimeList
                 Spacer(minLength: 0)
             }
             .padding(ZoopMetrics.screenPadding)
@@ -51,6 +55,43 @@ struct LiftProgramPlanSheet: View {
         .frame(width: 420, height: 260)
         #endif
         .onAppear { days = TrainingPlan.decode(planRaw).days(for: program.id) }
+        .task { await loadProgression() }
+    }
+
+    // MARK: Next time
+
+    /// Per exercise: what progression suggests for the next session, and any line today's muscle
+    /// recovery will skip or lighten. Only lines with something to say are listed.
+    @ViewBuilder private var nextTimeList: some View {
+        let rows = items.compactMap { item -> (String, String)? in
+            guard let line = lines.first(where: { $0.itemId == item.id }) else { return nil }
+            if line.recovery != .keep, let group = line.group, let pct = line.percentRecovered {
+                let key = line.recovery == .skip ? "zoop.lift.recovery.skip" : "zoop.lift.recovery.reduce"
+                return (item.exercise, PlanFormat.t(key, group.displayName, "\(pct)"))
+            }
+            return line.advice.map { (item.exercise, PlanFormat.nextTime($0)) }
+        }
+        if !rows.isEmpty {
+            VStack(alignment: .leading, spacing: ZoopSpacing.s) {
+                ForEach(rows, id: \.0) { exercise, text in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(exercise)
+                            .font(ZoopType.body)
+                            .foregroundStyle(StrandPalette.textPrimary)
+                        Text(text)
+                            .font(ZoopType.caption)
+                            .foregroundStyle(StrandPalette.textSecondary)
+                    }
+                }
+            }
+            .padding(.top, ZoopSpacing.m)
+        }
+    }
+
+    private func loadProgression() async {
+        guard let store = await repo.storeHandle() else { return }
+        items = (try? await store.liftProgramItems(programId: program.id)) ?? []
+        lines = await LiftProgressionAdvisor.lines(for: items, repo: repo)
     }
 
     /// Weekday numbers (1 = Sunday) in the locale's week order, so a German week starts on Monday.

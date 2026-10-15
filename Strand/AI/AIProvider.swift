@@ -28,7 +28,7 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .openAI:    return "gpt-5-mini"
         case .anthropic: return "claude-sonnet-4-6"
         case .gemini:    return "gemini-flash-latest"   // stable alias → current Flash, no version churn (#400)
-        case .openRouter: return "meta-llama/llama-3.3-70b-instruct:free"
+        case .openRouter: return AIProvider.openRouterDefaultModel
         case .custom:    return ""   // the user picks the model their server serves
         }
     }
@@ -82,6 +82,7 @@ enum AIProvider: String, CaseIterable, Identifiable {
             // A starting set of free models. OpenRouter rotates which models are free, so
             // `refreshModels()` replaces this with the live list of `:free` ids once a key is set.
             return [
+                AIProvider.openRouterDefaultModel,
                 "meta-llama/llama-3.3-70b-instruct:free",
                 "deepseek/deepseek-chat-v3-0324:free",
                 "google/gemma-3-27b-it:free",
@@ -122,6 +123,12 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .custom:    return CustomClient()
         }
     }
+
+    /// The model a new setup starts on: the free dots-3 note preview on OpenRouter.
+    static let openRouterDefaultModel = "dots-studio/dots-3-note-preview:free"
+    /// Where a request goes when the chosen OpenRouter model is gone: OpenRouter's free router, so the
+    /// "nothing is billed" promise of the setup screen still holds. Editable in Coach settings.
+    static let openRouterDefaultFallback = "openrouter/free"
 
     // MARK: - Custom (OpenAI-compatible) base URL
 

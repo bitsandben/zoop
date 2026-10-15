@@ -72,7 +72,7 @@ struct LiftLogView: View {
         }
         .sheet(item: $planning) { target in
             if let program = target.program {
-                LiftProgramPlanSheet(program: program)
+                LiftProgramPlanSheet(program: program).environmentObject(repo)
             }
         }
         .sheet(item: $viewing) { target in

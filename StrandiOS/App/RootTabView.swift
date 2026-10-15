@@ -202,6 +202,9 @@ struct RootTabView: View {
 
     var body: some View {
         tabShell
+        #if DEBUG
+        .onAppear { if PlanChatDemo.opensTraining { selectedTab = IOSTab.training } }
+        #endif
         // Zoop: no vertical scroll bar on any tab or the sheets this shell presents.
         .scrollIndicators(.hidden, axes: .vertical)
         .overlay(alignment: .bottomTrailing) {

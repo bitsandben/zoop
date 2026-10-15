@@ -193,10 +193,10 @@ extension AICoachEngine {
     /// chat) and the headless `generateBrief()` below (used by the scheduled morning-brief notification).
     /// Kept in one place so the two paths never drift.
     private static let briefInstruction = """
-    Based on the data above, give me TODAY'S coaching brief in three short parts: \
-    (1) my readiness in one line, citing charge, HRV and rest; \
-    (2) exactly what training to do today and what to avoid; \
-    (3) one specific thing to improve my charge. Be punchy and motivating.
+    Based on the data above, give me TODAY'S coaching brief as three short lines, one sentence each: \
+    (1) my readiness, citing charge, HRV and rest; \
+    (2) exactly what training to do today; \
+    (3) one specific thing to improve my charge. No headings.
     """
 
     /// K5: Generate today's coaching brief WITHOUT touching the visible chat transcript. Used by the
@@ -228,13 +228,12 @@ extension AICoachEngine {
     /// Dispatch to the user's chosen provider client.
     func callProvider(key: String,
                       messages: [(role: ChatMessage.Role, content: String)]) async throws -> String {
-        try await provider.client.send(
-            key: key,
-            model: model,
-            systemPrompt: CoachLanguage.withDirective(systemPrompt),
-            messages: messages,
-            session: session
-        )
+        let client = provider.client
+        let prompt = CoachLanguage.withDirective(systemPrompt)
+        return try await withModelFallback { model in
+            try await client.send(key: key, model: model, systemPrompt: prompt,
+                                  messages: messages, session: self.session)
+        }
     }
 
     /// K1: Dispatch to the user's chosen provider client's streaming method. The default
@@ -245,15 +244,13 @@ extension AICoachEngine {
                                 messages: [(role: ChatMessage.Role, content: String)],
                                 inlineImage: String? = nil,
                                 onDelta: (String) -> Void) async throws {
-        try await provider.client.streamWithImage(
-            key: key,
-            model: model,
-            systemPrompt: CoachLanguage.withDirective(systemPrompt),
-            messages: messages,
-            inlineImage: inlineImage,
-            session: session,
-            onDelta: onDelta
-        )
+        let client = provider.client
+        let prompt = CoachLanguage.withDirective(systemPrompt)
+        try await withModelFallback { model in
+            try await client.streamWithImage(key: key, model: model, systemPrompt: prompt,
+                                             messages: messages, inlineImage: inlineImage,
+                                             session: self.session, onDelta: onDelta)
+        }
     }
 }
 
@@ -270,12 +267,10 @@ extension AICoachEngine {
         guard CoachBriefScheduler.coachMasterEnabled, isConfigured, let key = resolvedKey else {
             throw AICoachError.noKey
         }
-        return try await provider.client.send(
-            key: key,
-            model: model,
-            systemPrompt: systemPrompt,
-            messages: [(.user, prompt)],
-            session: session
-        )
+        let client = provider.client
+        return try await withModelFallback { model in
+            try await client.send(key: key, model: model, systemPrompt: systemPrompt,
+                                  messages: [(.user, prompt)], session: self.session)
+        }
     }
 }

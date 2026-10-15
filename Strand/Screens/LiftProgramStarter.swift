@@ -39,11 +39,15 @@ enum LiftProgramStarter {
                                 // onto the line it came from, and be there next time.
                                 programItemId: item.id)
         }
+        // Progressive overload from the logged sets and today's muscle recovery, applied to this
+        // session's snapshot only; the program's own targets stay as the user wrote them.
+        let lines = await LiftProgressionAdvisor.lines(for: items, repo: repo)
+        let adapted = LiftProgressionAdvisor.adapt(plan, lines: lines)
         guard !session.isActive else {
             session.isPresented = true
             return
         }
-        session.start(plan: plan, programId: program.id, programName: program.name)
+        session.start(plan: adapted, programId: program.id, programName: program.name)
     }
 
     /// Save a parsed program (generated or imported) as a new Lift Log program, remembering its

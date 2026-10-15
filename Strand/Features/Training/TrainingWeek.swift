@@ -1,4 +1,5 @@
 import Foundation
+import StrandAnalytics
 import WhoopStore
 
 // MARK: - The training week
@@ -23,6 +24,8 @@ struct TrainingWeek {
         let isToday: Bool
         /// Only the month calendar builds days after today; the week window ends on it.
         var isFuture = false
+        /// Coach-plan sessions without a program planned on this day (only the month calendar fills it).
+        var plannedSessions: [PlanSession] = []
         var id: Date { date }
     }
 

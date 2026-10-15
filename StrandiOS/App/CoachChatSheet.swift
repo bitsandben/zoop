@@ -55,6 +55,8 @@ private struct CoachChat: View {
     /// would redraw the whole message list on every live reading it publishes.
     let repo: Repository
     @State private var showClearConfirm = false
+    @State private var buildingPlan = false
+    @State private var buildingRoutine = false
     /// Whether the end of the conversation is on screen. A streaming reply is followed only while it is,
     /// so scrolling up to reread an earlier answer is not undone by the next words arriving.
     @State private var atBottom = true
@@ -67,6 +69,7 @@ private struct CoachChat: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 12) {
+                    PlanUpdateCard()
                     if coach.messages.isEmpty && !coach.sending {
                         emptyState
                     }
@@ -153,6 +156,8 @@ private struct CoachChat: View {
             Button("Clear", role: .destructive) { coach.clearConversation() }
             Button("Cancel", role: .cancel) {}
         }
+        .fullScreenCover(isPresented: $buildingPlan) { PlanChatSheet(kind: .plan) }
+        .fullScreenCover(isPresented: $buildingRoutine) { PlanChatSheet(kind: .routine) }
         .task {
             // The same opening sequence as the Coach screen: restore the saved conversation, surface a
             // morning brief that arrived meanwhile, then the first-open brief, each only into an empty one.
@@ -270,6 +275,12 @@ private struct CoachChat: View {
             NavigationLink {
                 CoachSuggestionHistoryPage()
             } label: { Label { Text(CoachStrings.historyTitle) } icon: { Image(systemName: "list.bullet.clipboard") } }
+            Button { buildingPlan = true } label: {
+                Label { Text(PlanFormat.t("zoop.planchat.plan.entry")) } icon: { Image(systemName: "calendar.badge.plus") }
+            }
+            Button { buildingRoutine = true } label: {
+                Label { Text(PlanFormat.t("zoop.planchat.routine.entry")) } icon: { Image(systemName: "dumbbell") }
+            }
             Button(role: .destructive) { showClearConfirm = true } label: {
                 Label("Clear conversation", systemImage: "trash")
             }
