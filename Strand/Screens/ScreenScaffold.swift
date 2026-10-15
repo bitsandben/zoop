@@ -58,9 +58,10 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
             // to the same edges (2026-07-02); macOS keeps the classic 28 in the #else branch.
             .padding(.horizontal, ZoopMetrics.screenHPadding)
             .padding(.top, 24)
-            // The tab bar floats over the scroll content, so the last card sat hidden behind it.
-            // Reserve extra bottom scroll room so every screen's final card clears the floating bar.
-            .padding(.bottom, ZoopMetrics.tabBarClearance)
+            // The tab bar already insets the scroll content by its own height (the system adds it to the
+            // scroll view's safe area), so only a little air is left under the last card. Adding the
+            // bar's height again left a large empty run at the end of every page.
+            .padding(.bottom, ZoopSpacing.l)
             // iPad: cap the readable column, then centre it in the full-width scroll viewport.
             // iPhone (.compact): the inner frame is .infinity/.leading, identical to before.
             .frame(maxWidth: hSizeClass == .regular ? 700 : .infinity,

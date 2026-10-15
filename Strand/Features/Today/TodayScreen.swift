@@ -38,7 +38,14 @@ struct TodayScreen: View {
                 }
                 .padding(.horizontal, ZoopSpacing.gutter)
                 .padding(.top, ZoopSpacing.xs)
-                .padding(.bottom, ZoopSpacing.xxl * 3)
+                // The tab bar already insets the scroll content by its own height; this only leaves
+                // a little air under the last card.
+                .padding(.bottom, ZoopSpacing.l)
+                // The page is exactly as wide as the screen, whatever a card asks for. A card wider
+                // than the viewport (the rings at large text sizes, long German labels) otherwise made
+                // the scroll content wider than the screen: the page sat off-centre and could be
+                // dragged sideways, rubber-banding back while the day swipe stepped the day.
+                .containerRelativeFrame(.horizontal)
             }
             .scrollIndicators(.hidden)
             .scrollBounceBehavior(.basedOnSize, axes: .horizontal)

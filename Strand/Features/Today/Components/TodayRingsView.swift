@@ -78,7 +78,9 @@ struct TodayRingCell: View {
                 center(p)
                     .padding(.horizontal, diameter * 0.12)
             }
-            .frame(width: diameter, height: diameter)
+            // Shrinks below the text-scaled size when three rings do not fit across the screen.
+            .frame(maxWidth: diameter, maxHeight: diameter)
+            .aspectRatio(1, contentMode: .fit)
             VStack(spacing: 2) {
                 Text(verbatim: p.label)
                     .font(ZoopType.headline)
