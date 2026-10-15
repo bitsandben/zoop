@@ -141,12 +141,13 @@ struct TrainingScreen: View {
 
     // MARK: Header links
 
-    /// The Training tab header's two round buttons: Lift Log and Intervals. Empty elsewhere, and on macOS,
+    /// The Training tab header's round buttons: Live heart rate, Lift Log and Intervals. Empty elsewhere, and on macOS,
     /// where both have their own sidebar rows.
     @ViewBuilder private var trainingLinks: some View {
         #if os(iOS)
         if asTrainingTab {
             HStack(spacing: ZoopSpacing.m) {
+                headerLink(.live, icon: "waveform.path.ecg", label: LocalizedStringKey("zoop.today.quick.liveHR"))
                 headerLink(.liftLog, icon: "dumbbell.fill", label: "Lift Log")
                 headerLink(.intervals, icon: "timer", label: "Intervals")
             }

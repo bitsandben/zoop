@@ -19,6 +19,7 @@ struct TodayScreen: View {
     @AppStorage(UnitPrefs.systemKey) private var unitSystemRaw = UnitSystem.metric.rawValue
     @AppStorage(UnitPrefs.temperatureKey) private var temperatureRaw = ""
     @AppStorage(RecoveryCalibrationStore.enabledKey) private var calibrationEnabled = false
+    @AppStorage(TodayDashboardPrefs.storageKey) private var dashboardTilesRaw = ""
 
     @State private var model = TodayModel()
     @State private var explained: MetricReadout?
@@ -72,7 +73,8 @@ struct TodayScreen: View {
                 .presentationDetents([.medium, .large])
         }
         .sheet(item: $sheet, onDismiss: { Task { await model.load(environment) } }) { sheet in
-            TodaySheetContent(sheet: sheet, onDetectedHandled: model.removeDetectedWorkout)
+            TodaySheetContent(sheet: sheet, onDetectedHandled: model.removeDetectedWorkout,
+                              dashboardTiles: $dashboardTilesRaw)
         }
     }
 
@@ -109,7 +111,8 @@ struct TodayScreen: View {
             startCheckIn: { model.acceptCheckInInvite(); calibrationEnabled = true },
             dismissCheckIn: model.dismissCheckInInvite,
             answerCheckIn: { sheet = .checkIn },
-            quickActions: { router.requestQuickActions() })
+            quickActions: { router.requestQuickActions() },
+            customiseDashboard: { sheet = .customiseDashboard })
     }
 
     private func openActivity(_ item: TodayActivity) {
@@ -125,11 +128,12 @@ struct TodayScreen: View {
         return TodayEnvironment(repo: repo, profile: profile,
                                 whoopScale: UnitPrefs.resolveEffortScale(effortScaleRaw) == .whoop,
                                 temperatureUnit: UnitPrefs.resolveTemperature(system: system, override: temperatureRaw),
-                                dayCycleMode: DayCycleMode.persisted(dayCycleModeRaw))
+                                dayCycleMode: DayCycleMode.persisted(dayCycleModeRaw),
+                                dashboardTiles: TodayDashboardPrefs.decode(dashboardTilesRaw))
     }
 
     private var loadKey: String {
-        "\(repo.refreshSeq)-\(model.dayOffset)-\(dayCycleModeRaw)-\(effortScaleRaw)-\(calibrationEnabled)"
+        "\(repo.refreshSeq)-\(model.dayOffset)-\(dayCycleModeRaw)-\(effortScaleRaw)-\(calibrationEnabled)-\(dashboardTilesRaw)"
     }
 
     /// The stress tile, the moment card and the Energy Bank follow the day while Today is open.

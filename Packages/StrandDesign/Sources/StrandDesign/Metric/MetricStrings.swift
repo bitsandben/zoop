@@ -93,6 +93,10 @@ enum MetricStrings {
     static func yearsSpoken(_ v: String) -> LocalizedStringResource {
         LocalizedStringResource("zoop.metric.unit.years.spoken", defaultValue: "\(v) years", bundle: .main)
     }
+    static let days = LocalizedStringResource("zoop.metric.unit.days", defaultValue: "d", bundle: .main)
+    static func daysSpoken(_ v: String) -> LocalizedStringResource {
+        LocalizedStringResource("zoop.metric.unit.days.spoken", defaultValue: "\(v) days", bundle: .main)
+    }
     static func vo2maxSpoken(_ v: String) -> LocalizedStringResource {
         LocalizedStringResource("zoop.metric.unit.vo2max.spoken",
                                 defaultValue: "\(v) millilitres per kilogram per minute", bundle: .main)

@@ -43,6 +43,10 @@ enum TabRoute: Hashable {
     case fitnessAge
     /// The fasting timer, plan and history (iOS).
     case fasting
+    /// Why Recovery is what it is (iOS); Today's Recovery ring opens it.
+    case recovery
+    /// The live heart-rate console, reached from the Training tab header.
+    case live
 }
 
 /// The detail screen for one catalog metric. Fitness age has its own screen on iOS, so its routes land there.
@@ -138,6 +142,13 @@ extension View {
                 #else
                 EmptyView()
                 #endif
+            case .recovery:
+                #if os(iOS)
+                RecoveryScreen()
+                #else
+                EmptyView()
+                #endif
+            case .live: LiveView()
             }
         }
     }

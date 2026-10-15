@@ -102,10 +102,22 @@ extension TodayLoader {
 
     // MARK: Fitness age
 
-    func fitnessAge(key: String) async -> (readout: MetricReadout, history: [(day: String, value: Double)]) {
-        let history = await FitnessAgeSnapshot.load(repo: repo).history.filter { $0.day <= key }
+    struct FitnessResult {
+        let readout: MetricReadout
+        let history: [(day: String, value: Double)]
+        let snapshot: FitnessAgeSnapshot
+        /// The VO₂max line the Fitness age screen draws, 7-day averaged; read only for the VO₂max tile.
+        let vo2Series: [(day: String, value: Double)]
+    }
+
+    func fitnessAge(key: String) async -> FitnessResult {
+        let snapshot = await FitnessAgeSnapshot.load(repo: repo)
+        let history = snapshot.history.filter { $0.day <= key }
         let readout = TodayBodyReadouts.fitnessAge(latest: history.last, age: env.profile.age, selectedDay: key)
-        return (readout, history)
+        let vo2 = env.dashboardTiles.contains(.vo2max)
+            ? FitnessAgeModel.rollingMean(await FitnessAgeModel.vo2Series(repo: repo, measured: snapshot.vo2IsMeasured, days: 60))
+            : []
+        return FitnessResult(readout: readout, history: history, snapshot: snapshot, vo2Series: vo2)
     }
 
     // MARK: Explainer inputs
@@ -131,6 +143,7 @@ extension TodayLoader {
             .sleepScore: points(sleep),
             .strain: points(window.compactMap { d in d.strain.map { (day: d.day, value: $0 * scale) } }),
             .stress: points(stressTrend.map { (day: $0.day, value: $0.level) }),
+            .stressDaily: points(stressTrend.map { (day: $0.day, value: $0.level) }),
             .steps: points(dashboard.steps),
             .activeCalories: points(dashboard.calories),
             .weight: points(dashboard.weight),

@@ -116,21 +116,4 @@ struct TodayCheckInCard: View {
     }
 }
 
-/// Steps, active calories and weight as list rows; each row explains its number with a 30-day trend.
-struct TodayDashboardCard: View {
-    let readouts: [MetricReadout]
-    let onExplain: (MetricReadout) -> Void
-
-    var body: some View {
-        ListCard {
-            ForEach(Array(readouts.enumerated()), id: \.element.id) { index, readout in
-                Button { onExplain(readout) } label: { MetricRow(readout) }
-                    .buttonStyle(.plain)
-                    .overlay(alignment: .top) {
-                        if index > 0 { Rectangle().fill(StrandPalette.hairline).frame(height: 1) }
-                    }
-            }
-        }
-    }
-}
 #endif

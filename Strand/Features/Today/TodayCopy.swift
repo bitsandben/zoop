@@ -24,7 +24,34 @@ enum TodayCopy {
     static let weight = r("zoop.today.label.weight", "Weight")
     static let fitnessAge = r("zoop.today.label.fitnessAge", "Fitness age")
     static let myDay = r("zoop.today.section.myDay", "My Day")
-    static let dashboard = r("zoop.today.section.dashboard", "Dashboard")
+    static let dashboard = r("zoop.today.section.dashboard", "My Dashboard")
+
+    // MARK: Dashboard tiles and the customise sheet
+
+    static let tileHRV = r("zoop.today.tile.hrv", "HRV")
+    static let tileRestingHR = r("zoop.today.tile.restingHR", "Resting HR")
+    static let tileRespiratory = r("zoop.today.tile.respiratory", "Respiratory rate")
+    static let tileSpO2 = r("zoop.today.tile.spo2", "SpO₂")
+    static let tileSkinTemp = r("zoop.today.tile.skinTemp", "Skin temperature")
+    static let tileStressDaily = r("zoop.today.tile.stressDaily", "Stress (daily average)")
+    static let tileSleepDebt = r("zoop.today.tile.sleepDebt", "Sleep debt")
+    static let tileVO2max = r("zoop.today.tile.vo2max", "VO₂max")
+    static let tileFasting = r("zoop.today.tile.fasting", "Fasting streak")
+    static let customise = r("zoop.today.dashboard.customise", "Customise")
+    static let customiseTitle = r("zoop.today.dashboard.customiseTitle", "My Dashboard")
+    static let customiseShown = r("zoop.today.dashboard.shown", "On your dashboard")
+    static let customiseShownNote = r("zoop.today.dashboard.shownNote", "Drag to reorder, swipe to remove.")
+    static let customiseMore = r("zoop.today.dashboard.more", "More tiles")
+    static let customiseReset = r("zoop.today.dashboard.reset", "Restore defaults")
+    static let customiseDone = r("zoop.today.dashboard.done", "Done")
+    static let dashboardEmpty = r("zoop.today.dashboard.empty", "Pick the numbers you want to see here.")
+    static let stressDailyNoData = r("zoop.today.stressDaily.noData", "Your daily stress appears after a day with the strap.")
+    static let fastingNoData = r("zoop.today.fasting.noData", "Finish a fast and your streak starts here.")
+    static func fastingMeaning(met: Int, of days: Int) -> LocalizedStringResource {
+        LocalizedStringResource("zoop.today.fasting.meaning", defaultValue: "You met your fasting goal on \(met) of the last \(days) days.")
+    }
+    static let vo2NoData = r("zoop.today.vo2max.noData", "Needs a week of resting heart rate plus your age and sex.")
+    static let vitalNoData = r("zoop.today.vital.noData", "Not measured on this day.")
 
     // MARK: Meanings, one sentence per verdict
 
@@ -154,6 +181,13 @@ enum TodayCopy {
     static let batteryCharging = r("zoop.today.status.charging", "Charging")
     static let explain = r("zoop.today.action.explain", "How is this calculated?")
     static let quickActions = r("zoop.today.action.quickActions", "Quick actions")
+    static let quickStartWorkout = r("zoop.today.quick.startWorkout", "Start workout")
+    static let quickLogWorkout = r("zoop.today.quick.logWorkout", "Log workout")
+    static let quickFasting = r("zoop.today.quick.fasting", "Fasting")
+    static let quickJournal = r("zoop.today.quick.journal", "Logbook")
+    static let quickBreathe = r("zoop.today.quick.breathe", "Breathe")
+    static let quickNap = r("zoop.today.quick.nap", "Add nap")
+    static let liveHeartRate = r("zoop.today.quick.liveHR", "Live heart rate")
     static let profile = r("zoop.today.action.profile", "Profile and settings")
 }
 

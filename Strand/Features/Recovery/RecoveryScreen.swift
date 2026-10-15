@@ -13,7 +13,10 @@ struct RecoveryScreen: View {
     @StateObject private var model = RecoveryModel()
 
     var body: some View {
-        Group {
+        // A ZStack with the canvas, not a bare Group: an empty Group has no view, so its `.task` never
+        // ran and the pushed screen stayed blank.
+        ZStack {
+            StrandPalette.surfaceBase.ignoresSafeArea()
             if let content = model.content { RecoveryContentView(content: content) }
         }
         .task { await model.load(repo: repo) }
