@@ -278939,6 +278939,23 @@
           }
         }
       }
+    },
+    "zoop.today.fasting.runningTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fasting"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fasten"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

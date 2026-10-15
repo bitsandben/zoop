@@ -30,6 +30,9 @@ struct TodayFastingCard: View {
                     HStack(spacing: ZoopSpacing.m) {
                         FastingProgressRing(progress: r.progress, lineWidth: 6).frame(width: 44, height: 44)
                         VStack(alignment: .leading, spacing: 2) {
+                            // Names what is counting: a bare duration read as an unlabelled timer.
+                            Text("zoop.today.fasting.runningTitle").font(ZoopType.caption)
+                                .foregroundStyle(StrandPalette.textSecondary)
                             Text(verbatim: r.elapsed).font(ZoopType.headline.monospacedDigit())
                                 .foregroundStyle(StrandPalette.textPrimary)
                             Text(r.status).font(ZoopType.caption)
