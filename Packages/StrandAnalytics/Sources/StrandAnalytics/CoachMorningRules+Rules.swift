@@ -102,7 +102,8 @@ extension CoachMorningRules {
     // MARK: Tonight
 
     /// An earlier or steadier night, only when the planner (or the best-bedtime window) knows a time.
-    /// The planner's time is kept within reach of the usual bedtime (`reasonableBedtime`).
+    /// The planner's time is already `TonightBedtime`'s; `reasonableBedtime` with the same usual bedtime
+    /// leaves it unchanged and only clamps a raw time (tests, the best-bedtime fallback).
     static func sleepCandidate(_ i: Input) -> Candidate? {
         guard let raw = i.bedtimeMinute ?? i.bestBedtimeMinute else { return nil }
         let bed = reasonableBedtime(raw, usual: i.usualBedtimeMinute ?? i.bestBedtimeMinute)

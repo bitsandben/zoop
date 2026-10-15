@@ -42,7 +42,7 @@ enum CoachMorningInputs {
 
         // The planner's own resolver: wake time (alarm / reminder / habit) minus tonight's time in bed.
         let patterns = PatternsModel()
-        await patterns.loadQuick(repo: repo)
+        await patterns.loadQuick(repo: repo, alarm: AppModel.shared?.nextArmedStrapAlarm(from: now))
         input.bedtimeMinute = patterns.tonight?.bedtime.map { $0 / 60 }
         addSleepTiming(to: &input, repo: repo, todayKey: todayKey)
 
@@ -94,10 +94,8 @@ enum CoachMorningInputs {
         if let last = nights.last(where: { $0.wakeDay == todayKey }) {
             input.lastBedtimeMinute = Int(last.bedtimeClockMin.rounded())
         }
-        let recent = nights.suffix(14).map(\.bedtimeSignedMin).sorted()
-        if recent.count >= 3 {
-            input.usualBedtimeMinute = Int(SleepInsights.clock(fromSigned: recent[recent.count / 2]).rounded())
-        }
+        // The same usual bedtime the planner clamps with, so the rules' clamp leaves its time unchanged.
+        input.usualBedtimeMinute = TonightBedtime.usualMinute(signedBedtimes: nights.map(\.bedtimeSignedMin))
         if let window = SleepInsights.bedtime(nights), !window.isFlat {
             input.bestBedtimeMinute = Int(SleepInsights.clock(fromSigned: window.best.center).rounded())
         }

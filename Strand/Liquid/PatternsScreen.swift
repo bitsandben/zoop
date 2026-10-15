@@ -17,7 +17,7 @@ final class PatternsModel: ObservableObject {
         let need: SleepDebt.NeedTonight; let bedtime: Int?; let wake: Int?
         /// The armed strap alarm the wake time came from, when there is one.
         var alarm: Date? = nil
-        /// Minutes in bed for the chosen goal, and the goal itself (share of the need).
+        /// Minutes in bed between the recommended bedtime and the wake time, and the goal (share of the need).
         var inBedMin: Double = 0
         var goal: Double = 1
         /// Bedtime for the full need, for the planner's "optimal" line.
@@ -45,8 +45,6 @@ final class PatternsModel: ObservableObject {
         let goal = SleepGoal.current.fraction
         let inBed = PatternInsights.inBedMinutes(needMin: sleepNeed.totalMin, goal: goal, efficiency: eff)
         let fullInBed = PatternInsights.inBedMinutes(needMin: sleepNeed.totalMin, goal: 1, efficiency: eff)
-        // The reminder counts back the same time in bed, so it is handed over every time it is computed.
-        WindDownNudge.updateTonightNeed(Int(inBed.rounded()))
         // One wake time for the card and the reminder: an armed strap alarm within the next day first,
         // then the wake time set for the reminder, then the habitual one from past nights.
         var bed: Int?, wake: Int?
@@ -62,12 +60,21 @@ final class PatternsModel: ObservableObject {
             wake = (mid + Int(typical / 2)) % Self.day
         }
         var fullBed: Int?
+        var reminderInBed = inBed
         if let w = wake {
-            bed = ((w - Int(inBed * 60)) % Self.day + Self.day) % Self.day
+            // The one recommended bedtime (`TonightBedtime`): kept within reach of the usual bedtime, so
+            // the planner, Today's evening card, the coach and the reminder all name the same time.
+            let nights = SleepInsightsSection.nights(sleeps: repo.sleeps, days: days, withLatency: false)
+            let usual = TonightBedtime.usualMinute(signedBedtimes: nights.map(\.bedtimeSignedMin))
+            let bedMin = TonightBedtime.recommendedMinute(wakeMinute: w / 60, inBedMinutes: inBed, usualMinute: usual)
+            bed = bedMin * 60
+            reminderInBed = Double(((w / 60 - bedMin) % 1440 + 1440) % 1440)
             fullBed = ((w - Int(fullInBed * 60)) % Self.day + Self.day) % Self.day
         }
+        // The reminder counts back the same time in bed, so it is handed over every time it is computed.
+        WindDownNudge.updateTonightNeed(Int(reminderInBed.rounded()))
         tonight = Tonight(need: sleepNeed, bedtime: bed, wake: wake, alarm: usableAlarm,
-                          inBedMin: inBed, goal: goal, fullNeedBedtime: fullBed)
+                          inBedMin: reminderInBed, goal: goal, fullNeedBedtime: fullBed)
     }
 
     /// The best-bedtime window from the last five months of nights; returns those nights for reuse.
