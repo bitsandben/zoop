@@ -25,6 +25,7 @@ struct TodayScreen: View {
     @State private var explained: MetricReadout?
     @State private var sheet: TodaySheet?
     @State private var napEditHaptic = 0
+    @State private var daySwiping = false
     @ObservedObject private var backgroundStore = BackgroundImageStore.shared
 
     private static let topID = "today.top"
@@ -34,7 +35,12 @@ struct TodayScreen: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: ZoopSpacing.cardGap) {
                     header.id(Self.topID)
-                    if let content = model.content { TodayContentStack(content: content, actions: actions) }
+                    if let content = model.content {
+                        // While a sideways day swipe is under way the cards stop taking touches, so the
+                        // card the finger started on doesn't also open when the swipe ends.
+                        TodayContentStack(content: content, actions: actions)
+                            .allowsHitTesting(!daySwiping)
+                    }
                 }
                 .padding(.horizontal, ZoopSpacing.gutter)
                 .padding(.top, ZoopSpacing.xs)
@@ -171,7 +177,14 @@ struct TodayScreen: View {
 
     private var daySwipe: some Gesture {
         DragGesture(minimumDistance: 24)
+            .onChanged { value in
+                let dx = value.translation.width, dy = value.translation.height
+                if !daySwiping, abs(dx) > abs(dy) * 1.5, abs(dx) > 24, !ZoopChartScrubState.isActiveOrRecent {
+                    daySwiping = true
+                }
+            }
             .onEnded { value in
+                defer { daySwiping = false }
                 let dx = value.translation.width, dy = value.translation.height
                 guard abs(dx) > abs(dy) * 1.5, abs(dx) > 50, !ZoopChartScrubState.isActiveOrRecent else { return }
                 withAnimation(StrandMotion.interactive) { model.step(TodayLogic.daySwipeDelta(dx: dx)) }
