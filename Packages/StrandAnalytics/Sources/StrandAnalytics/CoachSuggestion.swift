@@ -34,8 +34,23 @@ public struct CoachSuggestion: Codable, Equatable, Identifiable, Sendable {
         case routine(programId: String, name: String)
         /// Be in bed by this minute of the day (0..<1440); accepting arms a wind-down reminder.
         case bedtime(minuteOfDay: Int)
-        /// Start the next fast at this minute of the day; accepting arms a start reminder.
+        /// Start the next fast at this minute of the day. No longer proposed (the coach does not send
+        /// generic fasting reminders); kept so suggestions stored by an earlier build still decode.
         case fastingStart(minuteOfDay: Int, planId: String)
+        /// A short breathing break at this minute of the day; accepting arms a reminder.
+        case breathe(minuteOfDay: Int)
+
+        /// Stable name of the case, the contract a cloud reply has to echo back (`CoachBriefReply`).
+        public var kindName: String {
+            switch self {
+            case .none: return "none"
+            case .strainTarget: return "strainTarget"
+            case .routine: return "routine"
+            case .bedtime: return "bedtime"
+            case .fastingStart: return "fastingStart"
+            case .breathe: return "breathe"
+            }
+        }
     }
 
     public let id: String
@@ -47,7 +62,7 @@ public struct CoachSuggestion: Codable, Equatable, Identifiable, Sendable {
     public var title: String
     /// One sentence.
     public var body: String
-    /// Which data the suggestion rests on, in plain words ("Recovery 28 %, HRV under your range").
+    /// Why, grounded in the user's numbers, as one sentence ("Because your recovery is 28 % and …").
     public var rationale: String
     public let action: Action
     public var status: Status

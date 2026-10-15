@@ -143,22 +143,28 @@ enum TodayRings {
     /// "Target 10–14" in the strain readout's own unit and locale.
     static func strainTargetCaption(recovery: Double?, whoopScale: Bool, locale: Locale) -> LocalizedStringResource? {
         guard let band = CoupledView.optimalStrainRange(recovery: recovery) else { return nil }
+        let (low, high) = strainTargetNumbers(band, whoopScale: whoopScale, locale: locale)
+        return TodayCopy.strainTarget(low, high)
+    }
+
+    /// A 0-21 strain band in the user's Effort scale, the numbers the ring's target caption and the
+    /// coach both print, so the two never disagree.
+    static func strainTargetNumbers(_ band: ClosedRange<Int>, whoopScale: Bool, locale: Locale) -> (String, String) {
         let unit = MetricUnit.score(fractionDigits: 0)
         let scale = whoopScale ? 1 : 100.0 / 21
-        return TodayCopy.strainTarget(unit.number(Double(band.lowerBound) * scale, locale: locale),
-                                      unit.number(Double(band.upperBound) * scale, locale: locale))
+        return (unit.number(Double(band.lowerBound) * scale, locale: locale),
+                unit.number(Double(band.upperBound) * scale, locale: locale))
     }
 
     // MARK: Synthesis
 
-    /// One sentence under the rings, from Recovery alone (the rings already show the rest). Today only:
-    /// a past day's plan is no longer actionable.
+    /// The line under the rings. Advice belongs to the coach card alone, so a scored day shows nothing
+    /// here (the rings already carry their verdicts); only the factual calibration note remains.
     static func synthesis(_ display: RecoveryDisplay, isToday: Bool) -> LocalizedStringResource? {
         guard isToday else { return nil }
         switch display {
-        case .scored(let pct), .carried(let pct, _): return TodayCopy.synthesis(ScoreBand(score: pct))
         case .calibrating: return TodayCopy.synthesisCalibrating
-        case .noData: return nil
+        case .scored, .carried, .noData: return nil
         }
     }
 

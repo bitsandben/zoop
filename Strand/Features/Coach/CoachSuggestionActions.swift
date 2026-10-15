@@ -6,7 +6,8 @@ import UserNotifications
 /// What the three answers on a suggestion do. Kept out of the card so the view only forwards taps.
 ///
 /// Accepting carries out the suggestion's action where the app can: a routine lands in today's Lift
-/// Log plan, a bedtime arms a one-off wind-down reminder, a fasting start arms a start reminder.
+/// Log plan, a bedtime arms a one-off wind-down reminder, a breather arms a reminder before the usual
+/// stress peak.
 /// Advice the app cannot act on (a strain band, a habit) is recorded as accepted.
 @MainActor
 enum CoachSuggestionActions {
@@ -18,6 +19,8 @@ enum CoachSuggestionActions {
     /// Ids keep the existing routing prefixes so a tap opens the sleep planner / fasting screen.
     private static let bedtimeRequestId = "wind-down-nudge-coach"
     private static let fastingRequestId = "fasting-goal-coach-start"
+    /// Routed to the breathing screen by `NotificationPresenter`.
+    static let breatheRequestId = "coach-breathe"
 
     static func accept(_ s: CoachSuggestion, store: CoachSuggestionStore = .shared, now: Date = Date()) {
         let performed = perform(s.action, now: now)
@@ -52,6 +55,11 @@ enum CoachSuggestionActions {
             guard let fire = nextOccurrence(of: minute, after: now) else { return false }
             schedule(id: fastingRequestId, at: fire, title: CoachStrings.fastReminderTitle,
                      body: CoachStrings.fastReminderBody)
+            return true
+        case .breathe(let minute):
+            guard let fire = nextOccurrence(of: minute, after: now) else { return false }
+            schedule(id: breatheRequestId, at: fire, title: CoachStrings.breatheReminderTitle,
+                     body: CoachStrings.breatheReminderBody)
             return true
         }
     }

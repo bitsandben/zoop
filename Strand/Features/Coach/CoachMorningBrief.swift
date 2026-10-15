@@ -33,7 +33,7 @@ enum CoachMorningBrief {
     /// Called on every days republish once the sync gates passed. Generates at most once per day, after
     /// the night ended and Recovery is scored; posts only in the morning and only when the
     /// good-morning notification is on.
-    static func onDayUpdate(today: String, recovery: Double?, nightEndTs: Int?,
+    static func onDayUpdate(today: String, recovery: Double?, nightEndTs: Int?, illness: Bool,
                             repo: Repository, coach: AICoachEngine, now: Date = Date()) {
         guard isActive, recovery != nil, !inFlight,
               UserDefaults.standard.string(forKey: lastDayKey) != today,
@@ -41,7 +41,7 @@ enum CoachMorningBrief {
         inFlight = true
         Task { @MainActor in
             defer { inFlight = false }
-            let result = await generate(repo: repo, coach: coach, now: now, day: today)
+            let result = await generate(repo: repo, coach: coach, illness: illness, now: now, day: today)
             UserDefaults.standard.set(today, forKey: lastDayKey)
             let hour = Calendar.current.component(.hour, from: now)
             guard GoodMorningNotifier.isEnabled, hour < GoodMorningNotifier.latestHour,
@@ -54,11 +54,12 @@ enum CoachMorningBrief {
 
     /// Builds and stores today's brief. Also the "generate now" path for previews and the DEBUG hook.
     @discardableResult
-    static func generate(repo: Repository, coach: AICoachEngine, now: Date = Date(),
+    static func generate(repo: Repository, coach: AICoachEngine, illness: Bool = false, now: Date = Date(),
                          day: String = Repository.localDayKey(Date())) async -> CoachDailyBrief {
-        let input = await CoachMorningInputs.gather(repo: repo, now: now)
+        let input = await CoachMorningInputs.gather(repo: repo, illness: illness, now: now)
         let plan = CoachMorningRules.evaluate(input)
-        var output = CoachMorningComposer.compose(input: input, plan: plan, now: now)
+        var output = CoachMorningComposer.compose(input: input, plan: plan, now: now,
+                                                  whoopScale: CoachMorningInputs.whoopScale)
         var byAI = false
         if let reply = await providerReply(coach: coach, output: output, declined: input.suppressedReasons) {
             output = CoachMorningComposer.applying(reply, to: output)
@@ -70,16 +71,20 @@ enum CoachMorningBrief {
     }
 
     /// Asks the configured provider to pick and reword the candidates. Only with the Coach's data
-    /// consent: the prompt carries the same metrics summary the chat sends. Nil means "use the rules".
+    /// consent: the prompt carries the same metrics summary the chat sends. Nil means "use the rules":
+    /// also when the reply is not plain JSON or not written in the app language.
     private static func providerReply(coach: AICoachEngine, output: CoachMorningComposer.Output,
                                       declined: Set<String>) async -> CoachBriefReply.Parsed? {
         guard coach.canSendOneShot, coach.dataConsent, !output.suggestions.isEmpty else { return nil }
         let context = await coach.buildFullContext()
-        let prompt = CoachMorningComposer.providerPrompt(context: context, output: output, declined: declined)
-        let language = AppLanguage.activeLocale.language.languageCode?.identifier ?? "en"
-        guard let reply = try? await coach.oneShot(systemPrompt: CoachBriefReply.systemPrompt(language: language),
-                                                   prompt: prompt) else { return nil }
-        return CoachBriefReply.parse(reply, candidateCount: output.suggestions.count)
+        let language = CoachLanguage.code
+        let prompt = CoachMorningComposer.providerPrompt(context: context, output: output, declined: declined,
+                                                         languageCode: language)
+        guard let reply = try? await coach.oneShot(systemPrompt: CoachBriefReply.systemPrompt(languageCode: language),
+                                                   prompt: prompt),
+              let parsed = CoachBriefReply.parse(reply, candidateActions: output.suggestions.map(\.action.kindName)),
+              CoachLanguageCheck.matches(parsed.allText, languageCode: language) else { return nil }
+        return parsed
     }
 
     private static func nightEnded(_ endTs: Int?, now: Date) -> Bool {

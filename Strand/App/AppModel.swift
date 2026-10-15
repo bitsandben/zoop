@@ -1691,7 +1691,8 @@ final class AppModel: ObservableObject {
         // With the Coach on, the morning goes out as the coach brief instead of the plain text.
         if CoachMorningBrief.isActive {
             CoachMorningBrief.onDayUpdate(today: Repository.localDayKey(Date()), recovery: row.recovery,
-                                          nightEndTs: nightEnd, repo: repo, coach: coach)
+                                          nightEndTs: nightEnd, illness: CoachMorningInputs.isUnwell(illnessSignal),
+                                          repo: repo, coach: coach)
             return
         }
         #endif

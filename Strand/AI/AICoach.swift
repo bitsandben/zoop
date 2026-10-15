@@ -330,12 +330,17 @@ final class AICoachEngine: ObservableObject {
     /// Contextual suggestion chips for the composer, derived from today's bands via `CoachSuggestions`.
     /// Reads only on-device `repo.days`; pure, byte-identical to the Android twin. Returns the stable
     /// generic fallback when there is no usable data for today.
-    var suggestions: [String] { CoachSuggestions.suggestions(for: repo.days.last, recent: repo.days) }
+    /// The chips are English catalogue keys, shown (and sent) in the app language.
+    var suggestions: [String] {
+        CoachSuggestions.suggestions(for: repo.days.last, recent: repo.days).map(CoachLanguage.localizedPrompt)
+    }
 
     /// K7: Follow-up suggestion chips shown after each assistant reply. These are generic
     /// conversational follow-ups (not data-derived) so the user can dig deeper without typing.
-    /// Byte-identical to the Android twin's `followUpSuggestions`.
-    static let followUpSuggestions: [String] = [
+    /// The English keys are byte-identical to the Android twin's `followUpSuggestions`; shown in the
+    /// app language through the String Catalog.
+    static var followUpSuggestions: [String] { followUpKeys.map(CoachLanguage.localizedPrompt) }
+    static let followUpKeys: [String] = [
         "Tell me more about that",
         "What should I do next?",
         "How does today compare to this week?",
@@ -696,7 +701,7 @@ final class AICoachEngine: ObservableObject {
     /// No-op if a conversation already exists, so it never duplicates into an active chat.
     func surfaceScheduledBrief(_ text: String) {
         guard messages.isEmpty else { return }
-        appendMessage(ChatMessage(role: .assistant, text: "Today's brief\n\n" + text))
+        appendMessage(ChatMessage(role: .assistant, text: Self.briefHeading + "\n\n" + text))
         conversationDay = Self.localEpochDay()
         persistMessages()
     }
@@ -719,7 +724,7 @@ final class AICoachEngine: ObservableObject {
     /// mid-conversation tap still shows the fresh brief.
     func appendGeneratedBrief(_ text: String) {
         retireStaleConversationIfNeeded()
-        appendMessage(ChatMessage(role: .assistant, text: "Today's brief\n\n" + text))
+        appendMessage(ChatMessage(role: .assistant, text: Self.briefHeading + "\n\n" + text))
         conversationDay = Self.localEpochDay()
         persistMessages()
     }
@@ -811,7 +816,7 @@ final class AICoachEngine: ObservableObject {
             if !partial.isEmpty, let lastIdx = messages.indices.last, messages[lastIdx].role == .assistant {
                 messages[lastIdx] = ChatMessage(
                     id: placeholder.id, role: .assistant,
-                    text: partial + "\n\n*(stream interrupted)*"
+                    text: partial + "\n\n*(" + Self.streamInterrupted + ")*"
                 )
             } else if let lastIdx = messages.indices.last, messages[lastIdx].role == .assistant {
                 // No text received at all — remove the empty placeholder.
@@ -825,7 +830,7 @@ final class AICoachEngine: ObservableObject {
             if !partial.isEmpty, let lastIdx = messages.indices.last, messages[lastIdx].role == .assistant {
                 messages[lastIdx] = ChatMessage(
                     id: placeholder.id, role: .assistant,
-                    text: partial + "\n\n*(stream interrupted)*"
+                    text: partial + "\n\n*(" + Self.streamInterrupted + ")*"
                 )
             } else if let lastIdx = messages.indices.last, messages[lastIdx].role == .assistant {
                 messages.remove(at: lastIdx)
@@ -849,7 +854,7 @@ final class AICoachEngine: ObservableObject {
         let wire: [(role: ChatMessage.Role, content: String)] =
             [(.user, context + "\n\n---\n\n" + Self.briefInstruction)]
 
-        let prefix = "Today's brief\n\n"
+        let prefix = Self.briefHeading + "\n\n"
         let placeholder = ChatMessage(role: .assistant, text: prefix)
         appendMessage(placeholder)
         var accumulated = ""
@@ -881,7 +886,7 @@ final class AICoachEngine: ObservableObject {
             } else if let lastIdx = messages.indices.last, messages[lastIdx].role == .assistant {
                 messages[lastIdx] = ChatMessage(
                     id: placeholder.id, role: .assistant,
-                    text: prefix + partial + "\n\n*(stream interrupted)*"
+                    text: prefix + partial + "\n\n*(" + Self.streamInterrupted + ")*"
                 )
             }
             errorText = e.errorDescription
@@ -896,12 +901,20 @@ final class AICoachEngine: ObservableObject {
             } else if let lastIdx = messages.indices.last, messages[lastIdx].role == .assistant {
                 messages[lastIdx] = ChatMessage(
                     id: placeholder.id, role: .assistant,
-                    text: prefix + partial + "\n\n*(stream interrupted)*"
+                    text: prefix + partial + "\n\n*(" + Self.streamInterrupted + ")*"
                 )
             }
             errorText = AICoachError.network(error.localizedDescription).errorDescription
             keyRejected = false
         }
+    }
+
+    /// Heading of a brief in the chat, and the marker on a cut-off reply, in the app language.
+    static var briefHeading: String {
+        String(localized: LocalizedStringResource("zoop.coach.chat.briefHeading", defaultValue: "Today's brief"))
+    }
+    static var streamInterrupted: String {
+        String(localized: LocalizedStringResource("zoop.coach.chat.interrupted", defaultValue: "stream interrupted"))
     }
 
     /// K5: The brief instruction shared by the interactive `startBriefIfNeeded()` (streamed into the
@@ -926,11 +939,18 @@ final class AICoachEngine: ObservableObject {
         guard CoachBriefScheduler.coachMasterEnabled else { return nil }
         guard isConfigured, dataConsent, let key = resolvedKey else { return nil }
         let context = await buildFullContext()
-        let wire: [(role: ChatMessage.Role, content: String)] =
-            [(.user, context + "\n\n---\n\n" + Self.briefInstruction)]
-        guard let reply = try? await callProvider(key: key, messages: wire) else { return nil }
-        let clean = reply.trimmingCharacters(in: .whitespacesAndNewlines)
-        return clean.isEmpty ? nil : clean
+        let request = context + "\n\n---\n\n" + Self.briefInstruction + "\n" + CoachLanguage.directive
+        // The scheduled brief is shown as is, so a reply in the wrong language gets one retry with the
+        // language line stressed, then counts as a failed generation (the caller retries later).
+        for attempt in 0..<2 {
+            let text = attempt == 0 ? request : request + "\n\nIMPORTANT: " + CoachLanguage.directive
+            let messages: [(role: ChatMessage.Role, content: String)] = [(.user, text)]
+            guard let reply = try? await callProvider(key: key, messages: messages) else { return nil }
+            let clean = reply.trimmingCharacters(in: .whitespacesAndNewlines)
+            if clean.isEmpty { return nil }
+            if CoachLanguage.matches(clean) { return clean }
+        }
+        return nil
     }
 
     /// Full data context = the metrics summary + recent workouts (+ an OPT-IN on-device-signals summary
@@ -1032,7 +1052,7 @@ final class AICoachEngine: ObservableObject {
         try await provider.client.send(
             key: key,
             model: model,
-            systemPrompt: systemPrompt,
+            systemPrompt: CoachLanguage.withDirective(systemPrompt),
             messages: messages,
             session: session
         )
@@ -1049,7 +1069,7 @@ final class AICoachEngine: ObservableObject {
         try await provider.client.streamWithImage(
             key: key,
             model: model,
-            systemPrompt: systemPrompt,
+            systemPrompt: CoachLanguage.withDirective(systemPrompt),
             messages: messages,
             inlineImage: inlineImage,
             session: session,

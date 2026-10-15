@@ -3,7 +3,9 @@ import SwiftUI
 import StrandAnalytics
 import StrandDesign
 
-/// Today's coach card: the morning brief and the suggestions still waiting for an answer.
+/// Today's coach card, compact: the day's main takeaway in one line, how many suggestions wait, and a
+/// chevron. Tapping opens `CoachBriefSheet` with the full brief and the answers, so Today never
+/// carries a paragraph or button rows.
 ///
 /// Draws nothing when the coach is off or no brief exists for today, so it can sit on Today
 /// unconditionally. All decisions live in `CoachSuggestionStore` / `CoachSuggestionActions`.
@@ -11,10 +13,7 @@ struct CoachTodayCard: View {
     @ObservedObject private var store = CoachSuggestionStore.shared
     @AppStorage("zoop.coachEnabled") private var coachEnabled = true
     @AppStorage(CoachMorningBrief.proactiveKey) private var proactive = true
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// The history is also reachable from the Coach chat; here it serves people without a provider,
-    /// for whom the chat shows its setup screen instead.
-    @State private var showsHistory = false
+    @State private var showsBrief = false
 
     var body: some View {
         // Re-evaluated every few minutes so a snoozed suggestion comes back without a reload.
@@ -26,99 +25,41 @@ struct CoachTodayCard: View {
     @ViewBuilder
     private func content(now: Date) -> some View {
         let day = Repository.localDayKey(now)
-        if coachEnabled, proactive, let brief = store.brief(for: day) {
+        if coachEnabled, proactive, store.brief(for: day) != nil {
             let active = store.active(at: now)
-            ContentCard(LocalizedStringKey(CoachStrings.cardTitle.key)) {
-                Text(brief.text)
-                    .font(ZoopType.body)
-                    .foregroundStyle(StrandPalette.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                ForEach(active) { suggestion in
-                    Rectangle().fill(StrandPalette.hairline).frame(height: 1)
-                    CoachSuggestionRow(suggestion: suggestion, answer: answer)
+            Button { showsBrief = true } label: {
+                ContentCard(LocalizedStringKey(CoachStrings.cardTitle.key), showsChevron: true) {
+                    VStack(alignment: .leading, spacing: ZoopSpacing.xs) {
+                        Text(CoachTodayCard.headline(active: active))
+                            .font(ZoopType.body)
+                            .foregroundStyle(StrandPalette.textPrimary)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                        if !active.isEmpty {
+                            Text(CoachStrings.pending(active.count))
+                                .font(ZoopType.caption)
+                                .foregroundStyle(StrandPalette.textSecondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                if store.hasAnsweredAll(day: day, at: now) {
-                    Text(CoachStrings.allAnswered)
-                        .font(ZoopType.caption)
-                        .foregroundStyle(StrandPalette.textTertiary)
-                }
-                Button { showsHistory = true } label: {
-                    Text(CoachStrings.historyOpen)
-                        .font(ZoopType.caption)
-                        .foregroundStyle(StrandPalette.textSecondary)
-                        .frame(minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
+                .contentShape(Rectangle())
             }
-            .animation(ZoopMotion.gated(ZoopMotion.card, reduced: reduceMotion), value: active.map(\.id))
-            .sheet(isPresented: $showsHistory) {
-                NavigationStack { CoachSuggestionHistoryPage() }
+            .buttonStyle(LiquidPressStyle())
+            .sheet(isPresented: $showsBrief) {
+                CoachBriefSheet()
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
+                    .opaqueSheetBackground()
             }
         }
     }
 
-    private func answer(_ suggestion: CoachSuggestion, _ answer: CoachSuggestionRow.Answer) {
-        switch answer {
-        case .accept: CoachSuggestionActions.accept(suggestion)
-        case .later: CoachSuggestionActions.later(suggestion)
-        case .dismiss: CoachSuggestionActions.dismiss(suggestion)
-        }
-    }
-}
-
-/// One suggestion: what, why, and the three answers.
-struct CoachSuggestionRow: View {
-    enum Answer { case accept, later, dismiss }
-
-    let suggestion: CoachSuggestion
-    let answer: (CoachSuggestion, Answer) -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: ZoopSpacing.xs) {
-            Text(suggestion.title)
-                .font(ZoopType.headline)
-                .foregroundStyle(StrandPalette.textPrimary)
-            Text(suggestion.body)
-                .font(ZoopType.body)
-                .foregroundStyle(StrandPalette.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-            if !suggestion.rationale.isEmpty {
-                Text(suggestion.rationale)
-                    .font(ZoopType.caption)
-                    .foregroundStyle(StrandPalette.textTertiary)
-            }
-            // Side by side when they fit, stacked at large Dynamic Type sizes.
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: ZoopSpacing.s) { buttons }
-                VStack(alignment: .leading, spacing: ZoopSpacing.xs) { buttons }
-            }
-            .padding(.top, ZoopSpacing.xs)
-        }
-        .accessibilityElement(children: .contain)
-    }
-
-    @ViewBuilder
-    private var buttons: some View {
-        Button { answer(suggestion, .accept) } label: { Text(CoachStrings.accept) }
-            .buttonStyle(ZoopButtonStyle(.secondary))
-        quiet(CoachStrings.later) { answer(suggestion, .later) }
-        quiet(CoachStrings.dismiss) { answer(suggestion, .dismiss) }
-    }
-
-    /// Low-emphasis text answer with a full 44 pt target.
-    private func quiet(_ title: LocalizedStringResource, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(ZoopType.body)
-                .foregroundStyle(StrandPalette.textSecondary)
-                .padding(.horizontal, ZoopSpacing.s)
-                .frame(minHeight: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
+    /// The single most important takeaway: the top waiting suggestion's title, or, once everything is
+    /// answered, the all-set line. Never the paragraph.
+    static func headline(active: [CoachSuggestion]) -> String {
+        if let top = active.first { return top.title }
+        return String(localized: CoachStrings.allAnswered)
     }
 }
 #endif

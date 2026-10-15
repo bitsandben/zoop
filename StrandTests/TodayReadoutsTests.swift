@@ -47,6 +47,13 @@ final class TodayReadoutsTests: XCTestCase {
         XCTAssertNil(TodayRings.synthesis(d, isToday: true))
     }
 
+    /// Advice lives on the coach card: a scored morning shows no sentence under the rings.
+    func testScoredDayHasNoAdviceUnderTheRings() {
+        XCTAssertNil(TodayRings.synthesis(.scored(pct: 25), isToday: true))
+        XCTAssertNil(TodayRings.synthesis(.scored(pct: 85), isToday: true))
+        XCTAssertNotNil(TodayRings.synthesis(.calibrating(nights: 2), isToday: true))
+    }
+
     // MARK: Sleep
 
     /// The "--%" next to the Sleep screen's 89: today with no new night shows the newest night, dated.

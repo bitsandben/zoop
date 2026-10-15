@@ -181,7 +181,7 @@ final class BodyLoader {
     }
 
     /// Hourly stress for the last 14 full days, 07:00–23:00, scored the way the Stress screen scores a day.
-    private func stressTiming(repo: Repository) async -> BodyInsights.StressTiming? {
+    func stressTiming(repo: Repository) async -> BodyInsights.StressTiming? {
         var perDay: [[BodyInsights.HourLevel]] = []
         for date in pastDays(Self.stressDays) {
             let from = Int(date.timeIntervalSince1970) + 7 * 3600

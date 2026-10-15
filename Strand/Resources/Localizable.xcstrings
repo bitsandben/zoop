@@ -272333,57 +272333,6 @@
         }
       }
     },
-    "zoop.today.synthesis.high" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gut erholt: Heute ist eine harte Einheit drin."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Well recovered: today can take a hard session."
-          }
-        }
-      }
-    },
-    "zoop.today.synthesis.medium" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Teilweise erholt: Plane einen moderaten Tag."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Partly recovered: aim for a moderate day."
-          }
-        }
-      }
-    },
-    "zoop.today.synthesis.low" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Noch in Erholung: Halte den Tag leicht und schlaf früh."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Still recovering: keep today light and sleep early."
-          }
-        }
-      }
-    },
     "zoop.today.synthesis.calibrating" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -280351,23 +280300,6 @@
         }
       }
     },
-    "zoop.coach.accept" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Übernehmen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Accept"
-          }
-        }
-      }
-    },
     "zoop.coach.later" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -280929,40 +280861,6 @@
         }
       }
     },
-    "zoop.coach.s.fastNext.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fasten ab %@"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fast from %@"
-          }
-        }
-      }
-    },
-    "zoop.coach.s.fastShort.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Heute kürzer fasten"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keep today's fast short"
-          }
-        }
-      }
-    },
     "zoop.coach.s.steady.title" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -280980,257 +280878,19 @@
         }
       }
     },
-    "zoop.coach.s.rest.body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Halte die Belastung zwischen %1$@ und %2$@: gehen, dehnen, nichts Hartes."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keep strain between %1$@ and %2$@: walk, stretch, nothing hard."
-          }
-        }
-      }
-    },
-    "zoop.coach.s.easeOff.body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mach %@ leichter oder tausche es gegen Mobility."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Do a lighter version of %@ or swap it for mobility."
-          }
-        }
-      }
-    },
-    "zoop.coach.s.go.body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dein Körper ist bereit, ziel auf eine Belastung von %1$@ bis %2$@."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your body is ready; aim for strain %1$@ to %2$@."
-          }
-        }
-      }
-    },
-    "zoop.coach.s.greenRoutine.body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deine Erholung ist hoch, ein guter Tag für Krafttraining."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recovery is high, a good day for a strength session."
-          }
-        }
-      }
-    },
-    "zoop.coach.s.push.body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deine Erholung ist hoch, ziel auf eine Belastung von %1$@ bis %2$@."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recovery is high; aim for strain %1$@ to %2$@."
-          }
-        }
-      }
-    },
-    "zoop.coach.s.moderate.body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Heute Qualität statt Umfang, ziel auf eine Belastung von %1$@ bis %2$@."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quality over volume today; aim for strain %1$@ to %2$@."
-          }
-        }
-      }
-    },
-    "zoop.coach.s.bedDebt.body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "So holst du einen Teil deiner %@ Schlafschuld auf."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "That pays back part of your %@ sleep debt."
-          }
-        }
-      }
-    },
-    "zoop.coach.s.bedShort.body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die letzte Nacht war kurz, eine frühere Nacht gleicht das aus."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Last night was short; an earlier night evens it out."
-          }
-        }
-      }
-    },
-    "zoop.coach.s.hrv.body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deine HRV ist niedrig, verzichte heute Abend auf Alkohol und spätes Koffein."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your HRV is low; skip alcohol and late caffeine tonight."
-          }
-        }
-      }
-    },
-    "zoop.coach.s.stress.body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dein Stress ist hoch, nimm dir heute Nachmittag zehn ruhige Minuten."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your stress is high; take ten calm minutes this afternoon."
-          }
-        }
-      }
-    },
-    "zoop.coach.s.fastNext.body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dann ist dein nächstes Fasten fällig, übernimm es für eine Erinnerung."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your next fast is due then; accept and you get a reminder."
-          }
-        }
-      }
-    },
-    "zoop.coach.s.fastShort.body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deine Erholung ist niedrig, kürzer fasten schont heute deinen Körper."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recovery is low; a shorter fast is kinder to your body today."
-          }
-        }
-      }
-    },
-    "zoop.coach.s.steady.body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Heute fällt nichts auf: beweg dich, iss gut, schlaf rechtzeitig."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nothing stands out today: move, eat well, sleep on time."
-          }
-        }
-      }
-    },
     "zoop.coach.why.recovery" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erholung %@"
+            "value" : "deine Erholung bei %@ liegt"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Recovery %@"
-          }
-        }
-      }
-    },
-    "zoop.coach.why.hrv" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "HRV %1$@ ms, sonst %2$@ ms"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "HRV %1$@ ms, typically %2$@ ms"
+            "value" : "your recovery is %@"
           }
         }
       }
@@ -281241,13 +280901,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Geschlafen: %@"
+            "value" : "du nur %@ geschlafen hast"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Slept %@"
+            "value" : "you slept only %@"
           }
         }
       }
@@ -281258,13 +280918,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Schlafschuld %@"
+            "value" : "du %@ Schlafschuld offen hast"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sleep debt %@"
+            "value" : "you carry %@ of sleep debt"
           }
         }
       }
@@ -281275,13 +280935,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stress %@ von 3"
+            "value" : "dein Stress gestern bei %@ von 3 lag"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stress %@ of 3"
+            "value" : "your stress yesterday was %@ of 3"
           }
         }
       }
@@ -281292,13 +280952,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Geplant: %@"
+            "value" : "%@ auf deinem Plan steht"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Planned: %@"
+            "value" : "%@ is on your plan"
           }
         }
       }
@@ -281309,13 +280969,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dein Fastenrhythmus"
+            "value" : "du seit %lld Stunden fastest"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your fasting rhythm"
+            "value" : "you have been fasting for %lld hours"
           }
         }
       }
@@ -284043,6 +283703,1011 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "zoop.coach.accept.plan" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einplanen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plan it"
+          }
+        }
+      }
+    },
+    "zoop.coach.accept.remind" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erinnern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remind me"
+          }
+        }
+      }
+    },
+    "zoop.coach.accept.ok" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mach ich"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Got it"
+          }
+        }
+      }
+    },
+    "zoop.coach.remind.breathe.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeit für eine Atempause"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time for a breather"
+          }
+        }
+      }
+    },
+    "zoop.coach.remind.breathe.body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drei ruhige Minuten vor deinem üblichen Stresshoch."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Three slow minutes before your usual stress peak."
+          }
+        }
+      }
+    },
+    "zoop.coach.s.illness.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhetag"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rest day"
+          }
+        }
+      }
+    },
+    "zoop.coach.s.poorSleep.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lass es heute ruhig angehen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take it easy today"
+          }
+        }
+      }
+    },
+    "zoop.coach.s.caution.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute etwas zurückhalten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold back a little"
+          }
+        }
+      }
+    },
+    "zoop.coach.s.deload.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leichterer Tag"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lighter day"
+          }
+        }
+      }
+    },
+    "zoop.coach.s.backOnTrack.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute ist %@ dran"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is due today"
+          }
+        }
+      }
+    },
+    "zoop.coach.s.missed.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denk an %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remember %@"
+          }
+        }
+      }
+    },
+    "zoop.coach.s.trendGreen.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute grünes Licht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Green light today"
+          }
+        }
+      }
+    },
+    "zoop.coach.s.breathe.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atempause um %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breather at %@"
+          }
+        }
+      }
+    },
+    "zoop.coach.s.fastBreak.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fasten heute beenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consider ending your fast"
+          }
+        }
+      }
+    },
+    "zoop.coach.body.plain" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@."
+          }
+        }
+      }
+    },
+    "zoop.coach.body.target" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (Belastung %2$@)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (strain %2$@)."
+          }
+        }
+      }
+    },
+    "zoop.coach.b.illness" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lass das Training ausfallen, trink viel und geh früh ins Bett"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip training, drink plenty and get to bed early"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.rest" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spazieren und dehnen, nichts Hartes"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Walk and stretch, nothing hard"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.poorSleep" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trainiere locker und lass harte Intervalle weg"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep training light and skip hard intervals"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.easeOff" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mach %@ leichter oder tausche es gegen Mobility"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do a lighter version of %@ or swap it for mobility"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.caution" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trainiere, aber kontrolliert und ohne Maximalbelastung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Train, but keep it controlled and skip max efforts"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.deload" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Woche ist schon hart, mach heute einen leichten Tag"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your week is already heavy, so make today an easy one"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.backOnTrack" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zieh %@ heute durch und komm zurück in deinen Rhythmus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get %@ done today to get back into your rhythm"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.missed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Körper ist bereit, ein guter Tag, um %@ nachzuholen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your body is ready, a good day to catch up on %@"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.go" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Körper ist bereit für %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your body is ready for %@"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.greenRoutine" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Erholung ist hoch, ein guter Tag für Krafttraining"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recovery is high, a good day for a strength session"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.push" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein guter Tag für eine harte Einheit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A good day for a hard session"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.trendGreen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Körper ist im Aufwind, heute darfst du Gas geben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your body is trending up, a good day to push"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.moderate" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute Qualität statt Umfang"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quality over volume today"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.bedDebt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So holst du einen Teil deiner Schlafschuld auf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That pays back part of your sleep debt"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.bedShort" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine frühere Nacht gleicht die kurze aus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An earlier night evens out the short one"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.bedRegular" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine feste Schlafenszeit hilft dir bei der Erholung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A steady bedtime helps you recover"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.breathe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drei Minuten ruhig atmen vor deinem üblichen Stresshoch"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Three minutes of slow breathing before your usual stress peak"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.stress" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nimm dir heute Nachmittag zehn ruhige Minuten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take ten calm minutes this afternoon"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.hrv" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verzichte heute Abend auf Alkohol und späten Kaffee"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip alcohol and late caffeine tonight"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.fastBreak" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brich es mit einer richtigen Mahlzeit und trink viel Wasser"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Break it with a proper meal and drink plenty of water"
+          }
+        }
+      }
+    },
+    "zoop.coach.b.steady" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute fällt nichts auf, also beweg dich, iss gut und schlaf rechtzeitig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing stands out today, so move, eat well and sleep on time"
+          }
+        }
+      }
+    },
+    "zoop.coach.because" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weil %@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Because %@."
+          }
+        }
+      }
+    },
+    "zoop.coach.why.hrvDown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "deine HRV seit %1$lld Tagen unter deinem Normalwert liegt (%2$@)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your HRV has been below your normal for %1$lld days (%2$@)"
+          }
+        }
+      }
+    },
+    "zoop.coach.why.hrvUp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "deine HRV seit %1$lld Tagen über deinem Normalwert liegt (%2$@)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your HRV has been above your normal for %1$lld days (%2$@)"
+          }
+        }
+      }
+    },
+    "zoop.coach.why.rhrUp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dein Ruhepuls seit %1$lld Tagen über deinem Normalwert liegt (%2$@)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your resting heart rate has been above your normal for %1$lld days (%2$@)"
+          }
+        }
+      }
+    },
+    "zoop.coach.why.rhrDown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dein Ruhepuls seit %1$lld Tagen unter deinem Normalwert liegt (%2$@)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your resting heart rate has been below your normal for %1$lld days (%2$@)"
+          }
+        }
+      }
+    },
+    "zoop.coach.why.hrvToday" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "deine HRV bei %1$@ ms liegt, sonst bei %2$@ ms"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your HRV is %1$@ ms, typically %2$@ ms"
+          }
+        }
+      }
+    },
+    "zoop.coach.why.load" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "deine Trainingslast diese Woche bei %@ deines Normalwerts liegt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your training load this week is %@ of your normal"
+          }
+        }
+      }
+    },
+    "zoop.coach.why.missed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "du %1$lld von %2$lld geplanten Einheiten in den letzten zwei Wochen ausgelassen hast"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "you skipped %1$lld of %2$lld planned sessions in the last two weeks"
+          }
+        }
+      }
+    },
+    "zoop.coach.why.bedDrift" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "deine letzte Nacht um %1$@ statt gegen %2$@ begann"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "last night started at %1$@ instead of around %2$@"
+          }
+        }
+      }
+    },
+    "zoop.coach.why.stressPeak" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dein Stress meist gegen %@ am höchsten ist"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your stress usually peaks around %@"
+          }
+        }
+      }
+    },
+    "zoop.coach.why.illness" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mehrere deiner Vitalwerte von deinem Normalwert abweichen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "several of your vitals are off your normal"
+          }
+        }
+      }
+    },
+    "zoop.coach.chat.briefHeading" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Briefing für heute"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today's brief"
+          }
+        }
+      }
+    },
+    "zoop.coach.chat.interrupted" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antwort abgebrochen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "stream interrupted"
+          }
+        }
+      }
+    },
+    "How's my recovery trending this week?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie entwickelt sich meine Erholung diese Woche?"
+          }
+        }
+      }
+    },
+    "Active recovery only today — what should I do?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute nur aktive Erholung – was soll ich tun?"
+          }
+        }
+      }
+    },
+    "Quality over volume today — plan my session" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute Qualität statt Umfang – plane meine Einheit"
+          }
+        }
+      }
+    },
+    "Green light — how hard can I push today?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grünes Licht – wie hart kann ich heute trainieren?"
+          }
+        }
+      }
+    },
+    "Why is my HRV trending down?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warum sinkt meine HRV?"
+          }
+        }
+      }
+    },
+    "I slept poorly — how do I recover today?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich habe schlecht geschlafen – wie erhole ich mich heute?"
+          }
+        }
+      }
+    },
+    "Have I done enough today, or push more?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Habe ich heute genug gemacht oder geht noch mehr?"
+          }
+        }
+      }
+    },
+    "Tell me more about that" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erzähl mir mehr darüber"
+          }
+        }
+      }
+    },
+    "What should I do next?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was soll ich als Nächstes tun?"
+          }
+        }
+      }
+    },
+    "How does today compare to this week?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie steht heute im Vergleich zur Woche da?"
+          }
+        }
+      }
+    },
+    "Give me a specific action plan" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib mir einen konkreten Plan"
+          }
+        }
+      }
+    },
+    "zoop.coach.today.pendingOne" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 Vorschlag"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 suggestion"
+          }
+        }
+      }
+    },
+    "zoop.coach.today.pending" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Vorschläge"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld suggestions"
           }
         }
       }

@@ -2,19 +2,28 @@ import Foundation
 import XCTest
 @testable import StrandAnalytics
 
-/// The offline morning coach: readiness bands, which suggestion each signal raises, ordering, caps and
-/// the dismissal feedback loop.
+/// The offline morning coach, training slot and prioritisation: readiness bands, the one training
+/// decision per day, its evidence, ordering, the cap and the dismissal feedback loop.
 final class CoachMorningRulesTests: XCTestCase {
 
-    private func input(_ build: (inout CoachMorningRules.Input) -> Void) -> CoachMorningRules.Input {
+    func input(_ build: (inout CoachMorningRules.Input) -> Void) -> CoachMorningRules.Input {
         var i = CoachMorningRules.Input()
         build(&i)
         return i
     }
 
-    private func reasons(_ i: CoachMorningRules.Input) -> [CoachMorningRules.Reason] {
+    func reasons(_ i: CoachMorningRules.Input) -> [CoachMorningRules.Reason] {
         CoachMorningRules.evaluate(i).candidates.map(\.reason)
     }
+
+    func first(_ i: CoachMorningRules.Input) -> CoachMorningRules.Candidate? {
+        CoachMorningRules.evaluate(i).candidates.first
+    }
+
+    private let upper = CoachMorningRules.Routine(id: "p1", name: "Upper A")
+    private let legs = CoachMorningRules.Routine(id: "p2", name: "Legs")
+
+    // MARK: Readiness
 
     func testNoDataGivesNoSuggestions() {
         let plan = CoachMorningRules.evaluate(.init())
@@ -29,84 +38,154 @@ final class CoachMorningRulesTests: XCTestCase {
         XCTAssertEqual(CoachMorningRules.Readiness(recovery: 67), .high)
     }
 
-    func testLowRecoveryRestsWithStrainBand() {
-        let plan = CoachMorningRules.evaluate(input { $0.recovery = 25; $0.strainTarget = 4...10 })
-        XCTAssertEqual(plan.candidates.first,
-                       .init(kind: .recovery, reason: .lowRecoveryRest, action: .strainTarget(low: 4, high: 10)))
+    // MARK: Low days
+
+    func testLowRecoveryRestsWithStrainBandAndCitesRecovery() {
+        let c = first(input { $0.recovery = 25; $0.strainTarget = 4...10 })
+        XCTAssertEqual(c?.reason, .lowRecoveryRest)
+        XCTAssertEqual(c?.action, .strainTarget(low: 4, high: 10))
+        XCTAssertEqual(c?.evidence, [.recovery(percent: 25)])
+    }
+
+    func testPoorNightTakesItEasyBecauseOfTheSleep() {
+        let c = first(input { $0.recovery = 40; $0.sleepMin = 290; $0.strainTarget = 8...12 })
+        XCTAssertEqual(c?.reason, .poorSleepEasy)
+        XCTAssertEqual(c?.evidence, [.sleep(minutes: 290), .recovery(percent: 40)])
+    }
+
+    func testPoorNightWithoutScoredRecoveryStillAdvisesEasy() {
+        XCTAssertEqual(first(input { $0.sleepMin = 280 })?.reason, .poorSleepEasy)
     }
 
     func testLowRecoveryWithPlannedRoutineEasesOff() {
-        let r = reasons(input {
-            $0.recovery = 25
-            $0.plannedRoutines = [.init(id: "p1", name: "Upper A")]
-        })
-        XCTAssertEqual(r.first, .plannedRoutineEaseOff)
+        let c = first(input { $0.recovery = 25; $0.plannedRoutines = [upper] })
+        XCTAssertEqual(c?.reason, .plannedRoutineEaseOff)
+        XCTAssertEqual(c?.evidence, [.recovery(percent: 25), .planned(name: "Upper A")])
     }
 
-    func testGreenDayProposesFirstAvailableRoutine() {
+    func testIllnessOverridesEverythingElse() {
         let plan = CoachMorningRules.evaluate(input {
-            $0.recovery = 80
-            $0.availableRoutines = [.init(id: "p2", name: "Legs"), .init(id: "p1", name: "Upper A")]
+            $0.recovery = 85; $0.illness = true; $0.availableRoutines = [legs]
         })
-        XCTAssertEqual(plan.candidates.first?.action, .routine(programId: "p2", name: "Legs"))
-        XCTAssertEqual(plan.candidates.first?.kind, .routine)
+        XCTAssertEqual(plan.candidates.first?.reason, .illnessRest)
+        XCTAssertEqual(plan.candidates.first?.evidence.first, .illness)
+        XCTAssertFalse(plan.candidates.map(\.reason).contains(.greenRoutine))
+    }
+
+    // MARK: Trends and load
+
+    func testHrvDownStreakTurnsAGreenDayCautious() {
+        let c = first(input {
+            $0.recovery = 75; $0.availableRoutines = [legs]
+            $0.hrvTrend = .init(below: true, streakDays: 4, deltaPercent: -12.4)
+        })
+        XCTAssertEqual(c?.reason, .hrvTrendCaution)
+        XCTAssertEqual(c?.evidence.first, .hrvTrend(days: 4, deltaPercent: -12))
+    }
+
+    func testRestingHrUpStreakIsACaution() {
+        let c = first(input { $0.recovery = 55; $0.rhrTrend = .init(below: false, streakDays: 3, deltaPercent: 6) })
+        XCTAssertEqual(c?.reason, .hrvTrendCaution)
+        XCTAssertEqual(c?.evidence.first, .rhrTrend(days: 3, deltaPercent: 6))
+    }
+
+    func testShortStreakIsNotATrend() {
+        XCTAssertEqual(first(input {
+            $0.recovery = 55; $0.hrvTrend = .init(below: true, streakDays: 2, deltaPercent: -9)
+        })?.reason, .moderateSession)
+    }
+
+    func testHrvUpStreakIsAGreenLight() {
+        let c = first(input { $0.recovery = 80; $0.hrvTrend = .init(below: false, streakDays: 5, deltaPercent: 8) })
+        XCTAssertEqual(c?.reason, .trendGreenLight)
+    }
+
+    func testHighLoadDeloads() {
+        let c = first(input { $0.recovery = 70; $0.loadState = .high; $0.loadRatio = 1.42 })
+        XCTAssertEqual(c?.reason, .loadDeload)
+        XCTAssertEqual(c?.evidence.first, .load(percentOfNormal: 142))
+    }
+
+    func testLowLoadOnAGreenDayCitesRoomToBuild() {
+        let c = first(input { $0.recovery = 80; $0.loadState = .low; $0.loadRatio = 0.6 })
+        XCTAssertEqual(c?.reason, .greenPush)
+        XCTAssertEqual(c?.evidence, [.recovery(percent: 80), .load(percentOfNormal: 60)])
+    }
+
+    // MARK: Routines
+
+    func testGreenDayProposesFirstAvailableRoutine() {
+        let c = first(input { $0.recovery = 80; $0.availableRoutines = [legs, upper] })
+        XCTAssertEqual(c?.action, .routine(programId: "p2", name: "Legs"))
+        XCTAssertEqual(c?.kind, .routine)
     }
 
     func testGreenDayWithoutRoutinesPushes() {
         XCTAssertEqual(reasons(input { $0.recovery = 80; $0.strainTarget = 14...18 }), [.greenPush])
     }
 
-    func testSleepDebtProposesPlannerBedtime() {
-        let plan = CoachMorningRules.evaluate(input {
-            $0.recovery = 50; $0.sleepDebtMin = 90; $0.bedtimeMinute = 22 * 60 + 40
+    func testMissedRoutineIsRemindedAfterTwoMisses() {
+        let c = first(input {
+            $0.recovery = 60; $0.availableRoutines = [legs, upper]
+            $0.adherence = .init(planned: 4, missed: 2, missedProgramId: "p1")
         })
-        XCTAssertTrue(plan.candidates.contains(.init(kind: .sleepTiming, reason: .sleepDebtBedtime,
-                                                     action: .bedtime(minuteOfDay: 1360))))
+        XCTAssertEqual(c?.reason, .routineMissed)
+        XCTAssertEqual(c?.action, .routine(programId: "p1", name: "Upper A"))
+        XCTAssertEqual(c?.evidence.first, .missedRoutine(missed: 2, planned: 4))
     }
 
-    func testShortNightWithoutDebtStillProposesBedtime() {
-        XCTAssertTrue(reasons(input {
-            $0.recovery = 50; $0.sleepMin = 300; $0.bedtimeMinute = 1380
-        }).contains(.shortNightBedtime))
+    func testOneMissIsNotANudge() {
+        XCTAssertEqual(first(input {
+            $0.recovery = 60; $0.availableRoutines = [upper]
+            $0.adherence = .init(planned: 4, missed: 1, missedProgramId: "p1")
+        })?.reason, .moderateSession)
     }
 
-    func testNoBedtimeKnownMeansNoSleepSuggestion() {
-        XCTAssertFalse(reasons(input { $0.recovery = 50; $0.sleepDebtMin = 120 })
-            .contains(.sleepDebtBedtime))
+    func testMissedRoutineIsNotPushedOnALowDay() {
+        XCTAssertEqual(first(input {
+            $0.recovery = 20; $0.availableRoutines = [upper]
+            $0.adherence = .init(planned: 4, missed: 3, missedProgramId: "p1")
+        })?.reason, .lowRecoveryRest)
     }
 
-    func testBedtimeWrapsIntoTheDay() {
-        let plan = CoachMorningRules.evaluate(input { $0.sleepDebtMin = 90; $0.bedtimeMinute = 1440 + 30 })
-        XCTAssertEqual(plan.candidates.first?.action, .bedtime(minuteOfDay: 30))
+    func testPlannedRoutineAfterMissesIsBackOnTrack() {
+        XCTAssertEqual(first(input {
+            $0.recovery = 75; $0.plannedRoutines = [upper]
+            $0.adherence = .init(planned: 5, missed: 2, missedProgramId: "p1")
+        })?.reason, .routineBackOnTrack)
     }
 
-    func testHrvBelowRangeAndHighStress() {
-        let r = reasons(input { $0.hrv = 40; $0.hrvBaseline = 60; $0.stressLevel = 2.4 })
-        XCTAssertEqual(r, [.hrvBelowRange, .highStress])
-        XCTAssertEqual(reasons(input { $0.hrv = 55; $0.hrvBaseline = 60 }), [])
+    func testPlannedRoutineOnAMediumDayWithAPoorNightEasesOff() {
+        let c = first(input { $0.recovery = 50; $0.sleepMin = 300; $0.plannedRoutines = [upper] })
+        XCTAssertEqual(c?.reason, .plannedRoutineEaseOff)
+        XCTAssertEqual(c?.evidence, [.sleep(minutes: 300), .planned(name: "Upper A")])
     }
 
-    func testFastingNextOnlyForPeopleWhoFastAndAreNotFasting() {
-        let fasting = CoachMorningRules.Fasting(active: false, nextStartMinute: 20 * 60, planId: "16-8",
-                                                fastingHours: 16)
-        let plan = CoachMorningRules.evaluate(input { $0.recovery = 50; $0.fasting = fasting })
-        XCTAssertTrue(plan.candidates.contains(.init(kind: .fasting, reason: .fastingNext,
-                                                     action: .fastingStart(minuteOfDay: 1200, planId: "16-8"))))
-        let active = CoachMorningRules.Fasting(active: true, nextStartMinute: 1200, planId: "16-8", fastingHours: 16)
-        XCTAssertFalse(reasons(input { $0.recovery = 50; $0.fasting = active }).contains(.fastingNext))
-    }
-
-    func testLongFastShortenedOnLowRecovery() {
-        let fasting = CoachMorningRules.Fasting(active: false, nextStartMinute: 1200, planId: "20-4", fastingHours: 20)
-        XCTAssertTrue(reasons(input { $0.recovery = 20; $0.fasting = fasting }).contains(.fastingShorten))
-    }
+    // MARK: Prioritisation
 
     func testCappedAtThreeInPriorityOrder() {
         let r = reasons(input {
             $0.recovery = 25; $0.sleepDebtMin = 90; $0.bedtimeMinute = 1360
-            $0.hrv = 40; $0.hrvBaseline = 60; $0.stressLevel = 2.5
+            $0.hrv = 40; $0.hrvBaseline = 60; $0.stressLevel = 2.5; $0.stressPeakHour = 15
         })
-        XCTAssertEqual(r, [.lowRecoveryRest, .sleepDebtBedtime, .hrvBelowRange])
+        XCTAssertEqual(r, [.lowRecoveryRest, .sleepDebtBedtime, .stressPeakBreathe])
+    }
+
+    func testFastingBreakOutranksTheBedtime() {
+        let r = reasons(input {
+            $0.recovery = 20; $0.sleepDebtMin = 90; $0.bedtimeMinute = 1360
+            $0.fasting = .init(elapsedHours: 18, targetHours: 20)
+        })
+        XCTAssertEqual(r, [.lowRecoveryRest, .fastingBreak, .sleepDebtBedtime])
+    }
+
+    func testEveryCandidateCarriesEvidence() {
+        let plan = CoachMorningRules.evaluate(input {
+            $0.recovery = 45; $0.sleepMin = 320; $0.bedtimeMinute = 1350; $0.stressLevel = 2.2
+        })
+        XCTAssertFalse(plan.candidates.isEmpty)
+        for c in plan.candidates { XCTAssertFalse(c.evidence.isEmpty, "\(c.reason) has no because") }
+        XCTAssertTrue(plan.candidates.allSatisfy { $0.evidence.count <= 2 })
     }
 
     func testSuppressedReasonAndKindAreLeftOut() {
@@ -119,15 +198,15 @@ final class CoachMorningRulesTests: XCTestCase {
     }
 
     func testSteadyDayWhenNothingFires() {
-        // Medium readiness always yields a training line; a high day with routines suppressed and no
-        // other signal falls through to the steady-day note.
-        let r = reasons(input { $0.recovery = 80; $0.suppressedKinds = [.trainingToday] })
-        XCTAssertEqual(r, [.steadyDay])
+        let plan = CoachMorningRules.evaluate(input { $0.recovery = 80; $0.suppressedKinds = [.trainingToday] })
+        XCTAssertEqual(plan.candidates.map(\.reason), [.steadyDay])
+        XCTAssertEqual(plan.candidates.first?.evidence, [.recovery(percent: 80)])
     }
 
     func testReasonRawValuesAreStable() {
         // Stored with every suggestion; renaming one silently breaks the dismissal feedback.
         XCTAssertEqual(CoachMorningRules.Reason.sleepDebtBedtime.rawValue, "sleepDebtBedtime")
-        XCTAssertEqual(CoachMorningRules.Reason.allCases.count, 13)
+        XCTAssertEqual(CoachMorningRules.Reason.lowRecoveryRest.rawValue, "lowRecoveryRest")
+        XCTAssertEqual(CoachMorningRules.Reason.allCases.count, 21)
     }
 }

@@ -328,7 +328,8 @@ struct StrandiOSApp: App {
                 .task {
                     guard UserDefaults.standard.bool(forKey: "zoopCoachBriefNow") else { return }
                     try? await Task.sleep(nanoseconds: 3_000_000_000)
-                    await CoachMorningBrief.generate(repo: model.repo, coach: model.coach)
+                    await CoachMorningBrief.generate(repo: model.repo, coach: model.coach,
+                                                    illness: CoachMorningInputs.isUnwell(model.illnessSignal))
                 }
                 #endif
         }

@@ -28,6 +28,7 @@ final class NotificationPresenter: NSObject, UNUserNotificationCenterDelegate {
         case id == "good-morning": return .route(.metric(HeroRingMetric.charge))
         // The coach brief's suggestions live on Today's coach card.
         case id == "coach-morning": return .home
+        case id == "coach-breathe": return .route(.breathe)
         case id.hasPrefix("battery-"): return .route(.dataSources)
         // The detected workout opens its Save / Not a workout sheet on Home; the move reminder opens Home.
         case id == "auto-workout": return .autoWorkout

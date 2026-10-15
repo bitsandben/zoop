@@ -91,13 +91,13 @@ final class CoachSuggestionLogTests: XCTestCase {
           {"id": 1, "title": "Duplicate", "body": "Again."},
           {"id": 0, "title": "Legs today", "body": "Your legs routine fits today."}]}
         """
-        let parsed = CoachBriefReply.parse(reply, candidateCount: 2)
+        let parsed = CoachBriefReply.parse(reply, candidateActions: ["routine", "bedtime"])
         XCTAssertEqual(parsed?.brief, "Recovery 72 %. Good day to train.")
         XCTAssertEqual(parsed?.picks.map(\.index), [1, 0])
     }
 
     func testReplyWithoutBriefIsRejected() {
-        XCTAssertNil(CoachBriefReply.parse("no json here", candidateCount: 2))
-        XCTAssertNil(CoachBriefReply.parse(#"{"brief": "  ", "suggestions": []}"#, candidateCount: 2))
+        XCTAssertNil(CoachBriefReply.parse("no json here", candidateActions: ["routine", "bedtime"]))
+        XCTAssertNil(CoachBriefReply.parse(#"{"brief": "  ", "suggestions": []}"#, candidateActions: ["routine", "bedtime"]))
     }
 }

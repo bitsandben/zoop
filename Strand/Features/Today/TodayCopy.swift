@@ -121,15 +121,8 @@ enum TodayCopy {
     }
     static let energyNoData = r("zoop.today.energy.noData", "Wear the strap and your Energy Bank fills in.")
 
-    // MARK: Synthesis (the one sentence under the rings)
+    // MARK: Under the rings (factual only: advice belongs to the coach card)
 
-    static func synthesis(_ band: ScoreBand) -> LocalizedStringResource {
-        switch band {
-        case .high: return r("zoop.today.synthesis.high", "Well recovered: today can take a hard session.")
-        case .medium: return r("zoop.today.synthesis.medium", "Partly recovered: aim for a moderate day.")
-        case .low: return r("zoop.today.synthesis.low", "Still recovering: keep today light and sleep early.")
-        }
-    }
     static let synthesisCalibrating = r("zoop.today.synthesis.calibrating", "Zoop is still learning your baseline, a few more nights.")
 
     // MARK: Health monitor
