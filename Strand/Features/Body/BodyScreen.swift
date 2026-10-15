@@ -6,7 +6,7 @@ import WhoopStore
 // MARK: - BodyScreen: the Insights tab (CONCEPT §3.6)
 //
 // "How is my body doing over time?" in the order a reader needs it: what the body shows (the
-// interpretations), the five vitals against their personal ranges, one trend to explore, the patterns
+// interpretations), the five vitals against their personal ranges, the sleep type, one trend to explore, the patterns
 // in habits and weekdays, and the ways out (all metrics, lab book, report). Each fact appears once.
 // The screen holds no logic; `BodyModel` builds everything it shows.
 //
@@ -33,6 +33,7 @@ struct BodyScreen: View {
                     BodyInterpretationsSection(summary: model.vitalsSummary, findings: model.findings,
                                                loading: model.loadingSlow) { selectedFinding = $0 }
                     BodyVitalsSection(vitals: model.vitals) { selectedVital = $0 }
+                    BodySleepTypeSection(content: model.sleepType)
                     BodyTrendCard(model: model)
                     BodyPatternsSection(model: model) { selectedFinding = $0 }
                     BodyLinksCard(onLabBook: { router.openLabBook() }, onReport: { showingReport = true })

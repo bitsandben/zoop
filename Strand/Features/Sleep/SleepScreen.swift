@@ -8,8 +8,8 @@ typealias SleepView = SleepScreen
 // MARK: - SleepScreen (CONCEPT §3.3)
 //
 // "How did I sleep and what do I need tonight?" in a fixed order: the night, its timeline, its stages,
-// naps, debt and rhythm, the night's vitals, tonight's plan and at most two insights. The screen holds
-// no logic: `SleepScreenModel` builds every readout and owns the edit, delete and undo intents.
+// naps, debt and rhythm, the sleep type, the night's vitals, tonight's plan and at most three insights.
+// The screen holds no logic: `SleepScreenModel` builds every readout and owns the edit, delete and undo intents.
 //
 // The screen deliberately does not observe `LiveState` or `AppModel`: both publish about once a second
 // while a strap streams. The leaves that need them (the freshness note, the plan card) observe them.
@@ -36,6 +36,9 @@ struct SleepScreen: View {
                     if let overview = model.overview {
                         SleepRhythmCard(overview: overview) { selected = $0 }
                     }
+                    #if os(iOS)
+                    SleepChronotypeSection()
+                    #endif
                     SleepVitalsGrid(metrics: page.metrics.vitals) { selected = $0 }
                     tonight
                     #if os(iOS)

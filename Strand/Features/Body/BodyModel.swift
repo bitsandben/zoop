@@ -17,6 +17,8 @@ final class BodyModel: ObservableObject {
     @Published private(set) var vitalsSummary: LocalizedStringResource?
     @Published private(set) var trend: BodyTrend?
     @Published private(set) var patterns = BodyPatternsContent()
+    /// The sleep type, from the same resolver as the Sleep screen's card; nil under seven nights.
+    @Published private(set) var sleepType: SleepChronotypeContent?
     /// The slow readings (streams, journal) are still loading.
     @Published private(set) var loadingSlow = true
 
@@ -37,6 +39,7 @@ final class BodyModel: ObservableObject {
         await loadVitals(repo: repo)
         rebuildFindings()
         rebuildTrend()
+        sleepType = SleepChronotypeContent.load(sleeps: repo.sleeps, days: repo.days)
 
         var s = snapshot
         await loader.journal(into: &s, repo: repo)
