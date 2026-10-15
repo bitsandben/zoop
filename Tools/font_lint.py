@@ -6,6 +6,11 @@ compares with Tools/font_lint_baseline.json. The budget may only decrease.
 
     python3 Tools/font_lint.py                  # report; exit 1 if any file exceeds its baseline
     python3 Tools/font_lint.py --update-baseline  # record the current counts (after a migration)
+
+The 2.0 migration took app code to (near) zero. Any increase in any file fails, so new UI must use a
+token: text -> ZoopType (display, title, metric, headline, body, caption, micro, small, label, callout,
+subtitle, number(_:), mono); SF Symbols in fixed chrome -> ZoopType.icon(_:weight:); colours ->
+StrandPalette. Only re-record the baseline after counts go DOWN, never to admit a new literal.
 """
 import json
 import re
