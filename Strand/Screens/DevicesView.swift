@@ -647,6 +647,12 @@ private struct DeviceSyncStatusCard: View {
         let status = live.syncStatus
         switch SyncChipState.resolve(live: live) {
         case .syncing, .synced:
+            #if os(iOS)
+            // The same capsule as under the Today header; it already sits on the strap screen, so a tap
+            // only explains a blocked or noted state.
+            SyncCapsule()
+                .frame(maxWidth: .infinity, alignment: .leading)
+            #else
             let line = [status.syncLine(lastSyncedAt: live.lastSyncedAt), status.detail]
                 .compactMap { $0 }.joined(separator: "\n")
             statusCard(
@@ -655,6 +661,7 @@ private struct DeviceSyncStatusCard: View {
                 tint: status.tone.color,
                 accessibility: line
             )
+            #endif
         case .experimentalLive:
             statusCard(
                 systemImage: "checkmark.circle.fill",

@@ -26,6 +26,7 @@ struct TodayScreen: View {
     @State private var sheet: TodaySheet?
     @State private var napEditHaptic = 0
     @State private var daySwiping = false
+    @State private var pullSync = TodayPullSync()
     @ObservedObject private var backgroundStore = BackgroundImageStore.shared
 
     private static let topID = "today.top"
@@ -55,11 +56,12 @@ struct TodayScreen: View {
             }
             .scrollIndicators(.hidden)
             .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
-            .refreshable { await syncAndRefresh() }
+            .modifier(PullToSync(isBusy: pullSync.phase.isBusy) { await syncAndRefresh() })
             .background { background }
             .simultaneousGesture(daySwipe)
             .sensoryFeedback(.selection, trigger: model.dayOffset)
             .sensoryFeedback(.impact(weight: .medium), trigger: napEditHaptic)
+            .sensoryFeedback(trigger: pullSync.finishedCount) { _, _ in pullSync.haptic }
             .onChange(of: scrollToTopSignal) { _, _ in
                 withAnimation(.easeOut(duration: 0.35)) { proxy.scrollTo(Self.topID, anchor: .top) }
             }
@@ -99,7 +101,9 @@ struct TodayScreen: View {
                         onSelectDay: { offset in withAnimation(StrandMotion.interactive) { model.select(offset) } },
                         onProfile: { sheet = .settings },
                         onQuickActions: { router.requestQuickActions() })
-            TodayStatusLine { router.openDevices() }
+            SyncCapsule(pull: pullSync.phase,
+                        onOpenDevices: { router.openDevices() },
+                        onRetry: { Task { await syncAndRefresh() } })
         }
     }
 
@@ -159,12 +163,14 @@ struct TodayScreen: View {
         }
     }
 
-    /// A pull asks the strap for its stored history; the status line reports how that goes.
+    /// A pull asks the strap for its stored history; the sync capsule under the header reports how
+    /// that goes.
     private func syncAndRefresh() async {
-        if ble.state.historyReady { ble.syncNow() }
-        let seq = repo.refreshSeq
-        await repo.refresh()
-        if repo.refreshSeq == seq { await model.load(environment) }
+        await pullSync.run(live: ble.state, ble: ble) {
+            let seq = repo.refreshSeq
+            await repo.refresh()
+            if repo.refreshSeq == seq { await model.load(environment) }
+        }
     }
 
     /// A tapped "Workout detected" notification opens its sheet once the candidate is loaded.
