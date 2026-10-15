@@ -1,4 +1,5 @@
 import SwiftUI
+import StrandAnalytics
 import StrandDesign
 import WhoopStore
 
@@ -63,6 +64,9 @@ struct TrainingDaySheet: View {
                         ForEach(day.planned, id: \.id) { program in
                             plannedRow(program)
                         }
+                        ForEach(day.plannedSessions) { session in
+                            plannedSessionRow(session)
+                        }
                     }
                 }
                 .padding(ZoopMetrics.screenPadding)
@@ -85,7 +89,33 @@ struct TrainingDaySheet: View {
         #endif
     }
 
-    private var showsPlan: Bool { !day.planned.isEmpty && (day.isToday || day.isFuture) }
+    private var showsPlan: Bool {
+        (!day.planned.isEmpty || !day.plannedSessions.isEmpty) && (day.isToday || day.isFuture)
+    }
+
+    /// A session of the coach-built plan: what, how long, when.
+    private func plannedSessionRow(_ session: PlanSession) -> some View {
+        let tint = TrainingCalendarStyle.color(for: session.sport)
+        return ContentCard {
+            HStack(spacing: ZoopSpacing.m) {
+                Image(systemName: sportSymbol(session.sport))
+                    .font(ZoopType.caption.weight(.semibold))
+                    .foregroundStyle(tint)
+                    .frame(width: 32, height: 32)
+                    .overlay(Circle().strokeBorder(tint, style: StrokeStyle(lineWidth: 1.5, dash: [3, 3])))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(session.title)
+                        .font(ZoopType.body)
+                        .foregroundStyle(StrandPalette.textPrimary)
+                    Text(PlanFormat.sessionDetail(session))
+                        .font(ZoopType.caption)
+                        .foregroundStyle(StrandPalette.textSecondary)
+                }
+                Spacer(minLength: 0)
+            }
+        }
+    }
 
     private func workoutRow(_ row: WorkoutRow) -> some View {
         // The detail pushes inside the sheet's own stack, so closing the sheet returns to the page.

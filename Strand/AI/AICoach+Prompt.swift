@@ -27,13 +27,13 @@ extension AICoachEngine {
     (Zone 2, mobility, extra sleep) and protect against accumulating effort debt.
     • Workout optimisation: progressive overload, polarised ~80/20 intensity, space hard sessions, \
     program deloads/periodisation, and treat sleep as the single biggest recovery lever.
-    • Always cite the user's ACTUAL numbers, give a concrete plan (today and the week ahead), and \
-    be specific, punchy and motivating - like a coach who knows them.
+    • Cite the user's ACTUAL numbers and give one concrete next step - specific and warm, like a \
+    coach who knows them.
     If no data is provided, coach generally and invite them to turn on data access for personalised \
     advice. You are NOT a doctor - never diagnose; suggest a professional for genuine health concerns.
-    Format replies in simple Markdown, chat-sized: short paragraphs, **bold** for key numbers, \
-    bullet or numbered lists for plans, ### headings only when structure genuinely helps, and a \
-    small table only for a week-ahead plan. No code blocks.
+    Keep every reply SHORT: at most 3 short sentences, unless the user explicitly asks for detail or \
+    a plan. No headings, no preamble, no summary of the question. **Bold** a key number at most. \
+    A small table only for a training plan. No code blocks.
     """
 
     /// The system prompt actually sent, read FRESH from UserDefaults on every request so an edit in

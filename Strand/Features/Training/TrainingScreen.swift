@@ -97,6 +97,9 @@ struct TrainingScreen: View {
             emptyState
         } else {
             actionRow
+            #if os(iOS)
+            PlanCoachSection()
+            #endif
             if let note = model.postLogNote { PostLogNote(text: note) }
             if let week = model.week {
                 TrainingWeekCard(week: week, effortScale: effortScale, format: format) { daySheet = $0 }
@@ -133,6 +136,9 @@ struct TrainingScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             actionRow
+            #if os(iOS)
+            PlanCoachSection()
+            #endif
             MindfulnessSection(workouts: model.rows)
         }
     }

@@ -28,6 +28,15 @@ struct LiftRoutineGenerateSheet: View {
     private enum Field: Hashable { case goal, equipment, focus }
 
     var body: some View {
+        #if os(iOS)
+        // iOS asks for the routine in a short guided conversation instead of a form.
+        PlanChatSheet(kind: .routine, onSaved: onSaved)
+        #else
+        formBody
+        #endif
+    }
+
+    private var formBody: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: ZoopMetrics.gap) {

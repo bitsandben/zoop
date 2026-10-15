@@ -23,6 +23,7 @@ struct CoachSettingsPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 26) {
                 providerCard
+                CoachModelSettingsGroup()
 
                 group("Privacy") {
                     toggleRow(icon: coach.dataConsent ? "lock.open.fill" : "lock.fill",

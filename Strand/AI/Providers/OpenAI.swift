@@ -20,6 +20,19 @@ struct OpenAIClient: AIProviderClient {
         messages: [(role: ChatMessage.Role, content: String)],
         session: URLSession
     ) async throws -> String {
+        try await sendDetailed(key: key, model: model, systemPrompt: systemPrompt,
+                               messages: messages, session: session).text
+    }
+
+    /// `send`, plus the reasoning text a reasoning model returns beside its answer (OpenRouter's
+    /// `message.reasoning`), which the plan builder keeps behind its "thought for N seconds" line.
+    func sendDetailed(
+        key: String,
+        model: String,
+        systemPrompt: String,
+        messages: [(role: ChatMessage.Role, content: String)],
+        session: URLSession
+    ) async throws -> (text: String, reasoning: String?) {
         var wire: [[String: Any]] = [["role": "system", "content": systemPrompt]]
         for m in messages { wire.append(["role": m.role.rawValue, "content": m.content]) }
 
@@ -81,7 +94,8 @@ struct OpenAIClient: AIProviderClient {
         guard let list = json["data"] as? [[String: Any]] else { return [] }
         if provider == .openRouter {
             // Only the free models, sorted, so the picker lists what costs nothing to use.
-            return list.compactMap { $0["id"] as? String }.filter { $0.hasSuffix(":free") }.sorted()
+            return list.compactMap { $0["id"] as? String }
+                .filter { $0.hasSuffix(":free") || $0 == AIProvider.openRouterDefaultFallback }.sorted()
         }
         return list.compactMap { row in
             guard let id = row["id"] as? String, !id.isEmpty else { return nil }
@@ -98,7 +112,7 @@ struct OpenAIClient: AIProviderClient {
         wire: [[String: Any]],
         modernParams: Bool,
         session: URLSession
-    ) async throws -> String {
+    ) async throws -> (text: String, reasoning: String?) {
         var body: [String: Any] = ["model": model, "messages": wire]
         // #1074: 900 truncated detailed coaching replies mid-sentence; 4096 lets a full multi-section
         // reply complete (a cap, not a target — the system prompt keeps it short). Matches Gemini + Android.
@@ -123,6 +137,7 @@ struct OpenAIClient: AIProviderClient {
                   .trimmingCharacters(in: .whitespacesAndNewlines), !content.isEmpty else {
             throw emptyReplyError(json)   // #1074: surface the provider's real error if the 200 body has one
         }
-        return content
+        let reasoning = (message["reasoning"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (content, reasoning?.isEmpty == false ? reasoning : nil)
     }
 }

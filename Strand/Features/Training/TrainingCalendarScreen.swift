@@ -25,6 +25,7 @@ struct TrainingCalendarScreen: View {
     @State private var pendingStart: LiftProgramRow?
     @State private var planning: PlanTarget?
     @State private var generating = false
+    @State private var buildingPlan = false
 
     private struct PlanTarget: Identifiable {
         let program: LiftProgramRow
@@ -49,11 +50,16 @@ struct TrainingCalendarScreen: View {
             .environmentObject(repo)
         }
         .sheet(item: $planning) { target in
-            LiftProgramPlanSheet(program: target.program)
+            LiftProgramPlanSheet(program: target.program).environmentObject(repo)
         }
         .sheet(isPresented: $generating) {
             LiftRoutineGenerateSheet { await model.refresh() }
         }
+        #if os(iOS)
+        .fullScreenCover(isPresented: $buildingPlan) {
+            PlanChatSheet(kind: .plan) { await model.refresh() }
+        }
+        #endif
         .onChangeCompat(of: planRaw) { model.updatePlan(raw: $0) }
     }
 
@@ -144,6 +150,12 @@ struct TrainingCalendarScreen: View {
                 Image(systemName: sportSymbol("Strength"))
                     .font(ZoopType.caption.weight(.semibold))
                     .foregroundStyle(StrandPalette.effortColor)
+            } else if let next = day.plannedSessions.first, day.isFuture || day.isToday {
+                let tint = TrainingCalendarStyle.color(for: next.sport)
+                Circle().strokeBorder(tint, style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
+                Image(systemName: sportSymbol(next.sport))
+                    .font(ZoopType.caption.weight(.semibold))
+                    .foregroundStyle(tint)
             } else {
                 Text(verbatim: "\(calendar.component(.day, from: day.date))")
                     .font(ZoopType.caption.monospacedDigit())
@@ -174,6 +186,9 @@ struct TrainingCalendarScreen: View {
         if !day.sessions.isEmpty { return "\(date), \(TrainingStrings.sessionCount(day.sessions.count))" }
         if let planned = day.planned.first, day.isFuture || day.isToday {
             return "\(date), \(String(localized: "Planned")): \(planned.name)"
+        }
+        if let planned = day.plannedSessions.first, day.isFuture || day.isToday {
+            return "\(date), \(String(localized: "Planned")): \(planned.title)"
         }
         return date
     }
@@ -206,7 +221,8 @@ struct TrainingCalendarScreen: View {
         let ids = plan.programIds(on: date, calendar: calendar)
         return TrainingWeek.Day(date: date, sessions: byDay[date] ?? [], effort: nil,
                                 planned: model.programs.filter { ids.contains($0.id) },
-                                isToday: date == today, isFuture: date > today)
+                                isToday: date == today, isFuture: date > today,
+                                plannedSessions: plan.plannedSessions(on: date, calendar: calendar))
     }
 
     private func startPendingRoutine() {
@@ -252,6 +268,12 @@ struct TrainingCalendarScreen: View {
                 Label(TrainingStrings.generateRoutine, systemImage: "sparkles")
             }
             .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
+            #if os(iOS)
+            Button { buildingPlan = true } label: {
+                Label(PlanFormat.t("zoop.planchat.plan.entry"), systemImage: "calendar.badge.plus")
+            }
+            .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
+            #endif
         }
     }
 

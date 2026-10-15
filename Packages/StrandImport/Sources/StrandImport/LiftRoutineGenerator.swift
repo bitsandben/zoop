@@ -81,7 +81,12 @@ public enum LiftRoutineGenerator {
               let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
             throw ParseError.noJSON
         }
+        return try program(from: obj)
+    }
 
+    /// A program from an already-decoded JSON object with `name`, `note` and `exercises`. Shared with
+    /// the training-plan parser, whose strength sessions carry the same exercise schema.
+    public static func program(from obj: [String: Any]) throws -> ImportedProgram {
         let rawExercises = (obj["exercises"] as? [Any]) ?? []
         var lines: [ImportedProgramLine] = []
         for case let item as [String: Any] in rawExercises {

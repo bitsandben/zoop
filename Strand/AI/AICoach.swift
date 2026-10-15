@@ -73,8 +73,14 @@ final class AICoachEngine: ObservableObject {
         }
     }
     @Published var model: String {
-        didSet { UserDefaults.standard.set(model, forKey: Self.modelKey) }
+        didSet {
+            UserDefaults.standard.set(model, forKey: Self.modelKey)
+            if model != oldValue { modelFallbackNote = nil }
+        }
     }
+    /// The chosen model that last failed as unavailable and was answered by the fallback instead; nil
+    /// while the chosen model works. Coach settings shows it as a calm note.
+    @Published var modelFallbackNote: String?
     /// The model ids offered in the picker. Seeded from `provider.modelOptions`, reset when the
     /// provider changes, and optionally extended by `refreshModels()` with the provider's live list.
     @Published var availableModels: [String] = []
@@ -133,11 +139,14 @@ final class AICoachEngine: ObservableObject {
         self.session = session
 
         // Restore persisted provider / model (falling back to sane defaults).
-        let storedProvider = UserDefaults.standard.string(forKey: Self.providerKey)
-            .flatMap(AIProvider.init(rawValue:)) ?? .openAI
+        let persistedProvider = UserDefaults.standard.string(forKey: Self.providerKey)
+            .flatMap(AIProvider.init(rawValue:))
+        let storedProvider = persistedProvider ?? Self.initialProvider()
         self.provider = storedProvider
 
-        let storedModel = UserDefaults.standard.string(forKey: Self.modelKey)
+        // A model stored without a provider belonged to the old OpenAI default, not to the new one.
+        let storedModel = persistedProvider == nil && storedProvider != .openAI
+            ? nil : UserDefaults.standard.string(forKey: Self.modelKey)
         // A persisted custom id is honoured even if it's not in the built-in list.
         if let storedModel, !storedModel.isEmpty {
             self.model = storedModel
@@ -158,6 +167,16 @@ final class AICoachEngine: ObservableObject {
         self.customConnected = UserDefaults.standard.bool(forKey: Self.customConnectedKey)
         self.includeOnDeviceSignals = UserDefaults.standard.bool(forKey: Self.onDeviceSignalsKey)
         self.multimodalChartEnabled = UserDefaults.standard.bool(forKey: Self.multimodalChartKey)
+    }
+
+    /// The provider when none was ever stored. `provider` is only persisted when it CHANGES, so an
+    /// existing user who stayed on the old OpenAI default has nothing stored: their saved key's owner
+    /// (or a legacy owner-less key, which predates every other provider) keeps them on what they use.
+    /// Only a genuinely new setup starts on OpenRouter.
+    private static func initialProvider() -> AIProvider {
+        if let owner = AIKeyStore.ownerProvider, let p = AIProvider(rawValue: owner) { return p }
+        if AIKeyStore.read() != nil { return .openAI }
+        return .openRouter
     }
 
     // MARK: Key management
