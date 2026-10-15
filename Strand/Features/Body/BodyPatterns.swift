@@ -8,9 +8,8 @@ import StrandDesign
 // Each pattern says how big the difference is, how many days it rests on, and whether it is a clear
 // difference at all. "No clear difference" is a real answer and is shown, not hidden.
 //
-// Known gap: `EffectRanker` tests every logged habit at three lags without a multiple-comparison
-// correction, so a single "clear" row can still be chance. Benjamini–Hochberg at 10 % belongs in
-// StrandAnalytics (CONCEPT §5.1, WP-04); the explainer says so until it lands.
+// "Clear" for a habit is `RankedEffect.fdrSignificant`: Benjamini–Hochberg at 10 % over every
+// habit×lag test of the run (StrandAnalytics), not the raw per-test p < 0.05.
 
 struct BodyPatternsContent: Equatable {
     var habits: [BodyFinding] = []
@@ -40,7 +39,7 @@ enum BodyPatterns {
     static func habit(_ r: RankedEffect, outcome: BodyOutcome) -> BodyFinding {
         let e = r.effect
         let unit = metricUnit(outcome)
-        let clear = e.significant
+        let clear = r.fdrSignificant
         let name = habitName(r.behavior)
         let magnitude = e.pctChange.map { MetricUnit.percent.format(abs($0), locale: BodyFormat.locale) }
             ?? unit.format(abs(e.delta), locale: BodyFormat.locale)

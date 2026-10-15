@@ -278198,13 +278198,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ja-Tage gegen Nein-Tage bei der stärksten von drei Verzögerungen; klar heißt p < 0,05 bei je mindestens 5 Tagen."
+            "value" : "Ja-Tage gegen Nein-Tage bei der stärksten von drei Verzögerungen, mit mindestens 5 Tagen je Gruppe; klar heißt: nach Korrektur für viele Tests (Benjamini–Hochberg, 10 %) weiterhin auffällig."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yes days against no days at the strongest of three lags; clear means p < 0.05 with at least 5 days each."
+            "value" : "Yes days against no days at the strongest of three lags, with at least 5 days each; clear means still standing after correcting for many tests (Benjamini–Hochberg, 10 %)."
           }
         }
       }
@@ -278232,13 +278232,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Viele Gewohnheiten werden gleichzeitig geprüft und noch nicht dafür korrigiert; ein einzelner klarer Befund kann Zufall sein."
+            "value" : "Viele Gewohnheiten werden gleichzeitig geprüft; die Korrektur begrenzt Zufallstreffer, ersetzt aber keine längere Datenbasis."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Many habits are tested at once and not yet corrected for that, so a single clear result can still be chance."
+            "value" : "Many habits are tested at once; the correction limits chance hits but does not replace a longer record."
           }
         }
       }

@@ -37,6 +37,10 @@ class IssueReferenceTests(unittest.TestCase):
         )
 
 
+@unittest.skipIf(
+    parity_ledger.fork_skips_parity(REPOSITORY),
+    "Tools/parity_fork.json: android_parity=false (iOS-only fork; no Kotlin twin markers to govern)",
+)
 class RepositoryBaselineTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:

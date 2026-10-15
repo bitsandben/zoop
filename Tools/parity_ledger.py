@@ -2690,6 +2690,18 @@ def _summary(result: ScanResult) -> str:
     )
 
 
+def fork_skips_parity(root: Path) -> bool:
+    """True when ``Tools/parity_fork.json`` says this checkout does not maintain Android parity.
+
+    Read relative to ``root`` so scanner fixtures in temporary directories are never affected.
+    """
+    try:
+        value = json.loads((root / "Tools/parity_fork.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return isinstance(value, dict) and value.get("android_parity") is False
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT, help="repository root")
@@ -2714,6 +2726,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     root = args.root.resolve()
+    if fork_skips_parity(root):
+        print("SKIP parity ledger: Tools/parity_fork.json sets android_parity=false (iOS-only fork)")
+        return 0
     map_path = args.map_path or root / "Tools/parity_twin_map.json"
     baseline_path = args.baseline_path or root / "Tools/parity_ledger_baseline.json"
     if args.bootstrap_map != args.write_baseline:
