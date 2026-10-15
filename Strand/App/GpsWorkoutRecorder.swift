@@ -380,6 +380,10 @@ final class GpsWorkoutRecorder: NSObject, ObservableObject {
     @Published private(set) var distanceM: Double = 0
     @Published private(set) var paceSecPerKm: Double?
     @Published private(set) var pointCount = 0
+    /// Location permission as last seen, so the live screen can explain a missing distance.
+    @Published private(set) var access: LocationAccess = .notDetermined
+    /// Per-fix distance / pace / climb series for the live screen (`LiveRouteMetrics`).
+    let metrics = LiveRouteMetrics()
 
     private let manager = CLLocationManager()
     private var filter = TrackFilter()
@@ -431,7 +435,9 @@ final class GpsWorkoutRecorder: NSObject, ObservableObject {
         paceSecPerKm = nil
         pointCount = 0
         rawFixCount = 0
+        metrics.reset()
         isRecording = true
+        access = CLLocationManager.locationServicesEnabled() ? LocationAccess(manager.authorizationStatus) : .unavailable
 
         switch manager.authorizationStatus {
         case .notDetermined:
@@ -459,6 +465,7 @@ final class GpsWorkoutRecorder: NSObject, ObservableObject {
             pointCount = track.count
             distanceM = RouteMath.totalMeters(track)
             ActiveRouteStore.store(banked)
+            metrics.restore(points: banked, startMs: startMs, pausedDurationMs: max(0, pausedDurationMs))
         }
         self.pausedDurationMs = max(0, pausedDurationMs)
         if let pausedAtMs {
@@ -521,11 +528,11 @@ final class GpsWorkoutRecorder: NSObject, ObservableObject {
     }
 
     /// Fold a batch of fixes into the route, updating live distance and pace. No-op when not recording.
-    fileprivate func ingest(_ fixes: [RawFix]) {
+    fileprivate func ingest(_ fixes: [RawFix], altitudes: [(altitude: Double, accuracy: Double)?] = []) {
         guard isRecording else { return }
         rawFixCount += fixes.count
         var changed = false
-        for fix in fixes {
+        for (i, fix) in fixes.enumerated() {
             if let pt = filter.accept(fix) {
                 if let seam = restoredSeam {
                     restoredSeam = nil
@@ -540,8 +547,13 @@ final class GpsWorkoutRecorder: NSObject, ObservableObject {
                         pointCount = 0
                         persistedPointCount = 0
                         ActiveRouteStore.clear()
+                        metrics.reset()
                     }
                 }
+                let added = track.last.map { RouteMath.haversineMeters($0, pt) } ?? 0
+                let alt = i < altitudes.count ? altitudes[i] : nil
+                metrics.append(seconds: Double(fix.tMs - startMs - pausedDurationMs) / 1000, addedMeters: added,
+                               altitude: alt?.altitude, verticalAccuracy: alt?.accuracy)
                 track.append(pt)
                 routePoints.append(WorkoutRoutePoint(lat: fix.lat, lon: fix.lon,
                                                      accuracyM: fix.accuracyM, tMs: fix.tMs))
@@ -577,6 +589,7 @@ final class GpsWorkoutRecorder: NSObject, ObservableObject {
 extension GpsWorkoutRecorder: @preconcurrency CLLocationManagerDelegate {
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        access = LocationAccess(manager.authorizationStatus)
         guard isRecording else { return }
         switch manager.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
@@ -596,7 +609,7 @@ extension GpsWorkoutRecorder: @preconcurrency CLLocationManagerDelegate {
                    accuracyM: $0.horizontalAccuracy,
                    tMs: Int64($0.timestamp.timeIntervalSince1970 * 1000))
         }
-        ingest(fixes)
+        ingest(fixes, altitudes: locations.map { (altitude: $0.altitude, accuracy: $0.verticalAccuracy) })
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

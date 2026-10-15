@@ -137,6 +137,13 @@ final class TrainingViewModel: ObservableObject {
         }
     }
 
+    /// The muscle card shows whenever any workout ended in the last 28 days, or the load model has a result.
+    var showsMuscleCard: Bool {
+        if lift.muscleLoad != nil { return true }
+        let cutoff = Int(Date().timeIntervalSince1970) - MuscleLoad.weeks * 7 * 86_400
+        return rows.contains { $0.endTs >= cutoff }
+    }
+
     // MARK: Session list
 
     var filter: WorkoutFilter { WorkoutFilter(sport: sportFilter, sourceClass: sourceFilter, search: searchText) }

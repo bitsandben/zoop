@@ -74,7 +74,7 @@ final class AppModel: ObservableObject {
     /// no GPS or denied permission it records nothing and the session still banks HR + Effort. Arms only for
     /// `WorkoutCatalog.Sport.isDistanceSport`; the final route is persisted on End via `RouteStore`.
     let gpsRecorder = GpsWorkoutRecorder()
-    private var activeWorkoutIsGps = false
+    private(set) var activeWorkoutIsGps = false
 
     /// A manual workout in progress. `samples` accumulate from the smoothed live `bpm`; `liveStrain` is
     /// recomputed as the window grows.

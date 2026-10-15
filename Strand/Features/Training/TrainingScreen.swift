@@ -105,6 +105,11 @@ struct TrainingScreen: View {
             if let cardio = model.cardio {
                 TrainingLoadGauges(cardio: cardio, muscular: model.lift.muscular, effortScale: effortScale)
             }
+            // Muscle load covers every sport, so it shows whenever anything was trained in the last four
+            // weeks, including the "all recovered" state after a quiet stretch.
+            if model.showsMuscleCard {
+                MuscleLoadCard(result: model.lift.muscleLoad, computedAt: model.lift.computedAt)
+            }
             TrainingStrengthSection(snapshot: model.lift, unitSystem: unitSystem)
             TrainingSessionsSection(model: model, effortScale: effortScale, format: format)
         }

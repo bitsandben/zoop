@@ -128,6 +128,32 @@ public enum TrainingLoadGauge {
         return StrengthWeek(workingSets: sets, volumeKg: volume)
     }
 
+    // MARK: Comparison sentence
+
+    /// This week against the norm, as the one sentence under each gauge. Built from the SAME acute and
+    /// chronic the gauge classifies, so the percentage and the Low / Optimal / High verdict cannot disagree.
+    public enum Comparison: Equatable, Sendable {
+        /// Within +-5 % of the norm.
+        case same
+        case more(percent: Int)
+        case less(percent: Int)
+    }
+
+    /// Nil while calibrating or when the norm is zero (no percentage of nothing).
+    public static func comparison(_ reading: Reading) -> Comparison? {
+        guard reading.state != .calibrating, let a = reading.acute, let c = reading.chronic,
+              a.isFinite, c.isFinite, c > 0 else { return nil }
+        let pct = Int(((a / c - 1) * 100).rounded())
+        if abs(pct) < 5 { return .same }
+        return pct > 0 ? .more(percent: pct) : .less(percent: -pct)
+    }
+
+    /// Position of `value` on a 0...1 track running from 0 to `reading.scaleMax`, clamped.
+    public static func trackFraction(_ value: Double, of reading: Reading) -> Double {
+        guard value.isFinite, reading.scaleMax > 0 else { return 0 }
+        return Swift.max(0, Swift.min(1, value / reading.scaleMax))
+    }
+
     // MARK: Helpers
 
     /// Smallest of 1, 2, 2.5, 5 x 10^n at or above `v`, so the gauge ends on a readable number.
