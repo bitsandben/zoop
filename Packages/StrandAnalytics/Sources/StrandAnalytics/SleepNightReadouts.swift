@@ -2,26 +2,21 @@ import Foundation
 
 // MARK: - Sleep night readouts (Zoop)
 //
-// Pure helpers behind three Sleep-screen readouts: how long it took to fall asleep, the typical share
-// of the night each stage takes, and which overnight signal curves are plausible enough to draw. They
-// read only numbers the app already stores; none of them changes a score.
-//
-// These are presentation bands, not clinical thresholds. Every edge is pinned by `SleepNightReadoutsTests`.
+// Pure helpers behind three Sleep-screen readouts: time to fall asleep, the typical share of the night
+// each stage takes, and which overnight signal curves are plausible enough to draw. Presentation
+// bands, not clinical thresholds; none changes a score.
 
 // MARK: Sleep latency
 
 public enum SleepLatency {
 
-    /// The three steps on the latency track.
     public enum Band: String, Sendable {
         case fast, normal, late
     }
 
-    /// Under this many minutes reads as fast.
     public static let fastBelowMin: Double = 10
     /// Over this many minutes reads as late. Between the two edges (inclusive) reads as normal.
     public static let lateAboveMin: Double = 30
-    /// The latency the right end of the track stands for; longer values pin to the end.
     public static let trackMaxMin: Double = 45
 
     /// Minutes from the start of the night (time 0, the in-bed start) to the first sleep segment.
@@ -40,7 +35,6 @@ public enum SleepLatency {
         return .normal
     }
 
-    /// Where the dot sits on the track, 0...1.
     public static func trackFraction(minutes: Double) -> Double {
         min(1, max(0, minutes / trackMaxMin))
     }
@@ -50,7 +44,7 @@ public enum SleepLatency {
 
 public enum StageShareBands {
 
-    /// One night's stored stage minutes. `efficiency` is asleep / in-bed, as 0...1 or as a percentage.
+    /// One night's stored stage minutes. `efficiency` is asleep / in-bed, as 0...1 or a percentage.
     public struct Night: Equatable, Sendable {
         public var lightMin: Double?
         public var deepMin: Double?
@@ -64,8 +58,8 @@ public enum StageShareBands {
         }
     }
 
-    /// The 25th to 75th percentile of each stage's share of time in bed, 0...1. A nil stage had fewer
-    /// than `minNights` usable nights.
+    /// The 25th–75th percentile of each stage's share of time in bed (0...1); nil with fewer than
+    /// `minNights` usable nights.
     public struct Bands: Equatable, Sendable {
         public var awake: ClosedRange<Double>?
         public var light: ClosedRange<Double>?
@@ -92,7 +86,6 @@ public enum StageShareBands {
         return Bands(awake: iqr(awake), light: iqr(light), deep: iqr(deep), rem: iqr(rem))
     }
 
-    /// 25th...75th percentile with linear interpolation, nil under `minNights` values.
     static func iqr(_ raw: [Double]) -> ClosedRange<Double>? {
         let v = raw.sorted()
         guard v.count >= minNights else { return nil }
@@ -110,7 +103,6 @@ public enum StageShareBands {
 
 public enum NightSignal {
 
-    /// The four curves the night chart can switch between.
     public enum Metric: String, CaseIterable, Sendable {
         case heartRate, hrv, respiratoryRate, spo2
 
@@ -126,9 +118,7 @@ public enum NightSignal {
         }
     }
 
-    /// Fewest plausible points worth a curve.
     public static let minPoints = 8
-    /// Share of a stream's values that must be plausible before it is drawn at all.
     public static let minPlausibleShare = 0.8
 
     /// The values to plot, or nil when the stream is too short or mostly not this metric.
@@ -141,7 +131,6 @@ public enum NightSignal {
         return keep
     }
 
-    /// Centered moving average over `window` points (odd; shrinks at the edges).
     public static func smoothed(_ values: [Double], window: Int) -> [Double] {
         guard window > 1, values.count > 2 else { return values }
         let half = window / 2

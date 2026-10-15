@@ -1,71 +1,54 @@
 import Foundation
 import WhoopProtocol
 
-// EnergyBank.swift — a 0–100 ESTIMATE of how much energy the body has right now, in the spirit of a
-// "body battery": it opens at a morning value set by last night's recovery, drains through the waking
-// day (faster with exertion and stress) and refills during sleep and calm, low-heart-rate rest.
+// EnergyBank.swift - a 0-100 estimate of how much energy the body has right now, in the spirit of
+// a "body battery": it opens at a morning value set by last night's recovery, drains through the
+// waking day (faster with exertion and stress) and refills during sleep and calm rest.
 //
-// This is a new, deliberately simple estimate, not a validated physiological measure. Every rate below
-// is a named constant so the behaviour can be read off the code and explained in one sentence:
-//
-//   • morning value  = morningFloor + morningRecoverySpan × recovery/100, lowered when last night's
-//                      sleep fell short of the need (sleepShortfallPenalty × shortfall share).
-//   • each step      : asleep            → + sleepChargePerHour × sleep quality
-//                      awake, HR near rest and not stressed → + calmChargePerHour
-//                      awake otherwise   → − passiveDrainPerHour
-//                                          − exertionDrainPerHour × exertion share of HR reserve
-//                                          − stressDrainPerHour × stress share above the baseline band
-//   • the level is clamped to 0…100 after every step.
-//
-// Pure: no I/O, no clock. The caller passes the window, the samples and the context.
+// A deliberately simple estimate, not a validated physiological measure; every rate is a named constant.
+//   - morning = morningFloor + morningRecoverySpan * recovery/100, lowered by sleepShortfallPenalty
+//     times the share of the sleep need missed.
+//   - each step: asleep adds sleepChargePerHour * quality; awake with HR near rest and low stress adds
+//     calmChargePerHour; otherwise it subtracts passiveDrainPerHour plus exertion and stress drains.
+//   - the level is clamped to 0...100 after every step.
+// Pure: no I/O, no clock.
 
 public enum EnergyBank {
 
     // MARK: Constants
 
-    /// Step length in seconds. Five minutes is fine enough for a day curve and coarse enough that a few
-    /// noisy samples do not swing a step.
+    /// Step length in seconds: fine enough for a day curve, coarse enough that noisy samples don't swing a step.
     public static let stepSeconds = 300
-    /// Morning value at 0 % recovery.
     public static let morningFloor = 20.0
-    /// Added on top of the floor at 100 % recovery (so 100 % recovery opens at 95).
+    /// Added on top of the floor at 100% recovery (opens at 95).
     public static let morningRecoverySpan = 75.0
-    /// Morning value when last night's recovery is unknown.
     public static let morningDefault = 60.0
-    /// Points removed at the morning when last night's sleep was entirely missing; scaled by the share
-    /// of the sleep need that was missed (half the need → half this penalty).
+    /// Points removed from the morning when last night's sleep was entirely missing, scaled by the share of need missed.
     public static let sleepShortfallPenalty = 20.0
-    /// Recharge per hour of sleep at full sleep quality (eight good hours ≈ +80 before the clamp).
+    /// Recharge per hour of sleep at full quality (eight good hours = +80 before the clamp).
     public static let sleepChargePerHour = 10.0
-    /// Sleep quality used when a sleep span carries none.
     public static let defaultSleepQuality = 0.85
-    /// Recharge per hour of calm, low-heart-rate wakefulness (sitting quietly, resting).
     public static let calmChargePerHour = 2.0
-    /// HR-reserve share at or below which an awake step counts as calm.
     public static let calmReserveCeiling = 0.10
-    /// Stress (0–3) below which a low-HR step may count as calm. Unknown stress does not block calm.
+    /// Stress (0-3) below which a low-HR step may count as calm; unknown stress does not block calm.
     public static let calmStressCeiling = 1.0
-    /// The baseline cost of being awake, per hour (sixteen waking hours ≈ −40).
+    /// Baseline cost of being awake per hour (sixteen waking hours = -40).
     public static let passiveDrainPerHour = 2.5
-    /// HR-reserve share above which exertion starts to drain on top of the passive cost.
     public static let exertionReserveFloor = 0.20
-    /// Extra drain per hour at 100 % of HR reserve; scales linearly from `exertionReserveFloor`
-    /// (an hour at 60 % reserve ≈ −15 on top of the passive cost).
+    /// Extra drain per hour at 100% of HR reserve, linear from `exertionReserveFloor`.
     public static let exertionDrainPerHour = 30.0
-    /// Stress (0–3) above which stress drains on top of the passive cost (the middle of the scale).
+    /// Stress (0-3) above which stress drains on top of the passive cost.
     public static let stressFloor = 1.5
-    /// Extra drain per hour at the top of the stress scale; scales linearly from `stressFloor`.
+    /// Extra drain per hour at the top of the stress scale, linear from `stressFloor`.
     public static let stressDrainPerHour = 6.0
-    /// Resting heart rate assumed when none is known.
     public static let defaultRestingHR = 60.0
-    /// Maximum heart rate assumed when none is known.
     public static let defaultMaxHR = 190.0
     /// A stress reading applies to steps up to this many seconds after it (the hourly curve's grain).
     public static let stressValiditySeconds = 3600
 
     // MARK: Types
 
-    /// A span of sleep inside (or overlapping) the window. `quality` is 0…1 (sleep efficiency works).
+    /// A span of sleep inside (or overlapping) the window. `quality` is 0...1 (sleep efficiency works).
     public struct SleepSpan: Equatable, Sendable {
         public let start: Int
         public let end: Int
@@ -75,7 +58,6 @@ public enum EnergyBank {
         }
     }
 
-    /// One intraday stress reading on the 0–3 scale, valid from `ts`.
     public struct StressPoint: Equatable, Sendable {
         public let ts: Int
         public let level: Double
@@ -83,16 +65,12 @@ public enum EnergyBank {
     }
 
     public struct Inputs {
-        /// Window start (unix seconds), usually the end of last night's sleep.
         public var start: Int
-        /// Window end (unix seconds), usually now.
         public var end: Int
         public var heartRate: [HRSample]
         public var sleeps: [SleepSpan]
         public var stress: [StressPoint]
-        /// Last night's recovery, 0–100.
         public var morningRecovery: Double?
-        /// Last night's sleep as a share of the need (1 = met).
         public var sleepSufficiency: Double?
         public var restingHR: Double?
         public var maxHR: Double?
@@ -113,21 +91,16 @@ public enum EnergyBank {
     }
 
     public struct Result: Equatable, Sendable {
-        /// The level at the start of the window.
         public let morning: Double
-        /// The level at the end of the window.
         public let current: Double
-        /// The level at the window start and after every step.
         public let timeline: [Point]
-        /// Total points gained over the window (after clamping).
         public let charged: Double
-        /// Total points lost over the window (after clamping), as a positive number.
         public let drained: Double
     }
 
     // MARK: Engine
 
-    /// The morning value from last night's recovery and sleep sufficiency, clamped to 0…100.
+    /// The morning value from last night's recovery and sleep sufficiency, clamped to 0...100.
     public static func morningLevel(recovery: Double?, sleepSufficiency: Double?) -> Double {
         var level = recovery.map { morningFloor + morningRecoverySpan * min(max($0, 0), 100) / 100 }
             ?? morningDefault

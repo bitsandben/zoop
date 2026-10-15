@@ -2,16 +2,11 @@ import Foundation
 import WhoopProtocol
 
 /// Wrap-aware step derivation from the strap's cumulative `step_motion_counter@57`, shared by the daily
-/// total (`AnalyticsEngine.analyzeDay`) and any windowed total (a manual workout's `[start, end]`, #398).
+/// total and windowed totals (a manual workout's `[start, end]`, #398).
 ///
-/// `step_motion_counter@57` is a CUMULATIVE u16 motion counter: it climbs for both locomotion and some
-/// non-step wrist motion, and wraps at 65536. On classed WHOOP 5/MG records, the increment ending at each
-/// sample is counted only when the strap labels that sample walk (1) or run (2); still (0) and unknown are
-/// rejected. A wholly unclassed legacy window retains the old counter-only estimate so pre-migration history
-/// remains readable. The caller applies its per-user `stepTicksPerStep` calibration afterwards. The result is
-/// still an estimate, not cloud/clinical parity.
-///
-/// Kept byte-for-byte in lockstep with the Kotlin twin `StepsCounter.stepsInWindow`.
+/// The counter is a CUMULATIVE u16 that wraps at 65536 and climbs for some non-step wrist motion too. On
+/// classed WHOOP 5/MG records an increment counts only when the sample is labelled walk (1) or run (2); a
+/// wholly unclassed legacy window keeps the counter-only estimate. The caller applies `stepTicksPerStep`.
 public enum StepsCounter {
     private static let locomotionActivityClasses: Set<Int> = [1, 2]
 
@@ -19,7 +14,6 @@ public enum StepsCounter {
         samples.contains { $0.activityClass != nil }
     }
 
-    /// Kotlin twin: `StepsCounter.shouldCountDelta`.
     static func shouldCountDelta(activityClass: Int?, hasActivityClasses: Bool) -> Bool {
         !hasActivityClasses || activityClass.map(locomotionActivityClasses.contains) == true
     }
@@ -28,7 +22,6 @@ public enum StepsCounter {
     public static let maxStepDelta = 512
     public static let maxTicksPerSecond = 4
 
-    /// Kotlin twin: `StepsCounter.isPlausibleDelta`.
     static func isPlausibleDelta(previousTs: Int, currentTs: Int, delta: Int) -> Bool {
         guard delta >= 1, delta < maxStepDelta else { return false }
         let elapsed = currentTs - previousTs
@@ -39,10 +32,8 @@ public enum StepsCounter {
         return delta <= rateAllowance
     }
 
-    /// Raw wrap-aware locomotion-tick total across `samples`. When any sample carries `activityClass`, each
-    /// positive increment is attributed to the later sample and retained only for walk/run. When the whole
-    /// window is legacy-unclassed, all valid increments retain the historical counter-only fallback. Sorts
-    /// by `ts` internally and returns `nil` for fewer than two samples or no retained movement.
+    /// Raw wrap-aware locomotion-tick total across `samples` (sorted by `ts` internally). Nil for fewer than
+    /// two samples or no retained movement.
     public static func stepsInWindow(_ samples: [StepSample]) -> Int? {
         let sorted = samples.sorted { $0.ts < $1.ts }
         if sorted.count < 2 { return nil }

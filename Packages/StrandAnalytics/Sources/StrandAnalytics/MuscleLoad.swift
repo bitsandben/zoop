@@ -1,28 +1,21 @@
 import Foundation
 import WhoopStore
 
-// MARK: - Muscle load (Zoop)
+// MARK: - Muscle load
 //
-// Which muscle groups the last week of training loaded, from ANY workout, not only the Lift Log. It is
-// an openly stated estimate, not a measurement: nothing on the strap sees which muscles worked.
-//
-//   • Every sport carries a fixed involvement table, 0...1 per muscle group (`involvement(sport:)`):
-//     swimming drives shoulders and lats, running quads and calves. Unknown sports get a light,
-//     even full-body table.
-//   • A workout's load on a group = involvement × minutes × intensity. Intensity comes from heart-rate
-//     reserve when the average HR and the profile's max / resting HR are known, else from the
-//     session's Effort, else 1.
-//   • A Lift Log session uses its own sets instead (`LiftMetrics.muscleCounts`, fractional), at
-//     `loadPerSet` units per set, so a logged lift is never counted twice through its workout row.
-//   • State per group compares this week's load with (a) the mean group this week, "share", and
-//     (b) the person's own weekly average over the last four weeks, "ratio":
-//       High     share ≥ 1.6, or ratio ≥ 1.5 with share ≥ 0.8;
-//       Under    share ≤ 0.4, or ratio ≤ 0.5 with share < 1;
-//       Balanced otherwise.
-//     The ratio rule only applies once the history spans 14 days, so a first week is judged on share.
-//   • Recovery reuses `MuscleRecovery`'s linear decay: a session leaves a window that grows with its
-//     set-equivalent dose (load / loadPerSet) and a starting fatigue of (dose − 0.5) / 4, capped at 1,
-//     so a group that barely took part (under half a set's worth) keeps reading recovered.
+// Which muscle groups the last week of training loaded, from any workout, not only the Lift Log. An openly
+// stated estimate: nothing on the strap sees which muscles worked.
+//   - Each sport has a fixed 0...1 involvement table per group (`involvement(sport:)`); unknown sports get a
+//     light even full-body table.
+//   - Load = involvement x minutes x intensity (heart-rate reserve when avg HR and max/resting HR are known,
+//     else Effort, else 1).
+//   - A Lift Log session uses its own fractional sets (`LiftMetrics.muscleCounts`) at `loadPerSet` units per
+//     set, so a logged lift is never counted twice via its workout row.
+//   - State compares this week's load with the mean group ("share") and the person's own 4-week weekly average
+//     ("ratio"): High = share >= 1.6, or ratio >= 1.5 with share >= 0.8; Under = share <= 0.4, or ratio <= 0.5
+//     with share < 1; else Balanced. The ratio rule applies only once history spans 14 days.
+//   - Recovery reuses `MuscleRecovery`'s linear decay: window grows with set-equivalent dose (load / loadPerSet),
+//     starting fatigue (dose - 0.5) / 4 capped at 1, so a group that barely took part reads recovered.
 
 public enum MuscleLoad {
 
@@ -79,13 +72,13 @@ public enum MuscleLoad {
     // MARK: Input
 
     public struct Session: Sendable, Equatable {
-        /// The stored sport name, shown in the detail sheet.
+        /// Stored sport name, shown in the detail sheet.
         public let sport: String
         public let startTs: Int
         public let endTs: Int
         /// Load per group for this session.
         public let load: [Group: Double]
-        /// A Lift Log session rated hard (mean working RPE ≥ 9): longer recovery window.
+        /// A Lift Log session rated hard (mean working RPE >= 9): longer recovery window.
         public let hard: Bool
 
         public init(sport: String, startTs: Int, endTs: Int, load: [Group: Double], hard: Bool = false) {
@@ -120,7 +113,7 @@ public enum MuscleLoad {
         }
     }
 
-    /// 0.4...1.6. Heart-rate reserve 0.5 reads 1.0; Effort (0-100) 40 reads 1.0.
+    /// 0.4...1.6; heart-rate reserve 0.5 or Effort 40 reads 1.0.
     public static func intensity(avgHr: Int?, hrMax: Int?, restingHr: Int?, effort: Double?) -> Double {
         if let a = avgHr, let mx = hrMax, let r = restingHr, mx > r, a > 0 {
             let hrr = Swift.max(0, Swift.min(1, Double(a - r) / Double(mx - r)))
@@ -151,27 +144,22 @@ public enum MuscleLoad {
         /// weekLoad / the mean group's weekLoad this week.
         public let share: Double
         public let state: State
-        /// 0...100.
         public let percentRecovered: Int
         public let hoursToFull: Double
-        /// Weekly loads, oldest first, the last being this week.
+        /// Weekly loads, oldest first, last = this week.
         public let weeklyLoads: [Double]
         /// This week's sessions that loaded this group, largest first.
         public let contributions: [Contribution]
     }
 
     public enum Verdict: Sendable, Equatable {
-        /// Nothing in the last 7 days.
         case quietWeek
-        /// No group stands out.
         case balanced
-        /// `top` carried most of the load; `sport` drove it when one sport gave most of that load;
-        /// `lowRegion` is a body region that got little work.
+        /// `top` carried most of the load; `sport` drove it when one sport gave most; `lowRegion` is a body region with little work.
         case focused(top: [Group], sport: String?, lowRegion: Group.Region?)
     }
 
     public struct Result: Sendable, Equatable {
-        /// Every group, most loaded first this week.
         public let entries: [Entry]
         public let verdict: Verdict
         public func entry(_ g: Group) -> Entry? { entries.first { $0.group == g } }
@@ -244,7 +232,7 @@ public enum MuscleLoad {
         guard !high.isEmpty else { return .balanced }
         let top = Array(high.prefix(2).map(\.group))
 
-        // The sport that gave at least 60 % of the top groups' load, if any.
+        // Sport giving >= 60% of the top groups' load, if any.
         var bySport: [String: Double] = [:]
         var total = 0.0
         for s in thisWeek {
@@ -254,7 +242,7 @@ public enum MuscleLoad {
         }
         let sport = bySport.max { $0.value < $1.value }.flatMap { total > 0 && $0.value / total >= 0.6 ? $0.key : nil }
 
-        // A region whose groups mostly read Under and that holds none of the top groups.
+        // A region mostly Under that holds none of the top groups.
         let topRegions = Set(top.map(\.region))
         let low = Group.Region.allCases.filter { !topRegions.contains($0) }.compactMap { r -> (Group.Region, Double)? in
             let inRegion = entries.filter { $0.group.region == r }
@@ -265,8 +253,7 @@ public enum MuscleLoad {
         return .focused(top: top, sport: sport, lowRegion: low)
     }
 
-    /// Fatigue (0...1+) and hours to full per group at `now`, `MuscleRecovery`'s linear decay applied
-    /// to set-equivalent doses.
+    /// Fatigue (0...1+) and hours to full per group at `now` (`MuscleRecovery` linear decay on set-equivalent doses).
     static func recoveryState(sessions: [Session], now: Int) -> [Group: (fatigue: Double, toFull: Double)] {
         var out: [Group: (fatigue: Double, toFull: Double)] = [:]
         for s in sessions where s.endTs <= now {
@@ -285,7 +272,7 @@ public enum MuscleLoad {
         return out
     }
 
-    /// Filled segments of a 10-segment bar for a load share (share 2 or more fills the bar).
+    /// Filled segments of a 10-segment bar for a load share (share >= 2 fills it).
     public static func filledSegments(share: Double, of segments: Int = 10) -> Int {
         Swift.max(0, Swift.min(segments, Int((share / 2 * Double(segments)).rounded())))
     }
@@ -294,8 +281,7 @@ public enum MuscleLoad {
 
     public typealias Table = [Group: Double]
 
-    /// Involvement 0...1 per group for a stored sport name. Matches the catalogue names and the
-    /// HealthKit-style camel-case names other sources store; unknown → a light full-body table.
+    /// Involvement 0...1 per group for a stored sport name (catalogue and HealthKit camel-case names); unknown gets a light full-body table.
     public static func involvement(sport: String) -> Table {
         let key = normalized(sport)
         if let t = exact[key] { return t }
@@ -468,8 +454,7 @@ public enum MuscleLoad {
         "curling": light, "sailing": light, "scubadiving": swimming, "horsebackriding": light,
     ]
 
-    /// Substring fallbacks for names outside the catalogue (HealthKit camel case, free text). Ordered:
-    /// the first match wins.
+    /// Substring fallbacks for names outside the catalogue; first match wins.
     static let keywords: [(String, Table)] = [
         ("swim", swimming), ("run", running), ("jog", running), ("walk", walking), ("hik", hiking),
         ("cycl", cycling), ("bik", cycling), ("spin", cycling), ("row", rowing), ("paddl", paddling),

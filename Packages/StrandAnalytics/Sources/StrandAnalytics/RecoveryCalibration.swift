@@ -1,23 +1,15 @@
 import Foundation
 
-// RecoveryCalibration.swift — personal Charge (Recovery) weighting learned from a morning check-in.
+// Personal Charge (Recovery) weighting learned from a morning check-in: one question ("how recovered do you
+// feel?", 1-5) plus symptom toggles (headache, soreness, ill, stress). Once enough mornings exist, each Charge
+// term's weight is nudged by how well it tracked the wearer's answers.
 //
-// Zoop fork. The wearer answers one question each morning ("how recovered do you feel?", 1–5) plus a few
-// symptom toggles (headache, muscle soreness, feeling ill, stress). Once enough mornings exist, each
-// Charge term's weight is nudged by how well that term tracked the wearer's own answers: a term whose
-// z-score rises and falls with how they feel gains weight, one that does not loses weight.
-//
-// Guard rails, all deliberate:
-//   - A weight moves at most ±`maxShift` (50 %) from its standard value, so 28 noisy answers cannot
-//     re-invent the model; the physiology stays in charge.
-//   - The shift is scaled by `confidence` = mornings / `fullDays`, so the preview from `previewDays`
-//     onward moves the weights only a little and sharpens as answers accumulate.
-//   - HRV stays the dominant weight (never below any other term), matching WHOOP's public description.
-//   - Weights are renormalised to the standard total, so calibration re-balances, it never inflates.
-//   - Symptoms are NOT learned away: they enter as their own penalty term (`RecoveryScorer.wSymptoms`) on
-//     the morning they are reported, independent of the weights.
-//
-// Pure and side-effect-free: no clock, no I/O.
+// Guard rails:
+//   - A weight moves at most +/-`maxShift` (50%) from standard, so noisy answers can't re-invent the model.
+//   - The shift scales by `confidence` = mornings / `fullDays`; the preview from `previewDays` moves little.
+//   - HRV stays the dominant weight; weights are renormalised to the standard total (re-balance, never inflate).
+//   - Symptoms are not learned away: they enter as their own penalty term (`RecoveryScorer.wSymptoms`).
+// Pure: no clock, no I/O.
 
 /// The per-term weights `RecoveryScorer.recovery` composes Charge with.
 public struct ChargeWeights: Equatable, Codable, Sendable {
@@ -35,7 +27,7 @@ public struct ChargeWeights: Equatable, Codable, Sendable {
         self.skinTemp = skinTemp
     }
 
-    /// The documented RecoveryScorer weights. Every caller that does not calibrate scores with these.
+    /// The documented RecoveryScorer weights, used by every caller that does not calibrate.
     public static let standard = ChargeWeights(hrv: RecoveryScorer.wHRV, rhr: RecoveryScorer.wRHR,
                                                sleep: RecoveryScorer.wSleep, resp: RecoveryScorer.wResp,
                                                skinTemp: RecoveryScorer.wSkinTemp)
@@ -63,16 +55,13 @@ public struct ChargeWeights: Equatable, Codable, Sendable {
     var total: Double { ChargeTerm.allCases.reduce(0) { $0 + weight($1) } }
 }
 
-/// The calibratable Charge terms.
 public enum ChargeTerm: String, CaseIterable, Codable, Sendable {
     case hrv, rhr, sleep, resp, skinTemp
 }
 
-/// One morning's self-report. Every field is saved the moment it is tapped, so a check-in can be partial:
-/// symptoms without a face yet, or a face with no symptoms.
+/// One morning's self-report, saved field by field, so a check-in can be partial.
 public struct MorningCheckIn: Equatable, Codable, Sendable {
-    /// How recovered the wearer feels, 1 (exhausted) … 5 (fully recovered), or nil while not answered.
-    /// Only mornings with a feeling count towards the calibration fit.
+    /// How recovered the wearer feels, 1 (exhausted) ... 5 (fully recovered); nil while unanswered. Only answered mornings enter the fit.
     public var feeling: Int?
     public var headache: Bool
     public var soreness: Bool
@@ -90,18 +79,16 @@ public struct MorningCheckIn: Equatable, Codable, Sendable {
 
     public static let scale: ClosedRange<Int> = 1...5
 
-    /// True when nothing was answered: no feeling and no symptom.
+    /// True when nothing was answered.
     public var isEmpty: Bool { feeling == nil && !headache && !soreness && !ill && !stress }
 
-    /// Symptom load in z-units for `RecoveryScorer.recovery(symptomLoad:)`. Feeling ill weighs most since
-    /// it is the strongest sign the body is fighting something; the others are ordinary morning burdens.
-    /// 0 when nothing was reported, so the term is skipped.
+    /// Symptom load in z-units for `RecoveryScorer.recovery(symptomLoad:)`; feeling ill weighs most. 0 when nothing reported (term skipped).
     public var symptomLoad: Double {
         (ill ? 2.0 : 0) + (headache ? 1.0 : 0) + (soreness ? 0.75 : 0) + (stress ? 0.75 : 0)
     }
 }
 
-/// One calibration sample: the Charge term z-scores of a night and how the wearer felt that morning.
+/// One calibration sample: a night's Charge term z-scores and how the wearer felt that morning.
 public struct CalibrationSample: Equatable, Sendable {
     public let day: String
     public let feeling: Double
@@ -114,24 +101,22 @@ public struct CalibrationSample: Equatable, Sendable {
     }
 }
 
-/// Outcome of a calibration fit.
 public struct RecoveryCalibrationResult: Equatable, Codable, Sendable {
     public enum Phase: String, Codable, Sendable {
-        /// Fewer than `previewDays` answered mornings: standard weights, nothing learned yet.
+        /// Fewer than `previewDays` answered mornings: standard weights.
         case collecting
-        /// Weights are already personalised, but only partly (confidence < 1).
+        /// Partly personalised weights (confidence < 1).
         case preview
-        /// `fullDays` or more mornings: full-strength personal weights, still updating with every answer.
+        /// `fullDays` or more mornings: full-strength weights, still updating.
         case calibrated
     }
 
     public let phase: Phase
     /// Answered mornings that had a scoreable night.
     public let mornings: Int
-    /// mornings / fullDays, capped at 1.
     public let confidence: Double
     public let weights: ChargeWeights
-    /// Pearson r between each term's z and the morning feeling (only terms with enough data).
+    /// Pearson r between each term's z and the morning feeling (terms with enough data only).
     public let correlations: [String: Double]
 
     public init(phase: Phase, mornings: Int, confidence: Double, weights: ChargeWeights,
@@ -149,22 +134,18 @@ public struct RecoveryCalibrationResult: Equatable, Codable, Sendable {
 
 public enum RecoveryCalibration {
 
-    /// Answered mornings before the personal weighting starts to move (the preview).
+    /// Answered mornings before the weighting starts to move.
     public static let previewDays = 7
-    /// Answered mornings for full-strength calibration. Four weeks spans training and rest weeks,
-    /// weekends and a typical hormonal cycle, so the fit does not learn one unusual week.
+    /// Answered mornings for full-strength calibration; four weeks spans training/rest weeks and weekends so the fit doesn't learn one unusual week.
     public static let fullDays = 28
-    /// Largest fractional move of any weight away from its standard value.
+    /// Largest fractional move of any weight from standard.
     public static let maxShift = 0.5
-    /// Correlation at which a term keeps its standard weight. Moderate agreement between a single
-    /// physiological signal and a 1–5 feeling is what a working term looks like, so below it a term
-    /// loses weight and above it gains.
+    /// Correlation at which a term keeps its standard weight (moderate agreement is what a working term looks like); below loses weight, above gains.
     public static let neutralCorrelation = 0.2
-    /// Correlation distance from `neutralCorrelation` that reaches the full ±maxShift.
+    /// Correlation distance from `neutralCorrelation` that reaches the full +/-maxShift.
     public static let correlationSpan = 0.3
 
-    /// The Charge term z-scores exactly as `RecoveryScorer.recovery` builds them (higher = better
-    /// recovery). Terms whose input or baseline is missing are absent.
+    /// The Charge term z-scores as `RecoveryScorer.recovery` builds them (higher = better); terms missing input or baseline are absent.
     public static func termZScores(hrv: Double, rhr: Double, resp: Double?,
                                    hrvBaseline: BaselineState, rhrBaseline: BaselineState?,
                                    respBaseline: BaselineState?, sleepPerf: Double?,
@@ -187,7 +168,7 @@ public enum RecoveryCalibration {
         return z
     }
 
-    /// Fit personal weights from the answered mornings.
+    /// Fits personal weights from the answered mornings.
     public static func fit(_ samples: [CalibrationSample]) -> RecoveryCalibrationResult {
         let n = samples.count
         guard n >= previewDays else {
@@ -202,7 +183,7 @@ public enum RecoveryCalibration {
             let pairs = samples.compactMap { s in s.termZ[term].map { ($0, s.feeling) } }
             guard pairs.count >= previewDays, let r = pearson(pairs) else { continue }
             correlations[term.rawValue] = r
-            // A term with too few of its own pairs only moves as far as its own data supports.
+            // A term with few pairs moves only as far as its own data supports.
             let termConfidence = min(confidence, Double(pairs.count) / Double(fullDays))
             let pull = max(-1.0, min(1.0, (r - neutralCorrelation) / correlationSpan))
             weights.set(term, standard.weight(term) * (1.0 + maxShift * termConfidence * pull))
@@ -213,7 +194,7 @@ public enum RecoveryCalibration {
                                          correlations: correlations)
     }
 
-    /// Rescale to `toTotal` and keep HRV the dominant weight.
+    /// Rescales to `toTotal` keeping HRV dominant.
     static func normalised(_ w: ChargeWeights, toTotal total: Double) -> ChargeWeights {
         var out = w
         for _ in 0..<3 {
@@ -227,7 +208,7 @@ public enum RecoveryCalibration {
         return out
     }
 
-    /// Pearson correlation, nil when either side has no variance.
+    /// Pearson correlation; nil when either side has no variance.
     static func pearson(_ pairs: [(Double, Double)]) -> Double? {
         let n = Double(pairs.count)
         guard n >= 2 else { return nil }

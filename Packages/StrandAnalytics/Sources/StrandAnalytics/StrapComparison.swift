@@ -1,15 +1,11 @@
 import Foundation
 
-// StrapComparison.swift — #1300 tier 2: a READ-ONLY, non-diagnostic comparison of the SAME metric from
-// two straps (e.g. a WHOOP 4.0 and a 5/MG) for one user. It reuses the existing per-metric tolerances
-// (`MetricArbitrationPolicy.tolerance`) to say whether the two straps AGREE, differ a little, or conflict —
-// for a "compare my straps" card in the Devices window. It NEVER mixes the two into one score (scores stay
-// single-owner-per-day, invariant I2); it only describes how they line up, with both values kept visible.
-// Pure + deterministic, no clock, no I/O. Value-for-value Kotlin twin (`StrapComparison.kt`).
+// StrapComparison: a read-only, non-diagnostic comparison of the SAME metric from two straps (#1300 tier 2).
+// Reuses `MetricArbitrationPolicy.tolerance` to say whether the straps agree, differ a little, or conflict.
+// It never mixes the two into one score (scores stay single-owner-per-day, invariant I2). Pure.
 public enum StrapComparison {
 
-    /// One metric's two-strap comparison. `a`/`b` are the two straps' values for that metric (nil = that
-    /// strap has no value); `agreement` is `.single` when only one strap reported it.
+    /// One metric's two-strap comparison; nil `a`/`b` means that strap has no value, `.single` when only one reported.
     public struct Row: Equatable, Sendable {
         public let metric: MetricArbitrationPolicy.MetricKind
         public let a: Double?
@@ -23,9 +19,8 @@ public enum StrapComparison {
         }
     }
 
-    /// Compare two straps' per-metric values (each strap's stored daily mapped to MetricKind->value at the
-    /// call site). Emits a row per metric EITHER strap reported, in `MetricKind` declaration order; `.other`
-    /// is skipped (it's the non-comparable passthrough family). Read-only, non-diagnostic.
+    /// Compares two straps' per-metric values. Emits a row per metric either strap reported, in `MetricKind`
+    /// declaration order; `.other` (the non-comparable passthrough family) is skipped.
     public static func compare(_ a: [MetricArbitrationPolicy.MetricKind: Double],
                                _ b: [MetricArbitrationPolicy.MetricKind: Double]) -> [Row] {
         MetricArbitrationPolicy.MetricKind.allCases.compactMap { metric in
@@ -36,9 +31,8 @@ public enum StrapComparison {
         }
     }
 
-    /// The agreement between two strap values for one metric, using that metric's published tolerance.
-    /// `.single` when only one strap has it. SYMMETRIC: a percentage tolerance is taken against the LARGER
-    /// magnitude, so neither strap is privileged as a "winner" (unlike the resolver, which has one).
+    /// Agreement between two strap values for one metric using its published tolerance; `.single` when only
+    /// one has it. Symmetric: a percentage tolerance is taken against the LARGER magnitude.
     public static func agreement(metric: MetricArbitrationPolicy.MetricKind,
                                  a: Double?, b: Double?) -> AgreementState {
         guard let a, let b else { return .single }

@@ -41,7 +41,6 @@ public enum PhysiologicalSteps {
     }
     private static let minMainSleepSeconds = 3 * 3_600
 
-    /// Kotlin twin: `PhysiologicalSteps.classifyForCycle`.
     public static func classifyForCycle(_ blocks: [SleepBlock], offsetSec: Int,
                                         habitualMidsleepSec: Int?) -> [SleepBlock] {
         guard !blocks.isEmpty else { return [] }
@@ -78,7 +77,6 @@ public enum PhysiologicalSteps {
         }
     }
 
-    /// Kotlin twin: `PhysiologicalSteps.cycleWindows`.
     public static func cycleWindows(_ boundaries: [CycleBoundary], now: Int) -> [CycleWindow] {
         var ids = Set<String>()
         let ordered = boundaries.filter { $0.onset <= now && ids.insert($0.sleepId).inserted }
@@ -91,7 +89,6 @@ public enum PhysiologicalSteps {
         }
     }
 
-    /// Kotlin twin: `PhysiologicalSteps.ownerSegmentsFromCoverage`.
     public static func ownerSegmentsFromCoverage(_ window: CycleWindow, coverage: [OwnerCoverage],
                                                  fallbackOwner: String) -> [OwnerSegment] {
         guard window.endExclusive > window.onset else { return [] }

@@ -1,13 +1,11 @@
 import Foundation
 
-// CycleCalendar.swift — a calendar estimate of the menstrual cycle from logged period starts alone.
+// CycleCalendar.swift - a calendar estimate of the menstrual cycle from logged period starts alone.
 //
-// `CyclePhaseEngine` reads the cycle from skin temperature and needs weeks of nights before it says
-// anything. This is the plain calendar method a period tracker uses from the first log: cycle length
-// is the median gap between logged starts (21–40 days count; 28 until there are two), ovulation is
-// placed 14 days before the next expected start, and the phase follows from the cycle day. It is an
-// estimate for orientation, not contraception or diagnosis, and it never reads or writes a score.
-// Days are whole local day numbers (days since the epoch in the user's calendar) so this stays pure.
+// Unlike `CyclePhaseEngine` (skin temperature, needs weeks of nights), this is the plain tracker
+// method: cycle length is the median gap between logged starts (21-40 days count; 28 until there
+// are two), ovulation is 14 days before the next expected start. Orientation only, not
+// contraception or diagnosis, and it never touches a score. Days are whole local day numbers.
 
 public enum CycleCalendar {
 
@@ -21,13 +19,10 @@ public enum CycleCalendar {
         public let cycleLength: Int
         public let periodLength: Int
         public let phase: Phase
-        /// Day number of the next expected period start.
         public let nextPeriodStart: Int
-        /// Days from today to the next expected start; negative when it is late.
         public let daysUntilNextPeriod: Int
         /// How many logged gaps the cycle length is based on (0 = the 28-day default).
         public let cyclesUsed: Int
-        /// Cycle-day ranges of each phase, for drawing the cycle bar.
         public let ovulationDay: Int
     }
 
@@ -70,9 +65,8 @@ public enum CycleCalendar {
         public let loggedPeriod: Bool
     }
 
-    /// The phase of any calendar day: inside a logged cycle it uses that cycle's real length (the gap to
-    /// the next logged start), after the last start it projects cycles of the estimated length forward.
-    /// nil before the first logged start.
+    /// The phase of any calendar day: inside a logged cycle it uses that cycle's real length, after the
+    /// last start it projects cycles of the estimated length. Nil before the first logged start.
     public static func dayInfo(_ day: Int, periodStarts: [Int], today: Int,
                                periodLength: Int = defaultPeriodLength) -> DayInfo? {
         let starts = Array(Set(periodStarts.filter { $0 <= today })).sorted()
@@ -108,8 +102,8 @@ public enum CycleCalendar {
                        loggedPeriod: logged && phase == .menstrual && day <= today)
     }
 
-    /// The window the next period is expected in: the estimate ± half the spread of the logged cycle
-    /// lengths (1–4 days), or ± 2 days while there are fewer than two logged cycles.
+    /// The window the next period is expected in: the estimate +/- half the spread of logged cycle
+    /// lengths (1-4 days), or +/- 2 days with fewer than two logged cycles.
     public static func nextPeriodWindow(periodStarts: [Int], today: Int) -> ClosedRange<Int>? {
         guard let e = estimate(periodStarts: periodStarts, today: today) else { return nil }
         let starts = Array(Set(periodStarts.filter { $0 <= today })).sorted()

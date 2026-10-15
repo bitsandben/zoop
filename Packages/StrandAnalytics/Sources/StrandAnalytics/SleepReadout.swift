@@ -3,14 +3,12 @@ import WhoopProtocol
 
 // SleepReadout.swift - pure values for the Sleep & Rest live-readout panel.
 //
-// hrDensityNow + gravityCoverageNow are computed from the same streams detection reads, so the
-// panel shows what the detector sees. lastNightGateFired is parsed from the tagged log tail
-// (the gate-trace lines E2/E3 emit), so the panel reflects exactly which gate fired tonight.
-// No state, no side effects, no em-dashes.
+// hrDensityNow and gravityCoverageNow come from the same streams detection reads;
+// lastNightGateFired is parsed from the tagged log tail (the gate-trace lines).
 
 public enum SleepReadout {
 
-    /// HR samples per minute over the stream's own span. 0 when fewer than 2 samples.
+    /// HR samples per minute over the stream's own span; 0 when fewer than 2 samples.
     public static func hrDensityPerMinute(hr: [HRSample]) -> Double {
         guard hr.count >= 2 else { return 0 }
         let sorted = hr.sorted { $0.ts < $1.ts }
@@ -19,9 +17,8 @@ public enum SleepReadout {
         return Double(sorted.count) / (spanS / 60.0)
     }
 
-    /// Fraction of the HR window the gravity stream spans, in [0, 1]. The same ratio the
-    /// sparse-gravity gate keys on (`SleepStager.sparseGravitySpanFrac`); a value below that
-    /// constant means tonight's gravity is sparse.
+    /// Fraction of the HR window the gravity stream spans, in [0, 1]; the ratio the sparse-gravity gate
+    /// (`SleepStager.sparseGravitySpanFrac`) keys on.
     public static func gravityCoverageFraction(gravity: [GravitySample], hr: [HRSample]) -> Double {
         guard gravity.count >= 2, hr.count >= 2 else { return 0 }
         let g = gravity.sorted { $0.ts < $1.ts }
@@ -32,8 +29,8 @@ public enum SleepReadout {
         return max(0.0, min(1.0, gravSpan / hrSpan))
     }
 
-    /// The gate named by the most recent gate-trace line in the tagged log tail, or nil.
-    /// Lines look like "[sleep] gate run=1 ... gate=accepted ...".
+    /// The gate named by the most recent gate-trace line in the tagged tail, or nil
+    /// (lines look like "[sleep] gate run=1 ... gate=accepted ...").
     public static func lastGateFired(taggedTail: [String]) -> String? {
         for line in taggedTail.reversed() where line.contains("gate=") {
             guard let range = line.range(of: "gate=") else { continue }
@@ -45,22 +42,16 @@ public enum SleepReadout {
     }
 }
 
-/// Pure values for the Recovery (Charge) and HRV live-readout panels (Group G). Each parses the tagged
-/// log tail the Recovery / HRV test-mode emitters write, so the panel reflects exactly the last Charge
-/// breakdown or HRV computation. No state, no side effects, no em-dashes.
+/// Pure values for the Recovery (Charge) and HRV live-readout panels, parsed from the tagged log tail
+/// the Recovery / HRV test-mode emitters write.
 public enum TestReadout {
 
-    /// The Charge outcome for the MOST RECENT day from the `.recovery`-tagged tail, or nil. The emitter
-    /// writes "[recovery] charge day=<yyyy-MM-dd> ... score=<n> band=<b> ..." (or a "nilScore reason=..."
-    /// line when that day could not be scored). Returns the score/band fragment so the panel reads the same
-    /// number the dashboard shows; falls back to the nil-reason only when the NEWEST day genuinely has none.
+    /// The Charge outcome for the MOST RECENT day from the `.recovery`-tagged tail, or nil. Returns the
+    /// score/band fragment, or the nil-reason only when the newest day genuinely has none.
     ///
-    /// #343: the engine emits days NEWEST-FIRST (and may replay several passes), so the LAST line in the
-    /// tail is the OLDEST window-edge day — which is routinely a cold-start `nilScore missingInput` (no
-    /// baseline history at the window's far edge). Scanning the tail in reverse therefore surfaced that
-    /// stale edge day and read "no score (input missing)" even when today's Charge was a healthy green.
-    /// Instead select by the newest `day=` (ISO dates compare lexicographically), order-independently, and
-    /// prefer the last pass for that day. Mirrors the Kotlin twin `TestReadout.lastChargeBreakdown`.
+    /// The engine emits days newest-first (and may replay passes), so the last tail line is the OLDEST
+    /// window-edge day, routinely a cold-start `nilScore`. Select by the newest `day=` (ISO dates compare
+    /// lexicographically), order-independently, preferring the last pass for that day.
     public static func lastChargeBreakdown(taggedTail: [String]) -> String? {
         var bestDay = ""
         var outcome: String?
@@ -85,10 +76,8 @@ public enum TestReadout {
         return outcome
     }
 
-    /// The most recent HRV result fragment from the `.hrv`-tagged tail, or nil. The emitter writes
-    /// "[hrv] hrv rmssd=<n>ms sdnn=<n>ms meanNN=<n>ms" on success, or "[hrv] hrv result=nil (..)" when a
-    /// gate refused the reading. Returns the rmssd/sdnn fragment, or the nil note, so the panel reads the
-    /// same outcome the snapshot screen showed.
+    /// The most recent HRV result fragment from the `.hrv`-tagged tail (rmssd/sdnn, or the nil note when
+    /// a gate refused the reading), or nil.
     public static func lastHrvComputation(taggedTail: [String]) -> String? {
         for line in taggedTail.reversed() {
             if let r = line.range(of: "rmssd=") {
@@ -101,16 +90,11 @@ public enum TestReadout {
     }
 }
 
-/// Pure values for the Steps live-readout panel. Each parses the `.steps`-tagged log tail the Steps
-/// test-mode emitters write, so the panel reflects exactly the last step estimate and calibration state
-/// without the engine having to expose new published properties. No state, no side effects, no em-dashes.
-/// The Kotlin twin is the StepsReadout object in StepsEstimateEngineTrace.kt.
+/// Pure values for the Steps live-readout panel, parsed from the `.steps`-tagged log tail.
 public enum StepsReadout {
 
-    /// Today's steps for the `stepsToday` id: the most recent scaled-steps figure in the tagged tail. The
-    /// 5/MG raw emitter writes "[steps] stepsRaw total ... scaledSteps=<n> ...", and the WHOOP-4 path's
-    /// estimate is surfaced the same way ("stepsEst day=... steps=<n>"). Returns the most recent of either,
-    /// so the panel reads the same number the Today tile shows. nil when no step line is present yet.
+    /// The most recent scaled-steps figure in the tagged tail (5/MG "scaledSteps=" or WHOOP-4 "stepsEst"
+    /// lines), or nil when none is present yet.
     public static func stepsToday(taggedTail: [String]) -> Int? {
         for line in taggedTail.reversed() {
             if let n = intField(line, key: "scaledSteps=") { return n }
@@ -119,10 +103,8 @@ public enum StepsReadout {
         return nil
     }
 
-    /// Calibration state for the `calibrationState` id: the most recent calibration outcome fragment the
-    /// WHOOP-4 calibration emitter writes ("k=<n> sampleDays=<n> confidence=<n> manual=<bool>" on a fit, or
-    /// "needsMoreDays have=<n> need=<n>" when withheld). Returns the parsed fragment so the panel reads the
-    /// same state Settings shows. nil when no calibration line is present yet (e.g. a 5/MG-only session).
+    /// The most recent WHOOP-4 calibration outcome fragment (a fit, or "needsMoreDays" when withheld), or
+    /// nil when none is present yet.
     public static func calibrationState(taggedTail: [String]) -> String? {
         for line in taggedTail.reversed() {
             if let r = line.range(of: "stepsCal fit ") {
@@ -137,8 +119,7 @@ public enum StepsReadout {
         return nil
     }
 
-    /// Parse a `key=<int>` field out of a line (the value runs up to the next space). nil when absent or
-    /// non-numeric. Shared by both readout ids.
+    /// Parse a `key=<int>` field out of a line (value runs to the next space); nil when absent or non-numeric.
     static func intField(_ line: String, key: String) -> Int? {
         guard let r = line.range(of: key) else { return nil }
         let token = line[r.upperBound...].prefix { $0 != " " }

@@ -1,40 +1,24 @@
 import Foundation
 import WhoopProtocol
 
-// AutoWorkoutDetector.swift — opt-in MVP "did you just work out?" detector.
-//
-// Faithful Swift twin of android/.../com/noop/analytics/AutoWorkoutDetector.kt — the two MUST
-// stay BYTE-PARITY on the detection logic (same thresholds, same span/merge/overlap rules, same
-// outputs), verified by the mirrored unit tests on each platform.
-//
-// This is DELIBERATELY SEPARATE from `WorkoutDetector` (the exercise.py port that computes
-// calories / zones / strain for daily analytics and enriches already logged workouts). This one
-// is the lightweight, OPT-IN, NON-DESTRUCTIVE confirmation detector that only ever SUGGESTS a
-// workout via a dismissible Today card — it never writes a row on its own. The user taps "Save"
-// to turn a suggestion into a manual workout, or X to dismiss it forever. Its published policy
-// remains frozen while the duration alternatives collect local shadow evidence.
-//
-// The published thresholds here are intentionally CONSERVATIVE (low sensitivity): a sustained ≥ 12-min
-// elevation of HR ≥ resting + 30 bpm, brief (≤ 90 s) dips tolerated, near windows merged. Tuned
-// to avoid false positives from stress / caffeine / a brief flight of stairs, at the cost of
-// missing the odd short or gentle session — exactly right for a SUGGESTION you can decline. An
-// OPTIONAL continuous motion signal, when one is readily available, is required as confirmation;
-// with no motion series it runs HR-only.
-//
-// The 10- and 15-minute alternatives are SHADOW policies only. Test Centre may run them beside the
-// published 12-minute result to compare against labelled workouts, but they must not drive the Today
-// card, persistence, classification, or downstream scores until real-world validation supports a change.
-//
-// Pure / headless: no I/O, no clock. All ts/start/end are unix SECONDS. NOT medical advice.
+// Opt-in "did you just work out?" detector, separate from `WorkoutDetector` (which scores and
+// enriches logged workouts). It only suggests a workout via a dismissible Today card and never
+// writes a row itself. Published policy: a sustained 12-min or longer elevation of HR at or above
+// resting + 30 bpm, dips up to 90 s tolerated, near windows merged. Deliberately conservative: it may
+// miss a short or gentle session, which suits a suggestion. An optional motion series, when present,
+// is required as confirmation; otherwise HR-only.
+// The 10- and 15-minute alternatives are shadow policies for Test Centre comparison only and must not
+// drive the Today card, persistence, classification or scores until validated.
+// Pure: no I/O or clock; all timestamps are unix seconds. Not medical advice.
 
-/// A candidate workout window the user can accept (Save) or reject (dismiss). All fields are
-/// derived purely from the HR samples inside the window. Mirrors the Kotlin `DetectedWorkout`.
+/// A candidate workout window the user can accept (Save) or dismiss, derived purely from the HR
+/// samples inside it.
 public struct DetectedWorkout: Equatable, Sendable {
     public let startSec: Int
     public let endSec: Int
     public let avgBpm: Int
     public let peakBpm: Int
-    /// Whole minutes, floor of (endSec - startSec) / 60 — what the prompt shows.
+    /// Whole minutes: floor of (endSec - startSec) / 60.
     public let durationMin: Int
 
     public init(startSec: Int, endSec: Int, avgBpm: Int, peakBpm: Int, durationMin: Int) {
@@ -46,9 +30,8 @@ public struct DetectedWorkout: Equatable, Sendable {
     }
 }
 
-/// A [startSec, endSec] span of an already-saved workout, used to exclude windows that overlap a
-/// session the user has already logged (so we never re-suggest one). Mirrors the Kotlin
-/// `Pair<Long, Long>` saved-workout argument.
+/// A [startSec, endSec] span of an already-saved workout, used to exclude overlapping windows so a
+/// logged session is never re-suggested.
 public struct SavedWorkoutSpan: Equatable, Sendable {
     public let startSec: Int
     public let endSec: Int
@@ -62,30 +45,26 @@ public enum AutoWorkoutDetector {
 
     // MARK: - Constants (keep byte-identical with the Kotlin twin)
 
-    /// Elevated gate: bpm must be at least restingHR + this margin to count as "working".
+    /// Elevated gate: bpm must be at least restingHR + this margin to count as working.
     public static let elevatedMarginBPM = 30
-    /// A candidate must hold the elevated gate for a contiguous span of at least this long (12 min).
+    /// Minimum contiguous span (minutes) holding the elevated gate.
     public static let minSustainedMin: Double = 12.0
-    /// Candidate duration policies evaluated only by local Test Centre shadow diagnostics.
-    /// The published confirmation path continues to use `minSustainedMin` (12 minutes).
+    /// Duration policies evaluated only by local Test Centre shadow diagnostics; the published path uses `minSustainedMin`.
     public static let shadowSustainedMinutes: [Double] = [10.0, 15.0]
-    /// A dip below the gate no longer than this does NOT break the span (a red light, a sip of water).
+    /// A dip below the gate no longer than this does not break the span (a red light, a sip of water).
     public static let maxDipS = 90
-    /// Two detected windows whose gap is strictly less than this are merged into one (5 min).
+    /// Two windows whose gap is strictly less than this (5 min) are merged.
     public static let mergeGapS = 5 * 60
-    /// When an OPTIONAL continuous motion series is supplied, a window must ALSO show elevated motion
-    /// to qualify (confirmation). "Elevated motion" = the window's mean per-second motion intensity
-    /// (L2 gravity-delta) is at least this. Ignored entirely in HR-only mode. Matches the Kotlin twin.
+    /// With a motion series, a window must also have mean per-second motion intensity (L2 gravity delta)
+    /// at least this. Ignored in HR-only mode.
     public static let motionConfirmMean = 0.05
     /// Resting-HR fallback when the caller has no nightly RHR for the day.
     public static let defaultRestingHR = 60
 
     // MARK: - Inputs
 
-    /// One motion-intensity reading aligned to the HR timeline (optional confirmation signal).
-    /// `intensity` is on the same L2-gravity-delta scale as `WorkoutDetector.activitySeries`.
-    /// (The Kotlin twin takes raw `GravitySample`s and derives this internally; the Swift call site
-    /// — `Repository.autoDetectCandidate` — has the gravity already decoded, so it passes the points.)
+    /// One motion-intensity reading aligned to the HR timeline (optional confirmation), on the same
+    /// L2-gravity-delta scale as `WorkoutDetector.activitySeries`.
     public struct MotionPoint: Equatable, Sendable {
         public let ts: Int
         public let intensity: Double
@@ -95,9 +74,7 @@ public enum AutoWorkoutDetector {
         }
     }
 
-    /// Per-second motion intensity = L2 magnitude of the gravity change vs the previous record.
-    /// First row → 0. Empty input → []. Mirrors the Kotlin `motionIntensityByTs` (and
-    /// `WorkoutDetector.activitySeries`) so a caller can build the optional `motion` argument.
+    /// Per-second motion intensity: L2 magnitude of the gravity change vs the previous record (first row 0).
     public static func motionPoints(_ gravity: [GravitySample]) -> [MotionPoint] {
         if gravity.isEmpty { return [] }
         let rows = gravity.sorted { $0.ts < $1.ts }
@@ -123,28 +100,22 @@ public enum AutoWorkoutDetector {
     // MARK: - Public API
 
     /// Detect candidate sustained-elevated-HR workout windows.
-    ///
-    /// Algorithm (kept byte-identical with the Kotlin twin):
-    ///  1. Sort HR ascending. Floor = restingHR + `elevatedMarginBPM`. A sample is "elevated" when
-    ///     bpm >= floor.
-    ///  2. Grow a contiguous span across elevated samples. A run of NON-elevated samples is tolerated
-    ///     (does not end the span) ONLY while the dip's wall-clock duration (from the first sub-threshold
-    ///     sample) stays <= `maxDipS`; a longer dip closes the span. The span's [start, end] are the
-    ///     first/last ELEVATED sample timestamps.
-    ///  3. Keep a span only when it lasts >= `minimumSustainedMinutes` (applied per-span, BEFORE merge).
-    ///  4. Merge two kept spans when the gap between them is strictly < `mergeGapS`.
-    ///  5. If a motion series is supplied, drop a window unless its mean motion intensity over the
-    ///     window is >= `motionConfirmMean` (confirmation). With no motion series, HR-only — keep it.
-    ///  6. Drop a window that OVERLAPS any saved span (touching endpoints count) — never re-suggest one.
-    ///  7. Emit a `DetectedWorkout` per surviving window (avg/peak bpm + whole-minute duration).
+    /// 1. Sort HR ascending; floor = restingHR + `elevatedMarginBPM`; elevated means bpm >= floor.
+    /// 2. Grow a span across elevated samples, tolerating a non-elevated run only while its duration from
+    ///    the first sub-threshold sample stays <= `maxDipS`. Bounds are the first/last elevated timestamps.
+    /// 3. Keep a span only if it lasts >= `minimumSustainedMinutes` (before merge).
+    /// 4. Merge kept spans whose gap is strictly < `mergeGapS`.
+    /// 5. With a motion series, drop a window whose mean intensity is < `motionConfirmMean`; HR-only keeps it.
+    /// 6. Drop a window overlapping any saved span (touching endpoints count).
+    /// 7. Emit a `DetectedWorkout` (avg/peak bpm, whole-minute duration) per survivor.
     ///
     /// - Parameters:
-    ///   - hr: the day's (or last day or two's) HR samples `[(ts, bpm)]`; any order; empty → [].
-    ///   - restingBpm: the nightly resting HR for the day; nil → `defaultRestingHR` (60).
-    ///   - motion: OPTIONAL continuous motion series for confirmation; nil/empty → HR-only.
-    ///   - savedSpans: already-saved workout windows to exclude by overlap.
-    ///   - minimumSustainedMinutes: duration policy. The default is the published 12-minute policy;
-    ///     callers may pass values from `shadowSustainedMinutes` only for local shadow diagnostics.
+    ///   - hr: HR samples `[(ts, bpm)]` in any order; empty gives [].
+    ///   - restingBpm: nightly resting HR; nil uses `defaultRestingHR`.
+    ///   - motion: optional motion series for confirmation; nil/empty is HR-only.
+    ///   - savedSpans: already-saved windows to exclude by overlap.
+    ///   - minimumSustainedMinutes: defaults to the published policy; `shadowSustainedMinutes` values are
+    ///     for local shadow diagnostics only.
     public static func detect(hr: [(ts: Int, bpm: Int)],
                               restingBpm: Int?,
                               motion: [MotionPoint]? = nil,
@@ -155,9 +126,8 @@ public enum AutoWorkoutDetector {
 
         let floor = (restingBpm ?? defaultRestingHR) + elevatedMarginBPM
 
-        // --- 1 + 2 + 3: grow sustained spans tolerating brief dips ---
-        // A span is [spanStart, spanEnd] over ELEVATED-sample timestamps. `dipStart` marks where the
-        // current sub-threshold run began (nil = not in a dip); a dip longer than maxDipS closes the span.
+        // Steps 1-3: grow sustained spans tolerating brief dips. `dipStart` marks where the current
+        // sub-threshold run began (nil = not in a dip).
         var spans: [(start: Int, end: Int)] = []
         var spanStart: Int? = nil
         var spanEnd = 0
@@ -177,8 +147,7 @@ public enum AutoWorkoutDetector {
                 spanEnd = sample.ts
                 dipStart = nil   // the dip (if any) is bridged
             } else if spanStart != nil {
-                // In a span: tolerate the dip until it runs longer than maxDipS. `dipStart` is the
-                // first sub-threshold sample of the current dip (set once, cleared on the next elevated).
+                // Tolerate the dip until it runs longer than maxDipS (`dipStart` is set once, cleared on the next elevated sample).
                 if dipStart == nil { dipStart = sample.ts }
                 if let d = dipStart, sample.ts - d > maxDipS { closeSpan() }
             }
@@ -187,7 +156,7 @@ public enum AutoWorkoutDetector {
 
         if spans.isEmpty { return [] }
 
-        // --- 4: merge spans whose gap is strictly < mergeGapS (spans are start-ascending by build) ---
+        // Step 4: merge spans whose gap is strictly < mergeGapS (spans are start-ascending).
         var merged: [(start: Int, end: Int)] = []
         var curStart = spans[0].start
         var curEnd = spans[0].end
@@ -203,17 +172,15 @@ public enum AutoWorkoutDetector {
         }
         merged.append((curStart, curEnd))
 
-        // --- 5 + 6 + 7 ---
+        // Steps 5-7
         let motionSeries = (motion?.isEmpty ?? true) ? nil : motion
         var results: [DetectedWorkout] = []
         for (start, end) in merged {
-            // 6: never re-suggest a window overlapping an already-saved workout.
             if savedSpans.contains(where: { overlaps(start, end, $0.startSec, $0.endSec) }) { continue }
 
             let window = seg.filter { $0.ts >= start && $0.ts <= end }
             if window.isEmpty { continue }
 
-            // 5: motion confirmation, only when a continuous motion series was supplied.
             if let motionSeries = motionSeries {
                 let inWin = motionSeries.filter { $0.ts >= start && $0.ts <= end }.map { $0.intensity }
                 let meanMotion = inWin.isEmpty ? 0.0 : inWin.reduce(0.0, +) / Double(inWin.count)
@@ -230,8 +197,7 @@ public enum AutoWorkoutDetector {
         return results
     }
 
-    /// Two closed [aStart, aEnd] / [bStart, bEnd] intervals overlap (touching endpoints count).
-    /// Mirrors the Kotlin `overlaps`.
+    /// Closed intervals overlap (touching endpoints count).
     static func overlaps(_ aStart: Int, _ aEnd: Int, _ bStart: Int, _ bEnd: Int) -> Bool {
         aStart <= bEnd && bStart <= aEnd
     }

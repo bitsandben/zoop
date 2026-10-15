@@ -1,17 +1,15 @@
 import Foundation
 import WhoopStore
 
-// The daily level and the headline of the stress fact. `DaytimeStress` is the one stress resolver: the
-// hourly curve (`analyze`), the once-a-day level from the night's vitals (`daily`), and the single number
-// a surface shows (`headline`) all live here on the same 0–3 squash, the same bands and the same z
-// directions. The daily level used to be computed in the Stress screen's view layer with a private copy
-// of this math, and every surface picked between hourly and daily on its own.
+// The daily level and headline of the stress fact. `DaytimeStress` is the one stress resolver: the
+// hourly curve (`analyze`), the once-a-day level (`daily`) and the single number a surface shows
+// (`headline`) share the same 0-3 squash, bands and z directions.
 
 public extension DaytimeStress {
 
     // MARK: - Bands
 
-    /// The three stress bands on the shared 0–3 scale.
+    /// The three stress bands on the shared 0-3 scale.
     enum Band: String, Equatable, Sendable {
         case low, medium, high
 
@@ -35,7 +33,6 @@ public extension DaytimeStress {
         case derived
     }
 
-    /// One day on the daily trend.
     struct DailyPoint: Equatable, Sendable {
         public let day: String
         public let level: Double
@@ -43,7 +40,7 @@ public extension DaytimeStress {
 
     /// The daily stress level for the newest day with signal, with the inputs that explain it.
     struct Daily: Equatable, Sendable {
-        /// The day scored: the newest row with resting HR, HRV or a stored value (the #543 carry).
+        /// The day scored: the newest row with resting HR, HRV or a stored value (#543).
         public let day: String
         public let level: Double
         public let source: DailySource
@@ -52,10 +49,8 @@ public extension DaytimeStress {
         /// The scored day's value minus the baseline-window mean (bpm / ms); nil without both.
         public let restingHRDelta: Double?
         public let hrvDelta: Double?
-        /// Every day with a stored or derivable level, oldest first, against the SAME baseline as `level`
-        /// so the line is comparable to the headline.
+        /// Every day with a stored or derivable level, oldest first, against the same baseline as `level`.
         public let trend: [DailyPoint]
-        /// Valid nights in the resting-HR / HRV baseline window behind `level` (0 when stored).
         public let baselineNights: Int
 
         public var band: Band { Band(level: level) }
@@ -67,26 +62,24 @@ public extension DaytimeStress {
         }
     }
 
-    /// Nights in the trailing window the daily level compares against.
     static let dailyBaselineWindow = 30
 
-    /// The daily level from oldest-first `days` plus any stored stress series (0–3, clamped).
+    /// The daily level (0-3, clamped) from oldest-first `days` plus any stored stress series.
     ///
-    /// A stored value for the scored day wins; otherwise the level is the squashed z-sum of resting HR
-    /// (up = stress) and HRV (down = stress) against the 30 days before it. Nil only when no day carries
-    /// any usable signal.
+    /// A stored value for the scored day wins; otherwise the squashed z-sum of resting HR (up = stress)
+    /// and HRV (down = stress) against the 30 days before it. Nil only when no day carries signal.
     static func daily(days: [DailyMetric], stored: [(day: String, value: Double)]) -> Daily? {
         let storedByDay: [String: Double] = Dictionary(
             stored.map { ($0.day, min(max($0.value, 0), 3)) }, uniquingKeysWith: { _, b in b })
 
-        // Carry (#543): today's row is often vitals-less until the overnight is analysed, so score the
-        // newest day that actually carries signal, the same last-night carry every other vital uses.
+        // Today's row is often vitals-less until the overnight is analysed, so score the newest day that
+        // carries signal (#543).
         guard let idx = days.lastIndex(where: {
             $0.restingHr != nil || $0.avgHrv != nil || storedByDay[$0.day] != nil
         }) ?? days.indices.last else { return nil }
         let today = days[idx]
 
-        // The window ends the day BEFORE the scored day, so a day is never measured against itself.
+        // The window ends the day before the scored day, so a day is never measured against itself.
         let baseline = idx > 0 ? Array(days[0..<idx].suffix(dailyBaselineWindow)) : []
         let rhrBase = baseline.compactMap(\.restingHr).map(Double.init)
         let hrvBase = baseline.compactMap(\.avgHrv)
@@ -132,19 +125,14 @@ public extension DaytimeStress {
 
     /// Which reading the headline shows.
     enum HeadlineSource: String, Equatable, Sendable {
-        /// The latest scored waking hour of today's curve.
         case currentHour
-        /// The morning's daily level, while today's curve has no scored hour yet.
         case dailyLevel
-        /// Neither exists.
         case none
     }
 
     /// The one stress number a surface shows for today: the latest scored hour, else the daily level.
-    ///
-    /// Every surface that shows "your stress now" asks this, so the Home tile and the Stress screen
-    /// cannot pick different sources. Hourly reads are `.building` at best: the daytime margin is
-    /// validated on one subject only (r≈0.6 against an Oura reference), so it is a hint, not a measurement.
+    /// Hourly reads are `.building` at best (the daytime margin is validated on one subject, r~0.6
+    /// against an Oura reference), so they are a hint, not a measurement.
     static func headline(hours: [HourPoint], daily: Daily?) -> Assessment<Double, HeadlineSource> {
         if let level = hours.last(where: { $0.level != nil })?.level {
             return Assessment(value: level, confidence: .building, reason: .currentHour)

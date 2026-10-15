@@ -2,50 +2,33 @@ import Foundation
 
 // SleepStager+Trace.swift - the per-candidate-run GATE TRACE formatter (Sleep & Rest test mode).
 //
-// Pure, side-effect-free string builders. They never touch detection state, so a caller can
-// assert the exact line a fixture night produces. Every emitter that USES these is gated by
-// TestCentre.active(.sleep) at the detectSleep call site, and the lines exit through the
-// redacting sink, so this file holds only formatting. Counts and seconds only, no wall-clock.
+// Pure string builders that never touch detection state, so a fixture night's exact line can be
+// asserted. Emitters are gated by TestCentre.active(.sleep) at the detectSleep call site and exit
+// through the redacting sink. Counts and seconds only, no wall-clock.
 
 extension SleepStager {
 
     /// Whether a candidate in-bed run survived a gate or was dropped by it.
     public enum GateVerdict: String, Sendable { case kept = "KEPT", dropped = "DROPPED" }
 
-    /// The gate-trace line formatters. Compact, parseable, no em-dashes.
+    /// The gate-trace line formatters. Compact and parseable.
     public enum GateTrace {
 
-        /// Why the HR-only spine did or did not run (#1801). Twin of the Kotlin `hrOnlyGateLine`.
+        /// Why the HR-only spine did or did not run. The funnel line only exists when the spine is CALLED, so
+        /// its absence was ambiguous (gate never opened vs sink never wired); this says which.
         ///
-        /// The funnel line below only exists when the spine is CALLED, so its absence was ambiguous in
-        /// exactly the way that made the first field report unreadable: it could mean the gate never
-        /// opened, or that the sink was never wired. This says which, on any day with no motion — the
-        /// only days where the question arises.
-        ///
-        /// `day` leads the line (#2397). A re-score emits one of these per night, twenty-one of them
-        /// inside two seconds in one field log, and without the date they are an unattributable block:
-        /// asked which band last night used, a reader can only count lines and hope the emission order
-        /// matches the day order. The other funnel lines in this file already carry `day=`.
+        /// `day` leads the line: a re-score emits one per night in quick succession, and without the date the
+        /// block cannot be attributed to a night.
         public static func hrOnlyGateLine(day: String, attempted: Bool, reason: String,
                                           gravRows: Int, storedNights: Int) -> String {
             "[sleep] hr-only gate day=\(day) attempted=\(attempted) reason=\(reason) "
                 + "grav=\(gravRows) stored=\(storedNights)"
         }
 
-        /// The HR-only spine's own funnel line (#1801). Byte-identical twin of the Kotlin
-        /// `SleepStagerTrace.hrOnlyLine`, so an Android and an Apple log of the same night compare
-        /// directly — which is the entire reason these formatters are twinned at all.
-        ///
-        /// The path shipped SILENT on both platforms, and a field log then showed `reason=no-motion`
-        /// with no way to tell whether the spine had run and found nothing or never ran. Every number
-        /// separates the two failures that actually happen: a band too tight (`sleepRuns` near zero)
+        /// The HR-only spine's own funnel line. Its numbers separate a band too tight (`sleepRuns` near zero)
         /// from a duration gate eating real runs (`sleepRuns` high, `longestMin` under `minSleepMin`).
-        ///
-        /// `anchorBpm` and `bandBpm` are printed because they are DERIVED, not configured: the anchor is
-        /// a percentile of THIS window, so the same code gives every wearer a different threshold.
-        ///
-        /// `day` leads for the reason given on the gate line above: these two travel as a pair, and a
-        /// pair that cannot be attributed to a night answers nothing about that night.
+        /// `anchorBpm` and `bandBpm` are printed because they are DERIVED per window (a percentile), not
+        /// configured. `day` leads, as on the gate line.
         public static func hrOnlyLine(day: String, anchorBpm: Double?, bandBpm: Double?,
                                       hrP50: Double?, hrP90: Double?, epochs: Int,
                                       runs: Int, mergedRuns: Int, sleepRuns: Int,
@@ -57,24 +40,18 @@ extension SleepStager {
                 + "longestMin=\(longestSleepMin) staged=\(staged) kept=\(kept) minSleepMin=\(minSleepMin)"
         }
 
-        /// One decimal, by ARITHMETIC rather than `String(format:)`. Twin of the Kotlin `SleepStagerTrace.round1`, and
-        /// see its note: `printf` rounds half-to-even on the binary value while Java's `String.format`
-        /// rounds HALF_UP on the decimal expansion, so the two disagreed on 64.05. This does the same
-        /// IEEE arithmetic on both platforms and cannot.
-        ///
-        /// NON-NEGATIVE ONLY, same as the Kotlin twin: `-0.5` would print "0.5", because the integer
-        /// division truncates toward zero and the sign is then lost to `abs`. Every current caller is a
-        /// bpm, which cannot be negative.
+        /// One decimal by ARITHMETIC rather than `String(format:)`, so the output is deterministic IEEE
+        /// arithmetic instead of printf's half-to-even on the binary value (which disagreed with a
+        /// decimal HALF_UP on 64.05). Non-negative only: `-0.5` would print "0.5" (truncating division
+        /// loses the sign to `abs`); every caller is a bpm.
         private static func round1(_ v: Double?) -> String {
             guard let v else { return "nil" }
             let tenths = Int((v * 10.0).rounded())
             return "\(tenths / 10).\(abs(tenths % 10))"
         }
 
-        /// One verdict line for a candidate run. `gate` names the constant that decided it
-        /// (minSleepMin, maxMainSleepSpanS, offWrist, daytimeGuard, morningStillness, hrConfirm,
-        /// sparseBridge, accepted); `detail` carries that gate's numbers. `startTs`/`endTs` give the
-        /// span in seconds only (the sink scrubs identifiers; we never print a formatted clock here).
+        /// One verdict line for a candidate run. `gate` names the constant that decided it; `detail` carries
+        /// that gate's numbers. `startTs`/`endTs` are seconds only (the sink scrubs identifiers).
         public static func runLine(index: Int, startTs: Int, endTs: Int,
                                    verdict: GateVerdict, gate: String, detail: String) -> String {
             let spanS = max(0, endTs - startTs)
@@ -87,8 +64,6 @@ extension SleepStager {
         }
     }
 
-    /// Round to 2 decimal places for the trace detail fields. Local to the trace so the inline
-    /// emitters in `detectSleepUncached` can call it unqualified (AnalyticsEngine.round2 is a
-    /// separate type's helper). Formatting only, never a scoring path.
+    /// Round to 2 decimal places for trace detail fields (formatting only, never a scoring path).
     static func round2(_ v: Double) -> Double { (v * 100.0).rounded() / 100.0 }
 }

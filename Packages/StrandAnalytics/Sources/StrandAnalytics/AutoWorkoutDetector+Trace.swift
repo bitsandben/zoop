@@ -1,21 +1,10 @@
 import Foundation
 import WhoopProtocol
 
-// AutoWorkoutDetector+Trace.swift - the Workouts & GPS test-mode auto-detect trace + line formatters.
-//
-// detectTrace(...) is the side-effect-free twin of AutoWorkoutDetector.detect(...): it returns the SAME
-// [DetectedWorkout] detect would (it reuses detect verbatim), plus a trace that names the detector's inputs
-// (HR sample count, resting floor), the thresholds it applied (elevated margin, sustained minutes, dip /
-// merge / motion-confirm constants), and WHY each candidate window was offered or dropped (too short,
-// motion-not-confirmed, overlaps a saved session). So a "my workout went missing / auto-detect didn't fire"
-// report shows exactly which gate kept or dropped each window.
-//
-// WorkoutsTrace adds the line formatters the app-target emitters use for the session lifecycle, the GPS-fix
-// count and the cross-source dedup decisions (the app layer owns the live state, this owns the line shape so
-// the two platforms read identically and a fixture pins them). Everything here is pure, no clock, no I/O, no
-// PII (counts / bpm / seconds / sport keys only). The Workouts test mode gates each call behind
-// TestCentre.active(.workouts) at the call site; when the mode is off it is never called, so there is zero
-// cost. No em-dashes. The Kotlin twin is AutoWorkoutDetectorTrace / WorkoutsTrace.
+// Workouts & GPS test-mode trace and line formatters. `detectTrace` returns exactly what `detect`
+// returns plus a trace of the detector's inputs, thresholds, and why each candidate window was offered
+// or dropped. `WorkoutsTrace` owns the line shape; the app layer owns the live state. All pure, with no
+// clock, I/O or PII (counts, bpm, seconds, sport keys). Callers gate on TestCentre.active(.workouts).
 
 extension AutoWorkoutDetector {
 
@@ -25,16 +14,12 @@ extension AutoWorkoutDetector {
         let overlapS: Int
     }
 
-    /// Side-effect-free diagnostic twin of `detect(...)`: returns the SAME `[DetectedWorkout]` detect would,
-    /// plus the trace. The returned windows ARE `detect(...)`'s verbatim, so the trace can never disagree
-    /// with what the Today card actually suggests. The trace logs the inputs + the thresholds, then walks the
-    /// detector's own gates (sustained-minutes, motion-confirm, saved-overlap) to name why each merged window
-    /// survived or dropped, mirroring the algorithm exactly. The Kotlin twin is
-    /// `AutoWorkoutDetectorTrace.detectTrace`.
-    ///
-    /// - Parameters mirror `detect(...)` exactly. `minimumSustainedMinutes` defaults to the published
-    ///   12-minute policy; explicit 10/15-minute values are for local shadow diagnostics only. `path` tags
-    ///   the call ("autoDetect" / "manualReview") so a report shows which entry point produced it.
+    /// Diagnostic twin of `detect(...)`: returns the same `[DetectedWorkout]` verbatim plus a trace that
+    /// logs inputs and thresholds, then walks the detector's gates (sustained-minutes, motion-confirm,
+    /// saved-overlap) to name why each merged window survived or dropped.
+    /// - Parameters mirror `detect(...)`. `minimumSustainedMinutes` defaults to the published 12-minute
+    ///   policy; 10/15 are for local shadow diagnostics only. `path` tags the entry point
+    ///   ("autoDetect" / "manualReview").
     public static func detectTrace(hr: [(ts: Int, bpm: Int)],
                                    restingBpm: Int?,
                                    motion: [MotionPoint]? = nil,
@@ -43,7 +28,7 @@ extension AutoWorkoutDetector {
                                    path: String = "autoDetect")
         -> (results: [DetectedWorkout], trace: [String]) {
 
-        // The result the Today card reads, verbatim, so the trace cannot diverge from it.
+        // The result the Today card reads, verbatim, so the trace cannot diverge.
         let results = detect(hr: hr, restingBpm: restingBpm, motion: motion,
                              savedSpans: savedSpans,
                              minimumSustainedMinutes: minimumSustainedMinutes)
@@ -57,15 +42,13 @@ extension AutoWorkoutDetector {
             + "restingBpm=\(restingBpm.map(String.init) ?? "default(\(defaultRestingHR))") "
             + "elevatedFloor=\(floor)bpm motion=\(hasMotion ? "supplied" : "hrOnly") savedSpans=\(savedSpans.count)")
 
-        // Thresholds applied (the autoDetectThresholds capture). Stated once so a report carries the
-        // calibration the windows were judged against.
+        // Thresholds applied, stated once so a report carries the calibration.
         lines.append("autoDetect thresholds elevatedMargin=\(elevatedMarginBPM)bpm "
             + "minSustainedMin=\(minimumSustainedMinutes) maxDipS=\(maxDipS) mergeGapS=\(mergeGapS) "
             + "motionConfirmMean=\(motionConfirmMean)")
 
-        // Rebuild the SAME merged windows the detector forms (sustained spans tolerating dips, then merge),
-        // so we can name why each survived or dropped WITHOUT changing the returned `results`. This mirrors
-        // detect(...)'s steps 1-4 exactly; the per-window verdict below mirrors steps 5-6.
+        // Rebuild the merged windows exactly as detect(...) steps 1-4 do (sustained spans tolerating dips, then
+        // merge) to name why each survived without changing `results`; the verdict below mirrors steps 5-6.
         let seg = hr.sorted { $0.ts < $1.ts }
         if seg.isEmpty {
             lines.append("autoDetect result windows=0 (no HR samples)")
@@ -102,7 +85,7 @@ extension AutoWorkoutDetector {
             return (results, lines)
         }
 
-        // Merge spans whose gap is strictly < mergeGapS (same as detect step 4).
+        // Merge spans whose gap is strictly < mergeGapS (detect step 4).
         var merged: [(start: Int, end: Int)] = []
         var curStart = spans[0].start
         var curEnd = spans[0].end
@@ -118,17 +101,16 @@ extension AutoWorkoutDetector {
         }
         merged.append((curStart, curEnd))
 
-        // Per-window verdict (the autoDetectWhy capture), mirroring detect steps 5-6.
+        // Per-window verdict, mirroring detect steps 5-6.
         let motionSeries = hasMotion ? motion : nil
         for (start, end) in merged {
             let durMin = (end - start) / 60
             let overlapping = savedSpans.filter { overlaps(start, end, $0.startSec, $0.endSec) }
                 .sorted { $0.startSec == $1.startSec ? $0.endSec < $1.endSec : $0.startSec < $1.startSec }
             if !overlapping.isEmpty {
-                // #2527: measure each suppression before choosing a duration-aware policy. The exact
-                // saved/candidate ratio avoids rounding away short recordings; intersection seconds
-                // distinguish a contained recording from one mostly outside the candidate. Endpoint-only
-                // contact still suppresses under the current policy and is honestly reported as zero.
+                // Measure each suppression before choosing a duration-aware policy (#2527). The exact saved/candidate
+                // ratio avoids rounding away short recordings; intersection seconds separate a contained recording
+                // from one mostly outside. Endpoint-only contact still suppresses and is reported as zero.
                 let candidateSec = end - start
                 for saved in overlapping {
                     let savedSec = max(0, saved.endSec - saved.startSec)
@@ -155,24 +137,19 @@ extension AutoWorkoutDetector {
         return (results, lines)
     }
 
-    /// Compare shadow candidates with manually/imported labelled workouts, without suppressing overlaps.
-    /// Candidates and labels are canonical-sorted, then paired one-to-one with a deterministic weighted
-    /// assignment. The assignment maximises cardinality first and total overlap second, so a broad label cannot
-    /// strand a candidate with no alternative and an equally large matching cannot retain a lower-overlap set.
-    /// Results therefore do not depend on database/union iteration order. A match requires strictly positive
-    /// overlap; endpoint-only contact is not evidence that the detector found the labelled workout.
+    /// Compare shadow candidates with manual/imported labelled workouts without suppressing overlaps.
+    /// Candidates and labels are canonical-sorted, then paired one-to-one by a deterministic weighted
+    /// assignment: cardinality first, total overlap second, so results do not depend on iteration order.
+    /// A match needs strictly positive overlap; endpoint contact is not evidence.
     ///
-    /// When `hrForObservability` is supplied, a label is observable only when its longest recorded HR run
-    /// (no sample gap above the detector's 90-second dip tolerance) spans the shorter of the label duration
-    /// and this policy's qualification duration. This retains genuinely short labelled workouts as evidence,
-    /// but two isolated points cannot manufacture a policy miss. Unobservable labels are reported separately
-    /// and never counted as misses. `matched` counts pairs, `unmatched` candidates left over, and `missed`
-    /// observable labelled spans left over. Median onset/end errors are absolute seconds for matched pairs,
-    /// or `n/a` when nothing matched.
+    /// With `hrForObservability`, a label is observable only when its longest HR run (no gap above the
+    /// detector's 90 s dip tolerance) spans the shorter of the label duration and the policy's
+    /// qualification duration, so two isolated points cannot manufacture a miss. Unobservable labels are
+    /// reported separately. `matched` counts pairs, `unmatched` leftover candidates, `missed` leftover
+    /// observable labels. Median onset/end errors are absolute seconds, or `n/a` with no match.
     ///
-    /// The caller must exclude legacy automatically detected rows from `savedSpans`: shadow mode measures
-    /// against user-confirmed/imported labels, not against the detector's own prior output. This formatter is
-    /// pure and returns only aggregate counts; it cannot save, dismiss, classify, or score a workout.
+    /// The caller must exclude legacy auto-detected rows from `savedSpans`: shadow mode measures against
+    /// user-confirmed/imported labels. Pure; returns aggregate counts only.
     public static func shadowComparisonLine(policyMinutes: Double,
                                             candidates: [DetectedWorkout],
                                             savedSpans: [SavedWorkoutSpan],
@@ -224,10 +201,9 @@ extension AutoWorkoutDetector {
             + "medianEndErrorS=\(medianErrorLabel(endErrors))"
     }
 
-    /// Run the published policy plus the supported 10/15-minute alternatives for local shadow diagnostics
-    /// and return aggregate trace lines only. Label spans are deliberately NOT passed into `detect`: doing
-    /// so would suppress every true overlap before it could be measured. No result from this function is a
-    /// published suggestion.
+    /// Run the published policy plus the supported 10/15-minute alternatives for local shadow diagnostics,
+    /// returning aggregate trace lines only. Labels are not passed into `detect`, which would suppress every
+    /// true overlap before it could be measured. Nothing here is a published suggestion.
     public static func shadowComparisonLines(hr: [(ts: Int, bpm: Int)],
                                              restingBpm: Int?,
                                              motion: [MotionPoint]? = nil,
@@ -242,7 +218,7 @@ extension AutoWorkoutDetector {
         }
     }
 
-    /// Split labels by whether the detector input has enough contiguous-in-time HR to evaluate this policy.
+    /// Split labels by whether the HR input has enough contiguous-in-time coverage to evaluate this policy.
     private static func shadowLabelPartition(savedSpans: [SavedWorkoutSpan],
                                              hr: [(ts: Int, bpm: Int)]?,
                                              policyMinutes: Double)
@@ -273,10 +249,9 @@ extension AutoWorkoutDetector {
         return (observable, savedSpans.count - observable.count)
     }
 
-    /// Hungarian assignment over candidate rows and saved-label + dummy columns. Every positive-overlap
-    /// edge receives a cardinality bonus larger than the maximum possible total overlap, making the scalar
-    /// objective exactly lexicographic: match count first, summed overlap second. Canonical input order and
-    /// lowest-column tie breaks keep equal optima deterministic across Swift and Kotlin.
+    /// Hungarian assignment over candidate rows and saved-label + dummy columns. Each positive-overlap edge
+    /// gets a cardinality bonus larger than any possible total overlap, so the objective is lexicographic:
+    /// match count, then summed overlap. Canonical order and lowest-column tie breaks keep it deterministic.
     private static func maximumCardinalityOverlapPairs(possibleByCandidate: [[ShadowPair]],
                                                        savedCount: Int) -> [ShadowPair] {
         let candidateCount = possibleByCandidate.count
@@ -297,7 +272,7 @@ extension AutoWorkoutDetector {
             }
         }
 
-        // Minimum-cost Hungarian algorithm over negated weights. `p[column]` is its assigned 1-based row.
+        // Minimum-cost Hungarian algorithm over negated weights; `p[column]` is its assigned 1-based row.
         var rowPotential = Array(repeating: Int64(0), count: candidateCount + 1)
         var columnPotential = Array(repeating: Int64(0), count: columnCount + 1)
         var assignedRow = Array(repeating: 0, count: columnCount + 1)
@@ -359,7 +334,7 @@ extension AutoWorkoutDetector {
         }
     }
 
-    /// Locale-independent policy label for byte-identical Swift/Kotlin shadow lines.
+    /// Locale-independent policy label.
     private static func shadowMinuteLabel(_ value: Double) -> String {
         if value.isFinite, abs(value) < 1e15, value.rounded() == value {
             return String(Int(value))
@@ -376,16 +351,12 @@ extension AutoWorkoutDetector {
     }
 }
 
-/// Pure line formatters + the live-readout parser for the Workouts & GPS test mode. The app-target emitters
-/// (AppModel session lifecycle, GpsWorkoutRecorder fixes, Repository cross-source dedup) own the live state;
-/// these own the line SHAPE so both platforms read identically and a fixture pins them. WorkoutsReadout
-/// parses the `.workouts`-tagged log tail back into the `lastSessionSummary` id the panel binds. No state,
-/// no side effects, no PII (counts / seconds / sport keys only). No em-dashes. The Kotlin twin is WorkoutsTrace.
+/// Pure line formatters for the Workouts & GPS test mode. The app-target emitters own the live state;
+/// these own the line shape. No state, side effects or PII (counts, seconds, sport keys).
 public enum WorkoutsTrace {
 
-    /// A session-lifecycle line. `event` is "start" / "end" / "discarded"; the counts are the captured HR
-    /// window size and (for an end) the duration + whether a GPS route landed, so the lifecycle of a missing
-    /// workout is visible end to end. Sport is the normalised key, never free text.
+    /// A session-lifecycle line. `event` is "start" / "end" / "discarded"; counts are the captured HR window
+    /// size and, for an end, the duration and whether a GPS route landed. Sport is the normalised key.
     public static func sessionLine(event: String,
                                    sportKey: String,
                                    hrSamples: Int,
@@ -397,24 +368,18 @@ public enum WorkoutsTrace {
         return line
     }
 
-    /// A GPS-fix-progress line: the raw fixes seen, how many the accuracy / speed filter accepted, and the
-    /// running distance. So a route that under-records (a weak signal, a denied permission) is visible.
-    ///
-    /// `rawFixes` is OPTIONAL: macOS sees the pre-filter raw stream and passes a real count, so the line can
-    /// show a true accept rate. Android's LocationTracker pre-filters upstream, so the raw count is NOT
-    /// available at the GpsSession seam (every fix here is already accepted); it passes nil and the line
-    /// renders `rawFixes=n/a` rather than implying an accept rate the platform cannot actually measure.
+    /// A GPS-fix-progress line: raw fixes seen, fixes the accuracy/speed filter accepted, running distance.
+    /// `rawFixes` is optional: a platform that pre-filters upstream has no raw count and passes nil, and the
+    /// line renders `rawFixes=n/a` rather than implying an accept rate it cannot measure.
     public static func gpsLine(rawFixes: Int?, acceptedPoints: Int, distanceM: Double) -> String {
         "gps rawFixes=\(rawFixes.map(String.init) ?? "n/a") accepted=\(acceptedPoints) "
             + "distanceM=\(Int(distanceM.rounded())) (filter: accuracy+speed gate)"
     }
 
-    /// An analytics detected-bout decision line. IntelligenceEngine derives a bout from raw HR/motion for
-    /// scoring and enrichment, but never creates or reconciles a visible generic workout from it. A bout
-    /// with no real overlap is `analyticsOnly`; one overlapping a manual/imported row is either
-    /// `droppedOverlapBackfilled` when it supplied missing metrics, or `droppedOverlap` when that row was
-    /// already complete. On an overlap, `overlapSource` names the real row. `durMin` is the whole-minute bout
-    /// length. No PII (a source label + minutes + bpm only). Mirrors Kotlin `WorkoutsTrace.detectedBoutLine`.
+    /// An analytics detected-bout decision line. A bout is derived from raw HR/motion for scoring and
+    /// enrichment but never creates a visible generic workout. No real overlap is `analyticsOnly`; overlap
+    /// with a manual/imported row is `droppedOverlapBackfilled` when the bout supplied missing metrics,
+    /// else `droppedOverlap`, and `overlapSource` names the row. `durMin` is whole minutes.
     public static func detectedBoutLine(verdict: String,
                                         durMin: Int,
                                         avgBpm: Int,
@@ -424,9 +389,8 @@ public enum WorkoutsTrace {
         return line
     }
 
-    /// A cross-source dedup decision line: two same-activity rows from different sources were collapsed to
-    /// the richer one. Reports the sources, the kept richness, and the overlap, so a "my workout shows twice"
-    /// or "the richer one disappeared" report shows exactly which pair merged and which won.
+    /// A cross-source dedup decision line: two same-activity rows from different sources collapsed to the
+    /// richer one. Reports the sources, kept richness and overlap.
     public static func dedupLine(sportKey: String,
                                  keptSource: String,
                                  droppedSource: String,
@@ -437,14 +401,11 @@ public enum WorkoutsTrace {
     }
 }
 
-/// Pure values for the Workouts & GPS live-readout panel. Parses the `.workouts`-tagged log tail the
-/// emitters write, so the panel reflects exactly the last session without the app layer exposing new
-/// published properties. No state, no side effects, no em-dashes. The Kotlin twin is the WorkoutsReadout object.
+/// Parses the `.workouts`-tagged log tail back into values for the live-readout panel, so it reflects
+/// the last session without new published properties. Pure.
 public enum WorkoutsReadout {
 
-    /// The last session summary for the `lastSessionSummary` id: the most recent session-lifecycle line's
-    /// fragment (event + sport + counts), or nil when none is present. So the panel reads the same outcome
-    /// the lifecycle emitter wrote.
+    /// The most recent session-lifecycle line's fragment (event, sport, counts), or nil when none is present.
     public static func lastSessionSummary(taggedTail: [String]) -> String? {
         for line in taggedTail.reversed() {
             if let r = line.range(of: "session ") {

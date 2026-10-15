@@ -1,38 +1,26 @@
 import Foundation
 
-/// Pure guards for the hand-edit sleep-time pickers (#940). The reporter corrected a late-tracked
-/// night's bed time from 01:06 back to 23:00; the picker kept the calendar DATE, so the "corrected"
-/// bed landed on the COMING evening: a future-dated night whose staged window came back all-awake,
-/// and the display merge then blanked the whole Sleep tab. Three layered rules, shared by
-/// macOS/iOS (SleepTimeEditor) and Android (com.noop.analytics.SleepEditGuard, byte-for-byte twin),
-/// all pure and unit-tested:
-///   1. `autoCorrectedBed`: a time-only roll that lands the bed in the future, or at/after the
-///      night's wake, almost always means the PREVIOUS evening; auto-decrement the date.
-///   2. `isDisjoint`: a corrected window with no overlap of the night's recorded coverage needs an
-///      explicit confirm ("this moves the night to a time with no recorded data"), never silent
-///      acceptance.
-///   3. `clampedEditWindow`: the repository belt-and-braces; no code path may persist a future or
-///      inverted window even if a client UI misbehaves.
+/// Pure guards for the hand-edit sleep-time pickers. A time-only picker edit keeps the calendar DATE,
+/// so correcting a late night's bed time could land it on the coming evening: a future-dated night whose
+/// staged window came back all-awake and blanked the Sleep tab. Three layered rules:
+///   1. `autoCorrectedBed`: a time-only roll that lands the bed in the future, or at/after the night's
+///      wake, almost always means the previous evening; decrement the date.
+///   2. `isDisjoint`: a window with no overlap of the night's recorded coverage needs explicit confirm.
+///   3. `clampedEditWindow`: repository backstop; no path may persist a future or inverted window.
 public enum SleepEditGuard {
 
-    /// The longest night span (seconds) the at/after-wake auto-correct will manufacture. A genuine
-    /// evening-bed correction (bed 23:00, wake 05:00 next day) yields a ~6h span; a user moving a
-    /// session LATER past its wake (nap 14:00-15:00 -> bed 16:00 same day) would yield a ~23h span if
-    /// decremented, which is not a plausible night - so we leave those candidates verbatim.
+    /// The longest night span (seconds) the at/after-wake auto-correct will manufacture. A real evening-bed
+    /// fix yields ~6 h; moving a nap LATER past its wake would yield ~23 h if decremented, which is not a
+    /// plausible night, so those candidates are left verbatim.
     public static let maxAutoCorrectNightSec: TimeInterval = 16 * 3600
 
-    /// Rule 1: the cross-midnight bed auto-correct. `candidateBed` is what the picker just produced,
-    /// `previousBed` is the value it held before this change (so a DELIBERATE date change, where the
-    /// two sit on different calendar days, is always respected verbatim). When the change was
-    /// time-only (same calendar day) and the candidate is impossible for a bed time, the user almost
-    /// always meant the previous evening: return the candidate moved one day back, provided that lands
-    /// in the past. Two impossibility cases:
-    ///   - the candidate is in the FUTURE (`candidateBed > now`) - always corrected (this is the
-    ///     `originalWake == nil` "Add a nap" case too, whose seed sits after the night's wake);
-    ///   - the candidate is at/after `originalWake` AND decrementing it forms a PLAUSIBLE night, i.e.
-    ///     the decremented bed lands before the wake and within `maxAutoCorrectNightSec` of it. This
-    ///     guards a legitimate MOVE-LATER edit (past bed rolled to just after its own wake on the same
-    ///     day) from being silently shoved back a full day into a ~23h wrong-day window.
+    /// Rule 1: cross-midnight bed auto-correct. A deliberate date change (`previousBed` on a different
+    /// calendar day) is always respected. For a time-only change, the candidate moves one day back when
+    /// it is impossible for a bed time and that lands in the past:
+    ///   - the candidate is in the FUTURE (also the "Add a nap" case, `originalWake == nil`);
+    ///   - the candidate is at/after `originalWake` AND the decremented bed forms a plausible night
+    ///     (before the wake, within `maxAutoCorrectNightSec`), so a legitimate move-later edit isn't
+    ///     shoved back a full day.
     public static func autoCorrectedBed(previousBed: Date, candidateBed: Date, originalWake: Date?,
                                         now: Date, calendar: Calendar = .current) -> Date {
         guard calendar.isDate(candidateBed, inSameDayAs: previousBed) else { return candidateBed }
@@ -41,32 +29,27 @@ public enum SleepEditGuard {
         let futureViolation = candidateBed > now
         let wakeViolation: Bool = {
             guard let wake = originalWake, candidateBed >= wake else { return false }
-            // Only correct when the decremented bed forms a possible night for THIS wake.
             return decremented < wake && wake.timeIntervalSince(decremented) <= maxAutoCorrectNightSec
         }()
         guard futureViolation || wakeViolation else { return candidateBed }
         return decremented
     }
 
-    /// Rule 2: true when the corrected window `[newStart, newEnd)` shares NOTHING with the night's
-    /// recorded coverage `[coverageStart, coverageEnd)` (unix seconds). A disjoint window has no
-    /// data to stage from, so accepting it silently fabricates an all-awake phantom night; the UI
-    /// must confirm the move instead.
+    /// Rule 2: true when `[newStart, newEnd)` shares nothing with the night's recorded coverage
+    /// `[coverageStart, coverageEnd)` (unix seconds). Accepting it silently would fabricate an all-awake
+    /// phantom night, so the UI must confirm.
     public static func isDisjoint(newStart: Int, newEnd: Int,
                                   coverageStart: Int, coverageEnd: Int) -> Bool {
         newEnd <= coverageStart || newStart >= coverageEnd
     }
 
-    /// The maximum duration of an edited sleep window. The wake date is explicit for #970, but
-    /// allowing an unbounded date change can re-bucket stages and totals onto unrelated days (#406).
-    /// One day preserves legitimate long sleep/nap corrections while rejecting multi-day windows.
+    /// The maximum duration of an edited sleep window; an unbounded date change can re-bucket stages and
+    /// totals onto unrelated days.
     public static let maxEditWindowSec: Int = 24 * 3600
 
-    /// Rule 3: the persistence belt-and-braces. Caps the corrected wake at `now + slackSec` (a sleep
-    /// cannot END in the future; the slack absorbs clock skew) and refuses (nil) any window that is
-    /// inverted, spans more than one day, or is entirely in the future once capped. The editor's own
-    /// guards should make this unreachable; it exists so NO client code path can write a phantom night
-    /// the display merge cannot render.
+    /// Rule 3: caps the corrected wake at `now + slackSec` (a sleep cannot END in the future; slack
+    /// absorbs clock skew) and returns nil for a window that is inverted, spans more than a day, or is
+    /// entirely in the future once capped. The editor's guards should make this unreachable.
     public static func clampedEditWindow(start: Int, end: Int, now: Int,
                                          slackSec: Int = 300) -> (start: Int, end: Int)? {
         let cappedEnd = min(end, now + slackSec)

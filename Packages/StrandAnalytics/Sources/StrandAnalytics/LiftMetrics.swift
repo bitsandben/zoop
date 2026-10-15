@@ -1,59 +1,32 @@
 import Foundation
 import WhoopStore
 
-// Training metrics for the Lift Log.
+// Training metrics for the Lift Log. Every figure is arithmetic the user can redo by hand from their own sets:
+// a few honest numbers rather than one invented score. Pure (no store, clock or UI).
 //
-// Every figure here is arithmetic the user can redo by hand from their own logged sets. That is the
-// whole design constraint: Zoop shows a few honest numbers rather than one invented score, because a
-// composite "workout score out of 100" feels satisfying and tells you nothing about what to change.
-//
-// PURE. No store, no clock, no UI — the inputs are rows and the outputs are numbers, so the whole
-// surface is unit-testable with no strap, no database and no simulator.
-//
-// WHAT IS DELIBERATELY ABSENT, and must stay absent:
-//
-//  • Anything that feeds `workout.strain` or daily Effort. Zoop's strain is HR-measured (Karvonen
-//    %HRR -> Edwards TRIMP). There is no validated public path from typed sets/reps/weight to a
-//    cardiovascular-strain equivalent — WHOOP's own muscular load runs velocity-based algorithms
-//    over strap accelerometer/gyroscope under an unpublished model — and deriving one here is the
-//    exact case `CLAUDE.md` warns about after the withdrawn PPG->HR estimate (#194).
-//
-//  • Per-exercise muscle weightings ("bench press = 0.7 triceps"). There is no published table to
-//    take them from. Inventing one would make every downstream per-muscle figure fiction wearing
-//    the costume of precision. The direct/indirect split is the resolution the evidence supports.
-//
-//  • Acute:chronic workload ratios or any injury-risk / overtraining warning. The construct's
-//    validity is actively disputed, and a health warning from a non-medical app is either ignored
-//    or believed — both bad.
+// Deliberately absent, and must stay so:
+//  - Anything feeding `workout.strain` or daily Effort. Zoop's strain is HR-measured (Karvonen %HRR -> Edwards
+//    TRIMP); there is no validated public path from typed sets/reps/weight to cardiovascular strain (cf. the
+//    withdrawn PPG->HR estimate, #194).
+//  - Per-exercise muscle weightings ("bench press = 0.7 triceps"): no published table exists. The
+//    direct/indirect split is what the evidence supports.
+//  - Acute:chronic workload ratios or injury-risk / overtraining warnings: validity is disputed.
 
 public enum LiftMetrics {
 
     // MARK: - Performed or not
 
-    /// Whether a set was performed, from its rep count. A set with ZERO reps was not: that is how a
-    /// finished session keeps the sets the user discards, so Edit sets can still fill them in, and it is
-    /// what a user types for a planned set they skipped. Every figure leaves such a set out, since
-    /// counting it would add a set nobody did. A set with no rep count (nil) still counts: it was done,
-    /// the number just was not typed. `WhoopStore.liftSetCounts` and `lastLiftSets` apply the same rule
-    /// in SQL. One function per platform, so the parity ledger pairs the twins unambiguously.
-    ///
-    /// The Kotlin twin is `LiftMetrics.isPerformed`.
+    /// Whether a set was performed, from its rep count. Zero reps means not performed (a discarded or skipped
+    /// set Edit sets can still fill in); every figure leaves it out. A nil rep count still counts as done.
+    /// `WhoopStore.liftSetCounts` and `lastLiftSets` apply the same rule in SQL.
     public static func isPerformed(reps: Int?) -> Bool {
         reps != 0
     }
 
     // MARK: - Volume load (tonnage)
 
-    /// Σ (weight × reps) over WORKING sets, in kilograms. Nil when nothing countable was logged.
-    ///
-    /// Warm-ups are excluded because the training literature counts working sets, and a warm-up
-    /// double counted as volume would flatter every session. A set missing either its weight or its
-    /// reps contributes nothing rather than a guess.
-    ///
-    /// Good for: tracking progression WITHIN one exercise across weeks. Not comparable between
-    /// exercises — 100 kg of leg press is not 100 kg of squat — and not comparable between people.
-    ///
-    /// The Kotlin twin is `LiftMetrics.volumeLoadKg`.
+    /// Sum of weight x reps over working sets, in kg; nil when nothing countable was logged. Warm-ups are
+    /// excluded and a set missing weight or reps contributes nothing. Compare progression within one exercise only.
     public static func volumeLoadKg(_ sets: [LiftSetRow]) -> Double? {
         let total = sets.reduce(into: 0.0) { sum, s in
             guard !s.isWarmup, let w = s.weightKg, let r = s.reps, w > 0, r > 0 else { return }
@@ -64,15 +37,8 @@ public enum LiftMetrics {
 
     // MARK: - Session load (Foster sRPE-TL)
 
-    /// Session RPE × duration in minutes.
-    ///
-    /// Foster's session-RPE training load. The reason it earns a place next to volume: it is
-    /// validated across BOTH resistance and endurance training, which makes it the only figure in
-    /// the app that puts a leg day and a run on one comparable scale.
-    ///
-    /// Nil when the session was not rated — a skipped rating must never be read as an effortless 0.
-    ///
-    /// The Kotlin twin is `LiftMetrics.sessionLoad`.
+    /// Session RPE x duration in minutes (Foster's session-RPE load), the one figure that puts resistance and
+    /// endurance sessions on one scale. Nil when unrated; a skipped rating is never an effortless 0.
     public static func sessionLoad(sessionRpe: Double?, durationSec: Int) -> Double? {
         guard let rpe = sessionRpe, rpe > 0, durationSec > 0 else { return nil }
         return rpe * (Double(durationSec) / 60.0)
@@ -80,19 +46,11 @@ public enum LiftMetrics {
 
     // MARK: - Estimated one-rep max (Epley)
 
-    /// The rep ceiling above which a 1RM estimate stops being worth showing.
-    ///
-    /// Every 1RM formula is a straight-line fit to a curved relationship, and the error grows with
-    /// reps: a 20-rep set says far more about endurance than about maximal strength. Twelve is the
-    /// conventional upper bound where the formulas are least unreliable.
+    /// Rep ceiling above which a 1RM estimate is not shown (the formulas are straight-line fits whose error grows with reps).
     public static let oneRepMaxRepCeiling = 12
 
-    /// Epley: `w × (1 + reps/30)`. Nil for a set that cannot support an estimate.
-    ///
-    /// A single rep returns the weight itself — the formula's own +3.3% at one rep is an artefact of
-    /// the fit, not a claim that a single you just completed was really 3% heavier.
-    ///
-    /// The Kotlin twin is `LiftMetrics.estimatedOneRepMaxKg`.
+    /// Epley: `w x (1 + reps/30)`; nil for a set that can't support an estimate. One rep returns the weight itself
+    /// (the formula's +3.3% there is a fit artefact).
     public static func estimatedOneRepMaxKg(weightKg: Double?, reps: Int?) -> Double? {
         guard let w = weightKg, let r = reps, w > 0, r > 0, r <= oneRepMaxRepCeiling else { return nil }
         guard r > 1 else { return w }
@@ -103,13 +61,11 @@ public enum LiftMetrics {
 
     public struct ExerciseSummary: Equatable {
         public let exercise: String
-        /// Working sets only — the tally the dose-response literature is built on.
+        /// Working sets only.
         public let workingSets: Int
         public let warmupSets: Int
         public let volumeKg: Double?
-        /// The session's best set for this exercise, ranked by ESTIMATED 1RM rather than by raw
-        /// weight: 90 kg × 10 is a better set than 100 kg × 5, and ranking by weight alone would
-        /// hide that. Falls back to the heaviest set when no set supports an estimate.
+        /// Best set ranked by estimated 1RM, not raw weight (90 kg x 10 beats 100 kg x 5); heaviest set when none supports an estimate.
         public let bestWeightKg: Double?
         public let bestReps: Int?
         public let bestEstimatedOneRepMaxKg: Double?
@@ -126,11 +82,7 @@ public enum LiftMetrics {
         }
     }
 
-    /// One summary per exercise, in the order the exercises were first performed — which is the
-    /// order they were done in, not alphabetical, because that is how a session reads back. A set that
-    /// was not performed (`isPerformed`) appears nowhere, and neither does an exercise with only such sets.
-    ///
-    /// The Kotlin twin is `LiftMetrics.perExercise`.
+    /// One summary per exercise in first-performed order. Unperformed sets (`isPerformed`) appear nowhere.
     public static func perExercise(_ sets: [LiftSetRow]) -> [ExerciseSummary] {
         var order: [String] = []
         var grouped: [String: [LiftSetRow]] = [:]
@@ -142,8 +94,7 @@ public enum LiftMetrics {
             let rows = grouped[name] ?? []
             let working = rows.filter { !$0.isWarmup }
 
-            // Rank by estimated 1RM where possible; otherwise by raw weight, so an exercise logged
-            // only at high reps still reports a best set rather than nothing.
+            // Rank by estimated 1RM; otherwise raw weight, so a high-rep-only exercise still reports a best set.
             let best = working.max { a, b in
                 let ea = estimatedOneRepMaxKg(weightKg: a.weightKg, reps: a.reps)
                 let eb = estimatedOneRepMaxKg(weightKg: b.weightKg, reps: b.reps)
@@ -183,18 +134,11 @@ public enum LiftMetrics {
         }
     }
 
-    /// The default "this set was close to failure" line. Informational only.
+    /// Default "close to failure" RPE line; informational only.
     public static let hardSetRpeThreshold = 8.0
 
-    /// How close to failure the working sets were.
-    ///
-    /// Reported SEPARATELY from the set counts and never as a filter on them. The tempting move is
-    /// to count only sets at RPE >= 7 toward a muscle's weekly total, since proximity to failure is
-    /// what makes a set count biologically. Doing that would compare a smaller number against
-    /// reference doses derived from UNFILTERED working-set counts — quietly changing the scale.
-    /// `unratedSets` is surfaced so a mean computed from three of twelve sets is visibly thin.
-    ///
-    /// The Kotlin twin is `LiftMetrics.rpeProfile`.
+    /// How close to failure the working sets were. Reported separately and never used to filter set counts, which
+    /// would shift the scale against reference doses built on unfiltered counts. `unratedSets` shows how thin the mean is.
     public static func rpeProfile(_ sets: [LiftSetRow],
                                   threshold: Double = hardSetRpeThreshold) -> RpeProfile {
         let working = sets.filter { !$0.isWarmup && isPerformed(reps: $0.reps) }
@@ -210,7 +154,7 @@ public enum LiftMetrics {
     // MARK: - Sets per muscle
 
     public struct MuscleCounts: Equatable {
-        /// direct × 1.0 + indirect × 0.5 — the published fractional method.
+        /// direct x 1.0 + indirect x 0.5.
         public let fractional: [LiftMuscle: Double]
         public let direct: [LiftMuscle: Int]
         public let indirect: [LiftMuscle: Int]
@@ -223,20 +167,10 @@ public enum LiftMetrics {
         }
     }
 
-    /// Fractional set counts per muscle over the given sets.
-    ///
-    /// The 0.5 for an indirect set is NOT a house convention: the 2025 Sports Medicine dose-response
-    /// meta-regression compared counting a secondary mover's set as 1.0 ("total"), 0.5
-    /// ("fractional") and 0.0 ("direct"), found the evidence strongest for fractional, and used it
-    /// in its primary models. The reference doses in `ReferenceDose` were derived under that same
-    /// operationalisation, so the credit and the doses have to move together or the comparison
-    /// silently stops meaning anything.
-    ///
-    /// Warm-ups and sets never performed (`isPerformed`) are excluded; nothing else is. An unclassified
-    /// exercise (nil primary) contributes to volume and session load but claims no muscle it was never
-    /// assigned.
-    ///
-    /// The Kotlin twin is `LiftMetrics.muscleCounts`.
+    /// Fractional set counts per muscle. The 0.5 indirect credit follows the 2025 Sports Medicine dose-response
+    /// meta-regression (fractional had the strongest evidence), the same operationalisation `ReferenceDose` was
+    /// derived under, so the two must change together. Warm-ups and unperformed sets are excluded; an unclassified
+    /// exercise (nil primary) claims no muscle.
     public static func muscleCounts(_ sets: [LiftSetRow]) -> MuscleCounts {
         var fractional: [LiftMuscle: Double] = [:]
         var direct: [LiftMuscle: Int] = [:]
@@ -256,20 +190,14 @@ public enum LiftMetrics {
 
     // MARK: - The reference band
 
-    /// Weekly fractional sets per muscle, from the same dose-response meta-regression the 0.5
-    /// credit comes from.
-    ///
-    /// PRESENTED AS A BAND WITH ITS SOURCE NAMED, NEVER AS A PERSONAL PRESCRIPTION. Zoop is not a
-    /// medical device and does not tell anyone what their body needs; it says what the research
-    /// associates with growth and leaves the conclusion to the reader.
+    /// Weekly fractional sets per muscle from the same meta-regression. Shown as a band with its source named,
+    /// never as a personal prescription.
     public enum ReferenceDose {
         /// Below roughly this, hypertrophy is not reliably detectable.
         public static let hypertrophyMinimumSetsPerWeek = 4.0
         /// Strength keeps improving from a single weekly set.
         public static let strengthMinimumSetsPerWeek = 1.0
-        /// Beyond roughly this, added volume stops reliably beating the smallest detectable effect
-        /// FOR STRENGTH. Hypertrophy has no identified ceiling — gains continue with strongly
-        /// diminishing returns, and the uncertainty widens as volume rises.
+        /// Beyond roughly this, extra volume stops reliably beating the smallest detectable effect for strength; hypertrophy has no identified ceiling.
         public static let strengthPlateauSetsPerWeek = 4.0
     }
 }
