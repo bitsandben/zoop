@@ -105,6 +105,11 @@ public enum StressTrace {
         return "\(tenths / 10).\(tenths % 10)"
     }
 
+    /// `formatLevel` with the user's decimal separator, for UI text only ("1,5" on a German screen).
+    public static func displayLevel(_ value: Double, locale: Locale = .current) -> String {
+        formatLevel(value).replacingOccurrences(of: ".", with: locale.decimalSeparator ?? ".")
+    }
+
     /// Prints the LF/HF ratio to one decimal with the same tenths arithmetic as `formatLevel`.
     ///
     /// The two platforms disagreed through their printf-family formatters in OPPOSITE directions —

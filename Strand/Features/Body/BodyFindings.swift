@@ -47,7 +47,8 @@ enum BodyFindings {
             meaning: meaning,
             value: MetricUnit.percent.formatDelta(d.deltaPercent, locale: BodyFormat.locale),
             comparison: BodyStrings.weekVsNormal,
-            verdict: below ? .below : .above,
+            // Lower HRV is worse, lower resting heart rate is better.
+            verdict: below == hrv ? .worse : .better,
             sample: BodyStrings.readingsIn30Days(d.series.count),
             explanation: BodyFindingExplanation(
                 whatItIs: hrv ? BodyStrings.hrvTrendWhat : BodyStrings.rhrTrendWhat,

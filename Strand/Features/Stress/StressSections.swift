@@ -34,7 +34,7 @@ struct StressTodayCard: View {
         .accessibilityElement(children: .combine)
     }
 
-    private func level(_ value: Double?) -> String { StressTrace.formatLevel(value ?? 0) }
+    private func level(_ value: Double?) -> String { StressTrace.displayLevel(value ?? 0) }
 
     /// The start of the hour the point covers.
     private func time(_ point: DaytimeStress.HourPoint) -> String {
@@ -98,7 +98,7 @@ struct StressTrendCard: View {
             }
         }
         .chartYScale(domain: 0...3)
-        .zoopYAxis { StressTrace.formatLevel($0) }
+        .zoopYAxis { StressTrace.displayLevel($0) }
         .zoopDayXAxis(days: range.rawValue)
         .frame(height: 160)
         .accessibilityLabel(Text(StressStrings.trendSummary))

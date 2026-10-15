@@ -31,6 +31,8 @@ struct BodyFinding: Identifiable, Equatable {
 /// entries so "Below your range" reads the same everywhere.
 enum BodyVerdict: Equatable {
     case typical, above, below
+    /// A range verdict with direction (HRV up, resting heart rate down = better), as on the metric tiles.
+    case better, worse
     case strong, noticeable, little
     case quick, slow
     case mostlyEasy, mixed, mostlyHard
@@ -38,13 +40,15 @@ enum BodyVerdict: Equatable {
     case clearDifference, noClearDifference
 
     /// Attention verdicts get the warning tint; everything else stays neutral (§1 "calm by default").
-    var needsAttention: Bool { self == .strong || self == .slow }
+    var needsAttention: Bool { self == .strong || self == .slow || self == .worse }
 
     var text: LocalizedStringResource {
         switch self {
         case .typical: return MetricVerdict.typical.text
         case .above: return MetricVerdict.above.text
         case .below: return MetricVerdict.below.text
+        case .better: return MetricVerdict.above.text(rangeIsPersonal: true, polarity: .higherIsBetter)
+        case .worse: return MetricVerdict.below.text(rangeIsPersonal: true, polarity: .higherIsBetter)
         case .strong: return BodyStrings.verdictStrong
         case .noticeable: return BodyStrings.verdictNoticeable
         case .little: return BodyStrings.verdictLittle
