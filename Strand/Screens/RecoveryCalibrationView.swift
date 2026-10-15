@@ -146,10 +146,12 @@ struct MorningCheckInSheet: View {
     @State private var changed = false
     /// The last queued write; each save waits for it so rapid taps land in order.
     @State private var saveTask: Task<Void, Never>?
+    /// The measured content height: the sheet opens at exactly this, so nothing needs a swipe up.
+    @State private var contentHeight: CGFloat = 420
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: ZoopMetrics.space6) {
+            VStack(alignment: .leading, spacing: ZoopSpacing.l) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
                         Text("Good morning").strandOverline()
@@ -169,12 +171,12 @@ struct MorningCheckInSheet: View {
                     .accessibilityLabel(Text("Close"))
                 }
                 faces
-                VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
+                VStack(alignment: .leading, spacing: ZoopSpacing.s) {
                     Text("Anything else?")
                         .font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: ZoopMetrics.space3),
-                                        GridItem(.flexible(), spacing: ZoopMetrics.space3)],
-                              spacing: ZoopMetrics.space3) {
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: ZoopSpacing.s),
+                                        GridItem(.flexible(), spacing: ZoopSpacing.s)],
+                              spacing: ZoopSpacing.s) {
                         symptomTile("Headache", systemImage: "brain.head.profile", isOn: $headache)
                         symptomTile("Sore muscles", systemImage: "figure.strengthtraining.traditional", isOn: $soreness)
                         symptomTile("Feeling ill", systemImage: "thermometer.medium", isOn: $ill)
@@ -188,17 +190,24 @@ struct MorningCheckInSheet: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.horizontal, ZoopMetrics.screenPadding)
-            .padding(.top, ZoopMetrics.space6)
-            .padding(.bottom, ZoopMetrics.space4)
+            .padding(.top, ZoopSpacing.xl)
+            .padding(.bottom, ZoopSpacing.l)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
         }
+        #if os(iOS)
+        // Scrolls only when Dynamic Type makes the content taller than the screen.
+        .scrollBounceBehavior(.basedOnSize)
+        #endif
         .background(StrandPalette.surfaceBase.ignoresSafeArea())
+        // Opens at the content's own height, so every question is visible without dragging the sheet up.
+        .presentationDetents([.height(contentHeight), .large])
         .task { await load() }
         .onDisappear { rescoreIfChanged() }
     }
 
     private var faces: some View {
-        VStack(spacing: ZoopMetrics.space3) {
-            HStack(spacing: ZoopMetrics.space2) {
+        VStack(spacing: ZoopSpacing.s) {
+            HStack(spacing: ZoopSpacing.s) {
                 ForEach(Array(MorningCheckIn.scale), id: \.self) { v in
                     faceButton(v)
                 }
@@ -219,11 +228,11 @@ struct MorningCheckInSheet: View {
             persist()
         } label: {
             Text(verbatim: RecoveryCalibrationCopy.feelingFace(v))
-                .font(ZoopType.icon(34))
-                .scaleEffect(selected ? 1.15 : 1)
+                .font(ZoopType.icon(28))
+                .scaleEffect(selected ? 1.12 : 1)
                 .opacity(feeling == nil || selected ? 1 : 0.45)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, ZoopMetrics.space3)
+                .padding(.vertical, ZoopSpacing.s)
                 .background(shape.fill(selected ? StrandPalette.accent.opacity(0.22) : StrandPalette.surfaceInset))
                 .overlay(shape.strokeBorder(selected ? StrandPalette.accent : Color.clear, lineWidth: 1.5))
                 .contentShape(shape)
@@ -240,21 +249,22 @@ struct MorningCheckInSheet: View {
             withAnimation(.easeOut(duration: 0.15)) { isOn.wrappedValue.toggle() }
             persist()
         } label: {
-            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
-                HStack {
-                    Image(systemName: systemImage)
-                        .font(ZoopType.icon(22, weight: .semibold))
-                        .foregroundStyle(on ? StrandPalette.accent : StrandPalette.textSecondary)
-                    Spacer()
-                    Image(systemName: on ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(on ? StrandPalette.accent : StrandPalette.textTertiary)
-                }
+            // One line per tile (icon, name, check), so the 2×2 grid stays two short rows.
+            HStack(spacing: ZoopSpacing.s) {
+                Image(systemName: systemImage)
+                    .font(ZoopType.icon(18, weight: .semibold))
+                    .foregroundStyle(on ? StrandPalette.accent : StrandPalette.textSecondary)
+                    .frame(width: 24)
                 Text(title)
                     .font(StrandFont.subhead)
                     .foregroundStyle(on ? StrandPalette.textPrimary : StrandPalette.textSecondary)
                     .lineLimit(1).minimumScaleFactor(0.7)
+                Spacer(minLength: 0)
+                Image(systemName: on ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(on ? StrandPalette.accent : StrandPalette.textTertiary)
             }
-            .padding(ZoopMetrics.space4)
+            .padding(.horizontal, ZoopSpacing.m)
+            .padding(.vertical, ZoopSpacing.m)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(shape.fill(on ? StrandPalette.accent.opacity(0.18) : StrandPalette.surfaceInset))
             .overlay(shape.strokeBorder(on ? StrandPalette.accent : StrandPalette.hairline, lineWidth: on ? 1.5 : 1))
@@ -345,7 +355,6 @@ struct MorningCheckInSummaryRow: View {
         .task { await reload() }
         .sheet(isPresented: $showSheet) {
             MorningCheckInSheet(day: today) { answer = $0.isEmpty ? nil : $0 }
-                .presentationDetents([.medium, .large])
                 .opaqueSheetBackground()
                 .presentationDragIndicator(.visible)
         }

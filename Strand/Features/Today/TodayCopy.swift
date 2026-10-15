@@ -86,6 +86,10 @@ enum TodayCopy {
     static func strainTarget(_ low: String, _ high: String) -> LocalizedStringResource {
         LocalizedStringResource("zoop.today.strain.target", defaultValue: "Target \(low)–\(high)")
     }
+    /// The day a carried ring value belongs to ("from 6 Oct"), under the ring's verdict.
+    static func ringFrom(_ day: String) -> LocalizedStringResource {
+        LocalizedStringResource("zoop.today.ring.from", defaultValue: "from \(day)")
+    }
 
     static func vitalMeaning(_ id: VitalCopyID, _ word: RangeVerdict) -> LocalizedStringResource {
         switch (id, word) {

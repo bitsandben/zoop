@@ -84,6 +84,12 @@ struct RootTabView: View {
     /// a no-op). Threaded into each tab's root via `\.scrollToTopSignal`; ScreenScaffold / TodayScreen
     /// scroll to their top anchor when their tab's token changes.
     @State private var scrollTop: [Int] = Array(repeating: 0, count: IOSTab.count)
+    /// The theme each tab was last built in. A theme switch re-colours everything in place (the root's
+    /// `.zoopThemeInPlace`), but fonts, radii and ring shapes are read when a view is built. So every
+    /// tab that is NOT on screen is re-keyed at once, and the visible one once it is left: the open
+    /// tab, its stack and any sheet stay put (FB-7), and no tab keeps the old shapes for long.
+    @State private var tabThemes: [String] = Array(repeating: "", count: IOSTab.count)
+    @AppStorage(ZoopTheme.storageKey) private var themeRaw = ZoopTheme.classic.rawValue
     /// The Today tab root.
     private var todayTabRoot: some View { TodayScreen() }
 
@@ -130,17 +136,17 @@ struct RootTabView: View {
                 // Icon + text: an icon-only bar fails HIG legibility. The four German labels (Heute,
                 // Training, Einblicke, Mehr) are short enough for the compact bar on the smallest iPhone.
                 Tab(value: IOSTab.home) {
-                    tabStack(todayTabRoot, path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home])
+                    tabStack(todayTabRoot, path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home], themeKey: tabThemes[IOSTab.home])
                 } label: { Label("zoop.tab.today", systemImage: "house") }
                 Tab(value: IOSTab.training) {
                     tabStack(WorkoutsView(asTrainingTab: true), path: $tabPaths[IOSTab.training],
-                             scrollSignal: scrollTop[IOSTab.training])
+                             scrollSignal: scrollTop[IOSTab.training], themeKey: tabThemes[IOSTab.training])
                 } label: { Label("zoop.tab.training", systemImage: "figure.run") }
                 Tab(value: IOSTab.insights) {
-                    tabStack(InsightsTabView(), path: $tabPaths[IOSTab.insights], scrollSignal: scrollTop[IOSTab.insights])
+                    tabStack(InsightsTabView(), path: $tabPaths[IOSTab.insights], scrollSignal: scrollTop[IOSTab.insights], themeKey: tabThemes[IOSTab.insights])
                 } label: { Label("zoop.tab.insights", systemImage: "chart.line.uptrend.xyaxis") }
                 Tab(value: IOSTab.more) {
-                    moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more])
+                    moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more], themeKey: tabThemes[IOSTab.more])
                 } label: { Label("zoop.tab.more", systemImage: "line.3.horizontal") }
                 // A role is what moves Coach into its own round button at the trailing end of the bar,
                 // apart from the four destinations. Hidden rather than left out when Coach is off, so
@@ -153,14 +159,14 @@ struct RootTabView: View {
             }
         } else {
             TabView(selection: nativeTabSelection) {
-                tab(todayTabRoot, "zoop.tab.today", "house", path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home]).tag(IOSTab.home)
-                tab(WorkoutsView(asTrainingTab: true), "zoop.tab.training", "figure.run", path: $tabPaths[IOSTab.training], scrollSignal: scrollTop[IOSTab.training]).tag(IOSTab.training)
-                tab(InsightsTabView(), "zoop.tab.insights", "chart.line.uptrend.xyaxis", path: $tabPaths[IOSTab.insights], scrollSignal: scrollTop[IOSTab.insights]).tag(IOSTab.insights)
-                moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more])
+                tab(todayTabRoot, "zoop.tab.today", "house", path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home], themeKey: tabThemes[IOSTab.home]).tag(IOSTab.home)
+                tab(WorkoutsView(asTrainingTab: true), "zoop.tab.training", "figure.run", path: $tabPaths[IOSTab.training], scrollSignal: scrollTop[IOSTab.training], themeKey: tabThemes[IOSTab.training]).tag(IOSTab.training)
+                tab(InsightsTabView(), "zoop.tab.insights", "chart.line.uptrend.xyaxis", path: $tabPaths[IOSTab.insights], scrollSignal: scrollTop[IOSTab.insights], themeKey: tabThemes[IOSTab.insights]).tag(IOSTab.insights)
+                moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more], themeKey: tabThemes[IOSTab.more])
                     .tabItem { Label("zoop.tab.more", systemImage: "line.3.horizontal") }
                     .tag(IOSTab.more)
                 if coachEnabled {
-                    tab(CoachView(), "Coach", "sparkles", path: $tabPaths[IOSTab.coach], scrollSignal: scrollTop[IOSTab.coach]).tag(IOSTab.coach)
+                    tab(CoachView(), "Coach", "sparkles", path: $tabPaths[IOSTab.coach], scrollSignal: scrollTop[IOSTab.coach], themeKey: tabThemes[IOSTab.coach]).tag(IOSTab.coach)
                 }
             }
         }
@@ -206,6 +212,16 @@ struct RootTabView: View {
         // Switching Coach off while STANDING on it leaves `selectedTab` pointing at a tag no tab claims
         // any more, which renders as an empty tab rather than as an error. Send that wearer to Today, and
         // only in that case, so a flip made from anywhere else does not move them.
+        .onChange(of: themeRaw) { _, theme in
+            for tag in 0..<IOSTab.count where tag != selectedTab { tabThemes[tag] = theme }
+        }
+        .onChange(of: selectedTab) { previous, _ in
+            // After the crossfade, so the tab being left does not flash while it fades out.
+            guard tabThemes[previous] != themeRaw else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                if selectedTab != previous { tabThemes[previous] = themeRaw }
+            }
+        }
         .onChangeCompat(of: coachEnabled) { enabled in
             if !enabled && selectedTab == IOSTab.coach { selectedTab = IOSTab.home }
         }
@@ -251,7 +267,6 @@ struct RootTabView: View {
         }
         .sheet(isPresented: $showMorningCheckIn) {
             MorningCheckInSheet()
-                .presentationDetents([.medium, .large])
                 .opaqueSheetBackground()
                 .presentationDragIndicator(.visible)
         }
@@ -608,12 +623,13 @@ struct RootTabView: View {
     }
 
     private func tab<V: View>(_ view: V, _ title: LocalizedStringKey, _ icon: String,
-                              path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
-        tabStack(view, path: path, scrollSignal: scrollSignal)
+                              path: Binding<NavigationPath>, scrollSignal: Int, themeKey: String) -> some View {
+        tabStack(view, path: path, scrollSignal: scrollSignal, themeKey: themeKey)
             .tabItem { Label(title, systemImage: icon) }
     }
 
-    private func tabStack<V: View>(_ view: V, path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
+    private func tabStack<V: View>(_ view: V, path: Binding<NavigationPath>, scrollSignal: Int,
+                                   themeKey: String) -> some View {
         // Each primary tab gets its OWN NavigationStack so the in-content NavigationLinks (e.g. the Today
         // dashboard card rows) both navigate AND render opaque. An ORPHANED NavigationLink (no
         // NavigationStack ancestor) renders its whole label in a disabled/translucent state — that was
@@ -634,6 +650,8 @@ struct RootTabView: View {
         // Drive this tab's root scroll-to-top on an at-root re-tap (#198 follow-up); read by ScreenScaffold
         // / TodayScreen inside. Only THIS tab's token changes on its reselect, so the others don't scroll.
         .environment(\.scrollToTopSignal, scrollSignal)
+        // Rebuilt (path kept) once it is off screen after a theme switch; see `tabThemes`.
+        .id(themeKey)
     }
 
     // The "More" tab is the app's catch-all index. It was a plain SwiftUI `List` with system large-title
@@ -641,7 +659,7 @@ struct RootTabView: View {
     // + SectionHeader's UPPERCASE overline + the 28pt section rhythm). Rebuilt on the shared page chrome:
     // ScreenScaffold for the title1 "More" + subtitle, a `SectionHeader` overline per group, and the group's
     // rows in a single grouped ZoopCard with hairline dividers — the same row idiom Settings/Health use.
-    private func moreStack(path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
+    private func moreStack(path: Binding<NavigationPath>, scrollSignal: Int, themeKey: String) -> some View {
         NavigationStack(path: path) {
             ScreenScaffold(title: "zoop.tab.more", subtitle: "Everything else, one tap away",
                            quietSubtitle: true,
@@ -680,6 +698,7 @@ struct RootTabView: View {
         }
         // Scroll the More index to the top on an at-root re-tap (#198 follow-up); read by its ScreenScaffold.
         .environment(\.scrollToTopSignal, scrollSignal)
+        .id(themeKey)
     }
 
     /// One group in the More index: a small grey label over the group's rows in a single card. Every

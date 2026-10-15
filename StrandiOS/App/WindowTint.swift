@@ -23,9 +23,18 @@ extension View {
 enum ZoopWindowTint {
     static func apply() {
         let color = UIColor(StrandPalette.accent)
+        let theme = ZoopTheme.current.traitValue
         for scene in UIApplication.shared.connectedScenes {
             guard let windows = (scene as? UIWindowScene)?.windows else { continue }
-            for window in windows { window.tintColor = color }
+            for window in windows {
+                // The theme as a trait: UIKit chrome (bars, sheets, menus) re-resolves its colours in place.
+                // Reading an override that was never set throws, so check `contains` first.
+                if !window.traitOverrides.contains(ZoopThemeTrait.self)
+                    || window.traitOverrides[ZoopThemeTrait.self] != theme {
+                    window.traitOverrides[ZoopThemeTrait.self] = theme
+                }
+                window.tintColor = color
+            }
         }
     }
 }

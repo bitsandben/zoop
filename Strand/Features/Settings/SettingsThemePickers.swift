@@ -7,6 +7,9 @@ import StrandDesign
 /// `.zoopTheme`, so the whole app re-skins on tap.
 struct SettingsDesignPicker: View {
     @AppStorage(ZoopTheme.storageKey) private var themeRaw = ZoopTheme.classic.rawValue
+    /// The tile shown as selected. Held as view state as well, because after a light/dark switch the
+    /// in-place theme change did not always re-render this view from the `@AppStorage` write alone.
+    @State private var shown: ZoopTheme?
 
     var body: some View {
         VStack(alignment: .leading, spacing: ZoopSpacing.s) {
@@ -18,9 +21,10 @@ struct SettingsDesignPicker: View {
     }
 
     private func tile(_ theme: ZoopTheme) -> some View {
-        let selected = ZoopTheme.resolve(themeRaw) == theme
+        let selected = (shown ?? ZoopTheme.resolve(themeRaw)) == theme
         let shape = RoundedRectangle(cornerRadius: ZoopRadius.button, style: .continuous)
         return Button {
+            shown = theme
             withAnimation(.easeInOut(duration: 0.2)) { themeRaw = theme.rawValue }
         } label: {
             VStack(alignment: .leading, spacing: ZoopSpacing.s) {

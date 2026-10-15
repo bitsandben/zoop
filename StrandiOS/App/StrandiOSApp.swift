@@ -234,7 +234,8 @@ struct StrandiOSApp: App {
                 // Match SwiftUI format styles to the localization selected by the app's bundles. Language
                 // changes are process-wide on Apple and are applied after the documented reopen.
                 .environment(\.locale, AppLanguage.activeLocale)
-                .zoopTheme(themeRaw)
+                // In place, not re-keyed: a switch in Settings keeps the open tab, stack and sheet.
+                .zoopThemeInPlace(themeRaw)
                 .chartStyle(chartStyleRaw)
                 .noopAccent(accentRaw, customHex: accentCustomHex)
                 // The theme accent, not the system blue, for every control and UIKit-presented sheet.

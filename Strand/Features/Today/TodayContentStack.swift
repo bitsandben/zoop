@@ -138,7 +138,6 @@ struct TodaySheetContent: View {
             .opaqueSheetBackground()
         case .checkIn:
             MorningCheckInSheet()
-                .presentationDetents([.medium, .large])
                 .opaqueSheetBackground()
                 .presentationDragIndicator(.visible)
         case .workout(let row):

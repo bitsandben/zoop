@@ -83,9 +83,15 @@ struct TodayRingCell: View {
                 Text(verbatim: p.label)
                     .font(ZoopType.headline)
                     .foregroundStyle(StrandPalette.textPrimary)
-                Text(verbatim: p.number == nil ? " " : p.verdict)
+                Text(verbatim: p.number == nil ? reason(p) : p.verdict)
                     .font(ZoopType.caption)
-                    .foregroundStyle(TodayTint.verdictColor(readout))
+                    .foregroundStyle(p.number == nil ? StrandPalette.textTertiary : TodayTint.verdictColor(readout))
+                // A carried value keeps its colour and says which day it is from.
+                if p.number != nil, case .stale(let since) = readout.confidence {
+                    Text(TodayCopy.ringFrom(since.formatted(.dateTime.day().month(.abbreviated).locale(locale))))
+                        .font(ZoopType.caption)
+                        .foregroundStyle(StrandPalette.textTertiary)
+                }
             }
             .lineLimit(1)
             .minimumScaleFactor(0.8)
@@ -106,18 +112,17 @@ struct TodayRingCell: View {
             // The number alone: the three rings share one style, so Recovery drops its "%".
             Text(verbatim: number)
                 .font(ZoopType.metric)
-                .foregroundStyle(readout.isStale ? StrandPalette.textTertiary : StrandPalette.textPrimary)
+                .foregroundStyle(readout.isStale ? StrandPalette.textSecondary : StrandPalette.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
-        } else {
-            // The reason takes the number's place ("3 more nights", "No data yet").
-            Text(verbatim: p.verdict)
-                .font(ZoopType.caption)
-                .foregroundStyle(StrandPalette.textSecondary)
-                .multilineTextAlignment(.center)
-                .lineLimit(3)
-                .minimumScaleFactor(0.8)
         }
+        // No number: the ring stays an empty track and the reason sits under it (see `reason`).
+    }
+
+    /// The short reason under an empty ring: "3 more nights" while calibrating, else "No data".
+    private func reason(_ p: MetricPresentation) -> String {
+        if case .unavailable(.calibrating) = readout.verdict { return p.verdict }
+        return p.compactVerdict
     }
 
     /// Ring fill eases in once (0.6 s, §7.6) and stays still under Reduce Motion.
@@ -129,8 +134,13 @@ struct TodayRingCell: View {
 
 /// The metric colours of §7.5, read from a readout's tint. Recovery follows its score band.
 enum TodayTint {
+    /// A carried (stale) value keeps its metric colour, slightly dimmed; its date says how old it is.
     static func color(_ readout: MetricReadout) -> Color {
-        if readout.isStale { return StrandPalette.textTertiary }
+        let base = metricColor(readout)
+        return readout.isStale ? base.opacity(0.55) : base
+    }
+
+    private static func metricColor(_ readout: MetricReadout) -> Color {
         switch readout.tint {
         case .recovery: return readout.displayValue.map(StrandPalette.recoveryColor) ?? StrandPalette.textTertiary
         case .strain: return StrandPalette.effortColor
@@ -144,7 +154,6 @@ enum TodayTint {
     /// Score bands carry their band colour; a range verdict is tinted only through the metric's
     /// polarity (better / worse), everything else stays neutral (calm by default).
     static func verdictColor(_ readout: MetricReadout) -> Color {
-        if readout.isStale { return StrandPalette.textTertiary }
         if case .score = readout.verdict, let v = readout.displayValue { return StrandPalette.recoveryColor(v) }
         switch readout.assessment {
         case .better: return StrandPalette.textPositive
