@@ -125,7 +125,7 @@ struct SleepTimeEditor: View {
                 Spacer(minLength: ZoopMetrics.space3)
                 Button { dismiss() } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(ZoopType.icon(14, weight: .bold))
                         .foregroundStyle(StrandPalette.textSecondary)
                         .frame(width: 34, height: 34)
                         .background(Circle().fill(StrandPalette.surfaceInset))
@@ -199,7 +199,7 @@ struct SleepTimeEditor: View {
         return Button { withAnimation(.snappy) { editing = which } } label: {
             VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
                 HStack(spacing: 6) {
-                    Image(systemName: icon).font(.system(size: 13, weight: .semibold))
+                    Image(systemName: icon).font(ZoopType.icon(13, weight: .semibold))
                     Text(label).font(StrandFont.subhead)
                 }
                 .foregroundStyle(StrandPalette.textSecondary)

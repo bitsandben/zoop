@@ -301,7 +301,7 @@ private struct FusedMetricRowView: View {
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textSecondary)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(ZoopType.icon(9, weight: .semibold))
                         .foregroundStyle(StrandPalette.textTertiary)
                     Spacer(minLength: 0)
                 }

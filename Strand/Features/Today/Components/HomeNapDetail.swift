@@ -130,10 +130,7 @@ struct HomeNapDetailSheet: View {
     @ViewBuilder
     private var stagesCard: some View {
         if let decoded {
-            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
-                Text("Stages")
-                    .font(ZoopType.headline)
-                    .foregroundStyle(StrandPalette.textPrimary)
+            ContentCard("Stages") {
                 if !decoded.intervals.isEmpty {
                     Hypnogram(intervals: decoded.intervals, height: 120, showsStageAxis: false,
                               showsHover: false, nightStart: start, showsTimeAxis: true)
@@ -143,19 +140,13 @@ struct HomeNapDetailSheet: View {
                              total: decoded.stages.total)
                 }
             }
-            .padding(ZoopMetrics.space4)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(ZoopPanelSurface())
         }
     }
 
     @ViewBuilder
     private var heartRateCard: some View {
         if heartRate.count >= 2 {
-            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
-                Text("Heart rate")
-                    .font(ZoopType.headline)
-                    .foregroundStyle(StrandPalette.textPrimary)
+            ContentCard("Heart rate") {
                 LiquidThread(bpm: heartRate, tint: StrandPalette.liquidHeart, height: 92, animated: false)
                 HStack {
                     hrStat("Min", heartRate.min())
@@ -165,9 +156,6 @@ struct HomeNapDetailSheet: View {
                     hrStat("Max", heartRate.max())
                 }
             }
-            .padding(ZoopMetrics.space4)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(ZoopPanelSurface())
         }
     }
 
@@ -184,7 +172,7 @@ struct HomeNapDetailSheet: View {
         }
         .padding(ZoopMetrics.space3)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(ZoopPanelSurface())
+        .zoopInsetSurface(radius: ZoopMetrics.cardRadius)
     }
 
     private func stageRow(_ stage: SleepStage, minutes: Double, total: Double) -> some View {

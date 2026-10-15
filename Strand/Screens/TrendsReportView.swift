@@ -218,27 +218,23 @@ struct TrendsReportPage: View {
 
     private var header: some View {
         // Report chrome uses the same shared panel surface as the in-app cards.
-        ZStack(alignment: .leading) {
-            ZoopPanelSurface(tint: StrandPalette.accent,
-                             cornerRadius: ZoopMetrics.cardRadius,
-                             elevated: true)
-            VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
-                HStack(alignment: .firstTextBaseline) {
-                    BrandMark(size: 22)
-                    Text("Zoop").font(StrandFont.overline).tracking(StrandFont.overlineTracking)
-                        .foregroundStyle(StrandPalette.accent)
-                    Spacer()
-                    Text(range.longName).strandOverline()
-                }
-                Text("Trends report")
-                    .font(StrandFont.title1)
-                    .foregroundStyle(StrandPalette.textPrimary)
-                Text(rangeLabel)
-                    .font(StrandFont.subhead)
-                    .foregroundStyle(StrandPalette.textSecondary)
+        VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
+            HStack(alignment: .firstTextBaseline) {
+                BrandMark(size: 22)
+                Text("Zoop").font(StrandFont.overline).tracking(StrandFont.overlineTracking)
+                    .foregroundStyle(StrandPalette.accent)
+                Spacer()
+                Text(range.longName).strandOverline()
             }
-            .padding(ZoopMetrics.cardPadding)
+            Text("Trends report")
+                .font(StrandFont.title1)
+                .foregroundStyle(StrandPalette.textPrimary)
+            Text(rangeLabel)
+                .font(StrandFont.subhead)
+                .foregroundStyle(StrandPalette.textSecondary)
         }
+        .padding(ZoopMetrics.cardPadding)
+        .zoopControlSurface(radius: ZoopMetrics.cardRadius, tint: StrandPalette.accent)
     }
 
     private var rangeLabel: String {

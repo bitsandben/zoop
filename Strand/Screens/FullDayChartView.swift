@@ -213,12 +213,11 @@ struct FullDayChartView: View {
     // MARK: Chart
 
     @ViewBuilder private var chartCard: some View {
-        ChartCard(
+        ContentCard(
             title: LocalizedStringKey(metric.title),
             subtitle: resolutionSubtitle,
             trailing: latestReadout,
-            height: 280,
-            tint: StrandPalette.metricRose
+            height: 280
         ) {
             if loading && series.points.isEmpty {
                 loadingState
@@ -293,7 +292,7 @@ struct FullDayChartView: View {
     private var emptyState: some View {
         VStack(spacing: ZoopMetrics.space2) {
             Image(systemName: "waveform.slash")
-                .font(.system(size: 26, weight: .light))
+                .font(ZoopType.icon(26, weight: .light))
                 .foregroundStyle(StrandPalette.textTertiary)
             Text("No \(metric.title.lowercased()) here")
                 .font(StrandFont.body)

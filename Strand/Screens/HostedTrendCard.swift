@@ -63,7 +63,7 @@ enum HostedTrendData {
 
 /// One Trends metric trend, rendered as a Today host card (#today-hosted-cards).
 ///
-/// Draws the same `ChartCard` + `TrendChart` pair the Trends tab draws, from the same resolved points,
+/// Draws the same chart `ContentCard` + `TrendChart` pair the Trends tab draws, from the same resolved points,
 /// so the hosted copy cannot become a second chart of the same numbers.
 ///
 /// What it does NOT carry is the range selector. A home-screen card has nowhere to put one and no place
@@ -110,8 +110,8 @@ struct HostedTrendCard: View {
         // The unit rides with the average. The Trends tab carries it in a footer of min/mean/max, which
         // a home-screen card has no room for, so without this the number would appear bare.
         let trailing = avg.map { "\(fmt($0)) \(unit)" }
-        ChartCard(title: title, subtitle: nil, trailing: trailing,
-                  height: ZoopMetrics.chartHeight, tint: colour) {
+        ContentCard(title: title, subtitle: nil, trailing: trailing,
+                  height: ZoopMetrics.chartHeight) {
             TrendChart(points: pts,
                        gradient: Gradient(colors: [colour.opacity(0.35), colour]),
                        valueRange: HostedTrendData.valueRange(pts, fallback: fallback),

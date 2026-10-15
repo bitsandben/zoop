@@ -57,7 +57,7 @@ public struct MenuBarLabel: View {
     public var body: some View {
         HStack(spacing: 4) {
             Image(systemName: live.connected ? "heart.fill" : "heart")
-                .font(.system(size: 11, weight: .semibold))
+                .font(ZoopType.icon(11, weight: .semibold))
                 .foregroundStyle(dotColor)
             Text(displayHR.map(String.init) ?? "—")
                 .font(StrandFont.rounded(12, weight: .semibold))
@@ -334,7 +334,7 @@ public struct MenuBarContent: View {
         Button(action: action) {
             HStack(spacing: 6) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(ZoopType.icon(12, weight: .semibold))
                 Text(title)
                     .font(StrandFont.subhead)
                     .lineLimit(1)

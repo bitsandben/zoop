@@ -70,7 +70,7 @@ struct CoachLauncherSheet: View {
                     .foregroundStyle(StrandPalette.textPrimary)
                     .padding(.horizontal, 12).padding(.vertical, 8)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(FrostedCardSurface(cornerRadius: ZoopMetrics.cardRadius))
+                    .zoopInsetSurface(radius: ZoopMetrics.cardRadius)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -82,13 +82,13 @@ struct CoachLauncherSheet: View {
                 .textFieldStyle(.plain)
                 .lineLimit(1...3)
                 .padding(.horizontal, 12).padding(.vertical, 9)
-                .background(FrostedCardSurface(cornerRadius: ZoopMetrics.cardRadius))
+                .zoopInsetSurface(radius: ZoopMetrics.cardRadius)
                 .onSubmit { submitDraft() }
             Button {
                 submitDraft()
             } label: {
                 Image(systemName: "arrow.up.circle.fill")
-                    .font(.system(size: 26, weight: .semibold))
+                    .font(ZoopType.icon(26, weight: .semibold))
                     .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
             }
             .buttonStyle(.plain)
@@ -117,7 +117,7 @@ struct CoachLauncherSheet: View {
                 .foregroundStyle(StrandPalette.textPrimary)
                 .padding(.horizontal, 14).padding(.vertical, 10)
                 .frame(maxWidth: .infinity)
-                .background(FrostedCardSurface(cornerRadius: ZoopMetrics.cardRadius))
+                .zoopInsetSurface(radius: ZoopMetrics.cardRadius)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

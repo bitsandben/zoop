@@ -149,16 +149,16 @@ struct StressWidgetView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Stress")
-                .font(.system(size: 13, weight: .medium))
+                .font(ZoopType.caption.weight(.medium))
                 .foregroundStyle(StrandPalette.textPrimary)
 
             HStack(alignment: .lastTextBaseline, spacing: 4) {
                 Text(latest.map { StressTrace.formatLevel($0) } ?? "—")
-                    .font(.system(size: 30, weight: .bold, design: .default))
+                    .font(ZoopType.number(30, weight: .bold))
                     .foregroundStyle(StrandPalette.textPrimary)
                 if latest != nil {
                     Text("of 3")
-                        .font(.system(size: 12))
+                        .font(ZoopType.small)
                         .foregroundStyle(StrandPalette.textSecondary)
                 }
                 if let stats, let peak = stats.peak.level {
@@ -172,7 +172,7 @@ struct StressWidgetView: View {
                         Text("Peak")
                         Text(verbatim: StressTrace.formatLevel(peak) + " · " + peakTime)
                     }
-                    .font(.system(size: 11))
+                    .font(ZoopType.micro)
                     .foregroundStyle(StrandPalette.textPrimary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
@@ -217,11 +217,11 @@ struct StressWidgetView: View {
                             Text(verbatim: " · ")
                             Text("Updated \(updated, format: .dateTime.hour().minute())")
                         }
-                        .font(.system(size: 10))
+                        .font(ZoopType.micro)
                         .foregroundStyle(StrandPalette.textSecondary)
                     } else {
                         Text("Updated \(updated, format: .dateTime.hour().minute())")
-                            .font(.system(size: 10))
+                            .font(ZoopType.micro)
                             .foregroundStyle(StrandPalette.textSecondary)
                     }
                     Spacer()

@@ -47,11 +47,11 @@ struct CycleScreen: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text("Cycle day \(e.cycleDay)")
-                        .font(.system(size: 26, weight: .bold))
+                        .font(ZoopType.number(26, weight: .bold))
                         .foregroundStyle(StrandPalette.textPrimary)
                     Rectangle().fill(StrandPalette.hairline).frame(width: 1, height: 22)
                     Text(e.phase.title)
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(ZoopType.subtitle.weight(.semibold))
                         .foregroundStyle(e.phase.tint)
                 }
                 if let w = CycleCalendar.nextPeriodWindow(periodStarts: startNumbers, today: today) {
@@ -106,7 +106,7 @@ struct CycleScreen: View {
                     Button { monthOffset += 1 } label: { Image(systemName: "chevron.right") }
                     Spacer()
                 }
-                .font(.system(size: 15, weight: .semibold))
+                .font(ZoopType.label.weight(.semibold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .buttonStyle(.plain)
 
@@ -163,7 +163,7 @@ struct CycleScreen: View {
             }
             if let d = dayOfMonth {
                 Text("\(d)")
-                    .font(.system(size: 14, weight: .semibold).monospacedDigit())
+                    .font(ZoopType.icon(14, weight: .semibold).monospacedDigit())
                     .foregroundStyle(me?.predicted == true || me == nil ? StrandPalette.textSecondary : StrandPalette.textPrimary)
             }
             if isToday {
@@ -196,7 +196,7 @@ struct CycleScreen: View {
             ContentCard {
                 HStack(spacing: 12) {
                     Image(systemName: "drop.fill")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(ZoopType.icon(15, weight: .semibold))
                         .foregroundStyle(StrandPalette.textPrimary)
                         .frame(width: 40, height: 40)
                         .background(Circle().fill(StrandPalette.surfaceBase))
@@ -205,7 +205,7 @@ struct CycleScreen: View {
                         .foregroundStyle(StrandPalette.textPrimary)
                     Spacer()
                     Image(systemName: "plus")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(ZoopType.icon(17, weight: .semibold))
                         .foregroundStyle(StrandPalette.primaryButtonText)
                         .frame(width: 36, height: 36)
                         .background(Circle().fill(StrandPalette.primaryButtonFill))

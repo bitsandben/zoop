@@ -488,7 +488,7 @@ private struct SidebarStatus: View {
             Spacer()
         }
         .padding(10)
-        .background(ZoopPanelSurface(cornerRadius: 10))
+        .zoopInsetSurface(radius: 10)
     }
 
     // Shares LiveState.connectionStatus* with the Settings strap card so they never disagree (#266); a

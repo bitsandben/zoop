@@ -5,9 +5,12 @@ import UIKit
 import AppKit
 #endif
 
-// MARK: - ZoopType: the six semantic type tokens
-// The ONLY sizes a 2.0 screen may use. All scale with Dynamic Type and both themes expose the same names (Classic keeps the default face, Pastel swaps to SF Rounded where themed).
-// Additive until call sites migrate off the older `StrandFont` scale.
+// MARK: - ZoopType: the six semantic type tokens (Zoop 2.0 §7.1)
+//
+// The ONLY sizes a 2.0 screen may use. Every token scales with Dynamic Type, and both themes expose
+// the same six names, so a view never branches on the theme: Classic keeps the square default face,
+// Pastel & Nature swaps to SF Rounded where the table asks for it. Additive: the older `StrandFont`
+// scale keeps working until the call sites are migrated.
 
 public enum ZoopType {
 
@@ -37,6 +40,43 @@ public enum ZoopType {
     /// Units, deltas, data age.
     public static var caption: Font { Font.system(.footnote) }
 
+    // MARK: Supporting tokens (the migration off `.font(.system(size:))`)
+    //
+    // Chrome that the six tokens above do not cover. Each one still scales with Dynamic Type except
+    // `icon`, whose glyph sits in fixed-size chrome. Add `.weight(_:)` / `.monospacedDigit()` at the
+    // use site rather than inventing another size.
+
+    /// 9–11 pt labels: chart axis ticks, legend keys, tiny badges, unit suffixes on small readouts.
+    public static var micro: Font { Font.system(.caption2) }
+
+    /// 12 pt secondary labels in dense rows and chips.
+    public static var small: Font { Font.system(.caption) }
+
+    /// 14–15 pt row and button labels.
+    public static var label: Font { Font.system(.subheadline) }
+
+    /// 16 pt emphasised row text and compact button titles.
+    public static var callout: Font { Font.system(.callout) }
+
+    /// 18–22 pt text headings inside a card or sheet (not numbers; those use `number(_:)`).
+    public static var subtitle: Font { Font.system(.title3, design: design) }
+
+    /// A number at a fixed point size in the theme's numeral face (tabular digits): ring centres,
+    /// secondary heroes and readouts that sit between `metric` and `display`. Scales with Dynamic Type.
+    public static func number(_ size: CGFloat, weight: Font.Weight = .semibold) -> Font {
+        scaled(size, weight: weight, style: size >= 34 ? .largeTitle : .title).monospacedDigit()
+    }
+
+    /// An SF Symbol glyph at a fixed point size. Symbols sit inside fixed chrome (wells, buttons,
+    /// pills), so the size does not follow Dynamic Type; text never uses this.
+    public static func icon(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        Font.system(size: size, weight: weight)
+    }
+
+    /// Monospaced text (raw values, codes, logs) at the footnote size.
+    public static var mono: Font { Font.system(.footnote, design: .monospaced) }
+
+    // Why: Classic = default design, Pastel = rounded, for the tokens the table marks as themed.
     private static var design: Font.Design { ZoopTheme.isPastel ? .rounded : .default }
 
     /// A fixed point size that still follows Dynamic Type (`Font.system(size:)` does not scale).
@@ -67,7 +107,7 @@ private extension Font.Weight {
 }
 #endif
 
-// MARK: - Spacing and radius
+// MARK: - Spacing and radius (§7.2)
 
 /// 4-pt grid.
 public enum ZoopSpacing {

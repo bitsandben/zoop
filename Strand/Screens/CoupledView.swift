@@ -28,10 +28,6 @@ import Foundation
 struct CoupledView: View {
     @EnvironmentObject var repo: Repository
 
-    /// "Card transparency" (0–100, default 100): fades the coupled glance cards in lockstep with the
-    /// frosted cards; content stays readable. Mirrors Kotlin `ZoopPrefs.cardOpacityPercent`.
-    @CardOpacity private var cardOpacity: Double
-
     // Effort is stored 0–100; the coupled read is always the 0–21 Day-Strain axis regardless of the user's
     // #268 display toggle, so the gauge reads like the classic coupled home. Display-only conversion.
     private let strainScale: EffortScale = .whoop
@@ -451,7 +447,7 @@ struct CoupledView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(ZoopType.icon(13, weight: .semibold))
                             .foregroundStyle(StrandPalette.textTertiary)
                     }
                 }
@@ -582,7 +578,7 @@ struct CoupledView: View {
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "function")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(ZoopType.icon(14, weight: .semibold))
                                 .foregroundStyle(StrandPalette.icon(StrandPalette.chargeColor))
                             VStack(alignment: .leading, spacing: 1) {
                                 Text("How Charge is calculated")
@@ -592,11 +588,11 @@ struct CoupledView: View {
                             }
                             Spacer(minLength: 8)
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(ZoopType.icon(12, weight: .semibold))
                                 .foregroundStyle(StrandPalette.textTertiary)
                         }
                         .padding(14)
-                        .background(ZoopPanelSurface(cornerRadius: 14))
+                        .zoopInsetSurface(radius: 14)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -640,7 +636,7 @@ struct CoupledView: View {
         return ZoopCard(padding: 14, tint: StrandPalette.chargeColor) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "gauge.with.dots.needle.bottom.50percent")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(ZoopType.icon(16, weight: .semibold))
                     .foregroundStyle(StrandPalette.icon(StrandPalette.chargeColor))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
@@ -680,10 +676,7 @@ struct CoupledView: View {
     /// resting hairline over surfaceRaised), so the coupled glance cards read identically to Today and the
     /// batch-1 liquid screens.
     private func card<V: View>(@ViewBuilder _ content: () -> V) -> some View {
-        content()
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(ZoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
+        ContentCard { content() }
     }
 
     private func clockString(_ ts: Int) -> String {

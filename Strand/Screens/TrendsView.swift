@@ -8,7 +8,7 @@ import Foundation
 //
 // The longitudinal view, rebuilt on the locked Zoop component system so every
 // surface, height and gap is identical: one SegmentedPillControl for the range,
-// a hero recovery ChartCard, a uniform grid of HRV / Resting HR / Day Strain
+// a hero recovery chart ContentCard, a uniform grid of HRV / Resting HR / Day Strain
 // ChartCards (all ZoopMetrics.chartHeight tall), and the whole history as a
 // recovery YearHeatStrip in a ZoopCard. No hand-sized cards anywhere.
 
@@ -897,7 +897,7 @@ private struct TrendsSparsePlaceholder: View {
             .font(StrandFont.subhead)
             .foregroundStyle(StrandPalette.textTertiary)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .background(ZoopPanelSurface(cornerRadius: 12))
+            .zoopInsetSurface(radius: 12)
     }
 }
 
@@ -937,12 +937,11 @@ private struct TrendsScrubCard<Footer: View>: View {
     @State private var selected: TrendPoint?
 
     var body: some View {
-        ChartCard(
+        ContentCard(
             title: title,
             subtitle: selected.map { $0.date.formatted(trendsScrubDayStyle) } ?? subtitle,
             trailing: selected.map { headerFormat($0.value) } ?? average,
             height: ZoopMetrics.chartHeight,
-            tint: tint,
             showsChevron: TrendsView.cardsShowChevron,
             chart: {
                 if points.count >= 2 {

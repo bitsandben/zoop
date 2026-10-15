@@ -18,46 +18,45 @@ struct HomeFitnessAgeCard: View {
     @State private var loaded = false
 
     var body: some View {
-        HStack(alignment: .center, spacing: ZoopSpacing.l) {
-            VStack(alignment: .leading, spacing: ZoopSpacing.s) {
-                HStack(spacing: 6) {
-                    Text(FitnessAgeStrings.title)
-                        .font(StrandFont.ui(15, weight: .semibold))
-                        .foregroundStyle(StrandPalette.textPrimary)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(StrandPalette.textTertiary)
+        ContentCard {
+            HStack(alignment: .center, spacing: ZoopSpacing.l) {
+                VStack(alignment: .leading, spacing: ZoopSpacing.s) {
+                    HStack(spacing: 6) {
+                        Text(FitnessAgeStrings.title)
+                            .font(StrandFont.ui(15, weight: .semibold))
+                            .foregroundStyle(StrandPalette.textPrimary)
+                        Image(systemName: "chevron.right")
+                            .font(ZoopType.icon(13, weight: .semibold))
+                            .foregroundStyle(StrandPalette.textTertiary)
+                            .accessibilityHidden(true)
+                    }
+                    if let latest = snapshot.latest {
+                        Text(verbatim: fitnessOneDecimal(latest.value))
+                            .font(StrandFont.display(34))
+                            .foregroundStyle(StrandPalette.textPrimary)
+                        Text(fitnessAgeDeltaLine(fitnessAge: latest.value, chronoAge: profile.age))
+                            .font(StrandFont.subhead)
+                            .foregroundStyle(fitnessTint(delta: Double(profile.age) - latest.value))
+                            .lineLimit(2)
+                    } else if loaded {
+                        // A dash is never a valid state: say what is still missing.
+                        Text(fitnessReadyLeadCopy(
+                            rhrDays: repo.days.suffix(7).compactMap { $0.restingHr }.count,
+                            hasAge: profile.age > 0, hasSex: !profile.sex.isEmpty))
+                            .font(StrandFont.subhead)
+                            .foregroundStyle(StrandPalette.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Spacer(minLength: 0)
+                if let latest = snapshot.latest, profile.age > 0 {
+                    FitnessAgeDial(value: latest.value, chronoAge: Double(profile.age), compact: true)
+                        .frame(width: 112, height: 64)
                         .accessibilityHidden(true)
                 }
-                if let latest = snapshot.latest {
-                    Text(verbatim: fitnessOneDecimal(latest.value))
-                        .font(StrandFont.display(34))
-                        .foregroundStyle(StrandPalette.textPrimary)
-                    Text(fitnessAgeDeltaLine(fitnessAge: latest.value, chronoAge: profile.age))
-                        .font(StrandFont.subhead)
-                        .foregroundStyle(fitnessTint(delta: Double(profile.age) - latest.value))
-                        .lineLimit(2)
-                } else if loaded {
-                    // A dash is never a valid state: say what is still missing.
-                    Text(fitnessReadyLeadCopy(
-                        rhrDays: repo.days.suffix(7).compactMap { $0.restingHr }.count,
-                        hasAge: profile.age > 0, hasSex: !profile.sex.isEmpty))
-                        .font(StrandFont.subhead)
-                        .foregroundStyle(StrandPalette.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            Spacer(minLength: 0)
-            if let latest = snapshot.latest, profile.age > 0 {
-                FitnessAgeDial(value: latest.value, chronoAge: Double(profile.age), compact: true)
-                    .frame(width: 112, height: 64)
-                    .accessibilityHidden(true)
             }
         }
-        .padding(ZoopSpacing.cardPadding)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(ZoopPanelSurface(cornerRadius: 20))
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: ZoopRadius.card, style: .continuous))
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .task(id: repo.refreshSeq) {

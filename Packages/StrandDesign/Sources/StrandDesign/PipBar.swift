@@ -1,10 +1,25 @@
 import SwiftUI
 
 // MARK: - PipBar (the Zoop segmented count-up bar)
-// N equal rounded segments with small gaps; segments up to the value's fraction are filled with the tint, the last filled one a touch brighter (lead edge).
-// Count-up on first appear and every value change: ONE animated fraction on a spring drives all segments, each deriving its fill over a short ramp,
-// so they light in sequence with no per-segment timers. Quiet motion sets it instantly. Flat fills only (no glow), tokens only.
-// `PipBar` is the bare bar; `PipBarRow` is the card-ready metric row (label, big value/unit, bar beneath).
+//
+// A horizontal row of N equal rounded segments ("pips") separated by small uniform gaps. Segments
+// from the left up to the value's fraction are filled with the tint; the rest stay the track colour.
+// The last filled segment is a touch brighter (the lead edge). This is the Zoop signature for showing
+// a 0…max value — a flat, crisp, WHOOP-grade alternative to a smooth progress bar.
+//
+// COUNT-UP: on first appear AND on every value change, the fill cascades segment-by-segment from 0 up
+// to the value in a quick eased sweep (~0.5–0.7s). The whole effect is driven by a SINGLE animated
+// fraction on a spring — each segment derives its own fill from that one value over a short per-segment
+// ramp, so the pips appear to light up in sequence with NO per-segment timers (cheap to animate).
+// Quiet motion → the fraction is set instantly and the bar renders static at its final frame.
+//
+// HARD constraints honoured: NO GLOW (flat fills only), TOKENS only (surfaceInset track, tint fill),
+// crisp high-contrast, PUBLIC stable API, self-contained in this file.
+//
+// Two surfaces:
+//   • `PipBar`     — just the segmented bar, for inline use under a value.
+//   • `PipBarRow`  — the card-ready WHOOP metric row: UPPERCASE label + big white value/unit on top,
+//                    the PipBar beneath.
 
 // MARK: - PipBar
 
@@ -36,7 +51,8 @@ public struct PipBar: View {
     }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    // Same gate as count-up text: in-app Reduce Motion or Low Power Mode suppress the sweep even when the OS flag is off.
+    // Keep the fill sweep on the same gate as count-up text: an in-app Reduce Motion choice
+    // or Low Power Mode must suppress the decorative transition even when the OS flag is off.
     @ObservedObject private var motion = ZoopMotionState.shared
     private var poseStill: Bool { motion.poseStill(reduceMotion) }
 
@@ -44,7 +60,9 @@ public struct PipBar: View {
     /// it 0 → target so segments light in sequence; quiet motion snaps it to the target.
     @State private var animatedFraction: Double = 0
 
-    /// The count-up curve: a quick eased cascade (~0.6s) so pips light left→right; `nil` under the quiet-motion gate so the bar renders static.
+    /// The count-up curve: a quick eased cascade (~0.6s total) so the pips light left→right. Suppressed to
+    /// `nil` under the shared quiet-motion gate so the bar renders static.
+    /// Self-contained here (no edit to StrandMotion); mirrors `StrandMotion.drawIn(reduced:)`'s pattern.
     private var countUp: Animation? {
         poseStill ? nil : .easeOut(duration: 0.6)
     }
@@ -65,7 +83,10 @@ public struct PipBar: View {
         let gap: CGFloat = max(2, height * 0.28)
         let corner: CGFloat = 2.5
 
-        // Precompute the three constant colours (inset track, tint, brightened lead tint) once per body eval, not inside each of the (default 24) segment closures.
+        // Precompute the three constant colours ONCE per body eval rather than re-deriving them inside
+        // every one of the (default 24) segment closures: the inset track, the plain tint, and the
+        // brightened lead-edge tint (which itself runs an interpolate → Color(hex:) allocation). Combined
+        // with the Palette memoization this removes the per-segment colour allocations across the bar.
         let track = StrandPalette.surfaceInset
         let leadBase = brighten(tint)
 
@@ -81,20 +102,26 @@ public struct PipBar: View {
             withAnimation(countUp) { animatedFraction = targetFraction }
         }
         .onChangeCompat(of: value) { _ in
+            // Re-run the cascade whenever the value changes.
             withAnimation(countUp) { animatedFraction = targetFraction }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityValue(Text(axValue))
     }
 
-    /// The fill for one segment, derived from the single animated fraction. Each pip owns `[index/N, (index+1)/N]` and ramps over its own span so the leading pip fades in;
-    /// the pip holding the lead edge gets a small brightness lift.
+    /// The fill for a single segment, derived from the one animated fraction.
+    ///
+    /// Each pip owns the sub-range `[index/N, (index+1)/N]`. As `animatedFraction` sweeps up it crosses
+    /// these edges left→right, so segments fill in sequence. Within a pip the fill ramps over its own
+    /// span (so the *leading* pip fades in smoothly rather than snapping), then we add a small brightness
+    /// lift to whichever pip currently holds the lead edge — the "last filled segment is a touch brighter".
     private func fillStyle(for index: Int, track: Color, leadBase: Color) -> Color {
         let n = Double(pipCount)
         let segStart = Double(index) / n
         let segEnd = Double(index + 1) / n
         let f = animatedFraction
 
+        // How much of THIS segment is covered by the current fraction (0…1 across the segment span).
         let local: Double
         if f >= segEnd {
             local = 1
@@ -104,14 +131,18 @@ public struct PipBar: View {
             local = (f - segStart) / (segEnd - segStart) // span is 1/n, always > 0
         }
 
-        // Track colour for unlit pips; partially-lit pips mix toward it so the cascade edge reads cleanly.
+        // Track colour for unlit pips: surfaceInset is the canonical well; fall back to a faint hairline
+        // feel by mixing toward the track for partially-lit pips so the cascade edge reads cleanly.
         if local <= 0 { return track }
 
-        // Lit pips use the tint; the lead-edge pip uses `leadBase` (brightened tint, precomputed in `body`). Flat, no glow.
+        // Lit pips use the tint; the segment holding the live lead edge (target fraction sits inside it)
+        // is nudged a touch brighter for a crisp leading highlight. Flat — no glow. (`leadBase` is the
+        // brightened tint, precomputed once in `body`.)
         let isLeadEdge = targetFraction > segStart && targetFraction <= segEnd
         let base = isLeadEdge ? leadBase : tint
 
-        // Partially covered pip (the moving front): blend track → fill by coverage so the sweep edge is smooth.
+        // Partially-covered pip (the moving front of the cascade): blend track → fill by coverage so the
+        // sweep edge is smooth, not stepped. Fully covered pips are the solid fill.
         return local >= 1 ? base : StrandPalette.interpolate(track, base, local)
     }
 
@@ -124,6 +155,7 @@ public struct PipBar: View {
     }
 
     private var axValue: String {
+        // Report the raw value in its range, rounded for speech.
         let v = (value * 10).rounded() / 10
         let shown = v.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(v)) : String(v)
         return shown
@@ -132,7 +164,9 @@ public struct PipBar: View {
 
 // MARK: - PipBarRow (card-ready WHOOP metric row)
 
-/// A card-ready row: UPPERCASE overline label + big white value with a smaller unit suffix on top, the `PipBar` beneath. Drop into a `StrandCard`.
+/// A card-ready row: UPPERCASE label + big white value/unit on top, the `PipBar` beneath. Matches the
+/// WHOOP metric-row type — bold white number with a smaller-weight unit suffix over a tracked overline
+/// label. Drop into a `ContentCard` for an instant metric tile.
 public struct PipBarRow: View {
 
     /// UPPERCASE-style label (rendered with overline tracking + textCase upper).
@@ -170,12 +204,14 @@ public struct PipBarRow: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            // UPPERCASE label.
             Text(label)
                 .font(StrandFont.overline)
                 .tracking(StrandFont.overlineTracking)
                 .textCase(.uppercase)
                 .foregroundStyle(StrandPalette.textSecondary)
 
+            // Big white value + smaller-weight unit suffix.
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(valueText)
                     .font(StrandFont.number(30, weight: .bold))
@@ -187,6 +223,7 @@ public struct PipBarRow: View {
                 }
             }
 
+            // The segmented count-up bar.
             PipBar(value: value, range: range, segments: segments, tint: tint)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -216,8 +253,9 @@ public struct PipBarRow: View {
                 labelled("tall",   PipBar(value: 45, tint: StrandPalette.statusWarning, height: 14))
             }
 
+            // Card-ready rows.
             Text("In a card").strandOverline().padding(.top, 8)
-            StrandCard(tint: StrandPalette.chargeColor) {
+            ContentCard {
                 VStack(alignment: .leading, spacing: 18) {
                     PipBarRow(label: "Charge", value: 74, tint: StrandPalette.chargeColor,
                               valueText: "74", unit: "%")

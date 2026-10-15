@@ -93,7 +93,7 @@ struct SmartAlarmView: View {
                              time: windDownOn ? timeLabel(WindDownNudge.nudgeMinuteOfDay()) : "—",
                              tint: StrandPalette.restColor)
                     Image(systemName: "arrow.right")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(ZoopType.icon(13, weight: .semibold))
                         .foregroundStyle(StrandPalette.textTertiary)
                         .accessibilityHidden(true)
                     // "Wake" was the wind-down INPUT wearing the name of the thing that wakes you, in the
@@ -634,7 +634,7 @@ struct SmartAlarmView: View {
                     model.applySmartAlarm()
                 } label: {
                     Image(systemName: "arrow.uturn.backward")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(ZoopType.icon(12, weight: .semibold))
                         .foregroundStyle(StrandPalette.textTertiary)
                         .padding(6)
                         .contentShape(Rectangle())

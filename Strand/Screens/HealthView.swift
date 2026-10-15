@@ -5,12 +5,12 @@ import StrandAnalytics
 import WhoopStore
 
 /// Zoop — Health Monitor.
-/// Live heart rate hero (ChartCard with a streaming sparkline + HR-zone footer),
+/// Live heart rate hero (chart ContentCard with a streaming sparkline + HR-zone footer),
 /// then a uniform LazyVGrid of the body's vital signs (respiratory rate, blood
 /// oxygen, resting HR, HRV, skin temp) as fixed-height StatTiles, each tinted and
 /// captioned with its in-range state. Re-skinned to the locked Zoop component
 /// system: every surface is a ZoopCard, every metric is a StatTile, every chart is
-/// a ChartCard — no ad-hoc card heights or paddings.
+/// a chart ContentCard — no ad-hoc card heights or paddings.
 struct HealthView: View {
     @EnvironmentObject var repo: Repository
     @EnvironmentObject var profile: ProfileStore
@@ -302,12 +302,11 @@ private struct HeartRateSection: View {
 
             // The live HR hero is a flat WHOOP card tinted rose — heart-rate's metric accent.
             // No scenic starfield / bloom: fill contrast carries the edge (Apple-flat).
-            ChartCard(
+            ContentCard(
                 title: "Heart Rate",
                 subtitle: hrIsDerived ? String(localized: "Estimated from R-R interval")
                     : (hasLiveHR ? String(localized: "Streaming live") : String(localized: "Awaiting strap")),
-                trailing: hasLiveHR ? "\(displayHR!) bpm" : "—",
-                tint: StrandPalette.metricRose
+                trailing: hasLiveHR ? "\(displayHR!) bpm" : "—"
             ) {
                 heroChart(displayHR: displayHR, hasLiveHR: hasLiveHR,
                           fraction: fraction, zone: zone, series: series)
@@ -333,7 +332,7 @@ private struct HeartRateSection: View {
     }
 
     /// The hero chart body: a tall, time-aware HR line tinted to the current zone, with a
-    /// status pill floated top-trailing. Fixed to ZoopMetrics.chartHeight via ChartCard.
+    /// status pill floated top-trailing. Fixed to ZoopMetrics.chartHeight via chart ContentCard.
     private func heroChart(displayHR: Int?, hasLiveHR: Bool,
                            fraction: Double, zone: Int, series: [LiveHRSample]) -> some View {
         ZStack(alignment: .topTrailing) {
@@ -873,14 +872,14 @@ private struct FitnessAgeSection: View {
         Button { fitnessSheet = .settings } label: {
             HStack(spacing: 8) {
                 Image(systemName: "lungs.fill")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(ZoopType.icon(13, weight: .semibold))
                     .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                 Text("Add your waist for a more accurate VO₂max")
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textSecondary)
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(ZoopType.icon(12, weight: .semibold))
                     .foregroundStyle(StrandPalette.textTertiary)
             }
             .contentShape(Rectangle())
@@ -895,111 +894,105 @@ private struct FitnessAgeSection: View {
         let delta = Double(profile.age) - age        // +ve = fitness age younger than chronological
         let years = Int(abs(delta).rounded())
         let younger = delta >= 0
-        return VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
-            // Tap the hero body to open the full "fitness_age" trend.
-            Button { fitnessSheet = .trend } label: {
-                HStack(alignment: .center, spacing: ZoopMetrics.space5) {
-                    // The signature liquid gauge anchors the hero: a vessel tinted to the Charge world,
-                    // filled by how young the fitness age reads (younger = fuller), with the age counting
-                    // up over it. Same HeroScoreCell idiom as Today. tapPassesThrough is what actually makes
-                    // taps reach the trend Button: a plain splash gesture on the vessel swallows them.
-                    ZStack {
-                        LiquidVessel(value: fitnessAgeFraction(age), tint: StrandPalette.chargeColor,
-                                     animated: true, tapPassesThrough: true)
-                            .frame(width: 96, height: 96)
-                        CountUpNumber(value: Double(shown), font: StrandFont.rounded(30), prefix: bound)
-                            .foregroundStyle(.white)
-                            .shadow(color: StrandPalette.shadow(0.5), radius: 6, y: 1)
-                            .allowsHitTesting(false)
-                    }
-                    VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
-                        Text("Fitness Age").strandOverline()
-                        Text(ageDeltaLine(years: years, younger: younger, bound: bound))
-                            .font(StrandFont.subhead)
-                            .foregroundStyle(younger ? StrandPalette.statusPositive : StrandPalette.statusWarning)
-                    }
-                    Spacer(minLength: 0)
-                    if let vo2 = vo2max {
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text("VO₂max").strandOverline()
-                            Text(ZoopNumber.decimal(vo2, digits: 0))
-                                .font(StrandFont.number(30))
-                                .foregroundStyle(StrandPalette.metricCyan)
-                            Text("ml/kg/min")
-                                .font(StrandFont.footnote)
-                                .foregroundStyle(StrandPalette.textTertiary)
-                            Text("\(String(localized: "On-device")) · \(vo2MaxEstimatorDisplayName(vo2maxEstimator))")
-                                .font(StrandFont.footnote)
-                                .foregroundStyle(StrandPalette.textTertiary)
+        return ContentCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
+                // Tap the hero body to open the full "fitness_age" trend.
+                Button { fitnessSheet = .trend } label: {
+                    HStack(alignment: .center, spacing: ZoopMetrics.space5) {
+                        // The signature liquid gauge anchors the hero: a vessel tinted to the Charge world,
+                        // filled by how young the fitness age reads (younger = fuller), with the age counting
+                        // up over it. Same HeroScoreCell idiom as Today. tapPassesThrough is what actually makes
+                        // taps reach the trend Button: a plain splash gesture on the vessel swallows them.
+                        ZStack {
+                            LiquidVessel(value: fitnessAgeFraction(age), tint: StrandPalette.chargeColor,
+                                         animated: true, tapPassesThrough: true)
+                                .frame(width: 96, height: 96)
+                            CountUpNumber(value: Double(shown), font: StrandFont.rounded(30), prefix: bound)
+                                .foregroundStyle(.white)
+                                .shadow(color: StrandPalette.shadow(0.5), radius: 6, y: 1)
+                                .allowsHitTesting(false)
                         }
+                        VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
+                            Text("Fitness Age").strandOverline()
+                            Text(ageDeltaLine(years: years, younger: younger, bound: bound))
+                                .font(StrandFont.subhead)
+                                .foregroundStyle(younger ? StrandPalette.statusPositive : StrandPalette.statusWarning)
+                        }
+                        Spacer(minLength: 0)
+                        if let vo2 = vo2max {
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("VO₂max").strandOverline()
+                                Text(ZoopNumber.decimal(vo2, digits: 0))
+                                    .font(StrandFont.number(30))
+                                    .foregroundStyle(StrandPalette.metricCyan)
+                                Text("ml/kg/min")
+                                    .font(StrandFont.footnote)
+                                    .foregroundStyle(StrandPalette.textTertiary)
+                                Text("\(String(localized: "On-device")) · \(vo2MaxEstimatorDisplayName(vo2maxEstimator))")
+                                    .font(StrandFont.footnote)
+                                    .foregroundStyle(StrandPalette.textTertiary)
+                            }
+                        }
+                        Image(systemName: "chevron.right")
+                            .font(ZoopType.icon(13, weight: .semibold))
+                            .foregroundStyle(StrandPalette.textTertiary)
+                            .accessibilityHidden(true)
                     }
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(StrandPalette.textTertiary)
-                        .accessibilityHidden(true)
+                    .contentShape(Rectangle())
                 }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(LiquidPressStyle())
-            .accessibilityElement(children: .ignore)
-            // The spoken label carries the bound too, so a screen reader is not told a floored reading is exact.
-            .accessibilityLabel("Fitness Age \(bound)\(shown), \(ageDeltaLine(years: years, younger: younger, bound: bound)). Tap to see the trend.")
+                .buttonStyle(LiquidPressStyle())
+                .accessibilityElement(children: .ignore)
+                // The spoken label carries the bound too, so a screen reader is not told a floored reading is exact.
+                .accessibilityLabel("Fitness Age \(bound)\(shown), \(ageDeltaLine(years: years, younger: younger, bound: bound)). Tap to see the trend.")
 
-            // At a bound the age has stopped carrying information: every model output past the end of
-            // the scale banks as the same number, so someone still improving sees nothing move (#2184).
-            // The VO₂max in the row above is NOT clamped and is the same estimate this age derives from,
-            // so it keeps resolving where the age cannot. Pointing at it asserts nothing the model cannot
-            // support, which an extended reporting floor could not manage: two more years of range would
-            // still sit inside the ±5 band the line below states.
-            //
-            // FULL WIDTH, beside that band line, rather than inside the VStack holding the vessel and the
-            // delta: that column shares an HStack with the VO₂max readout, so a 44-character sentence
-            // would wrap in half a card and crowd the number it explains.
-            if !bound.isEmpty, vo2max != nil {
-                Text("Fitness Age stops here. VO₂max keeps moving.")
+                // At a bound the age has stopped carrying information: every model output past the end of
+                // the scale banks as the same number, so someone still improving sees nothing move (#2184).
+                // The VO₂max in the row above is NOT clamped and is the same estimate this age derives from,
+                // so it keeps resolving where the age cannot. Pointing at it asserts nothing the model cannot
+                // support, which an extended reporting floor could not manage: two more years of range would
+                // still sit inside the ±5 band the line below states.
+                //
+                // FULL WIDTH, beside that band line, rather than inside the VStack holding the vessel and the
+                // delta: that column shares an HStack with the VO₂max readout, so a 44-character sentence
+                // would wrap in half a card and crowd the number it explains.
+                if !bound.isEmpty, vo2max != nil {
+                    Text("Fitness Age stops here. VO₂max keeps moving.")
+                        .font(StrandFont.footnote)
+                        .foregroundStyle(StrandPalette.textTertiary)
+                }
+
+                Text("± \(Int(FitnessAgeEngine.displayBandYears)) yr · a fitness comparison, not a biological age")
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textTertiary)
-            }
 
-            Text("± \(Int(FitnessAgeEngine.displayBandYears)) yr · a fitness comparison, not a biological age")
-                .font(StrandFont.footnote)
-                .foregroundStyle(StrandPalette.textTertiary)
+                Divider().overlay(StrandPalette.hairline)
 
-            Divider().overlay(StrandPalette.hairline)
-
-            // The honest disclosure: what we have / what we still need, grouped by what it unlocks.
-            Button {
-                withAnimation(StrandMotion.interactive) { showReadiness.toggle() }
-            } label: {
-                HStack(spacing: ZoopMetrics.space2) {
-                    Image(systemName: "info.circle")
-                        .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
-                        .accessibilityHidden(true)
-                    Text("How accurate is this?")
-                        .font(StrandFont.subhead)
-                        .foregroundStyle(StrandPalette.textPrimary)
-                    Spacer()
-                    Image(systemName: showReadiness ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(StrandPalette.textTertiary)
-                        .accessibilityHidden(true)
+                // The honest disclosure: what we have / what we still need, grouped by what it unlocks.
+                Button {
+                    withAnimation(StrandMotion.interactive) { showReadiness.toggle() }
+                } label: {
+                    HStack(spacing: ZoopMetrics.space2) {
+                        Image(systemName: "info.circle")
+                            .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
+                            .accessibilityHidden(true)
+                        Text("How accurate is this?")
+                            .font(StrandFont.subhead)
+                            .foregroundStyle(StrandPalette.textPrimary)
+                        Spacer()
+                        Image(systemName: showReadiness ? "chevron.up" : "chevron.down")
+                            .font(ZoopType.icon(12, weight: .semibold))
+                            .foregroundStyle(StrandPalette.textTertiary)
+                            .accessibilityHidden(true)
+                    }
+                    .contentShape(Rectangle())
                 }
-                .contentShape(Rectangle())
+                .buttonStyle(LiquidPressStyle())
+                // Whole-string key per variant (never a stitched Hide/Show fragment).
+                .accessibilityLabel(showReadiness
+                    ? "How accurate is this? Hide the data behind your Fitness Age"
+                    : "How accurate is this? Show the data behind your Fitness Age")
             }
-            .buttonStyle(LiquidPressStyle())
-            // Whole-string key per variant (never a stitched Hide/Show fragment).
-            .accessibilityLabel(showReadiness
-                ? "How accurate is this? Hide the data behind your Fitness Age"
-                : "How accurate is this? Show the data behind your Fitness Age")
         }
-        .padding(ZoopMetrics.space5)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        // Apple-flat WHOOP card: a plain frosted surface tinted to the Charge (green) world —
-        // no scenic starfield / bloom, no gold border. Fill contrast carries the edge.
-        .background {
-            FrostedCardSurface(tint: StrandPalette.chargeColor, cornerRadius: ZoopMetrics.cardRadius)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
     }
 
     /// Load the latest weekly Fitness Age (+ optional VO₂max) from the strap's metricSeries. Uses the
@@ -1129,7 +1122,7 @@ private struct ReadinessChecklistCard: View {
             && (item.key == "age" || item.key == "sex" || item.key == "bodyMetrics" || item.key == "waist")
         let row = HStack(alignment: .firstTextBaseline, spacing: 12) {
             Image(systemName: statusIcon(item.status))
-                .font(.system(size: 14, weight: .semibold))
+                .font(ZoopType.icon(14, weight: .semibold))
                 .foregroundStyle(statusColor(item.status))
                 .frame(width: 18)
                 .accessibilityHidden(true)
@@ -1243,61 +1236,55 @@ private struct VitalitySection: View {
         let sorted = contributions.sorted { $0.lnHazard < $1.lnHazard }
         let best = sorted.first
         let worst = sorted.last
-        return VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
-            HStack(alignment: .center, spacing: ZoopMetrics.space5) {
-                // The weekly Vitality score (0…100) as the signature liquid gauge: a vessel tinted to the
-                // Charge world, filled to the score, with the number counting up over it (Today's
-                // HeroScoreCell idiom). Taps splash the gauge; the number is hit-transparent.
-                VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
-                    Text("Health score").strandOverline()
-                    ZStack {
-                        LiquidVessel(value: max(0, min(1, v / 100)), tint: StrandPalette.chargeColor, animated: true)
-                            .frame(width: 108, height: 108)
-                        VStack(spacing: 0) {
-                            CountUpNumber(value: v, font: StrandFont.rounded(38))
-                                .foregroundStyle(.white)
-                                .shadow(color: StrandPalette.shadow(0.5), radius: 6, y: 1)
-                            Text("of 100").font(StrandFont.caption).foregroundStyle(StrandPalette.textSecondary)
+        return ContentCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
+                HStack(alignment: .center, spacing: ZoopMetrics.space5) {
+                    // The weekly Vitality score (0…100) as the signature liquid gauge: a vessel tinted to the
+                    // Charge world, filled to the score, with the number counting up over it (Today's
+                    // HeroScoreCell idiom). Taps splash the gauge; the number is hit-transparent.
+                    VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
+                        Text("Health score").strandOverline()
+                        ZStack {
+                            LiquidVessel(value: max(0, min(1, v / 100)), tint: StrandPalette.chargeColor, animated: true)
+                                .frame(width: 108, height: 108)
+                            VStack(spacing: 0) {
+                                CountUpNumber(value: v, font: StrandFont.rounded(38))
+                                    .foregroundStyle(.white)
+                                    .shadow(color: StrandPalette.shadow(0.5), radius: 6, y: 1)
+                                Text("of 100").font(StrandFont.caption).foregroundStyle(StrandPalette.textSecondary)
+                            }
+                            .allowsHitTesting(false)
                         }
-                        .allowsHitTesting(false)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Vitality \(Int(v.rounded())) out of 100")
                     }
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("Vitality \(Int(v.rounded())) out of 100")
+                    Spacer(minLength: 0)
+                    VStack(alignment: .trailing, spacing: ZoopMetrics.space1) {
+                        Text("Body Age").strandOverline()
+                        CountUpText(value: ba,
+                                    format: { "\(Int($0.rounded()))" },
+                                    font: StrandFont.number(34),
+                                    color: StrandPalette.textPrimary)
+                        Text(bodyAgeDeltaLine(yrs: yrs, younger: younger))
+                            .font(StrandFont.footnote)
+                            .foregroundStyle(younger ? StrandPalette.statusPositive : StrandPalette.statusWarning)
+                    }
                 }
-                Spacer(minLength: 0)
-                VStack(alignment: .trailing, spacing: ZoopMetrics.space1) {
-                    Text("Body Age").strandOverline()
-                    CountUpText(value: ba,
-                                format: { "\(Int($0.rounded()))" },
-                                font: StrandFont.number(34),
-                                color: StrandPalette.textPrimary)
-                    Text(bodyAgeDeltaLine(yrs: yrs, younger: younger))
-                        .font(StrandFont.footnote)
-                        .foregroundStyle(younger ? StrandPalette.statusPositive : StrandPalette.statusWarning)
+                if (best?.lnHazard ?? 0) < 0 || (worst?.lnHazard ?? 0) > 0 {
+                    Divider().overlay(StrandPalette.hairline)
+                    if let best, best.lnHazard < 0 {
+                        Text("Helping most: \(engineText(best.label))")
+                            .font(StrandFont.footnote).foregroundStyle(StrandPalette.statusPositive)
+                    }
+                    if let worst, worst.lnHazard > 0 {
+                        Text("Holding you back: \(engineText(worst.label))")
+                            .font(StrandFont.footnote).foregroundStyle(StrandPalette.statusWarning)
+                    }
                 }
+                Text("A wellness estimate from your habits, not a clinical biological age.")
+                    .font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary)
             }
-            if (best?.lnHazard ?? 0) < 0 || (worst?.lnHazard ?? 0) > 0 {
-                Divider().overlay(StrandPalette.hairline)
-                if let best, best.lnHazard < 0 {
-                    Text("Helping most: \(engineText(best.label))")
-                        .font(StrandFont.footnote).foregroundStyle(StrandPalette.statusPositive)
-                }
-                if let worst, worst.lnHazard > 0 {
-                    Text("Holding you back: \(engineText(worst.label))")
-                        .font(StrandFont.footnote).foregroundStyle(StrandPalette.statusWarning)
-                }
-            }
-            Text("A wellness estimate from your habits, not a clinical biological age.")
-                .font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary)
         }
-        .padding(ZoopMetrics.space5)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        // Apple-flat WHOOP card: a plain frosted surface tinted to the Charge (green) world —
-        // no scenic starfield / bloom, no gold border. Fill contrast carries the edge.
-        .background {
-            FrostedCardSurface(tint: StrandPalette.chargeColor, cornerRadius: ZoopMetrics.cardRadius)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
     }
 
     /// The Body Age delta as whole-phrase variants per count and direction, so translators see
@@ -1613,7 +1600,7 @@ private struct HealthHubLinksSection: View {
             ZoopCard {
                 HStack(spacing: 12) {
                     Image(systemName: symbol)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(ZoopType.icon(16, weight: .semibold))
                         .foregroundStyle(tint)
                         .frame(width: 30, height: 30)
                         .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
@@ -1626,7 +1613,7 @@ private struct HealthHubLinksSection: View {
                     }
                     Spacer(minLength: 8)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(ZoopType.icon(12, weight: .semibold))
                         .foregroundStyle(StrandPalette.textTertiary)
                         .accessibilityHidden(true)
                 }

@@ -25,7 +25,7 @@ private struct FitnessPanel<Content: View>: View {
         VStack(alignment: .leading, spacing: ZoopSpacing.m) { content }
             .padding(ZoopSpacing.cardPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(ZoopPanelSurface(cornerRadius: ZoopRadius.tile))
+            .zoopInsetSurface(radius: ZoopRadius.tile)
     }
 }
 

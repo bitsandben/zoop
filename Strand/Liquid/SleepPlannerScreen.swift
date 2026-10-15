@@ -69,7 +69,7 @@ struct SleepPlannerScreen: View {
     private var unlockBanner: some View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.circle.fill")
-                .font(.system(size: 18))
+                .font(ZoopType.icon(18))
                 .foregroundStyle(StrandPalette.stressHigh)
             Text("Your WHOOP 5/MG needs one switch for the alarm.")
                 .font(ZoopType.caption.weight(.medium))
@@ -97,7 +97,7 @@ struct SleepPlannerScreen: View {
     private var rejectedBanner: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 18))
+                .font(ZoopType.icon(18))
                 .foregroundStyle(StrandPalette.statusWarning)
             Text("Your strap isn't taking the alarm. Charge and reconnect it, and keep a phone alarm until it does.")
                 .font(ZoopType.caption.weight(.medium))
@@ -124,7 +124,7 @@ struct SleepPlannerScreen: View {
                 ZStack {
                     Capsule().fill(StrandPalette.accent.opacity(0.22)).frame(height: 8)
                     Text(Self.duration(t.inBedMin))
-                        .font(.system(size: 15, weight: .bold).monospacedDigit())
+                        .font(ZoopType.label.weight(.bold).monospacedDigit())
                         .foregroundStyle(StrandPalette.textPrimary)
                         .padding(.horizontal, 14)
                         .frame(height: 30)
@@ -166,10 +166,10 @@ struct SleepPlannerScreen: View {
                     .foregroundStyle(StrandPalette.textPrimary)
                 Spacer()
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(ZoopType.icon(12, weight: .semibold))
                     .foregroundStyle(StrandPalette.textSecondary)
             }
-            .font(.system(size: 15, weight: .semibold))
+            .font(ZoopType.label.weight(.semibold))
             .lineLimit(1)
             .minimumScaleFactor(0.8)
             .padding(.horizontal, 16)
@@ -208,7 +208,7 @@ struct SleepPlannerScreen: View {
     }
 
     private var alarmCard: some View {
-        VStack(spacing: 0) {
+        ListCard {
             HStack {
                 Text("Alarm")
                     .font(ZoopType.headline.weight(.semibold))
@@ -220,10 +220,9 @@ struct SleepPlannerScreen: View {
                     .labelsHidden()
                     .tint(StrandPalette.accent)
             }
-            .padding(.horizontal, 16)
             .frame(height: 58)
             ForEach(groups) { g in
-                Divider().overlay(StrandPalette.hairline).padding(.leading, 16)
+                Divider().overlay(StrandPalette.hairline)
                 Button { editing = g } label: {
                     HStack {
                         Text(Self.dayRange(g.days))
@@ -231,35 +230,32 @@ struct SleepPlannerScreen: View {
                             .foregroundStyle(StrandPalette.textSecondary)
                         Spacer()
                         Text(g.minutes.map { PatternsScreen.clock($0) } ?? String(localized: "Off"))
-                            .font(.system(size: 22, weight: .bold).monospacedDigit())
+                            .font(ZoopType.number(22, weight: .bold))
                             .foregroundStyle(g.minutes == nil || !behavior.smartAlarmEnabled
                                              ? StrandPalette.textTertiary : StrandPalette.textPrimary)
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(ZoopType.icon(12, weight: .semibold))
                             .foregroundStyle(StrandPalette.textTertiary)
                     }
-                    .padding(.horizontal, 16)
                     .frame(height: 54)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
-            Divider().overlay(StrandPalette.hairline).padding(.leading, 16)
+            Divider().overlay(StrandPalette.hairline)
             Button { editing = AlarmGroup(days: [], minutes: behavior.smartAlarmMinutes) } label: {
                 Label("Add a time", systemImage: "plus")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(ZoopType.label.weight(.semibold))
                     .foregroundStyle(StrandPalette.accent)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
                     .frame(height: 50)
             }
             .buttonStyle(.plain)
         }
-        .background(ZoopPanelSurface())
     }
 
     private var gentleWakeCard: some View {
-        VStack(spacing: 0) {
+        ListCard {
             Menu {
                 Picker("Gentle wake", selection: Binding(
                     get: { windowMinutes },
@@ -284,19 +280,18 @@ struct SleepPlannerScreen: View {
                         .font(StrandFont.subhead.weight(.semibold))
                         .foregroundStyle(windowMinutes == 0 ? StrandPalette.textSecondary : StrandPalette.accent)
                     Image(systemName: "chevron.up.chevron.down")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(ZoopType.icon(12, weight: .semibold))
                         .foregroundStyle(StrandPalette.textTertiary)
                 }
-                .padding(16)
+                .padding(.vertical, 16)
             }
             if let t = patterns.tonight {
-                Divider().overlay(StrandPalette.hairline).padding(.leading, 16)
+                Divider().overlay(StrandPalette.hairline)
                 WindDownReminderRow(suggestedWakeMinute: t.wake.map { $0 / 60 }) { Task { await reload() } }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(16)
+                    .padding(.vertical, 16)
             }
         }
-        .background(ZoopPanelSurface())
     }
 
     // MARK: Formatting
@@ -421,7 +416,7 @@ struct SleepPlanEntryCard: View {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 12) {
                         Image(systemName: "moon.stars.fill")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(ZoopType.icon(15, weight: .semibold))
                             .foregroundStyle(StrandPalette.textPrimary)
                             .frame(width: 38, height: 38)
                             .background(Circle().fill(StrandPalette.surfaceBase))
@@ -430,12 +425,12 @@ struct SleepPlanEntryCard: View {
                                 .font(ZoopType.caption.weight(.semibold))
                                 .foregroundStyle(StrandPalette.textSecondary)
                             Text(line)
-                                .font(.system(size: 17, weight: .semibold).monospacedDigit())
+                                .font(ZoopType.headline.monospacedDigit())
                                 .foregroundStyle(StrandPalette.textPrimary)
                         }
                         Spacer()
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(ZoopType.icon(13, weight: .semibold))
                             .foregroundStyle(StrandPalette.textTertiary)
                     }
                     if let w = patterns.bedtime, w.windowMean - w.overallMean >= 3 {

@@ -144,7 +144,7 @@ struct LiveWorkoutView: View {
             }
             .padding(.horizontal, ZoopMetrics.space2)
             .padding(.vertical, ZoopMetrics.space1)
-            .background(ZoopPanelSurface(tint: StrandPalette.metricRose, cornerRadius: 14))
+            .zoopInsetSurface(radius: 14, tint: StrandPalette.metricRose)
             .clipShape(Capsule())
             Spacer(minLength: 0)
         }
@@ -373,9 +373,7 @@ struct LiveWorkoutView: View {
             endWorkoutGlassButton
         }
         .padding(Self.bottomBarInset)
-        .background {
-            ZoopPanelSurface(cornerRadius: ZoopVisualStyle.pillRadius, elevated: true)
-        }
+        .zoopControlSurface(radius: ZoopVisualStyle.pillRadius)
         .padding(.horizontal, ZoopMetrics.space4)
         .padding(.top, ZoopMetrics.space2)
         .padding(.bottom, ZoopMetrics.space3)
@@ -402,7 +400,7 @@ struct LiveWorkoutView: View {
     private var endWorkoutGlassButton: some View {
         Button { showEndConfirm = true } label: {
             Image(systemName: "xmark")
-                .font(.system(size: 18, weight: .semibold))
+                .font(ZoopType.icon(18, weight: .semibold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .frame(width: Self.bottomControlDiameter, height: Self.bottomControlDiameter)
                 .contentShape(Circle())
@@ -416,7 +414,7 @@ struct LiveWorkoutView: View {
         let paused = model.activeWorkout?.isPaused == true
         return Button { model.toggleWorkoutPause() } label: {
             Image(systemName: paused ? "play.fill" : "pause.fill")
-                .font(.system(size: 18, weight: .semibold))
+                .font(ZoopType.icon(18, weight: .semibold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .frame(width: Self.bottomControlDiameter, height: Self.bottomControlDiameter)
                 .contentShape(Circle())
@@ -428,7 +426,7 @@ struct LiveWorkoutView: View {
     private var deleteWorkoutGlassButton: some View {
         Button { showDeleteConfirm = true } label: {
             Image(systemName: "trash")
-                .font(.system(size: 18, weight: .semibold))
+                .font(ZoopType.icon(18, weight: .semibold))
                 .foregroundStyle(StrandPalette.statusCritical)
                 .frame(width: Self.bottomControlDiameter, height: Self.bottomControlDiameter)
                 .contentShape(Circle())

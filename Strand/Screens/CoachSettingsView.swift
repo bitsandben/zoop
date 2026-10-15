@@ -210,7 +210,7 @@ struct CoachSettingsView: View {
                         }
                         Spacer(minLength: 8)
                         Image(systemName: promptExpanded ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(ZoopType.icon(12, weight: .semibold))
                             .foregroundStyle(StrandPalette.textTertiary)
                             .accessibilityHidden(true)
                     }

@@ -399,7 +399,7 @@ private struct BreathingContent: View {
                 .foregroundStyle(selected ? StrandPalette.surfaceBase : StrandPalette.textPrimary)
             if let systemImage {
                 Image(systemName: systemImage)
-                    .font(.system(size: 13, weight: .bold))
+                    .font(ZoopType.icon(13, weight: .bold))
                     .foregroundStyle(StrandPalette.textSecondary)
                     .accessibilityHidden(true)
             } else if let detail {
@@ -491,53 +491,53 @@ private struct BreathingContent: View {
     // MARK: - Settings (vibration, sound, info, test buzz)
 
     private var settingsCard: some View {
-        VStack(spacing: 0) {
-            toggleRow(icon: "iphone.radiowaves.left.and.right",
-                      title: "Vibration",
-                      detail: "A pulse on each breath, on your phone and strap",
-                      isOn: $vibration)
-            rowDivider
-            toggleRow(icon: audioCues ? "speaker.wave.2.fill" : "speaker.slash.fill",
-                      title: "Audio cues",
-                      detail: "Soft tone on each phase · respects silent mode",
-                      isOn: $audioCues)
-            rowDivider
-            Button { showEdu = true } label: {
-                HStack(spacing: 12) {
-                    rowIcon("info.circle")
-                    Text("About this pace")
-                        .font(StrandFont.body)
-                        .foregroundStyle(StrandPalette.textPrimary)
-                    Spacer(minLength: 8)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(StrandPalette.textTertiary)
-                        .accessibilityHidden(true)
-                }
-                .padding(.vertical, 12)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            if live.bonded {
+        ListCard {
+            VStack(spacing: 0) {
+                toggleRow(icon: "iphone.radiowaves.left.and.right",
+                          title: "Vibration",
+                          detail: "A pulse on each breath, on your phone and strap",
+                          isOn: $vibration)
                 rowDivider
-                Button { model.buzz(loops: 1) } label: {
+                toggleRow(icon: audioCues ? "speaker.wave.2.fill" : "speaker.slash.fill",
+                          title: "Audio cues",
+                          detail: "Soft tone on each phase · respects silent mode",
+                          isOn: $audioCues)
+                rowDivider
+                Button { showEdu = true } label: {
                     HStack(spacing: 12) {
-                        rowIcon("waveform.path")
-                        Text("Test buzz")
+                        rowIcon("info.circle")
+                        Text("About this pace")
                             .font(StrandFont.body)
                             .foregroundStyle(StrandPalette.textPrimary)
                         Spacer(minLength: 8)
+                        Image(systemName: "chevron.right")
+                            .font(ZoopType.icon(13, weight: .semibold))
+                            .foregroundStyle(StrandPalette.textTertiary)
+                            .accessibilityHidden(true)
                     }
                     .padding(.vertical, 12)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help("Fire a single haptic pulse on the strap (requires a bonded connection)")
+                if live.bonded {
+                    rowDivider
+                    Button { model.buzz(loops: 1) } label: {
+                        HStack(spacing: 12) {
+                            rowIcon("waveform.path")
+                            Text("Test buzz")
+                                .font(StrandFont.body)
+                                .foregroundStyle(StrandPalette.textPrimary)
+                            Spacer(minLength: 8)
+                        }
+                        .padding(.vertical, 12)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Fire a single haptic pulse on the strap (requires a bonded connection)")
+                }
             }
+            .padding(.vertical, 4)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 4)
-        .background(ZoopPanelSurface())
     }
 
     private var rowDivider: some View {
@@ -549,7 +549,7 @@ private struct BreathingContent: View {
 
     private func rowIcon(_ name: String) -> some View {
         Image(systemName: name)
-            .font(.system(size: 15, weight: .semibold))
+            .font(ZoopType.icon(15, weight: .semibold))
             .foregroundStyle(StrandPalette.textSecondary)
             .frame(width: 28)
             .accessibilityHidden(true)
@@ -652,7 +652,7 @@ private struct BreathingContent: View {
         ContentCard {
             HStack(spacing: 10) {
                 Image(systemName: "wind")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(ZoopType.icon(14, weight: .semibold))
                     .foregroundStyle(StrandPalette.icon(StrandPalette.restBright))
                     .accessibilityHidden(true)
                 Text(line)
@@ -1635,7 +1635,7 @@ private struct CalmModeView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 10) {
                     Image(systemName: controller.calmDidNotFall ? "minus.circle" : "checkmark.circle")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(ZoopType.icon(14, weight: .semibold))
                         .foregroundStyle(controller.calmDidNotFall ? StrandPalette.textTertiary : StrandPalette.statusPositive)
                         .accessibilityHidden(true)
                     Text(line)

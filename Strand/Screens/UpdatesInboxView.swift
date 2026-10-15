@@ -57,7 +57,7 @@ struct UpdatesInboxView: View {
             Spacer()
             Button(action: onClose) {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 22))
+                    .font(ZoopType.icon(22))
                     .foregroundStyle(StrandPalette.textTertiary)
             }
             .buttonStyle(.plain)
@@ -111,7 +111,7 @@ struct UpdatesInboxView: View {
         VStack(spacing: 12) {
             Spacer(minLength: 40)
             Image(systemName: "bell.slash")
-                .font(.system(size: 34, weight: .light))
+                .font(ZoopType.icon(34, weight: .light))
                 .foregroundStyle(StrandPalette.textTertiary)
                 .accessibilityHidden(true)
             Text("You're all caught up.")

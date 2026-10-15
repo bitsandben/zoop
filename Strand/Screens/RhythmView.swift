@@ -366,7 +366,7 @@ struct RhythmView: View {
         if let onClose {
             Button(action: onClose) {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 18))
+                    .font(ZoopType.icon(18))
                     .foregroundStyle(StrandPalette.textTertiary)
             }
             .buttonStyle(.plain)

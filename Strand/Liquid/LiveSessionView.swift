@@ -26,10 +26,6 @@ struct LiveSessionView: View {
     /// The Android twin gated `LiveSessionScreen`'s breath under battery saver in #911.
     @ObservedObject private var motion = ZoopMotionState.shared
 
-    /// "Card transparency" (0–100, default 100): fades the live-session cards in lockstep with the frosted
-    /// cards; content stays readable. Mirrors Kotlin `ZoopPrefs.cardOpacityPercent`.
-    @CardOpacity private var cardOpacity: Double
-
     /// One runner per presentation — created here, started on appear, never restarted.
     @StateObject private var runner = LiveSessionRunner()
     let onClose: () -> Void
@@ -298,7 +294,6 @@ struct LiveSessionSummarySheet: View {
     let row: LiveSessionRow
     let guardedCount: Int?
     let onDone: () -> Void
-    @CardOpacity private var cardOpacity: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
@@ -370,10 +365,9 @@ struct LiveSessionSummarySheet: View {
     }
 
     private func summaryCard<V: View>(@ViewBuilder _ content: () -> V) -> some View {
-        VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) { content() }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(ZoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
+        ContentCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.rowSpacing) { content() }
+        }
     }
 
     private var cueLine: String {

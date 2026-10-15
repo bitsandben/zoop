@@ -2,7 +2,8 @@ import SwiftUI
 
 // MARK: - The locked component system
 //
-// Screens compose ONLY these: fixed dimensions plus one spacing scale. Do not invent ad-hoc cards.
+// Every screen composes ONLY these. Fixed dimensions + one spacing scale guarantee
+// the uniform, instrument-grade look from the reference. Do not invent ad-hoc cards.
 
 public enum ZoopMetrics {
     public static let cardRadius: CGFloat = ZoopVisualStyle.cardRadius
@@ -11,18 +12,20 @@ public enum ZoopMetrics {
     public static let sectionGap: CGFloat = ZoopVisualStyle.sectionGap
     public static let screenPadding: CGFloat = ZoopVisualStyle.pagePadding
     public static let tileHeight: CGFloat = 96   // Design Reset: tighter metric tile
-    // Key Metrics grid: one fixed height every tile snaps to (clears value + inline sparkline + caption);
-    // `maxHeight: .infinity` can't equalise them inside a LazyVGrid, which only offers content height.
+    // Key Metrics grid: one fixed height every tile snaps to, so a sparkline-and-caption tile and a
+    // plain value tile read the same. maxHeight: .infinity can't equalise them inside a LazyVGrid (the
+    // grid only offers a cell its content height, so there's nothing for the shorter tile to grow into),
+    // so we pin a single height that clears the tallest layout (value + inline sparkline + caption).
     public static let keyMetricTileHeight: CGFloat = 122
     public static let chartHeight: CGFloat = 220
     /// Minimum macOS detail-sheet footprint for a scrollable editor/history surface.
     public static let detailSheetMinWidth: CGFloat = 520
     public static let detailSheetMinHeight: CGFloat = 620
-    /// Compact provenance-chip height; shared with overlays that align the chip to a border.
+    /// Canonical compact provenance-chip height; shared with overlays that align the chip to a border.
     public static let sourceBadgeHeight: CGFloat = 18
     public static let hypnogramBandMinThickness: CGFloat = 14  // floor so short stages read as bars, not ticks
     public static let tabBarClearance: CGFloat = 76  // iOS: extra bottom scroll room so the last card clears the floating tab bar
-    /// Diameter for compact circular controls in dense header chrome.
+    /// Canonical diameter for compact circular controls in dense header chrome.
     public static let compactControlSize: CGFloat = 36
     /// Expanded width of the compact charge-to-sync status capsule.
     public static let syncIndicatorExpandedWidth: CGFloat = 108
@@ -30,19 +33,27 @@ public enum ZoopMetrics {
     public static let syncIndicatorLabelSpacing: CGFloat = 5
     /// Smallest readable scale for long localized labels inside the sync capsule.
     public static let syncIndicatorMinimumLabelScale: CGFloat = 0.72
-    /// Even inset around the sync control before exact-bounds Liquid Glass, matching the system's `.small` glass chrome.
+    /// Even inset around the sync control before applying exact-bounds Liquid Glass, matching the inset
+    /// the system's `.small` glass chrome gives the sibling header circles. Equal on both axes so the
+    /// compact state stays circular.
     public static let syncIndicatorGlassPadding: CGFloat = 5
-    /// Inset for the indicator's ring in BOTH states: battery arc and spinner share one radius so the morph does not resize.
+    /// Inset for the indicator's ring in BOTH states — the battery arc and the sync spinner share one
+    /// radius, so the morph changes colour and sweep without the circle also resizing. Two different
+    /// radii read as two different controls swapping places rather than one control changing state.
     public static let syncIndicatorArcInset: CGFloat = 2.5
     /// Width of the soft fade where long header text passes beneath trailing controls.
     public static let headerTextFadeWidth: CGFloat = 48
-    /// Starting guess for the trailing header-control footprint, used ONLY until the host measures its own
-    /// cluster (see `headerTrailingControlFadeMask(reserving:)`); deliberately not a fixed budget.
+    /// Starting guess for the trailing footprint a header control row occupies, used ONLY until the host
+    /// has measured its own cluster (see `headerTrailingControlFadeMask(reserving:)`). Four compact
+    /// controls plus their gaps and the sync control's glass inset — deliberately not a fixed budget,
+    /// because a cluster that gains a control must not silently start mis-fading the title beside it.
     public static let headerControlReserveWidth: CGFloat = 168
 
     // MARK: Standardised spacing scale (the ONE source of truth for margins)
     //
-    // A 4pt-based ramp; `cardPadding` (16) is an alias of `space4`.
+    // A 4pt-based ramp. Reach for these instead of literal numbers so every gap,
+    // inset and margin lines up to the same grid. Note `cardPadding` (16) above is
+    // the same value as `space4` — kept as a named alias for the existing call sites.
     public static let space1:  CGFloat = 4
     /// Optical separation for paired labels; structural layout still follows the 4-point ramp.
     public static let spaceHalf: CGFloat = 2
@@ -54,8 +65,8 @@ public enum ZoopMetrics {
     public static let space8:  CGFloat = 32
     public static let space10: CGFloat = 40
 
-    // MARK: Named layout constants
-    /// Horizontal page margin (screen gutter). Use via `.screenPadding()`.
+    // MARK: Named layout constants — the canonical margins/heights screens compose with.
+    /// Horizontal page margin (the gutter on the left/right edge of a screen). Use via `.screenPadding()`.
     public static let screenHPadding: CGFloat = ZoopVisualStyle.pagePadding
     /// Vertical gap between top-level page sections.
     public static let sectionSpacing: CGFloat = ZoopVisualStyle.sectionGap
@@ -67,7 +78,7 @@ public enum ZoopMetrics {
     public static let rowSpacing: CGFloat = 10
     /// Standard interactive-control height (buttons, fields, segmented controls).
     public static let controlHeight: CGFloat = 48
-    /// One-pixel edge used by cards and compact controls.
+    /// Standard one-pixel edge used by cards and compact controls.
     public static let hairlineWidth: CGFloat = 1
     /// Profile form dimensions shared by avatar and numeric controls.
     public static let profileAvatarDiameter: CGFloat = 44
@@ -76,7 +87,7 @@ public enum ZoopMetrics {
     /// Compact metadata and explanatory-footer heights.
     public static let compactMetadataMinHeight: CGFloat = 24
     public static let compactHintMinHeight: CGFloat = 18
-    /// Thickness for compact horizontal indicator tracks.
+    /// Canonical thickness for compact horizontal indicator tracks.
     public static let indicatorTrackHeight: CGFloat = 8
     /// Fully-rounded corner radius — pills, chips, capsule buttons.
     public static let pillRadius: CGFloat = ZoopVisualStyle.pillRadius
@@ -88,7 +99,9 @@ public enum ZoopMetrics {
 // MARK: - Screen padding
 
 public extension View {
-    /// Applies the canonical horizontal page gutter (`ZoopMetrics.screenHPadding`).
+    /// Apply the canonical horizontal page gutter (`ZoopMetrics.screenHPadding`). The single
+    /// source of truth for left/right screen margins — use this instead of a literal padding so
+    /// every screen lines up to the same edge.
     func screenPadding() -> some View {
         self.padding(.horizontal, ZoopMetrics.screenHPadding)
     }
@@ -98,11 +111,15 @@ public extension View {
 
 #if os(iOS)
 public extension View {
-    /// The house iOS sheet idiom: drag indicator plus detents (iOS only; macOS sheets are windows).
-    /// `largeFirst == false` opens at .medium with .large reachable; `true` opens full-height.
+    /// The house iOS sheet idiom: the drag indicator (the touch affordance that says
+    /// "swipe to dismiss") plus detents. macOS sheets are free-floating windows and must
+    /// NOT receive this, so the helper is iOS-only and call sites stay shared via #if.
+    /// `largeFirst == false` opens at .medium with .large reachable by dragging up (short
+    /// forms); `true` opens full-height (long scrolls).
     @ViewBuilder
     func noopSheetPresentation(largeFirst: Bool) -> some View {
-        // Zoop: sheets stop at about three quarters of the screen; long ones can be pulled to full height.
+        // Zoop: sheets stop at about three quarters of the screen so the page behind stays in view;
+        // long ones can still be pulled to full height.
         let sized = self
             .presentationDragIndicator(.visible)
             .presentationDetents(largeFirst ? [.fraction(0.75), .large] : [.medium, .fraction(0.75)])
@@ -112,8 +129,9 @@ public extension View {
 #endif
 
 public extension View {
-    /// An opaque sheet background in the base surface instead of the iOS 26 glass default, which
-    /// re-refracts the screen on every frame while resizing (stutter). No-op on macOS.
+    /// An opaque sheet background in the app's base surface instead of the iOS 26 glass default. A glass
+    /// sheet re-refracts the whole screen behind it on every frame while it is resized or dismissed,
+    /// which stuttered. No-op on macOS, where sheets are windows.
     @ViewBuilder func opaqueSheetBackground() -> some View {
         #if os(iOS)
         if #available(iOS 16.4, *) { self.presentationBackground(StrandPalette.surfaceBase) } else { self }
@@ -122,7 +140,8 @@ public extension View {
         #endif
     }
 
-    /// Keeps a small explainer a popover on iPhone instead of growing into a full-screen sheet. No-op on macOS.
+    /// Keep a small explainer a small popover on iPhone instead of letting it grow into a full-screen
+    /// sheet holding two lines of text. A no-op on macOS, where popovers never adapt.
     @ViewBuilder func compactPopover() -> some View {
         #if os(iOS)
         if #available(iOS 16.4, *) { self.presentationCompactAdaptation(.popover) } else { self }
@@ -134,7 +153,9 @@ public extension View {
 
 // MARK: - Surface
 
-/// The one card surface: the frosted card with optional per-domain accent `tint`.
+/// The one card surface — now the Bevel frosted card. PUBLIC API is unchanged
+/// (padding + content); an optional `tint` was ADDED (defaulted) so callers can opt
+/// into a per-domain accent wash without breaking existing call sites.
 public struct ZoopCard<Content: View>: View {
     private let padding: CGFloat
     private let tint: Color?
@@ -149,14 +170,19 @@ public struct ZoopCard<Content: View>: View {
         content()
             .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            // Hover chrome lives in the background so its animation is scoped to the surface and never re-animates a chart inside (#104).
+            // Hover chrome (fill + border + shadow) lives in the background so its animation is
+            // scoped to the card surface ONLY. It must never animate the content() subtree, or a
+            // chart inside re-animates its line every time the cursor crosses the card. (#104)
             .background { cardSurface }
         #if os(macOS)
             .onHover { hover = $0 }
         #endif
     }
 
-    // Touch can't hover, so iOS renders only the static frosted surface (no hover @State/.onHover/.animation); macOS adds the hover border.
+    // Touch can't hover, so iOS renders only the static resting frosted surface — no
+    // hover @State, no .onHover tracking, no .animation node. That trims the modifier
+    // count on every card, which multiplies across long scrolling lists. macOS adds the
+    // hover emphasis border on top (with the #104 animation scoping) unchanged.
     @ViewBuilder private var cardSurface: some View {
         let shape = RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous)
         #if os(macOS)
@@ -202,7 +228,9 @@ public struct StatTile<Accessory: View>: View {
     var deltaColor: Color = StrandPalette.textTertiary
     var sparkline: [Double]? = nil
     var sparkColor: Color = StrandPalette.accent
-    /// Optional trailing accessory INLINE in the header row (e.g. an ⓘ), so it can never sit on top of the value or sparkline on a narrow tile (#495).
+    /// An optional trailing accessory laid out INLINE in the header row beside the label (e.g. a small
+    /// ⓘ that opens a scoring guide). Inline placement — not a corner overlay — so it can never sit on
+    /// top of the value, sparkline or trend chip on a narrow tile (#495). Defaults to nothing.
     @ViewBuilder var accessory: () -> Accessory
 
     public init(label: LocalizedStringKey, value: String, caption: String? = nil,
@@ -216,10 +244,12 @@ public struct StatTile<Accessory: View>: View {
     }
 
     public var body: some View {
-        // The tile borrows its accent as a faint card wash.
+        // The tile borrows its accent as a faint card wash, so each metric tile reads as
+        // part of its colour world while staying legible on the deep blue-black.
         ZoopCard(padding: 14, tint: accent) {
             VStack(alignment: .leading, spacing: 0) {
-                // Header row: label plus the optional accessory, in flow so it reserves its own space.
+                // Header row: the metric label, and (right-aligned) the optional accessory laid out in
+                // flow so it reserves its own space rather than floating over the value below (#495).
                 HStack(alignment: .top, spacing: 4) {
                     Text(label).strandOverline()
                     Spacer(minLength: 0)
@@ -233,9 +263,11 @@ public struct StatTile<Accessory: View>: View {
                     Text(value).font(StrandFont.number(26)).foregroundStyle(accent).lineLimit(1).minimumScaleFactor(0.6)
                     #endif
                     Spacer(minLength: 0)
+                    // Trend chip — the delta as a tinted pill with a direction arrow.
                     if let delta { TrendChip(text: delta, color: deltaColor) }
                 }
-                // Sparkline needs chart-hover helpers, unavailable on watchOS.
+                // Sparkline isn't available on watchOS (it relies on chart-hover helpers); the watch
+                // doesn't use StatTile, but guard the reference so the file still compiles there.
                 #if !os(watchOS)
                 if let sparkline, sparkline.count > 1 {
                     Sparkline(values: sparkline, gradient: Gradient(colors: [sparkColor.opacity(0.5), sparkColor]))
@@ -249,15 +281,21 @@ public struct StatTile<Accessory: View>: View {
                 }
             }
         }
-        // A FLOOR, not a fixed height: sparkline tiles must grow rather than clip. `maxHeight: .infinity` lets a
-        // caller that hands a bounded height (Key Metrics grid) stretch it; in a LazyVGrid equal heights come from the caller.
+        // A FLOOR, not a fixed height: a sparkline tile's content exceeds the 96pt base and must be
+        // allowed to grow rather than clip. maxHeight: .infinity lets a caller that DOES hand this tile a
+        // bounded height (e.g. the Key Metrics grid pins every cell to ZoopMetrics.keyMetricTileHeight)
+        // stretch it to fill; in an unbounded parent it resolves to the content's own height, unchanged.
+        // Note: inside a LazyVGrid the cell only offers content height, so equal heights come from the
+        // caller pinning a fixed height, not from maxHeight: .infinity alone.
         .frame(minHeight: ZoopMetrics.tileHeight, maxHeight: .infinity)
-        // One VoiceOver stop per tile; the decorative sparkline is hidden.
+        // One VoiceOver stop per tile (label, value, caption, delta) instead of up
+        // to four fragmented stops; the decorative sparkline is hidden above.
         .accessibilityElement(children: .combine)
     }
 }
 
-// Convenience: a StatTile with NO accessory (`Accessory` defaults to `EmptyView`).
+// Backward-compatible convenience: a StatTile with NO accessory (the common case) — every existing
+// call site keeps working unchanged, and the type defaults `Accessory` to `EmptyView`.
 public extension StatTile where Accessory == EmptyView {
     init(label: LocalizedStringKey, value: String, caption: String? = nil,
          accent: Color = StrandPalette.textPrimary, delta: String? = nil,
@@ -269,9 +307,11 @@ public extension StatTile where Accessory == EmptyView {
     }
 }
 
-// MARK: - Trend chip
+// MARK: - Trend chip — a small tinted delta pill with a direction arrow.
 
-/// A compact trend pill: up/down/flat arrow plus delta text, tinted to `color`. Direction comes from a leading +/− (else flat).
+/// A compact trend pill: an up/down/flat arrow + the delta text, tinted to `color`.
+/// Inferred direction comes from a leading +/− in the text (else flat). Sits in the
+/// corner of a StatTile or beside a metric value.
 public struct TrendChip: View {
     let text: String
     var color: Color = StrandPalette.textTertiary
@@ -282,74 +322,26 @@ public struct TrendChip: View {
         let t = text.trimmingCharacters(in: .whitespaces)
         if t.hasPrefix("+") || t.hasPrefix("▲") || t.lowercased().hasPrefix("up") { return "arrow.up.right" }
         if t.hasPrefix("-") || t.hasPrefix("−") || t.hasPrefix("▼") || t.lowercased().hasPrefix("down") { return "arrow.down.right" }
-        // No sign means a plain magnitude (e.g. "874 kcal"), not a trend: show NO direction glyph (#41).
+        // No sign → a plain magnitude (e.g. a workout's "874 kcal"), not a trend: show NO direction
+        // glyph. Previously this fell to "minus", whose leading dash read as a negative ("-874 kcal" — #41).
         return nil
     }
     public var body: some View {
         HStack(spacing: 3) {
             if let symbol { Image(systemName: symbol).font(.system(size: 8, weight: .bold)) }
-            // One line: a long chip truncates rather than wraps, so it never grows a tile past its floor (#934).
+            // One line, always: a long chip (e.g. a workout's kcal) truncates rather than wraps, so
+            // the pill never grows a tile past its floor. Matches Android's unconditional ellipsize (#934).
             Text(text).font(StrandFont.captionNumber).lineLimit(1)
         }
-        // Plain tinted text, no pill.
+        // Zoop: plain tinted text, no pill. Colour and the arrow carry the direction.
         .foregroundStyle(color)
         .accessibilityHidden(true)
     }
 }
 
-// MARK: - Chart card (header + fixed chart body + footer)
+// MARK: - Chart footer
 
-public struct ChartCard<ChartBody: View, Footer: View>: View {
-    let title: LocalizedStringKey
-    var subtitle: String? = nil
-    var trailing: String? = nil
-    var height: CGFloat = ZoopMetrics.chartHeight
-    var tint: Color? = nil
-    /// Draws a small chevron after the title, for a card that opens a page.
-    var showsChevron: Bool = false
-    @ViewBuilder let chart: () -> ChartBody
-    @ViewBuilder let footer: () -> Footer
-
-    public init(title: LocalizedStringKey, subtitle: String? = nil, trailing: String? = nil,
-                height: CGFloat = ZoopMetrics.chartHeight, tint: Color? = nil, showsChevron: Bool = false,
-                @ViewBuilder chart: @escaping () -> ChartBody,
-                @ViewBuilder footer: @escaping () -> Footer = { EmptyView() }) {
-        self.title = title; self.subtitle = subtitle; self.trailing = trailing
-        self.height = height; self.tint = tint; self.showsChevron = showsChevron
-        self.chart = chart; self.footer = footer
-    }
-
-    public var body: some View {
-        ZoopCard(tint: tint) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 4) {
-                            Text(title).strandOverline()
-                            if showsChevron {
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(StrandPalette.textTertiary)
-                                    .accessibilityHidden(true)
-                            }
-                        }
-                        if let subtitle { Text(subtitle).font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary) }
-                    }
-                    Spacer()
-                    if let trailing { Text(trailing).font(StrandFont.bodyNumber).foregroundStyle(StrandPalette.textPrimary) }
-                }
-                chart().frame(height: height)
-                let f = footer()
-                if !(f is EmptyView) {
-                    Divider().overlay(StrandPalette.hairline)
-                    f
-                }
-            }
-        }
-    }
-}
-
-/// A footer row of small "label / value" stats for ChartCard.
+/// A footer row of small "label / value" stats under a chart `ContentCard`.
 public struct ChartFooter: View {
     let items: [(LocalizedStringKey, String)]
     public init(_ items: [(LocalizedStringKey, String)]) { self.items = items }
@@ -366,44 +358,19 @@ public struct ChartFooter: View {
     }
 }
 
-// MARK: - Insight card
-
-public struct InsightCard: View {
-    let category: LocalizedStringKey, status: LocalizedStringKey, detail: LocalizedStringKey
-    var statusColor: Color = StrandPalette.accent
-    var tint: Color? = nil
-    /// Extra trailing inset on the overline + status rows so a caller's top-trailing overlay doesn't run over the title (#69). Defaults to 0.
-    var titleTrailingInset: CGFloat = 0
-    public init(category: LocalizedStringKey, status: LocalizedStringKey, detail: LocalizedStringKey, statusColor: Color = StrandPalette.accent, tint: Color? = nil, titleTrailingInset: CGFloat = 0) {
-        self.category = category; self.status = status; self.detail = detail; self.statusColor = statusColor; self.tint = tint; self.titleTrailingInset = titleTrailingInset
-    }
-    public var body: some View {
-        // Card wash defaults to the status colour so the coaching card sits in the score's colour world.
-        let hue = tint ?? statusColor
-        // Flat card; identity comes from the coloured status headline alone.
-        return ZoopCard(padding: 18, tint: hue) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(category).strandOverline()
-                    .padding(.trailing, titleTrailingInset)
-                Text(status).font(StrandFont.rounded(28, weight: .bold)).foregroundStyle(statusColor)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.trailing, titleTrailingInset)
-                Text(detail).font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-}
-
-// MARK: - Range control (the ONE segmented pill control)
+// MARK: - Range control (the ONE segmented pill control, used everywhere)
 
 public struct SegmentedPillControl<T: Hashable>: View {
     let items: [T]
     let label: (T) -> String
-    /// When requested, keeps the intrinsic control where it fits and falls back to equal-width segments on
-    /// compact screens, so long option sets cannot widen a page beyond the viewport.
+    /// When requested, keep the regular intrinsic control wherever it fits and fall back to
+    /// equal-width segments inside the parent's available width on compact screens. This prevents
+    /// long option sets from widening an entire page beyond the viewport while leaving the many
+    /// shorter segmented controls byte-identical.
     let adaptsToAvailableWidth: Bool
-    /// Per-segment availability (#943): a disabled segment stays visible but renders extra-dim and ignores taps. Defaults to all enabled.
+    /// Per-segment availability (#943): a disabled segment stays visible (so users learn the
+    /// option exists) but renders extra-dim and ignores taps; VoiceOver announces it dimmed.
+    /// Defaults to everything enabled; ADDED additively, no existing call site touched.
     let isEnabled: (T) -> Bool
     let fillsAvailableWidth: Bool
     @Binding var selection: T
@@ -460,10 +427,14 @@ public struct SegmentedPillControl<T: Hashable>: View {
                     Text(label(item))
                         .font(StrandFont.captionNumber)
                         .lineLimit(equalWidth ? 1 : nil)
-                        // Neutral selection so the control works over every metric colour world; disabled segments drop to fainter tertiary.
+                        // Range selection stays deliberately neutral so the control works above charts
+                        // from every metric colour world without borrowing their green/blue/amber tint.
+                        // Disabled segments drop to a fainter tertiary so the lock reads at a glance.
                         .foregroundStyle(sel ? StrandPalette.textPrimary
                                              : StrandPalette.textTertiary.opacity(enabled ? 1 : 0.35))
-                        // Fill the segment height so the selected pill has equal margins to the track on every side.
+                        // Fill the segment height so the selected pill has EQUAL margins to the track
+                        // on every side. (The old compact pill inside a taller 44pt touch frame left
+                        // more vertical margin than horizontal — it read as off-centre.)
                         .frame(minWidth: equalWidth ? nil : 26,
                                maxWidth: equalWidth ? .infinity : nil,
                                maxHeight: .infinity)
@@ -494,6 +465,7 @@ public struct SegmentedPillControl<T: Hashable>: View {
                 .frame(maxWidth: equalWidth ? .infinity : nil)
                 .frame(height: 32)   // segment height; the pill fills it for an even inset
                 .disabled(!enabled)
+                // Announce the active range to VoiceOver and give a non-colour cue.
                 .accessibilityAddTraits(sel ? .isSelected : [])
             }
         }
@@ -529,9 +501,11 @@ public struct SourceBadge: View {
     let text: LocalizedStringKey; var tint: Color = StrandPalette.accent
     public init(_ text: LocalizedStringKey, tint: Color = StrandPalette.accent) { self.text = text; self.tint = tint }
     public var body: some View {
-        // `.frame(height:)` centres its content, so the label sits mid-capsule for free.
+        // `.frame(height:)` centres its content by default, so the label sits mid-capsule for free. Noted
+        // because the Android twin pinned the same 18 with `heightIn` applied to the label itself, which
+        // top-aligns — same number, different render. That one is matched to this, not the reverse.
         #if os(iOS)
-        // Provenance is a quiet caption, no capsule.
+        // Zoop: provenance is a quiet caption, no capsule.
         Text(text).font(.system(size: 12, weight: .medium))
             .frame(height: ZoopMetrics.sourceBadgeHeight)
             .foregroundStyle(StrandPalette.textTertiary)
@@ -548,8 +522,11 @@ public struct SourceBadge: View {
 // MARK: - Numeric field helpers (iOS soft-keyboard)
 
 public extension View {
-    /// Configures a TextField for number/decimal entry on iOS (decimal pad; no-op on macOS). Pair with
-    /// `.keyboardDoneToolbar(...)`, since the decimal pad has no return key.
+    /// Configures a TextField for whole-number-or-decimal entry on iOS: the decimal-pad
+    /// keyboard (handles both integer Avg-HR and decimal calories). No-op on macOS
+    /// (hardware keyboard), so the SAME shared view compiles on both. Pair with
+    /// `.keyboardDoneToolbar(...)` on the enclosing view to add a Done button (the decimal
+    /// pad has no return key).
     func numericKeyboard() -> some View {
         #if os(iOS)
         self.keyboardType(.decimalPad).textContentType(nil)
@@ -558,7 +535,9 @@ public extension View {
         #endif
     }
 
-    /// Adds a trailing "Done" button to the software-keyboard accessory bar that resigns the given focus binding. iOS-only.
+    /// Adds a single trailing "Done" button to the software-keyboard accessory bar that
+    /// resigns the given focus binding. iOS-only; the keyboard toolbar is hosted by the
+    /// keyboard itself, so it works inside a sheet with no NavigationStack. No-op on macOS.
     func keyboardDoneToolbar<Value: Hashable>(_ focus: FocusState<Value?>.Binding) -> some View {
         #if os(iOS)
         self.toolbar {
@@ -575,9 +554,11 @@ public extension View {
     }
 }
 
-// MARK: - Buttons (Titanium & Gold)
+// MARK: - Buttons (Titanium & Gold) — ADDED additively, no existing API touched.
 //
-// Primary, secondary and ghost button styles reading off the gold tokens; pressed = subtle dim + scale.
+// Three house button styles for primary actions, secondary chrome and ghost/gold
+// CTAs. Drop in via `.buttonStyle(.noopPrimary)` etc. on any `Button`. All read off
+// the new gold tokens so they match Apple ⇄ Android. Pressed = subtle dim + scale.
 
 /// Primary call-to-action: gold-gradient fill, dark gold-deep ink (700), rounded 13.
 public struct ZoopPrimaryButtonStyle: ButtonStyle {
@@ -595,7 +576,8 @@ public struct ZoopPrimaryButtonStyle: ButtonStyle {
                           ? AnyShapeStyle(StrandPalette.primaryButtonFill)
                           : AnyShapeStyle(LinearGradient(gradient: StrandPalette.goldGradient, startPoint: .topLeading, endPoint: .bottomTrailing)))
             )
-            // Subtle neutral elevation, no bloom.
+            // A crisp, subtle NEUTRAL elevation — the gold cast-glow read as too much against the
+            // clean design, so it's a soft dark lift now, no bloom.
             .shadow(color: StrandPalette.shadow(pressed ? 0.08 : 0.16), radius: 6, x: 0, y: 3)
             .opacity(pressed ? 0.9 : 1)
             .scaleEffect(pressed ? 0.98 : 1)
@@ -658,7 +640,9 @@ public extension ButtonStyle where Self == ZoopGhostButtonStyle {
 
 // MARK: - Score state pill (SOLID / BUILDING / CALIBRATING / LIVE)
 //
-// The score-lifecycle chip: SOLID = gold fill, BUILDING = blue, CALIBRATING = slate, LIVE = gold dot with a pulsing halo.
+// ADDED additively — the existing `StatePill` (tone-based, in StatePill.swift) is
+// untouched. This is the score-lifecycle chip the new design calls for: SOLID = gold
+// fill, BUILDING = blue, CALIBRATING = slate, LIVE = gold dot with a pulsing halo.
 
 public enum ScoreState: Sendable, Equatable {
     case solid        // a settled, trustworthy score
@@ -666,7 +650,7 @@ public enum ScoreState: Sendable, Equatable {
     case calibrating  // baseline still forming
     case live         // streaming right now
 
-    /// The chip's hue (gold / blue / slate).
+    /// The chip's hue, drawn from the re-pointed palette (gold / blue / slate).
     public var color: Color {
         switch self {
         case .solid:        return StrandPalette.statusPositive // settled / trustworthy — WHOOP green
@@ -686,7 +670,8 @@ public enum ScoreState: Sendable, Equatable {
     var pulsing: Bool { self == .live }
 }
 
-/// The score-lifecycle chip: dot, tinted fill and border, hue text. LIVE pulses its dot. `text` overrides the default label.
+/// The score-lifecycle chip: dot + hue@.12 fill + hue@.32 border + hue text. LIVE
+/// pulses its dot. `text` overrides the default state label (e.g. "Building — 2 of 4").
 public struct ScoreStatePill: View {
     public var state: ScoreState
     public var text: LocalizedStringKey?
@@ -695,7 +680,7 @@ public struct ScoreStatePill: View {
     }
     public var body: some View {
         #if os(iOS)
-        // No lifecycle badges ("Solid", "Building"): they read as decoration, not information.
+        // Zoop iOS: no lifecycle badges ("Solid", "Building"). They read as decoration, not information.
         EmptyView()
         #else
         pill
@@ -711,32 +696,40 @@ public struct ScoreStatePill: View {
                 .tracking(0.4)
                 .foregroundStyle(hue)
         }
-        // Dot and tinted label only, no capsule.
+        // Zoop: dot and tinted label only, no capsule.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(text ?? state.label)
     }
 }
 
-/// A small dot with an optional breathing halo (LIVE). Honours Reduce Motion.
+/// A small dot with an optional breathing pulse halo (LIVE). Honours Reduce Motion.
+/// Local to the score pill so it doesn't disturb StatePill.swift's ConnectionDot.
 private struct PulseDot: View {
     var color: Color
     var pulsing: Bool
     var size: CGFloat
     @State private var animate = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// Low Power Mode / "Reduce motion in Zoop". The halo is a `repeatForever` loop on screen for long stretches, so it sits behind the same gate as the liquid surfaces.
+    /// Low Power Mode / "Reduce motion in Zoop". This halo is a `repeatForever` loop that never
+    /// settles and is on screen for long stretches — a connected strap in Settings, a backfill on
+    /// every scaffolded screen — so it belongs behind the same gate as the liquid surfaces.
     @ObservedObject private var motion = ZoopMotionState.shared
     private var poseStill: Bool { motion.poseStill(reduceMotion) }
     @Environment(\.colorScheme) private var scheme
     var body: some View {
         ZStack {
-            // Dark mode only: gated explicitly so light mode stays ring-free (the resting dot and shadow carry LIVE there).
+            // Dark-mode only (#review): AdditiveBloom used to hide this expanding ring on light
+            // (content.opacity(0)); now that we drop the offscreen bloom, gate it explicitly so light
+            // mode stays ring-free (the resting dot + its shadow carry the live state there).
             if pulsing && scheme == .dark {
                 Circle().fill(color)
                     .frame(width: size, height: size)
                     .scaleEffect(animate ? 2.4 : 1.0)
                     .opacity(animate ? 0.0 : 0.5)
-                    // No .additiveBloom(): the .plusLighter blend forced an offscreen pass every frame of the pulse.
+                    // No .additiveBloom(): the .plusLighter blend forced an offscreen pass every
+                    // frame of the repeatForever pulse, a continuous cost while a strap is backfilling
+                    // (exactly when this live dot is on screen). The expanding/fading ring reads the
+                    // same without it; the resting dot's shadow still carries the "live" glow.
             }
             Circle().fill(color)
                 .frame(width: size, height: size)

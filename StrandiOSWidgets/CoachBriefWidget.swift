@@ -73,10 +73,10 @@ struct CoachBriefWidgetView: View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 4) {
                 Image(systemName: "sparkles")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(ZoopType.icon(10, weight: .bold))
                     .foregroundStyle(StrandPalette.accent)
                 Text("Coach")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(ZoopType.micro.weight(.bold))
                     .foregroundStyle(StrandPalette.textSecondary)
                 Spacer(minLength: 0)
                 if let date = entry.briefDate {
@@ -86,7 +86,7 @@ struct CoachBriefWidgetView: View {
                 }
             }
             Text(briefDisplay)
-                .font(.system(size: 11))
+                .font(ZoopType.micro)
                 .foregroundStyle(StrandPalette.textPrimary)
                 .lineLimit(3)
                 .minimumScaleFactor(0.8)
@@ -105,26 +105,26 @@ struct CoachBriefWidgetView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: "sparkles")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(ZoopType.icon(13, weight: .bold))
                     .foregroundStyle(StrandPalette.accent)
                 Text("Coach Brief")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(ZoopType.caption.weight(.bold))
                     .foregroundStyle(StrandPalette.textSecondary)
                 Spacer()
             }
             if entry.briefText == nil {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("No brief yet")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(ZoopType.label.weight(.medium))
                         .foregroundStyle(StrandPalette.textTertiary)
                     Text("Enable Morning Brief in Coach settings to see today's readiness here.")
-                        .font(.system(size: 11))
+                        .font(ZoopType.micro)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             } else {
                 Text(briefDisplay)
-                    .font(.system(size: 12))
+                    .font(ZoopType.small)
                     .foregroundStyle(StrandPalette.textPrimary)
                     .lineLimit(5)
                     .minimumScaleFactor(0.8)

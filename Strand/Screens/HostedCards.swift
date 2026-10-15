@@ -56,7 +56,7 @@ enum HostedCard: String, CaseIterable, Identifiable {
     /// `HostedCard.STRESS_TODAY`.
     case stressToday = "stress.today"
     /// Trends tab · "HRV" — the trailing-month HRV trend (#today-hosted-cards). The three Trends-origin
-    /// cards render the SAME `ChartCard` + `TrendChart` pair the tab draws, from the SAME resolved
+    /// cards render the SAME chart `ContentCard` + `TrendChart` pair the tab draws, from the SAME resolved
     /// points, parameterised by which `DailyMetric` field they read.
     ///
     /// These rawValues ride `.zoopbak` and are byte-identical to the Android `HostedCard` ids.

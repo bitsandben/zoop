@@ -9,7 +9,7 @@ import WhoopStore
 // The catalog-driven "Explore" surface. The root is a grouped list — one
 // SectionHeader per MetricCatalog.category, then a row per metric — pushing a
 // MetricDetailView. The detail is a uniform analytic dossier built ONLY from the
-// locked StrandDesign components (ZoopCard / ChartCard / StatTile / InsightCard /
+// locked StrandDesign components (ZoopCard / chart ContentCard / StatTile /
 // SegmentedPillControl). No custom card heights, paddings, or surfaces anywhere.
 //
 // Sparse-metric rule (owner saw "no data" on metrics that HAVE data): a series may
@@ -609,7 +609,7 @@ struct MetricExplorerView: View {
                     RoundedRectangle(cornerRadius: 11, style: .continuous)
                         .fill(StrandPalette.metricRose.opacity(0.16))
                     Image(systemName: "waveform.path.ecg")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(ZoopType.icon(18, weight: .semibold))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.metricRose))
                 }
                 .frame(width: 42, height: 42)
@@ -625,7 +625,7 @@ struct MetricExplorerView: View {
                 }
                 Spacer(minLength: 8)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(ZoopType.icon(12, weight: .semibold))
                     .foregroundStyle(StrandPalette.textTertiary)
             }
         }
@@ -684,7 +684,7 @@ private struct MetricRow: View {
                 RoundedRectangle(cornerRadius: 9, style: .continuous)
                     .fill(StrandPalette.surfaceInset)
                 Image(systemName: metric.icon)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(ZoopType.icon(15, weight: .medium))
                     .foregroundStyle(metricAccent(metric))
             }
             .frame(width: 34, height: 34)
@@ -713,7 +713,7 @@ private struct MetricRow: View {
                     .accessibilityLabel("No data")
             }
             Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .semibold))
+                .font(ZoopType.icon(11, weight: .semibold))
                 .foregroundStyle(StrandPalette.textTertiary)
         }
         .padding(.horizontal, 14)
@@ -731,7 +731,7 @@ private struct MetricRow: View {
 // MARK: - Detail / drill-down
 
 /// The full analytic dossier for one metric, built ONLY from locked components:
-/// a SegmentedPillControl range, a hero ChartCard (line + latest "as of"), a uniform
+/// a SegmentedPillControl range, a hero chart ContentCard (line + latest "as of"), a uniform
 /// StatTile row (Average / Min / Max / Latest / Δ), and a "What correlates" ZoopCard.
 struct MetricDetailView: View {
     let metric: MetricDescriptor
@@ -1042,7 +1042,7 @@ struct MetricDetailView: View {
                         ZoopCard {
                             HStack(alignment: .top, spacing: 10) {
                                 Image(systemName: "info.circle")
-                                    .font(.system(size: 14, weight: .medium))
+                                    .font(ZoopType.icon(14, weight: .medium))
                                     .foregroundStyle(StrandPalette.textTertiary)
                                     .accessibilityHidden(true)
                                 Text(note)
@@ -1068,7 +1068,7 @@ struct MetricDetailView: View {
                                     .font(StrandFont.subhead.weight(.medium))
                                 Spacer()
                                 Image(systemName: "chevron.down")
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .font(ZoopType.icon(13, weight: .semibold))
                                     .rotationEffect(.degrees(showReadings ? 0 : -90))
                             }
                             .foregroundStyle(StrandPalette.textSecondary)
@@ -1339,7 +1339,8 @@ struct MetricDetailView: View {
         // stretching ZStack sibling — an unconstrained ScenicHeroBackground inside a ScrollView filled
         // the whole viewport and left a huge blank band above the chart. As a .background it sizes to
         // the hero content, so the number/ring sits directly under the range pill.
-        VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
+        HeroCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 // Category + title on their OWN full-width row so a long title ("Heart Rate Variability")
                 // is never crushed into a letter-per-line column by the range pill (2026-07-02).
                 if !isStepsDetail { VStack(alignment: .leading, spacing: 2) {
@@ -1437,11 +1438,6 @@ struct MetricDetailView: View {
                         .foregroundStyle(StrandPalette.textTertiary)
                 }
             }
-        .padding(ZoopMetrics.cardPadding)
-        .background {
-            ZoopPanelSurface(tint: domain.color,
-                             cornerRadius: ZoopMetrics.cardRadius,
-                             elevated: true)
         }
         // The hero shows the LATEST available point (range-independent), so the vessel fills once on
         // appear (0 → its fraction) and settles — like TodayView's rings.
@@ -1536,12 +1532,11 @@ struct MetricDetailView: View {
             ? MetricDetailSteps.presentation(readings: series, range: effectiveRange).accessibilitySummary
             : nil
         let stepsResolution = MetricDetailSteps.resolution(for: effectiveRange)
-        return ChartCard(
+        return ContentCard(
             title: isStepsDetail ? LocalizedStringKey("Historical trend") : LocalizedStringKey("\(metric.title)"),
             subtitle: subtitle,
             trailing: "\(heroValue) · \(asOf)",
-            height: ZoopMetrics.chartHeight + (isStepsDetail ? 70 : 0),
-            tint: metricDomain(metric).color
+            height: ZoopMetrics.chartHeight + (isStepsDetail ? 70 : 0)
         ) {
             TrendChart(
                 points: trendPoints(windowed),
@@ -1579,7 +1574,7 @@ struct MetricDetailView: View {
             // as "something weird with a broken line". Shown only when a break actually exists, so it
             // explains the chart in front of the reader rather than a behaviour they cannot see.
             //
-            // In the FOOTER, not beside the chart: `ChartCard` applies `chart().frame(height:)` to that
+            // In the FOOTER, not beside the chart: chart `ContentCard` applies `chart().frame(height:)` to that
             // whole closure, so a caption in there would be squeezed into the chart's fixed height and
             // steal space from the line it is explaining. The footer is the only full-height slot under
             // the chart. Android places it directly under the plot because its card has no such frame -
@@ -1872,7 +1867,7 @@ struct MetricDetailView: View {
         let color = correlationColor(row.r)
         HStack(spacing: 12) {
             Image(systemName: row.metric.icon)
-                .font(.system(size: 14, weight: .medium))
+                .font(ZoopType.icon(14, weight: .medium))
                 .foregroundStyle(StrandPalette.textSecondary)
                 .frame(width: 22)
             VStack(alignment: .leading, spacing: 1) {

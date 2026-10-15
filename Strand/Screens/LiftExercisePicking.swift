@@ -55,7 +55,7 @@ struct LiftExerciseSuggestionLabel: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "arrow.up.left")
-                .font(.system(size: 10, weight: .semibold))
+                .font(ZoopType.icon(10, weight: .semibold))
                 .foregroundStyle(StrandPalette.textTertiary)
             VStack(alignment: .leading, spacing: 1) {
                 Text(row.name)
@@ -104,7 +104,7 @@ struct LiftMusclePicker: View {
                                                      : StrandPalette.textPrimary)
                                 Spacer(minLength: 0)
                                 Image(systemName: "chevron.up.chevron.down")
-                                    .font(.system(size: 10, weight: .semibold))
+                                    .font(ZoopType.icon(10, weight: .semibold))
                                     .foregroundStyle(StrandPalette.textTertiary)
                             }
                             .contentShape(Rectangle())

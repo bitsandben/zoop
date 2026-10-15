@@ -38,16 +38,17 @@ public enum ZoopVisualStyle {
 
 /// Shared card/panel treatment: a solid surface on iOS, gradient and soft elevation elsewhere.
 /// `tint` is intentionally faint so metric identity never turns the whole card into a coloured tile.
-public struct ZoopPanelSurface: View {
-    public var tint: Color?
-    public var cornerRadius: CGFloat
-    public var elevated: Bool
-    public var surfaceOpacity: Double
+/// Internal: app code uses the card types or `zoopInsetSurface` / `zoopControlSurface`.
+struct ZoopPanelSurface: View {
+    var tint: Color?
+    var cornerRadius: CGFloat
+    var elevated: Bool
+    var surfaceOpacity: Double
     #if !os(iOS)
     @Environment(\.colorScheme) private var scheme
     #endif
 
-    public init(
+    init(
         tint: Color? = nil,
         cornerRadius: CGFloat = ZoopVisualStyle.cardRadius,
         elevated: Bool = false,
@@ -59,7 +60,7 @@ public struct ZoopPanelSurface: View {
         self.surfaceOpacity = surfaceOpacity
     }
 
-    public var body: some View {
+    var body: some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         #if os(iOS)
         // Scrolling stacks hold many panels; layered translucent gradients and blurred shadows multiply compositing cost, so iOS uses one flat theme-aware fill with no rim. Decorative depth only.

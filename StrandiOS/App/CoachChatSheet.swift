@@ -32,7 +32,7 @@ struct CoachChatSheet: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(ZoopType.icon(14, weight: .bold))
                             .foregroundStyle(StrandPalette.textPrimary)
                     }
                     .accessibilityLabel("Close")
@@ -203,12 +203,12 @@ private struct CoachChat: View {
     private var emptyState: some View {
         VStack(spacing: 14) {
             Image(systemName: "sparkles")
-                .font(.system(size: 28, weight: .semibold))
+                .font(ZoopType.icon(28, weight: .semibold))
                 .foregroundStyle(StrandPalette.accent)
                 .frame(width: 72, height: 72)
                 .background(SquircleShape().fill(StrandPalette.surfaceRaised))
             Text("Ask about your numbers")
-                .font(.system(size: 22, weight: .bold))
+                .font(ZoopType.subtitle.weight(.bold))
                 .foregroundStyle(StrandPalette.textPrimary)
             Text(coach.dataConsent
                  ? "Coach reads your recovery, sleep, strain and workouts to answer."
@@ -248,7 +248,7 @@ private struct CoachChat: View {
                 Text(shortModel)
                     .font(StrandFont.caption.weight(.medium))
                     .lineLimit(1)
-                Image(systemName: "chevron.down").font(.system(size: 9, weight: .bold))
+                Image(systemName: "chevron.down").font(ZoopType.icon(9, weight: .bold))
             }
             .foregroundStyle(StrandPalette.textSecondary)
         }
@@ -276,7 +276,7 @@ private struct CoachChat: View {
             }
         } label: {
             Image(systemName: "ellipsis")
-                .font(.system(size: 15, weight: .bold))
+                .font(ZoopType.icon(15, weight: .bold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .frame(width: 32, height: 32)
         }
@@ -296,7 +296,7 @@ private struct CoachChat: View {
                         Task { await coach.send(lastQuestion) }
                     } label: {
                         Label("Try again", systemImage: "arrow.clockwise")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(ZoopType.label.weight(.semibold))
                             .foregroundStyle(StrandPalette.accent)
                     }
                     .buttonStyle(.plain)
@@ -402,7 +402,7 @@ private struct CoachComposer: View {
                 if CoachVoiceInput.isSupported {
                     Button(action: toggleVoice) {
                         Image(systemName: voice.isRecording ? "stop.circle.fill" : "mic")
-                            .font(.system(size: 17, weight: .medium))
+                            .font(ZoopType.icon(17, weight: .medium))
                             .foregroundStyle(voice.isRecording ? StrandPalette.statusCritical : StrandPalette.textSecondary)
                             .symbolEffect(.pulse, isActive: voice.isRecording)
                             .frame(width: 36, height: 42)
@@ -416,7 +416,7 @@ private struct CoachComposer: View {
 
             Button(action: send) {
                 Image(systemName: "arrow.up")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(ZoopType.icon(16, weight: .bold))
                     .foregroundStyle(empty || sending ? StrandPalette.textTertiary : StrandPalette.goldDeepText)
                     .frame(width: 42, height: 42)
                     .background(Circle().fill(empty || sending ? StrandPalette.surfaceRaised : StrandPalette.accent))
@@ -524,7 +524,7 @@ private struct CoachBubble: View, Equatable {
 private struct CoachAvatar: View {
     var body: some View {
         Image(systemName: "sparkles")
-            .font(.system(size: 12, weight: .bold))
+            .font(ZoopType.icon(12, weight: .bold))
             .foregroundStyle(StrandPalette.goldDeepText)
             .frame(width: 26, height: 26)
             .background(SquircleShape().fill(StrandPalette.accent))
@@ -589,12 +589,12 @@ private struct CoachSetup: View {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 10) {
                     Image(systemName: "sparkles")
-                        .font(.system(size: 24, weight: .semibold))
+                        .font(ZoopType.icon(24, weight: .semibold))
                         .foregroundStyle(StrandPalette.accent)
                         .frame(width: 60, height: 60)
                         .background(SquircleShape().fill(StrandPalette.surfaceRaised))
                     Text(picked == nil ? "Set up Coach" : "Paste your key")
-                        .font(.system(size: 30, weight: .bold))
+                        .font(StrandFont.title1)
                         .foregroundStyle(StrandPalette.textPrimary)
                     Text(picked == nil
                          ? String(localized: "Coach runs on an AI provider with your own key. The key stays in this phone's Keychain.")
@@ -650,7 +650,7 @@ private struct CoachSetup: View {
                 } label: {
                     HStack(spacing: 14) {
                         Image(systemName: icon(p))
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(ZoopType.icon(17, weight: .semibold))
                             .foregroundStyle(StrandPalette.textPrimary)
                             .frame(width: 44, height: 44)
                             .background(Circle().fill(StrandPalette.surfaceBase))
@@ -669,7 +669,7 @@ private struct CoachSetup: View {
                                 .foregroundStyle(StrandPalette.accent)
                         }
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(ZoopType.icon(13, weight: .semibold))
                             .foregroundStyle(StrandPalette.textTertiary)
                     }
                     .padding(14)
@@ -693,7 +693,7 @@ private struct CoachSetup: View {
         let empty = keyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         return VStack(alignment: .leading, spacing: 18) {
             SecureField("API key", text: $keyDraft)
-                .font(.system(size: 17, design: .monospaced))
+                .font(StrandFont.mono(17))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .focused($keyFocused)
                 .textInputAutocapitalization(.never)

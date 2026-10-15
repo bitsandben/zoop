@@ -89,15 +89,9 @@ struct HomeDetectedWorkoutSheet: View {
     @ViewBuilder
     private var heartRateCard: some View {
         if heartRate.count >= 2 {
-            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
-                Text("Heart rate")
-                    .font(ZoopType.headline)
-                    .foregroundStyle(StrandPalette.textPrimary)
+            ContentCard("Heart rate") {
                 LiquidThread(bpm: heartRate, tint: StrandPalette.liquidHeart, height: 92, animated: false)
             }
-            .padding(ZoopMetrics.space4)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(ZoopPanelSurface())
         }
     }
 
@@ -116,7 +110,7 @@ struct HomeDetectedWorkoutSheet: View {
         }
         .padding(ZoopMetrics.space3)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(ZoopPanelSurface())
+        .zoopInsetSurface(radius: ZoopMetrics.cardRadius)
     }
 
     private func save() {

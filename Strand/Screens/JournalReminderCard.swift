@@ -60,7 +60,7 @@ struct JournalReminderCard: View {
             VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 HStack(spacing: ZoopMetrics.space2) {
                     Image(systemName: "book.closed")
-                        .font(.system(size: 18))
+                        .font(ZoopType.icon(18))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text(String(localized: "Logbook"))
@@ -68,7 +68,7 @@ struct JournalReminderCard: View {
                         .foregroundStyle(StrandPalette.textPrimary)
                     Spacer()
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(ZoopType.icon(14, weight: .semibold))
                         .foregroundStyle(StrandPalette.textTertiary)
                         .accessibilityHidden(true)
                 }

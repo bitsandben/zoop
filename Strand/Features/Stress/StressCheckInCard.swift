@@ -52,7 +52,7 @@ struct StressCheckInCard: View {
                 VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                     HStack(spacing: ZoopMetrics.space2) {
                         Image(systemName: "wind")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(ZoopType.icon(14, weight: .semibold))
                             .foregroundStyle(StrandPalette.icon(StrandPalette.restBright))
                             .accessibilityHidden(true)
                         Text("Stress check-in").strandOverline()

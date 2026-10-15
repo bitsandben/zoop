@@ -124,7 +124,7 @@ struct WindDownReminderRow: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: enabled ? "bell.fill" : "bell")
-                .font(.system(size: 13, weight: .semibold))
+                .font(ZoopType.icon(13, weight: .semibold))
                 .foregroundStyle(enabled ? StrandPalette.textPrimary : StrandPalette.textSecondary)
             if enabled {
                 Text("Reminder at \(PatternsScreen.clock(reminderMinute))")

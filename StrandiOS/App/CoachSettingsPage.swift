@@ -98,7 +98,7 @@ struct CoachSettingsPage: View {
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(ZoopType.icon(13, weight: .semibold))
                                 .foregroundStyle(StrandPalette.textTertiary)
                         }
                     }
@@ -158,13 +158,13 @@ struct CoachSettingsPage: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 14) {
                 Image(systemName: "sparkles")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(ZoopType.icon(20, weight: .semibold))
                     .foregroundStyle(StrandPalette.goldDeepText)
                     .frame(width: 52, height: 52)
                     .background(SquircleShape().fill(StrandPalette.accent))
                 VStack(alignment: .leading, spacing: 3) {
                     Text(coach.provider.displayName)
-                        .font(.system(size: 20, weight: .bold))
+                        .font(ZoopType.subtitle.weight(.bold))
                         .foregroundStyle(StrandPalette.textPrimary)
                     HStack(spacing: 6) {
                         Circle().fill(StrandPalette.accent).frame(width: 7, height: 7)
@@ -193,7 +193,7 @@ struct CoachSettingsPage: View {
                     }
                     Spacer()
                     Image(systemName: "chevron.up.chevron.down")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(ZoopType.icon(13, weight: .semibold))
                         .foregroundStyle(StrandPalette.textSecondary)
                 }
                 .padding(14)
@@ -247,7 +247,7 @@ struct CoachSettingsPage: View {
                                     @ViewBuilder _ content: () -> Content) -> some View {
         HStack(spacing: 14) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
+                .font(ZoopType.icon(15, weight: .semibold))
                 .foregroundStyle(tint)
                 .frame(width: 38, height: 38)
                 .background(Circle().fill(StrandPalette.surfaceBase))

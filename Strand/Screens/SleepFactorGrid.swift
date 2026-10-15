@@ -44,7 +44,7 @@ struct SleepFactorGrid: View {
         let color = Self.color(r.verdict)
         return VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
             Image(systemName: Self.icon(r.factor))
-                .font(.system(size: 14, weight: .semibold))
+                .font(ZoopType.icon(14, weight: .semibold))
                 .foregroundStyle(StrandPalette.textSecondary)
                 .accessibilityHidden(true)
             Text(Self.verdictText(r.verdict))

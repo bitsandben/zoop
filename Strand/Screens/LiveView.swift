@@ -32,10 +32,6 @@ struct LiveView: View {
     @AppStorage("selectedWhoopModel") private var selectedModelRaw = WhoopModel.whoop4.rawValue
     private var selectedModel: WhoopModel { WhoopModel(rawValue: selectedModelRaw) ?? .whoop4 }
 
-    /// "Card transparency" (0–100, default 100): fades the live console cards in lockstep with the frosted
-    /// cards; content stays readable. Mirrors Kotlin `ZoopPrefs.cardOpacityPercent`.
-    @CardOpacity private var cardOpacity: Double
-
     /// Maps the picked strap model to the HRV-reading source so the spot caveat is honest (#537): a
     /// WHOOP 5/MG's R-R is optical PPG (noisier), a WHOOP 4 is electrical R-R. Mirrors the Android
     /// `LiveScreen` mapping.
@@ -203,10 +199,7 @@ struct LiveView: View {
     // MARK: - Frosted card helper (matches LiquidTodayView.card: rounded 22 + resting hairline)
 
     private func card<V: View>(@ViewBuilder _ content: () -> V) -> some View {
-        content()
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(ZoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
+        ContentCard { content() }
     }
 
     // MARK: - Console header
@@ -475,7 +468,7 @@ struct LiveView: View {
             Spacer(minLength: 0)
         }
         .padding(ZoopMetrics.space3)
-        .background(ZoopPanelSurface(cornerRadius: 18))
+        .zoopInsetSurface(radius: 18)
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
             .strokeBorder(StrandPalette.statusWarning.opacity(0.5), lineWidth: 1))
         .accessibilityElement(children: .combine)
@@ -497,7 +490,7 @@ struct LiveView: View {
             Spacer(minLength: 0)
         }
         .padding(ZoopMetrics.space3)
-        .background(ZoopPanelSurface(cornerRadius: 18))
+        .zoopInsetSurface(radius: 18)
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
             .strokeBorder(StrandPalette.statusWarning.opacity(0.5), lineWidth: 1))
         .accessibilityElement(children: .combine)
@@ -534,7 +527,7 @@ struct LiveView: View {
             Spacer(minLength: 0)
         }
         .padding(ZoopMetrics.space3)
-        .background(ZoopPanelSurface(tint: StrandPalette.accent, cornerRadius: 18))
+        .zoopInsetSurface(radius: 18, tint: StrandPalette.accent)
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
             .strokeBorder(StrandPalette.accent.opacity(0.4), lineWidth: 1))
         .accessibilityElement(children: .combine)
@@ -646,7 +639,7 @@ struct LiveView: View {
                     .accessibilityHidden(true)
             }
             .padding(ZoopMetrics.space3)
-            .background(ZoopPanelSurface(cornerRadius: 18))
+            .zoopInsetSurface(radius: 18)
             .contentShape(Rectangle())
         }
         .buttonStyle(LiquidPressStyle())
@@ -1060,7 +1053,7 @@ private struct LivePhysiology: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(ZoopMetrics.rowSpacing)
-        .background(ZoopPanelSurface(cornerRadius: 14))
+        .zoopInsetSurface(radius: 14)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
     }
@@ -1276,47 +1269,45 @@ private struct LiveLogCard: View {
     /// app-switcher snapshot, and blanking the log there would be visible for no benefit. The kill needs
     /// sustained non-frontmost CPU, which is `.background`.
     @Environment(\.scenePhase) private var scenePhase
-    @CardOpacity private var cardOpacity: Double
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 12) {
-                Text("STRAP LOG").font(StrandFont.overline).tracking(StrandFont.overlineTracking)
-                    .foregroundStyle(StrandPalette.textSecondary)
-                Spacer()
-                // Export the log so people can attach it to a bug report (issue #17 — macOS users
-                // had no way to share it). Copy → clipboard; Save… → a .txt file.
-                Button("Copy") { copyStrapLog() }
-                    .buttonStyle(.plain).font(StrandFont.mono).foregroundStyle(StrandPalette.accent)
-                Button("Save…") { saveStrapLog() }
-                    .buttonStyle(.plain).font(StrandFont.mono).foregroundStyle(StrandPalette.accent)
-            }
-            if scenePhase == .background {
-                // Same height so returning to the app does not shift the card's layout.
-                Color.clear.frame(height: 200)
-            } else {
-                logScroller
-            }
-
-            // Users look on Live first when something's wrong (#507/#509), so link straight into the
-            // Test Centre diagnostic home, one tap from the log.
-            Divider().overlay(StrandPalette.hairline)
-            NavigationLink(destination: TestCentreView()) {
-                HStack(spacing: 8) {
-                    Image(systemName: "testtube.2").foregroundStyle(StrandPalette.icon(StrandPalette.accent))
-                    Text("Open Test Centre to report a bug").font(StrandFont.mono)
-                        .foregroundStyle(StrandPalette.accent)
+        ContentCard {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 12) {
+                    Text("STRAP LOG").font(StrandFont.overline).tracking(StrandFont.overlineTracking)
+                        .foregroundStyle(StrandPalette.textSecondary)
                     Spacer()
-                    Image(systemName: "chevron.right").foregroundStyle(StrandPalette.textSecondary)
+                    // Export the log so people can attach it to a bug report (issue #17 — macOS users
+                    // had no way to share it). Copy → clipboard; Save… → a .txt file.
+                    Button("Copy") { copyStrapLog() }
+                        .buttonStyle(.plain).font(StrandFont.mono).foregroundStyle(StrandPalette.accent)
+                    Button("Save…") { saveStrapLog() }
+                        .buttonStyle(.plain).font(StrandFont.mono).foregroundStyle(StrandPalette.accent)
                 }
-                .contentShape(Rectangle())
+                if scenePhase == .background {
+                    // Same height so returning to the app does not shift the card's layout.
+                    Color.clear.frame(height: 200)
+                } else {
+                    logScroller
+                }
+
+                // Users look on Live first when something's wrong (#507/#509), so link straight into the
+                // Test Centre diagnostic home, one tap from the log.
+                Divider().overlay(StrandPalette.hairline)
+                NavigationLink(destination: TestCentreView()) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "testtube.2").foregroundStyle(StrandPalette.icon(StrandPalette.accent))
+                        Text("Open Test Centre to report a bug").font(StrandFont.mono)
+                            .foregroundStyle(StrandPalette.accent)
+                        Spacer()
+                        Image(systemName: "chevron.right").foregroundStyle(StrandPalette.textSecondary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Open Test Centre")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Open Test Centre")
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(ZoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
     }
 
     /// The tail of the log, lazily.
@@ -1399,8 +1390,6 @@ private enum LiveSyncFormat {
 /// and a one-line detail. The whole card is combined into a single accessibility element so VoiceOver
 /// reads "Heart rate: 62 bpm. Streaming now." rather than three disjoint fragments.
 private struct SignalTrustTile: View {
-    @CardOpacity private var cardOpacity: Double
-
     struct Model: Identifiable {
         let title: String
         let value: String
@@ -1439,10 +1428,9 @@ private struct SignalTrustTile: View {
                 .minimumScaleFactor(0.8)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(14)
-        .frame(minHeight: 112, alignment: .top)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(ZoopPanelSurface(cornerRadius: 20, surfaceOpacity: cardOpacity))
+        // The tile surface pads 12 a side, so the content floor is 88 to keep the 112 pt tile height.
+        .frame(minHeight: 88, alignment: .top)
+        .zoopTileSurface()
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(tile.title): \(tile.value). \(tile.detail)")
     }
