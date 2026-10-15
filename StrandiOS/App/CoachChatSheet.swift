@@ -267,6 +267,9 @@ private struct CoachChat: View {
             NavigationLink {
                 CoachSettingsPage()
             } label: { Label("Coach settings", systemImage: "slider.horizontal.3") }
+            NavigationLink {
+                CoachSuggestionHistoryPage()
+            } label: { Label { Text(CoachStrings.historyTitle) } icon: { Image(systemName: "list.bullet.clipboard") } }
             Button(role: .destructive) { showClearConfirm = true } label: {
                 Label("Clear conversation", systemImage: "trash")
             }

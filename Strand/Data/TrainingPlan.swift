@@ -8,6 +8,9 @@ import Foundation
 struct TrainingPlan: Codable, Equatable {
     /// Program id → `Calendar` weekday numbers (1 = Sunday … 7 = Saturday).
     var weekdays: [String: [Int]] = [:]
+    /// One-off plans: local day key (yyyy-MM-dd) → program ids, e.g. a routine the coach proposed for
+    /// today. Optional so plans saved before it existed still decode.
+    var dates: [String: [String]]?
 
     static let storageKey = "zoop.trainingPlan.v1"
 
@@ -29,9 +32,25 @@ struct TrainingPlan: Codable, Equatable {
         weekdays[programId] = valid.isEmpty ? nil : valid
     }
 
-    /// Program ids planned on the weekday of `date`, in a stable order.
+    /// Program ids planned on `date` (weekly plan plus one-off days), in a stable order.
     func programIds(on date: Date, calendar: Calendar = .current) -> [String] {
         let weekday = calendar.component(.weekday, from: date)
-        return weekdays.filter { $0.value.contains(weekday) }.keys.sorted()
+        let weekly = weekdays.filter { $0.value.contains(weekday) }.keys
+        let oneOff = dates?[Self.dayKey(date, calendar: calendar)] ?? []
+        return Set(weekly).union(oneOff).sorted()
+    }
+
+    /// Plans `programId` once on `date`, leaving the weekly plan alone. Past one-off days are dropped
+    /// here so the list never grows.
+    mutating func addOnce(_ programId: String, on date: Date, calendar: Calendar = .current) {
+        let key = Self.dayKey(date, calendar: calendar)
+        var map = (dates ?? [:]).filter { $0.key >= key }
+        map[key] = Array(Set(map[key, default: []]).union([programId])).sorted()
+        dates = map
+    }
+
+    private static func dayKey(_ date: Date, calendar: Calendar) -> String {
+        let c = calendar.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
     }
 }

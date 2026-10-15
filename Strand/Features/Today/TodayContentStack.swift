@@ -34,6 +34,7 @@ struct TodayContentStack: View {
         if content.isToday { HealthAlertBanner() }
 
         TodayRingsView(content: content, onExplain: actions.explain)
+        if content.isToday { CoachTodayCard() } // Coach card mounts here
 
         // Coach card mounts here (FB-4): directly under the rings, above the health and stress tiles.
 

@@ -17,6 +17,7 @@ struct CoachSettingsPage: View {
     @State private var briefStatus: String?
     @State private var refreshing = false
     @State private var showClearConfirm = false
+    @AppStorage(CoachMorningBrief.proactiveKey) private var proactive = true
 
     var body: some View {
         ScrollView {
@@ -47,6 +48,11 @@ struct CoachSettingsPage: View {
                 }
 
                 group("Morning brief") {
+                    toggleRow(icon: "text.badge.checkmark",
+                              title: "zoop.coach.settings.proactive",
+                              subtitle: "zoop.coach.settings.proactive.note",
+                              isOn: $proactive)
+                    divider
                     toggleRow(icon: "sunrise.fill",
                               title: "Daily brief",
                               subtitle: "A notification with today's readiness and a plan.",
