@@ -2,17 +2,16 @@ import SwiftUI
 
 // MARK: - MetricTile (2-up grid)
 //
-// Label, number, range bar, verdict. The meaning sentence is too long for half a screen width, so the
-// tile speaks it as the VoiceOver hint and shows it in the explainer the tap opens.
+// Label, number, range bar, verdict. The meaning sentence is too long for a half-width tile, so it is
+// the VoiceOver hint and shown in the explainer the tap opens.
 
 public struct MetricTile: View {
     private let readout: MetricReadout
     @Environment(\.locale) private var locale
-    /// 28 pt at the default size (§7.1 `metric`).
+    /// 28 pt at the default size, scaled with text size.
     @ScaledMetric(relativeTo: .title) private var numberSize: CGFloat = 28
     @ScaledMetric(relativeTo: .subheadline) private var unitSize: CGFloat = 15
 
-    /// Tile corner radius and padding (§7.2).
     private static let radius: CGFloat = 18
     private static let padding: CGFloat = 16
 

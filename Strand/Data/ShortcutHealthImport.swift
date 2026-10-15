@@ -1,47 +1,32 @@
 import Foundation
 import WhoopStore
 
-/// PR #581 — HealthKit-free Apple Health **import** for sideloaded iOS installs. The mirror of the
-/// #155 export (`ShortcutHealthExport`): a free (7-day) signing identity can't carry the HealthKit
-/// entitlement, so the in-app `AppleHealthImport` (which reads an `export.zip` via HealthKit-shaped
-/// XML) is the user's only path — and that still works. This adds a SECOND, lighter path for the
-/// data Apple Health can hand a Shortcut directly: the reporter builds a Siri Shortcut that reads
-/// their daily Health totals + workouts and opens
+/// HealthKit-free Apple Health import for sideloaded iOS installs; the mirror of `ShortcutHealthExport`.
+/// A Siri Shortcut reads daily Health totals and workouts and opens
 ///
 ///   zoop://import-health?v=1&payload=<base64(text)>
 ///
-/// where the decoded text is line-oriented, en_US_POSIX, NO header, one record per line. Two record
-/// kinds, discriminated by the first field:
+/// where the decoded text is line-oriented, en_US_POSIX, no header, one record per line:
 ///
 ///   D,yyyy-MM-dd,steps,activeKcal,restingHr,hrvMs,avgHr,asleepMin,vo2max,weightKg
 ///   W,startUnix,endUnix,sport,durationS,energyKcal,distanceM
 ///
-/// Empty fields keep their commas (fixed column positions); a missing optional is empty, not 0.
+/// Empty fields keep their commas; a missing optional is empty, not 0.
 ///
-/// LOOP-FREEDOM (the #581 review's central risk). Everything this ingests lands under the
-/// `apple-health` source id — the SAME source the `export.zip` importer writes and NEVER the strap
-/// (`my-whoop`) source. The complementary export (#155) reads the strap source ONLY and writes into
-/// Apple Health. So the round-trip is one-way at each hop:
+/// Loop-freedom: everything lands under the `apple-health` source (the same one the `export.zip`
+/// importer writes), never the strap source, and the export reads only the strap source, so a value
+/// can never round-trip back into Apple Health. `targetSource` is rejected if it is ever a strap
+/// source (pinned by `ShortcutHealthImportTests.testRejectsStrapTarget`).
 ///
-///   strap (`my-whoop`)  --[#155 export Shortcut]-->  Apple Health  --[this import]-->  `apple-health`
-///
-/// A value this import writes can never be picked up by the export (the export ignores `apple-health`)
-/// and so can never be re-logged into Apple Health and re-imported. `targetSource` is asserted equal to
-/// `WorkoutSource.appleHealthSource` and is REJECTED if it is ever the strap source — a belt-and-braces
-/// guard so a future caller can't accidentally point the ingest at the strap and create the loop.
-/// `ShortcutHealthImportTests.testRejectsStrapTarget` pins this.
-///
-/// Platform-neutral (no UIKit) so it compiles into the macOS target too, mirroring `ShortcutHealthExport`;
-/// the iOS-only `.onOpenURL` wiring lives in StrandiOS/ (see crossLaneNotes / Lane E) and calls
+/// Platform-neutral so it compiles into the macOS target too; the iOS `.onOpenURL` wiring calls
 /// `AppModel.handleHealthImportURL(_:)`.
 enum ShortcutHealthImport {
 
-    /// The only source id this import is ever allowed to write to. Equal to the `export.zip` importer's
-    /// source so the two Apple paths merge into one timeline. NEVER a strap device id.
+    /// The only source id this import may write to; equal to the `export.zip` importer's so both Apple
+    /// paths merge into one timeline. Never a strap device id.
     static let targetSource = WorkoutSource.appleHealthSource   // "apple-health"
 
-    /// The strap source ids the import must never write to — writing here is what would close the
-    /// export→import loop. Used only by the guard + its test.
+    /// Strap source ids the import must never write to; writing there would close the export-import loop.
     static let forbiddenSources: Set<String> = ["my-whoop", "my-whoop-zoop"]
 
     static let scheme = "zoop"
@@ -102,8 +87,7 @@ enum ShortcutHealthImport {
 
     // MARK: - URL → outcome
 
-    /// Validate + decode the `zoop://import-health` URL into the raw text payload. Returns nil with a
-    /// `.rejected` reason on any malformed/foreign URL so a stray deep link can't reach the store.
+    /// Validates and decodes the `zoop://import-health` URL into its text payload, rejecting any malformed or foreign URL.
     static func decodePayload(from url: URL) -> Result<String, Outcome> {
         guard url.scheme?.lowercased() == scheme else {
             return .failure(.rejected("Not a zoop:// link."))
@@ -123,7 +107,7 @@ enum ShortcutHealthImport {
         guard b64.utf8.count <= maxBase64Length else {
             return .failure(.rejected("Import payload is too large."))
         }
-        // Tolerate URL-safe base64 (Shortcuts' "Base64 Encode" can emit either) + missing padding.
+        // Tolerate URL-safe base64 (Shortcuts can emit either) and missing padding.
         guard let data = decodeBase64(b64), data.count <= maxPayloadBytes,
               let text = String(data: data, encoding: .utf8) else {
             return .failure(.rejected("Couldn't decode the import payload."))
@@ -131,7 +115,7 @@ enum ShortcutHealthImport {
         return .success(text)
     }
 
-    /// Accept both standard and URL-safe base64, with or without `=` padding.
+    /// Accepts standard and URL-safe base64, with or without `=` padding.
     static func decodeBase64(_ s: String) -> Data? {
         var t = s.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
         let pad = t.count % 4
@@ -141,15 +125,11 @@ enum ShortcutHealthImport {
 
     // MARK: - Pure parse
 
-    /// Parse the decoded payload text into days + workouts. Unknown record kinds and unparseable lines
-    /// are skipped (forward-compatible). Days with no metric are dropped.
+    /// Parses the payload into days and workouts. Unknown record kinds and unparseable lines are skipped; days with no metric are dropped.
     static func parse(_ text: String) -> Parsed {
         var out = Parsed()
-        // Split on ANY newline via `Character.isNewline`. Critically, a CRLF (`\r\n`) is a SINGLE Swift
-        // Character (extended grapheme cluster), so an `$0 == "\n" || $0 == "\r"` predicate would NOT
-        // match it — a Windows/Shortcuts CRLF-terminated payload would then glue the line ending onto the
-        // next record's kind field ("\r\nW" ≠ "W") and silently DROP that valid record. `isNewline`
-        // matches CR, LF and the CRLF grapheme. Trim newlines too (not just spaces) as belt-and-braces.
+        // Split with `Character.isNewline`: CRLF is a single Swift Character, so an `== "\n" || == "\r"`
+        // predicate would miss it and glue the line ending onto the next record's kind field.
         for raw in text.split(whereSeparator: { $0.isNewline }) {
             let line = raw.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !line.isEmpty else { continue }
@@ -174,7 +154,6 @@ enum ShortcutHealthImport {
     }
 
     private static func parseDay(_ f: [String]) -> ParsedDay? {
-        // D,day,steps,activeKcal,restingHr,hrvMs,avgHr,asleepMin,vo2max,weightKg
         guard let day = field(f, 1), isValidDay(day) else { return nil }
         var d = ParsedDay(day: day)
         d.steps      = field(f, 2).flatMap { Int($0) }
@@ -189,7 +168,6 @@ enum ShortcutHealthImport {
     }
 
     private static func parseWorkout(_ f: [String]) -> ParsedWorkout? {
-        // W,startUnix,endUnix,sport,durationS,energyKcal,distanceM
         guard let startS = field(f, 1), let start = Int(startS),
               let endS = field(f, 2), let end = Int(endS),
               let sport = field(f, 3), end >= start else { return nil }
@@ -200,8 +178,7 @@ enum ShortcutHealthImport {
         return w
     }
 
-    /// A strict `yyyy-MM-dd` shape check (the store keys on the day string; a garbage key would
-    /// scatter rows). Calendar-validity is not enforced — the importer never date-maths the key.
+    /// Strict `yyyy-MM-dd` shape check (the store keys on the day string). Calendar validity is not enforced.
     static func isValidDay(_ s: String) -> Bool {
         let parts = s.split(separator: "-")
         guard parts.count == 3,
@@ -212,8 +189,7 @@ enum ShortcutHealthImport {
 
     // MARK: - Parsed → store rows
 
-    /// Map the parsed days into the same three store shapes the `export.zip` importer writes
-    /// (`AppleDaily`, `DailyMetric`, generic `MetricPoint`), all under `targetSource`.
+    /// Maps parsed days into the three store shapes the `export.zip` importer writes (`AppleDaily`, `DailyMetric`, `MetricPoint`) under `targetSource`.
     static func appleDailyRows(_ days: [ParsedDay]) -> [AppleDaily] {
         days.map { d in
             AppleDaily(day: d.day, steps: d.steps, activeKcal: d.activeKcal, basalKcal: nil,
@@ -261,8 +237,7 @@ enum ShortcutHealthImport {
 
     // MARK: - Ingest
 
-    /// Decode + parse a Shortcut payload without writing anything. The app uses this to show a
-    /// confirmation sheet before accepting data from the custom URL scheme.
+    /// Decodes and parses a Shortcut payload without writing, so the app can confirm before accepting data from the URL scheme.
     static func prepare(url: URL) -> Result<PendingImport, Outcome> {
         let text: String
         switch decodePayload(from: url) {
@@ -274,13 +249,12 @@ enum ShortcutHealthImport {
         return .success(PendingImport(text: text, parsed: parsed))
     }
 
-    /// Decode → parse → upsert into `store` under `targetSource`. Returns a typed outcome. Rejects any
-    /// caller-supplied source that targets the strap (loop guard). Does NOT refresh the dashboard — the
-    /// caller (AppModel) does, matching the file-import path.
+    /// Decodes, parses and upserts into `store` under `targetSource`, returning a typed outcome. Rejects any
+    /// source that targets the strap. Does not refresh the dashboard; the caller does.
     @discardableResult
     static func ingest(url: URL, into store: WhoopStore,
                        targetSource source: String = ShortcutHealthImport.targetSource) async -> Outcome {
-        // Loop guard: never write to the strap source, or the export would re-emit imported rows.
+        // Loop guard: never write to the strap source.
         guard !forbiddenSources.contains(source), source == targetSource else {
             return .rejected("Import target must be the Apple Health source, not the strap.")
         }

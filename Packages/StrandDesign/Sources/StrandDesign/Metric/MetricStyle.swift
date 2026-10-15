@@ -2,13 +2,11 @@ import SwiftUI
 
 // MARK: - Shared pieces of the Metric* views
 //
-// Colours come from StrandPalette tokens only, which already carry both themes (Classic / Pastel) and
-// both appearances, so nothing here branches on the theme.
+// Colours come from StrandPalette tokens only, which already carry both themes and appearances.
 
 enum MetricStyle {
 
-    /// The metric's data colour (§7.5). A stale readout drops to tertiary so an old number never looks
-    /// current.
+    /// The metric's data colour. A stale readout drops to tertiary so an old number never looks current.
     static func tint(_ readout: MetricReadout) -> Color {
         if readout.isStale { return StrandPalette.textTertiary }
         switch readout.tint {
@@ -21,8 +19,8 @@ enum MetricStyle {
         }
     }
 
-    /// Score bands carry the green / amber / red band colour (§1.1); every other verdict stays
-    /// neutral, because "above" is good for HRV and bad for resting heart rate (calm by default).
+    /// Score bands carry the green / amber / red colour; every other verdict stays neutral, because
+    /// "above" is good for HRV and bad for resting heart rate.
     static func verdictColor(_ readout: MetricReadout) -> Color {
         if readout.isStale { return StrandPalette.textTertiary }
         if case .score = readout.verdict { return recoveryColor(readout.verdict) }
@@ -44,8 +42,7 @@ enum MetricStyle {
     }
 }
 
-/// Number with its unit on one baseline. Concatenated `Text` wraps as one run at large type sizes
-/// instead of clipping the unit.
+/// Number with its unit on one baseline; concatenated `Text` wraps as one run at large sizes instead of clipping the unit.
 struct MetricValueText: View {
     let presentation: MetricPresentation
     let numberFont: Font
@@ -115,8 +112,8 @@ struct MetricVerdictText: View {
 }
 
 extension View {
-    /// One VoiceOver element: "HRV" then "62 milliseconds, Above your range". The meaning sentence is
-    /// the hint; delta and range sit in the More Content rotor so the first swipe stays short.
+    /// One VoiceOver element ("HRV", "62 milliseconds, Above your range"); the meaning is the hint, and
+    /// delta and range sit in the More Content rotor so the first swipe stays short.
     func metricAccessibility(_ p: MetricPresentation) -> some View {
         self
             .accessibilityElement(children: .ignore)

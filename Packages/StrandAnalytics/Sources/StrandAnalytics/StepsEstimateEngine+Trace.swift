@@ -1,46 +1,26 @@
 import Foundation
 import WhoopProtocol
 
-// StepsEstimateEngine+Trace.swift - the Steps test-mode diagnostic traces.
+// StepsEstimateEngine+Trace: the Steps test-mode diagnostic traces. Pure, no clock/I/O/PII (counts and
+// ratios only); each call is gated behind TestCentre.active(.steps) at the call site.
 //
-// Two pure, side-effect-free twins for the two ways Zoop produces a step number:
-//
-//  1. calibrationTrace(...) - the WHOOP-4 motion-volume path. Reports each calibration day's motion VOLUME
-//     and phone reference count, then the fitted (or manual) calibration state (k / sampleDays / confidence
-//     / manual) by reusing StepsEstimateEngine.calibrate VERBATIM, so the trace can never disagree with the
-//     coefficient the Settings/Steps screen shows. When the fit is withheld it names the status (the
-//     "Need N more days" reason), the same status the tile renders.
-//
-//  2. rawCounterTrace(...) - the WHOOP 5/MG raw path. Reports the cumulative step_motion_counter series and
-//     its WRAP-AWARE deltas (cur - prev) & 0xFFFF, the dropped deltas (>= 512, a sync-gap / reboot boundary,
-//     not real steps), and the same total AnalyticsEngine.analyzeDay sums, with the SAME maxStepDelta gate
-//     and the SAME ticks-per-step scaling, so the trace and the daily steps_est value can never diverge.
-//
-// No clock, no I/O, no PII (counts and ratios only). A fixture pins the exact lines. The Steps test mode
-// gates each call behind TestCentre.active(.steps) at the call site (IntelligenceEngine); when the mode is
-// off neither is ever called, so there is zero cost. No em-dashes. The Kotlin twin is StepsEstimateEngineTrace.
+// calibrationTrace: the WHOOP-4 motion-volume path, reusing StepsEstimateEngine.calibrate VERBATIM so it
+// cannot disagree with the coefficient the Steps screen shows.
+// rawCounterTrace: the WHOOP 5/MG raw path, with the same maxStepDelta gate and ticks-per-step scaling as
+// AnalyticsEngine.analyzeDay so it cannot diverge from the daily steps_est value.
 
 extension StepsEstimateEngine {
 
-    /// The WHOOP-4 motion-volume calibration trace. Given the per-day calibration points (each a motion
-    /// volume + a phone reference step count) and the optional manual override, it logs:
-    ///   - one `stepsCal point` line per usable day (the day's motion volume and phone reference count, plus
-    ///     the implied steps/motion ratio that votes in the fit),
-    ///   - the calibration outcome line, built by reusing `calibrate(...)` VERBATIM (so k / sampleDays /
-    ///     confidence / manual are exactly what the Settings screen reads), or the `status(...)` line naming
-    ///     why the fit was withheld (e.g. needsMoreDays have/need).
-    ///
-    /// Every number is the SAME expression the production fit uses, and the reported coefficient IS
-    /// `calibrate(...)`'s, so the trace can never diverge from the headline. The Kotlin twin is
-    /// `StepsEstimateEngineTrace.calibrationTrace`.
+    /// The WHOOP-4 calibration trace: one `stepsCal point` line per usable day (motion volume, phone reference
+    /// count, implied ratio), then the outcome from `calibrate(...)` or the `status(...)` line naming why the
+    /// fit was withheld.
     public static func calibrationTrace(points: [CalibrationPoint],
                                         manualOverride: Double? = nil) -> [String] {
         func r2(_ x: Double) -> Double { (x * 100.0).rounded() / 100.0 }
 
         var lines: [String] = []
 
-        // Per-usable-day points: the SAME filter the fit applies (motion >= minMotionForFit && steps > 0),
-        // so the trace shows exactly the days that voted. Phone reference count is the calibration anchor.
+        // Same filter the fit applies, so the trace shows exactly the days that voted.
         let usable = points.filter(isUsableCalibrationPoint)
         for p in usable {
             let ratio = p.motion > 0 ? p.steps / p.motion : 0
@@ -48,15 +28,14 @@ extension StepsEstimateEngine {
                 + "ratio=\(r2(ratio)) (steps/motion votes weighted by motion)")
         }
 
-        // The calibration outcome, read from calibrate(...) verbatim so it matches the stored coefficient.
+        // Read from calibrate(...) verbatim so it matches the stored coefficient.
         if let cal = calibrate(points, manualOverride: manualOverride), usable.count >= minCalibrationDays || cal.manual {
             let source = cal.manual ? "user-set k" : "k = motion-weighted median of steps/motion"
             lines.append("stepsCal fit k=\(r2(cal.coefficient)) sampleDays=\(cal.sampleDays) "
                 + "confidence=\(r2(cal.confidence)) manual=\(cal.manual) "
                 + "(\(source))")
         } else {
-            // Withheld: name the status the tile shows (the "need N more days" reason), via status(...)
-            // verbatim so the trace explains the blank tile with the SAME usable-day filter.
+            // Withheld: name the status the tile shows, via status(...) with the same usable-day filter.
             let status = self.status(points, manualOverride: manualOverride)
             switch status {
             case let .needsMoreDays(have, need):
@@ -73,42 +52,30 @@ extension StepsEstimateEngine {
         return lines
     }
 
-    /// The WHOOP 5/MG raw-counter trace for one day. Recomputes the SAME wrap-aware sum
-    /// `AnalyticsEngine.analyzeDay` runs over the cumulative `step_motion_counter` series: the time-ordered
-    /// records filtered to the LOCAL day, each consecutive `(cur - prev) & 0xFFFF` increment, the dropped
-    /// deltas (>= `maxStepDelta`, a sync-gap / reboot boundary), and the `ticksPerStep` scaling. Reports the
-    /// counter series length, the kept/dropped delta counts, the raw tick total and the scaled steps - the
-    /// SAME value the daily `steps_est` carries (byte-identical math), so the trace can never diverge.
-    ///
-    /// - Parameters mirror the analyzeDay step block exactly: the day's step samples (any order), the local
-    ///   day key, the tz offset, and the user's ticks-per-step. `daySteps` is the calendar-day stream the
-    ///   production total prefers. The Kotlin twin is `StepsEstimateEngineTrace.rawCounterTrace`.
+    /// The WHOOP 5/MG raw-counter trace for one day: recomputes the wrap-aware sum `analyzeDay` runs over the
+    /// cumulative `step_motion_counter` (kept/dropped delta counts, raw ticks, scaled steps), so it matches
+    /// the daily `steps_est`. `daySteps` may be in any order; the filter is by local `dayKey`.
     public static func rawCounterTrace(daySteps: [StepSample],
                                        dayKey: String,
                                        tzOffsetSeconds: Int,
                                        ticksPerStep: Double) -> [String] {
-        // The SAME maxStepDelta gate AnalyticsEngine.analyzeDay uses for the daily steps total.
+        // Same maxStepDelta gate as analyzeDay.
         let maxStepDelta = 512
 
-        // The SAME filter + sort: keep only this LOCAL day's samples, time-ordered.
+        // Same filter + sort: this local day's samples, time-ordered.
         let sorted = daySteps
             .filter { AnalyticsEngine.dayString($0.ts, offsetSec: tzOffsetSeconds) == dayKey }
             .sorted { $0.ts < $1.ts }
 
         var lines: [String] = []
-        // #810: a WHOOP 4.0 sends NO raw step counter over BLE at all, so `daySteps` is empty for it; its
-        // steps are MOTION-ESTIMATED (the calibrationTrace path), not counted. Emitting the bare
-        // "counterSamples=0 (need >=2 for a delta)" line made a 4.0 export read as BROKEN. When there is
-        // no counter sample at all, say so honestly so the trace reflects the model, not a fault. (A 5/MG
-        // with a single counter sample still falls through to the "need >=2" line: it HAS a counter, just
-        // one read this window.) The Kotlin twin emits the same branch first; keep them byte-identical.
+        // #810: a WHOOP 4.0 sends no raw step counter over BLE, so `daySteps` is empty and its steps are
+        // motion-estimated; say so rather than emit a line that reads as a fault.
         if daySteps.isEmpty {
             lines.append("stepsRaw day=\(dayKey) counterSamples=0 noRawCounter "
                 + "(no step counter on this device; steps are motion-estimated, e.g. WHOOP 4.0)")
             return lines
         }
-        // A non-empty input proves a counter exists. If its rows all fall outside the requested local day,
-        // report only that window mismatch; never infer device capability or motion-estimation semantics.
+        // Non-empty input proves a counter exists; rows all outside the local day is only a window mismatch.
         if sorted.isEmpty {
             lines.append("stepsRaw day=\(dayKey) counterSamples=0 inputSamples=\(daySteps.count) noRowsForDay "
                 + "(no counter rows matched the requested local day)")
@@ -119,7 +86,7 @@ extension StepsEstimateEngine {
             return lines
         }
 
-        // Walk the wrap-aware deltas exactly as the production sum does.
+        // Wrap-aware deltas exactly as the production sum.
         var rawTotal = 0
         var keptDeltas = 0
         var droppedDeltas = 0
@@ -148,14 +115,11 @@ extension StepsEstimateEngine {
                 + "(each = (cur-prev)&0xFFFF, wrap-aware)")
         }
 
-        // The scaled total, the SAME expression analyzeDay produces for steps_est (ticks / ticksPerStep,
-        // floored at 0.5 so a bad pref can at most double, never explode, the total).
+        // Same expression as analyzeDay's steps_est; ticksPerStep floored at 0.5 so a bad pref can at most double it.
         let scaled = rawTotal > 0
             ? Int((Double(rawTotal) / Swift.max(ticksPerStep, 0.5)).rounded())
             : 0
-        // L7: production analyzeDay returns `scaled > 0 ? scaled : nil`, so a tiny rawTotal that rounds to 0
-        // yields NO steps_est for the day. Render "none" (not 0) so the trace matches the nil headline rather
-        // than implying a real zero-step measurement.
+        // analyzeDay returns nil for a total that rounds to 0, so render "none" rather than a measured zero.
         let scaledText = scaled > 0 ? String(scaled) : "none"
         lines.append("stepsRaw total rawTicks=\(rawTotal) ticksPerStep=\((ticksPerStep * 100).rounded() / 100) "
             + "scaledSteps=\(scaledText) (steps_est for the day)")

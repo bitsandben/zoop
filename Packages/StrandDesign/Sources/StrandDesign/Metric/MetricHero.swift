@@ -2,13 +2,12 @@ import SwiftUI
 
 // MARK: - MetricHero (screen top)
 //
-// The full anatomy, largest: label + info affordance, display number, delta, range bar, verdict and
-// meaning. Hosted inside a hero card; draws no surface of its own.
+// The full anatomy, largest. Hosted inside a hero card; draws no surface of its own.
 
 public struct MetricHero: View {
     private let readout: MetricReadout
     @Environment(\.locale) private var locale
-    /// 56 pt at the default size, scaled with the user's text size (§7.1 `display`).
+    /// 56 pt at the default size, scaled with the user's text size.
     @ScaledMetric(relativeTo: .largeTitle) private var numberSize: CGFloat = 56
     @ScaledMetric(relativeTo: .title) private var unitSize: CGFloat = 22
 

@@ -2,54 +2,22 @@ import Foundation
 
 /// Per-stream read caps for the `analyzeRecent` sliding windows (#1538).
 ///
-/// One shared cap of 200,000 covered both heavy streams, and it was sized for HR. A field capture
-/// (2026-09-05, WHOOP 5/MG, 21 nights) shows what that cost:
+/// A single 200,000 cap sized for HR let ten R-R windows (21 nights, WHOOP 5/MG) come back AT the cap. The
+/// read is `ORDER BY ts ASC LIMIT`, so the NEWEST rows were dropped and every HRV number from those windows
+/// was computed on a night missing its tail, silently. R-R arrives in BURSTS (average below HR's 1/s, peaks
+/// far above), and HR's full 54-hour window (~194,400 rows) sat only 3% under the cap. Caps are therefore
+/// sized to what a window can PEAK at; the rate constants are deliberately generous ceilings.
 ///
-///     hr[read=1723815 served=1826919 truncated=0]
-///     rr[read=2563444 served=610905 truncated=10]
-///
-/// Ten R-R windows came back AT the cap. `SlidingStreamWindow.truncatedReads` is explicit about what
-/// that means - "a non-zero count means a number may be wrong, not merely slow" - because the read is
-/// `ORDER BY ts ASC LIMIT`, so what gets dropped is the NEWEST rows. Every HRV number derived from one
-/// of those windows was computed on a night missing its tail, silently.
-///
-/// ## Why R-R and not HR
-///
-/// Measured, not reasoned from beat rate - the capture contradicts the obvious argument. R-R is one row
-/// per BEAT, so it "should" outrun HR's 1/s, yet a stride read in that same log returned 81,009 R-R rows
-/// against 107,415 HR: R-R is recorded in BURSTS, not continuously, so its average over a window sits
-/// BELOW HR's while its peaks run far above. Averages are why one cap looked safe; peaks are what
-/// truncated it.
-///
-/// What is certain is the behaviour: across 21 nights R-R came back at the 200,000 cap ten times and HR
-/// never did. HR's own margin is the other half of the story - a full 54-hour window at 1/s is ~194,400
-/// rows, 3% under the cap, so HR was never comfortable either, merely lucky.
-///
-/// The caps are therefore sized against what a window can PEAK at, not what it averages. The rate
-/// constants below are deliberately generous for that reason: they are a ceiling to stay clear of, not a
-/// prediction of typical density.
-///
-/// So the bug was not the number being too small. It was ONE number serving two streams whose peak
-/// densities differ, where a value comfortable for one is a silent truncation for the other.
-///
-/// ## The invariant
-///
-/// A cap must exceed what a full window can legitimately hold, or a complete read is indistinguishable
-/// from a truncated one. `capExceedsFullWindow` pins exactly that, per stream, so a future change to the
-/// window span or a stream's rate fails a test rather than quietly clipping a night.
-///
-/// Note the cap is a ceiling, not an allocation: a read still returns only the rows that exist. Raising
-/// it costs nothing on a normal night and buys correctness on a dense one.
+/// Invariant: a cap must exceed what a full window can legitimately hold, or a complete read is
+/// indistinguishable from a truncated one. `capExceedsFullWindow` pins this per stream. The cap is a
+/// ceiling, not an allocation.
 public enum StreamReadCap {
 
-    /// How far BEFORE the day boundary the pass reads. EVERY lookback in the engine takes this value -
-    /// the per-day `from`, the window start, the skin-anchor scan - so the window and the caps derived
-    /// from it cannot drift apart - widening the lookback there without
-    /// resizing the caps here is precisely how a stream starts truncating again, and is the "one number
-    /// in two places" shape this whole type exists because of.
+    /// How far BEFORE the day boundary the pass reads. EVERY lookback in the engine takes this value (per-day
+    /// `from`, window start, skin-anchor scan) so the window and the caps derived from it cannot drift apart.
     public static let lookbackSeconds = 30 * 3_600
 
-    /// How far AFTER it, capped at `now` for a day still in progress. A whole day.
+    /// How far AFTER the day boundary, capped at `now` for a day in progress.
     public static let forwardSeconds = 24 * 3_600
 
     /// The per-day read window: `dayStart - 30h` through the night, i.e. 54 hours.
@@ -58,37 +26,22 @@ public enum StreamReadCap {
     /// HR: one sample per second.
     public static let hrRowsPerSecond = 1.0
 
-    /// R-R at its PEAK. The measured average is below 1/s (it arrives in bursts, with gaps), but bursts
-    /// are what reach a cap - and #1008's cross-second overcount can double the rows a burst produces.
-    /// 2/s is a ceiling chosen to stay clear of, not a claim about typical density.
+    /// R-R at its PEAK. The average is below 1/s (bursts), but bursts reach a cap, and #1008's cross-second
+    /// overcount can double a burst. A ceiling, not typical density.
     public static let rrRowsPerSecond = 2.0
 
-    /// Gravity: one sample per second, like HR, and read over the SAME 54-hour window - the code's claim
-    /// that "the other eight streams are thousands of rows" does not hold for this one. A field capture
-    /// measured 192,698 gravity rows, 96% of the old shared cap.
-    ///
-    /// It is the most dangerous of the three, because it is a PLAIN read rather than a
-    /// `SlidingStreamWindow`: nothing counts a truncation here, so a clip would be silent even by the
-    /// standard that caught R-R. Sleep STAGING is what consumes it, so the cost of a clipped read is a
-    /// mis-staged night rather than a slow one.
+    /// Gravity: one sample per second over the same 54-hour window (a field capture measured 192,698 rows,
+    /// 96% of the old shared cap). Most dangerous: it is a PLAIN read, not a `SlidingStreamWindow`, so nothing
+    /// counts a truncation, and a clip mis-stages a night.
     public static let gravityRowsPerSecond = 1.0
 
-    /// Headroom over a full window, so a legitimate read cannot land ON the cap and be mistaken for a
-    /// truncated one.
+    /// Headroom over a full window, so a legitimate read cannot land ON the cap and look truncated.
     public static let headroom = 1.5
 
-    /// The cap on the sleep engine's skin-temp reads, named rather than left a literal so the no-night
-    /// line can say when one came back AT it. Skin reads OUTSIDE the engine (a chart, an export) keep
-    /// their own limits - this is not a repo-wide skin cap.
-    ///
-    /// Not derived from a row rate like the caps below: skin's density was never measured. Skin rides the
-    /// record that carries gravity, and gravity ranged from 177 to 192,698 rows across 54 HOURS in one
-    /// capture, so whether 200,000 is generous or tight is genuinely unknown - which is the reason to
-    /// print the count. Unchanged in value: this names what both platforms already read at.
-    ///
-    /// Shared by two reads with very different spans - the night window, and the ~21-day WHOOP 4.0 anchor
-    /// scan. Only the window read's count reaches the no-night line, so an `atCap=skin` marker means THAT
-    /// read was clipped; a clipped anchor scan still goes unreported.
+    /// Cap on the sleep engine's skin-temp reads, named so the no-night line can say when one came back AT it.
+    /// Not derived from a row rate: skin density was never measured (gravity ranged 177 to 192,698 rows across
+    /// 54 h in one capture). Shared by the night-window read and the ~21-day WHOOP 4.0 anchor scan; only the
+    /// window read's count reaches the no-night line, so a clipped anchor scan goes unreported.
     public static let skin = 200_000
 
     /// The cap for a stream producing `rowsPerSecond` at its densest.
@@ -96,17 +49,13 @@ public enum StreamReadCap {
         Int((Double(windowSeconds) * rowsPerSecond * headroom).rounded(.up))
     }
 
-    /// 291,600 - a full HR window plus half again.
-    ///
-    /// STORED, not computed. A window's read cap and its truncation threshold must be the same number,
-    /// and the engine names this in both slots - a stored constant makes those two references provably
-    /// one value rather than two evaluations that merely ought to agree.
+    /// 291,600: a full HR window plus half again. STORED, not computed, so the read cap and the truncation
+    /// threshold are provably one value.
     public static let hr = cap(rowsPerSecond: hrRowsPerSecond)
 
-    /// 583,200 - a full R-R window at its densest, plus half again. Stored for the reason `hr` gives.
+    /// 583,200: a full R-R window at its densest, plus half again. Stored like `hr`.
     public static let rr = cap(rowsPerSecond: rrRowsPerSecond)
 
-    /// 291,600 - the same shape as `hr`, for the same 54-hour window. Only the 54-hour read needs it;
-    /// the day-scoped gravity reads span 24 hours and cannot approach any of these.
+    /// 291,600: same shape as `hr`. Only the 54-hour read needs it; day-scoped gravity reads span 24 hours.
     public static let gravity = cap(rowsPerSecond: gravityRowsPerSecond)
 }

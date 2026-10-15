@@ -1,22 +1,18 @@
 import Foundation
 import WhoopProtocol   // DeviceFamily (sleepMotionLine)
 
-// RestSubScoreTrace.swift - the Sleep & Rest test-mode diagnostic for the Rest composite.
-//
-// Recomputes the four weighted sub-scores from the SAME inputs AnalyticsEngine.Rest.composite
-// reads, and reuses Rest.composite for the final value so the trace can never disagree with the
-// score. Pure and side-effect-free. No em-dashes. Counts and ratios only.
+// Sleep & Rest test-mode diagnostic for the Rest composite. Recomputes the four weighted sub-scores from the
+// same inputs as AnalyticsEngine.Rest.composite and reuses Rest.composite for the final value, so the trace
+// can never disagree with the score. Pure; counts and ratios only.
 
-/// Where the night that drove this day's sleep figures came from (CAPTURE-C / #799). The measured BLE
-/// path (`AnalyticsEngine.analyzeDay`) emits `.measured`; the caller passes `.imported(...)` when a
-/// previously-imported sleep row WON the daily merge over the on-device night, so the trace shows the
-/// import winning instead of silently replacing the measured number. The raw wire string is the contract
-/// shape `measured` / `imported:whoop` / `imported:apple`.
+/// Where the night behind this day's sleep figures came from (#799). The measured BLE path emits `.measured`;
+/// the caller passes `.imported(...)` when an imported row won the daily merge, so the trace shows the import
+/// winning instead of silently replacing the measured number. Wire strings: `measured` / `imported:whoop` / `imported:apple`.
 public enum SleepProvenance: Equatable, Sendable {
     case measured
     case imported(String)   // source tag, e.g. "whoop" / "apple"
 
-    /// The verbatim provenance token for the trace line: "measured", or "imported:<source>".
+    /// Verbatim provenance token: "measured" or "imported:<source>".
     public var wire: String {
         switch self {
         case .measured: return "measured"
@@ -27,11 +23,8 @@ public enum SleepProvenance: Equatable, Sendable {
 
 extension AnalyticsEngine {
 
-    /// One per-day sleep PROVENANCE line for the Sleep & Rest test mode (CAPTURE-C / #799). It rides the
-    /// SAME trace sink as the Rest sub-score line, right after it, so an imported row winning the merge is
-    /// visible in the export instead of silently substituting the measured night. `hoursAsleepMin` is the
-    /// scored night's total sleep in MINUTES (the same `tstS/60` the daily rollup uses); `sourceRowId` is a
-    /// stable id for the winning row (the measured main-night's start ts, or the imported row's id). PURE.
+    /// Per-day sleep provenance line (#799), emitted right after the Rest sub-score line. `hoursAsleepMin` is total
+    /// sleep in minutes (`tstS/60`); `sourceRowId` is a stable id of the winning row (main-night start ts or imported row id).
     public static func sleepProvenanceLine(provenance: SleepProvenance,
                                            hoursAsleepMin: Double,
                                            sourceRowId: String) -> String {
@@ -39,56 +32,38 @@ extension AnalyticsEngine {
             + "hoursAsleep=\(Int(hoursAsleepMin.rounded())) sourceRowId=\(sourceRowId)"
     }
 
-    /// #1567: the pass-level warning that this scoring run has no device registry behind it.
-    ///
-    /// Twin of Kotlin `IntelligenceEngine.ownerSourceAbsentLine` — same grammar, deliberately different
-    /// cause token, because the two platforms reach this state by genuinely different routes. Kotlin's
-    /// `analyzeRecent` takes an OPTIONAL owner source and a caller could omit it (`ownerSource=absent`);
-    /// Swift's reads the registry itself, so the only way in is that read FAILING (`registry=unavailable`).
-    /// Forcing one identical string would hide which of the two actually happened, which is the one thing a
-    /// reader of this line needs to know.
-    ///
-    /// Worth having on both because the underlying flaw is shared: an unresolvable device family does not
-    /// error, it silently becomes WHOOP5 — and on a WHOOP 4.0 that reads a raw skin-temp ADC as
-    /// centidegrees, missing the 28–42 °C worn gate, so the night yields nothing at all. A pass that scored
-    /// against fallbacks was previously indistinguishable from one that scored against the real registry.
-    ///
-    /// PURE. Counts and an id only, same privacy class as the sibling `sleep day=` line.
+    /// #1567: pass-level warning that this scoring run has no device registry behind it. Same grammar as Kotlin's
+    /// `ownerSourceAbsentLine` but a different cause token (`registry=unavailable` here vs `ownerSource=absent`), since
+    /// the platforms reach this state by different routes. An unresolvable family silently becomes WHOOP5, which on a
+    /// WHOOP 4.0 reads a raw skin-temp ADC as centidegrees and misses the 28-42 deg C worn gate. Counts and an id only.
     public static func registryUnavailableLine(importedDeviceId: String) -> String {
         "analyzeRecent registry=unavailable owner->\(importedDeviceId) skinTempScale->whoop5"
     }
 
-    /// #319 diagnostic (Sleep & Rest test mode): the motion-coverage + staging context behind the Rest
-    /// number, so a high score on a poor night can be explained straight from an export. `grav`/`hr` are the
-    /// night-window sample counts; `sparse` is the gravity-sparse gate (WHOOP 4.0 banks motion coarsely, so
-    /// most epochs default to sleep → over-counted duration → high Rest); `stager` says which engine ran;
-    /// `family` the day's owner. PURE; byte-identical to Android `AnalyticsEngine.sleepMotionLine`.
+    /// #319 diagnostic: motion coverage and staging context behind the Rest number, so a high score on a poor night
+    /// can be explained from an export. `grav`/`hr` are night-window sample counts; `sparse` is the gravity-sparse gate
+    /// (WHOOP 4.0 banks motion coarsely, so most epochs default to sleep and over-count duration); `stager` is the
+    /// engine that ran; `family` the day's owner.
     public static func sleepMotionLine(day: String, grav: Int, hr: Int, sparse: Bool,
                                        useSleepStagerV2: Bool, family: DeviceFamily) -> String {
         "sleep-motion day=\(day) grav=\(grav) hr=\(hr) sparse=\(sparse) "
             + "stager=\(useSleepStagerV2 ? "V2" : "V1") family=\(family.rawValue)"
     }
 
-    /// How long AFTER the detected onset to sample HR for the #271 onset trace (seconds). The first
-    /// several minutes of the window: if onset opened on a still-but-awake stretch, HR here is still near
-    /// baseline; a real onset has already dipped. 10 min is long enough to average out beat noise.
+    /// Seconds after detected onset to sample HR for the #271 onset trace; long enough to average out beat noise, early enough that a real onset has already dipped.
     public static let onsetTraceWindowSec: Int = 600
 
-    /// Median of a bpm list — the deterministic "sorted, element at count/2" rule (upper-middle on an even
-    /// count) so Swift and Kotlin agree byte-for-byte. nil on an empty list. Used to build the #271 onset
-    /// trace's baseline + at-onset HR from the SAME rule on both platforms.
+    /// Median of a bpm list: sorted element at count/2 (upper-middle on even counts) so platforms agree; nil when empty.
     public static func medianBpm(_ bpms: [Int]) -> Int? {
         if bpms.isEmpty { return nil }
         let s = bpms.sorted()
         return s[s.count / 2]
     }
 
-    /// #271 diagnostic (Sleep & Rest test mode): the ONSET decision behind an over-early WHOOP 4.0 bedtime.
-    /// `onsetTs` is where the detected sleep window OPENED; `hrAtOnsetBpm` is the median HR in the first
-    /// `onsetTraceWindowSec` of it; `baselineHrBpm` is the day's median HR. `hrRatio` = atOnset / baseline:
-    /// near 1.0 means HR had NOT dipped when the window opened — the pre-onset-awake over-staging this issue
-    /// tracks (sparse 4.0 motion classifies "lying still, awake" as sleep); a real onset dips well below
-    /// baseline (cf. the wake-side `morningReonsetRestingHRMult` = 0.90). PURE; byte-identical to Android.
+    /// #271 diagnostic: the onset decision behind an over-early WHOOP 4.0 bedtime. `hrRatio` = HR at onset (median of
+    /// the first `onsetTraceWindowSec`) / the day's median HR; near 1.0 means HR had not dipped when the window opened
+    /// (sparse 4.0 motion classifying "lying still, awake" as sleep), whereas a real onset dips well below baseline
+    /// (cf. `morningReonsetRestingHRMult` = 0.90).
     public static func sleepOnsetLine(onsetTs: Int, hrAtOnsetBpm: Int, baselineHrBpm: Int) -> String {
         let ratio = baselineHrBpm > 0 ? Double(hrAtOnsetBpm) / Double(baselineHrBpm) : 0.0
         let r2 = (ratio * 100.0).rounded() / 100.0
@@ -99,23 +74,22 @@ extension AnalyticsEngine {
 
 extension AnalyticsEngine.Rest {
 
-    /// One Rest sub-score diagnostic line. `groupFragments` / `groupInBedSeconds` describe the
-    /// main-night GROUP composition (#525/#561): how many detected blocks were bridged into the
-    /// scored night and their summed in-bed span. The four term scores mirror `composite`'s own
-    /// math; the final `composite=` value is `Rest.composite` verbatim so they cannot diverge.
+    /// One Rest sub-score diagnostic line. `groupFragments` / `groupInBedSeconds` describe the main-night group
+    /// (#525/#561): blocks bridged into the scored night and their in-bed span. The final `composite=` is
+    /// `Rest.composite` verbatim so they can't diverge.
     public static func subScoreLine(tstSeconds: Double, inBedSeconds: Double, efficiency: Double,
                                     restorativeSeconds: Double, needHours: Double,
                                     consistency: Double?, deepSeconds: Double?,
                                     groupFragments: Int, groupInBedSeconds: Double) -> String {
         func r2(_ x: Double) -> Double { (x * 100.0).rounded() / 100.0 }
 
-        // The SAME sub-scores `composite` weighs (shared `terms`), so the line cannot drift from it.
+        // Shared `terms` with `composite`, so the line can't drift from it.
         let t = AnalyticsEngine.Rest.terms(
             tstSeconds: tstSeconds, efficiency: efficiency, restorativeSeconds: restorativeSeconds,
             needHours: needHours, consistency: consistency, deepSeconds: deepSeconds)
         let durationScore = t.duration, efficiencyScore = t.efficiency
         let restorativeScore = t.restorative, deepFactor = t.deepFactor
-        // -1 = no regularity signal: the term is omitted and the other weights renormalised.
+        // -1 = no regularity signal: term omitted, other weights renormalised.
         let consistencyScore = t.consistency ?? -1
         let composite = AnalyticsEngine.Rest.composite(
             tstSeconds: tstSeconds, inBedSeconds: inBedSeconds, efficiency: efficiency,

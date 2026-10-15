@@ -2,35 +2,26 @@ import Foundation
 
 // MARK: - Sleep insights (Zoop)
 //
-// Pure, DB-free interpretations of the wearer's stored nights: how long falling asleep usually takes and
-// whether that is changing, how much sleep their recovery likes best, which bedtime window precedes the
-// best recoveries, whether a regular bedtime pays off, and how far weekends shift the night.
-//
-// Every insight returns nil unless there is enough data to say it honestly; the minimums are constants
-// below and pinned by `SleepInsightsTests`. These are personal correlations over the wearer's own nights,
-// not causal or clinical claims, and none of them feeds a score.
-//
-// The engine returns numbers and series only. The app composes the sentences, so they localize there.
+// Pure, DB-free interpretations of the wearer's stored nights: time to fall asleep, the sleep duration
+// and bedtime window that precede the best recoveries, whether a regular bedtime pays off, and the
+// weekend shift. Each insight is nil unless there is enough data (minimums below, pinned by
+// `SleepInsightsTests`). Personal correlations only: not causal or clinical, and none feeds a score.
+// The engine returns numbers and series; the app composes the sentences so they localize there.
 
 public enum SleepInsights {
 
     // MARK: Input
 
-    /// One main night, keyed by its local wake day.
     public struct Night: Equatable, Sendable {
         /// "yyyy-MM-dd" local day the night ended on (the day whose recovery it feeds).
         public var wakeDay: String
         /// Local clock time the night started (in bed), minutes after midnight, 0..<1440.
         public var bedtimeClockMin: Double
-        /// Time in bed, minutes.
         public var inBedMin: Double
-        /// Time asleep, minutes, when known.
         public var asleepMin: Double?
-        /// Minutes from the in-bed start to the first sleep, when the night has a staged timeline.
         public var latencyMin: Double?
         /// The recovery scored the morning after this night, 0...100.
         public var recovery: Double?
-        /// True when the wake day is a free day (Saturday or Sunday).
         public var isFreeDay: Bool
 
         public init(wakeDay: String, bedtimeClockMin: Double, inBedMin: Double, asleepMin: Double?,
@@ -43,28 +34,21 @@ public enum SleepInsights {
         /// Bedtime as signed minutes from midnight: 22:30 is -90, 00:30 is +30. Noon is the seam, so a
         /// night that starts after midnight sorts after one that starts before it.
         public var bedtimeSignedMin: Double { SleepInsights.signedClock(bedtimeClockMin) }
-        /// Mid-sleep as signed minutes from midnight, on the same scale.
         public var midSleepSignedMin: Double { bedtimeSignedMin + inBedMin / 2 }
     }
 
     // MARK: Minimums and windows
 
-    /// Nights with a latency the typical value needs, out of the last `latencyWindow`.
     public static let latencyMinNights = 14
     public static let latencyWindow = 30
-    /// The recent comparison span, and how many of those nights need a latency.
     public static let latencyRecentWindow = 7
     public static let latencyRecentMinNights = 3
-    /// A recent change smaller than this (minutes) reads as "as usual".
     public static let latencySteadyBandMin: Double = 2
 
     /// Nights paired with a next-morning recovery that the recovery insights need.
     public static let recoveryMinNights = 14
-    /// How far back the recovery insights look, in nights.
     public static let recoveryWindow = 90
-    /// Bin width (minutes) for sleep duration and bedtime.
     public static let binWidthMin: Double = 30
-    /// Nights a bin needs before its mean counts.
     public static let minNightsPerBin = 3
     /// A shorter sleep bin within this many recovery points of the best bin is "as good".
     public static let bestBinTolerancePts: Double = 5
@@ -73,12 +57,10 @@ public enum SleepInsights {
 
     /// Within this many minutes of the usual bedtime counts as a regular night.
     public static let regularToleranceMin: Double = 30
-    /// Nights each side (regular / irregular) the consistency insight needs.
     public static let consistencyMinPerGroup = 4
     /// A recovery difference smaller than this (points) reads as no clear difference.
     public static let consistencyNoEffectPts: Double = 3
 
-    /// Weekend shift looks at the last six weeks.
     public static let weekendWindow = 42
     public static let weekendMinFreeNights = 4
     public static let weekendMinWorkNights = 8
@@ -90,7 +72,6 @@ public enum SleepInsights {
 
     // MARK: Output
 
-    /// One day's value in a series.
     public struct Point: Equatable, Sendable {
         public var day: String
         public var value: Double
@@ -108,17 +89,13 @@ public enum SleepInsights {
     }
 
     public struct Latency: Equatable, Sendable {
-        /// Median over the last `latencyWindow` nights with a latency.
         public var typicalMin: Double
-        /// Median over the last `latencyRecentWindow` nights with a latency.
         public var recentMin: Double
         /// recent − typical. Negative = falling asleep faster lately.
         public var deltaMin: Double
         public var nightCount: Int
         public var recentCount: Int
-        /// Per-night latency, oldest first, the last `latencyWindow` nights that had one.
         public var series: [Point]
-        /// Wake days of the nights the recent median used.
         public var recentDays: [String]
 
         public enum Trend: String, Sendable { case faster, slower, steady }
@@ -131,18 +108,14 @@ public enum SleepInsights {
     public struct BinnedRecovery: Equatable, Sendable {
         /// Qualifying bins (≥ `minNightsPerBin` nights), ascending.
         public var bins: [Bin]
-        /// The bin the headline names.
         public var best: Bin
-        /// Highest minus lowest qualifying bin mean.
         public var spreadPts: Double
-        /// Nights that went into the bins (qualifying or not).
         public var nightCount: Int
         /// True when no bin stands out, so the headline must not name a winner.
         public var isFlat: Bool { spreadPts < SleepInsights.flatSpreadPts }
     }
 
     public struct Consistency: Equatable, Sendable {
-        /// Median bedtime, signed minutes from midnight.
         public var usualBedtimeSignedMin: Double
         public var regularMeanRecovery: Double
         public var irregularMeanRecovery: Double
@@ -150,7 +123,6 @@ public enum SleepInsights {
         public var irregularCount: Int
         /// regular − irregular, recovery points.
         public var deltaPts: Double
-        /// Per night: absolute bedtime deviation from the usual (minutes) and the recovery that followed.
         public var points: [(deviationMin: Double, recovery: Double)]
 
         public enum Effect: String, Sendable { case regularBetter, irregularBetter, none }
@@ -169,14 +141,12 @@ public enum SleepInsights {
     }
 
     public struct WeekendShift: Equatable, Sendable {
-        /// Mean mid-sleep, signed minutes from midnight.
         public var workdayMidSleepSignedMin: Double
         public var freeDayMidSleepSignedMin: Double
         /// free − workday, minutes. Positive = later on weekends.
         public var shiftMin: Double
         public var workdayCount: Int
         public var freeDayCount: Int
-        /// Mid-sleep per night (signed minutes), oldest first, with whether it was a free day.
         public var series: [(day: String, midSleepSignedMin: Double, isFreeDay: Bool)]
 
         public static func == (a: WeekendShift, b: WeekendShift) -> Bool {
@@ -302,14 +272,12 @@ public enum SleepInsights {
 
     // MARK: Helpers
 
-    /// Clock minutes (0..<1440) to signed minutes from midnight in -720..<720.
     public static func signedClock(_ clockMin: Double) -> Double {
         let c = clockMin.truncatingRemainder(dividingBy: 1440)
         let pos = c < 0 ? c + 1440 : c
         return pos >= 720 ? pos - 1440 : pos
     }
 
-    /// Signed minutes back to a 0..<1440 clock.
     public static func clock(fromSigned signed: Double) -> Double {
         let c = signed.truncatingRemainder(dividingBy: 1440)
         return c < 0 ? c + 1440 : c
@@ -319,7 +287,6 @@ public enum SleepInsights {
         Array(normalized(nights).suffix(recoveryWindow))
     }
 
-    /// Bins `(value, recovery)` pairs by `binWidthMin` and keeps the bins with enough nights.
     static func binned(_ pairs: [(Double, Double)]) -> [Bin] {
         var groups: [Double: [Double]] = [:]
         for (v, r) in pairs {

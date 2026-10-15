@@ -3,13 +3,10 @@ import StrandDesign
 import StrandAnalytics
 import WhoopStore
 
-/// #849: an in-memory snapshot of everything `loadHistoryWide()` computes: the ~40 history-wide reads +
-/// the per-workout strap-HR derivation. Held on the long-lived `Repository` (NOT TodayView's `@State`),
-/// keyed by the `refreshSeq` it was built at, so a Today RE-MOUNT (TabView/module switch, or an
-/// Apple-Health import that recreates the view, both tear down `@State`) can RESTORE these values without
-/// re-running the heavy query pass. Restoring is a handful of in-memory assignments; the old code instead
-/// re-ran the full history-wide reload on every re-mount, which is the lag #849 reports returning to Today
-/// after an import. Built only after a real `loadHistoryWide()`; consumed when the seq still matches.
+/// In-memory snapshot of everything `loadHistoryWide()` computes (~40 history-wide reads plus the
+/// per-workout strap-HR derivation). Held on the long-lived `Repository`, keyed by the `refreshSeq` it
+/// was built at, so a Today re-mount can restore it with in-memory assignments instead of re-running
+/// the heavy query pass (#849). Consumed only while the seq still matches.
 struct TodayHistoryWideCache {
     let sparks: [String: [Double]]
     let stepsEstByDay: [String: Int]
@@ -21,20 +18,15 @@ struct TodayHistoryWideCache {
     let fitnessAgeToday: Double?
     let vo2maxToday: Double?
     let vitalityToday: Double?
-    // Hydration total/goal intentionally absent (#989): mutations don't bump refreshSeq, so a cached
-    // value could restore stale. TodayView re-reads hydration live on restore instead.
+    // Hydration total/goal is intentionally absent (#989): mutations don't bump refreshSeq, so a cached
+    // value could restore stale. TodayView re-reads hydration live on restore.
 }
 
-/// #849/#932: an in-memory snapshot of everything `loadDayScoped()` computes for ONE viewed day: the Rest
-/// score + its tile spark, the provenance winners, the selected day's 5-minute HR buckets, the day's step
-/// activity class, the live Effort, the pinned chart axis and the overlapping sleep band. Held on the
-/// long-lived `Repository` (NOT TodayView's `@State`), keyed by the (`refreshSeq`, viewed-day key) it was
-/// built at, so a Today RE-MOUNT with unchanged data (macOS cold-mounts the screen on every sidebar switch)
-/// can RESTORE these values without re-running the heavy `hrBuckets`/`hrSamples` reads, 170k+ HR rows/day
-/// on a big library, the measured #932 frame degradation. The day key half of the pair is what makes day
-/// navigation safe: another day's snapshot can never be served because its key differs. Built only after a
-/// real `loadDayScoped()`; consumed when BOTH the seq AND the day key still match (see
-/// `Repository.todayDayScopedLoadedSeq` / `todayDayScopedLoadedDayKey`).
+/// In-memory snapshot of everything `loadDayScoped()` computes for ONE viewed day (Rest score and spark,
+/// provenance winners, 5-minute HR buckets, step class, live Effort, chart axis, sleep band). Held on
+/// the long-lived `Repository`, keyed by (`refreshSeq`, viewed-day key), so a re-mount with unchanged
+/// data skips the heavy `hrBuckets`/`hrSamples` reads (170k+ HR rows/day on a big library, #932).
+/// Consumed only when BOTH the seq and the day key match, so another day's snapshot is never served.
 struct TodayDayScopedCache {
     let restSpark: [Double]
     let restScore: Double?
@@ -45,7 +37,7 @@ struct TodayDayScopedCache {
     let liveTodayStrain: Double?
     let hrAxis: ClosedRange<Date>
     let sleepToday: CachedSleepSession?
-    /// When the snapshot was banked. TODAY hits are age-gated on this (`todayCacheMaxAge`): live banking
-    /// does not bump `refreshSeq`, so an unbounded today snapshot would drift behind the 1Hz stream.
+    /// When the snapshot was banked. Today hits are age-gated on this (`todayCacheMaxAge`): live banking
+    /// does not bump `refreshSeq`, so an unbounded snapshot would drift behind the 1 Hz stream.
     let bankedAt: Date
 }

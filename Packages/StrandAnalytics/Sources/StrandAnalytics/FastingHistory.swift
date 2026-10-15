@@ -2,22 +2,19 @@ import Foundation
 
 // MARK: - Fasting history: week, streak, consistency, and the night split for patterns
 //
-// A fast belongs to the calendar day it ENDED on: that is the day the user experiences as "I made it",
-// and it keeps an overnight 20:00–12:00 fast from counting for two days.
+// A fast belongs to the calendar day it ended on, so an overnight 20:00-12:00 fast doesn't count for two days.
 
 /// One day of the weekly chart.
 public struct FastingDay: Equatable, Sendable {
     public let dayStart: Date
     /// Longest fast ending that day (a running fast counts for today with its elapsed time).
     public let fasted: TimeInterval
-    /// The goal of that fast; nil when nothing was logged.
     public let goal: TimeInterval?
     public let met: Bool
     public let inProgress: Bool
 }
 
-/// Goal-met days over a window. `consideredDays` never reaches back before the first logged fast, so a
-/// user who started last week is not scored against a month they never tracked.
+/// Goal-met days over a window. `consideredDays` never reaches back before the first logged fast.
 public struct FastingConsistency: Equatable, Sendable {
     public let metDays: Int
     public let consideredDays: Int
@@ -38,12 +35,10 @@ public enum FastingComparison: Equatable, Sendable {
 
 public extension FastingEngine {
 
-    /// Minimum logged fast for a night to count as a fasting night: the shortest preset. Shorter logs
-    /// are ordinary overnight gaps between dinner and breakfast.
+    /// Minimum logged fast for a fasting night: the shortest preset; shorter logs are ordinary overnight gaps.
     static let minFastingNight: TimeInterval = 12 * 3600
 
-    /// The overnight window that decides the split, local [00:00, 05:00) of the wake-day: the core of a
-    /// typical night, where overnight heart rate and HRV are measured.
+    /// The window that decides the split: local [00:00, 05:00) of the wake-day, where overnight HR and HRV are measured.
     static let nightWindowHours: (start: Int, end: Int) = (0, 5)
 
     /// The last `days` calendar days ending today, oldest first.
@@ -62,8 +57,7 @@ public extension FastingEngine {
         }
     }
 
-    /// Consecutive days with a goal-met fast, counting back from today. Today without one yet does not
-    /// break the streak: the day is still open.
+    /// Consecutive goal-met days counting back from today. Today without one yet doesn't break the streak.
     static func streak(_ intervals: [FastingInterval], now: Date, calendar: Calendar) -> Int {
         let metDays = metDaySet(intervals, now: now, calendar: calendar)
         var day = calendar.startOfDay(for: now)
@@ -80,7 +74,7 @@ public extension FastingEngine {
         return count
     }
 
-    /// Goal-met days in the last `days` days. Today counts only once it is met (an open day is no miss).
+    /// Goal-met days in the last `days` days; today counts only once met.
     static func consistency(_ intervals: [FastingInterval], now: Date, days: Int,
                             calendar: Calendar) -> FastingConsistency {
         guard let first = intervals.map(\.start).min() else {
@@ -100,10 +94,9 @@ public extension FastingEngine {
         return FastingConsistency(metDays: met, consideredDays: considered)
     }
 
-    /// Splits wake-days (yyyy-MM-dd) into nights spent inside a logged fast of at least 12 h and nights
-    /// with no logged fast touching the night window. Nights only partly covered are dropped, and so is
-    /// everything before the first logged fast: an unlogged day is unknown, not a "no" (the same rule
-    /// `BehaviorInsights.effect` applies to the journal).
+    /// Splits wake-days (yyyy-MM-dd) into nights inside a logged fast of at least 12 h and nights with no
+    /// logged fast touching the window. Partly covered nights and everything before the first logged
+    /// fast are dropped: an unlogged day is unknown, not a "no" (same rule as `BehaviorInsights.effect`).
     static func nightSplit(_ intervals: [FastingInterval], now: Date, calendar: Calendar) -> FastingNightSplit {
         guard let first = intervals.map(\.start).min() else { return FastingNightSplit(fasting: [], control: []) }
         var fasting = Set<String>(), control = Set<String>()
@@ -127,9 +120,9 @@ public extension FastingEngine {
         return FastingNightSplit(fasting: fasting, control: control)
     }
 
-    /// Compares one overnight outcome (keyed by wake-day) between the two groups. Numbers are only
-    /// returned once both groups reach the patterns minimum, and "difference" only when the Welch test
-    /// clears `BehaviorInsights.alpha`; otherwise the honest answer is "no clear difference".
+    /// Compares one overnight outcome (keyed by wake-day) between the groups. Numbers appear only once
+    /// both groups reach the patterns minimum, and "difference" only when the Welch test clears
+    /// `BehaviorInsights.alpha`; otherwise "no clear difference".
     static func compare(split: FastingNightSplit, outcomeByDay: [String: Double],
                         outcome: String) -> FastingComparison {
         let needed = BehaviorInsights.minGroupForSignificance
@@ -150,8 +143,7 @@ public extension FastingEngine {
         return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
     }
 
-    /// Days with a goal-met fast. A running fast that already passed its goal counts for today: the
-    /// goal is reached whether or not the stop button has been pressed yet.
+    /// Days with a goal-met fast. A running fast already past its goal counts for today.
     private static func metDaySet(_ intervals: [FastingInterval], now: Date, calendar: Calendar) -> Set<Date> {
         Set(intervals.compactMap { i in
             let reached = i.metGoal || (i.isActive && i.duration(now: now) >= i.goal)

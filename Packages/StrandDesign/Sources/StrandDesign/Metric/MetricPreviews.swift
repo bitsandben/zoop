@@ -3,8 +3,7 @@ import SwiftUI
 
 // MARK: - Preview fixtures
 //
-// One readout per state the components must handle (§8.2): solid, provisional, calibrating, stale,
-// empty, plus the score and load vocabularies.
+// One readout per state the components must handle: solid, provisional, calibrating, stale, empty, plus score and load vocabularies.
 
 enum MetricSamples {
     static let lastWeek = Date(timeIntervalSinceReferenceDate: 813_000_000)

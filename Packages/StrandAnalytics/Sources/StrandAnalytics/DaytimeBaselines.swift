@@ -1,51 +1,35 @@
 import Foundation
 import WhoopProtocol
 
-// DaytimeBaselines.swift — the CALLER-side folding path that turns a person's past DAYTIME history
-// into the personal rolling baselines `DaytimeStress.analyze(mode: .baselineRelative(hr:rmssd:))`
-// scores today's waking hours against.
+// DaytimeBaselines.swift - turns past DAYTIME history into the personal rolling baselines that
+// `DaytimeStress.analyze(mode: .baselineRelative(hr:rmssd:))` scores today's waking hours against.
 //
-// `.baselineRelative` (see DaytimeStress.ScoringMode) is deliberately caller-fed: the scorer takes a
-// finished `BaselineState` and never fetches history itself. This file is that missing caller — it
-// computes ONE daytime aggregate per past day and folds the ordered series through the SAME
-// Winsorized-EWMA machinery (`Baselines.foldHistory`) the nightly resting-HR / HRV baselines use, with
-// the daytime-specific `Baselines.daytimeHRCfg` / `daytimeRMSSDCfg` configs.
-//
-// The per-day aggregate is defined in terms of EXACTLY the hourly means the scorer references: it reuses
-// `DaytimeStress`'s own `floorDiv` / `bucketSeconds` / `isWakingHour` / `minHourHRSamples` /
-// `HRVAnalyzer` so "the value we fold into the baseline" and "the value we later z-score against that
-// baseline" are the same quantity, never two drifting definitions.
+// The scorer takes a finished `BaselineState` and never fetches history; this is the caller side.
+// It computes one daytime aggregate per past day, using DaytimeStress's own bucketing, gates and
+// HRVAnalyzer so the value folded into the baseline and the value later z-scored against it are the
+// same quantity, then folds the series through `Baselines.foldHistory` (Winsorized EWMA) with
+// `daytimeHRCfg` / `daytimeRMSSDCfg`.
 
 public extension DaytimeStress {
 
     // MARK: - Per-day daytime aggregate
 
-    /// Percentile of a day's waking-hour mean HRs used as that day's daytime-HR aggregate: the 10th,
-    /// i.e. the CALM FLOOR ("how low does my HR run when I'm calm and awake"). VALIDATED — this is the
-    /// ~65 bpm pooled figure from the 26-day Oura-reference correlation behind
-    /// `baselineRelativeHighMarginBPM`. It is intentionally the floor (not the median) because the HR
-    /// term pairs it with a FIXED bpm margin (a large effective spread via `marginToSigma`), so anchoring
-    /// at the floor makes "floor + margin" the exact HIGH cutoff.
+    /// Percentile of a day's waking-hour mean HRs used as the daytime-HR aggregate: the 10th, the calm
+    /// floor. Validated (~65 bpm pooled, 26-day Oura-reference correlation behind
+    /// `baselineRelativeHighMarginBPM`). It is the floor because the HR term pairs it with a fixed bpm
+    /// margin, making "floor + margin" the exact HIGH cutoff.
     static let daytimeHRAggregatePercentile: Double = 0.10
 
-    /// Percentile of a day's waking-hour RMSSDs used as that day's daytime-RMSSD aggregate: the 50th
-    /// (MEDIAN / typical), NOT the symmetric calm-ceiling percentile. The asymmetry with HR above is
-    /// deliberate and load-bearing: the RMSSD term is scaled by the person's OWN spread
-    /// (`Baselines.sigma`), not a fixed margin, so `(baseline − hourRMSSD) / σ` is only meaningful when
-    /// `baseline` is the TYPICAL daytime RMSSD — then a typical hour reads neutral and only genuine HRV
-    /// suppression reads stressed. Anchoring at a calm-ceiling percentile (the direct mirror of HR's
-    /// floor) would make an ordinary median hour sit ~1–2σ "below baseline" and stack a large false
-    /// stress term on top of the HR term. TUNING SEAM: like every RMSSD figure in this mode, the median
-    /// choice is a first pass pending an HR+HRV validation pass (the validated study was HR-only).
+    /// Percentile of a day's waking-hour RMSSDs used as the daytime-RMSSD aggregate: the median, not a
+    /// mirror of HR's floor. The RMSSD term is scaled by the person's own spread, so the baseline must
+    /// be the typical value for a typical hour to read neutral; a calm-ceiling percentile would put an
+    /// ordinary hour 1-2 sigma "below baseline" and stack a false stress term. First pass pending an
+    /// HR+HRV validation (the study was HR-only).
     static let daytimeRMSSDAggregatePercentile: Double = 0.50
 
-    /// One local day's waking HR + R-R streams, the input to the daytime-baseline fold. `hr`/`rr` carry
-    /// wall-clock `ts`; `tzOffsetSeconds` (seconds east of UTC for THAT day) places them on the local
-    /// clock exactly as `analyze`'s `tzOffsetSeconds` does, so DST-varying days can each carry their own
-    /// offset.
-    ///
-    /// Not `Sendable`: `HRSample` / `RRInterval` (WhoopProtocol) aren't `Sendable`, and this is a plain
-    /// pure-function input built and consumed within one context — it is never sent across actors.
+    /// One local day's waking HR and R-R streams, the input to the baseline fold. `tzOffsetSeconds`
+    /// (east of UTC for that day) places them on the local clock as `analyze` does, so DST-varying days
+    /// carry their own offset. Not `Sendable` (`HRSample` / `RRInterval` aren't).
     struct DaytimeDayStreams: Equatable {
         public let hr: [HRSample]
         public let rr: [RRInterval]
@@ -55,21 +39,18 @@ public extension DaytimeStress {
         }
     }
 
-    /// One day's daytime aggregates, computed with the SCORER's own hourly bucketing so the folded value
-    /// matches what `.baselineRelative` later references:
-    ///   - `hr`: the `daytimeHRAggregatePercentile` (P10) of the day's WAKING-hour mean HRs, where each
-    ///     hour's mean HR is gated at `minHourHRSamples` exactly like the scorer (a sparse/imported day
-    ///     whose hours never clear the gate yields `nil` — it contributes no daytime-HR floor, honestly).
-    ///   - `rmssd`: the `daytimeRMSSDAggregatePercentile` (P50) of the day's WAKING-hour RMSSDs, each run
-    ///     through the same `HRVAnalyzer.analyze(rawRR:)` cleaner the scorer uses (so ectopic beats can't
-    ///     fabricate variability); `nil` when no waking hour had enough clean R-R (e.g. an HR-only day).
-    /// Either field is `nil` independently. Bucketing keys off the HR buckets (like the scorer), so an
-    /// hour with R-R but no HR contributes neither.
+    /// One day's daytime aggregates, computed with the scorer's own hourly bucketing so the folded value
+    /// matches what `.baselineRelative` later references.
+    ///   - `hr`: the P10 of the day's waking-hour mean HRs, each hour gated at `minHourHRSamples`;
+    ///     nil if no hour clears the gate (sparse or imported day).
+    ///   - `rmssd`: the P50 of the day's waking-hour RMSSDs through `HRVAnalyzer.analyze(rawRR:)`
+    ///     (ectopic beats can't fabricate variability); nil when no hour had enough clean R-R.
+    /// Either may be nil independently. Bucketing keys off HR buckets, so an hour with R-R but no HR counts for neither.
     static func dayDaytimeAggregate(hr: [HRSample], rr: [RRInterval],
                                     tzOffsetSeconds: Int) -> (hr: Double?, rmssd: Double?) {
         guard !hr.isEmpty else { return (nil, nil) }
 
-        // Bucket HR + R-R into LOCAL hour-of-day buckets, byte-for-byte the scorer's step 1.
+        // Bucket HR and R-R into local hour-of-day buckets, as the scorer does.
         var hrByBucket: [Int: [Double]] = [:]
         for s in hr {
             let local = s.ts + tzOffsetSeconds
@@ -83,8 +64,7 @@ public extension DaytimeStress {
             rrByBucket[bucket, default: []].append(Double(s.rrMs))
         }
 
-        // Per WAKING hour: the gated mean HR + the cleaned RMSSD, mirroring the scorer's step 2 + waking
-        // filter. Keyed off HR buckets so an R-R-only hour is ignored exactly as the scorer ignores it.
+        // Per waking hour: gated mean HR and cleaned RMSSD, keyed off HR buckets like the scorer.
         var wakingMeanHRs: [Double] = []
         var wakingRMSSDs: [Double] = []
         for (bucket, hrs) in hrByBucket where isWakingHour(bucket) {
@@ -103,36 +83,22 @@ public extension DaytimeStress {
 
     // MARK: - Fold the trailing history into personal baselines
 
-    /// Fold a person's trailing per-day daytime streams (OLDEST → NEWEST, TODAY EXCLUDED — today is the
-    /// day being scored, not part of its own baseline) into the personal baselines `.baselineRelative`
-    /// consumes.
+    /// Folds trailing per-day daytime streams (oldest to newest, today excluded) into the personal
+    /// baselines `.baselineRelative` consumes, replaying the per-day aggregates through
+    /// `Baselines.foldHistory`. Nil aggregates become skip-and-hold nights.
     ///
-    /// Each day contributes one `dayDaytimeAggregate`; the ordered series is replayed through
-    /// `Baselines.foldHistory` (the identical Winsorized-EWMA path as the nightly baselines) with
-    /// `daytimeHRCfg` / `daytimeRMSSDCfg`. `nil` aggregates (sparse/HR-only days) become skip-and-hold
-    /// nights, exactly like a missing nightly value.
-    ///
-    /// The HR baseline is always returned (it may be `.calibrating`; the caller checks `.usable` to
-    /// decide whether to use `.baselineRelative` at all). The RMSSD baseline is returned ONLY when it is
-    /// `.usable` (≥ `Baselines.minNightsSeed` days actually carried a daytime RMSSD); otherwise `nil`, so
-    /// the scorer honestly runs HR-only rather than z-scoring against a 1–2-day, untrustworthy HRV
-    /// baseline — the whole-baseline grain of the per-hour graceful-nil already in `rawScore`.
+    /// The HR baseline is always returned (maybe `.calibrating`; callers check `.usable`). The RMSSD
+    /// baseline is returned only when `.usable` (>= `Baselines.minNightsSeed` days carried one), so the
+    /// scorer runs HR-only rather than z-scoring against a 1-2 day HRV baseline.
     static func foldDaytimeBaselines(days: [DaytimeDayStreams]) -> (hr: BaselineState, rmssd: BaselineState?) {
         foldAggregates(days.map {
             dayDaytimeAggregate(hr: $0.hr, rr: $0.rr, tzOffsetSeconds: $0.tzOffsetSeconds)
         })
     }
 
-    /// The same fold, taking days already reduced to their `dayDaytimeAggregate` pair.
-    ///
-    /// This exists so a CALLER can reduce each day as it reads it and let that day's raw samples go,
-    /// instead of holding thirty days of them at once (#2107). A day collapses to two `Double?`s here and
-    /// its streams are never read again, so keeping them alive bought nothing and cost a heap: thirty days
-    /// of a worn 5.0 is millions of sample objects, which is how a 256MB Android heap ran out.
-    ///
-    /// `foldDaytimeBaselines(days:)` is now literally this with the reduction done eagerly, so the
-    /// streaming caller and the list caller cannot drift apart: there is one fold, reached two ways.
-    /// Twin of Kotlin `DaytimeBaselines.foldAggregates`.
+    /// The same fold over days already reduced to their `dayDaytimeAggregate` pair, so a caller can
+    /// drop each day's raw samples after reducing it instead of holding thirty days at once (#2107,
+    /// an Android heap OOM). `foldDaytimeBaselines(days:)` is this with eager reduction: one fold, two entry points.
     static func foldAggregates(_ aggregates: [(hr: Double?, rmssd: Double?)])
         -> (hr: BaselineState, rmssd: BaselineState?) {
         var hrAggs: [Double?] = []
@@ -148,26 +114,21 @@ public extension DaytimeStress {
         return (hrState, rmssdState.usable ? rmssdState : nil)
     }
 
-    /// The scoring mode to hand `analyze` for TODAY, decided from the trailing daytime `history`:
-    /// `.baselineRelative` once the personal HR baseline is `.usable` (≥ `Baselines.minNightsSeed` days
-    /// of real daytime HR aggregates — the Oura-style, validated-r≈0.6 path), else `.dayRelative` (the
-    /// unchanged default). This is the single graceful-degradation gate: a cold start, or a trailing
-    /// window that is all sparse/imported days, keeps EXACTLY today's pre-existing day-relative behaviour.
+    /// The scoring mode for TODAY from trailing daytime `history`: `.baselineRelative` once the personal
+    /// HR baseline is `.usable` (>= `Baselines.minNightsSeed` days), else `.dayRelative`. This is the
+    /// single graceful-degradation gate for cold starts and sparse/imported windows.
     static func scoringMode(history days: [DaytimeDayStreams]) -> ScoringMode {
         scoringModeFromAggregates(days.map {
             dayDaytimeAggregate(hr: $0.hr, rr: $0.rr, tzOffsetSeconds: $0.tzOffsetSeconds)
         })
     }
 
-    /// `scoringMode(history:)` for days already reduced to aggregates. See `foldAggregates` for why
-    /// (#2107). Named rather than overloaded, so the twin stays findable by name from either side.
-    /// Twin of Kotlin `DaytimeBaselines.scoringModeFromAggregates`.
+    /// `scoringMode(history:)` for days already reduced to aggregates (see `foldAggregates`).
     static func scoringModeFromAggregates(_ aggregates: [(hr: Double?, rmssd: Double?)]) -> ScoringMode {
         let baselines = foldAggregates(aggregates)
         guard baselines.hr.usable else { return .dayRelative }
-        // RMSSD stays out of the LIVE score until it has its own validation pass — see
-        // `DaytimeStress.daytimeRMSSDScoringEnabled`. The baseline is still folded above (so the
-        // machinery + tests exercise the real path); it just doesn't reach scoring while gated off.
+        // RMSSD stays out of the live score until validated (`DaytimeStress.daytimeRMSSDScoringEnabled`);
+        // the baseline is still folded so the machinery and tests exercise the real path.
         let rmssd = DaytimeStress.daytimeRMSSDScoringEnabled ? baselines.rmssd : nil
         return .baselineRelative(hr: baselines.hr, rmssd: rmssd)
     }

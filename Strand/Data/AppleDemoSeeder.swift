@@ -3,23 +3,15 @@ import Foundation
 import WhoopStore
 
 // MARK: - DEBUG-only demo seed (Apple parity with Android's DemoSeeder)
-// Seeds a comprehensive, self-contained synthetic dataset so a DEBUG build can walk every screen —
-// Today, Sleep, Trends, Workouts, Health, Stress, Insights, Explore — with no strap and no import.
-// This is the Apple twin of `android/.../data/DemoSeeder.kt` (same RNG seed, same physiology, same
-// 120-day window) and exists so we can render iOS + macOS for verification and marketing screenshots.
-//
-// Gating: the whole file is `#if DEBUG`, so it is stripped from every Release build (the shipped
-// app). At runtime it only seeds when launched with `--demo-seed` AND the store has no daily rows,
-// so it runs at most once and never clobbers real data. Everything here is SYNTHETIC and
-// DETERMINISTIC (fixed seed) — nothing is real biometric data. Values are physiologically plausible
-// and internally correlated (recovery ↔ HRV ↔ resting-HR ↔ sleep; strain ↔ workouts; a slow fitness
-// drift) so the charts, trends and insights all read like a real account.
+// DEBUG-only synthetic dataset so every screen renders with no strap and no import.
+// Seeds only with `--demo-seed` and an empty store (deterministic fixed RNG seed, nothing real).
+// Values are physiologically plausible and correlated (recovery, HRV, resting HR, sleep, strain).
 enum AppleDemoSeeder {
 
     static let whoop = "my-whoop"
     static let apple = "apple-health"
     private static let DAYS = 120
-    /// Effort rescale factor: the old 0–21 strain scale → the new 0–100 Effort scale.
+    /// Rescales the 0-21 strain scale to the 0-100 Effort scale.
     private static let STRAIN_SCALE = 100.0 / 21.0
 
     private static let SPORTS = [
@@ -27,8 +19,7 @@ enum AppleDemoSeeder {
     ]
     private static let DISTANCE_SPORTS: Set<String> = ["Running", "Cycling", "Walking", "Swimming", "Rowing"]
 
-    /// True when the process was launched asking for the demo seed (Xcode scheme arg or `simctl
-    /// launch … --demo-seed`).
+    /// True when launched with `--demo-seed` (Xcode scheme arg or `simctl launch`).
     static var requested: Bool { CommandLine.arguments.contains("--demo-seed") }
 
     /// Seed only if requested AND the store is empty. Safe to call on every launch.
@@ -41,11 +32,8 @@ enum AppleDemoSeeder {
         catch { NSLog("AppleDemoSeeder: seed failed — \(error)") }
     }
 
-    /// DEBUG/demo-only: so the Devices screen renders with content under `--demo-seed`, pair a second
-    /// (non-WHOOP) strap alongside the seeded WHOOP. If the registry only holds the WHOOP, add a
-    /// `.paired` "Polar H10" — the screenshot then shows the WHOOP (Active) plus a paired strap. Status
-    /// `.paired` (not `.active`) keeps the WHOOP active, so the SourceCoordinator stays dormant and the
-    /// existing WHOOP path is untouched. No-op once a second device already exists.
+    /// DEBUG-only: pairs a second, non-WHOOP strap (`.paired` Polar H10) so the Devices screen has content.
+    /// `.paired` keeps the WHOOP active; no-op once a second device exists.
     private static func seedDemoDeviceIfNeeded(into store: WhoopStore) {
         let registry = DeviceRegistryStore(dbQueue: store.registryWriter)
         guard let devices = try? registry.all() else { return }
@@ -88,11 +76,9 @@ enum AppleDemoSeeder {
             let weekend = (weekday == 1 || weekday == 7)
             fitness += 0.012
 
-            // --- training load for the day ---
             let trains = weekend ? rng.nextDouble() < 0.40 : rng.nextDouble() < 0.62
             let nWorkouts = !trains ? 0 : (rng.nextDouble() < 0.22 ? 2 : 1)
 
-            // --- sleep architecture ---
             let totalSleep = gauss(&rng, 430.0, 35.0).clamped(300.0, 540.0)
             let efficiency = gauss(&rng, 89.0, 4.0).clamped(72.0, 98.0)
             let deep = (totalSleep * gauss(&rng, 0.20, 0.03)).clamped(35.0, 130.0)
@@ -100,7 +86,6 @@ enum AppleDemoSeeder {
             let light = (totalSleep - deep - rem).atLeast(60.0)
             let disturbances = Int(gauss(&rng, 6.0, 3.0).clamped(0.0, 18.0))
 
-            // --- autonomic markers ---
             let hrv = (gauss(&rng, 78.0 + fitness * 1.5, 12.0) + (weekend ? 6 : 0) - Double(nWorkouts) * 4)
                 .clamped(28.0, 150.0)
             let rhr = Int((gauss(&rng, 56.0 - fitness * 0.4, 3.0) + Double(nWorkouts) * 1.2).clamped(42.0, 70.0))
@@ -108,13 +93,11 @@ enum AppleDemoSeeder {
             let skinTempDev = gauss(&rng, 0.0, 0.25).clamped(-1.2, 1.4)
             let resp = gauss(&rng, 14.6, 0.9).clamped(11.0, 19.0)
 
-            // --- recovery: a function of HRV, sleep quality and resting-HR ---
             let recovery = (
                 40 + (hrv - 70) * 0.55 + (efficiency - 85) * 0.6 + (totalSleep - 420) * 0.03 -
                     (Double(rhr) - 55) * 1.4 - Double(disturbances) * 0.8 + gauss(&rng, 0.0, 5.0)
             ).clamped(8.0, 99.0)
 
-            // --- strain (Effort): workout-driven, rescaled 0–21 → 0–100 ---
             let strain = (
                 (nWorkouts == 0 ? gauss(&rng, 7.5, 1.8)
                  : gauss(&rng, 13.5, 2.4) + Double(nWorkouts - 1) * 2.5) * STRAIN_SCALE
@@ -127,8 +110,7 @@ enum AppleDemoSeeder {
                 recovery: round1(recovery), strain: round1(strain), exerciseCount: nWorkouts,
                 spo2Pct: round1(spo2), skinTempDevC: round2(skinTempDev), respRateBpm: round1(resp)))
 
-            // --- sleep session: previous night ~23:10 → wake, with a REAL stage timeline so the
-            //     hypnogram renders the computed segment path (not just the proportional bar). ---
+            // Sleep session with a real stage timeline so the hypnogram renders the computed segment path.
             let onsetBase = cal.date(byAdding: .day, value: -1, to: date)!
             let onsetDay = cal.startOfDay(for: onsetBase)
             let onset = Int(onsetDay.timeIntervalSince1970) + 23 * 3600 + 10 * 60 + rng.nextInt(-1800, 1800)
@@ -139,13 +121,12 @@ enum AppleDemoSeeder {
                 stagesJSON: segmentsJSON(onset: onset, deep: deep, rem: rem, light: light,
                                          awakeMin: Double(disturbances) * 1.6)))
 
-            // --- long-format extras (body composition) under my-whoop ---
             weight += gauss(&rng, -0.02, 0.18)
             series.append(MetricPoint(day: day, key: "weightKg", value: round2(weight)))
             series.append(MetricPoint(day: day, key: "bodyFatPct",
                 value: round1((18.0 - fitness * 0.2 + gauss(&rng, 0.0, 0.4)).clamped(10.0, 24.0))))
-            // Export-verbatim sleep figures (same metricSeries keys the importers write), so the demo
-            // Sleep tiles exercise the prefer-imported path.
+            // Export-verbatim sleep figures (same metricSeries keys the importers write) exercise the
+            // prefer-imported path.
             let demoNeedMin = (totalSleep + gauss(&rng, 25.0, 20.0)).clamped(420.0, 560.0)
             series.append(MetricPoint(day: day, key: "sleep_performance",
                 value: round1(min(totalSleep / demoNeedMin * 100.0, 100.0))))
@@ -155,7 +136,6 @@ enum AppleDemoSeeder {
             series.append(MetricPoint(day: day, key: "sleep_debt_min",
                 value: round1((demoNeedMin - totalSleep).atLeast(0.0))))
 
-            // --- Apple Health daily aggregate ---
             let steps = Int(gauss(&rng, 8500.0, 2600.0).clamped(1200.0, 19000.0))
             appleRows.append(AppleDaily(
                 day: day, steps: steps,
@@ -165,7 +145,6 @@ enum AppleDemoSeeder {
                 avgHr: Int(gauss(&rng, 72.0, 5.0)), maxHr: Int(gauss(&rng, 150.0, 12.0)),
                 walkingHr: Int(gauss(&rng, 108.0, 6.0)), weightKg: round2(weight)))
 
-            // --- workouts on training days ---
             for k in 0..<nWorkouts {
                 let sport = SPORTS[rng.nextInt(0, SPORTS.count)]
                 let durSec = gauss(&rng, 48.0, 16.0).clamped(18.0, 110.0) * 60
@@ -189,7 +168,7 @@ enum AppleDemoSeeder {
                     zonesJSON: zonesJSON, notes: nil, steps: nil))
             }
 
-            // --- journal answers for the recent 40 days (real catalog strings → Insights light up) ---
+            // Journal answers for the recent 40 days.
             if i >= DAYS - 40 {
                 journal.append(JournalEntry(day: day, question: "Did you drink any alcohol?", answeredYes: rng.nextDouble() < 0.18, notes: nil))
                 journal.append(JournalEntry(day: day, question: "Did you have caffeine late in the day?", answeredYes: rng.nextDouble() < 0.30, notes: nil))
@@ -197,9 +176,7 @@ enum AppleDemoSeeder {
             }
         }
 
-        // --- weekly Fitness Age + VO2max estimate (the engine stamps these on each week's
-        //     Saturday; mirror that here so the Fitness Age screen renders under --demo-seed).
-        //     Trends from ~42 → ~36 (younger) as the demo "fitness" drift climbs; vo2max ~44 → ~50.
+        // Weekly Fitness Age + VO2max, stamped on Saturdays like the engine does.
         var fitnessAge = 42.0
         var vo2 = 44.0
         var vitality = 55.0      // weekly Vitality (0–100) trending up as the demo habits improve
@@ -236,16 +213,14 @@ enum AppleDemoSeeder {
     private static func round1(_ x: Double) -> Double { (x * 10).rounded() / 10 }
     private static func round2(_ x: Double) -> Double { (x * 100).rounded() / 100 }
 
-    /// Box–Muller normal sample, matching DemoSeeder.gauss exactly.
+    /// Box-Muller normal sample.
     private static func gauss(_ rng: inout SplitMix64, _ mean: Double, _ sd: Double) -> Double {
         let u1 = rng.nextDouble().clamped(1e-9, 1.0)
         let u2 = rng.nextDouble()
         return mean + sd * (Foundation.sqrt(-2.0 * Foundation.log(u1)) * Foundation.cos(2.0 * Double.pi * u2))
     }
 
-    /// A plausible light→deep→rem cycle as the COMPUTED segment array
-    /// [{"start":epoch,"end":epoch,"stage":"light"|"deep"|"rem"|"wake"}] that SleepView.decodeSegments
-    /// reads, laid end-to-end from `onset`.
+    /// A plausible light/deep/rem cycle as the computed segment array that SleepView.decodeSegments reads.
     private static func segmentsJSON(onset: Int, deep: Double, rem: Double, light: Double, awakeMin: Double) -> String {
         var t = onset
         var parts: [String] = []
@@ -262,8 +237,7 @@ enum AppleDemoSeeder {
     }
 }
 
-/// Deterministic SplitMix64 PRNG — gives a fixed, reproducible demo dataset across runs (the Apple
-/// counterpart of Kotlin's `Random(0xC0FFEE)`). Not for any security use.
+/// Deterministic SplitMix64 PRNG for a reproducible demo dataset. Not for security use.
 struct SplitMix64 {
     private var state: UInt64
     init(seed: UInt64) { state = seed }

@@ -8,7 +8,7 @@ public struct SourcedMetricPoint: Sendable {
 }
 
 /// Provenance for one persisted Zoop-computed score. `sourceId` normally names the input provider;
-/// `vo2max_est` uses the estimator id because the method is the provenance users need for that series.
+/// `vo2max_est` uses the estimator id because the method is the provenance for that series.
 /// Natural key: (computed device namespace, day, metric key).
 public struct ScoreInputProvenanceRow: Equatable, Codable, Sendable {
     public let day: String
@@ -23,8 +23,8 @@ public struct ScoreInputProvenanceRow: Equatable, Codable, Sendable {
 }
 
 /// Estimator identity persisted beside a `vo2max_est` point in `ScoreInputProvenanceRow.sourceId`.
-/// Existing points have no such row and therefore remain explicitly unknown; their method must never be
-/// inferred from the current profile because a waist measurement may have changed since they were scored.
+/// Points without a row stay explicitly unknown: the method must not be inferred from the current
+/// profile, since a waist measurement may have changed since scoring.
 public enum Vo2MaxEstimator: String, Codable, Sendable {
     case nes
     case uth
@@ -33,10 +33,9 @@ public enum Vo2MaxEstimator: String, Codable, Sendable {
 }
 
 extension WhoopStore {
-    /// Persist computed daily/series scores and their input provenance in one SQLite transaction.
-    /// Replacing daily-score provenance in the scoring window prevents stale attribution when a metric
-    /// disappears or changes provider; independently-owned weekly VO₂max method tags survive. Any write
-    /// failure rolls back both scores and metadata.
+    /// Persists computed daily/series scores and their input provenance in one SQLite transaction.
+    /// Daily provenance in the scoring window is replaced so attribution never goes stale; independently
+    /// owned weekly VO₂max method tags survive. A write failure rolls back both scores and metadata.
     public func persistComputedScores(
         dailyMetrics: [DailyMetric],
         metricPoints: [MetricPoint],
@@ -48,11 +47,9 @@ extension WhoopStore {
         additionalMetricPoints: [SourcedMetricPoint] = [],
         replaceMetricSourceIds: [String] = []
     ) async throws {
-        // #1196: an empty scoring pass must not destructively rewrite the window — with no daily rows to
-        // write, the provenance wide-delete below would blank the window's attribution while a degenerate
-        // pass (a transient read over an incomplete raw store during a reconnect/offload storm) produced
-        // nothing. A real pass always carries the days it scored, so this guard never fires in steady state.
-        // Twin of the Android WhoopDao.replaceComputedScoreWindow empty guard.
+        // An empty scoring pass must not rewrite the window: with no daily rows the provenance wide-delete
+        // below would blank attribution after a degenerate pass (e.g. a transient read during an offload
+        // storm). A real pass always carries the days it scored. Mirrors the Android empty guard.
         guard !dailyMetrics.isEmpty else { return }
         try syncWrite { db in
             _ = try Self.upsertDailyMetrics(dailyMetrics, deviceId: deviceId, in: db)
@@ -67,9 +64,8 @@ extension WhoopStore {
                 _ = try Self.upsertMetricSeries(group.value.map(\.point), deviceId: group.key, in: db)
             }
 
-            // Weekly VO₂max provenance is owned by `persistMetricSeriesWithProvenance` below, not this
-            // daily scoring window. Preserve it or every normal 21-day re-score erases the prior two
-            // Saturdays' method tags while leaving their metricSeries values in place.
+            // Weekly VO₂max provenance is owned by `persistMetricSeriesWithProvenance`; preserve it or every
+            // 21-day re-score erases the prior two Saturdays' method tags while their metricSeries values stay.
             try db.execute(sql: """
                 DELETE FROM scoreInputProvenance
                 WHERE deviceId = ? AND day >= ? AND day <= ? AND key != 'vo2max_est'
@@ -84,8 +80,8 @@ extension WhoopStore {
         }
     }
 
-    /// Persist a metric-series batch and its specialized provenance in one SQLite transaction. Used by
-    /// weekly VO₂max so a method label can never describe an older/newer value after a partial write.
+    /// Persists a metric-series batch and its specialized provenance in one SQLite transaction, so a
+    /// weekly VO₂max method label never describes an older or newer value after a partial write.
     public func persistMetricSeriesWithProvenance(
         points: [MetricPoint],
         provenance: [ScoreInputProvenanceRow],
@@ -104,7 +100,7 @@ extension WhoopStore {
     }
 
     /// Input source for one computed score. Missing means the score predates provenance storage or its
-    /// attribution could not be persisted; callers must omit the badge instead of guessing.
+    /// attribution could not be persisted; callers omit the badge rather than guess.
     public func scoreInputSource(deviceId: String, day: String, key: String) async throws -> String? {
         try syncRead { db in
             try String.fetchOne(db, sql: """

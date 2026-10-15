@@ -1,34 +1,23 @@
 import Foundation
 import WhoopProtocol
 
-// StressIndex.swift, Baevsky's Stress Index (SI), a histogram-based autonomic-balance metric.
-//
-// PURELY ADDITIVE display metric. Touches no Charge / Effort / Rest / sleep output.
-//
-// Baevsky's Stress Index (Baevsky & Berseneva; "regulatory systems" / cardiointervalography) summarises how
-// "centralised" / sympathetically driven the heart rhythm is from the SHAPE of the R-R histogram:
+// StressIndex: Baevsky's Stress Index, a histogram-based autonomic-balance metric. PURELY ADDITIVE display
+// metric; touches no Charge / Effort / Rest / sleep output. APPROXIMATE, non-clinical.
 //
 //     SI = AMo / (2 * Mo * MxDMn)
 //
-//   • Mo   (mode, s)      : the most common R-R value, the histogram bin centre with the highest count.
-//   • AMo  (amplitude     : the % of intervals falling in the modal bin, a TALL narrow peak (rigid,
-//          of the mode, %)  sympathetically driven rhythm) gives a high AMo.
-//   • MxDMn (variation    : range of R-R = max - min (s), a wide range (flexible, vagal) lowers SI.
-//          range, s)
+//   - Mo (s): the most common R-R value (centre of the highest-count histogram bin).
+//   - AMo (%): share of intervals in the modal bin; a tall narrow peak means a rigid, sympathetic rhythm.
+//   - MxDMn (s): max - min R-R; a wide range (flexible, vagal) lowers SI.
 //
-// A high SI means a tall, narrow, low-range histogram = a rigid rhythm = high sympathetic stress; a low SI
-// means a broad, flat, wide-range histogram = a flexible rhythm = relaxed. The units follow the classic
-// convention: R-R in SECONDS and Mo/MxDMn in seconds, AMo as a percentage (0–100), so SI is dimensionless.
-//
-// APPROXIMATE, non-clinical. Returned as a plain optional number for the UI lane to band/label later.
+// Units follow the classic convention: R-R, Mo and MxDMn in SECONDS, AMo as 0-100, so SI is dimensionless.
 
 public enum StressIndex {
 
-    /// Histogram bin width in SECONDS. Baevsky's method canonically bins R-R at 50 ms (0.05 s), the width
-    /// used in cardiointervalography, so the mode and its amplitude are computed on the standard grid.
+    /// Histogram bin width in SECONDS; Baevsky's canonical 50 ms grid.
     public static let binWidthSec: Double = 0.05
 
-    /// Minimum clean intervals before an SI is computed (the histogram needs enough beats to have a mode).
+    /// Minimum clean intervals before an SI is computed (the histogram needs a mode).
     public static let minBeats: Int = 20
 
     /// The intermediate histogram terms, exposed so the UI / a test can show the "why" behind an SI.
@@ -47,9 +36,8 @@ public enum StressIndex {
         }
     }
 
-    /// Baevsky Stress Index from R-R intervals (cleaned with the shared range + Malik ectopic pipeline).
-    /// Returns nil when too few clean beats survive or the variation range is degenerate (all-equal beats,
-    /// MxDMn == 0, would divide by zero, an honest nil, not Infinity).
+    /// Baevsky Stress Index from R-R intervals (shared range + Malik ectopic cleaning). Nil when too few clean
+    /// beats survive or MxDMn == 0 (all-equal beats), rather than Infinity.
     public static func stressIndex(rr: [RRInterval]) -> Double? {
         components(rr: rr)?.si
     }
@@ -64,12 +52,11 @@ public enum StressIndex {
         components(rawRR: rr.map { Double($0.rrMs) })
     }
 
-    /// Full SI components from a raw R-R series (ms). Pure, deterministic, no clock / IO.
+    /// Full SI components from a raw R-R series (ms).
     public static func components(rawRR: [Double]) -> Components? {
         let clean = HRVAnalyzer.cleanRR(rawRR)
         guard clean.count >= minBeats else { return nil }
-        // #585 spot-honesty gate, matching HRVAnalyzer.analyze: a mostly-rejected capture (out-of-range or
-        // ectopic beats) is too noisy to label as stress. clean.count >= minBeats > 0 => rawRR non-empty.
+        // #585 spot-honesty gate, as in HRVAnalyzer.analyze: a mostly-rejected capture is too noisy to label as stress.
         guard 1.0 - Double(clean.count) / Double(rawRR.count) <= HRVAnalyzer.defaultSpotMaxRejectedFraction else { return nil }
 
         // Work in seconds (Baevsky's convention).
@@ -79,8 +66,7 @@ public enum StressIndex {
         let mxDMn = maxV - minV
         guard mxDMn > 0 else { return nil }   // all-equal beats: no histogram spread, SI undefined.
 
-        // Bin the series at binWidthSec; the modal bin is the one with the most intervals. Bin index is
-        // floor((v - minV) / binWidth); the last value lands in the final bin by construction.
+        // Bin index is floor((v - minV) / binWidth); the last value lands in the final bin.
         let binCount = max(1, Int((mxDMn / binWidthSec).rounded(.down)) + 1)
         var counts = [Int](repeating: 0, count: binCount)
         for v in sec {
@@ -89,7 +75,7 @@ public enum StressIndex {
             if idx >= binCount { idx = binCount - 1 }
             counts[idx] += 1
         }
-        // Modal bin: highest count; ties resolve to the LOWEST bin index (deterministic across platforms).
+        // Modal bin: highest count; ties go to the LOWEST index (deterministic).
         var modeIdx = 0
         var modeCount = counts[0]
         for i in 1..<binCount where counts[i] > modeCount {

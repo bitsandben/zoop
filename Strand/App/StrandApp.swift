@@ -7,26 +7,20 @@ struct StrandApp: App {
     init() {
         LocalSettingsArchive.restoreIfEmpty()
         AppLanguage.installAtLaunch()
-        // #1008: pin the pre-change Overnight-only default for existing installs before
-        // anything reads it. Idempotent; a no-op on fresh installs and after the first launch.
+        // Pin the Overnight-only continuous-HRV default for existing installs before anything reads it (#1008). Idempotent.
         PuffinExperiment.migrateContinuousHrvOvernightDefault()
-        // Zoop 2.0: clear preferences whose Settings controls were removed, so none is stuck on.
+        // Clear preferences whose Settings controls were removed, so none is stuck on.
         SettingsMigration.run()
         #if DEBUG
-        // DEBUG-only promo-screenshot harness: when launched with `--demo-hour <Int>`, pin the Today
-        // screen to that hour's day-cycle scene + a plausible per-hour stat frame. Runs synchronously
-        // here, before the first Today render. No-op (active stays nil) when the arg is absent, so
-        // Release is unaffected (whole harness is `#if DEBUG`). See DemoDayHarness.swift.
+        // DEBUG-only promo-screenshot harness: `--demo-hour <Int>` pins Today to that hour's scene. No-op when
+        // the arg is absent. See DemoDayHarness.swift.
         DemoDayHarness.applyLaunchArgsIfNeeded()
-        // DEBUG-only sync harness: `--demo-sync` drives the Today header's charge→sync control with a
-        // synthetic battery + a looping sync signal, so the morph is watchable with no strap paired.
-        // No-op (active stays false) when the arg is absent. See DemoSyncHarness.swift.
+        // DEBUG-only: `--demo-sync` drives the Today header's charge-to-sync control with synthetic data. See DemoSyncHarness.swift.
         DemoSyncHarness.applyLaunchArgsIfNeeded()
         #endif
-        // Foreground presentation: without a delegate, macOS suppresses a notification's banner while the
-        // app is frontmost, so a reminder tested with Zoop open would show nothing. Mirrors iOS.
+        // Without a delegate macOS suppresses a notification banner while the app is frontmost.
         UNUserNotificationCenter.current().delegate = NotificationPresenter.shared
-        // K5: tapping a scheduled morning-brief notification routes to Coach via the shared NavRouter.
+        // Tapping a scheduled morning-brief notification routes to Coach via the shared NavRouter.
         let router = NavRouter()
         _router = StateObject(wrappedValue: router)
         NotificationPresenter.shared.onCoachBriefTapped = { [weak router] in router?.openCoach() }
@@ -34,17 +28,15 @@ struct StrandApp: App {
     }
 
     @StateObject private var model = AppModel()
-    /// Shared cross-screen navigation hook (e.g. Live → Devices). The macOS shell (`RootView`)
-    /// observes it and drives the sidebar selection.
+    /// Shared cross-screen navigation hook; the macOS shell (`RootView`) drives the sidebar from it.
     @StateObject private var router: NavRouter
-    /// #267: drives a foreground sync kick when the window becomes active (no scenePhase hook
-    /// existed on macOS before this).
+    /// Drives a foreground sync kick when the window becomes active.
     @Environment(\.scenePhase) private var scenePhase
-    /// Appearance preference (System/Light/Dark). Default follows the OS; the Settings picker writes it.
+    /// Appearance preference (System/Light/Dark); defaults to the OS.
     @AppStorage(AppearanceMode.storageKey) private var appearanceRaw = AppearanceMode.system.rawValue
-    /// Chart data-colour style (Titanium / Classic throwback). Re-colours gauges + charts.
+    /// Chart data-colour style; re-colours gauges and charts.
     @AppStorage(ChartStyle.storageKey) private var chartStyleRaw = ChartStyle.titanium.rawValue
-    /// Chrome accent colour (mint / WHOOP blue / custom). Chrome only — never the data colour worlds.
+    /// Chrome accent colour only, never the data colour worlds.
     @AppStorage(AccentColor.storageKey) private var accentRaw = AccentColor.mint.rawValue
     @AppStorage(AccentColor.customHexKey) private var accentCustomHex = AccentColor.defaultCustomHex
 
@@ -61,26 +53,19 @@ struct StrandApp: App {
                 .environmentObject(model.coach)
                 .environmentObject(router)
                 .environmentObject(UpdateStore.shared)
-                // v5 L3: the shared stress check-in nudge surface, so the Breathe screen's passive
-                // card observes the SAME instance the central detector (AppModel.feedStressOnsetDetector) posts to.
+                // Shared stress check-in nudge surface, so Breathe observes the same instance the central detector posts to.
                 .environment(\.stressNudgeCenter, model.stressNudgeCenter)
                 .frame(minWidth: 1000, minHeight: 700)
                 .preferredColorScheme(AppearanceMode.resolve(appearanceRaw).colorScheme)
-                // Keep date/number words on the same bundle language as every localized string. A pending
-                // Settings change intentionally becomes active only after the documented reopen.
+                // Keep date/number words on the same bundle language as localized strings; a pending Settings change
+                // becomes active only after the documented reopen.
                 .environment(\.locale, AppLanguage.activeLocale)
                 .chartStyle(chartStyleRaw)
                 .noopAccent(accentRaw, customHex: accentCustomHex)
-                // Dynamic Type now scales the prose/label roles (StrandFont). Cap the upper end so the
-                // fixed-geometry tiles/gauges stay legible at the largest accessibility sizes rather than
-                // clipping; the common Larger-Text range still scales fully.
+                // Cap Dynamic Type at accessibility1 so fixed-geometry tiles/gauges do not clip.
                 .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-                // #267: pull a reasonably fresh sync when the window comes to the foreground rather than
-                // waiting for the 900s periodic timer or an incidental reconnect. Floored at 90s and never
-                // clock/empty-streak-suppressed (BackfillPolicy.shouldRun's .foreground case), so this is
-                // a safe no-op on rapid re-focusing. Mirrors the iOS scenePhase == .active handler.
-                // Single-param form (not the two-param `{ _, phase in }`) — that overload needs macOS 14,
-                // this target is macOS 13.
+                // Pull a fresh sync on foreground instead of waiting for the 900s timer. Floored at 90s and never
+                // suppressed (BackfillPolicy.shouldRun `.foreground`). Single-param onChange form: the two-param overload needs macOS 14.
                 .onChange(of: scenePhase) { phase in
                     if phase == .active { model.ble.requestSync(.foreground) }
                 }
@@ -88,7 +73,7 @@ struct StrandApp: App {
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 1180, height: 820)
 
-        // Menu-bar extra: glanceable live HR + a compact popover.
+        // Menu-bar extra: live HR and a compact popover.
         MenuBarExtra {
             MenuBarContent()
                 .environmentObject(model)

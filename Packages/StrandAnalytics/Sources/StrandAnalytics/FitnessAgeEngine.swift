@@ -1,66 +1,54 @@
 import Foundation
 
-// FitnessAgeEngine.swift — on-device "Fitness Age": a weighted, multi-marker age estimate in the style
-// of Bevel's Biological Age.
+// FitnessAgeEngine.swift - on-device "Fitness Age": a weighted, multi-marker age estimate.
 //
-// WHAT BEVEL DOES (as far as it is public): Bevel's Biological Age is a weekly number (it updates on
-// Mondays) built from "a mix of physiological, lifestyle and blood biomarker data", shown with a
-// confidence level and the factors moving it (resting-HR baseline, HRV baseline, weight, body fat,
-// VO₂max, …). Bevel does not publish its formula or weights. Sources:
-//   https://gadgetsandwearables.com/2026/05/16/bevel-3/ (Bevel 3.0 review: weekly, factors, confidence)
-//   https://athletechnews.com/bevel-launches-health-companion/ (biomarkers: VO₂, RHR, HRV, weight, body fat)
-// So this is NOT Bevel's model; it is an independent estimate with the same SHAPE: several markers,
-// each turned into "years older/younger than a typical peer of your age and sex", then blended with
-// fixed weights where VO₂max dominates (the strongest single predictor of all-cause mortality,
-// Kodama 2009 JAMA 301(19):2024; Mandsager 2018 JAMA Netw Open 1(6):e183605).
+// An independent estimate (not Bevel's unpublished model): several markers, each turned into
+// "years older/younger than a typical peer of your age and sex", blended with fixed weights where
+// VO2max dominates (the strongest single predictor of all-cause mortality, Kodama 2009 JAMA
+// 301(19):2024; Mandsager 2018 JAMA Netw Open 1(6):e183605).
 //
-// PER-FACTOR YEARS (each bounded, positive = older):
-//   • VO₂max — the HUNT "fitness age" idea (Nes 2013, Med Sci Sports Exerc 45(3):542): the age at
-//     which a typical peer has YOUR VO₂max, minus your age. The norm curve must be on the same scale as
-//     the VO₂max it is compared with, so a MEASURED value (Apple Health / Oura, lab-like) is read against
-//     the FRIEND registry 50th percentiles (Kaminsky 2015, Mayo Clin Proc 90(11):1515) and the Nes 2011
-//     waist-based ESTIMATE against the HUNT decade means it was fitted on (Loe 2013, PLoS ONE
-//     8(5):e64319, approximate). The resting-HR-only Uth estimate is NOT used here: it is a function of
-//     resting HR alone, which already has its own factor. Bounded ±20.
-//   • Resting HR — the Nes 2011 resting-HR coefficient over its age coefficient (≈0.52 yr/bpm men,
-//     0.46 women) against a 65 bpm reference. Bounded ±15.
-//   • HRV — nightly RMSSD against the age norm (`VitalityEngine.rmssdNorm`), on the log scale where
-//     between-person spread is ≈0.45; one spread ≈ 6 years. Bounded ±10.
-//   • Activity — the HUNT PA-index (0–15) against 5, at the Nes activity/age coefficient ratio
-//     (≈0.76 yr per point). Bounded ±8.
-//   • Body — body fat against a sex reference (20 % men / 28 % women, 0.35 yr per point) when measured,
-//     else BMI outside 18.5–25 (0.8 yr per unit). Bounded −4…+8.
-//   • Sleep regularity — night-to-night duration regularity (0–1) against 0.8. Bounded ±3.
+// Per-factor years (each bounded, positive = older):
+//   - VO2max: the HUNT "fitness age" idea (Nes 2013, Med Sci Sports Exerc 45(3):542), the age at
+//     which a typical peer has YOUR VO2max, minus your age. The norm must share the VO2max's scale:
+//     a MEASURED value (Apple Health / Oura) reads against FRIEND registry 50th percentiles
+//     (Kaminsky 2015, Mayo Clin Proc 90(11):1515); the Nes 2011 waist-based ESTIMATE against the
+//     HUNT decade means it was fitted on (Loe 2013, PLoS ONE 8(5):e64319, approximate). The
+//     resting-HR-only Uth estimate is not used: resting HR has its own factor. Bounded +/-20.
+//   - Resting HR: the Nes 2011 resting-HR coefficient over its age coefficient (~0.52 yr/bpm men,
+//     0.46 women) against 65 bpm. Bounded +/-15.
+//   - HRV: nightly RMSSD against the age norm (`VitalityEngine.rmssdNorm`) on the log scale
+//     (between-person spread ~0.45); one spread = ~6 years. Bounded +/-10.
+//   - Activity: HUNT PA-index (0-15) against 5, ~0.76 yr per point. Bounded +/-8.
+//   - Body: body fat against a sex reference (20% men / 28% women, 0.35 yr per point) when measured,
+//     else BMI outside 18.5-25 (0.8 yr per unit). Bounded -4...+8.
+//   - Sleep regularity: night-to-night duration regularity (0-1) against 0.8. Bounded +/-3.
 //
-// BLEND: fitness age = age + Σ wᵢ·yearsᵢ / Σ wᵢ over the factors present, with weights VO₂max 0.40,
-// resting HR 0.20, HRV 0.15, activity 0.10, body 0.10, sleep 0.05. Missing factors drop out and the
-// rest are renormalised, so the number works with resting HR alone. The result is bounded to the
-// chronological age ±15 (and 18…90). Inputs are 30-day medians, and the value is written once a week,
-// so it moves slowly. It is an estimate for tracking direction, not a medical or biological measurement.
+// Blend: age + sum(w*years)/sum(w) over present factors, weights VO2max 0.40, resting HR 0.20, HRV
+// 0.15, activity 0.10, body 0.10, sleep 0.05. Missing factors drop out and the rest renormalise, so
+// resting HR alone works. Bounded to chronological age +/-15 (and 18...90). Inputs are 30-day
+// medians written weekly, so it moves slowly. For tracking direction, not a medical measurement.
 public enum FitnessAgeEngine {
 
-    // MARK: - Nes 2011 waist-circumference coefficients (JAHA PMC7428991, confirmed vs CERG)
-    // VO₂max = intercept − ageC·age + paiC·PA − wcC·waist − rhrC·RHR
+    // MARK: - Nes 2011 waist-circumference coefficients (JAHA PMC7428991)
+    // VO2max = intercept - ageC*age + paiC*PA - wcC*waist - rhrC*RHR
     static let menIntercept = 100.27, menAge = 0.296, menWC = 0.369, menRHR = 0.155, menPAI = 0.226
     static let womenIntercept = 74.74, womenAge = 0.247, womenWC = 0.259, womenRHR = 0.114, womenPAI = 0.198
     public static let seeMen = 5.70, seeWomen = 5.14
 
     // MARK: - Normative reference point (the "average peer" the Fitness Age compares against)
-    /// Population-reference resting HR (bpm): an average healthy adult. At it the resting-HR factor adds 0.
+    /// Population-reference resting HR (bpm); at it the resting-HR factor adds 0.
     public static let restingHRReference = 65.0
-    /// Population-reference PA-index (0–15): ≈ "moderately active, a few sessions a week"; adds 0.
+    /// Population-reference PA-index (0-15), "moderately active, a few sessions a week"; adds 0.
     public static let paiReference = 5.0
 
-    /// Displayed uncertainty band (years) — a presentation constant for the estimate's honesty line.
+    /// Displayed uncertainty band (years), a presentation constant.
     public static let displayBandYears = 5.0
-    /// Absolute bounds of a stored fitness age.
     public static let minAge = 18.0, maxAge = 90.0
-    /// The furthest a fitness age may sit from the chronological age.
     public static let maxOffsetYears = 15.0
 
     private static func isFemale(_ sex: String) -> Bool { sex.lowercased() == "female" }
 
-    /// Coefficient tuple for the user's sex (intercept, ageC, wcC, rhrC, paiC). Non-binary uses men's.
+    /// Coefficients for the user's sex (intercept, ageC, wcC, rhrC, paiC); non-binary uses men's.
     private static func coeffs(_ sex: String) -> (Double, Double, Double, Double, Double) {
         isFemale(sex)
             ? (womenIntercept, womenAge, womenWC, womenRHR, womenPAI)
@@ -74,18 +62,18 @@ public enum FitnessAgeEngine {
         return weightKg / (m * m)
     }
 
-    /// Nes 2011 waist-variant VO₂max (ml/kg/min). Optional display metric — needs a waist measurement.
+    /// Nes 2011 waist-variant VO2max (ml/kg/min); needs a waist measurement.
     public static func estimateVO2max(age: Double, sex: String, waistCm: Double,
                                       restingHR: Double, paIndex: Double) -> Double {
         let (intercept, ageC, wcC, rhrC, paiC) = coeffs(sex)
         return intercept - ageC*age + paiC*paIndex - wcC*waistCm - rhrC*restingHR
     }
 
-    /// Reconstruct the HUNT PA-index (0–15 = frequency×intensity×duration) from measured weekly
-    /// aggregates. Bucket edges mirror the HUNT1 PA-Q response options (Kurtze 2008):
-    ///   frequency ∈ {0.0, 0.5, 1.0, 2.5, 5.0}  ← active days in the last 7
-    ///   intensity ∈ {1, 2, 3}                  ← share of active time at high intensity (HR zone 4–5)
-    ///   duration  ∈ {0.10, 0.38, 0.75, 1.0}    ← average active minutes per active day
+    /// Reconstructs the HUNT PA-index (0-15 = frequency x intensity x duration) from weekly aggregates.
+    /// Bucket edges mirror the HUNT1 PA-Q options (Kurtze 2008):
+    ///   frequency in {0.0, 0.5, 1.0, 2.5, 5.0}  (active days in the last 7)
+    ///   intensity in {1, 2, 3}                  (share of active time at HR zone 4-5)
+    ///   duration  in {0.10, 0.38, 0.75, 1.0}    (average active minutes per active day)
     public static func physicalActivityIndex(activeDaysPerWeek: Int,
                                              avgActiveMinutesPerDay: Double,
                                              highIntensityFraction: Double) -> Double {
@@ -114,13 +102,10 @@ public enum FitnessAgeEngine {
         return frequency * intensity * duration
     }
 
-    /// PA-index (0–15) from Zoop's measured weekly load — the UNIVERSAL path the orchestrator uses
-    /// (works on any device, since `strain` is computed from HR alone; HR-zone minutes only exist for
-    /// CSV-importers). `strain` (0–100, TRIMP-based) already integrates intensity × duration, so we map
-    /// the mean active-day strain straight to the HUNT intensity×duration PRODUCT (0–3) and multiply by
-    /// the frequency factor — deliberately NOT re-deriving intensity and duration separately, which
-    /// would double-count the same HR load. Calibrated so the reference peer (≈4 active days, mean
-    /// strain ≈60) lands near PA-index 5.
+    /// PA-index (0-15) from Zoop's measured weekly load; the universal path (strain comes from HR alone).
+    /// Mean active-day strain (0-100, TRIMP) already integrates intensity x duration, so it maps to the
+    /// HUNT product (0-3) and multiplies the frequency factor, not re-deriving each (double-counting
+    /// HR load). Calibrated so the reference peer (~4 active days, mean strain ~60) lands near 5.
     public static func physicalActivityIndexFromStrain(activeDaysPerWeek: Int,
                                                        meanActiveStrain: Double) -> Double {
         let frequency: Double
@@ -140,11 +125,11 @@ public enum FitnessAgeEngine {
 
 // MARK: - Multi-marker model
 
-/// One marker that moves the fitness age. Raw values double as the stored series suffixes.
+/// One marker that moves the fitness age. Raw values double as stored series suffixes.
 public enum FitnessAgeFactor: String, CaseIterable, Sendable {
     case vo2max, restingHR = "rhr", hrv, activity, body, sleep
 
-    /// Blend weight (see the file header). VO₂max dominates.
+    /// Blend weight (see the file header).
     public var weight: Double {
         switch self {
         case .vo2max: return 0.40
@@ -156,13 +141,11 @@ public enum FitnessAgeFactor: String, CaseIterable, Sendable {
         }
     }
 
-    /// Series key of the years this factor added to a stored fitness age.
     public var contributionKey: String { "fitness_age_c_" + rawValue }
-    /// Series key of the input value this factor was scored on.
     public var inputKey: String { "fitness_age_in_" + rawValue }
 }
 
-/// Where a VO₂max number came from, which decides the norm it is read against.
+/// Where a VO2max came from, which decides the norm it is read against.
 public enum FitnessVO2Source: String, Sendable {
     /// A device or lab measurement (Apple Health, Oura): FRIEND registry norms.
     case measured
@@ -174,17 +157,13 @@ public enum FitnessVO2Source: String, Sendable {
 public struct FitnessAgeInputs: Equatable, Sendable {
     public var chronoAge: Double
     public var sex: String
-    /// 30-day resting-HR baseline (bpm).
     public var restingHR: Double
     public var vo2max: Double?
     public var vo2Source: FitnessVO2Source
-    /// 30-day nightly RMSSD baseline (ms).
     public var rmssd: Double?
-    /// HUNT PA-index, 0–15.
     public var activityIndex: Double?
     public var bmi: Double?
     public var bodyFatPct: Double?
-    /// Night-to-night sleep regularity, 0–1.
     public var sleepConsistency: Double?
 
     public init(chronoAge: Double, sex: String, restingHR: Double,
@@ -200,10 +179,10 @@ public struct FitnessAgeInputs: Equatable, Sendable {
 
 extension FitnessAgeEngine {
 
-    /// FRIEND registry 50th-percentile VO₂max (treadmill CPET) at decade midpoints (Kaminsky 2015).
+    /// FRIEND registry 50th-percentile VO2max (treadmill CPET) at decade midpoints (Kaminsky 2015).
     static let friendMen: [(Double, Double)] = [(25, 48.0), (35, 42.4), (45, 37.8), (55, 32.6), (65, 28.2), (75, 24.4)]
     static let friendWomen: [(Double, Double)] = [(25, 37.6), (35, 30.9), (45, 27.9), (55, 24.2), (65, 20.7), (75, 18.3)]
-    /// HUNT Fitness Study mean VO₂peak at decade midpoints (Loe 2013, approximate).
+    /// HUNT Fitness Study mean VO2peak at decade midpoints (Loe 2013, approximate).
     static let huntMen: [(Double, Double)] = [(25, 54.4), (35, 49.0), (45, 47.7), (55, 42.6), (65, 39.2), (75, 35.0)]
     static let huntWomen: [(Double, Double)] = [(25, 43.0), (35, 40.0), (45, 38.4), (55, 34.8), (65, 31.4), (75, 28.9)]
 
@@ -217,7 +196,7 @@ extension FitnessAgeEngine {
         }
     }
 
-    /// Typical VO₂max for an age on the given scale (piecewise linear, extrapolated past the ends).
+    /// Typical VO2max for an age on the given scale (piecewise linear, extrapolated past the ends).
     public static func vo2Norm(age: Double, sex: String, source: FitnessVO2Source) -> Double {
         let t = normTable(sex: sex, source: source)
         let i: Int
@@ -227,10 +206,10 @@ extension FitnessAgeEngine {
         return v0 + (v1 - v0) * (age - a0) / (a1 - a0)
     }
 
-    /// The age at which a typical peer has this VO₂max (inverse of `vo2Norm`, extrapolated).
+    /// The age at which a typical peer has this VO2max (inverse of `vo2Norm`).
     public static func vo2Age(_ vo2: Double, sex: String, source: FitnessVO2Source) -> Double {
         let t = normTable(sex: sex, source: source)
-        // Norms fall with age, so the segments are walked by value.
+        // Norms fall with age, so segments are walked by value.
         let i: Int
         if vo2 >= t[0].1 { i = 1 } else if vo2 <= t[t.count - 1].1 { i = t.count - 1 }
         else { i = t.indices.first { t[$0].1 <= vo2 } ?? t.count - 1 }
@@ -238,8 +217,7 @@ extension FitnessAgeEngine {
         return a0 + (vo2 - v0) * (a1 - a0) / (v1 - v0)
     }
 
-    /// Years one factor alone would move the age (positive = older), before weighting. nil when the
-    /// input is missing.
+    /// Years one factor alone would move the age (positive = older), before weighting; nil if missing.
     public static func factorYears(_ factor: FitnessAgeFactor, _ x: FitnessAgeInputs) -> Double? {
         let female = x.sex.lowercased() == "female"
         switch factor {
@@ -272,7 +250,7 @@ extension FitnessAgeEngine {
         }
     }
 
-    /// The fitness age from whatever inputs are present. nil without an age or resting HR.
+    /// The fitness age from whatever inputs are present; nil without an age or resting HR.
     public static func compute(_ x: FitnessAgeInputs, lowerConfidence: Bool = false) -> FitnessAgeResult? {
         guard x.chronoAge > 0, x.restingHR > 0 else { return nil }
         var present: [(FitnessAgeFactor, Double)] = []
@@ -296,13 +274,13 @@ extension FitnessAgeEngine {
 
 // MARK: - Readiness checklist
 //
-// Transparency over a black-box number: show the user exactly which inputs we have, grouped by what
-// each one unlocks, and a single confidence verdict. Height/weight feed the body factor; the waist only
-// unlocks the Nes VO₂max estimate. The gate is age, sex, and resting-HR coverage over the last 7 days.
+// Shows which inputs we have, grouped by what each unlocks, with one confidence verdict. Height and
+// weight feed the body factor; the waist only unlocks the Nes VO2max estimate. The gate is age,
+// sex, and resting-HR coverage over the last 7 days.
 
 public enum FitnessReadinessStatus: String, Sendable { case satisfied, partial, missing }
 
-/// What a given input affects — so the checklist can be honest about its impact.
+/// What a given input affects, so the checklist is honest about its impact.
 public enum FitnessReadinessRole: String, Sendable {
     case drivesAge          // required for / sharpens the headline Fitness Age
     case unlocksVO2max      // only powers the separate VO₂max estimate
@@ -338,15 +316,11 @@ public struct FitnessAgeReadiness: Equatable, Sendable {
 }
 
 extension FitnessAgeEngine {
-    /// Minimum nights of resting-HR before the headline can be computed at all.
     public static let minCoverageDays = 4
-    /// Coverage at/above which an input reads as fully satisfied (a "confident" week).
     public static let goodCoverageDays = 6
 
-    /// Nights of resting-HR still needed before the headline can compute AT ALL — the countdown the
-    /// not-ready card shows ("N more nights of wear…"). 0 once `minCoverageDays` is met. Assumes continued
-    /// nightly wear (a skipped night just doesn't advance the count). Shared with the Android engine so both
-    /// platforms show the same number.
+    /// Nights of resting HR still needed before the headline can compute; 0 once `minCoverageDays` is met.
+    /// Assumes continued nightly wear.
     public static func nightsUntilReady(rhrDays: Int) -> Int { max(0, minCoverageDays - rhrDays) }
 
     private static func coverageStatus(_ days: Int, floor: Int) -> FitnessReadinessStatus {
@@ -355,8 +329,7 @@ extension FitnessAgeEngine {
         return .missing
     }
 
-    /// Build the readiness checklist + overall confidence from the inputs we have. The orchestrator
-    /// passes profile-completeness flags and the 7-day coverage counts.
+    /// Builds the readiness checklist and overall confidence from profile-completeness flags and 7-day coverage counts.
     public static func assessReadiness(hasAge: Bool, hasSex: Bool,
                                        rhrDays: Int, activityDays: Int,
                                        hasHeightWeight: Bool, hasWaist: Bool) -> FitnessAgeReadiness {
@@ -401,9 +374,8 @@ public struct FitnessAgeResult: Equatable, Sendable {
     public let deltaYears: Double      // chronoAge − fitnessAge (positive = younger than your age)
     public let bandYears: Double       // ± presentation band
     public let lowerConfidence: Bool   // true for non-binary (sex-specific norms) or sparse data
-    /// Weighted years each present factor adds (positive = older). Sums to the unbounded offset.
+    /// Weighted years each present factor adds (positive = older); sums to the unbounded offset.
     public let contributions: [FitnessAgeFactor: Double]
-    /// True when the blend fell outside the bounds and `fitnessAge` sits on one.
     public let bounded: Bool
 
     public init(vo2max: Double?, fitnessAge: Double, chronoAge: Double,
@@ -417,10 +389,8 @@ public struct FitnessAgeResult: Equatable, Sendable {
 
 /// Stored series keys of fitness-age inputs that are not one-per-factor.
 public enum FitnessAgeKeys {
-    /// 1 when the VO₂max input was measured (Apple Health), 0 for the Nes estimate.
+    /// 1 when the VO2max input was measured (Apple Health), 0 for the Nes estimate.
     public static let vo2Measured = "fitness_age_in_vo2max_measured"
-    /// Body fat (%) the body factor used, when measured.
     public static let bodyFat = "fitness_age_in_body_fat"
-    /// BMI the body factor used, when no body fat was measured.
     public static let bmi = "fitness_age_in_bmi"
 }

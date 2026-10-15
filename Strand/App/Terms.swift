@@ -1,17 +1,12 @@
 import Foundation
 
-/// The Terms of Use the first-run gate presents. Bump `currentVersion` when the terms MATERIALLY
-/// change (risk / liability / medical / affiliation wording) to re-prompt every user for a fresh
-/// acknowledgment; leave it for typo fixes. Mirrored on Android by `ZoopPrefs.TERMS_VERSION`. The
-/// full text lives in `TERMS.md`, shipped with Zoop.
+/// The Terms of Use the first-run gate presents. Bump `currentVersion` only when the terms materially
+/// change (risk / liability / medical / affiliation wording) to re-prompt every user. Full text is `TERMS.md`.
 enum Terms {
     static let currentVersion = "2.0"
 
-    /// The load-bearing points the user must accept on first launch — the plain-English summary of
-    /// `TERMS.md` §1–§6. Kept identical to the Android `Terms.points`. Each is (headline, body).
-    /// Wrapped in `String(localized:)` (the `RhythmView.points` pattern) so the gate is localized
-    /// like the rest of the app (PR #984); the English wording is the key, and the binding text
-    /// stays `TERMS.md` — a translation here is a courtesy, not the agreement.
+    /// The load-bearing points accepted on first launch, as (headline, body). A translation is a courtesy;
+    /// the binding text stays `TERMS.md`.
     static let points: [(String, String)] = [
         (String(localized: "Independent: not affiliated with WHOOP"),
          String(localized: "Zoop is an unofficial project: not affiliated with, endorsed by, or sponsored by WHOOP, Inc. \"WHOOP\" is their trademark, used only to name the hardware Zoop works with.")),
@@ -25,12 +20,8 @@ enum Terms {
          String(localized: "Zoop is free and provided \"as is\", with no warranty. Liability is limited to the maximum extent the law that applies to you allows, and nothing here removes protections your local law won't let us remove.")),
     ]
 
-    /// The affirmative attestations the user must EACH tick before Accept enables (clickwrap). They are
-    /// kept as separate, conspicuous consents rather than one blanket box so each is a distinct, knowing
-    /// acknowledgment — the load-bearing ones being the non-affiliation attestation and the liability
-    /// waiver. Mirrors the Android `Terms.attestations`. The English wording is the binding key (like
-    /// `points`); `TERMS.md` is the full text.
-    /// NOTE: the exact legal phrasing here should be reviewed by a solicitor before this ships publicly.
+    /// Attestations the user must each tick before Accept enables (clickwrap). Kept separate so each is a
+    /// distinct, knowing consent. The legal phrasing should be reviewed by a solicitor before public release.
     static let attestations: [String] = [
         String(localized: "I am not a WHOOP employee, contractor, or affiliate, and I am not using Zoop on WHOOP's behalf."),
         String(localized: "I own the WHOOP device I will use with Zoop and will only use it to access my own data. Doing so is my decision and my risk, including any effect on my WHOOP account, subscription, device, or warranty, and it may breach WHOOP's Terms of Service."),

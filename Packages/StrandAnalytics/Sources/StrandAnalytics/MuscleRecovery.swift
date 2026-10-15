@@ -1,20 +1,15 @@
 import Foundation
 import WhoopStore
 
-// MARK: - Muscle recovery (Zoop)
+// MARK: - Muscle recovery
 //
-// An estimate of how recovered each muscle group is from the lifting logged in the Lift Log. It is a
-// simple, openly stated model, not a measurement: nothing on the strap reads muscle damage.
-//
-//   • Each session leaves a muscle a recovery window that grows with the fractional sets it got
-//     (`LiftMetrics.muscleCounts`: direct sets 1, indirect 0.5): 30 h plus 6 h per set, clamped to
-//     36...72 h. Three sets ≈ 48 h, seven or more = 72 h, matching the 48-72 h range commonly quoted
-//     for a trained muscle.
-//   • A hard session (mean working RPE 9 or higher) stretches the window by 15 %.
-//   • Within its window a session's fatigue falls linearly from 1 to 0. Fatigue from overlapping
-//     sessions adds up (capped at 1), so training a muscle again before it recovered reads lower.
-//
-// Percent recovered = 100 × (1 − fatigue).
+// An openly stated estimate of how recovered each muscle group is from Lift Log training; nothing on the strap
+// reads muscle damage.
+//   - A session leaves a recovery window growing with fractional sets (`LiftMetrics.muscleCounts`: direct 1,
+//     indirect 0.5): 30 h + 6 h per set, clamped 36...72 h (the commonly quoted 48-72 h for a trained muscle).
+//   - A hard session (mean working RPE >= 9) stretches the window 15%.
+//   - Fatigue falls linearly 1 -> 0 over the window; overlapping sessions add (capped at 1).
+// Percent recovered = 100 x (1 - fatigue).
 
 public enum MuscleRecovery {
 
@@ -24,7 +19,7 @@ public enum MuscleRecovery {
     public static let maxHours = 72.0
     public static let hardSessionRpe = 9.0
     public static let hardSessionStretch = 1.15
-    /// How far back a session can still matter: the longest possible window.
+    /// How far back a session can matter: the longest possible window.
     public static var lookbackHours: Double { maxHours * hardSessionStretch }
 
     /// One finished session's sets and when it ended.
@@ -40,11 +35,10 @@ public enum MuscleRecovery {
     /// One muscle's state at `now`.
     public struct Entry: Equatable, Sendable {
         public let muscle: LiftMuscle
-        /// 0...100.
         public let percentRecovered: Int
-        /// Hours until fully recovered, 0 when already recovered.
+        /// Hours until fully recovered; 0 when already recovered.
         public let hoursToFull: Double
-        /// Fractional sets this muscle got in the sessions still in its window.
+        /// Fractional sets this muscle got in sessions still in its window.
         public let recentSets: Double
         public init(muscle: LiftMuscle, percentRecovered: Int, hoursToFull: Double, recentSets: Double) {
             self.muscle = muscle
@@ -54,14 +48,13 @@ public enum MuscleRecovery {
         }
     }
 
-    /// The recovery window, in hours, for one session's fractional sets on one muscle.
+    /// Recovery window (hours) for one session's fractional sets on one muscle.
     public static func windowHours(sets: Double, hard: Bool = false) -> Double {
         let raw = Swift.min(maxHours, Swift.max(minHours, baseHours + hoursPerSet * sets))
         return hard ? raw * hardSessionStretch : raw
     }
 
-    /// Per-muscle recovery at `now`, for every muscle a session in `sessions` touched. Sorted least
-    /// recovered first, then in the vocabulary's order. Sessions in the future are ignored.
+    /// Per-muscle recovery at `now` for every muscle touched, least recovered first; future sessions are ignored.
     public static func entries(sessions: [Session], now: Int) -> [Entry] {
         var fatigue: [LiftMuscle: Double] = [:]
         var toFull: [LiftMuscle: Double] = [:]
@@ -96,7 +89,7 @@ public enum MuscleRecovery {
         }
     }
 
-    /// Filled segments of a 10-segment bar for a percentage (rounded down, so 100 % is the only full bar).
+    /// Filled segments of a 10-segment bar (rounded down, so only 100% is full).
     public static func filledSegments(percent: Int, of segments: Int = 10) -> Int {
         Swift.max(0, Swift.min(segments, percent * segments / 100))
     }

@@ -2,15 +2,12 @@ import Foundation
 import GRDB
 
 // MARK: - v38 store: hourly Apple Health step counts
-// Mirrors OuraRawStore: an idempotent ON CONFLICT upsert keyed by the natural key (deviceId, ts), and
-// a range read — all GRDB work via syncWrite/syncRead. `appleDaily.steps` already answers "how many
-// steps that day"; this table answers "which HOURS were recorded", so the UI can show retroactively
-// when the iPhone was off/dead/left behind (e.g. mid-hike) instead of a single flattened daily total.
+// Idempotent upsert keyed by (deviceId, ts). `appleDaily.steps` gives the day total; this table records
+// which HOURS had data, so the UI can show when the iPhone was off or left behind.
 
 extension WhoopStore {
 
-    /// Upsert hourly Apple Health step counts. Idempotent by (deviceId, ts): re-importing the same
-    /// hour overwrites its count rather than duplicating. Returns rows changed.
+    /// Upserts hourly step counts, idempotent by (deviceId, ts). Returns rows changed.
     @discardableResult
     public func upsertAppleStepHours(_ rows: [(ts: Int, steps: Int)], deviceId: String) async throws -> Int {
         try syncWrite { db in

@@ -24,9 +24,8 @@ public struct Question: Sendable, Codable, Equatable {
     }
 }
 
-/// A test mode is DATA, not code (spec section 3.1). The screen, the export and the questionnaire all
-/// render from this. `captures` / `liveReadout` are declarative ids; the emitters and readout panels
-/// bind to them by name. Phase 1 registers exactly `.sleep` and `.battery`.
+/// A test mode is DATA, not code: the screen, export and questionnaire all render from this. `captures` /
+/// `liveReadout` are declarative ids that emitters and readout panels bind to by name.
 public struct TestMode: Sendable, Identifiable {
     public let domain: TestDomain
     public let title: String
@@ -51,12 +50,10 @@ public struct TestMode: Sendable, Identifiable {
     }
 }
 
-/// The single source the Test Centre IA iterates. Order is priority order on screen. The Kotlin twin is
-/// TestModeRegistry.kt, byte-aligned (same ids, titles, captures), verified by a parity test.
+/// The single source the Test Centre IA iterates; order is screen priority order.
 public enum TestModeRegistry {
 
-    /// Phase 1 shipped sleep + battery; Phase 2 appends the 🔴 high-pain domains plus the scoring chain
-    /// (connection, workouts, display, import, steps, recovery, hrv). Order is screen priority order.
+    /// Shipped modes, in screen priority order.
     public static let all: [TestMode] = [
         sleep, connection, workouts, display, dataImport, steps, battery, recovery, hrv,
     ]
@@ -67,13 +64,8 @@ public enum TestModeRegistry {
         domain: .sleep, title: "Sleep & Rest",
         blurb: "Wear it a few nights so we can see which gate kept or dropped each sleep run.",
         icon: "bed.double.fill", priority: .high,
-        // Only the captures the sleep sink actually receives are kept: the SleepStager gate-verdict ladder
-        // (SleepStagerTrace.runLine) plus the RestScorer.subScoreLine composite, i.e. gateTrace, wristOff
-        // (the offWristFrac field of the offWrist gate) and restSubScores. Dropped, all unemitted, same
-        // rationale Import used for firstFailingRow/failingFileSample/dedupMerge: hrDensity, perEpochFeatures,
-        // hypnogramV1V2 (flipLine has no call site), ppgOnlyNight, gravityCoverage (only the sparseBridge
-        // gate's sparse=/fragmentedToNothing= flags, which already ride gateTrace) and skinTempDsp (skin-temp is a Recovery input,
-        // never written to the sleep sink). The live-readout keys (hrDensityNow/gravityCoverageNow) are separate.
+        // Only captures the sleep sink actually receives: the SleepStager gate-verdict ladder, the offWristFrac
+        // field of the offWrist gate, and RestScorer.subScoreLine. Unemitted captures are omitted so the mode stays honest.
         captures: ["gateTrace", "wristOff", "restSubScores"],
         questionnaire: [
             Question(id: "sleepTimes", prompt: "Your actual sleep, wake and out-of-bed times?", kind: .text),
@@ -129,11 +121,7 @@ public enum TestModeRegistry {
         domain: .dataImport, title: "Import & Data Ingest",
         blurb: "Turn this on if a file import dropped rows or came in wrong.",
         icon: "square.and.arrow.down", priority: .high,
-        // Only the captures a production import actually emits: parser identity, per-stage rows, reject
-        // counts and day deltas. firstFailingRow / failingFileSample / dedupMerge (earlier) and now fileMeta
-        // (the import trace emits parser/stage/reject/dayDelta lines but never a file-meta line) were
-        // advertised with no emitter on either platform, so they were dropped from BOTH registries to keep
-        // the mode honest and the platforms in parity rather than over-promising.
+        // Only captures a production import emits: parser identity, per-stage rows, reject counts, day deltas.
         captures: ["parserVersion", "perStageRows", "rejectCounts", "dayDeltas"],
         questionnaire: [
             Question(id: "appFormatExpected", prompt: "Which app/format, and what did you expect to import?", kind: .text),
@@ -159,7 +147,7 @@ public enum TestModeRegistry {
         domain: .battery, title: "Battery & Charging",
         blurb: "Wear it a few days so we can fit your real discharge slope.",
         icon: "battery.50", priority: .med,
-        // Dropped offWristGaps: nothing emits an off-wrist-gap line for the battery discharge run.
+        // No off-wrist-gap line is emitted for the battery discharge run.
         captures: ["socSeries", "chargeSteps", "dischargeRun", "fittedSlope",
                    "sourceMeasuredVsRated", "batteryGates"],
         questionnaire: [
@@ -176,7 +164,7 @@ public enum TestModeRegistry {
         domain: .recovery, title: "Recovery (Charge)",
         blurb: "Turn this on if Charge looks wrong, to see which term moved it.",
         icon: "heart.text.square.fill", priority: .med,
-        // Dropped forecastInputs: the recovery trace emits baseline/term/nilTerm/renorm/score, no forecast line.
+        // The recovery trace emits no forecast line.
         captures: ["chargeTermBreakdown", "baselinesPerNight", "termZScores", "nilTerm"],
         questionnaire: [
             Question(id: "recalHealthHrv", prompt: "Recent recalibration? Is Apple Health / Health Connect feeding HRV?", kind: .text),
@@ -189,10 +177,8 @@ public enum TestModeRegistry {
         domain: .hrv, title: "HRV & Autonomic",
         blurb: "Turn this on if HRV reads nil or looks off, to see the clean beats.",
         icon: "waveform.path.ecg", priority: .med,
-        // The HRV trace emits the path/nInput/nClean/reject line, the minBeats gate and the
-        // "hrv rmssd=... sdnn=... meanNN=..." line. Dropped: respRsa (RSA respiration isn't computed in the
-        // HRV path), rawRR (the trace emits the beat COUNT nInput=, never the raw R-R list) and
-        // spotVsContinuous (the sole call site hardcodes path="spot", so it never emits "continuous").
+        // The HRV trace emits the path/nInput/nClean/reject line, the minBeats gate and the rmssd/sdnn/meanNN
+        // line; no respiration RSA, raw R-R list (only the count) or spot-vs-continuous (path is always "spot").
         captures: ["nInputCleanRejected", "rmssdSdnn", "minBeatsCleared"],
         questionnaire: [
             Question(id: "otherAppHrv", prompt: "Is another app feeding HRV to Apple Health / Health Connect?", kind: .yesNo),

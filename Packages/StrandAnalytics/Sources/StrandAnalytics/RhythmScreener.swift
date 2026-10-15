@@ -1,110 +1,74 @@
 import Foundation
 import WhoopProtocol
 
-// RhythmScreener.swift — beat-to-beat regularity DESCRIPTIVE statistics + Poincaré
-// point cloud for an experimental, non-clinical wellness VISUALIZATION.
+// Beat-to-beat regularity descriptive statistics and Poincare point cloud for an experimental, non-clinical
+// wellness visualization. Builds only the pure regularity math and a neutral categorical label ("looked
+// steady" / "some variation" / "varied a lot" / "couldn't read"). It emits no "consider a clinician" verdict,
+// condition name, probability or alarm; that screening verdict is held (spec section 11) behind a separate
+// go/no-go and the consent machinery.
 //
-// Spec: docs/superpowers/specs/2026-06-19-v5-rhythm-screening-design.md (§3, §11).
-//
-// SCOPE OF THIS ENGINE (deliberately narrow — read §11 of the spec):
-//   This builds ONLY the pure regularity math and a NEUTRAL categorical label scoped
-//   to a visualization ("looked steady" / "some variation" / "varied a lot" /
-//   "couldn't read"). It deliberately does NOT emit any "consider a clinician" verdict,
-//   any condition name, any probability-of-condition number, or any alarm. That
-//   screening verdict is HELD per the spec's §11 recommendation and is gated behind a
-//   separate go/no-go + the consent machinery — it is not part of this code.
-//
-// WHAT IT COMPUTES, over a clean RESTING window of successive R-R intervals
-// (range-filtered, but NOT ectopic-stripped — we need the ectopy):
-//   • Poincaré scatter SD1 / SD2 / SD1:SD2 ratio. SD1 = RMSSD/√2 (the standard rotated
-//     short-axis SD of the (NN[i], NN[i+1]) cloud), SD2 = sqrt(2·SDNN² − SD1²) (the
-//     long axis). A steady rhythm gives a tight elongated comet (small SD1, low ratio);
-//     a more variable rhythm gives a rounder, more diffuse cloud (ratio → 1).
-//   • Normalised RMSSD (RMSSD / meanNN) — a scale-free beat-to-beat variation index.
-//   • Turning-point rate — the fraction of interior ΔNN sign changes (local extrema):
-//     smooth respiratory modulation gives a low rate; disorganised beat-to-beat
-//     direction flips give a high one. Compared against the value EXPECTED for a random
-//     series (2/3), normalised to [0, ~1.5].
-//   • Ectopic-beat fraction — `HRVAnalyzer.rejectEctopic` run as a COUNTER: the fraction
-//     of beats the Malik filter WOULD drop. HRV throws these away; here we count them.
-//   • The Poincaré point cloud itself (paired successive intervals) for the plot.
-//
-// All statistics are deterministic and reuse HRVAnalyzer's published primitives
-// (rmssdRaw / sdnnRaw / rangeFilter / rejectEctopic / median). No new science, no model.
-//
-// NON-CLINICAL: every label is descriptive and benign. There are no disease names,
-// no diagnostic claims, and no call-to-action anywhere in this file.
+// Over a clean resting window of successive R-R (range-filtered but NOT ectopic-stripped, since the ectopy is
+// the point) it computes, reusing HRVAnalyzer primitives (no new science):
+//   - Poincare SD1 = RMSSD/sqrt(2) and SD2 = sqrt(2*SDNN^2 - SD1^2), and SD1:SD2 (steady = tight comet, low
+//     ratio; variable = round cloud, ratio -> 1)
+//   - normalised RMSSD (RMSSD / meanNN)
+//   - turning-point rate: fraction of interior delta-NN sign changes vs the 2/3 expected for a random series
+//     (smooth respiratory modulation is low, disorganised flips high), normalised to [0, ~1.5]
+//   - ectopic fraction: what `HRVAnalyzer.rejectEctopic` (Malik) WOULD drop, counted rather than discarded
+//   - the Poincare point cloud for the plot.
+// Every label is descriptive and benign: no disease names, diagnostic claims or calls-to-action.
 
 public enum RhythmScreener {
 
-    // MARK: - Thresholds (named, tunable in one place; tuned only on synthetic fixtures)
+    // MARK: - Thresholds (tuned only on synthetic fixtures)
 
-    /// Minimum clean range-filtered intervals required to read a window at all.
-    /// Set well above HRV's 20 — a regularity read needs a denser, steadier window.
+    /// Minimum clean range-filtered intervals to read a window; well above HRV's 20, since a regularity read needs a denser window.
     public static let windowMinBeats: Int = 60
 
-    /// Resting heart-rate band (bpm). Outside this, the window is treated as
-    /// unreadable (likely activity the motion gate missed, or artifact) rather than
-    /// described — a regularity read is only meaningful at rest.
+    /// Resting HR band (bpm); outside it the window is unreadable (missed activity or artifact), since a regularity read is only meaningful at rest.
     public static let restingHrMinBpm: Double = 40
     public static let restingHrMaxBpm: Double = 110
 
-    /// SD1:SD2 ratio at/above which the cloud is rounding out (less comet-like).
-    /// A tight sinus comet sits well below this; a diffuse cloud approaches 1.
+    /// SD1:SD2 at/above which the cloud is rounding out; a tight sinus comet sits well below.
     public static let tauRatio: Double = 0.55
 
-    /// Normalised-RMSSD (RMSSD / meanNN) at/above which beat-to-beat variation is high.
+    /// Normalised RMSSD (RMSSD / meanNN) at/above which beat-to-beat variation is high.
     public static let tauNRmssd: Double = 0.12
 
-    /// Normalised turning-point rate at/above which beat-to-beat direction flips are
-    /// frequent (close to or above the random-series expectation).
+    /// Normalised turning-point rate at/above which direction flips are frequent (near the random-series expectation).
     public static let tauTP: Double = 0.90
 
-    /// Ectopic-beat fraction at/above which isolated extra/skipped beats are notable
-    /// enough to read as "occasional", provided the rhythm is otherwise smooth (low
-    /// turning-point rate). Kept conservative.
+    /// Ectopic fraction at/above which isolated extra/skipped beats read as "occasional", provided the rhythm is otherwise smooth. Conservative.
     public static let tauEctopicLow: Double = 0.04
 
-    // MARK: - Night-persistence thresholds (descriptive aggregation only — §3.3)
+    // MARK: - Night-persistence thresholds
     //
-    // NOTE: summarizeNight() here aggregates window labels for the VISUALIZATION's
-    // night view. It produces NO notification and NO verdict — it only counts how many
-    // readable windows looked varied vs steady, so the plot/detail screen can describe
-    // the night honestly. The persistence gate that would (later) drive a heads-up is a
-    // separate, held decision.
+    // summarizeNight() only counts readable windows that looked varied vs steady for the night view: no notification,
+    // no verdict. The persistence gate that might later drive a heads-up is a separate, held decision.
 
-    /// Minimum varied windows in a night before the night is *described* as having had
-    /// recurring variation (vs a one-off blip). Tuned high to avoid over-reading noise.
+    /// Varied windows needed before the night is described as having recurring variation (high, to avoid over-reading noise).
     public static let nightMinVariedWindows: Int = 3
-    /// Minimum span (seconds) over which varied windows must be spread for the night to
-    /// read as "recurring" rather than a single clustered moment.
+    /// Span (seconds) varied windows must cover to read as recurring rather than one clustered moment.
     public static let nightMinSpanSeconds: Int = 30 * 60
 
-    // MARK: - Confidence (mirrors ScoreConfidence's calibrating/building/solid pattern)
+    // MARK: - Confidence (mirrors ScoreConfidence)
 
-    /// Clean-beat count at/above which a single window's read is "solid".
+    /// Clean-beat count at/above which a window's read is "solid".
     public static let solidBeats: Int = 200
 
     // MARK: - Types
 
-    /// One resting window, already assembled by the caller (app layer). Pure inputs —
-    /// no I/O. `rrMs` is the raw successive R-R series (ms); `ts` is the matching
-    /// wall-clock seconds (used only for night-span aggregation, optional).
+    /// One resting window assembled by the caller. `rrMs` is the raw successive R-R (ms); `ts` the matching wall-clock seconds (optional, used for night-span aggregation).
     public struct WindowInput: Equatable, Sendable {
-        /// Raw successive R-R intervals (ms), in time order, BEFORE cleaning.
+        /// Raw successive R-R intervals (ms), in time order, before cleaning.
         public let rrMs: [Double]
-        /// Wall-clock seconds for each interval (same length as `rrMs`), or empty if
-        /// the caller doesn't track timestamps. Used only for span/aggregation.
+        /// Wall-clock seconds per interval (same length as `rrMs`), or empty when untracked; used only for span/aggregation.
         public let ts: [Int]
-        /// Optional PPG-derived inter-beat intervals (ms) for the same window — an
-        /// independent timing channel. When present, the same stats are computed on it
-        /// and cross-source agreement is reported. nil on the R-R-only path.
+        /// Optional PPG-derived inter-beat intervals (ms), an independent timing channel; when present the same stats are computed on it and agreement is reported.
         public let ppgIBIms: [Double]?
-        /// True when the per-window accelerometer variance was below the "still"
-        /// threshold (the caller applies the GravitySample motion gate). A regularity
-        /// read is only attempted on a firmly-still window.
+        /// True when the window's accelerometer variance was below the "still" threshold (caller applies the GravitySample motion gate).
         public let motionStill: Bool
-        /// Mean heart rate (bpm) over the window, used for the resting-band gate.
+        /// Mean heart rate (bpm), for the resting-band gate.
         public let meanHR: Double
 
         public init(rrMs: [Double], ts: [Int] = [], ppgIBIms: [Double]? = nil,
@@ -116,8 +80,7 @@ public enum RhythmScreener {
             self.meanHR = meanHR
         }
 
-        /// Convenience: assemble from decoded `RRInterval` rows. Computes meanHR from the
-        /// cleaned series so the caller need not. `motionStill` still comes from the caller.
+        /// Assembles from decoded `RRInterval` rows, computing meanHR from the cleaned series; `motionStill` comes from the caller.
         public init(rr: [RRInterval], ppgIBIms: [Double]? = nil, motionStill: Bool) {
             let raw = rr.map { Double($0.rrMs) }
             let clean = HRVAnalyzer.rangeFilter(raw)
@@ -128,38 +91,36 @@ public enum RhythmScreener {
         }
     }
 
-    /// A single (NN[i], NN[i+1]) pair on the Poincaré plot (ms, ms).
+    /// A single (NN[i], NN[i+1]) pair on the Poincare plot (ms).
     public struct PoincarePoint: Equatable, Sendable, Codable {
         public let x: Double
         public let y: Double
         public init(x: Double, y: Double) { self.x = x; self.y = y }
     }
 
-    /// Descriptive statistics + neutral label for one window. All optional stats are
-    /// nil when the window was unreadable. Nothing here is a clinical metric.
+    /// Descriptive statistics and neutral label for one window; optional stats are nil when unreadable. Not a clinical metric.
     public struct WindowResult: Equatable, Sendable, Codable {
-        /// Neutral, visualization-scoped category (see RhythmRegularity).
+        /// Neutral, visualization-scoped category.
         public let label: RhythmRegularity
-        /// Poincaré short-axis SD (ms), = RMSSD/√2. nil if unreadable.
+        /// Poincare short-axis SD (ms) = RMSSD/sqrt(2); nil if unreadable.
         public let sd1: Double?
-        /// Poincaré long-axis SD (ms). nil if unreadable.
+        /// Poincare long-axis SD (ms); nil if unreadable.
         public let sd2: Double?
-        /// SD1 / SD2 (cloud roundness; → 1 as the cloud rounds out). nil if unreadable.
+        /// SD1 / SD2 (cloud roundness); nil if unreadable.
         public let sd1sd2: Double?
-        /// Normalised RMSSD (RMSSD / meanNN). nil if unreadable.
+        /// Normalised RMSSD (RMSSD / meanNN); nil if unreadable.
         public let normRmssd: Double?
-        /// Normalised turning-point rate (sign-change rate / (2/3)). nil if unreadable.
+        /// Normalised turning-point rate (sign-change rate / (2/3)); nil if unreadable.
         public let turningPointRate: Double?
-        /// Fraction of beats the Malik ectopic filter would drop. nil if unreadable.
+        /// Fraction of beats the Malik ectopic filter would drop; nil if unreadable.
         public let ectopicFraction: Double?
-        /// Clean (range-filtered) beat count actually analysed.
+        /// Clean (range-filtered) beats analysed.
         public let nBeats: Int
-        /// Read certainty (calibrating/building/solid), mirrors ScoreConfidence.
+        /// Read certainty (mirrors ScoreConfidence).
         public let confidence: RhythmConfidence
-        /// True only when an independent PPG IBI channel was present AND its label agreed
-        /// with the R-R label. false when no PPG channel, or when the two disagreed.
+        /// True only when an independent PPG IBI channel was present and its label agreed with the R-R label.
         public let agreedAcrossSources: Bool
-        /// The Poincaré point cloud for the plot (empty when unreadable).
+        /// Poincare point cloud for the plot (empty when unreadable).
         public let poincare: [PoincarePoint]
 
         public init(label: RhythmRegularity, sd1: Double?, sd2: Double?, sd1sd2: Double?,
@@ -179,7 +140,7 @@ public enum RhythmScreener {
             self.poincare = poincare
         }
 
-        /// An unreadable window (gate failed or too sparse) — all stats nil, no cloud.
+        /// An unreadable window (gate failed or too sparse): all stats nil, no cloud.
         static func unreadable(nBeats: Int,
                                confidence: RhythmConfidence = .calibrating) -> WindowResult {
             WindowResult(label: .unreadable, sd1: nil, sd2: nil, sd1sd2: nil,
@@ -189,10 +150,9 @@ public enum RhythmScreener {
         }
     }
 
-    /// A descriptive roll-up of a night's readable windows for the VISUALIZATION's night
-    /// view. Counts only — NO verdict, NO notification trigger, NO call-to-action.
+    /// Descriptive roll-up of a night's readable windows for the night view: counts only, no verdict or notification trigger.
     public struct NightRhythmSummary: Equatable, Sendable, Codable {
-        /// Windows that were readable (passed the gates).
+        /// Windows that passed the gates.
         public let readableWindows: Int
         /// Of those, how many looked steady.
         public let steadyWindows: Int
@@ -200,10 +160,9 @@ public enum RhythmScreener {
         public let occasionalWindows: Int
         /// Of those, how many varied a lot.
         public let variedWindows: Int
-        /// Whether varied windows recurred across a sustained span (descriptive only:
-        /// "this happened in a few separate windows tonight", not a flag).
+        /// Whether varied windows recurred across a sustained span (descriptive, not a flag).
         public let variationRecurred: Bool
-        /// The most prominent neutral label for the night, for a one-line summary.
+        /// The most prominent neutral label for the night.
         public let overall: RhythmRegularity
 
         public init(readableWindows: Int, steadyWindows: Int, occasionalWindows: Int,
@@ -219,19 +178,17 @@ public enum RhythmScreener {
 
     // MARK: - Public API
 
-    /// Screen one resting window: apply the gates, then compute the descriptive stats and
-    /// a neutral regularity label. Pure — takes plain inputs, returns a plain result.
+    /// Screens one resting window: applies the gates, then computes the descriptive stats and a neutral label. Pure.
     public static func screenWindow(_ input: WindowInput) -> WindowResult {
-        // Gate 1: motion. A regularity read is only attempted on a firmly-still window;
-        // movement masquerades as irregularity and is the single biggest false signal.
+        // Gate 1: motion. Movement masquerades as irregularity, the biggest false signal.
         guard input.motionStill else {
             return .unreadable(nBeats: 0)
         }
 
-        // Range-filter (keep ectopy — we only drop physiologically impossible jumps).
+        // Range-filter only physiologically impossible jumps; keep ectopy.
         let clean = HRVAnalyzer.rangeFilter(input.rrMs)
 
-        // Gate 2: signal quality — need a dense enough clean window.
+        // Gate 2: signal quality (dense enough clean window).
         guard clean.count >= windowMinBeats else {
             return .unreadable(nBeats: clean.count)
         }
@@ -241,15 +198,10 @@ public enum RhythmScreener {
             return .unreadable(nBeats: clean.count, confidence: confidence(for: clean.count))
         }
 
-        // Gate 4: beat-time integrity. Every statistic below is a SPREAD over the interval cloud —
-        // SD2 is built from SDNN outright — so a window whose beats are partly held twice describes a
-        // rhythm the heart never had, and describes it as MORE varied than it was. That is the wrong
-        // direction to be wrong in for a label a person reads. `unreadable` is the honest answer: the
-        // capture cannot support the read, which is exactly what this state exists for.
-        //
-        // Timestamps are optional on `WindowInput`, and without them coverage is not measurable — the
-        // verdict is then `unmeasurable`, which stays readable (a live spot capture has no timestamps
-        // and is perfectly time-accurate). Only a MEASURED over-count gates.
+        // Gate 4: beat-time integrity. Every statistic below is a spread over the interval cloud, so a window whose
+        // beats are partly held twice describes a rhythm the heart never had, and as MORE varied than it was; `unreadable`
+        // is the honest answer. Timestamps are optional and without them coverage is `unmeasurable`, which stays readable
+        // (a live spot capture is time-accurate); only a measured over-count gates.
         if input.ts.count == input.rrMs.count, !input.ts.isEmpty {
             let coverage = HRVAnalyzer.rrCoverage(tsSec: input.ts, rrMs: input.rrMs)
             let collapsed = HRVAnalyzer.collapsedCoverage(tsSec: input.ts, rrMs: input.rrMs)
@@ -257,22 +209,19 @@ public enum RhythmScreener {
             guard HRVAnalyzer.beatSpreadIsTrustworthy(verdict) else {
                 return .unreadable(nBeats: clean.count, confidence: confidence(for: clean.count))
             }
-            // Same gate, second fault: a BANKED stream stamps a whole record of intervals on one
-            // timestamp, so its stored values are a decomposition of a record period rather than
-            // beat-to-beat measurements. Coverage cannot see that — such a night can measure a
-            // textbook 1.03 — but every spread below is built from those values.
+            // Second fault: a banked stream stamps a whole record of intervals on one timestamp, so its values decompose a
+            // record period rather than measure beats. Coverage can't see that (such a night can measure a textbook 1.03).
             let accurate = HRVAnalyzer.beatAccurateFraction(tsSec: input.ts, rrMs: input.rrMs)
             guard HRVAnalyzer.beatValuesAreTrustworthy(beatAccurateFraction: accurate) else {
                 return .unreadable(nBeats: clean.count, confidence: confidence(for: clean.count))
             }
         }
 
-        // Core descriptive statistics over the clean (range-filtered, ectopy-kept) series.
+        // Core stats over the clean (range-filtered, ectopy-kept) series.
         let stats = computeStats(clean)
         let rrLabel = classify(stats)
 
-        // Optional independent PPG IBI channel: compute the same stats + label; report
-        // agreement. On the R-R-only path there is no PPG channel and agreement is false.
+        // Optional PPG IBI channel: same stats and label; agreement is false on the R-R-only path.
         var agreed = false
         if let ppg = input.ppgIBIms {
             let ppgClean = HRVAnalyzer.rangeFilter(ppg)
@@ -292,18 +241,17 @@ public enum RhythmScreener {
                             agreedAcrossSources: agreed, poincare: cloud)
     }
 
-    /// Aggregate a night's window results into a descriptive summary for the night view.
-    /// Counting only — produces no verdict and triggers nothing.
+    /// Aggregates window results into a descriptive night summary; counting only.
     public static func summarizeNight(_ windows: [WindowResult]) -> NightRhythmSummary {
         let readable = windows.filter { $0.label != .unreadable }
         let steady = readable.filter { $0.label == .steady }.count
         let occasional = readable.filter { $0.label == .occasionalEctopy }.count
         let varied = readable.filter { $0.label == .varied }.count
 
-        // "Recurred" = enough varied windows spread over a sustained span (descriptive).
+        // Recurred = enough varied windows over a sustained span.
         let recurred = varied >= nightMinVariedWindows
 
-        // Most-prominent neutral label for the one-line night summary.
+        // Most prominent neutral label.
         let overall: RhythmRegularity
         if readable.isEmpty {
             overall = .unreadable
@@ -321,57 +269,42 @@ public enum RhythmScreener {
                                   overall: overall)
     }
 
-    // MARK: - Empty-state diagnosis (#1360 — a TRUTHFUL empty state)
+    // MARK: - Empty-state diagnosis (#1360)
     //
-    // When a night produces nothing to plot, the screen must say WHY honestly. A device that can NEVER
-    // satisfy the read (a structural capture limit) is not the same as a night that merely lacked a
-    // calm, still window — and telling a ring owner "try again tomorrow" every night, when tomorrow is
-    // identical, is the misleading empty state #1360 fixes. These helpers turn the raw night into that
-    // distinction WITHOUT relaxing any gate: the gates stay exactly as strict; we only name the refusal.
+    // When a night has nothing to plot the screen must say why truthfully: a device that can never satisfy the read
+    // (structural capture limit) differs from a night that merely lacked a still window, and "try again tomorrow"
+    // every night is misleading. These helpers name the refusal without relaxing any gate.
 
-    /// Measured over the whole night: are the stored beats BANKED onto record timestamps, so the exact
-    /// per-beat spacing isn't recoverable? Reuses `HRVAnalyzer.beatAccurateFraction` — the fill ratio
-    /// comes from the RECORD TIMESTAMPS, never from the interval values being judged, so it can't be
-    /// gamed by laying beats out cumulatively (the #194 trap the gate exists to avoid). Returns false
-    /// when timestamps are absent or length-mismatched: a live spot capture carries none and is
-    /// perfectly time-accurate, not "banked". This is the device-class (#1108) signal, and it is
-    /// independent of the motion gate — so it is still measurable on a night the motion gate refused.
+    /// Whether the night's stored beats are banked onto record timestamps (per-beat spacing unrecoverable). Reuses
+    /// `HRVAnalyzer.beatAccurateFraction`, whose fill ratio comes from the record timestamps, not the values judged,
+    /// so it can't be gamed by laying beats out cumulatively (the #194 trap). False when timestamps are absent or
+    /// mismatched (a live spot capture is time-accurate). The device-class signal (#1108), independent of the motion gate.
     public static func nightBeatsAreBanked(rrMs: [Double], tsSec: [Int]) -> Bool {
         guard tsSec.count == rrMs.count, !tsSec.isEmpty else { return false }
         let accurate = HRVAnalyzer.beatAccurateFraction(tsSec: tsSec, rrMs: rrMs)
         return !HRVAnalyzer.beatValuesAreTrustworthy(beatAccurateFraction: accurate)
     }
 
-    /// Diagnose WHY a night has nothing to show, so the empty state reads truthfully (#1360). It names
-    /// the refusal the gates already made — it consults no gate and relaxes none:
-    ///   • `.none`             — at least one window was readable (the caller shows the plot, not an empty state).
-    ///   • `.gatheringData`    — the honest default: a device that DOES record a stillness signal (so it can read
-    ///                            in principle), a no-data night, or a genuine restless one. The ONLY state that
-    ///                            means "try again after a settled night".
-    ///   • `.deviceBanksBeats` / `.deviceNoMotion` — a STRUCTURAL limit, reached ONLY when the device recorded
-    ///                            dense R-R yet NO stillness signal at ALL (`gravitySample` empty for the whole
-    ///                            DB, #804 — the ring signature). Gating both verdicts on `!hadMotionSignal` is
-    ///                            deliberate: a WHOOP always writes an accelerometer track, so a WHOOP night
-    ///                            whose banked R-R happens to measure over-counted (#1118) is NEVER mislabelled
-    ///                            "this device can't support it" — it stays on the honest "try again". When the
-    ///                            device is structurally incapable, `beatsAreBanked` picks the more informative
-    ///                            copy (its beats arrive batched) over the plain no-stillness one.
-    /// `hadMotionSignal` = any stillness/gravity sample existed for the night; `beatsAreBanked` = the result
-    /// of `nightBeatsAreBanked` over the night's stored R-R.
+    /// Diagnoses why a night has nothing to show (#1360); names the refusal the gates already made.
+    ///   - `.none`: at least one window was readable.
+    ///   - `.gatheringData`: the honest default (device with a stillness signal, a no-data night, or a restless one); the only "try again".
+    ///   - `.deviceBanksBeats` / `.deviceNoMotion`: structural, reached only when the device recorded dense R-R yet NO
+    ///     stillness signal at all (`gravitySample` empty for the whole DB, #804, the ring signature). Gating on
+    ///     `!hadMotionSignal` means a WHOOP (which always writes an accelerometer track) whose banked R-R measures
+    ///     over-counted (#1118) is never labelled "can't support it". `beatsAreBanked` picks the more informative copy.
+    /// `hadMotionSignal` = any stillness/gravity sample existed; `beatsAreBanked` = `nightBeatsAreBanked` over the night's R-R.
     public static func classifyEmptyState(windows: [WindowResult],
                                           hadMotionSignal: Bool,
                                           beatsAreBanked: Bool) -> RhythmEmptyState {
         if windows.contains(where: { $0.label != .unreadable }) { return .none }
-        // A device WITH a motion signal (WHOOP), or a night with no dense window yet, gets the honest
-        // "try again" — never a permanent "can't support" verdict. Only the ring signature (dense R-R, zero
-        // stillness signal) is structural.
+        // A device with a motion signal (WHOOP), or a night with no dense window yet, gets "try again"; only the ring signature (dense R-R, zero stillness signal) is structural.
         guard !hadMotionSignal, !windows.isEmpty else { return .gatheringData }
         return beatsAreBanked ? .deviceBanksBeats : .deviceNoMotion
     }
 
     // MARK: - Statistics
 
-    /// Bundle of the descriptive statistics over a clean window.
+    /// The descriptive statistics over a clean window.
     struct Stats: Equatable {
         let sd1: Double?
         let sd2: Double?
@@ -381,8 +314,7 @@ public enum RhythmScreener {
         let ectopicFraction: Double?
     }
 
-    /// Compute SD1/SD2/ratio, normalised RMSSD, turning-point rate and ectopic fraction
-    /// over an already range-filtered (ectopy-kept) NN series. Reuses HRVAnalyzer.
+    /// SD1/SD2/ratio, normalised RMSSD, turning-point rate and ectopic fraction over a range-filtered (ectopy-kept) NN series.
     static func computeStats(_ nn: [Double]) -> Stats {
         guard nn.count >= 2 else {
             return Stats(sd1: nil, sd2: nil, sd1sd2: nil, normRmssd: nil,
@@ -392,7 +324,6 @@ public enum RhythmScreener {
         let sdnn = HRVAnalyzer.sdnnRaw(nn)
         let meanNN = nn.reduce(0, +) / Double(nn.count)
 
-        // SD1 = RMSSD/√2 (standard Poincaré short axis). SD2 = sqrt(2·SDNN² − SD1²).
         let sd1: Double? = rmssd.map { $0 / 2.0.squareRoot() }
         var sd2: Double? = nil
         if let sd1 = sd1, let sdnn = sdnn {
@@ -409,9 +340,7 @@ public enum RhythmScreener {
                      normRmssd: normRmssd, turningPointRate: tp, ectopicFraction: ect)
     }
 
-    /// Normalised turning-point rate: the fraction of interior points that are local
-    /// extrema (a sign change in successive Δ), divided by the 2/3 expected for a random
-    /// series. ≈ 1 means "as choppy as random"; < 1 means smoother (sinus modulation).
+    /// Fraction of interior points that are local extrema, divided by the 2/3 expected for a random series (~1 = as choppy as random; < 1 = smoother).
     static func turningPointRate(_ nn: [Double]) -> Double? {
         guard nn.count >= 3 else { return nil }
         var turns = 0
@@ -427,8 +356,7 @@ public enum RhythmScreener {
         return rate / expectedRandom
     }
 
-    /// Ectopic-beat fraction: the fraction of beats `HRVAnalyzer.rejectEctopic` WOULD
-    /// drop, used here as a COUNTER (HRV discards these; we count them). 0 when empty.
+    /// Fraction of beats `HRVAnalyzer.rejectEctopic` would drop, used as a counter (HRV discards these). 0 when empty.
     static func ectopicFraction(_ nn: [Double]) -> Double {
         guard !nn.isEmpty else { return 0 }
         let kept = HRVAnalyzer.rejectEctopic(nn)
@@ -436,7 +364,7 @@ public enum RhythmScreener {
         return Double(dropped) / Double(nn.count)
     }
 
-    /// The Poincaré point cloud: successive (NN[i], NN[i+1]) pairs.
+    /// Successive (NN[i], NN[i+1]) pairs.
     static func poincareCloud(_ nn: [Double]) -> [PoincarePoint] {
         guard nn.count >= 2 else { return [] }
         var pts: [PoincarePoint] = []
@@ -447,15 +375,11 @@ public enum RhythmScreener {
         return pts
     }
 
-    // MARK: - Classification (neutral, visualization-scoped — NO clinical verdict)
+    // MARK: - Classification (neutral; no clinical verdict)
 
-    /// Map descriptive stats to a NEUTRAL regularity label. The "varied" condition is a
-    /// conservative AND of high scatter, high beat-to-beat variation AND choppy turning
-    /// (a round, disorganised cloud). Isolated extra/skipped beats — a notable ectopic
-    /// fraction with an otherwise SMOOTH rhythm (low turning-point rate) — read separately
-    /// as "occasional", which discriminates a few sparse couplets (large scatter but not
-    /// choppy) from genuinely disorganised timing. Everything else reads "steady". No
-    /// condition is ever named, and there is no call-to-action.
+    /// Maps stats to a neutral label. "Varied" is a conservative AND of high scatter, high variation and choppy
+    /// turning. A notable ectopic fraction with an otherwise smooth rhythm reads "occasional" (sparse couplets, not
+    /// disorganised timing). Everything else is "steady". No condition is named.
     static func classify(_ s: Stats) -> RhythmRegularity {
         guard let ratio = s.sd1sd2, let nrmssd = s.normRmssd, let tp = s.turningPointRate
         else { return .unreadable }
@@ -464,14 +388,12 @@ public enum RhythmScreener {
         let variationHigh = nrmssd >= tauNRmssd
         let turningHigh = tp >= tauTP
 
-        // Conservative AND: only a window that is round AND variable AND choppy reads
-        // "varied a lot". This is the main lever against over-reading noise.
+        // Conservative AND is the main lever against over-reading noise.
         if scatterHigh && variationHigh && turningHigh {
             return .varied
         }
 
-        // Occasional extra/skipped beats: a notable ectopic fraction but NOT choppy — the
-        // rhythm is otherwise smooth, so this is sparse couplets, not disorganised timing.
+        // Notable ectopic fraction but not choppy: sparse couplets, not disorganised timing.
         let ect = s.ectopicFraction ?? 0
         if ect >= tauEctopicLow && !turningHigh {
             return .occasionalEctopy
@@ -480,22 +402,17 @@ public enum RhythmScreener {
         return .steady
     }
 
-    /// Read certainty from the clean-beat count, mirroring ScoreConfidence's tiers.
+    /// Read certainty from the clean-beat count (ScoreConfidence tiers).
     static func confidence(for nBeats: Int) -> RhythmConfidence {
         if nBeats < windowMinBeats { return .calibrating }
         return nBeats >= solidBeats ? .solid : .building
     }
 }
 
-/// Neutral, visualization-scoped regularity category. Strings are deliberately benign:
-/// no disease names, no diagnostic terms, no call-to-action. These back an experimental
-/// wellness PLOT, not a screening verdict.
-///
-/// User-facing copy maps these to plain language, e.g.
-///   .steady           → "looked steady"
-///   .occasionalEctopy → "some occasional extra or skipped beats"
-///   .varied           → "varied more than usual"
-///   .unreadable       → "couldn't read clearly"
+/// Neutral, visualization-scoped regularity category with deliberately benign strings (no disease names,
+/// diagnostic terms or calls-to-action); backs an experimental wellness plot, not a screening verdict.
+/// Copy: steady = "looked steady", occasionalEctopy = "some occasional extra or skipped beats",
+/// varied = "varied more than usual", unreadable = "couldn't read clearly".
 public enum RhythmRegularity: String, Codable, Sendable, Equatable {
     case steady
     case occasionalEctopy
@@ -503,25 +420,22 @@ public enum RhythmRegularity: String, Codable, Sendable, Equatable {
     case unreadable
 }
 
-/// Read certainty for a regularity result — mirrors `ScoreConfidence`'s tiers so a thin
-/// window reads truthfully instead of faking a confident shape.
+/// Read certainty for a regularity result (ScoreConfidence tiers), so a thin window doesn't fake a confident shape.
 public enum RhythmConfidence: String, Codable, Sendable, Equatable {
     case calibrating
     case building
     case solid
 }
 
-/// Why the Rhythm screen has nothing to plot, so its empty state can be TRUTHFUL instead of always
-/// reading "try again tomorrow" (#1360). A structural capture limit (`.deviceBanksBeats` /
-/// `.deviceNoMotion`) is PERMANENT for that device and must not be phrased as a one-off bad night;
-/// `.gatheringData` is the only state that means "try again". Produced by `RhythmScreener.classifyEmptyState`.
+/// Why the Rhythm screen has nothing to plot (#1360). `.deviceBanksBeats` / `.deviceNoMotion` are permanent for
+/// that device and must not read as a one-off bad night; `.gatheringData` is the only "try again". From `RhythmScreener.classifyEmptyState`.
 public enum RhythmEmptyState: String, Codable, Sendable, Equatable {
-    /// At least one window was readable — the caller shows the plot, not an empty state.
+    /// At least one window was readable.
     case none
-    /// Not enough evidence yet, or a genuine restless night. The only "try again" state.
+    /// Not enough evidence yet, or a restless night; the only "try again" state.
     case gatheringData
-    /// The device records no stillness signal at all, so the motion gate can never pass (#804).
+    /// The device records no stillness signal, so the motion gate can never pass (#804).
     case deviceNoMotion
-    /// The device banks its beats onto record timestamps, so per-beat spacing is unrecoverable (#1108).
+    /// The device banks beats onto record timestamps, so per-beat spacing is unrecoverable (#1108).
     case deviceBanksBeats
 }

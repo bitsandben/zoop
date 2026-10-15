@@ -2,13 +2,10 @@ import Foundation
 
 // MARK: - Metric copy (zoop.metric.* catalogue entries)
 //
-// These keys live in the app's catalogue (Strand/Resources/Localizable.xcstrings), not in the
-// package's, so every metric string is translated in the one place the screens' copy already is.
-// `bundle: .main` resolves them against the running app; package tests and previews fall back to
-// the English default value.
+// These keys live in the app's catalogue (Strand/Resources/Localizable.xcstrings), not the package's.
+// `bundle: .main` resolves them against the running app; tests and previews fall back to the English default.
 
 enum MetricStrings {
-    // Verdicts
     static let verdictTypical = LocalizedStringResource("zoop.metric.verdict.typical", defaultValue: "Typical", bundle: .main)
     static let verdictAbove = LocalizedStringResource("zoop.metric.verdict.above", defaultValue: "Above your range", bundle: .main)
     static let verdictAboveTypical = LocalizedStringResource("zoop.metric.verdict.aboveTypical", defaultValue: "Above the typical range", bundle: .main)
@@ -22,7 +19,6 @@ enum MetricStrings {
     static let loadDemanding = LocalizedStringResource("zoop.metric.verdict.load.demanding", defaultValue: "Demanding", bundle: .main)
     static let loadOverreaching = LocalizedStringResource("zoop.metric.verdict.load.overreaching", defaultValue: "Overreaching", bundle: .main)
 
-    // Data state
     static let noDataYet = LocalizedStringResource("zoop.metric.state.noData", defaultValue: "No data yet", bundle: .main)
     static let noDataCompact = LocalizedStringResource("zoop.metric.state.noData.compact", defaultValue: "No data", bundle: .main)
     static let calibratingCompact = LocalizedStringResource("zoop.metric.state.calibrating.compact", defaultValue: "Calibrating", bundle: .main)
@@ -34,7 +30,6 @@ enum MetricStrings {
                                 defaultValue: "No data since \(date, format: .dateTime.day().month(.abbreviated))", bundle: .main)
     }
 
-    // Confidence
     static let calibrated = LocalizedStringResource("zoop.metric.confidence.solid", defaultValue: "Calibrated", bundle: .main)
     static let calibrating = LocalizedStringResource("zoop.metric.confidence.calibrating", defaultValue: "Calibrating", bundle: .main)
     static let provisional = LocalizedStringResource("zoop.metric.confidence.building", defaultValue: "Provisional", bundle: .main)
@@ -43,7 +38,6 @@ enum MetricStrings {
                                 defaultValue: "As of \(date, format: .dateTime.day().month(.abbreviated))", bundle: .main)
     }
 
-    // Range and delta
     static func populationRange(nightsLeft: Int) -> LocalizedStringResource {
         LocalizedStringResource("zoop.metric.range.population",
                                 defaultValue: "Population range, personal range in \(nightsLeft) nights", bundle: .main)
@@ -64,7 +58,7 @@ enum MetricStrings {
     static let change = LocalizedStringResource("zoop.metric.a11y.change", defaultValue: "Change", bundle: .main)
     static let range = LocalizedStringResource("zoop.metric.a11y.range", defaultValue: "Range", bundle: .main)
 
-    // Units: short symbol where it is translated, spoken form for VoiceOver
+    // Units: short symbol where translated, spoken form for VoiceOver
     static func millisecondsSpoken(_ v: String) -> LocalizedStringResource {
         LocalizedStringResource("zoop.metric.unit.ms.spoken", defaultValue: "\(v) milliseconds", bundle: .main)
     }
@@ -104,7 +98,6 @@ enum MetricStrings {
                                 defaultValue: "\(v) millilitres per kilogram per minute", bundle: .main)
     }
 
-    // Explainer sheet
     static let whatItIs = LocalizedStringResource("zoop.metric.explainer.whatItIs", defaultValue: "What it is", bundle: .main)
     static let method = LocalizedStringResource("zoop.metric.explainer.method", defaultValue: "How we compute it", bundle: .main)
     static let dataUsed = LocalizedStringResource("zoop.metric.explainer.dataUsed", defaultValue: "Data used", bundle: .main)
@@ -127,7 +120,7 @@ enum MetricStrings {
         LocalizedStringResource("zoop.metric.data.source", defaultValue: "Source: \(s)", bundle: .main)
     }
 
-    /// Resolves a resource in the locale the view is rendering, not the process default.
+    /// Resolves a resource in the locale the view renders, not the process default.
     static func resolve(_ resource: LocalizedStringResource, locale: Locale) -> String {
         var r = resource
         r.locale = locale

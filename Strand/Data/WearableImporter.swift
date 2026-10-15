@@ -3,18 +3,15 @@ import StrandAnalytics
 import WhoopStore
 import StrandImport
 
-/// Maps a parsed Oura / Fitbit / Garmin own-data export into the on-device WhoopStore tables the UI
-/// reads — `dailyMetric`, `sleepSession`, and the generic `metricSeries` — under a per-brand Data
-/// Source id ("oura-import" / "fitbit-import" / "garmin-import"), so importing lights up the history
-/// immediately as its own source distinct from WHOOP.
+/// Maps a parsed Oura / Fitbit / Garmin export into the WhoopStore tables the UI reads (`dailyMetric`,
+/// `sleepSession`, `metricSeries`) under a per-brand Data Source id ("oura-import" etc.).
 ///
-/// HONEST DATA: only fields the export carried are written. The brand's OWN scores (Oura readiness,
-/// any sleep score) are stored under REFERENCE metric keys only — never as Zoop's Charge/Effort/Rest.
-/// Zoop recomputes its own scores downstream from the imported raw RHR / HRV / sleep, exactly as it
-/// does for every other imported source. Fully offline — the parse never touches the network.
+/// Only fields the export carried are written. The brand's OWN scores (readiness, sleep score) go under
+/// REFERENCE metric keys only, never as Zoop's Charge/Effort/Rest; Zoop recomputes its own scores from
+/// the imported RHR / HRV / sleep. Fully offline.
 enum WearableImporter {
 
-    /// The Oura/Fitbit/Garmin export mapping revision, stamped into the Import test-mode parser line.
+    /// The export mapping revision, stamped into the Import test-mode parser line.
     static let importerVersion = 1
 
     @discardableResult
@@ -23,8 +20,8 @@ enum WearableImporter {
         let result = try ImportCoordinator().importWearableExport(from: url)
         let deviceId = result.brand.sourceId
 
-        // Day rollups → DailyMetric. HRV/recovery/respiration that the export lacks stay nil; Zoop
-        // derives what it can locally. A brand's reference scores never populate `recovery`/`strain`.
+        // Day rollups to DailyMetric. Fields the export lacks stay nil; a brand's reference scores never
+        // populate `recovery`/`strain`.
         var metrics: [DailyMetric] = []
         for d in result.days {
             metrics.append(DailyMetric(
@@ -47,9 +44,8 @@ enum WearableImporter {
         // Capture the rows the store actually wrote (summed SQLite changes) for the Import test mode.
         let metricsWritten = try await store.upsertDailyMetrics(metrics, deviceId: deviceId)
 
-        // Sleep sessions → CachedSleepSession. Oura/Garmin give duration breakdowns without a per-segment
-        // hypnogram, so those sessions carry no stage JSON (we never synthesize a fake one); Fitbit's
-        // optional `levels.data` hypnogram is mapped when present.
+        // Sleep sessions. Oura/Garmin have no per-segment hypnogram, so those carry no stage JSON (never a
+        // synthesized one); Fitbit's `levels.data` hypnogram is mapped when present.
         var sessions: [CachedSleepSession] = []
         for s in result.sleeps {
             let startTs = Int(s.start.timeIntervalSince1970)
@@ -71,9 +67,8 @@ enum WearableImporter {
         }
         let sessionsWritten = try await store.upsertSleepSessions(sessions, deviceId: deviceId)
 
-        // Generic metric series — every scalar keyed for the Metric Explorer + correlations. The brand's
-        // own scores go under clearly-labelled reference keys (e.g. "ref_readiness_score"), so they're
-        // browseable but never mistaken for a Zoop score.
+        // Generic metric series for the Metric Explorer and correlations. The brand's own scores go under
+        // reference keys (e.g. "ref_readiness_score") so they are never mistaken for a Zoop score.
         var points: [MetricPoint] = []
         func add(_ day: String, _ key: String, _ v: Double?) {
             if let v { points.append(MetricPoint(day: day, key: key, value: v)) }
@@ -93,22 +88,22 @@ enum WearableImporter {
             add(d.day, "sleep_deep_min", d.deepMin)
             add(d.day, "sleep_light_min", d.lightMin)
             add(d.day, "sleep_rem_min", d.remMin)
-            // Reference-only: the brand's own scores, never a Zoop Charge/Effort/Rest input.
+            // Reference-only: never a Zoop Charge/Effort/Rest input.
             add(d.day, "ref_readiness_score", d.readinessScore.map(Double.init))
             add(d.day, "ref_sleep_score", d.sleepScore.map(Double.init))
         }
         try await store.upsertMetricSeries(points, deviceId: deviceId)
 
-        // Import & Data Ingest test mode: emit the per-stage / reject / day-delta trace iff the mode is on.
-        // The numbers are the import's own parsed + persisted counts, so emission changes nothing saved.
+        // Import test mode: emit the per-stage / reject / day-delta trace iff on. The numbers are the import's
+        // own counts, so emission changes nothing saved.
         if let trace {
             let daysMapped = Set(result.days.map { $0.day }).count
             let lines: [String] = [
                 ImportTrace.parserVersionLine(sourceKind: result.brand.dataSourceKind, importerVersion: importerVersion),
                 ImportTrace.stageLine(category: "days", rowsIn: result.days.count, rowsOut: metricsWritten),
                 ImportTrace.stageLine(category: "sleeps", rowsIn: sessions.count, rowsOut: sessionsWritten),
-                // The Oura/Fitbit/Garmin parser drops unusable rows upstream in StrandImport; the app map
-                // keeps every day/sleep, so the reject signal at this seam is the day-delta below.
+                // The parser drops unusable rows upstream in StrandImport and the app map keeps every day/sleep, so the
+                // reject signal here is the day-delta below.
                 ImportTrace.rejectLine(droppedRows: 0, skippedSpans: result.summary.skippedSpans),
                 ImportTrace.dayDeltaLine(category: "days", daysMapped: daysMapped, daysPersisted: metricsWritten),
             ]
@@ -118,7 +113,7 @@ enum WearableImporter {
         return result
     }
 
-    /// Asleep fraction of in-bed time, from the daily stage minutes (when the export gave no efficiency).
+    /// Asleep fraction of in-bed time from the daily stage minutes (when the export gave no efficiency).
     private static func sleepEfficiency(total: Double?, awake: Double?) -> Double? {
         guard let total, total > 0 else { return nil }
         let awake = awake ?? 0
@@ -126,7 +121,7 @@ enum WearableImporter {
         return inBed > 0 ? min(100, total / inBed * 100) : nil
     }
 
-    /// Asleep fraction from the hypnogram segments (non-wake ÷ in-bed span).
+    /// Asleep fraction from the hypnogram segments (non-wake / in-bed span).
     private static func efficiency(segs: [[String: Any]], start: Int, end: Int) -> Double? {
         guard end > start, !segs.isEmpty else { return nil }
         var asleep = 0

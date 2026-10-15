@@ -1,11 +1,8 @@
 import SwiftUI
 
-// MARK: - StatePill (§9.4 chrome) & ConnectionDot (sidebar status footer)
-//
-// Small status chips used in chrome: a rounded pill with an optional leading dot
-// and a tinted label. Tones map to the status palette (positive/warning/critical)
-// plus neutral and accent. The ConnectionDot is a tiny pulsing presence indicator
-// used in the strap-status footer / menu-bar.
+// MARK: - StatePill & ConnectionDot
+// Small status chips for chrome: a rounded pill with optional leading dot and tinted label (positive/warning/critical/neutral/accent).
+// ConnectionDot is a tiny pulsing presence indicator for the strap-status footer / menu bar.
 
 public enum StrandTone: Sendable {
     case neutral
@@ -91,9 +88,7 @@ public struct ConnectionDot: View {
 
     @State private var animate = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// Low Power Mode / "Reduce motion in Zoop". This halo is a `repeatForever` loop that never
-    /// settles and is on screen for long stretches — a connected strap in Settings, a backfill on
-    /// every scaffolded screen — so it belongs behind the same gate as the liquid surfaces.
+    /// Shares the quiet-motion gate (Low Power Mode / "Reduce motion in Zoop"): the halo is a never-settling `repeatForever` loop.
     @ObservedObject private var motion = ZoopMotionState.shared
     private var poseStill: Bool { motion.poseStill(reduceMotion) }
     @Environment(\.colorScheme) private var scheme
@@ -106,19 +101,14 @@ public struct ConnectionDot: View {
 
     public var body: some View {
         ZStack {
-            // Dark-mode only (#review): AdditiveBloom used to hide this expanding ring on light
-            // (content.opacity(0)); now that we drop the offscreen bloom, gate it explicitly so light
-            // mode stays ring-free (the resting dot + its shadow carry the live state there).
+            // Dark only: with the offscreen bloom dropped, light mode stays ring-free (the resting dot and its shadow carry the live state).
             if pulsing && scheme == .dark {
                 Circle()
                     .fill(tone.color)
                     .frame(width: size, height: size)
                     .scaleEffect(animate ? 2.4 : 1.0)
                     .opacity(animate ? 0.0 : 0.5)
-                    // No .additiveBloom(): the .plusLighter blend forced an offscreen pass every
-                    // frame of the repeatForever pulse, a continuous cost while a strap is backfilling
-                    // (exactly when this live dot is on screen). The expanding/fading ring reads the
-                    // same without it; the resting dot's shadow still carries the "live" glow.
+                    // No .additiveBloom(): .plusLighter forced an offscreen pass every frame of the repeatForever pulse, a continuous cost while a strap backfills. The ring reads the same without it.
             }
             Circle()
                 .fill(tone.color)
@@ -126,9 +116,7 @@ public struct ConnectionDot: View {
                 .shadow(color: tone.color.opacity(0.8), radius: pulsing ? 4 : 2)
         }
         .frame(width: size, height: size)
-        // Honour the quiet-motion gate (system Reduce Motion, Low Power Mode, or the in-app
-        // toggle): don't kick off the looping pulse (it settles at the resting dot) and never
-        // attach the repeatForever breathe animation.
+        // Quiet-motion gate: don't start the looping pulse or attach the repeatForever animation.
         .onAppear { if pulsing && !poseStill { animate = true } }
         .animation(pulsing && !poseStill ? StrandMotion.breathe : nil, value: animate)
         .accessibilityHidden(true)

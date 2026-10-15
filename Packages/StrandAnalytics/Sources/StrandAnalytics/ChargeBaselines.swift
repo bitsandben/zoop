@@ -1,33 +1,21 @@
 import Foundation
 import WhoopStore
 
-// ChargeBaselines.swift — which nights the Charge baselines are folded from (#2525).
-//
-// Charge scores a night against personal baselines for HRV, resting HR, respiration and skin
-// temperature. Before #2525 those baselines were folded from the WHOLE imported vendor history plus only
-// the nights of the current scan window (21 by default). The wearer's own older nights dropped out on
-// every pass while the import never did, so an import kept roughly a third of the weight for good, pinned
-// to the wearer's state at the end of their subscription however old that was.
-//
-// The rule here is a correction of which nights count, not a new scoring method:
-//   - Only nights inside a fixed calendar window (`windowDays`, counted back from the anchor day) count.
-//     The window is the scan window's own 21 days, so a wearer with no import folds exactly the nights the
-//     21-day pass always folded; what changes is that an imported night ages out like an own one, and
-//     that a full-history repair pass folds the same 21 days instead of the whole history.
-//   - The wearer's own (Zoop-computed) nights are the baseline. Imported vendor nights only SEED it: they
-//     take part while the own nights alone would not yet make a trusted baseline (`handoffNights`, the
-//     model's own `minNightsTrust`), and drop out entirely once they would. The two sources are different
-//     algorithms, so they are never mixed past the cold start.
-//   - The rule keeps no state. Every call decides from the nights it is given.
-//
-// Pure and database-free; the engine feeds it this pass's fresh values, the dashboard the stored rows.
-// Byte-identical twin of the Kotlin `ChargeBaselines`.
+// Which nights the Charge baselines (HRV, resting HR, respiration, skin temp) are folded from (#2525).
+// Previously they folded the whole imported vendor history plus only the current scan window's own
+// nights, so the import never aged out and kept about a third of the weight for good. Rules:
+// - Only nights inside a fixed calendar window (`windowDays`, back from the anchor day) count, so an
+//   imported night ages out like an own one.
+// - The wearer's own (Zoop-computed) nights are the baseline. Imported nights only seed it: they take
+//   part while own nights alone would not yet make a trusted baseline (`handoffNights`, the model's
+//   `minNightsTrust`) and drop out once they would. The two sources use different algorithms and are
+//   never mixed past the cold start.
+// - No state: every call decides from the nights it is given.
+// Pure and database-free; the engine feeds fresh values, the dashboard the stored rows.
 public enum ChargeBaselines {
 
-    /// Calendar days of nightly history a Charge baseline reads, counted back from the anchor day and
-    /// including it. Deliberately the default scan window (`analyzeRecent(maxDays: 21)`), so the own nights
-    /// a baseline reads are the ones the pass has just scored, and nothing changes for a wearer with no
-    /// import.
+    /// Calendar days of nightly history a Charge baseline reads, back from and including the anchor day.
+    /// The default scan window (`analyzeRecent(maxDays: 21)`), so own nights read are the ones just scored.
     public static let windowDays: Int = 21
 
     /// One metric's nightly history for a Charge baseline, oldest first, ready for
@@ -35,14 +23,13 @@ public enum ChargeBaselines {
     public struct History: Equatable, Sendable {
         /// `yyyy-MM-dd` keys, ascending, parallel to `values`.
         public let dayKeys: [String]
-        /// The nightly values; nil is a night that exists but carried no value (skip-and-hold).
+        /// Nightly values; nil is a night that exists without a value (skip-and-hold).
         public let values: [Double?]
-        /// True while imported vendor nights still take part (the own nights are not yet trusted on
-        /// their own and the window holds at least one imported night).
+        /// True while imported nights still take part (own nights not yet trusted and the window has an imported night).
         public let seededByImport: Bool
         /// Valid own nights on or after the epoch inside the window: the count the handoff is decided on.
         public let ownValidNights: Int
-        /// Imported nights this history carries (0 once the own nights have taken over).
+        /// Imported nights carried (0 once own nights take over).
         public let importedNights: Int
 
         public init(dayKeys: [String], values: [Double?], seededByImport: Bool,
@@ -55,28 +42,22 @@ public enum ChargeBaselines {
         }
     }
 
-    /// Build one metric's Charge history from the imported and own nights (#2525).
-    ///
+    /// Build one metric's Charge history from imported and own nights (#2525).
     /// - Parameters:
-    ///   - imported: imported vendor nights as `(day, value)`; a nil value is a night the import covers
-    ///     without that metric. A repeated day keeps its last value.
-    ///   - own: Zoop-computed nights, same shape. A repeated day keeps its last value.
+    ///   - imported: imported vendor nights as `(day, value)`; nil value = night covered without that
+    ///     metric. A repeated day keeps its last value.
+    ///   - own: Zoop-computed nights, same shape.
     ///   - anchorDay: the `yyyy-MM-dd` day the window ends on (the scoring pass's local today).
-    ///   - cfg: the metric's baseline configuration, used to count the valid own nights exactly as the
-    ///     fold will.
-    ///   - baselineEpoch: the epoch (seconds) the caller's fold will drop earlier nights by: the manual
-    ///     recalibration epoch, or a later device-era cut. Own nights before it do not count toward the
-    ///     handoff, because the fold will not use them.
+    ///   - cfg: the metric's baseline config, to count valid own nights as the fold will.
+    ///   - baselineEpoch: epoch (seconds) the fold drops earlier nights by (manual recalibration or a later
+    ///     device-era cut); own nights before it do not count toward the handoff.
     ///   - windowDays: see `windowDays`.
-    ///   - handoffNights: valid own nights at which the imported nights stop taking part.
-    ///
-    /// Days are filtered with pure civil-day arithmetic (no time zone), keeping only days on or before the
-    /// anchor and fewer than `windowDays` days before it. An unparseable key is dropped; an unparseable
-    /// anchor yields an empty history, so a caller can only ever under-state a baseline, never read one
-    /// from nights it cannot place. While seeding, an imported value wins a day both sources cover; an own
-    /// night fills a day the import does not cover or covers without a value (the precedence of the
-    /// dashboard's `mergeDaily` and of the engine merge before #2525, so a blank imported row can never
-    /// shadow a night the strap measured). Kotlin twin: `ChargeBaselines.history`.
+    ///   - handoffNights: valid own nights at which imported nights stop taking part.
+    /// Days are filtered with civil-day arithmetic (no time zone), keeping those on or before the anchor
+    /// and fewer than `windowDays` before it. An unparseable key is dropped; an unparseable anchor yields an
+    /// empty history, so a baseline can only be under-stated. While seeding, an imported value wins a day
+    /// both cover; an own night fills a day the import leaves open or covers without a value (so a blank
+    /// imported row cannot shadow a measured night).
     public static func history(imported: [(day: String, value: Double?)],
                                own: [(day: String, value: Double?)],
                                anchorDay: String,
@@ -101,16 +82,15 @@ public enum ChargeBaselines {
         var importedByDay: [String: Double?] = [:]
         for night in imported where inWindow(night.day) { importedByDay[night.day] = night.value }
 
-        // Handed off, or nothing to seed with: the own nights are the whole history.
+        // Handed off, or nothing to seed with: own nights are the whole history.
         if ownValid >= handoffNights || importedByDay.isEmpty {
             return History(dayKeys: ownKeys, values: ownValues, seededByImport: false,
                            ownValidNights: ownValid, importedNights: 0)
         }
 
-        // Seeding: every imported night in the window, then the own nights on the days it leaves open. The
-        // map's values are Optional, so `merged[day]` is `.some(nil)` for an imported night without a value:
-        // that slot is open too, and the own night fills it. An own night without a value still registers
-        // the day (a missing night), exactly as it would with no import.
+        // Seeding: every imported night in the window, then own nights on open days. `merged[day]` is
+        // `.some(nil)` for an imported night without a value, which is open too. An own night without a value
+        // still registers the day (a missing night).
         var merged = importedByDay
         for (day, value) in ownByDay {
             if let existing = merged[day], existing != nil { continue }   // an imported value wins
@@ -121,9 +101,9 @@ public enum ChargeBaselines {
                        ownValidNights: ownValid, importedNights: importedByDay.count)
     }
 
-    /// The Charge baselines the dashboard reads, resolved from the stored daily rows with the same rule the
-    /// engine's pass-2 fold applies (#2525), so the "What shaped it" rows, the calibration count and the
-    /// confidence tier describe the baseline the Charge headline was scored against.
+    /// The Charge baselines the dashboard reads, resolved from stored daily rows with the same rule as the
+    /// engine's pass-2 fold (#2525), so the "What shaped it" rows, calibration count and confidence tier
+    /// describe the baseline the headline was scored against.
     public struct Resolved: Equatable, Sendable {
         public let hrvHistory: History
         public let restingHRHistory: History
@@ -143,11 +123,10 @@ public enum ChargeBaselines {
         }
     }
 
-    /// Resolve HRV, resting-HR and respiration baselines from stored rows: `imported` are the imported
-    /// vendor rows, `own` the Zoop-computed ("-zoop") rows. HRV folds on `hrvEpoch`, resting HR and
-    /// respiration on `recoveryEpoch`, exactly as the engine does. The engine additionally cuts respiration
-    /// at a device-era boundary (#459), which needs a per-night source the stored rows do not carry; the
-    /// two agree for every single-brand history. Kotlin twin: `ChargeBaselines.resolve`.
+    /// Resolve HRV, resting-HR and respiration baselines from stored rows (`imported` vendor rows, `own`
+    /// Zoop-computed "-zoop" rows). HRV folds on `hrvEpoch`, the others on `recoveryEpoch`, as the engine
+    /// does. The engine also cuts respiration at a device-era boundary (#459), which needs a per-night
+    /// source the stored rows lack; the two agree for single-brand histories.
     public static func resolve(imported: [DailyMetric], own: [DailyMetric], anchorDay: String,
                                hrvEpoch: Double, recoveryEpoch: Double) -> Resolved {
         let hrvCfg = Baselines.hrvCfg, rhrCfg = Baselines.restingHRCfg, respCfg = Baselines.respCfg
@@ -170,10 +149,9 @@ public enum ChargeBaselines {
                                         baselineEpoch: recoveryEpoch))
     }
 
-    /// The Recovery test-mode line naming what each Charge baseline was folded from this pass. Per metric,
-    /// `own/N` means the own nights alone, N of them valid; `seed/N+M` means N valid own nights still seeded
-    /// by M imported nights. It reports only the composition the engine decided, not why the wearer's values
-    /// moved. Kotlin twin: `ChargeBaselines.logLine`, byte-identical.
+    /// The Recovery test-mode line naming what each Charge baseline was folded from. Per metric `own/N` is
+    /// own nights alone (N valid); `seed/N+M` is N valid own nights still seeded by M imported. It reports
+    /// the composition the engine decided, not why values moved.
     public static func logLine(anchorDay: String, hrv: History, restingHR: History, resp: History,
                                skin: History, windowDays: Int = ChargeBaselines.windowDays) -> String {
         let part: (History) -> String = { h in

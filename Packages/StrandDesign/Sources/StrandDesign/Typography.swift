@@ -5,13 +5,9 @@ import UIKit
 import AppKit
 #endif
 
-// MARK: - Strand Typography (§9.2)
-//
-// SF Pro for text and condensed bold SF Pro for numerals, following the WHOOP reference's square
-// type and tall, narrow figures. Tabular digits keep live metrics stable, while named text styles
-// retain Dynamic Type scaling. SF Mono remains reserved for logs.
-//
-// All numeric styles use `.monospacedDigit()` so live values don't reflow.
+// MARK: - Strand Typography
+// SF Pro for text and condensed bold SF Pro for numerals; all numeric styles use `.monospacedDigit()` so live values don't reflow.
+// Named text styles keep Dynamic Type scaling. SF Mono is reserved for logs.
 
 public enum StrandFont {
 
@@ -33,29 +29,25 @@ public enum StrandFont {
             : .system(size: size, weight: weight, design: .default).width(.condensed)
     }
 
-    // MARK: Scale (§9.2)
+    // MARK: Scale
 
-    /// Display 64–80 / Bold — the gauge score number. Helvetica Neue 700 with tight
-    /// tracking (≈ -0.04em), tabular digits so a changing value never reflows.
+    /// Display 64–80 / Bold, the gauge score number: Helvetica Neue 700, tight tracking, tabular digits.
     public static func display(_ size: CGFloat = 72) -> Font {
         numeralSystem(size, weight: .bold).monospacedDigit()
     }
 
-    /// The tight tracking for big display numbers (≈ -0.04em). Apply alongside
-    /// `display(_:)` at the use site, e.g. `.tracking(StrandFont.displayTracking(72))`.
+    /// Tight tracking for big display numbers (≈ -0.04em); apply with `display(_:)`, e.g. `.tracking(StrandFont.displayTracking(72))`.
     public static func displayTracking(_ size: CGFloat = 72) -> CGFloat {
         -size * 0.04
     }
 
-    /// A Helvetica-Neue numeric style at an arbitrary size/weight — the house
-    /// numeral. Tabular so live values align. Use anywhere a score/number is shown.
+    /// Helvetica-Neue numeric style at any size/weight, the house numeral; tabular so live values align.
     public static func rounded(_ size: CGFloat, weight: Font.Weight = .bold) -> Font {
         roundedSystem(size, weight: weight).monospacedDigit()
     }
 
-    /// A heading at a fixed size/weight in the theme's display face: the plain system face under
-    /// Classic (identical to `.system(size:weight:)`), SF Rounded under Pastel & Nature. Use for
-    /// titles and headlines that would otherwise hard-code `.system(size:weight:)`; body copy stays put.
+    /// A heading at a fixed size/weight in the theme's display face (plain system under Classic, SF Rounded under Pastel & Nature).
+    /// Use instead of hard-coded `.system(size:weight:)`; body copy stays put.
     public static func ui(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
         roundedSystem(size, weight: weight)
     }
@@ -81,17 +73,11 @@ public enum StrandFont {
     /// Footnote 11. Scales with Dynamic Type.
     public static let footnote = Font.system(.footnote, design: .default, weight: .regular)
 
-    /// Overline 11 / Bold, +1.4 tracking (apply `.tracking(1.4)` at use site;
-    /// `overlineText(_:)` does it for you). Sparing ALL-CAPS labels. Scales with Dynamic Type.
-    ///
-    /// Also the face for compact status copy in constrained chrome (the Today header's sync capsule),
-    /// used there WITHOUT the tracking — that is sentence case, not an overline, and the letter-spacing
-    /// is what makes an overline read as one.
+    /// Overline 11 / Bold, +1.4 tracking (`overlineText(_:)` applies it); sparing ALL-CAPS labels. Scales with Dynamic Type.
+    /// Also the face for compact status copy in constrained chrome (the Today sync capsule), used there WITHOUT tracking since that is sentence case.
     public static let overline = Font.system(.footnote, design: .default, weight: .semibold)
 
-    /// `overline` at a custom point size — same Helvetica face, weight and Dynamic-Type scaling
-    /// (relativeTo `.caption2`), just smaller. Passing 11 returns exactly `.overline`. Lets a caller
-    /// shrink an ALL-CAPS label to fit a small container without losing accessibility text-scaling.
+    /// `overline` at a custom point size, same face, weight and Dynamic-Type scaling (11 returns exactly `.overline`); shrinks an ALL-CAPS label to fit without losing text scaling.
     public static func overlineScaled(_ size: CGFloat) -> Font {
         #if canImport(UIKit)
         let base = UIFont.systemFont(ofSize: size, weight: .bold)
@@ -108,14 +94,12 @@ public enum StrandFont {
 
     // MARK: Numeric variants (tabular digits)
 
-    /// A numeric style at an arbitrary size/weight, for live values — Helvetica
-    /// Neue, tabular digits. This is the tile/value numeral.
+    /// Numeric style at any size/weight for live values (Helvetica Neue, tabular): the tile/value numeral.
     public static func number(_ size: CGFloat, weight: Font.Weight = .semibold) -> Font {
         numeralSystem(size, weight: weight).monospacedDigit()
     }
 
-    /// Helvetica-Neue body number — for inline live values that should align. Scales with Dynamic
-    /// Type alongside its sibling `body`/`caption` labels so a value and its label stay matched.
+    /// Helvetica-Neue body number for inline live values; scales with Dynamic Type alongside its labels.
     public static var bodyNumber: Font { Font.system(.body, design: displayDesign, weight: .medium).monospacedDigit() }
 
     /// Helvetica-Neue caption number — for small live values (sparklines, chips). Scales with Dynamic Type.
@@ -133,8 +117,7 @@ public enum StrandFont {
 // MARK: - Text helpers
 
 public extension Text {
-    /// Style as a small label: semibold, secondary text, in sentence case as the concept writes
-    /// its labels, so no case transform is applied.
+    /// Small label: semibold, secondary text, sentence case (no case transform).
     func strandOverline() -> some View {
         self.font(StrandFont.overline)
             .tracking(StrandFont.overlineTracking)

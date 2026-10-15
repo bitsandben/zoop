@@ -2,17 +2,11 @@ import Foundation
 import GRDB
 
 // MARK: - v22 store: Live Sessions
-//
-// LiveSessionStore.swift — GRDB CRUD over the `liveSession` table (migration v22), the durable record
-// behind the Live Sessions look-back summary + streak. Mirrors the established idiom exactly: a plain
-// Codable row struct, raw `Row` fetch + manual decode, idempotent upsert keyed by the natural key
-// (deviceId, startTs), all GRDB work via the actor's `syncWrite` / `syncRead` helpers.
-//
-// Design contract: docs/superpowers/specs/2026-07-04-live-sessions-design.md.
+// GRDB CRUD over `liveSession`, the durable record behind the Live Sessions look-back summary and streak.
+// Idempotent upsert keyed by (deviceId, startTs).
 
-/// One Live Session (silent guardian) record. Natural key (deviceId, startTs). `endTs` is nil while the
-/// session is still in progress. All second-totals are non-negative; the two cue counts are how many push
-/// nudges / ease-offs the coach sent that session.
+/// One Live Session record. Natural key (deviceId, startTs). `endTs` is nil while in progress; the two cue
+/// counts are the push nudges / ease-offs the coach sent.
 public struct LiveSessionRow: Equatable, Codable {
     public let startTs: Int              // unix seconds — session start (the key)
     public let endTs: Int?               // unix seconds — nil while in progress
@@ -38,14 +32,10 @@ public struct LiveSessionRow: Equatable, Codable {
 
 extension WhoopStore {
 
-    /// Upsert one Live Session. Natural key (deviceId, startTs) — called once at start (endTs nil) and
-    /// again at end with the final totals. Returns rows changed.
+    /// Upserts one Live Session (called at start with endTs nil, and again at end with final totals). Returns rows changed.
     ///
-    /// The `WHERE excluded.endTs IS NOT NULL OR liveSession.endTs IS NULL` guard makes a start-write
-    /// (endTs nil) refuse to overwrite an already-ended row: start/end persist as independent, unordered
-    /// tasks, so a late start-write could otherwise clobber the final row back to "in progress" and lose
-    /// the totals. Ordering-independent; the normal start→end order still updates (the row's endTs was
-    /// nil). Byte-parity with the Android Room upsert. (@bhelm)
+    /// The `WHERE excluded.endTs IS NOT NULL OR liveSession.endTs IS NULL` guard stops a late start-write from
+    /// overwriting an already-ended row: start and end persist as independent, unordered tasks.
     @discardableResult
     public func upsertLiveSession(_ r: LiveSessionRow, deviceId: String) async throws -> Int {
         try syncWrite { db in
@@ -72,7 +62,7 @@ extension WhoopStore {
         }
     }
 
-    /// The most-recent sessions first, for the look-back summary + streak. Newest by startTs.
+    /// The most recent sessions, newest by startTs first.
     public func recentLiveSessions(deviceId: String, limit: Int) async throws -> [LiveSessionRow] {
         try syncRead { db in
             try Row.fetchAll(db, sql: """

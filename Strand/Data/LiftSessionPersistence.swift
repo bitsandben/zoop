@@ -3,36 +3,24 @@ import WhoopStore
 
 // Crash-safety for an in-flight gym session.
 //
-// A session is written to UserDefaults on every tap and rehydrated on launch, so a crash, a phone
-// call, a flat battery or simply swiping the app away mid-workout costs nothing. This mirrors
-// `ActiveWorkoutPersistence` exactly — a small `Codable` snapshot, unix-second anchors, and an
-// encode/decode pair that is pure (no UserDefaults dependency of its own) so the round-trip is
-// testable without touching the defaults database.
-//
-// Unix seconds rather than `Date` for the same reason the store uses them: an absolute instant
-// survives suspension, timezone changes and a relaunch, and it is the only anchor that keeps a rest
-// countdown honest.
+// A session is written to UserDefaults on every tap and rehydrated on launch. Mirrors
+// `ActiveWorkoutPersistence`: a small `Codable` snapshot with unix-second anchors (absolute instants
+// survive suspension, timezone changes and relaunch) and a pure encode/decode pair.
 
 enum LiftSessionPersistence {
 
-    /// The durable shape of an in-flight session — the minimum needed to rebuild the engine and still
-    /// finish and save the session after a relaunch.
+    /// The durable shape of an in-flight session: the minimum needed to rebuild the engine and finish.
     struct Snapshot: Codable, Equatable {
         var startSec: Int
         var programId: String?
         var programName: String?
-        /// The plan, flattened at start. Stored rather than re-read from the program so that editing
-        /// or deleting the program mid-session cannot change what is being run.
+        /// The plan, flattened at start, so editing the program mid-session cannot change what is run.
         var plan: [PlanItem]
         var stage: StageBox
         var sets: [RecordedSet]
         var stageStartedAt: Int
-        /// Numbers typed into sets that have NOT happened yet, and slots marked a warm-up in
-        /// advance. Both are intent the user has already expressed, so a crash must not cost them —
-        /// that is the whole point of this snapshot.
-        ///
-        /// Optional because a snapshot written before these existed does not carry them: it decodes
-        /// as absent and the session resumes with nothing pending, which is exactly right.
+        /// Numbers typed into not-yet-performed sets, and slots marked warm-up in advance. Optional: an
+        /// older snapshot decodes as absent and resumes with nothing pending.
         var pendingValues: [PendingValue]?
         var pendingWarmups: [SlotBox]?
 
@@ -60,18 +48,14 @@ enum LiftSessionPersistence {
             var targetRpe: Double?
             var targetWeightKg: Double?
             var note: String?
-            /// The program line this was flattened from. Absent from a snapshot written before the
-            /// set count could be changed mid-session, which decodes to nil and simply skips the
-            /// write-back — the session itself is unaffected.
+            /// The program line this came from. Absent in older snapshots (decodes nil; skips write-back).
             var programItemId: String?
-            /// True for a line added during the session. Absent from a snapshot written before lines
-            /// could be added, which decodes to nil: a line from the program.
+            /// True for a line added during the session. Absent in older snapshots (a program line).
             var addedInSession: Bool?
         }
 
-        /// The stage as a flat, forward-compatible record rather than an encoded enum: a persisted
-        /// enum with associated values is a migration hazard the moment a case is added, and this
-        /// shape decodes to "warm-up" rather than to garbage if it is ever read by an older build.
+        /// The stage as a flat record rather than an encoded enum, so adding a case is not a migration
+        /// hazard and an older build decodes to "warm-up" rather than garbage.
         struct StageBox: Codable, Equatable {
             var kind: String        // warmup | working | resting | cooldown | finished
             var item: Int?
@@ -92,7 +76,7 @@ enum LiftSessionPersistence {
         }
     }
 
-    /// The single UserDefaults key (JSON-encoded `Snapshot`), namespaced like `noop.activeWorkout`.
+    /// The single UserDefaults key (JSON-encoded `Snapshot`).
     static let defaultsKey = "zoop.activeLiftSession"
 
     // MARK: - Codec
@@ -101,9 +85,8 @@ enum LiftSessionPersistence {
         try? JSONEncoder().encode(snapshot)
     }
 
-    /// Decode a snapshot, bound-checking the untrusted persisted values. Returns nil for
-    /// nil/garbage/empty input or an implausible start time, so a corrupt write is treated as "no
-    /// session in flight" rather than reviving a broken screen the user cannot get out of.
+    /// Decodes a snapshot, bound-checking untrusted values. Nil for garbage/empty input or an
+    /// implausible start time, so a corrupt write means "no session in flight".
     static func decode(_ data: Data?) -> Snapshot? {
         guard let data, !data.isEmpty,
               let raw = try? JSONDecoder().decode(Snapshot.self, from: data),
@@ -166,8 +149,7 @@ enum LiftSessionPersistence {
                                      restSec: $0.restSec)
             },
             stageStartedAt: engine.stageStartedAt,
-            // Sorted so the encoded snapshot is stable: a dictionary and a set have no order, and an
-            // unstable encoding would rewrite the defaults blob on every tick for no reason.
+            // Sorted so the encoding is stable and the defaults blob is not rewritten needlessly.
             pendingValues: pendingValues
                 .sorted { ($0.key.exerciseIndex, $0.key.setIndex) < ($1.key.exerciseIndex, $1.key.setIndex) }
                 .map { slot, values in
@@ -179,7 +161,7 @@ enum LiftSessionPersistence {
                 .map { Snapshot.SlotBox(exerciseIndex: $0.exerciseIndex, setIndex: $0.setIndex) })
     }
 
-    /// The numbers typed in advance, back as the controller holds them.
+    /// The numbers typed in advance, as the controller holds them.
     static func pendingValues(from s: Snapshot) -> [LiftSlot: LiftSessionController.PendingSetValues] {
         var out: [LiftSlot: LiftSessionController.PendingSetValues] = [:]
         for p in s.pendingValues ?? [] {
@@ -189,14 +171,13 @@ enum LiftSessionPersistence {
         return out
     }
 
-    /// The warm-up marks made in advance, back as the controller holds them.
+    /// The warm-up marks made in advance, as the controller holds them.
     static func pendingWarmups(from s: Snapshot) -> Set<LiftSlot> {
         Set((s.pendingWarmups ?? []).map { LiftSlot(exerciseIndex: $0.exerciseIndex, setIndex: $0.setIndex) })
     }
 
-    /// Rebuild an engine from a snapshot. Unknown muscle tokens are dropped rather than failing the
-    /// read, matching `LiftMuscle.decodeList`: a snapshot written by a newer build must not strand a
-    /// session in an older one.
+    /// Rebuilds an engine from a snapshot. Unknown muscle tokens are dropped rather than failing the
+    /// read (as `LiftMuscle.decodeList`), so a newer build's snapshot doesn't strand an older one.
     static func engine(from s: Snapshot) -> LiftSessionEngine {
         let plan = s.plan.map {
             LiftPlanItem(exercise: $0.exercise,
@@ -235,12 +216,8 @@ enum LiftSessionPersistence {
         }
     }
 
-    /// Anything unrecognised — a `working`/`resting` box missing its indices, or the retired
-    /// "cooldown" kind written by an earlier build — falls back to the warm-up.
-    ///
-    /// That is a real recovery, not a shrug: every COMPLETED set is carried in `sets` regardless, so
-    /// nothing logged is lost. Only the cursor's position is forgotten, and the next tap simply
-    /// resumes at the first set still outstanding.
+    /// Anything unrecognised (a box missing its indices, or the retired "cooldown" kind) falls back to
+    /// the warm-up. Completed sets are carried in `sets` regardless, so only the cursor is forgotten.
     private static func unbox(_ box: Snapshot.StageBox) -> LiftSessionEngine.Stage {
         switch box.kind {
         case "working":

@@ -3,23 +3,13 @@ import WhoopStore
 
 // The session state machine: the heart of the Lift Log.
 //
-// A GYM IS NOT A QUEUE. The first version walked the plan strictly in order, one set at a time, and
-// the first real session killed that: when a machine is occupied you move on and come back. So the
-// plan is a SHEET of slots — every set of every exercise, all visible — and any pending slot can be
-// started at any time. Order is a suggestion the session follows by default, not a rail.
-//
-// PURE (no timers, no store, no SwiftUI): it is the piece most likely to be wrong in a way that
-// costs someone a logged set, and the only part testable with no strap, no database, no simulator.
-//
-// TIME ENTERS ONLY AS A PARAMETER, so a test can drive a whole session through a known timeline.
-// Rest is an ABSOLUTE end instant, never a decrementing counter — a phone that sleeps through a rest
-// must wake up telling the truth.
-//
-// THERE IS NO COOL-DOWN STAGE. Warm-up is the time before the first set and cool-down the time after
-// the last; both fall out of the timestamps, so neither needs a stage of its own. The session ends
-// when the user says it does.
+// The plan is a SHEET of slots (every set of every exercise, all visible) and any pending slot can
+// be started at any time: a gym is not a queue. PURE (no timers, store or SwiftUI), so it is
+// testable with no strap or database. Time enters ONLY as a parameter, and rest is an ABSOLUTE end
+// instant, never a decrementing counter, so a phone that sleeps through a rest wakes up truthful.
+// There is no cool-down stage: warm-up and cool-down fall out of the timestamps.
 
-/// One set of one exercise — a position on the sheet. `setIndex` is 1-based within its exercise.
+/// One set of one exercise, a position on the sheet. `setIndex` is 1-based within its exercise.
 struct LiftSlot: Hashable {
     var exerciseIndex: Int
     var setIndex: Int
@@ -30,7 +20,7 @@ struct LiftPlanItem: Equatable {
     var exercise: String
     var primaryMuscle: LiftMuscle?
     var secondaryMuscles: [LiftMuscle]
-    /// Planned working sets. Always >= 1 — a line scheduling zero sets could not be tapped through.
+    /// Planned working sets. Always >= 1, so the line can be tapped through.
     var targetSets: Int
     /// Intended rest after each set, in seconds.
     var restSec: Int
@@ -40,18 +30,14 @@ struct LiftPlanItem: Equatable {
     /// The weight the program plans, in kilograms.
     var targetWeightKg: Double?
     var note: String?
-    /// The `liftProgramItem.id` this line was flattened from, so a set count changed during the session
-    /// can be offered back to the program when it is finished. Nil for a line with no program behind
-    /// it, which is then never offered. A line added during the session carries the id its program
-    /// line will have if finishing adds it (`addedInSession`).
+    /// The `liftProgramItem.id` this line came from, so a changed set count can be offered back to the
+    /// program. Nil when no program line is behind it; an added line carries the id it will have.
     var programItemId: String?
-    /// Added while the session ran (`LiftSessionEngine.addExercise`), so the program has no line for it
-    /// yet; finishing offers to add one.
+    /// Added while the session ran (`LiftSessionEngine.addExercise`); finishing offers to add a line.
     var addedInSession: Bool
 
-    /// Rest used when a program line does not specify one. Two minutes sits in the middle of the
-    /// range the hypertrophy literature uses for compound work, and is only a starting value: what
-    /// is actually rested is measured from the taps.
+    /// Rest used when a program line does not specify one; only a starting value, since actual rest
+    /// is measured from the taps.
     static let defaultRestSec = 120
 
     init(exercise: String,
@@ -91,16 +77,14 @@ struct LiftRecordedSet: Equatable {
     var isWarmup: Bool
     var startTs: Int
     var endTs: Int
-    /// Rest actually taken after this set. Nil while the rest is still running, or when the user
-    /// moved on without resting.
+    /// Rest actually taken after this set. Nil while running, or when the user moved on without resting.
     var restSec: Int?
 
     var slot: LiftSlot { LiftSlot(exerciseIndex: exerciseIndex, setIndex: setIndex) }
 }
 
-/// The numbers a set shows in grey: what it would save if completed without anything typed.
-///
-/// Only weight and reps. RPE is deliberately absent — see `carry(for:lastSession:)`.
+/// The numbers a set shows in grey: what it would save if completed with nothing typed. Weight and
+/// reps only; RPE is deliberately absent (see `carry(for:lastSession:)`).
 struct LiftSetCarry: Equatable {
     var weightKg: Double?
     var reps: Int?
@@ -121,31 +105,23 @@ struct LiftSessionEngine: Equatable {
         case finished
     }
 
-    /// The lines being worked. MUTABLE in two ways only, both because a gym decides them as it goes:
-    /// how many sets a line holds — a fifth set on a line that planned four, or dropping the last one
-    /// when the tank is empty — and a line added at the end for an exercise the program does not have.
-    /// Nothing about a line already there changes mid-session, so the plan stays the snapshot it was at
-    /// start, plus whatever was added.
+    /// The lines being worked. Mutable only in set count per line and by appending a line; nothing else
+    /// about a line changes mid-session.
     private(set) var plan: [LiftPlanItem]
     /// When the session began (unix seconds).
     let startTs: Int
     private(set) var stage: Stage
-    /// Completed sets in COMPLETION order — which is the order they happened, not the plan's order,
-    /// and is what `ord` is written from.
+    /// Completed sets in COMPLETION order (the order they happened), which `ord` is written from.
     private(set) var sets: [LiftRecordedSet]
     /// When the current stage began, so a set's duration is measurable.
     private(set) var stageStartedAt: Int
 
-    /// Undo stack: whole-state snapshots rather than inverse operations. A gym is a bad place to be
-    /// one tap ahead of yourself, and restoring a snapshot cannot get the arithmetic wrong the way a
-    /// hand-written inverse can.
+    /// Undo stack of whole-state snapshots rather than inverse operations, which cannot get the
+    /// arithmetic wrong.
     private var history: [Snapshot] = []
 
-    /// The plan travels in the snapshot with the stage and the sets, and is restored with them.
-    ///
-    /// It has to. Once the set count can move, a stage saved under one count is only meaningful
-    /// under that count: undoing back past a removed set would otherwise leave the session working
-    /// a slot the sheet no longer draws — and completing it would write a set nobody could see.
+    /// The plan travels in the snapshot: once the set count can move, a stage is only meaningful under
+    /// the count it was saved with, so undo cannot leave the session on a slot the sheet no longer draws.
     private struct Snapshot: Equatable {
         var plan: [LiftPlanItem]
         var stage: Stage
@@ -161,10 +137,8 @@ struct LiftSessionEngine: Equatable {
         self.stageStartedAt = startTs
     }
 
-    /// Rebuild an interrupted session — see `LiftSessionPersistence`.
-    ///
-    /// The undo history is deliberately NOT restored: it is a within-sitting convenience, and a
-    /// stack that survives a relaunch invites reaching back past a save boundary.
+    /// Rebuilds an interrupted session (see `LiftSessionPersistence`). Undo history is deliberately
+    /// NOT restored.
     init(restoring plan: [LiftPlanItem], startTs: Int, stage: Stage,
          sets: [LiftRecordedSet], stageStartedAt: Int) {
         self.plan = plan
@@ -176,7 +150,7 @@ struct LiftSessionEngine: Equatable {
 
     // MARK: - The sheet
 
-    /// Every slot of one exercise, in order — the rows the sheet draws.
+    /// Every slot of one exercise, in order.
     func slots(forExercise index: Int) -> [LiftSlot] {
         guard plan.indices.contains(index) else { return [] }
         return (1...plan[index].targetSets).map { LiftSlot(exerciseIndex: index, setIndex: $0) }
@@ -200,37 +174,22 @@ struct LiftSessionEngine: Equatable {
         }
     }
 
-    /// The next slot the plan would suggest — the first uncompleted one in plan order. Nil when the
-    /// whole sheet is done.
-    ///
-    /// This is the SHEET's answer, used to open a session and to know when everything is done. It is
-    /// deliberately NOT what `advance` follows after a set — see `slotAfter(_:)`.
+    /// The next slot the plan would suggest: the first uncompleted one in plan order, nil when the
+    /// sheet is done. Not what `advance` follows after a set (see `slotAfter(_:)`).
     var nextPendingSlot: LiftSlot? {
         allSlots.first { !isCompleted($0) }
     }
 
     /// Where the session goes after finishing `slot`: the next uncompleted set of the SAME exercise,
-    /// and only once that exercise is finished, the first uncompleted slot in plan order.
-    ///
-    /// Plan order alone is wrong, and wrong in a way that costs sets. A gym is not a queue — the
-    /// whole point of being able to start any pending set is that machines get occupied — so a user
-    /// who skips exercise 1 and starts exercise 3 has an EARLIER slot still uncompleted. Following
-    /// plan order then throws them back to the machine they just walked away from, mid-exercise,
-    /// after every single set. Reported from a real session: "when I double-tap for the next set, it
-    /// reverts to the first set of the exercise I couldn't do earlier."
-    ///
-    /// Staying on the current exercise until it is finished is also simply what lifting is: you do
-    /// your sets on the machine you are standing at. The skipped exercise is not forgotten — it is
-    /// still pending, and it is what you get once the current one is done.
+    /// and only once that is finished, the first uncompleted slot in plan order. Plan order alone would
+    /// throw a user who skipped exercise 1 back to it after every set of exercise 3.
     func slotAfter(_ slot: LiftSlot) -> LiftSlot? {
         slots(forExercise: slot.exerciseIndex).first { !isCompleted($0) } ?? nextPendingSlot
     }
 
-    /// The set the session is heading to after the current one — what the minimised bar and the Lock
-    /// Screen name as "next". During the warm-up it is the set `advance` starts; while a set is worked
-    /// or rested from, it is where `advance` goes once that set is done: `slotAfter(_:)`, with the
-    /// current set counted as done. Never a rest, which sits between sets rather than being one of
-    /// them. Nil when nothing is left to do after the current set.
+    /// The set the session is heading to after the current one (what the bar and Lock Screen call
+    /// "next"): `advance`'s target, with the current set counted as done. Never a rest. Nil when
+    /// nothing is left.
     var upcomingSlot: LiftSlot? {
         switch stage {
         case .warmup:
@@ -254,43 +213,29 @@ struct LiftSessionEngine: Equatable {
         plan.indices.contains(slot.exerciseIndex) ? plan[slot.exerciseIndex] : nil
     }
 
-    /// Seconds left in the current rest, floored at zero. Nil when not resting.
-    ///
-    /// Floored rather than negative so an overrun rest reads "0:00" and waits, which is what it
-    /// actually means: the user has not moved on yet.
+    /// Seconds left in the current rest, floored at zero (an overrun rest reads "0:00"). Nil when not resting.
     func restRemaining(now: Int) -> Int? {
         guard case .resting(_, let endsAt) = stage else { return nil }
         return max(0, endsAt - now)
     }
 
-    /// The nearest earlier set of this exercise already performed in THIS session. Nil for the first
-    /// set, or when nothing before it has been done yet.
+    /// The nearest earlier set of this exercise already performed in THIS session, or nil.
     func previousSetInSession(for slot: LiftSlot) -> LiftRecordedSet? {
         (1..<max(1, slot.setIndex)).reversed()
             .compactMap { recordedSet(for: LiftSlot(exerciseIndex: slot.exerciseIndex, setIndex: $0)) }
             .first
     }
 
-    /// The numbers a slot shows in grey, in order of preference: this exercise earlier in THIS
-    /// session, then the same set number LAST session, then the program's target.
+    /// The numbers a slot shows in grey, in order of preference: this exercise earlier in THIS session
+    /// (by what that set counts as, `values(of:lastSession:)`), the same set number LAST session, then
+    /// the program's target.
     ///
-    /// "Earlier in this session" means what that set COUNTS AS (`values(of:lastSession:)`), so set 2
-    /// follows set 1 whether or not anything was typed there, and moves again if set 1 is corrected.
+    /// Grey stays grey: finishing a set records timing only, and a number becomes the set's own only
+    /// when typed. What untyped sets are worth is decided once at finish (`setsToSave`).
     ///
-    /// GREY STAYS GREY. Finishing a set records its timing and nothing else; a number becomes the
-    /// set's own only when it is typed. What a set without typed numbers is worth is decided once,
-    /// when the session is finished: the user completes all of them with these numbers or discards
-    /// them (`LiftSessionController.setsToSave`). Both earlier rules lost something. Recording nothing
-    /// let 19 sets from a real session save with no numbers at all, and writing the grey numbers in at
-    /// "set done" turned a suggestion into an entry the user then had to type over.
-    ///
-    /// RPE is NOT carried. Weight and reps are a plan, knowable in advance; RPE is how hard a set
-    /// FELT, knowable only afterwards, and carrying one forward would invent the one figure nobody
-    /// can guess for you. It would also silently corrupt the coverage the RPE card reports — every
-    /// set would read as rated, and "14 of 19 sets unrated" could never be shown again.
-    ///
-    /// `lastSession` is this exercise's previous session by set number — the one layer the engine
-    /// cannot know. The caller supplies it; a set number it lacks falls through to the target.
+    /// RPE is NOT carried: it is how hard a set FELT, knowable only afterwards, and carrying it would
+    /// make every set read as rated and corrupt the RPE card's coverage. `lastSession` is supplied by
+    /// the caller; a set number it lacks falls through to the target.
     func carry(for slot: LiftSlot, lastSession: [Int: LiftSetCarry]) -> LiftSetCarry {
         let previous = previousSetInSession(for: slot).map { values(of: $0.slot, lastSession: lastSession) }
         let last = lastSession[slot.setIndex]
@@ -307,20 +252,17 @@ struct LiftSessionEngine: Equatable {
         return LiftSetCarry(weightKg: set.weightKg ?? grey.weightKg, reps: set.reps ?? grey.reps)
     }
 
-    /// Slots never performed. Finishing the session asks once what happens to all of them; a set that
-    /// was performed is complete whether or not anything was typed into it (Utku, 21 Sep 2026).
+    /// Slots never performed. Finishing asks once what happens to all of them; a performed set is
+    /// complete whether or not anything was typed.
     var unperformedSlots: [LiftSlot] {
         allSlots.filter { !isCompleted($0) }
     }
 
     // MARK: - Actions
 
-    /// Begin a specific set. Works from any stage, which is the whole point: a machine being busy
-    /// must not block the session.
-    ///
-    /// Starting a set while ANOTHER set is in progress abandons that one — nothing is recorded,
-    /// because nothing was finished. Starting an already-completed slot re-opens it for a redo,
-    /// dropping its previous record so the set is not counted twice.
+    /// Begins a specific set from any stage, so a busy machine never blocks the session. Starting a
+    /// set while ANOTHER is in progress abandons it unrecorded; starting a completed slot re-opens it
+    /// for a redo, dropping its previous record.
     mutating func start(_ slot: LiftSlot, now: Int) {
         guard planItem(for: slot) != nil else { return }
         pushHistory()
@@ -338,7 +280,7 @@ struct LiftSessionEngine: Equatable {
 
         case .working(let slot):
             pushHistory()
-            // Timing only: the numbers stay grey until typed (see `carry(for:lastSession:)`).
+            // Timing only; numbers stay grey until typed.
             sets.append(LiftRecordedSet(
                 exerciseIndex: slot.exerciseIndex, setIndex: slot.setIndex,
                 weightKg: nil, reps: nil, rpe: nil, isWarmup: false,
@@ -349,8 +291,7 @@ struct LiftSessionEngine: Equatable {
 
         case .resting(let slot, _):
             pushHistory()
-            // Record what was ACTUALLY rested — the figure each set row shows, and the one thing
-            // only the taps can know.
+            // Record what was ACTUALLY rested: only the taps can know.
             if let i = sets.firstIndex(where: { $0.slot == slot }) {
                 sets[i].restSec = max(0, now - stageStartedAt)
             }
@@ -358,8 +299,7 @@ struct LiftSessionEngine: Equatable {
                 stage = .working(next)
                 stageStartedAt = now
             } else {
-                // Sheet complete: stay put rather than inventing a stage. The user finishes when
-                // they are ready, and the time until then is the cool-down.
+                // Sheet complete: stay put; the time until the user finishes is the cool-down.
                 stage = .resting(slot, endsAt: now)
                 stageStartedAt = now
             }
@@ -369,8 +309,8 @@ struct LiftSessionEngine: Equatable {
         }
     }
 
-    /// Fill in (or correct) what a set actually was. Editing, never appending — the set already
-    /// exists, so typing can never create a phantom. No-op for a slot that has not been completed.
+    /// Fills in or corrects what a set actually was. Editing only (never appends); no-op for a slot
+    /// not yet completed.
     mutating func updateSet(_ slot: LiftSlot,
                             weightKg: Double?, reps: Int?, rpe: Double?, isWarmup: Bool) {
         guard let i = sets.firstIndex(where: { $0.slot == slot }) else { return }
@@ -381,19 +321,12 @@ struct LiftSessionEngine: Equatable {
     }
 
     // MARK: - Changing how many sets a line holds
-    //
-    // A program is what you INTENDED, and a gym argues with it. Five sets when the program says four
-    // is ordinary; so is stopping at three because the tank is empty. Until this existed the fifth
-    // set simply could not be recorded — the sheet drew exactly `1...targetSets` and there was no
-    // way past it — so the set was done and then lost, which is the failure this feature exists to
-    // prevent.
 
-    /// The most sets one line may hold. A bound against a stuck finger, not a recommendation: every
-    /// added set is a row on the sheet and a slot in the crash snapshot.
+    /// The most sets one line may hold: a bound against a stuck finger, as each set is a sheet row and
+    /// a crash-snapshot slot.
     static let maxSetsPerExercise = 20
 
-    /// Append one set to an exercise's line. Returns false when the line is already at the bound, so
-    /// a caller can tell "did nothing" from "done" without re-deriving the rule.
+    /// Appends one set to an exercise's line. Returns false when the line is at the bound.
     @discardableResult
     mutating func addSet(toExercise index: Int) -> Bool {
         guard plan.indices.contains(index),
@@ -403,21 +336,16 @@ struct LiftSessionEngine: Equatable {
         return true
     }
 
-    /// Whether the last set of a line can be dropped.
-    ///
-    /// Only the LAST one, and only while it is still pending. Set numbers are positions — the sheet
-    /// draws `1...targetSets` — so removing from the middle would renumber every set after it and
-    /// silently re-label what was already recorded. And a completed set is DATA: dropping it here
-    /// would delete a set the user actually performed, from a button whose job is to edit a plan.
-    /// The set being worked or rested from is excluded for the same reason it cannot be renumbered:
-    /// the session is standing on it.
+    /// Whether the last set of a line can be dropped. Only the LAST one, and only while pending: set
+    /// numbers are positions, so removing from the middle would re-label recorded sets, and a completed
+    /// set is data. The set being worked or rested from is excluded too.
     func canRemoveSet(fromExercise index: Int) -> Bool {
         guard plan.indices.contains(index), plan[index].targetSets > 1 else { return false }
         let last = LiftSlot(exerciseIndex: index, setIndex: plan[index].targetSets)
         return !isCompleted(last) && currentSlot != last
     }
 
-    /// Drop the last (pending) set of an exercise's line. Returns false when the rule above says no.
+    /// Drops the last (pending) set of an exercise's line. Returns false when the rule above says no.
     @discardableResult
     mutating func removeSet(fromExercise index: Int) -> Bool {
         guard canRemoveSet(fromExercise: index) else { return false }
@@ -428,14 +356,12 @@ struct LiftSessionEngine: Equatable {
 
     // MARK: - Adding an exercise
 
-    /// The most lines one session may hold: the importer's cap on one program, so a session grown during
-    /// the workout stays inside the bound its crash snapshot (written on every change) was sized for.
+    /// The most lines one session may hold: the importer's cap on a program, which the per-change
+    /// crash snapshot was sized for.
     static let maxExercises = 200
 
-    /// Append an exercise the program does not have, as ONE set at the end of the sheet (Utku, 21 Sep
-    /// 2026). Any set count the caller gives is ignored: a line starts with one set, and ⊕/⊖ change it
-    /// like any other. Undoable, like adding a set. Returns false when nothing was added — the session
-    /// is finished, or already at `maxExercises`.
+    /// Appends an exercise the program does not have, as ONE set at the end of the sheet (any count the
+    /// caller gives is ignored). Undoable. Returns false when finished or at `maxExercises`.
     @discardableResult
     mutating func addExercise(_ item: LiftPlanItem) -> Bool {
         guard stage != .finished, plan.count < LiftSessionEngine.maxExercises else { return false }
@@ -446,8 +372,7 @@ struct LiftSessionEngine: Equatable {
         return true
     }
 
-    /// End the session. The rest that was running is closed out first, so its measured duration is
-    /// not silently lost.
+    /// Ends the session, closing out the running rest first so its measured duration is kept.
     mutating func finish(now: Int) {
         guard stage != .finished else { return }
         pushHistory()

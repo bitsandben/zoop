@@ -2,46 +2,25 @@ import Foundation
 
 // MARK: - Lab Book projection (pure)
 //
-// LabBookProjection.swift — the pure, DB-free, deterministic logic that turns a set
-// of Lab Book readings into the daily `(day, key, value)` form the rest of the app
-// already understands, plus the windowed-aggregate pairing used before
-// `CorrelationEngine.pearson`.
+// Pure, DB-free, deterministic logic turning Lab Book readings into daily `(day, key, value)` series, plus the
+// windowed-aggregate pairing used before `CorrelationEngine.pearson`. No new statistics: a marker is just
+// another `(day, value)` series.
 //
-// Per the Health Records design spec (2026-06-19-v5-health-records-design.md,
-// §"On-device algorithm" and §"New"):
-//   - There is NO new statistics here. A marker is just another `(day, value)` series.
-//     Day-alignment + Pearson are reused byte-for-byte from `CorrelationEngine`.
-//   - SPARSE-MARKER handling is the real design problem: bloods are months apart, so
-//     naive day-alignment yields too few overlapping points. So a reading on day D is
-//     paired with the MEAN of a wearable series over a trailing window UP TO AND
-//     INCLUDING D (default 14 days) — a disclosed trailing-exposure-window choice, the
-//     same idea as a moving-average feature, kept fully deterministic and on-device.
-//   - HONESTY about n: callers gate the conclusion sentence on a reading-count floor
-//     (default 4); this engine just reports the exact pairs and their n.
-//
-// This engine is timezone-free by construction: it operates on pre-derived
-// `yyyy-MM-dd` day strings (the store derives the day from a reading's `takenAt`),
-// exactly like `CorrelationEngine`. That keeps the Swift engine and its Kotlin twin
-// byte-identical with no Calendar/ZoneId divergence.
-//
-// NON-CLINICAL (spec §"Non-clinical"): this folds and lines up the user's own numbers.
-// It never judges a value normal/abnormal and ships no thresholds.
+// Bloods are months apart, so naive day-alignment leaves too few overlapping points; a reading on day D is
+// paired with the mean of a wearable series over a trailing window up to and including D (default 14 days).
+// Callers gate any conclusion on a reading-count floor (default 4); this engine reports the pairs and n.
+// Timezone-free: it works on pre-derived `yyyy-MM-dd` strings, like `CorrelationEngine`.
+// Non-clinical: never judges a value normal/abnormal and ships no thresholds.
 
-/// One reading reduced to exactly what the projection needs: a numeric value on a
-/// pre-derived day, with the precise `takenAt` epoch seconds kept only to break
-/// ties when several readings of the same marker land on the same day.
-///
-/// Non-numeric (`valueText`-only) readings are simply not represented here — the
-/// caller omits them, since a `REAL`-only daily series can't carry them.
+/// One numeric reading on a pre-derived day. `takenAt` only breaks ties between same-day readings of a marker.
+/// Non-numeric readings are not represented (the caller omits them).
 public struct LabReading: Equatable, Sendable {
     /// Marker identifier (e.g. `"ldl"`, `"bp_systolic"`).
     public let markerKey: String
-    /// Pre-derived `yyyy-MM-dd` day key (the store derived this from `takenAt`).
+    /// Pre-derived `yyyy-MM-dd` day key.
     public let day: String
-    /// Numeric reading.
     public let value: Double
-    /// The reading's instant (epoch seconds). Used ONLY to order same-day readings
-    /// so "latest-per-day" is deterministic; never re-derives the day.
+    /// Reading instant (epoch seconds); only orders same-day readings, never re-derives the day.
     public let takenAtEpoch: Double
 
     public init(markerKey: String, day: String, value: Double, takenAtEpoch: Double) {
@@ -52,9 +31,7 @@ public struct LabReading: Equatable, Sendable {
     }
 }
 
-/// A projected daily point for one marker: the value that represents marker `key`
-/// on `day` after folding multiple same-day readings. This is what gets upserted
-/// into `metricSeries` under the `lab-book` source id.
+/// The value representing marker `key` on `day` after folding same-day readings (upserted into `metricSeries`).
 public struct ProjectedPoint: Equatable, Sendable {
     public let markerKey: String
     public let day: String
@@ -67,26 +44,23 @@ public struct ProjectedPoint: Equatable, Sendable {
     }
 }
 
-/// How to collapse several readings of the same marker on the same day into one
-/// daily value.
+/// How to collapse same-day readings of a marker into one daily value.
 public enum DailyFold: Sendable {
-    /// The reading with the latest `takenAt` wins (ties broken by input order).
+    /// Latest `takenAt` wins (ties by input order).
     case latest
-    /// The arithmetic mean of the day's readings.
+    /// Arithmetic mean of the day's readings.
     case mean
 }
 
-/// One windowed-aggregate pair: a marker reading on `day` lined up against the mean
-/// of a wearable series over the trailing window up to and including `day`.
+/// A marker reading on `day` paired with the wearable mean over the trailing window ending that day.
 public struct WindowedPair: Equatable, Sendable {
     /// The marker reading's day (`yyyy-MM-dd`).
     public let day: String
-    /// The marker's projected daily value on `day` (the x of the pair).
+    /// The marker's daily value (x of the pair).
     public let markerValue: Double
-    /// The trailing-window mean of the wearable series (the y of the pair).
+    /// Trailing-window wearable mean (y of the pair).
     public let wearableMean: Double
-    /// How many wearable points fell inside the window (transparency; 0-coverage
-    /// days are never emitted, so this is always ≥ 1 for an emitted pair).
+    /// Wearable points inside the window; always >= 1 for an emitted pair.
     public let wearableN: Int
 
     public init(day: String, markerValue: Double, wearableMean: Double, wearableN: Int) {
@@ -99,29 +73,20 @@ public struct WindowedPair: Equatable, Sendable {
 
 public enum LabBookProjection {
 
-    /// The constant device-id every projected marker day is written under, so a
-    /// future cross-device file sync would line up and the per-source resolver treats
-    /// markers as single-source (spec §"Cross-platform plan").
+    /// Device id every projected marker day is written under, so the per-source resolver treats markers as single-source.
     public static let sourceId = "lab-book"
 
-    /// The two keys a blood-pressure pair is stored as (spec §"Blood pressure
-    /// modelling": two keys for clean correlation, not one composite).
+    /// Blood pressure is stored as two keys (systolic / diastolic) for clean correlation, not one composite.
     public static let bpSystolicKey = "bp_systolic"
     public static let bpDiastolicKey = "bp_diastolic"
 
-    /// Default trailing window (days, inclusive of the reading day) for pairing a
-    /// sparse marker against a continuously-measured wearable series.
+    /// Default trailing window (days, inclusive of the reading day) for pairing a sparse marker with a wearable series.
     public static let defaultWindowDays = 14
 
     // MARK: - Daily projection
 
-    /// Fold readings into one daily point per (markerKey, day).
-    ///
-    /// For each marker and day, multiple readings are collapsed by `fold`
-    /// (`.latest` = most recent `takenAt` wins; `.mean` = arithmetic mean). Output is
-    /// sorted by markerKey then day ascending so it is deterministic across platforms.
+    /// Folds readings into one point per (markerKey, day) using `fold`. Sorted by markerKey then day.
     public static func project(_ readings: [LabReading], fold: DailyFold = .latest) -> [ProjectedPoint] {
-        // Group by (markerKey, day) → list of readings in that cell.
         var cells: [String: [LabReading]] = [:]
         var order: [String] = []
         for r in readings {
@@ -137,10 +102,7 @@ public enum LabBookProjection {
             let value: Double
             switch fold {
             case .latest:
-                // Most recent takenAt wins; a tie keeps the last in input order
-                // (`>` makes the later-encountered equal element NOT replace, so the
-                // last one written is the running best — deterministic either way as
-                // the store dedupes by natural key).
+                // Latest takenAt wins; ties keep input order (store dedupes by natural key).
                 var best = group[0]
                 for r in group.dropFirst() where r.takenAtEpoch >= best.takenAtEpoch {
                     best = r
@@ -154,26 +116,15 @@ public enum LabBookProjection {
             out.append(ProjectedPoint(markerKey: group[0].markerKey, day: group[0].day, value: value))
         }
 
-        // Deterministic order: markerKey asc, then day asc.
         out.sort { $0.markerKey != $1.markerKey ? $0.markerKey < $1.markerKey : $0.day < $1.day }
         return out
     }
 
     // MARK: - Windowed-aggregate pairing
 
-    /// Pair each marker reading with the trailing-window mean of a wearable series.
-    ///
-    /// For a marker projected to `[(day, value)]` (one numeric value per day — pass the
-    /// `.project` output filtered to one markerKey, or any `(day,value)` series) and a
-    /// daily `wearable` series `[(day, value)]`, each marker day `D` is paired with the
-    /// mean of all wearable values whose day is within the trailing `windowDays`
-    /// (inclusive of D): `D - (windowDays - 1) ... D`.
-    ///
-    /// Days where NO wearable point falls inside the window are DROPPED (spec: "days
-    /// with no wearable coverage are dropped"). The result is sorted by day ascending.
-    /// Window is clamped to ≥ 1. The day arithmetic reuses the same UTC-calendar
-    /// `shiftDay` used by `CorrelationEngine.lagged`, so the boundary is computed the
-    /// same way everywhere.
+    /// Pairs each marker day D with the mean of wearable values in `D-(windowDays-1) ... D`. Days with no wearable
+    /// coverage are dropped; the window is clamped to >= 1; result sorted by day. Day arithmetic reuses the UTC
+    /// `shiftDay` of `CorrelationEngine.lagged`.
     public static func pairMarkerToWearable(
         marker: [(day: String, value: Double)],
         wearable: [(day: String, value: Double)],
@@ -190,8 +141,6 @@ public enum LabBookProjection {
         var pairs: [WindowedPair] = []
         for day in markerByDay.keys.sorted() {
             guard let mv = markerByDay[day] else { continue }
-            // Walk the trailing window [D-(width-1) ... D] inclusive, summing wearable
-            // coverage. Deterministic: a fixed UTC calendar, integer day offsets.
             var sum = 0.0
             var n = 0
             for back in 0..<width {
@@ -207,10 +156,7 @@ public enum LabBookProjection {
         return pairs
     }
 
-    /// Convenience: reduce windowed pairs to the `(x, y)` tuples `CorrelationEngine.pearson`
-    /// consumes (x = marker value, y = wearable trailing-window mean), ordered by day.
-    /// The caller passes the result straight into `CorrelationEngine.pearson`; this
-    /// engine adds no statistics of its own.
+    /// Reduces pairs to the `(x, y)` tuples `CorrelationEngine.pearson` consumes, ordered by day.
     public static func correlationInput(_ pairs: [WindowedPair]) -> [(Double, Double)] {
         pairs.map { ($0.markerValue, $0.wearableMean) }
     }

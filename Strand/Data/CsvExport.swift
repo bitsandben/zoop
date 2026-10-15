@@ -8,22 +8,13 @@ import UniformTypeIdentifiers
 import WhoopStore
 import StrandImport
 
-/// Settings → Backup & restore → "Export CSV…": serialize the merged WHOOP history (imported wins
-/// per day — exactly what the dashboards show; Apple Health rows are deliberately EXCLUDED so a
-/// re-import can't mis-attribute them as WHOOP data) into WHOOP's 4-CSV zip via
-/// StrandImport.WhoopCsvExporter. The zip re-imports into Zoop on Mac (Data Sources → WHOOP Export)
-/// and on Android. On-device computed rows are marked "noop (APPROXIMATE)" in the Source column both
-/// importers ignore; the .sqlite backup remains the lossless restore path.
-///
-/// #458 (the Android twin's bug, mirror-image here): every read goes through the repository's
-/// active∪canonical union ids (`importedReadIds`/`computedReadIds`, #814) — reading the ACTIVE id
-/// alone dropped the canonical "my-whoop" rows (a prior CSV import + the canonical engine history)
-/// after a strap remove+re-add moved the active id to "whoop-<uuid>". Per-row dedup keeps the
-/// active-first copy; a single-canonical install collapses to one id per side, byte-identical.
-///
-/// Self-contained: it reads through the store handle and reconstructs Repository's merge precedence
-/// inline rather than depending on Repository's private merge helpers, so the export is decoupled
-/// from the dashboard read path.
+/// Settings export to WHOOP's 4-CSV zip via StrandImport.WhoopCsvExporter: merged WHOOP history, imported
+/// wins per day. Apple Health rows are excluded so a re-import cannot mis-attribute them.
+/// On-device computed rows are marked "noop (APPROXIMATE)" in the Source column both importers ignore; the
+/// .sqlite backup remains the lossless restore.
+/// Reads use the repository's active+canonical union ids (#458, #814), active first, so a strap remove and
+/// re-add does not drop canonical "my-whoop" rows. Merge precedence is reconstructed inline to stay
+/// decoupled from the dashboard read path.
 enum CsvExport {
     enum ExportResult {
         case exported(URL)
@@ -36,16 +27,14 @@ enum CsvExport {
         guard let store = await repo.storeHandle() else {
             return .failure("Couldn't open the local store.")
         }
-        // #458: the active∪canonical union ids (active FIRST, so per-row dedup keeps the live copy);
-        // a single-canonical install collapses to one id per side and reads byte-identically.
+        // Active-first union ids (#458), so per-row dedup keeps the live copy.
         let importedIds = repo.importedReadIds
         let computedIds = repo.computedReadIds
         let fromDay = "0000-01-01", toDay = "9999-12-31"
         let hi = Int(Date().timeIntervalSince1970) + 86_400
 
         do {
-            // Fetch every source off the WhoopStore actor (each `await store.*` already hops off main).
-            // Dailies: per side, the FIRST union id that has a day wins (active first).
+            // Dailies: per side, the first union id with a day wins.
             var importedByDay: [String: DailyMetric] = [:]
             for id in importedIds {
                 for d in try await store.dailyMetrics(deviceId: id, from: fromDay, to: toDay)
@@ -69,8 +58,7 @@ enum CsvExport {
                 }
                 seriesRaw[key] = byDay.values.sorted { $0.day < $1.day }
             }
-            // Sleeps / workouts: per side, exact-duplicate rows dropped on the natural key,
-            // active-first (mirrors the Kotlin dedupSleepBlocks / dedupWorkoutsByKey unions).
+            // Sleeps/workouts: exact duplicates dropped on the natural key, active first.
             var seenSleep = Set<String>(), seenComp = Set<String>()
             var impSleep: [CachedSleepSession] = [], compSleep: [CachedSleepSession] = []
             for id in importedIds {
@@ -91,15 +79,14 @@ enum CsvExport {
                 for w in try await store.workouts(deviceId: id, from: 0, to: hi, limit: 100_000)
                 where seenCompW.insert("\(w.startTs)|\(w.sport)").inserted { compWorkouts.append(w) }
             }
-            // Journal: natural key (day, question), active-first.
+            // Journal: natural key (day, question), active first.
             var seenJournal = Set<String>()
             var journal: [JournalEntry] = []
             for id in importedIds {
                 for j in try await store.journalEntries(deviceId: id, from: fromDay, to: toDay)
                 where seenJournal.insert("\(j.day)|\(j.question)").inserted { journal.append(j) }
             }
-            // Sidecar: every metricSeries row under EVERY Zoop source id, full fidelity (rows keep
-            // their own deviceId, so union entries stay distinguishable on re-import).
+            // Sidecar: every metricSeries row under every Zoop source id, full fidelity.
             var sidecar: [String: [MetricPoint]] = [:]
             for id in importedIds + computedIds {
                 var points: [MetricPoint] = []
@@ -109,53 +96,39 @@ enum CsvExport {
                 if !points.isEmpty { sidecar[id] = points }
             }
 
-            // The ONLY main-actor-isolated call in the assembly is Repository.localDayKey (Repository is
-            // @MainActor). Precompute every session's local end-day HERE, on main, into a plain Sendable
-            // [startTs: dayKey] map so the detached merge/serialization can key off it without touching the
-            // actor. startTs is the session's natural key (same key `sleepSource` uses). Same for the export
-            // file name (also localDayKey-derived).
+            // Repository.localDayKey is main-actor-isolated: precompute each session's local end-day (and
+            // the file name) on main into a Sendable [startTs: dayKey] map for the detached merge.
             var endDayByStartTs: [Int: String] = [:]
             for s in impSleep + compSleep {
                 endDayByStartTs[s.startTs] = Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval(s.endTs)))
             }
             let name = defaultName()
 
-            // Assembly + serialization + zip deflate run OFF the main actor (mirrors the timelineSeries
-            // Task.detached): only Sendable value types (the fetched rows, the precomputed day-key map)
-            // cross in, and the result (a temp file URL / the archive on disk) comes back. WhoopCsvExporter
-            // and SleepMerge are pure package statics; workoutSource is a pure static; endDay is now a pure
-            // dictionary lookup. Byte-identical output to the in-line version.
+            // Assembly, serialization and zip deflate run off the main actor; only Sendable values cross in.
             let tmp = try await Task.detached(priority: .utility) {
-                // Merged exactly like Repository.mergeDaily: computed first, imported overwrites, so a
-                // real WHOOP import always wins and the strap-only user still exports a full history.
+                // Merged like Repository.mergeDaily: computed first, imported overwrites.
                 var byDay: [String: DailyMetric] = [:]
                 var sourceByDay: [String: String] = [:]
                 for d in computed { byDay[d.day] = d; sourceByDay[d.day] = "noop (APPROXIMATE)" }
                 for d in imported { byDay[d.day] = d; sourceByDay[d.day] = "import" }
                 let days = byDay.values.sorted { $0.day < $1.day }
 
-                // The cycles columns DailyMetric lacks, recovered from the imported metricSeries.
+                // Cycles columns DailyMetric lacks, recovered from imported metricSeries.
                 var series: [String: [String: Double]] = [:]
                 for (key, points) in seriesRaw {
                     for p in points { series[p.day, default: [:]][key] = p.value }
                 }
 
-                // Sleep: merged per end-day, imported wins (Repository.mergeSleep semantics). endDay is a
-                // pure lookup into the precomputed map (localDayKey already ran on main).
+                // Sleep merged per end-day, imported wins (Repository.mergeSleep).
                 let endDay: (CachedSleepSession) -> String = { endDayByStartTs[$0.startTs] ?? "" }
                 var sleepSource: [Int: String] = [:]   // keyed by startTs (the session's natural key)
-                // #715: keep EVERY session, naps and main nights each export as their own sleeps.csv row.
-                // Imported still wins per end-day. Shared, unit-tested grouping (WhoopStore.SleepMerge) replaces
-                // the per-day dict that silently dropped a second same-day session.
+                // Keeps every session (#715), so naps and main nights each get a sleeps.csv row.
                 for s in compSleep { sleepSource[s.startTs] = "noop (APPROXIMATE)" }
                 for s in impSleep { sleepSource[s.startTs] = "import" }
                 let sleeps = SleepMerge.merge(imported: impSleep, computed: compSleep, endDay: endDay)
 
-                // Workouts: imported WHOOP ∪ on-device detected. Apple-Health workouts are intentionally
-                // omitted (read only the two Zoop sources), matching the cycles/sleep exclusion.
-                // Dedup by (startTs, sport), imported (deviceId) first so it wins. The same session can
-                // exist under both ids (e.g. a reimported export + BLE re-detection), which double-counted
-                // it in the CSV and inflated totals on reimport. (PR #97 review, tigercraft4.)
+                // Workouts: imported WHOOP plus on-device detected; Apple Health omitted. Dedup by
+                // (startTs, sport), imported first, since one session can exist under both ids.
                 var seenWorkouts = Set<String>()
                 let workouts = (impWorkouts + compWorkouts)
                     .filter { seenWorkouts.insert("\($0.startTs)|\($0.sport)").inserted }
@@ -166,8 +139,8 @@ enum CsvExport {
                     ("sleeps.csv",
                      Data(WhoopCsvExporter.sleepsCSV(
                         sleeps,
-                        // "Cycle start time" = the session's local end-day (the same key cyclesCSV/mergeSleep
-                        // use), so the two CSVs reconcile by cycle for a non-UTC user (#715).
+                        // Cycle start is the session's local end-day, so the CSVs reconcile by cycle for
+                        // non-UTC users (#715).
                         cycleStart: { endDay($0) + " 00:00:00" },
                         sourceBySession: { sleepSource[$0.startTs] ?? "" }).utf8)),
                     ("workouts.csv",
@@ -175,17 +148,14 @@ enum CsvExport {
                     ("journal_entries.csv", Data(WhoopCsvExporter.journalCSV(journal).utf8)),
                     ("noop_metric_series.json", WhoopCsvExporter.metricSeriesJSON(sidecar)),
                 ]
-                // Deflate to a temp path off main; the cheap atomic swap into the user's chosen destination
-                // stays on main (it needs the panel/picker result).
-                // Inside Zoop's own scratch folder, which also gives this one a sweep: staged flat
-                // under a bare UUID it matched no `noop-` prefix, so an interrupted export leaked it.
+                // Deflate to a temp path off main, inside ZoopScratch so interrupted exports get swept; the
+                // atomic swap into the destination stays on main.
                 let out = ZoopScratch.file(UUID().uuidString + ".zip")
                 try WhoopCsvExporter.writeArchive(entries: entries, to: out)
                 return out
             }.value
 
             #if os(macOS)
-            // Save panel — DataBackup.runExport precedent (NSSavePanel + .zip content type).
             let panel = NSSavePanel()
             panel.title = String(localized: "Export Zoop data as CSV")
             panel.nameFieldStringValue = name
@@ -196,9 +166,7 @@ enum CsvExport {
                 return .cancelled
             }
 
-            // Swap the freshly-written temp zip into place. Deleting the destination before a write that
-            // can throw destroyed the user's previous export on failure (PR #97 review, tigercraft4).
-            // replaceItemAt is atomic on APFS; the original survives a failed write.
+            // replaceItemAt is atomic on APFS, so a failed write keeps the user's previous export.
             if FileManager.default.fileExists(atPath: dest.path) {
                 _ = try FileManager.default.replaceItemAt(dest, withItemAt: tmp)
             } else {
@@ -206,9 +174,7 @@ enum CsvExport {
             }
             return .exported(dest)
             #else
-            // iOS: move the staged zip to its user-facing name, then hand it to the system document picker
-            // so the user can save it into Files / iCloud Drive (DataBackup.runExport precedent). Clear any
-            // stale staged copy first.
+            // iOS: move the staged zip to its user-facing name and hand it to the document picker.
             let staged = ZoopScratch.file(name)
             if FileManager.default.fileExists(atPath: staged.path) {
                 try FileManager.default.removeItem(at: staged)
@@ -222,19 +188,16 @@ enum CsvExport {
         }
     }
 
-    /// Classify a workout row for the parser-ignored Source column. The strings match how each row
-    /// is written on this Mac: WhoopImporter uses source "whoop"; AppModel manual logging uses
-    /// "manual"; IntelligenceEngine's on-device detected workouts use the computed source id with
-    /// sport "detected". #458: a detected row's source may be EITHER computed union id (active-noop
-    /// or canonical-noop), so membership replaces the single-id compare.
+    /// Classifies a workout row for the parser-ignored Source column: WhoopImporter writes "whoop", manual
+    /// logging "manual", detected workouts the computed source id with sport "detected" (either computed
+    /// union id, #458).
     private static func workoutSource(_ w: WorkoutRow, computedIds: [String]) -> String {
         if w.source == "manual" { return "manual" }
         if computedIds.contains(w.source) || w.sport == "detected" { return "noop (APPROXIMATE)" }
         return "import"
     }
 
-    // @MainActor: Repository.localDayKey is MainActor-isolated (Repository is @MainActor); only
-    // called from `run`, which already is.
+    // Repository.localDayKey is MainActor-isolated; only called from `run`.
     @MainActor
     private static func defaultName() -> String {
         "noop-export-\(Repository.localDayKey(Date())).zip"

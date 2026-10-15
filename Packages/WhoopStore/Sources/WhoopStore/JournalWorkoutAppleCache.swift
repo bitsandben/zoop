@@ -2,9 +2,7 @@ import Foundation
 import GRDB
 
 // MARK: - v8 cache: journal entries, workouts, and Apple-Health daily aggregates
-// Mirrors the MetricsCache pattern: Codable structs, idempotent ON CONFLICT upserts keyed by
-// natural key, and range-read accessors. All write/read GRDB work runs via the actor's
-// syncWrite/syncRead helpers (off the main thread).
+// Idempotent ON CONFLICT upserts keyed by natural key, plus range reads, via the actor's syncWrite/syncRead.
 
 /// One journal answer. Natural key (deviceId, day, question).
 public struct JournalEntry: Equatable, Codable {
@@ -12,9 +10,8 @@ public struct JournalEntry: Equatable, Codable {
     public let question: String
     public let answeredYes: Bool
     public let notes: String?
-    /// Optional numeric reading for a numeric journal item (e.g. caffeine mg, alcohol units).
-    /// nil for a plain yes/no answer and for every imported WHOOP row (#322). A numeric log writes
-    /// answeredYes=true AND numericValue=v, so the BehaviorInsights with/without split is unchanged.
+    /// Optional numeric reading for a numeric journal item (e.g. caffeine mg). nil for yes/no answers and
+    /// imported WHOOP rows. A numeric log also writes answeredYes=true so the with/without split is unchanged.
     public let numericValue: Double?
     public init(day: String, question: String, answeredYes: Bool, notes: String?,
                 numericValue: Double? = nil) {
@@ -25,8 +22,7 @@ public struct JournalEntry: Equatable, Codable {
 }
 
 /// One workout. Natural key (deviceId, startTs, sport). All metric columns nullable.
-/// `zonesJSON` is verbatim JSON of HR-zone percentages, stored as a string so the cache stays
-/// schema-agnostic about the zone shape.
+/// `zonesJSON` is verbatim JSON of HR-zone percentages.
 public struct WorkoutRow: Equatable, Codable {
     public let startTs: Int          // unix seconds
     public let endTs: Int            // unix seconds
@@ -41,15 +37,9 @@ public struct WorkoutRow: Equatable, Codable {
     public let zonesJSON: String?
     public let notes: String?
     public let steps: Int?               // #1058: per-session steps (activity-file foot sports); nil otherwise
-    /// NO DEFAULTS HERE, deliberately (#1444). Swift rebuilds a row field by field, so a defaulted
-    /// parameter lets an existing call site keep compiling while it silently starts writing nothing.
-    /// That is exactly how `steps` was dropped at six sites — two of which persisted the loss — with
-    /// nothing in the read path able to tell "never had steps" from "had steps, then lost them".
-    /// Requiring every field makes each call site state its intent and turns the next added column into
-    /// a compile error instead of silent data loss. Keep it that way: add a field WITHOUT a default and
-    /// fix the call sites the compiler points at. (Kotlin needs no equivalent rule because `copy()`
-    /// carries unmentioned fields — but note that only protects a rebuild whose receiver IS the stored
-    /// row, which is why the Android edit sheet lost `steps` anyway.)
+    /// No defaults, deliberately: a defaulted parameter lets a call site that rebuilds a row field by field keep
+    /// compiling while silently dropping a column (this is how `steps` was lost). Add new fields WITHOUT a
+    /// default and fix the call sites the compiler points at.
     public init(startTs: Int, endTs: Int, sport: String, source: String, durationS: Double?,
                 energyKcal: Double?, avgHr: Int?, maxHr: Int?, strain: Double?, distanceM: Double?,
                 zonesJSON: String?, notes: String?, steps: Int?) {
@@ -83,7 +73,7 @@ extension WhoopStore {
 
     // MARK: - Upserts (idempotent by natural key; latest value wins on conflict)
 
-    /// Upsert journal entries. Natural key (deviceId, day, question). Returns rows changed.
+    /// Upserts journal entries. Natural key (deviceId, day, question). Returns rows changed.
     @discardableResult
     public func upsertJournal(_ rows: [JournalEntry], deviceId: String) async throws -> Int {
         try syncWrite { db in
@@ -105,9 +95,8 @@ extension WhoopStore {
         }
     }
 
-    /// Delete one journal answer by natural key (the native logging card's "clear"). Source-scoped
-    /// by deviceId, so clearing a native ("noop-journal") answer never removes an identical imported
-    /// row. Returns rows deleted.
+    /// Deletes one journal answer by natural key. Scoped by deviceId, so clearing a native answer never
+    /// removes an identical imported row. Returns rows deleted.
     @discardableResult
     public func deleteJournal(deviceId: String, day: String, question: String) async throws -> Int {
         try syncWrite { db in
@@ -118,10 +107,8 @@ extension WhoopStore {
         }
     }
 
-    /// Atomically replace a device's journal within a day range (#136): clear [from, to] then upsert
-    /// `rows`, all in ONE transaction, so the wake-day keying fix leaves no pre-fix onset-keyed duplicates
-    /// AND a crash mid-import can't leave the range deleted-but-not-repopulated. Bounded to [from, to] —
-    /// journal outside the imported range is never touched. deviceId-scoped (native log untouched).
+    /// Atomically replaces a device's journal within a day range: clear [from, to] then upsert `rows` in ONE
+    /// transaction, so a crash mid-import cannot leave the range emptied. Journal outside the range is untouched.
     @discardableResult
     public func replaceJournalRange(_ rows: [JournalEntry], deviceId: String,
                                     from: String, to: String) async throws -> Int {
@@ -179,9 +166,7 @@ extension WhoopStore {
         }
     }
 
-    /// Delete one source's workouts of a given sport whose startTs is in [from, to]. Automatic
-    /// detected-workout reconciliation no longer calls this; explicit edit/dismiss paths still do.
-    /// Returns rows deleted. Port of Android WhoopDao.deleteWorkoutsBySport (#78/#2187).
+    /// Deletes one source's workouts of a given sport whose startTs is in [from, to]. Returns rows deleted.
     @discardableResult
     public func deleteWorkouts(deviceId: String, sport: String, from: Int, to: Int) async throws -> Int {
         try syncWrite { db in
@@ -223,8 +208,7 @@ extension WhoopStore {
 
     // MARK: - Reads
 
-    /// Journal entries for days in [from, to] (lexicographic YYYY-MM-DD compare),
-    /// oldest day first, then by question.
+    /// Journal entries for days in [from, to] (lexicographic YYYY-MM-DD compare), oldest day first, then by question.
     public func journalEntries(deviceId: String, from: String, to: String) async throws -> [JournalEntry] {
         try syncRead { db in
             try Row.fetchAll(db, sql: """
@@ -260,10 +244,8 @@ extension WhoopStore {
         }
     }
 
-    /// #1058: sum per-session `steps` over one source's workouts whose startTs is in [from, to). Used to
-    /// recompute an activity-file day's step total from ALL its sessions, so a second file on the same day
-    /// adds rather than clobbers — and re-importing a file is idempotent (its row's steps are replaced,
-    /// not re-added, by `upsertWorkouts`). Returns 0 when no session in the range carried steps.
+    /// Sums per-session `steps` over one source's workouts with startTs in [from, to), so a second file on
+    /// the same day adds rather than clobbers and re-import stays idempotent. Returns 0 when none carried steps.
     public func sumWorkoutSteps(deviceId: String, from: Int, to: Int) async throws -> Int {
         try syncRead { db in
             try Int.fetchOne(db, sql: """

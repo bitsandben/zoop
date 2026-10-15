@@ -1,14 +1,8 @@
 import SwiftUI
 
-// MARK: - Frosted card surface (Titanium & Gold) + StrandCard
-//
-// The card surface: a flat `surfaceRaised` fill, continuous rounded corners and a
-// single 1px `hairline` border — NO shadow (the Titanium look reads off the hairline
-// + tint, not a drop shadow). The TINTED variant deepens into a navy bevel
-// (150° #15243C → #0B1424) under a faint per-domain hue wash + a hue-biased border.
-// `.frostedCardSurface(tint:…)` is the one place the look lives so StrandCard /
-// ZoopCard / ad-hoc surfaces all share it. Pass a domain tint (or nil for the neutral
-// flat raised surface).
+// MARK: - Frosted card surface + StrandCard
+// Flat `surfaceRaised` fill, continuous corners and a single 1px `hairline` border, no shadow. The tinted variant deepens into a navy bevel (150° #15243C → #0B1424)
+// under a faint per-domain wash and hue-biased border. `.frostedCardSurface(tint:…)` is the one place the look lives; nil tint = neutral raised surface.
 
 public extension View {
     /// Apply the frosted-card surface as a background. `tint` colours the diagonal
@@ -22,15 +16,12 @@ public extension View {
     }
 }
 
-/// The frosted-card background fill and border. Standalone so it can be a
-/// `.background { }` (animation never reaches the card's content subtree — #104).
-/// No drop shadow — the Titanium surface reads off the hairline + tint alone.
+/// The frosted-card background fill and border; standalone so it can be a `.background { }` (animation never reaches the content subtree, #104). No drop shadow.
 public struct FrostedCardSurface: View {
     public var tint: Color?
     public var cornerRadius: CGFloat
     public var washStrength: Double
-    // "Card transparency" setting (reactive): fades the whole glass surface toward the background. 100 =
-    // solid (default). Reading it here makes every card update live when the Settings slider moves.
+    // "Card transparency" setting (reactive): fades the glass surface toward the background; 100 = solid. Reading it here updates every card live.
     @AppStorage(CardAppearancePrefs.opacityKey) private var cardOpacityPercent = CardAppearancePrefs.defaultPercent
 
     public init(tint: Color? = nil, cornerRadius: CGFloat = 22, washStrength: Double = 1.0) {
@@ -50,12 +41,8 @@ public struct FrostedCardSurface: View {
     }
 }
 
-// MARK: - StrandCard (§9.4 Cards)
-//
-// The card container — now the Bevel frosted surface, but the PUBLIC API is
-// unchanged (padding, cornerRadius, content). Adds an optional `tint` (defaulted)
-// so callers can opt into a domain wash without breaking existing call sites.
-// Keeps the mandated hover lift via `.strandCardHover()`.
+// MARK: - StrandCard
+// The card container. The optional defaulted `tint` opts into a domain wash; keeps the hover lift via `.strandCardHover()`.
 
 public struct StrandCard<Content: View>: View {
 
@@ -87,8 +74,7 @@ public struct StrandCard<Content: View>: View {
 
 // MARK: - Hover lift modifier
 
-/// The mandated hover behavior: shadow-md + translateY(-1px) and a hairline →
-/// hairline.strong border on hover. Apply to any card-like surface.
+/// The hover behaviour: shadow-md + translateY(-1px) and a hairline → hairline.strong border.
 public struct StrandCardHover: ViewModifier {
     public var cornerRadius: CGFloat
     @State private var hovering = false
@@ -100,15 +86,13 @@ public struct StrandCardHover: ViewModifier {
 
     public func body(content: Content) -> some View {
         content
-            // Hover emphasis: brighten the hairline edge (the frosted surface owns the
-            // resting border) and add the mandated lift (shadow + translateY(-1px)).
+            // Hover emphasis: brighten the hairline (the surface owns the resting border) and add the lift.
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(StrandPalette.hairlineStrong, lineWidth: 1)
                     .opacity(hovering ? 1 : 0)
             )
-            // Incremental hover lift on top of the surface's resting elevation: a warm soft shadow on
-            // light (the white card lifts off the paper), the signature black on dark.
+            // Incremental lift atop the resting elevation: warm soft shadow on light, black on dark.
             .shadow(
                 color: hovering ? (scheme == .light ? Color(hex: "#1A2230").opacity(0.16)
                                                      : Color.black.opacity(0.45)) : .clear,
@@ -132,15 +116,10 @@ public extension View {
     }
 }
 
-// MARK: - Touch press feedback (iOS) — the hover lift's touch analogue.
-//
-// `.onHover` never fires on a touchscreen, so tappable cards/rows feel dead on iPhone.
-// This gives a subtle press-DOWN state (scale + edge emphasis) for direct manipulation,
-// honouring Reduce Motion (which swaps the transform for a gentle dim). It's additive to
-// the hover lift: hover (pointer NEAR) and pressed (finger/click DOWN) animate distinct
-// properties on the shared StrandMotion.interactive spring, so they compose without a
-// double-bounce. Exposed two ways — a ButtonStyle for Button/NavigationLink-as-card (the
-// `.plain` replacement), and a `.strandPressable()` modifier for `.onTapGesture`-driven cards.
+// MARK: - Touch press feedback (iOS) — the hover lift's touch analogue
+// `.onHover` never fires on touch, so tappable cards feel dead on iPhone. This adds a subtle press-down (scale + edge emphasis), swapping the transform for a dim under Reduce Motion.
+// Hover and pressed animate distinct properties on the shared `StrandMotion.interactive` spring, so they compose without a double-bounce.
+// Exposed as a ButtonStyle (the `.plain` replacement) and a `.strandPressable()` modifier for `.onTapGesture` cards.
 
 /// Drop-in replacement for `.buttonStyle(.plain)` on full-card Buttons / NavigationLinks:
 /// a subtle press-down scale + hairline-strong edge.
@@ -169,9 +148,7 @@ public struct StrandPressableButtonStyle: ButtonStyle {
     }
 }
 
-/// Backs `.strandPressable()` — a press-down state for cards driven by `.onTapGesture`
-/// (no Button). A 0-distance drag tracks the finger; @GestureState auto-resets on release
-/// or when a parent scroll claims the gesture.
+/// Backs `.strandPressable()`: press-down for `.onTapGesture` cards. A 0-distance drag tracks the finger; @GestureState resets on release or when a parent scroll claims the gesture.
 public struct StrandPressableModifier: ViewModifier {
     public var cornerRadius: CGFloat
     public var scale: CGFloat

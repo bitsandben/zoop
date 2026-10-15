@@ -1,26 +1,20 @@
 import Foundation
 import WhoopStore
 
-// BodyInsights.swift — interpretations of the user's own history, one plain statement each.
-//
-// Every reading answers one question from data the app already stores ("what does my body show?") and
-// returns nil when there is not enough of it to say anything honest. The engine is locale-free: it hands
-// back typed numbers, a state and a short series for a chart; the app turns them into one sentence.
-// None of these readings feeds a score.
-//
+// Interpretations of the user's own history, one plain statement each. Every reading returns nil
+// when there is too little data; the engine is locale-free (typed numbers, a state, a chart series)
+// and none of it feeds a score.
 // - direction: is HRV (or resting HR) away from its own normal, and for how many days in a row?
 // - weekday: is one weekday reliably the low (or high) point of the recovery week?
-// - bounceBack: after the hardest days, how many mornings until recovery is back at its normal?
-// - zoneMix: share of recent training time spent easy (zones 1–2) against hard (zones 3–5).
-// - stressTiming: the hour of the waking day stress usually peaks, and the calmest one.
-// - strainSensitivity: how much a harder day lowers the next morning's recovery, per 10 effort points.
-//
-// Neighbours, so nothing here is computed twice: `ReadinessEngine` scores ONE day's HRV/RHR z-score (this
-// file reads the run of days); `ActivityCostEngine` costs each tagged sport against untouched rest days
-// (this file measures every hard day against its own trailing month, which still works for a wearer who
-// trains most days); `PatternInsights.weekdayPattern` draws every weekday's mean (this file only speaks
-// when one weekday stands out in most weeks). The split in `strainSensitivity` reuses
-// `PatternInsights.splitEffect`, and the bounce-back tolerance is `ActivityCostEngine.tolerance`.
+// - bounceBack: after the hardest days, how many mornings until recovery is back at normal?
+// - zoneMix: share of recent training time easy (zones 1-2) vs hard (zones 3-5).
+// - stressTiming: the hour stress usually peaks, and the calmest one.
+// - strainSensitivity: how much a harder day lowers next morning's recovery, per 10 effort points.
+// Neighbours, to avoid double computation: `ReadinessEngine` scores one day's z-score (this reads the
+// run of days); `ActivityCostEngine` costs tagged sports against rest days (this measures every hard
+// day against its own trailing month); `PatternInsights.weekdayPattern` draws every weekday's mean
+// (this speaks only when one stands out). `strainSensitivity` reuses `PatternInsights.splitEffect`,
+// and bounce-back uses `ActivityCostEngine.tolerance`.
 
 public enum BodyInsights {
 
@@ -33,8 +27,8 @@ public enum BodyInsights {
         public init(day: String, value: Double) { self.day = day; self.value = value }
     }
 
-    /// One day's effort (Zoop's 0–100 strain) and that morning's recovery (0–100). Recovery on `day`
-    /// belongs to the night BEFORE `day`, so the morning after a day's effort is the next row's recovery.
+    /// One day's effort (Zoop 0-100 strain) and that morning's recovery (0-100). Recovery on `day` belongs to
+    /// the night before, so the morning after a day's effort is the next row's recovery.
     public struct DayLoad: Equatable, Sendable {
         public let day: String
         public let strain: Double?
@@ -61,7 +55,7 @@ public enum BodyInsights {
 
     public struct Direction: Equatable, Sendable {
         public let trend: Trend
-        /// Consecutive latest readings beyond `zThreshold` on the same side (0 when there is no run).
+        /// Consecutive latest readings beyond `zThreshold` on the same side (0 when no run).
         public let streakDays: Int
         /// Mean of the last seven days, and of the thirty days before them.
         public let recentMean: Double
@@ -73,7 +67,7 @@ public enum BodyInsights {
         public let series: [DayValue]
     }
 
-    /// A day counts as "away from normal" at half a standard deviation from its trailing month.
+    /// A day is away from normal at half a standard deviation from its trailing month.
     static let zThreshold = 0.5
     /// A run of this many days is worth saying out loud.
     static let minStreak = 3
@@ -84,8 +78,8 @@ public enum BodyInsights {
     /// The latest reading must be at most this many days before `asOf`.
     static let maxStaleDays = 3
 
-    /// Reads where `values` stands against its own normal. `asOf` ("yyyy-MM-dd", usually today) makes a
-    /// stale history say nothing. Nil without 14 readings in the 30 days before the last week and 4 in it.
+    /// Where `values` stands against its own normal. `asOf` ("yyyy-MM-dd", usually today) makes a stale
+    /// history say nothing. Nil without 14 readings in the 30 days before the last week and 4 in it.
     public static func direction(_ values: [DayValue], asOf: String? = nil) -> Direction? {
         let byDay = dayMap(values)
         guard let last = byDay.keys.max() else { return nil }
@@ -98,8 +92,8 @@ public enum BodyInsights {
         let baseSD = sdFloor(sd(base), mean: baseMean)
         let recentMean = mean(recent)
 
-        // The run: walk back from the latest reading while each reading sits beyond the threshold on the
-        // same side as the latest one, against ITS OWN trailing month. One missing day is tolerated.
+        // The run: walk back from the latest reading while each sits beyond the threshold on the same side,
+        // against its own trailing month. One missing day is tolerated.
         func z(_ day: Int) -> Double? {
             guard let v = byDay[day] else { return nil }
             let prior = (day - baselineDays...day - 1).compactMap { byDay[$0] }
@@ -172,9 +166,9 @@ public enum BodyInsights {
     static let minWeekdayGap = 8.0
     static let minConsistency = 0.65
 
-    /// The weekday whose recovery is reliably lowest (and the reliably highest) over the last 26 weeks.
-    /// A weekday is named only when its mean sits at least 8 points from the other days AND it was on that
-    /// side of its own week in at least 65 % of weeks. Nil with fewer than 8 weeks or nothing that stands out.
+    /// The weekday whose recovery is reliably lowest (and highest) over the last 26 weeks: its mean sits at
+    /// least 8 points from the other days and it was on that side of its own week in at least 65% of weeks.
+    /// Nil with fewer than 8 weeks or nothing standing out.
     public static func weekday(_ recovery: [DayValue]) -> WeekdayReading? {
         let byDay = dayMap(recovery)
         guard let last = byDay.keys.max() else { return nil }
@@ -219,8 +213,8 @@ public enum BodyInsights {
     // MARK: - 3. Bounce-back after hard days
 
     public struct BounceBack: Equatable, Sendable {
-        /// Median mornings until recovery is back within `ActivityCostEngine.tolerance` of its normal.
-        /// Hard days that had not recovered after a week count as 8, so a value above 7 means "over a week".
+        /// Median mornings until recovery is back within `ActivityCostEngine.tolerance` of normal. Hard days
+        /// not recovered after a week count as 8, so above 7 means "over a week".
         public let medianDays: Double
         /// Hard days measured, and how many of them were still below normal a week later.
         public let events: Int
@@ -240,9 +234,9 @@ public enum BodyInsights {
     static let minBaselineForBounce = 10
     static let minBounceEvents = 5
 
-    /// After days in the user's top 20 % of effort, how many mornings until recovery is back at its normal.
-    /// Each hard day is measured against the median recovery of the 30 days before it. Nil with fewer than
-    /// 30 effort days or 5 measurable hard days.
+    /// After days in the user's top 20% of effort, how many mornings until recovery is back at normal; each
+    /// hard day is measured against the median recovery of the 30 days before it. Nil with fewer than 30
+    /// effort days or 5 measurable hard days.
     public static func bounceBack(_ days: [DayLoad]) -> BounceBack? {
         let (strain, recovery) = loadMaps(days)
         guard let last = (Array(strain.keys) + Array(recovery.keys)).max() else { return nil }
@@ -285,7 +279,7 @@ public enum BodyInsights {
     // MARK: - 4. Heart-rate zone mix
 
     public enum ZoneMixStyle: String, Equatable, Sendable {
-        /// At least 75 % of training time in zones 1–2 (close to the classic 80/20 split).
+        /// At least 75% of training time in zones 1-2 (close to an 80/20 split).
         case mostlyEasy
         /// Between half and three quarters easy.
         case mixed
@@ -309,9 +303,9 @@ public enum BodyInsights {
     static let minZoneSessions = 3
     static let minZoneMinutes = 90.0
 
-    /// Sums per-session zone minutes (each array is zones 1…5; shorter arrays are padded, extra entries
-    /// ignored). The caller picks the window (the app uses four weeks). Nil with fewer than 3 sessions
-    /// that carry zone time or under 90 minutes in total.
+    /// Sums per-session zone minutes (arrays are zones 1...5; shorter padded, extras ignored). The caller
+    /// picks the window (the app uses four weeks). Nil with fewer than 3 sessions with zone time or under
+    /// 90 minutes total.
     public static func zoneMix(sessions: [[Double]]) -> ZoneMix? {
         var total = [Double](repeating: 0, count: 5)
         var n = 0
@@ -353,9 +347,9 @@ public enum BodyInsights {
     static let minStressSpread = 0.4
     static let minPeakConsistency = 0.6
 
-    /// The hour stress usually peaks and the calmest hour, from several days of hourly levels (one array
-    /// per day). Nil with fewer than 7 days of 6+ scored hours, a spread under 0.4 on the 0–3 scale, or a
-    /// peak that leads on fewer than 60 % of days.
+    /// The hour stress usually peaks and the calmest hour, from hourly levels (one array per day). Nil with
+    /// fewer than 7 days of 6+ scored hours, a spread under 0.4 on the 0-3 scale, or a peak leading on
+    /// fewer than 60% of days.
     public static func stressTiming(days: [[HourLevel]]) -> StressTiming? {
         let usable = days.filter { Set($0.map(\.hour)).count >= minScoredHoursPerDay }
         guard usable.count >= minStressDays else { return nil }
@@ -414,7 +408,7 @@ public enum BodyInsights {
     static let minSensitivityPairs = 21
     static let minStrainSD = 3.0
 
-    /// How much a harder day lowers the next morning's recovery, from the last 180 days of (effort on D,
+    /// How much a harder day lowers next morning's recovery, from the last 180 days of (effort on D,
     /// recovery on D+1). Nil with fewer than 21 pairs or effort that barely varies.
     public static func strainSensitivity(_ days: [DayLoad]) -> StrainSensitivity? {
         let (strain, recovery) = loadMaps(days)
@@ -460,12 +454,12 @@ public enum BodyInsights {
 
     // MARK: - Day arithmetic (days since 1970-01-01, no Calendar)
 
-    /// "yyyy-MM-dd" → days since 1970-01-01, or nil when it does not parse.
+    /// "yyyy-MM-dd" to days since 1970-01-01, or nil.
     static func dayNumber(_ s: String) -> Int? {
         let p = s.split(separator: "-")
         guard p.count == 3, let y = Int(p[0]), let m = Int(p[1]), let d = Int(p[2]),
               (1...12).contains(m), (1...31).contains(d) else { return nil }
-        // Howard Hinnant's days_from_civil.
+        // Hinnant days_from_civil.
         let yy = m <= 2 ? y - 1 : y
         let era = (yy >= 0 ? yy : yy - 399) / 400
         let yoe = yy - era * 400
@@ -520,7 +514,7 @@ public enum BodyInsights {
         return (v.reduce(0) { $0 + ($1 - m) * ($1 - m) } / Double(v.count - 1)).squareRoot()
     }
 
-    /// A very steady baseline would turn a one-unit wobble into a large z; hold the spread at 3 % of the mean.
+    /// Hold the spread at 3% of the mean so a very steady baseline does not turn a one-unit wobble into a large z.
     static func sdFloor(_ s: Double, mean m: Double) -> Double { max(s, abs(m) * 0.03, 1e-9) }
 
     static func median(_ v: [Double]) -> Double {

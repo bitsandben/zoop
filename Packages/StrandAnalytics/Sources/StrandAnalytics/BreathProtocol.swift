@@ -1,18 +1,13 @@
 import Foundation
 
-// BreathProtocol.swift — content-driven breath sessions (stages + catalog + player).
-// Created: 2026-08-16
-// Last updated: 2026-08-16
-//
-// PURE + unit-tested. Mirrors the Ultrahuman-style “app is a renderer, protocols are content”
-// pattern without copying UH assets or copy. Presence Process tempos measured from public guides.
-// See docs/FEATURES.md (Breathe) and the Zoop breathwork catalog plan.
+// Content-driven breath sessions (stages, catalog, player): the app renders, protocols are content.
+// Pure. Presence Process tempos are measured from public guides. See docs/FEATURES.md (Breathe).
 
 /// How a protocol is driven in the UI.
 public enum BreathProtocolMode: String, Equatable, Sendable {
     /// Fixed stages + haptic/visual pacer.
     case playable
-    /// Education + session timer only (no aggressive auto-pacer) — safety for variable techniques.
+    /// Education and session timer only, no auto-pacer (safety for variable techniques).
     case guided
 }
 
@@ -22,7 +17,7 @@ public enum BreathProtocolCategory: String, Equatable, Sendable {
     case ans
     /// Presence Process consciously-connected tempos.
     case presence
-    /// Built-in Zoop biofeedback modes (Resonance / Calm) — not listed in this catalog table.
+    /// Built-in Zoop biofeedback modes (Resonance / Calm); not in the catalog table.
     case biofeedback
 }
 
@@ -31,7 +26,7 @@ public struct BreathStage: Equatable, Sendable {
     public let type: BreathPhase
     /// Stage length in milliseconds (explicit; no BPM clamp).
     public let durationMs: Int
-    /// Optional English UI label (e.g. left/right nostril); localize at the view layer.
+    /// Optional English UI label (e.g. nostril side); localize in the view.
     public let label: String?
 
     public init(type: BreathPhase, durationMs: Int, label: String? = nil) {
@@ -41,22 +36,22 @@ public struct BreathStage: Equatable, Sendable {
     }
 }
 
-/// One breath protocol: identity, education keys (English source strings), and optional stages.
+/// One breath protocol: identity, English source strings for education, and optional stages.
 public struct BreathProtocol: Equatable, Sendable, Identifiable {
     public let id: String
-    /// English source for `String(localized:)` — short pill / list title.
+    /// Short pill / list title.
     public let title: String
-    /// English source — one-line tagline under the orb when idle.
+    /// One-line tagline under the orb when idle.
     public let subtitle: String
-    /// English source — background / how-to for the ⓘ sheet.
+    /// Background / how-to for the info sheet.
     public let edu: String
-    /// English source — safety / who should skip; nil if none.
+    /// Safety note / who should skip; nil if none.
     public let caution: String?
-    /// English source — session length hint shown in the edu sheet.
+    /// Session length hint shown in the info sheet.
     public let sessionHint: String?
     public let mode: BreathProtocolMode
     public let category: BreathProtocolCategory
-    /// Default session length when the user picks this pace (Open / 5 / 10 / 15 override in UI).
+    /// Default session length when the user picks this pace (UI can override).
     public let recommendedDurationMs: Int
     /// Empty when `mode == .guided`.
     public let stages: [BreathStage]
@@ -95,7 +90,7 @@ public enum BreathProtocolPlayer {
     public static let holdLoops: Int = 0
     public static let textOnlyLoops: Int = 0
 
-    /// Map a stage type to the felt buzz count (parity with `BreathPacer` for inhale/exhale).
+    /// Felt buzz count for a stage type (matches `BreathPacer` for inhale/exhale).
     public static func loops(for phase: BreathPhase) -> Int {
         switch phase {
         case .inhale: return BreathPacer.inhaleLoops
@@ -104,9 +99,8 @@ public enum BreathProtocolPlayer {
         }
     }
 
-    /// Build cues covering `[0, sessionMs)` by repeating the protocol’s stage cycle.
-    /// Guided protocols or empty stages → `[]`. `sessionMs < 1` → `[]`.
-    /// Stops scheduling new stage onsets once `offsetMs >= sessionMs`.
+    /// Cues covering `[0, sessionMs)` by repeating the stage cycle. Guided protocols, empty stages or
+    /// `sessionMs < 1` give `[]`. No new stage onset is scheduled once `offsetMs >= sessionMs`.
     public static func schedule(_ proto: BreathProtocol, sessionMs: Int) -> [BreathCue] {
         guard proto.mode == .playable else { return [] }
         guard sessionMs >= 1 else { return [] }

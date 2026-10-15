@@ -1,10 +1,7 @@
 import SwiftUI
 
 // MARK: - Squircle ring
-//
-// The score ring from the redesign concept: a rounded-square outline rather than a circle. The path
-// starts at the top centre and runs clockwise, so trimming it to a fraction fills the ring the way a
-// circular gauge would.
+// The redesign's score ring: a rounded-square outline traced clockwise from the top centre, so trimming it to a fraction fills it like a circular gauge.
 
 /// A rounded square traced clockwise from the top centre. `cornerFraction` is the corner radius as a
 /// share of the shorter side; `smoothing` pulls the corner's control points toward the corner, so

@@ -1,16 +1,14 @@
 import Foundation
 
-// MARK: - MetricExplanation (explainer sheet content, CONCEPT §1.1)
+// MARK: - MetricExplanation (explainer sheet content)
 //
-// What the explainer shows beyond the readout: what the metric is, how it is computed, which data
-// went in, why the confidence is what it is, the 30-day trend and what moves it. Built by the
-// feature's `<Feature>Explanations.swift`; the sheet only lays it out.
+// What the explainer shows beyond the readout: what the metric is, how it is computed, the data that
+// went in, why the confidence is what it is, the 30-day trend and what moves it. The sheet only lays it out.
 
 public struct MetricExplanation: Equatable, Sendable {
 
     public struct Method: Equatable, Sendable {
         public let name: LocalizedStringResource
-        /// One line on how the number is computed.
         public let summary: LocalizedStringResource
         /// Literature reference, e.g. "Plews et al., 2012". Not translated.
         public let citation: String?
@@ -28,7 +26,6 @@ public struct MetricExplanation: Equatable, Sendable {
         }
         public let count: Count
         public let window: DateInterval?
-        /// The strap the data came from, e.g. "WHOOP 4.0". A product name, not translated.
         public let source: String?
 
         public init(count: Count, window: DateInterval? = nil, source: String? = nil) {
@@ -64,15 +61,12 @@ public struct MetricExplanation: Equatable, Sendable {
         }
     }
 
-    /// Two sentences at most.
     public let whatItIs: LocalizedStringResource
     public let method: Method
     public let dataUsed: DataUsed
-    /// Why the confidence is what it is ("12 of 14 nights had a clean HRV window").
     public let confidenceReason: LocalizedStringResource?
     /// Up to 30 days, oldest first. Missing days are simply absent, so the line breaks there.
     public let trend: [TrendPoint]
-    /// Top contributors, personal ones first; empty hides the section.
     public let contributors: [Contributor]
 
     public init(

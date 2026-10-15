@@ -1,20 +1,15 @@
 import Foundation
 import WhoopStore
 
-// MARK: - Training-load gauges (Zoop)
+// MARK: - Training-load gauges
 //
-// Two side-by-side readouts for the Workouts tab: Cardio and Muscular load. Each compares this week's
-// load with the user's OWN recent norm and marks a band around that norm. It is descriptive, never a
-// warning: nothing here feeds Readiness, Effort or any score, and the copy never mentions injury.
-//
-//   • Cardio reuses `TrainingLoadEngine` unchanged: acute = ATL (7-day EWMA of daily Effort), norm =
-//     CTL (42-day EWMA). Units are the stored Effort axis.
-//   • Muscular counts WORKING sets (performed, not warm-up), the unit `LiftMetrics` already reports:
-//     acute = sets in the last 7 days, norm = sets in the last 28 days / 4. Kilograms are not used,
-//     because volume is not comparable between exercises (see `LiftMetrics.volumeLoadKg`).
-//
-// Band = 0.8...1.3 × norm. Until `calibrationDays` of history exist the gauge says "Calibrating"
-// rather than placing a value against a norm it has not seen.
+// Cardio and Muscular load readouts for the Workouts tab. Each compares this week's load with the user's OWN
+// recent norm and marks a band (0.8...1.3 x norm) around it. Descriptive only: nothing here feeds Readiness,
+// Effort or any score, and the copy never mentions injury. Until `calibrationDays` of history exist the gauge
+// says "Calibrating".
+//   - Cardio reuses `TrainingLoadEngine`: acute = ATL (7-day), norm = CTL (42-day), in stored Effort units.
+//   - Muscular counts WORKING sets (performed, not warm-up): acute = last 7 days, norm = last 28 days / 4.
+//     Kilograms are not used because volume is not comparable between exercises (`LiftMetrics.volumeLoadKg`).
 
 public enum TrainingLoadGauge {
 
@@ -32,13 +27,13 @@ public enum TrainingLoadGauge {
 
     public struct Reading: Equatable, Sendable {
         public let state: State
-        /// This week's load. Nil only when there is nothing to show at all.
+        /// This week's load; nil only when there is nothing to show.
         public let acute: Double?
-        /// The user's norm (CTL, or weekly sets over four weeks). Nil while calibrating.
+        /// The user's norm (CTL, or weekly sets over four weeks); nil while calibrating.
         public let chronic: Double?
         public let optimalLow: Double?
         public let optimalHigh: Double?
-        /// The gauge's right-hand end, a round number above both the value and the band.
+        /// The gauge's right-hand end: a round number above both the value and the band.
         public let scaleMax: Double
         public init(state: State, acute: Double?, chronic: Double?, optimalLow: Double?,
                     optimalHigh: Double?, scaleMax: Double) {
@@ -51,7 +46,7 @@ public enum TrainingLoadGauge {
         }
     }
 
-    /// Classify `acute` against a norm. Calibrating when `historyDays` is short.
+    /// Classifies `acute` against a norm; calibrating when `historyDays` is short.
     public static func reading(acute: Double?, chronic: Double?, historyDays: Int) -> Reading {
         guard historyDays >= calibrationDays, let a = acute, let c = chronic, a.isFinite, c.isFinite else {
             return Reading(state: .calibrating, acute: acute, chronic: nil, optimalLow: nil,
@@ -85,8 +80,7 @@ public enum TrainingLoadGauge {
 
     // MARK: Muscular
 
-    /// One finished lift session. `daysAgo` is whole local days before today (0 = today); the caller
-    /// resolves it with the user's calendar so this stays timezone-free.
+    /// One finished lift session; `daysAgo` is whole local days before today (resolved by the caller, so this stays timezone-free).
     public struct LiftDay: Sendable {
         public let daysAgo: Int
         public let sets: [LiftSetRow]
@@ -101,7 +95,7 @@ public enum TrainingLoadGauge {
         sets.filter { !$0.isWarmup && LiftMetrics.isPerformed(reps: $0.reps) }.count
     }
 
-    /// Muscular load. `historyDays` = days since the first lift session on record (inclusive of today).
+    /// Muscular load; `historyDays` = days since the first lift session on record, inclusive of today.
     public static func muscular(sessions: [LiftDay], historyDays: Int) -> Reading {
         var acute = 0, chronic = 0
         for s in sessions where s.daysAgo >= 0 {
@@ -117,7 +111,7 @@ public enum TrainingLoadGauge {
 
     public struct StrengthWeek: Equatable, Sendable {
         public let workingSets: Int
-        /// Σ weight × reps over working sets, kg. 0 when nothing countable was logged.
+        /// Sum of weight x reps over working sets, kg; 0 when nothing countable was logged.
         public let volumeKg: Double
         public init(workingSets: Int, volumeKg: Double) {
             self.workingSets = workingSets
@@ -136,7 +130,7 @@ public enum TrainingLoadGauge {
 
     // MARK: Helpers
 
-    /// Smallest of 1, 2, 2.5, 5 × 10ⁿ at or above `v`, so the gauge ends on a readable number.
+    /// Smallest of 1, 2, 2.5, 5 x 10^n at or above `v`, so the gauge ends on a readable number.
     public static func niceCeiling(_ v: Double) -> Double {
         guard v.isFinite, v > 0 else { return 1 }
         let mag = pow(10, floor(log10(v)))

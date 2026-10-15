@@ -1,6 +1,6 @@
 import Foundation
 
-/// The eight step-detail windows. Kotlin twin: `StepsDetailRange`.
+/// The eight step-detail windows.
 public enum StepsDetailRange: String, CaseIterable, Sendable {
     case week = "W"
     case twoWeeks = "2W"
@@ -12,7 +12,6 @@ public enum StepsDetailRange: String, CaseIterable, Sendable {
     case all = "ALL"
 
     /// Inclusive calendar-day count, or nil for all history.
-    /// Kotlin twin: `StepsDetailRange.dayCount`.
     public func dayCount() -> Int? {
         switch self {
         case .week: return 7
@@ -26,7 +25,6 @@ public enum StepsDetailRange: String, CaseIterable, Sendable {
         }
     }
 
-    /// Kotlin twin: `StepsDetailRange.granularity`.
     fileprivate func granularity() -> StepsDetailGranularity {
         switch self {
         case .week, .twoWeeks, .threeWeeks, .month: return .daily
@@ -36,7 +34,7 @@ public enum StepsDetailRange: String, CaseIterable, Sendable {
     }
 }
 
-/// One already-resolved daily step observation; Kotlin uses the same fields and validation boundary.
+/// One already-resolved daily step observation.
 public struct StepsDetailReading: Equatable, Sendable {
     public let day: String
     public let value: Double
@@ -48,7 +46,6 @@ public struct StepsDetailReading: Equatable, Sendable {
 }
 
 /// One chart bucket, retaining the raw sum and observed-day denominator.
-/// Kotlin uses the same key, display anchor, sum, observed-day count and rounded mean.
 public struct StepsDetailBucket: Equatable, Sendable {
     public let key: String
     public let displayDay: String
@@ -72,13 +69,9 @@ private enum StepsDetailGranularity {
     case monthly
 }
 
-/// Pure calendar projection for step-detail charts. Swift and Kotlin deliberately expose the same
-/// inputs and outputs, and both are pinned by the one Android-hosted JSON oracle.
-/// Kotlin twin: `StepsDetailDensity`.
+/// Pure calendar projection for step-detail charts.
 public enum StepsDetailDensity {
-    /// Window, deduplicate and aggregate readings. The explicit anchor is optional so callers that
-    /// already know the latest valid measurement can reuse it without changing the contract.
-    /// Kotlin twin: `StepsDetailDensity.project`.
+    /// Windows, deduplicates and aggregates readings. The anchor is optional; by default the newest valid day.
     public static func project(readings: [StepsDetailReading], range: StepsDetailRange,
                                anchorDay: String? = nil) -> [StepsDetailBucket] {
         var byDay: [LocalCalendarDate: Double] = [:]
@@ -130,8 +123,7 @@ public enum StepsDetailDensity {
         }
     }
 
-    /// Parse exactly yyyy-MM-dd and reject impossible proleptic-Gregorian dates.
-    /// Kotlin twin: `StepsDetailDensity.strictDay`.
+    /// Parses exactly yyyy-MM-dd and rejects impossible proleptic-Gregorian dates.
     private static func strictDay(_ text: String) -> LocalCalendarDate? {
         let bytes = Array(text.utf8)
         guard bytes.count == 10, bytes[4] == 45, bytes[7] == 45 else { return nil }
@@ -146,7 +138,7 @@ public enum StepsDetailDensity {
         return LocalCalendarDate(year: year, month: month, day: day)
     }
 
-    /// Proleptic-Gregorian month length. Kotlin twin: `StepsDetailDensity.daysInMonth`.
+    /// Proleptic-Gregorian month length.
     private static func daysInMonth(year: Int, month: Int) -> Int {
         switch month {
         case 2: return isLeapYear(year) ? 29 : 28
@@ -155,13 +147,12 @@ public enum StepsDetailDensity {
         }
     }
 
-    /// Gregorian leap-year rule. Kotlin twin: `StepsDetailDensity.isLeapYear`.
+    /// Gregorian leap-year rule.
     private static func isLeapYear(_ year: Int) -> Bool {
         year.isMultiple(of: 4) && (!year.isMultiple(of: 100) || year.isMultiple(of: 400))
     }
 
     /// Canonical bucket key and period-start display anchor.
-    /// Kotlin twin: `StepsDetailDensity.bucketIdentity`.
     private static func bucketIdentity(for day: LocalCalendarDate,
                                        granularity: StepsDetailGranularity) -> (key: String, displayDay: String) {
         switch granularity {
@@ -178,7 +169,6 @@ public enum StepsDetailDensity {
     }
 
     /// Positive half-up rounding, independent of platform banker-rounding defaults.
-    /// Kotlin twin: `StepsDetailDensity.positiveHalfUp`.
     private static func positiveHalfUp(_ value: Double) -> Int {
         Int(floor(value + 0.5))
     }

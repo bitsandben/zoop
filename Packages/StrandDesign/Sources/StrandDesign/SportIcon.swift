@@ -6,10 +6,8 @@ import AppKit
 #endif
 
 // MARK: - Known workout types (catalog lockstep)
-//
-// Raw values match `WorkoutCatalog.all` / Android `WorkoutSport.all` display names exactly.
-// Free-text sports resolve into these cases (or the unknown fallback) so UI never switches on
-// ad-hoc strings. When the catalogue gains a sport, add a case here in the same PR.
+// Raw values match `WorkoutCatalog.all` / Android `WorkoutSport.all` display names exactly; free-text sports resolve into these cases (or the unknown fallback).
+// When the catalogue gains a sport, add a case here.
 
 /// Every named sport the workout pickers suggest. Exhaustive for iconography.
 public enum KnownWorkoutType: String, CaseIterable, Sendable {
@@ -68,7 +66,7 @@ public enum KnownWorkoutType: String, CaseIterable, Sendable {
     case padel = "Padel"
     case pickleball = "Pickleball"
     case bowling = "Bowling"
-    // #222 follow-up batch. Raw values byte-identical to WorkoutCatalog / Android WorkoutSport.
+    // Raw values byte-identical to WorkoutCatalog / Android WorkoutSport.
     case iceHockey = "Ice Hockey"
     case americanFootball = "American football"
     case australianFootball = "Australian football"
@@ -100,7 +98,7 @@ public enum KnownWorkoutType: String, CaseIterable, Sendable {
     case spinning = "Spinning"
     case jumpRope = "Jump rope"
     case powerlifting = "Powerlifting"
-    // Long-tail batch. Raw values byte-identical to WorkoutCatalog / Android.
+    // Long-tail batch (raw values byte-identical to the catalogue).
     case rucking = "Rucking"
     case sandVolleyball = "Sand volleyball"
     case archery = "Archery"
@@ -110,8 +108,7 @@ public enum KnownWorkoutType: String, CaseIterable, Sendable {
     case netball = "Netball"
     case gaelicFootball = "Gaelic football"
     case spikeball = "Spikeball"
-    // WHOOP-parity batch: activities in WHOOP's catalogue Zoop lacked (raw values byte-identical to
-    // WorkoutCatalog / Android WorkoutSport). Icons are distinct SF Symbols available on iOS 17 / macOS 13.
+    // Activities from WHOOP's catalogue Zoop lacked (raw values byte-identical to WorkoutCatalog). Icons are distinct SF Symbols available on iOS 17.
     case meditation = "Meditation"
     case horsebackRiding = "Horseback riding"
     case wheelchair = "Wheelchair"
@@ -173,9 +170,7 @@ public enum KnownWorkoutType: String, CaseIterable, Sendable {
         case s.contains("martial") || s.contains("jiu") || s.contains("judo")
             || s.contains("karate") || s.contains("mma") || s.contains("muay"):
                                                             return .martialArts
-        // "danc" rather than "dance": the common inflection is "dancing", which does not contain
-        // "dance", so the exact catalogue name was the only thing matching. Breakdancing and any
-        // free-typed "dancing" fell through to the generic icon.
+        // "danc" not "dance": the common inflection "dancing" does not contain "dance".
         case s.contains("danc") || s.contains("ballet"):    return .dancing
         case s.contains("golf"):                            return .golf
         case s.contains("climb"):                           return .climbing
@@ -227,10 +222,8 @@ public enum WorkoutTypeIconography {
             return .system("figure.run")
         case .walking:
             return .system("figure.walk")
-        // The WHOOP-parity sports. Each needs a glyph no other sport uses: the live-workout
-        // control draws them side by side, and testCatalogueSportsHaveUniqueWorkoutTypeIcons
-        // enforces it. Several of these are approximations rather than true depictions, marked
-        // below, and each carries a fallback for an OS without the preferred symbol.
+        // These sports each need a glyph no other sport uses (the live-workout control draws them side by side; testCatalogueSportsHaveUniqueWorkoutTypeIcons enforces it).
+        // Some are approximations, marked below; each has a fallback for an OS without the preferred symbol.
         // Nordic walking: poles make it a different gait from a plain walk.
         case .nordicWalking:
             return systemOrCustom("figure.walk.motion", fallbackSystem: "figure.walk")
@@ -342,8 +335,7 @@ public enum WorkoutTypeIconography {
             return systemOrCustom("figure.pickleball", .pickleballPaddle)
         case .bowling:
             return .system("figure.bowling")
-        // #222 follow-up batch. Each sport gets its OWN symbol — the icon tests require a distinct glyph
-        // + identity per case, so no two share one (that's why e.g. spinning ≠ indoor cycle here).
+        // Each sport gets its OWN symbol; the icon tests require a distinct glyph per case (hence spinning ≠ indoor cycle).
         case .iceHockey:            return .system("figure.hockey")
         case .americanFootball:     return .system("figure.american.football")
         case .australianFootball:   return .system("figure.australian.football")
@@ -695,7 +687,6 @@ struct SquashRacketShape: Shape {
         path.addEllipse(in: head)
         path.move(to: CGPoint(x: cx, y: head.maxY - s * 0.02))
         path.addLine(to: CGPoint(x: cx, y: rect.minY + s * 0.92))
-        // Small ball near throat.
         let r = s * 0.07
         path.addEllipse(in: CGRect(x: cx + s * 0.18, y: head.midY, width: r * 2, height: r * 2))
         return path
@@ -709,10 +700,8 @@ struct TreadmillBadgeShape: Shape {
     func path(in rect: CGRect) -> Path {
         let s = min(rect.width, rect.height)
         var path = Path()
-        // Deck
         path.move(to: CGPoint(x: rect.minX + s * 0.08, y: rect.minY + s * 0.72))
         path.addLine(to: CGPoint(x: rect.minX + s * 0.92, y: rect.minY + s * 0.72))
-        // Console upright
         path.move(to: CGPoint(x: rect.minX + s * 0.78, y: rect.minY + s * 0.72))
         path.addLine(to: CGPoint(x: rect.minX + s * 0.78, y: rect.minY + s * 0.28))
         path.addLine(to: CGPoint(x: rect.minX + s * 0.58, y: rect.minY + s * 0.28))
@@ -796,9 +785,7 @@ struct ShuttlecockShape: Shape {
         let s = min(rect.width, rect.height)
         let cx = rect.midX
         var path = Path()
-        // Cork
         path.addEllipse(in: CGRect(x: cx - s * 0.12, y: rect.minY + s * 0.62, width: s * 0.24, height: s * 0.22))
-        // Skirt feathers
         for dx in [-0.28, -0.14, 0.0, 0.14, 0.28] as [CGFloat] {
             path.move(to: CGPoint(x: cx, y: rect.minY + s * 0.68))
             path.addLine(to: CGPoint(x: cx + dx * s, y: rect.minY + s * 0.12))
@@ -824,14 +811,11 @@ struct RowMachineBadgeShape: Shape {
     func path(in rect: CGRect) -> Path {
         let s = min(rect.width, rect.height)
         var path = Path()
-        // Rail
         path.move(to: CGPoint(x: rect.minX + s * 0.08, y: rect.minY + s * 0.70))
         path.addLine(to: CGPoint(x: rect.minX + s * 0.92, y: rect.minY + s * 0.70))
-        // Seat
         path.addRoundedRect(in: CGRect(x: rect.minX + s * 0.30, y: rect.minY + s * 0.52,
                                        width: s * 0.28, height: s * 0.14),
                             cornerSize: CGSize(width: 3, height: 3))
-        // Flywheel
         path.addEllipse(in: CGRect(x: rect.minX + s * 0.68, y: rect.minY + s * 0.38,
                                    width: s * 0.24, height: s * 0.24))
         return path

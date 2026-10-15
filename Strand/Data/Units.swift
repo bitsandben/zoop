@@ -4,120 +4,81 @@ import StrandDesign
 
 // MARK: - Unit system preference
 //
-// Zoop stores EVERYTHING in SI (km, kg, cm, °C) — the importers normalise on the way in, so this is a
-// purely cosmetic, display-only layer. There is no data migration and nothing on disk changes when the
-// user flips this. Body measurements and exercise distance each have their own Metric/Imperial choice,
-// with a SEPARATE temperature override, because regional conventions commonly mix pounds with kilometres
-// (or kg/cm with °F). Default is Metric — most of the world, and it matches what we store.
-//
-// Persisted via @AppStorage (UserDefaults), the same mechanism every other macOS Zoop preference uses.
-// The Android side mirrors this exactly in Units.kt + ZoopPrefs.
+// Everything is stored in SI (km, kg, cm, °C); units are a display-only layer. Body measurements and
+// exercise distance have separate Metric/Imperial choices, plus a SEPARATE temperature override.
 
-/// A Metric/Imperial display choice. Body measurements and exercise distance persist separate values.
 enum UnitSystem: String, CaseIterable, Identifiable {
     case metric
     case imperial
     var id: String { rawValue }
 
-    /// "Follow body measurements" pairs temperature with the body choice; an explicit case lets the
-    /// user pin °C or °F independently.
     var temperatureMatching: TemperatureUnit { self == .imperial ? .fahrenheit : .celsius }
 }
 
-/// Temperature display unit. Kept separate from `UnitSystem` so it can be overridden on its own.
 enum TemperatureUnit: String, CaseIterable, Identifiable {
     case celsius
     case fahrenheit
     var id: String { rawValue }
 }
 
-/// How the Effort score is displayed (#268). Zoop's Effort is stored 0–100 (StrainScorer.maxStrain = 100);
-/// people coming from WHOOP often think in its 0–21 Day Strain axis, so this purely cosmetic toggle lets
-/// the SAME stored value be shown on either scale. Default is Zoop's own 0–100 — the data never changes.
+/// Effort is stored 0-100; this cosmetic toggle shows the same value on WHOOP's 0-21 Day Strain axis (#268).
 enum EffortScale: String, CaseIterable, Identifiable {
-    /// Zoop's native 0–100 axis (the stored value, one decimal).
     case hundred
-    /// WHOOP's 0–21 Day Strain axis — the stored 0–100 value rescaled down for display only.
     case whoop
     var id: String { rawValue }
 }
 
-/// How the trend charts (Trends tab) are drawn — a purely cosmetic, display-only toggle. The plotted
-/// data is identical on both settings; only the mark geometry changes (gradient line + area vs vertical
-/// bars). Default is the classic line. Distinct from `ChartStyle`, which chooses the colour ramp; this
-/// chooses line-vs-bar. Mirrored on Android by ZoopPrefs("trend.chart.style").
+/// Trends tab chart style (line + area vs bars). Display-only; the plotted data is identical.
 enum TrendChartStyle: String, CaseIterable, Identifiable {
-    /// The classic gradient-stroked line with a soft area fill (the long-standing look).
     case line
-    /// Vertical bars from the axis baseline, one per sample, value-ramp filled.
     case bar
     var id: String { rawValue }
-    /// Segmented-control label.
     var label: String { self == .bar ? "Bars" : "Line" }
 }
 
-/// Which sleep window the nightly HRV is measured over (#141). Zoop historically averages RMSSD across the
-/// WHOLE night (every stage); WHOOP/Polar/etc. sample the last slow-wave-sleep window, which reads lower.
-/// This lets a user match that. It CHANGES the computed avgHrv (NOT display-only), so a switch re-scores +
-/// re-baselines. Default is the historical whole-night value. Mirrored on Android by ZoopPrefs("hrv.window").
+/// Which sleep window the nightly HRV is measured over (#141). `whole` averages RMSSD across the whole
+/// night; WHOOP and others sample the last slow-wave window, which reads lower. NOT display-only: it
+/// changes the computed avgHrv, so a switch re-scores and re-baselines.
 enum HrvWindow: String, CaseIterable, Identifiable {
-    /// RMSSD averaged over every 5-min window of the night (Zoop's long-standing value).
     case whole
-    /// RMSSD over DEEP (slow-wave) sleep windows only — the window WHOOP samples.
+    /// RMSSD over DEEP (slow-wave) sleep windows only, the window WHOOP samples.
     ///
-    /// "Comparable to WHOOP" describes the METHOD, not the accuracy of the resulting number: the deep
-    /// windows come from Zoop's own stager, not the strap. `Tools/SleepPSG` scores that stager against
-    /// PSG truth over 31 subjects / 26 773 epochs and measures deep at 18.94 % predicted vs 13.76 %
-    /// truth — a +5.18 pp bias, roughly 38 % more deep epochs than exist, at four-class kappa 0.356.
-    /// An over-inclusive deep window pulls this value back toward the whole-night mean, which is the
-    /// one thing the setting exists not to be.
-    ///
-    /// So this stays opt-in and `whole` stays the default. #1008 tracks moving it, gated on that bias
-    /// coming down; re-run the benchmark before changing the default rather than assuming it has.
+    /// "Comparable to WHOOP" describes the METHOD, not the accuracy: the deep windows come from Zoop's own
+    /// stager, which `Tools/SleepPSG` measures at 18.94 % predicted deep vs 13.76 % truth (+5.18 pp bias,
+    /// four-class kappa 0.356). An over-inclusive deep window pulls this value toward the whole-night mean.
+    /// So this stays opt-in and `whole` stays the default (#1008); re-run the benchmark before changing it.
     case deep
     var id: String { rawValue }
-    /// Segmented-control label.
     var label: String { self == .deep ? "Deep sleep" : "Whole night" }
 }
 
-/// UserDefaults keys and backwards-compatible preference resolution.
 enum UnitPrefs {
-    /// The original combined preference now owns body measurements. Keeping its key preserves every
-    /// existing user's kg/cm or lb/ft-in choice without a migration.
+    /// The original combined preference, now owning body measurements. Keeping its key preserves existing
+    /// kg/cm or lb/ft-in choices without a migration.
     static let systemKey = "units.system"
-    /// Exercise distance + pace. Empty/unset follows `systemKey`, preserving the pre-#1913 behaviour.
     static let distanceSystemKey = "units.distance"
-    /// Temperature override. Empty string = "follow body measurements" (the default).
     static let temperatureKey = "units.temperature"
 
-    /// #1846: which skin-temp number the cards lead with — absent/`""` = a temperature (the default), or
-    /// `SkinTempDisplay.Kind.deviation.rawValue` to lead with the ±baseline move. Display-only; nothing
-    /// stored ever changes. Same key string as the Android `units.skinTempDisplay` pref.
+    /// Which skin-temp number the cards lead with (#1846): absent/`""` = a temperature, or
+    /// `SkinTempDisplay.Kind.deviation.rawValue` for the signed move from baseline. Display-only.
     static let skinTempDisplayKey = "units.skinTempDisplay"
-    /// Effort display scale (#268). Stored raw is an `EffortScale` rawValue; an unset/unknown value
-    /// resolves to `.hundred` (Zoop's native axis). Mirrored on Android by ZoopPrefs("effort.scale").
     static let effortScaleKey = "effort.scale"
 
-    /// Trend chart style (line vs bar). Stored raw is a `TrendChartStyle` rawValue; an unset/unknown
-    /// value resolves to `.line` (the classic look). Display-only — the plotted data never changes.
-    /// Mirrored on Android by ZoopPrefs("trend.chart.style").
     static let trendChartStyleKey = "trend.chart.style"
 
-    /// Nightly-HRV window (#141). Stored raw is an `HrvWindow` rawValue; unset/unknown resolves to `.whole`
-    /// (the historical whole-night value). NOT display-only — it changes the computed avgHrv, so the engine
-    /// reads it and a Settings switch re-scores. Mirrored on Android by ZoopPrefs("hrv.window").
+    /// Nightly-HRV window (#141): an `HrvWindow` rawValue; unset/unknown resolves to `.whole`. NOT
+    /// display-only: the engine reads it and a Settings switch re-scores.
     static let hrvWindowKey = "hrv.window"
 
-    /// Display factor for the #268 Effort scale: the stored 0-100 value multiplied by this renders on
-    /// the user's chosen axis (1.0 for the native 0-100, 0.21 for the WHOOP-style 0-21). Display-only,
-    /// mirrors Android's effortDisplayFactor helper so digest sentences match the charts on both.
+    /// Display factor for the Effort scale: the stored 0-100 value times this renders on the chosen axis
+    /// (1.0 for 0-100, 0.21 for 0-21).
     static func currentEffortDisplayFactor() -> Double {
         let raw = UserDefaults.standard.string(forKey: effortScaleKey) ?? ""
         return raw == EffortScale.whoop.rawValue ? 0.21 : 1.0
     }
 
-    /// The persisted choices as `MetricUnit` display systems, for readout builders that run outside a
-    /// view and so cannot hold `@AppStorage`. Values stay SI; only the shown unit changes.
+    /// The persisted choices as `MetricUnit` display systems, for readout builders outside a view that cannot
+    /// hold `@AppStorage`. Values stay SI; only the shown unit changes.
     static func currentMetricMassSystem() -> MetricUnit.System {
         let raw = UserDefaults.standard.string(forKey: systemKey) ?? ""
         return UnitSystem(rawValue: raw) == .imperial ? .imperial : .metric
@@ -130,19 +91,17 @@ enum UnitPrefs {
         return unit == .fahrenheit ? .imperial : .metric
     }
 
-    /// Resolve temperature, following body measurements when no explicit override is set.
     static func resolveTemperature(system: UnitSystem, override raw: String) -> TemperatureUnit {
         if let explicit = TemperatureUnit(rawValue: raw) { return explicit }
         return system.temperatureMatching
     }
 
-    /// Resolve the exercise-distance system. Existing installs have no distance key, so an empty or
-    /// unknown value follows the original combined preference until the user chooses independently.
+    /// Resolves the exercise-distance system. An empty or unknown value follows the combined body preference
+    /// until the user chooses independently.
     static func resolveDistance(system: UnitSystem, override raw: String) -> UnitSystem {
         UnitSystem(rawValue: raw) ?? system
     }
 
-    /// Resolve the stored Effort-scale raw value, defaulting to Zoop's native 0–100 axis.
     static func resolveEffortScale(_ raw: String) -> EffortScale {
         EffortScale(rawValue: raw) ?? .hundred
     }
@@ -150,30 +109,20 @@ enum UnitPrefs {
 
 // MARK: - Pure conversion + formatting
 
-/// Pure, dependency-free unit conversion and display formatting. Every site that prints a distance,
-/// mass, height or temperature goes through here so a unit toggle reaches all of them at once.
-///
-/// The conversion factors are pinned by `UnitFormatterTests` — a wrong factor can't ship silently.
-/// Nothing here reads UserDefaults: callers pass the resolved `UnitSystem` / `TemperatureUnit` in, which
-/// keeps the formatter trivially testable and side-effect free.
 enum UnitFormatter {
 
     // MARK: Factors (single source of truth — tests pin these exact numbers)
 
-    /// 1 kilometre = 0.621371 miles.
     static let milesPerKilometer = 0.621371
-    /// 1 kilogram = 2.20462 pounds.
     static let poundsPerKilogram = 2.20462
-    /// 1 inch = 2.54 cm exactly → 1 cm = 1/2.54 inches.
     static let centimetersPerInch = 2.54
 
     // MARK: Distance (stored km)
 
-    /// km → miles.
     static func kmToMiles(_ km: Double) -> Double { km * milesPerKilometer }
 
-    /// Format a distance given in METRES (the stored unit for workout distance).
-    /// Metric: "1.2 km" / "850 m". Imperial: "0.7 mi" / "230 yd" for sub-mile distances.
+    /// Formats a distance given in METRES (the stored workout unit). Metric: "1.2 km" / "850 m".
+    /// Imperial: "0.7 mi" / "230 yd" for sub-mile distances.
     static func distanceFromMeters(_ meters: Double, system: UnitSystem) -> String {
         switch system {
         case .metric:
@@ -182,16 +131,14 @@ enum UnitFormatter {
         case .imperial:
             let miles = kmToMiles(meters / 1000.0)
             if miles >= 0.1 { return oneDecimal(miles) + " mi" }
-            // Below ~160 m show yards rather than a "0.0 mi" that reads as nothing.
+            // Below ~160 m show yards rather than a "0.0 mi".
             let yards = meters * 1.09361
             return "\(Int(yards.rounded())) yd"
         }
     }
 
-    /// Average pace for display: "m:ss /km" (metric) or "m:ss /mi" (imperial). "—" when pace is undefined
-    /// (nil or ≤ 0, i.e. no distance yet). `secPerKm` is the seconds-per-kilometre the GPS recorder
-    /// publishes. Byte-identical to the Kotlin `UnitFormatter.paceFromSecPerKm`, and to the post-workout
-    /// pace shown in the workout detail view. (#1195)
+    /// Average pace for display: "m:ss /km" or "m:ss /mi"; "—" when undefined (nil or <= 0). `secPerKm` is
+    /// what the GPS recorder publishes; matches the post-workout pace in the workout detail view (#1195).
     static func paceFromSecPerKm(_ secPerKm: Double?, system: UnitSystem) -> String {
         guard let secPerKm, secPerKm > 0 else { return "—" }
         let (secs, label): (Double, String) = system == .imperial
@@ -201,8 +148,6 @@ enum UnitFormatter {
         return "\(s / 60):\(String(format: "%02d", s % 60)) \(label)"
     }
 
-    /// Format a distance given in KILOMETRES (e.g. the Workouts "Total Distance" sum), with one decimal
-    /// and a unit label. Metric: "12.4 km". Imperial: "7.7 mi".
     static func distanceFromKilometers(_ km: Double, system: UnitSystem) -> String {
         switch system {
         case .metric:   return oneDecimal(km) + " km"
@@ -210,12 +155,10 @@ enum UnitFormatter {
         }
     }
 
-    /// Unit label only, for sites that format the number separately. "km" / "mi".
     static func distanceUnit(_ system: UnitSystem) -> String {
         system == .imperial ? "mi" : "km"
     }
 
-    /// Format speed stored in kilometres/hour in the exercise-distance system.
     static func speedFromKilometersPerHour(_ kmh: Double?, system: UnitSystem) -> String? {
         guard let kmh, kmh.isFinite, kmh >= 0 else { return nil }
         switch system {
@@ -226,10 +169,8 @@ enum UnitFormatter {
 
     // MARK: Mass (stored kg)
 
-    /// kg → pounds.
     static func kgToPounds(_ kg: Double) -> Double { kg * poundsPerKilogram }
 
-    /// Format a mass given in KILOGRAMS with one decimal + unit. Metric: "74.5 kg". Imperial: "164.2 lb".
     static func massFromKilograms(_ kg: Double, system: UnitSystem) -> String {
         switch system {
         case .metric:   return oneDecimal(kg) + " kg"
@@ -237,17 +178,14 @@ enum UnitFormatter {
         }
     }
 
-    /// Mass unit label only. "kg" / "lb".
     static func massUnit(_ system: UnitSystem) -> String {
         system == .imperial ? "lb" : "kg"
     }
 
     // MARK: Height (stored cm)
 
-    /// cm → total inches.
     static func cmToInches(_ cm: Double) -> Double { cm / centimetersPerInch }
 
-    /// Decompose a height in CENTIMETRES into whole feet + inches (inches rounded, carried into feet).
     static func cmToFeetInches(_ cm: Double) -> (feet: Int, inches: Int) {
         let totalInches = Int(cmToInches(cm).rounded())
         var feet = totalInches / 12
@@ -256,24 +194,20 @@ enum UnitFormatter {
         return (feet, inches)
     }
 
-    /// Format a height given in CENTIMETRES. Metric: "178 cm". Imperial: "5′ 10″".
     static func heightFromCentimeters(_ cm: Double, system: UnitSystem) -> String {
         switch system {
         case .metric:
             return "\(Int(cm.rounded())) cm"
         case .imperial:
             let (ft, inch) = cmToFeetInches(cm)
-            // Prime/double-prime are the conventional ft/in glyphs and read cleanly at small sizes.
             return "\(ft)′ \(inch)″"
         }
     }
 
     // MARK: Temperature (stored °C — absolute)
 
-    /// °C → °F: F = C * 9/5 + 32.
     static func celsiusToFahrenheit(_ c: Double) -> Double { c * 9.0 / 5.0 + 32.0 }
 
-    /// Format an ABSOLUTE temperature in CELSIUS. Metric: "33.4 °C". Imperial: "92.1 °F".
     static func temperatureFromCelsius(_ c: Double, unit: TemperatureUnit, decimals: Int = 1) -> String {
         switch unit {
         case .celsius:    return decimalString(c, decimals) + " °C"
@@ -281,15 +215,10 @@ enum UnitFormatter {
         }
     }
 
-    /// °C delta → °F delta: a DIFFERENCE scales by 9/5 with NO +32 offset (the offset cancels between
-    /// the two absolute temperatures a delta is made of). Exposed as a Double because callers that need
-    /// locale-aware decimals — the illness-signal label formats through `AppLanguage.activeLocale` so a
-    /// German reader sees "0,7" — have to do their own formatting and would otherwise inline the 9/5,
-    /// scattering the one rule that must not drift.
+    /// °C delta to °F delta: a DIFFERENCE scales by 9/5 with NO +32 offset. A Double so callers can do their
+    /// own locale-aware formatting without inlining the 9/5.
     static func celsiusDeltaToFahrenheit(_ dc: Double) -> Double { dc * 9.0 / 5.0 }
 
-    /// Format a temperature DEVIATION (a ±Δ°C, e.g. the skin-temp deviation pipeline). A delta scales by
-    /// 9/5 but does NOT add the +32 offset — that would be wrong for a difference.
     static func temperatureDeltaFromCelsius(_ dc: Double, unit: TemperatureUnit, decimals: Int = 1) -> String {
         switch unit {
         case .celsius:    return decimalString(dc, decimals) + " °C"
@@ -297,17 +226,12 @@ enum UnitFormatter {
         }
     }
 
-    /// The skin-temperature phrase used by the illness-signal label — number AND unit chip, ready to
-    /// interpolate into one `%@`.
+    /// The skin-temperature phrase used by the illness-signal label: number and unit chip, ready for one `%@`.
     ///
-    /// #111/#622: the field is BIMODAL. An imported night carries an ABSOLUTE wrist °C, a live one a
-    /// signed DEVIATION from baseline, and they share a column — so the +32 offset belongs to only one
-    /// of them, and the chip is "°F" for one and "Δ°F" for the other. Both come from `SkinTempDisplay`,
-    /// the same authority the Today and Health tiles use.
-    ///
-    /// The NUMBER is formatted here rather than by `SkinTempDisplay.format` purely so it can honour
-    /// [locale]: the banner formats through `AppLanguage.activeLocale`, and a German reader must see
-    /// "0,7" where the package's plain `String(format:)` would give "0.7". Pass nil for POSIX decimals.
+    /// The field is BIMODAL (#111/#622): an imported night carries an ABSOLUTE wrist °C, a live one a signed
+    /// DEVIATION, in one column, so the +32 offset applies to only one and the chip is "°F" or "Δ°F". Both
+    /// come from `SkinTempDisplay`. The number is formatted here only to honour [locale] (a German reader
+    /// must see "0,7"); pass nil for POSIX decimals.
     static func skinTempSignalPhrase(_ value: Double, fahrenheit: Bool, locale: Locale?) -> String {
         let kind = SkinTempDisplay.kind(of: value)
         let shown: Double
@@ -320,33 +244,26 @@ enum UnitFormatter {
         return number + " " + SkinTempDisplay.unitSymbol(kind: kind, fahrenheit: fahrenheit)
     }
 
-    /// Temperature unit label only. "°C" / "°F".
     static func temperatureUnit(_ unit: TemperatureUnit) -> String {
         unit == .fahrenheit ? "°F" : "°C"
     }
 
     // MARK: Effort scale (stored 0–100 — #268)
 
-    /// Zoop stores Effort 0–100 (StrainScorer.maxStrain = 100). WHOOP's Day Strain axis is 0–21, and
-    /// the import boundary rescales by 100/21 (WhoopExportImporter.dayStrainToEffortScale), so the exact
-    /// inverse for a display-only 0–100 → 0–21 conversion is ×21/100. Kept byte-identical to that factor
-    /// and to the Android `UnitFormatter.EFFORT_SCALE_FACTOR`. A wrong factor is pinned by the formatter tests.
+    /// Effort is stored 0-100 and WHOOP's Day Strain axis is 0-21. The import boundary rescales by 100/21
+    /// (WhoopExportImporter.dayStrainToEffortScale), so the display inverse is x21/100.
     static let effortScaleFactor = 21.0 / 100.0
 
-    /// The stored 0–100 Effort value mapped onto the selected display scale (the raw number, no unit).
     static func effortValue(_ value: Double, scale: EffortScale) -> Double {
         scale == .whoop ? value * effortScaleFactor : value
     }
 
-    /// Format a stored 0–100 Effort value for display on the selected scale, to one decimal — the single
-    /// helper every Effort read-out (Today tile, Intelligence, Live, Trends, Workouts) routes through so
-    /// the toggle reaches all of them at once. The stored value is unchanged; only the display converts.
+    /// Formats a stored 0-100 Effort value on the selected scale to one decimal. Every Effort read-out routes
+    /// through this so the toggle reaches all of them.
     static func effortDisplay(_ value: Double, scale: EffortScale) -> String {
         oneDecimal(effortValue(value, scale: scale))
     }
 
-    /// The "out of" denominator label for the selected Effort scale — "100" or "21". Used by the tile
-    /// caption ("of 100"/"of 21"), the chart unit ("/ 100"/"/ 21") and the model-breakdown axis label.
     static func effortScaleMax(_ scale: EffortScale) -> String {
         scale == .whoop ? "21" : "100"
     }

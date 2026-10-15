@@ -1,27 +1,20 @@
 import Foundation
 
-// MARK: - MetricArbitrationPolicy (v5 — Local Multi-Device Fusion)
+// MARK: - MetricArbitrationPolicy (local multi-device fusion)
 //
-// The heart of v5 per docs/superpowers/specs/2026-06-19-v5-local-multi-device-fusion-design.md:
-// a DATA table (not if/else branches) keyed by metric × source that yields a trust tier + a plain,
-// published reason string, plus the per-metric cross-validation tolerances. It is the single place a
-// future Polar/Garmin/Oura source is registered. Pure constants + two lookups. Value-for-value Kotlin
-// twin in android/.../analytics/MetricArbitrationPolicy.kt.
+// A data table keyed by metric x source that yields a trust tier, a plain published reason string and the
+// per-metric cross-validation tolerances; the single place a new source is registered. Pure constants and lookups.
 //
-// Trust tiers (lower = more trusted), grounded in what a device MEASURES vs ESTIMATES (spec §1):
-//   0 — Direct dedicated sensor for this metric (WHOOP R-R for HRV; a wrist band's pedometer for
-//       steps; chest/PPG strap for avg/max/resting HR; ring/strap temp for skin temp).
-//   1 — Derived on-device from raw by Zoop (computed recovery/strain/sleep from strap streams).
-//   2 — Phone aggregate (Apple Health / Health Connect) of a declared-compatible quantity.
-//   3 — Estimate / proxy (a strap's STEP estimate; a calories estimate).
-//
-// "Best signal" is always backed by a NAMED, VISIBLE reason — never "accurate"/"correct"/"clinical".
-// This is wellness transparency, not a diagnosis.
+// Trust tiers (lower = more trusted), by what a device measures vs estimates:
+//   0 - direct dedicated sensor (WHOOP R-R for HRV, a wrist band's pedometer for steps, chest/PPG strap for HR,
+//       ring/strap temp for skin temp)
+//   1 - derived on-device by Zoop from raw streams (recovery/strain/sleep)
+//   2 - phone aggregate (Apple Health / Health Connect) of a declared-compatible quantity
+//   3 - estimate / proxy (a strap's step estimate, a calories estimate)
+// "Best signal" always has a named, visible reason, never "accurate"/"clinical": wellness transparency only.
 public enum MetricArbitrationPolicy {
 
-    /// The canonical fusion metric families. The string `key`s the resolver uses (e.g. "rhr",
-    /// "sleep_total_min", "sleep_deep_min") map onto one of these for tiering; raw keys that don't map
-    /// fall through to `.other` (single-source passthrough, tier by source kind only).
+    /// Canonical fusion metric families. Resolver series keys map onto one for tiering; unmapped keys fall to `.other` (single-source passthrough, tiered by source kind).
     public enum MetricKind: String, Equatable, Sendable, CaseIterable {
         case restingHR
         case heartRate      // avg/max HR
@@ -34,8 +27,7 @@ public enum MetricArbitrationPolicy {
         case other
     }
 
-    /// Map a resolver series key onto a `MetricKind`. Keys mirror `Repository.appleCompatibleKey`'s
-    /// vocabulary so the policy lines up with the existing cross-source resolver.
+    /// Maps a resolver series key onto a `MetricKind` (same vocabulary as `Repository.appleCompatibleKey`).
     public static func kind(forKey key: String) -> MetricKind {
         switch key {
         case "rhr", "resting_hr":
@@ -63,14 +55,12 @@ public enum MetricArbitrationPolicy {
         }
     }
 
-    /// Trust tier for a `(metric, source)` pair — lower is more trusted. Encodes the spec's
-    /// measure-vs-estimate intuition as data, e.g. a wrist band's pedometer (tier 0) beats the strap's
-    /// step ESTIMATE (tier 3); WHOOP sleep stages (tier 0) beat phone sleep buckets (tier 2). The
-    /// `other`/unmapped keys tier purely by source kind (import vs computed vs phone vs cache).
+    /// Trust tier for a `(metric, source)` pair, lower = more trusted. E.g. a wrist band's pedometer (0) beats the
+    /// strap's step estimate (3); WHOOP sleep stages (0) beat phone sleep buckets (2). Unmapped keys tier by source kind.
     public static func tier(metric: MetricKind, source: FusionSource) -> Int {
         switch metric {
         case .restingHR, .heartRate, .hrv, .spo2:
-            // Worn-sensor vitals: the strap measures them directly; the phone aggregates them.
+            // Worn-sensor vitals: strap measures, phone aggregates.
             switch source {
             case .whoopImport:   return 0   // direct dedicated sensor (R-R / PPG)
             case .xiaomiBand:    return 0   // dedicated wrist PPG
@@ -82,7 +72,7 @@ public enum MetricArbitrationPolicy {
             }
 
         case .skinTemp:
-            // Redundancy metric: the strap/ring measures it; the phone rarely carries it.
+            // Redundancy metric: strap/ring measures it, phone rarely carries it.
             switch source {
             case .whoopImport:   return 0
             case .xiaomiBand:    return 0
@@ -94,7 +84,7 @@ public enum MetricArbitrationPolicy {
             }
 
         case .steps:
-            // The device that ACTUALLY COUNTS steps wins; the strap only ESTIMATES from motion.
+            // The device that actually counts steps wins; the strap only estimates from motion.
             switch source {
             case .xiaomiBand:    return 0   // wrist pedometer — counts directly
             case .appleHealth:   return 0   // phone pedometer — counts directly
@@ -106,7 +96,7 @@ public enum MetricArbitrationPolicy {
             }
 
         case .sleep:
-            // The best STAGER wins: imported WHOOP stages > Zoop-computed stages > phone sleep buckets.
+            // Best stager wins: imported WHOOP > Zoop-computed > phone buckets.
             switch source {
             case .whoopImport:   return 0
             case .zoopComputed:  return 1
@@ -130,7 +120,7 @@ public enum MetricArbitrationPolicy {
             }
 
         case .other:
-            // Unmapped keys (nutrition/mood/passthrough): tier by source kind only.
+            // Unmapped keys: tier by source kind only.
             switch source {
             case .whoopImport:   return 0
             case .xiaomiBand:    return 0
@@ -143,10 +133,8 @@ public enum MetricArbitrationPolicy {
         }
     }
 
-    /// Stable tiebreak WITHIN a tier (lower wins). Mirrors the existing precedence baked into
-    /// `sourceCandidates`: imported WHOOP first, then Zoop-computed, then phone (Apple before Health
-    /// Connect, matching the #443 ordering), then a dedicated band, then single-source, then cache.
-    /// Used only when two sources land on the SAME tier, so the resolver stays deterministic.
+    /// Deterministic tiebreak within a tier (lower wins): imported WHOOP, Zoop-computed, phone (Apple before Health
+    /// Connect, #443), dedicated band, single-source, cache.
     public static func sourcePriority(_ source: FusionSource) -> Int {
         switch source {
         case .whoopImport:   return 0
@@ -159,9 +147,7 @@ public enum MetricArbitrationPolicy {
         }
     }
 
-    /// The published "best signal" reason a source wins (or appears) for a metric. Plain English,
-    /// wellness-only — never asserts a value is true or medically valid. Drives the one-line caption
-    /// on the fused row.
+    /// The published plain-English "best signal" reason for a source on a metric (wellness-only; drives the fused row caption).
     public static func reason(metric: MetricKind, source: FusionSource) -> String {
         let t = tier(metric: metric, source: source)
         switch (metric, source) {
@@ -189,18 +175,16 @@ public enum MetricArbitrationPolicy {
 
     // MARK: - Cross-validation tolerances
     //
-    // Per-metric hand-set bands for the agreement classifier (spec §2). A delta inside `agree` is
-    // agreement; inside `minorDelta` is a plausible measurement spread (show both, no alarm);
-    // anything larger is a `conflict` (flag, never merge). Both platforms read the SAME constants.
-    // Some metrics use a percentage band (steps), most use an absolute band; `Tolerance` carries both
-    // and the classifier picks per `isPercent`.
+    // Hand-set bands for the agreement classifier: a delta inside `agree` agrees, inside `minorDelta` is plausible
+    // spread (show both), beyond is a `conflict` (flag, never merge). `Tolerance` carries a percentage band (steps)
+    // or absolute band, per `isPercent`.
 
     public struct Tolerance: Equatable, Sendable {
-        /// Within this delta from the winning value → `agree`.
+        /// Within this delta of the winning value: `agree`.
         public let agree: Double
-        /// Within this delta (but beyond `agree`) → `minorDelta`; beyond it → `conflict`.
+        /// Within this delta (beyond `agree`): `minorDelta`; beyond it: `conflict`.
         public let minorDelta: Double
-        /// When true the deltas are FRACTIONS of the winning value (e.g. 0.10 = ±10%), else absolute.
+        /// When true the deltas are fractions of the winning value (0.10 = 10%), else absolute.
         public let isPercent: Bool
 
         public init(agree: Double, minorDelta: Double, isPercent: Bool) {
@@ -210,8 +194,7 @@ public enum MetricArbitrationPolicy {
         }
     }
 
-    /// The tolerance band for a metric. Defaults (spec §2 / Open question 3): RHR ±3 bpm, asleep ±20
-    /// min, steps ±10%. `minorDelta` is the outer plausible-spread edge before a `conflict`.
+    /// Tolerance band for a metric. Defaults: RHR +/-3 bpm, asleep +/-20 min, steps +/-10%.
     public static func tolerance(metric: MetricKind) -> Tolerance {
         switch metric {
         case .restingHR:
@@ -235,7 +218,7 @@ public enum MetricArbitrationPolicy {
         }
     }
 
-    /// Convenience: tolerance for a raw resolver key (maps via `kind(forKey:)`).
+    /// Tolerance for a raw resolver key (via `kind(forKey:)`).
     public static func tolerance(forKey key: String) -> Tolerance {
         tolerance(metric: kind(forKey: key))
     }

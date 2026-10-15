@@ -1,11 +1,9 @@
 import SwiftUI
 import StrandDesign
 
-/// Terms acknowledgment gate (clickwrap). On iOS it covers an install that already finished onboarding
-/// and now meets a new `Terms.currentVersion`; a fresh iOS install accepts the same text as step 2 of
-/// `OnboardingWizard`, so it sees one welcome screen first rather than a legal wall. The macOS shell
-/// still shows this gate first. Either way nothing pairs before acceptance; the accepted version is
-/// stored locally, the on-device consent record. See `Terms` / `TERMS.md`.
+/// Terms acknowledgment gate (clickwrap), shown when a finished-onboarding install meets a new
+/// `Terms.currentVersion`. A fresh iOS install accepts the same text inside `OnboardingWizard`. Nothing
+/// pairs before acceptance; the accepted version is stored locally. See `Terms` / `TERMS.md`.
 struct TermsGateView: View {
     let onAccept: () -> Void
     @State private var checks: [Bool] = Array(repeating: false, count: Terms.attestations.count)

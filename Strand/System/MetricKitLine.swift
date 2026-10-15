@@ -1,18 +1,14 @@
 import Foundation
 
-/// The strap-log lines for the reports iOS hands Zoop through MetricKit: one a day about the day before, and one
-/// after a crash, a hang, a CPU or disk-write exception, or a slow launch.
+/// Strap-log lines for the reports iOS hands Zoop through MetricKit: one daily report about the day
+/// before, and one after a crash, hang, CPU/disk-write exception or slow launch.
 ///
-/// Nothing here is sent anywhere. iOS gathers these numbers on the phone and delivers them to the app; the lines go
-/// only into Zoop's own strap log, which a person exports by hand. They exist so a battery or crash question can be
-/// answered from what the phone measured — how much CPU Zoop used in the background, why iOS closed it — rather than
-/// from the phone's Analytics Data files, which a user has to find and share one by one.
-///
-/// Each line says only what iOS reported: a field MetricKit left out is left out of the line, not printed as zero.
-/// Pure so `StrandTests` covers it; the subscriber that fills it (`MetricKitLog`) is iOS-only.
+/// Nothing is sent anywhere; the lines go only into the strap log a person exports by hand. A field
+/// MetricKit omitted is left out, not printed as zero. Pure so `StrandTests` covers it; the
+/// subscriber (`MetricKitLog`) is iOS-only.
 enum MetricKitLine {
 
-    /// One app-exit reason and how often it happened in the report's window, fore- and background added.
+    /// One app-exit reason and its count in the report window.
     struct Exit: Equatable {
         let reason: String
         let count: Int
@@ -47,13 +43,13 @@ enum MetricKitLine {
             + parts.joined(separator: ", ")
     }
 
-    /// A crash, hang, exception or slow-launch report: `kind` names it, `detail` is what iOS said about it.
+    /// A crash, hang, exception or slow-launch report: `kind` names it, `detail` is what iOS said.
     static func diagnostic(_ kind: String, appVersion: String, at: Date, detail: String,
                            timeZone: TimeZone = .current) -> String {
         "MetricKit \(kind) (Zoop \(appVersion), reported \(stamp(at, timeZone))): \(detail)"
     }
 
-    /// "1h 12m", "6m 12s", "40s", and tenths below ten seconds ("2.4s") where a hang lives.
+    /// "1h 12m", "6m 12s", "40s", and tenths below ten seconds ("2.4s").
     static func duration(_ seconds: TimeInterval) -> String {
         guard seconds.isFinite, seconds >= 0 else { return "?" }
         if seconds < 10 {

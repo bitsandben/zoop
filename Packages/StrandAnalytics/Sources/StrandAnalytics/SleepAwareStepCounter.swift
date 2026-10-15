@@ -1,7 +1,7 @@
 import Foundation
 import WhoopProtocol
 
-/// Sleep-context twin of Kotlin `SleepAwareStepCounter`. Counter decisions stay orientation-independent.
+/// Sleep-aware step counting. Counter decisions stay orientation-independent.
 public enum SleepAwareStepCounter {
     public static let maxSecondsBetweenGaitDeltas = 3
     public static let minGaitBoutDurationSeconds = 4
@@ -24,7 +24,6 @@ public enum SleepAwareStepCounter {
             rejectedActivityClassTicks: 0, rejectedImplausibleTicks: 0,
             gravitySamplesAvailable: 0, auxSamplesAvailable: 0)
 
-        /// Kotlin twin: `SleepAwareStepCounter.Count.plus`.
         public func adding(_ other: Count) -> Count {
             Count(totalTicks: totalTicks + other.totalTicks,
                 acceptedOutsideSleepTicks: acceptedOutsideSleepTicks + other.acceptedOutsideSleepTicks,
@@ -54,7 +53,6 @@ public enum SleepAwareStepCounter {
             hasClasses = hasActivityClasses
         }
 
-        /// Kotlin twin: `SleepAwareStepCounter.Accumulator.acceptPage`.
         @discardableResult public func acceptPage(_ samples: [StepSample]) -> Accumulator {
             precondition(!finished)
             for current in samples.sorted(by: { $0.ts < $1.ts }) {
@@ -81,7 +79,6 @@ public enum SleepAwareStepCounter {
             return self
         }
 
-        /// Kotlin twin: `SleepAwareStepCounter.Accumulator.observeMotionPage`.
         @discardableResult public func observeMotion(gravityCount: Int, auxCount: Int) -> Accumulator {
             precondition(!finished)
             gravityAvailable += gravityCount
@@ -89,7 +86,6 @@ public enum SleepAwareStepCounter {
             return self
         }
 
-        /// Kotlin twin: `SleepAwareStepCounter.Accumulator.finish`.
         public func finish() -> Count {
             if !finished { flush(); finished = true }
             return Count(totalTicks: outside + awake + sleep, acceptedOutsideSleepTicks: outside,
@@ -101,7 +97,6 @@ public enum SleepAwareStepCounter {
                          auxSamplesAvailable: auxAvailable)
         }
 
-        /// Kotlin twin: `SleepAwareStepCounter.Accumulator.flushSleepBout`.
         private func flush() {
             guard !pending.isEmpty else { return }
             let ticks = pending.reduce(0) { $0 + $1.ticks }
@@ -113,13 +108,11 @@ public enum SleepAwareStepCounter {
         }
     }
 
-    /// Kotlin twin: `SleepAwareStepCounter.stepsInWindow`.
     public static func stepsInWindow(_ samples: [StepSample], sleepSessions: [SleepSession]) -> Int? {
         let count = count(samples, sleepSessions: sleepSessions)
         return count.totalTicks > 0 ? count.totalTicks : nil
     }
 
-    /// Kotlin twin: `SleepAwareStepCounter.count`.
     public static func count(_ samples: [StepSample], sleepSessions: [SleepSession]) -> Count {
         let sorted = samples.sorted { $0.ts < $1.ts }
         return Accumulator(sleepSessions: sleepSessions,
@@ -127,7 +120,6 @@ public enum SleepAwareStepCounter {
             .acceptPage(sorted).finish()
     }
 
-    /// Kotlin twin: `SleepAwareStepCounter.contextAt`.
     private static func context(_ ts: Int, sessions: [SleepSession]) -> Int {
         guard let session = sessions.first(where: { ts >= $0.start && ts < $0.end }) else { return 0 }
         if let stage = session.stages.first(where: { ts >= $0.start && ts < $0.end }),

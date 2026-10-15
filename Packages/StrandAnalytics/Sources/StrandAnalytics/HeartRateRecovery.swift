@@ -1,15 +1,9 @@
 import Foundation
 import WhoopProtocol
 
-/// Heart-rate recovery after a sufficiently intense workout (#516).
-///
-/// The engine deliberately works from the recorded HR stream rather than the workout's editable summary
-/// fields. It looks for sustained Zone-3-or-higher effort near the end of the session, takes the highest
-/// recorded HR in the final 30 seconds as the cessation value, then compares it with robust median readings
-/// around 1, 2 and 5 minutes after the workout ended.
-///
-/// Missing post-workout coverage stays nil. The engine never interpolates across a gap or turns a missing
-/// reading into zero, which is important when a strap disconnects as the workout ends.
+/// Heart-rate recovery after a sufficiently intense workout (#516), computed from the recorded HR stream.
+/// Needs sustained Zone 3+ effort near the end; cessation HR is the max of the final 30 s, compared with
+/// median readings around 1, 2 and 5 minutes later. Missing coverage stays nil (no interpolation).
 public enum HeartRateRecovery {
     public struct Result: Equatable, Sendable {
         public let endHR: Int
@@ -29,12 +23,11 @@ public enum HeartRateRecovery {
         }
     }
 
-    /// Zone 3 starts at 70% HRmax in Zoop's display-zone model.
+    /// Zone 3 starts at 70% HRmax.
     public static let eligibilityFractionOfMaxHR = 0.70
-    /// The high-intensity effort must be sustained, not a single optical spike.
+    /// The effort must be sustained, not a single optical spike.
     public static let minimumHighIntensitySeconds = 120
-    /// Eligibility is intentionally tied to the end of the workout: HRR is meaningful only when exercise
-    /// cessation, rather than a long cool-down, anchors the recovery clock.
+    /// Tied to the workout end so exercise cessation, not a long cool-down, anchors the recovery clock.
     public static let eligibilityLookbackSeconds = 300
     public static let cessationWindowSeconds = 30
     public static let measurementToleranceSeconds = 15

@@ -19,9 +19,7 @@ extension WhoopStore {
     public func highwater(_ stream: String) async throws -> Int? { try await cursor("highwater:" + stream) }
 
     // MARK: - Read highwater (server-pull cursor)
-    // A DISTINCT "read:" prefix so the pull cursor never collides with the upload "highwater:"
-    // cursor for the same stream. Tracks the max server ts pulled-and-upserted per stream so
-    // pulls are incremental.
+    // Distinct "read:" prefix so it never collides with the upload "highwater:" cursor for the same stream.
     public func setReadHighwater(_ stream: String, _ ts: Int) async throws { try await setCursor("read:" + stream, ts) }
     public func readHighwater(_ stream: String) async throws -> Int? { try await cursor("read:" + stream) }
 }

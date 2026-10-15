@@ -1,12 +1,11 @@
 import Foundation
 
-/// Single source of truth for the in-app "What's New" screen and the expectation-setting copy used
-/// in onboarding. Mirrored byte-for-byte by the Android `AppChangelog.kt` and the repo CHANGELOG.md
-/// so every surface tells the same story.
+/// Single source of truth for the in-app "What's New" screen and onboarding expectation copy; kept in sync
+/// with the Android `AppChangelog.kt` and the repo CHANGELOG.md.
 enum AppChangelog {
 
-    /// Bump this when you add a release below. The "What's New" sheet shows automatically when the
-    /// stored last-seen version is behind this. (Decoupled from the bundle version on purpose.)
+    /// Bump when adding a release below; the "What's New" sheet shows when the stored last-seen version is
+    /// behind this. Decoupled from the bundle version on purpose.
     static let currentVersion = "1.0.0"
 
     struct Release: Identifiable {
@@ -19,7 +18,7 @@ enum AppChangelog {
 
     /// Newest first.
     static let releases: [Release] = [
-        // Zoop numbers its own releases from 1.0.0; the entries below it are the upstream Zoop history.
+        // Zoop numbers its own releases from 1.0.0; entries below are the upstream history.
         Release(
             version: "1.0.0",
             title: "Zoop",
@@ -2515,8 +2514,7 @@ enum AppChangelog {
             ]),
     ]
 
-    /// Expectation-setting points shown during onboarding and at the top of "What's New". This is the
-    /// “what is this and what should I expect” story, so people don't have to go read GitHub.
+    /// Expectation-setting points shown in onboarding and at the top of "What's New".
     struct Expectation: Identifiable {
         let icon: String      // SF Symbol
         let title: String

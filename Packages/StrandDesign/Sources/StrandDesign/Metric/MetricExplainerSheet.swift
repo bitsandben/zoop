@@ -2,8 +2,7 @@ import SwiftUI
 
 // MARK: - MetricExplainerSheet (tap target of every Metric* view)
 //
-// Present with `.sheet(item: $selected) { MetricExplainerSheet($0, explanation: model.explanation(for: $0.id)) }`.
-// The readout's own anatomy sits on top, then the fixed section order from CONCEPT §1.1.
+// The readout's own anatomy sits on top, then the fixed explainer sections.
 
 public struct MetricExplainerSheet: View {
     private let readout: MetricReadout

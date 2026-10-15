@@ -1,35 +1,21 @@
 import Foundation
 
-// ComparisonEngine.swift — period-over-period comparison of a daily metric.
+// ComparisonEngine.swift - period-over-period comparison of a daily metric.
 //
-// Pure, deterministic, DB-free. Given two slices of a series (e.g. this month vs
-// last month) it summarises each into a `SeriesStat` (mean / median / min / max /
-// sample-SD / count / least-squares slope-per-day) and reports the change between
-// the two as a signed delta, a percent change, and a coarse direction (-1/0/1).
-//
-// The slope is the ordinary least-squares slope of value against the 0-based day
-// index (0, 1, 2, … in the order supplied), i.e. the average per-step trend across
-// the period. With < 2 points or zero index variance the slope is 0.
-//
-// `monthOverMonth` splits a "yyyy-MM-dd"-keyed series on the calendar month of a
-// reference day: the reference day's own month is `current`, the immediately
-// preceding calendar month is `previous`. Splitting is done on the "yyyy-MM"
-// prefix so it is locale/timezone-free and matches the day strings AnalyticsEngine
-// emits.
+// Pure, DB-free. Summarises two slices of a series into `SeriesStat`s (mean / median / min / max /
+// sample-SD / count / least-squares slope-per-day) and reports signed delta, percent change and a
+// coarse direction. Slope is OLS of value against the 0-based index (0 with < 2 points).
+// `monthOverMonth` splits a "yyyy-MM-dd"-keyed series on the "yyyy-MM" prefix, so it is
+// locale/timezone-free.
 
 /// Summary statistics for one slice of a daily series.
 public struct SeriesStat: Equatable, Sendable {
-    /// Arithmetic mean of the values (0 when empty).
     public let mean: Double
-    /// Median of the values (0 when empty).
     public let median: Double
-    /// Minimum value (0 when empty).
     public let min: Double
-    /// Maximum value (0 when empty).
     public let max: Double
     /// Sample standard deviation, ddof = 1 (0 when fewer than 2 values).
     public let stdev: Double
-    /// Number of values in the slice.
     public let n: Int
     /// Least-squares slope of value vs 0-based day index (0 when n < 2).
     public let slopePerDay: Double
@@ -45,21 +31,16 @@ public struct SeriesStat: Equatable, Sendable {
         self.slopePerDay = slopePerDay
     }
 
-    /// An empty stat (all zeros, n = 0).
     public static let empty = SeriesStat(mean: 0, median: 0, min: 0, max: 0,
                                          stdev: 0, n: 0, slopePerDay: 0)
 }
 
 /// The comparison of a `current` period against a `previous` one.
 public struct PeriodComparison: Equatable, Sendable {
-    /// Stats for the current period.
     public let current: SeriesStat
-    /// Stats for the previous period.
     public let previous: SeriesStat
-    /// Signed change in mean: current.mean − previous.mean.
     public let delta: Double
-    /// Percent change in mean relative to previous.mean, or nil when previous.mean
-    /// is 0 (or the previous period is empty) so a ratio is undefined.
+    /// Percent change in mean relative to previous.mean; nil when that is 0 or empty.
     public let pctChange: Double?
     /// Direction of the change: -1 (down), 0 (flat), +1 (up).
     public let direction: Int
@@ -78,9 +59,7 @@ public enum ComparisonEngine {
 
     // MARK: - Single-slice statistics
 
-    /// Summarise a slice of values into a `SeriesStat`. The slope is the OLS slope
-    /// of value against the 0-based position index (the order in which values are
-    /// supplied). Returns `.empty` for an empty input.
+    /// Summarises a slice into a `SeriesStat`; `.empty` for empty input.
     public static func stat(_ values: [Double]) -> SeriesStat {
         let n = values.count
         guard n > 0 else { return .empty }
@@ -107,8 +86,7 @@ public enum ComparisonEngine {
 
     // MARK: - Two-period comparison
 
-    /// Compare a current slice to a previous slice. The delta and direction are on
-    /// the means; pctChange is nil when the previous mean is 0 / empty.
+    /// Compares a current slice to a previous one. Delta and direction are on the means.
     public static func compare(current: [Double], previous: [Double]) -> PeriodComparison {
         let cur = stat(current)
         let prev = stat(previous)
@@ -140,13 +118,9 @@ public enum ComparisonEngine {
 
     // MARK: - Month over month
 
-    /// Split a "yyyy-MM-dd"-keyed series into the calendar month of `referenceDay`
-    /// (current) vs the immediately preceding calendar month (previous), then
-    /// compare. Days outside those two months are ignored. Within each month the
-    /// values are ordered by day string (chronological) before computing slope.
-    ///
-    /// `referenceDay` must start with a "yyyy-MM" prefix; if it cannot be parsed
-    /// both periods come back empty.
+    /// Splits a "yyyy-MM-dd"-keyed series into the calendar month of `referenceDay` (current) and the
+    /// month before it (previous), then compares. Other days are ignored; both periods come back empty
+    /// if `referenceDay` lacks a "yyyy-MM" prefix.
     public static func monthOverMonth(byDay: [(day: String, value: Double)],
                                       referenceDay: String) -> PeriodComparison {
         guard let (curYear, curMonth) = yearMonth(of: referenceDay) else {
@@ -156,7 +130,7 @@ public enum ComparisonEngine {
         let curPrefix = monthPrefix(year: curYear, month: curMonth)
         let prevPrefix = monthPrefix(year: prevYear, month: prevMonth)
 
-        // Sort by day string so the slope is chronological regardless of input order.
+        // Sort by day string so the slope is chronological.
         let sorted = byDay.sorted { $0.day < $1.day }
         var curVals: [Double] = []
         var prevVals: [Double] = []
@@ -172,7 +146,6 @@ public enum ComparisonEngine {
 
     // MARK: - Helpers
 
-    /// Median of an array (0 when empty).
     static func median(_ values: [Double]) -> Double {
         guard !values.isEmpty else { return 0 }
         let s = values.sorted()
@@ -181,13 +154,11 @@ public enum ComparisonEngine {
         return (s[n / 2 - 1] + s[n / 2]) / 2.0
     }
 
-    /// OLS slope of values against their 0-based index. 0 when n < 2 or the index
-    /// has zero variance (impossible for distinct indices, but guarded anyway).
+    /// OLS slope of values against their 0-based index; 0 when n < 2.
     static func leastSquaresSlope(_ values: [Double]) -> Double {
         let n = values.count
         guard n >= 2 else { return 0 }
         let nD = Double(n)
-        // x = 0…n-1. meanX = (n-1)/2.
         let meanX = Double(n - 1) / 2.0
         let meanY = values.reduce(0, +) / nD
         var sxy = 0.0
@@ -220,8 +191,6 @@ public enum ComparisonEngine {
     /// Zero-padded "yyyy-MM" prefix.
     static func monthPrefix(year: Int, month: Int) -> String {
         let mm = month < 10 ? "0\(month)" : "\(month)"
-        // Years are assumed 4-digit (matches AnalyticsEngine output) but we don't
-        // force-pad beyond the natural string to stay robust.
         return "\(year)-\(mm)"
     }
 }

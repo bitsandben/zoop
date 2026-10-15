@@ -1,6 +1,5 @@
 #if !os(watchOS)
-// The one touch-scrub mechanism every iOS chart uses. The watch draws no scrubbable charts, so the file is
-// excluded there; on macOS the modifier is a no-op because the pointer hover already drives the readout.
+// The one touch-scrub mechanism every iOS chart uses. Excluded on watchOS; a no-op on macOS (pointer hover drives the readout).
 import SwiftUI
 #if os(iOS)
 import UIKit
@@ -9,29 +8,19 @@ import UIKit.UIGestureRecognizerSubclass
 
 // MARK: - Chart scrub (touch)
 //
-// Every chart answers a finger the same way: drag sideways (or rest the finger for a moment, then move)
-// and a vertical rule plus a small value/time label follows the finger; lift and it clears.
-//
-// The gesture only claims the touch when the finger means it, so a chart never traps the page:
-//  * A drag that starts mostly VERTICAL is refused at once, so the page scrolls as if the chart were not
-//    there.
-//  * A drag that starts mostly HORIZONTAL claims the touch, and a surrounding horizontal pager or carousel
-//    waits for that decision rather than sliding sideways under the finger.
-//  * A finger held still for `holdDuration` claims the touch too, after which it may move in any direction.
-//
-// On iOS 18 and later this is a UIKit recogniser (one decision point, failure requirements on the scroll
-// views around it). iOS 17 falls back to a simultaneous SwiftUI drag that only acts on horizontal intent,
-// which keeps vertical scrolling but cannot stop an enclosing pager.
+// Dragging sideways (or resting the finger, then moving) shows a vertical rule plus a value/time label.
+// The gesture claims the touch only when the finger means it: a mostly VERTICAL drag is refused so the
+// page scrolls; a mostly HORIZONTAL drag claims it (enclosing pagers wait for that decision); a hold of
+// `holdDuration` claims it too. iOS 18+ uses a UIKit recogniser with failure requirements on surrounding
+// scroll views; iOS 17 falls back to a simultaneous SwiftUI drag that cannot stop an enclosing pager.
 
-/// Whether a chart scrub is engaged, readable by page-level swipe gestures (the Home day swipe) that live
-/// outside UIKit's gesture arbitration and must ignore a drag that was really a scrub.
+/// Whether a chart scrub is engaged, for page-level swipe gestures (Home day swipe) outside UIKit's arbitration.
 public enum ZoopChartScrubState {
-    /// True from the moment a scrub engages until the finger lifts.
+    /// True from scrub engage until the finger lifts.
     public private(set) static var isActive = false
     private static var lastEnded = Date.distantPast
 
-    /// True while scrubbing, or within a short grace period after the scrub ended (the page swipe's
-    /// `onEnded` fires after the scrub's own end).
+    /// True while scrubbing or shortly after, since the page swipe's `onEnded` fires after the scrub's own end.
     public static var isActiveOrRecent: Bool {
         isActive || Date().timeIntervalSince(lastEnded) < 0.4
     }
@@ -45,19 +34,16 @@ public enum ZoopChartScrubState {
 
 /// How a chart's scrub may start.
 public enum ZoopChartScrubStart: Sendable {
-    /// A mostly horizontal drag, or a short hold. The default for every static chart.
+    /// A mostly horizontal drag, or a short hold (default).
     case horizontalDragOrHold
-    /// Only a short hold. For charts whose plain horizontal drag already pans a zoomed window.
+    /// Only a short hold, for charts whose horizontal drag already pans a zoomed window.
     case holdOnly
 }
 
 public extension View {
-    /// Touch scrubbing for a chart. `onChange` receives the finger's location in this view's own
-    /// coordinate space (attach it to the same view the chart's geometry is measured in, e.g. the
-    /// `chartOverlay` GeometryReader's content); `onEnd` fires when the finger lifts or the touch is lost.
-    ///
-    /// Both callbacks run in a non-animating transaction, so the rule and label track the finger
-    /// exactly and never slide or cross-fade between samples. No-op on macOS (pointer hover covers it).
+    /// Touch scrubbing for a chart. `onChange` receives the finger location in this view's coordinate space
+    /// (attach to the view the chart geometry is measured in); `onEnd` fires on lift or lost touch. Callbacks
+    /// run non-animated so the readout tracks the finger. No-op on macOS.
     func zoopChartScrub(
         isEnabled: Bool = true,
         start: ZoopChartScrubStart = .horizontalDragOrHold,
@@ -68,7 +54,7 @@ public extension View {
     }
 }
 
-/// Apply a scrub update without animation: the readout must follow the finger, not ease after it.
+/// Applies a scrub update without animation.
 func zoopScrubTransaction(_ body: () -> Void) {
     var transaction = Transaction()
     transaction.disablesAnimations = true
@@ -82,7 +68,7 @@ struct ZoopChartScrubModifier: ViewModifier {
     let onEnd: () -> Void
 
     #if os(iOS)
-    /// iOS 17 fallback state: the drag has been judged a scrub / judged a scroll.
+    /// iOS 17 fallback: the drag has been judged a scrub / a scroll.
     @State private var engaged = false
     @State private var rejected = false
     #endif
@@ -105,8 +91,7 @@ struct ZoopChartScrubModifier: ViewModifier {
     }
 
     #if os(iOS)
-    /// iOS 17: a simultaneous drag (so the enclosing scroll view keeps its own pan) that becomes a scrub only
-    /// when its first movement is mostly horizontal. A hold-only chart keeps the press-and-hold sequence.
+    /// iOS 17: a simultaneous drag (the enclosing scroll view keeps its pan) that becomes a scrub only on mostly horizontal first movement.
     private var fallbackGesture: some Gesture {
         DragGesture(minimumDistance: 10, coordinateSpace: .local)
             .onChanged { value in
@@ -133,10 +118,8 @@ struct ZoopChartScrubModifier: ViewModifier {
 }
 
 #if os(iOS)
-/// One-finger recogniser that decides, once, whether a touch is a chart scrub.
-///
-/// Stays `.possible` until the finger either travels `slop` points (horizontal → begin, otherwise → fail)
-/// or rests for `holdDuration` (→ begin). A second finger fails it so pinches stay with their owner.
+/// One-finger recogniser that decides once whether a touch is a chart scrub: begins on a horizontal
+/// travel past `slop` or a `holdDuration` rest, fails otherwise; a second finger fails it (pinches).
 final class ChartScrubRecognizer: UIGestureRecognizer {
     var allowsHorizontalStart = true
     var holdDuration: TimeInterval = 0.3
@@ -205,7 +188,7 @@ final class ChartScrubRecognizer: UIGestureRecognizer {
     }
 }
 
-/// Bridges `ChartScrubRecognizer` into SwiftUI and arbitrates with the scroll views around the chart.
+/// Bridges `ChartScrubRecognizer` into SwiftUI and arbitrates with surrounding scroll views.
 @available(iOS 18.0, *)
 struct ChartScrubGesture: UIGestureRecognizerRepresentable {
     var horizontalStart: Bool
@@ -213,9 +196,7 @@ struct ChartScrubGesture: UIGestureRecognizerRepresentable {
     var onEnd: () -> Void
 
     final class Coordinator: NSObject, UIGestureRecognizerDelegate {
-        /// Scroll-view pans (the page's vertical scroll, a horizontal carousel or pager) wait for the scrub to
-        /// decide. A vertical drag fails the scrub within a few points and the page scrolls; a horizontal one
-        /// begins it and the carousel's pan then fails instead of sliding the cards.
+        /// Scroll-view pans wait for the scrub to decide: vertical fails it and the page scrolls; horizontal begins it and the carousel pan fails.
         func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
                                shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
             otherGestureRecognizer is UIPanGestureRecognizer && otherGestureRecognizer.view is UIScrollView
@@ -255,9 +236,8 @@ struct ChartScrubGesture: UIGestureRecognizerRepresentable {
 
 // MARK: - Scrub readout
 
-/// The shared scrub readout: a vertical rule at `x` through the whole chart, an optional dot on the line,
-/// and the small value/time label kept inside the chart. Built from the hover toolkit pieces
-/// (`CrosshairRule`, `HighlightDot`, `PositionedTooltip`) so touch and pointer read identically.
+/// The shared scrub readout: a vertical rule at `x`, an optional dot, and a value/time label kept inside
+/// the chart, built from the hover toolkit so touch and pointer read identically.
 public struct ChartScrubReadout: View {
     public var x: CGFloat
     /// Where the series crosses the rule; nil draws no dot and anchors the label near the top.

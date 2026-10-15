@@ -1,12 +1,9 @@
 import Foundation
 import GRDB
 
-// MARK: - v48 store: user-logged fasting windows (Zoop 2.0 WP-10)
-//
-// Plain CRUD over `fastingSession`, in the CoachMessageStore idiom (Codable row, manual decode, all work
-// through the actor's syncRead/syncWrite). Validation (overlaps, future times, end before start) lives in
-// `FastingEngine.validate` so the rules are unit-tested without a database. Not in the `.zoopbak`
-// settings whitelist.
+// MARK: - v48 store: user-logged fasting windows
+// Plain CRUD over `fastingSession`. Validation (overlaps, future times, end before start) lives in
+// `FastingEngine.validate`. Not in the `.zoopbak` settings whitelist.
 
 public struct FastingSessionRow: Equatable, Codable, Sendable, Identifiable {
     public var id: String

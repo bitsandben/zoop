@@ -1,8 +1,7 @@
 import Foundation
 
-/// A device the user has paired. `id` is the same string used as `deviceId` in every sample table's
-/// `(deviceId, ts)` key — so a device's raw samples are already isolated by id, with no per-row source
-/// column needed. The existing WHOOP keeps id "my-whoop" (no sample migration).
+/// A device the user has paired. `id` is the `deviceId` in every sample table's `(deviceId, ts)` key,
+/// so raw samples are isolated by id. The original WHOOP keeps id "my-whoop".
 public struct PairedDevice: Equatable, Sendable, Identifiable {
     public let id: String                 // == deviceId in sample tables; e.g. "my-whoop", "polar-h10-1A2B"
     public var brand: String              // "WHOOP", "Polar", "Garmin", "Oura"
@@ -25,9 +24,8 @@ public struct PairedDevice: Equatable, Sendable, Identifiable {
         self.addedAt = addedAt; self.lastSeenAt = lastSeenAt
     }
 
-    /// A user nickname wins; otherwise "Brand Model" — but collapse to just the model when it already
-    /// carries the brand (so a WHOOP whose model is also "WHOOP" reads "WHOOP", not "WHOOP WHOOP", and a
-    /// future "WHOOP 4.0" model reads "WHOOP 4.0").
+    /// A user nickname wins; otherwise "Brand Model", collapsing to just the model when it already
+    /// carries the brand ("WHOOP", not "WHOOP WHOOP").
     public var displayName: String {
         if let nickname { return nickname }
         if model.isEmpty || model == brand { return brand }
@@ -35,10 +33,9 @@ public struct PairedDevice: Equatable, Sendable, Identifiable {
         return "\(brand) \(model)"
     }
 
-    /// True for a data-partition source (a cloud API pull or a file/CSV import) rather than a live,
-    /// connectable device. UI that offers "make active" must exclude these: activating one would demote
-    /// whatever live device (WHOOP, a BLE strap, Apple Watch) currently drives BLE routing + day-owner
-    /// priority 0 — an import source has no live connection to hand that role to.
+    /// True for a data-partition source (cloud API pull or file import) rather than a live device. "Make
+    /// active" UI must exclude these: an import source has no live connection to take over BLE routing
+    /// and day-owner priority 0.
     public var isImportSource: Bool { sourceKind == .cloudImport || sourceKind == .fileImport }
 }
 
@@ -46,35 +43,25 @@ public enum DeviceStatus: String, Sendable, CaseIterable { case active, paired, 
 
 public enum SourceKind: String, Sendable, CaseIterable {
     case liveBLE, historyBLE, cloudImport, fileImport
-    /// A live FTMS (Fitness Machine Service, 0x1826) gym machine — treadmill / indoor bike / rower /
-    /// cross-trainer. Streams a live machine-data + HR session that records via the existing live-workout
-    /// path. Additive: existing rows never carry this; only the gym-equipment wizard writes it.
+    /// A live FTMS (0x1826) gym machine: treadmill, bike, rower or cross-trainer. Records via the live-workout path.
     case ftms
-    /// An EXPERIMENTAL Huami-family live HR source — Amazfit / Zepp (incl. Helio) and Xiaomi Mi Band.
-    /// Reads the standard 0x180D HR service when exposed, else the documented Huami custom HR
-    /// characteristic, else surfaces an honest "needs pairing we can't do" message. Best-effort, shipped
-    /// behind the experimental add-device tier. Additive: only the experimental wizard writes it.
-    /// (Garmin uses `liveBLE` — its live HR is the standard broadcast-HR path, no proprietary protocol.)
+    /// An experimental Huami-family live HR source (Amazfit / Zepp, Xiaomi Mi Band). Reads the standard
+    /// 0x180D HR service when exposed, else the Huami custom HR characteristic, else reports that pairing
+    /// is unsupported. Garmin uses `liveBLE`.
     case huami
-    /// Apple Watch streamed via HealthKit (live HealthKit observer + background delivery). Apple-only,
-    /// no Android twin. Additive: only the Apple Watch device registration writes it.
+    /// Apple Watch streamed via HealthKit (live observer and background delivery). Apple-only.
     case liveAppleWatch
-    /// An EXPERIMENTAL live Oura Ring (gen 3/4/5) source over the ring's own clean-room BLE protocol
-    /// (OuraProtocol package). Owns its OWN central/GATT, never the WHOOP path. Surfaces only the ring's
-    /// decoded raw signals + open HRV/sleep-phase tags (capabilities {hr, hrv, spo2, skinTemp, sleep});
-    /// Zoop computes its own Charge/Rest and never reads Oura's encrypted readiness/sleep scores. When a
-    /// signal can't be read it stays "-" (Huami precedent), never faked. Additive (no DB migration): only
-    /// the experimental add-device wizard's Oura path writes it.
+    /// An experimental live Oura Ring (gen 3/4/5) over its own clean-room BLE protocol (OuraProtocol).
+    /// Owns its own central/GATT, never the WHOOP path. Surfaces only decoded raw signals and open
+    /// HRV/sleep-phase tags; Oura's encrypted scores are never read.
     case oura
-    /// A GPX/TCX/FIT activity file imported under the `activity-file` device (#137). Distinct from
-    /// `fileImport` (a whole-day WHOOP CSV export) so the day-owner resolver can rank it BELOW day-spanning
-    /// imports: a 90-minute ride must never displace a full-day source that has HR for the same day. It
-    /// wins ownership only when nothing else has data (a genuinely strap-less day), where its measured HR
-    /// lights the day Effort. Additive (no DB migration): only the activity-file importer writes it.
+    /// A GPX/TCX/FIT activity file imported under the `activity-file` device. Distinct from `fileImport`
+    /// so the day-owner resolver ranks it below day-spanning imports: a 90-minute ride must not displace
+    /// a full-day source. It wins only on a strap-less day.
     case activityFile
 }
 
-/// Canonical metric a source can provide. Drives capability-aware UI + the day-owner resolver.
+/// Canonical metric a source can provide. Drives capability-aware UI and the day-owner resolver.
 public enum Metric: String, Sendable, CaseIterable, Codable {
     case hr, hrv, spo2, skinTemp, steps, sleep, strainLoad
 }
