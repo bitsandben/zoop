@@ -11,6 +11,23 @@
         }
       }
     },
+    "Bonded · idle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gekoppelt · inaktiv"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bonded · idle"
+          }
+        }
+      }
+    },
     "Scale 0–3 · %@" : {
       "localizations" : {
         "de" : {
@@ -31847,6 +31864,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Worse than typical"
+          }
+        }
+      }
+    },
+    "zoop.sleep.planner.unset" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht festgelegt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not set"
           }
         }
       }

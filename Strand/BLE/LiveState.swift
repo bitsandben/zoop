@@ -507,12 +507,12 @@ public final class LiveState: ObservableObject {
     /// gates buzz, alarms, double-tap and history sync. LiveView has drawn this line since #69; this
     /// shared label (sidebar + Settings) had not, so the two screens disagreed about the same link.
     public var connectionStatusLabel: String {
-        if connected && encryptedBond { return "Bonded · streaming" }
-        if connected && bonded { return "Live HR (not fully paired)" }
-        if connected { return "Connected" }
-        if encryptedBond { return "Bonded · idle" }
+        if connected && encryptedBond { return String(localized: "Bonded · streaming") }
+        if connected && bonded { return String(localized: "Live HR (not fully paired)") }
+        if connected { return String(localized: "Connected") }
+        if encryptedBond { return String(localized: "Bonded · idle") }
         // No `bonded`-only idle arm: without an encrypted bond there was never a pairing to be idle from.
-        return "Disconnected"
+        return String(localized: "Disconnected")
     }
     /// True when the link is up with a REAL encrypted bond → status reads green. A live-HR-only link is
     /// amber via [connectionStatusIsIdle]: it works, but every pairing-gated feature is unavailable.

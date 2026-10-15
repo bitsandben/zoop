@@ -90,7 +90,7 @@ public enum MetricUnit: Equatable, Sendable {
         case .fahrenheit, .fahrenheitDeviation: return UnitTemperature.fahrenheit.symbol
         case .kilograms: return UnitMass.kilograms.symbol
         case .pounds: return UnitMass.pounds.symbol
-        case .kilocalories: return UnitEnergy.kilocalories.symbol
+        case .kilocalories: return "kcal"   // Foundation's symbol is "kCal"
         case .vo2max: return "ml/kg/min"
         case .beatsPerMinute: return MetricStrings.resolve(MetricStrings.bpm, locale: locale)
         case .breathsPerMinute: return MetricStrings.resolve(MetricStrings.breaths, locale: locale)
@@ -114,7 +114,7 @@ public enum MetricUnit: Equatable, Sendable {
     public func formatDelta(_ delta: Double, locale: Locale) -> String {
         switch self {
         case .duration:
-            let sign = delta < 0 ? "-" : "+"
+            let sign = abs(delta) < 30 ? "±" : (delta < 0 ? "-" : "+")   // under half a minute shows as 0
             return sign + Self.duration(abs(delta), width: .narrow, locale: locale)
         case .percent:
             return (delta / 100).formatted(.percent.precision(.fractionLength(0))

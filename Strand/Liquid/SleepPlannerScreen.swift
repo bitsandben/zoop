@@ -111,14 +111,19 @@ struct SleepPlannerScreen: View {
 
     // MARK: Tonight
 
+    /// Shown instead of a time while no wake time is known (never a dash).
+    static var unset: String {
+        String(localized: LocalizedStringResource("zoop.sleep.planner.unset", defaultValue: "Not set"))
+    }
+
     private func tonightCard(_ t: PatternsModel.Tonight) -> some View {
         ContentCard {
             VStack(spacing: 16) {
                 HStack(alignment: .top) {
-                    timeColumn(t.bedtime.map { PatternsScreen.clock($0 / 60) } ?? "–",
+                    timeColumn(t.bedtime.map { PatternsScreen.clock($0 / 60) } ?? Self.unset,
                                label: "Bedtime", icon: "moon.fill")
                     Spacer()
-                    timeColumn(t.wake.map { PatternsScreen.clock($0 / 60) } ?? "–",
+                    timeColumn(t.wake.map { PatternsScreen.clock($0 / 60) } ?? Self.unset,
                                label: alarm == nil ? "Wake up" : "Alarm", icon: "alarm.fill")
                 }
                 ZStack {
@@ -162,19 +167,24 @@ struct SleepPlannerScreen: View {
             HStack(spacing: 6) {
                 Text("Tomorrow I want to")
                     .foregroundStyle(StrandPalette.textSecondary)
+                    .lineLimit(1)
+                    .layoutPriority(1)
+                // The goal wraps instead of being cut ("meinen Schlafbedarf erre…").
                 Text(goal.title)
                     .foregroundStyle(StrandPalette.textPrimary)
-                Spacer()
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
                 Image(systemName: "chevron.up.chevron.down")
                     .font(ZoopType.icon(12, weight: .semibold))
                     .foregroundStyle(StrandPalette.textSecondary)
             }
             .font(ZoopType.label.weight(.semibold))
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
             .padding(.horizontal, 16)
-            .frame(height: 50)
-            .background(Capsule().fill(StrandPalette.surfaceRaised))
+            .padding(.vertical, ZoopSpacing.s)
+            .frame(minHeight: 50)
+            .background(RoundedRectangle(cornerRadius: 25, style: .continuous).fill(StrandPalette.surfaceRaised))
         }
     }
 
@@ -451,7 +461,7 @@ struct SleepPlanEntryCard: View {
 
     private var line: String {
         guard let t = patterns.tonight, let bed = t.bedtime else { return String(localized: "Plan your sleep") }
-        let wake = t.wake.map { PatternsScreen.clock($0 / 60) } ?? "–"
+        let wake = t.wake.map { PatternsScreen.clock($0 / 60) } ?? SleepPlannerScreen.unset
         return "\(PatternsScreen.clock(bed / 60)) → \(wake)"
     }
 }

@@ -29,7 +29,7 @@ public struct MetricPresentation: Equatable, Sendable {
 
         label = text(readout.label)
         verdict = text(readout.verdict.text(rangeIsPersonal: readout.rangeIsPersonal, polarity: readout.polarity))
-        compactVerdict = text(readout.verdict.compactText)
+        compactVerdict = readout.verdict.isUnavailable ? text(readout.verdict.compactText) : verdict
         meaning = text(readout.meaning)
 
         if let value = readout.displayValue {

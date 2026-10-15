@@ -50,6 +50,7 @@ final class MetricReadoutTests: XCTestCase {
         let age = MetricReadout(id: .fitnessAge, label: "Fitness age", value: 31, unit: .years,
                                 typicalRange: 35...37, verdict: .below, meaning: "x")
         XCTAssertEqual(MetricPresentation(age, locale: en).verdict, "Better than usual")
+        XCTAssertEqual(MetricPresentation(age, locale: en).compactVerdict, "Better than usual", "tiles use the compact form")
         let debt = MetricReadout(id: "sleep_debt", label: "Debt", value: 90, unit: .duration,
                                  typicalRange: 10...40, rangeIsPersonal: false, verdict: .above, meaning: "x",
                                  polarity: .lowerIsBetter)

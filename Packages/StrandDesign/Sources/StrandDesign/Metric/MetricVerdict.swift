@@ -39,6 +39,11 @@ public enum MetricVerdict: Equatable, Sendable {
         }
     }
 
+    public var isUnavailable: Bool {
+        if case .unavailable = self { return true }
+        return false
+    }
+
     public var compactText: LocalizedStringResource {
         if case .unavailable(let reason) = self { return reason.compactText }
         return text
