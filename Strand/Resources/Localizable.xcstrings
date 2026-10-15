@@ -279143,6 +279143,584 @@
           }
         }
       }
+    },
+    "zoop.sleep.chronotype.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlaftyp"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep type"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.midSleep" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafmitte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mid-sleep"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.midSleep.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hälfte deiner üblichen Nacht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halfway through your usual night"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.spread" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwankung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Timing variation"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.spread.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie stark deine Schlafmitte von Nacht zu Nacht wandert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How much your mid-sleep moves night to night"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.jetlag" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sozialer Jetlag"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Social jetlag"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.jetlag.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abstand zwischen freien Tagen und Arbeitstagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gap between free days and workdays"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.jetlag.pending" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sozialer Jetlag erscheint nach zwei Wochenenden mit dem Band."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Social jetlag appears after two weekends with the strap."
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.shift.steady" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Timing verschiebt sich zwischen Arbeits- und freien Tagen kaum."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your timing barely shifts between workdays and free days."
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.shift.later" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An freien Tagen schläfst du %@ später als an Arbeitstagen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On free days you sleep %@ later than on workdays."
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.shift.earlier" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An freien Tagen schläfst du %@ früher als an Arbeitstagen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On free days you sleep %@ earlier than on workdays."
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.sample" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld Nächte · davon %2$lld vor freien Tagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld nights · %2$lld before free days"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.building" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch im Aufbau: belastbar ab 14 Nächten mit zwei Wochenenden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Still building: solid from 14 nights including two weekends."
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.typeMidSleep" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafmitte frei %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free-day mid-sleep %@"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.chart" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafmitte pro Nacht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mid-sleep per night"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.freeDay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Freier Tag"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free day"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.workday" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbeitstag"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workday"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.what.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was es ist"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What it is"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.what" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Chronotyp ist die Zeit, zu der deine innere Uhr schlafen will; er ist großteils angeboren und wandert mit dem Alter."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your chronotype is when your inner clock prefers to sleep; it is largely innate and shifts with age."
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.method.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So wird es berechnet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How it's computed"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.method" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafmitte an freien Tagen, bereinigt um Nachholschlaf, aus deinen letzten 42 Nächten. Vor 3:30 gilt als früh, ab 5:00 als spät."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mid-sleep on free days, corrected for catch-up sleep, over your last 42 nights. Before 3:30 reads as early, from 5:00 as late."
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.advice.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was hilft"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What helps"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.scale.early" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Früh"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Early"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.scale.late" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spät"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Late"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.early" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frühtyp"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Early type"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.intermediate" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mischtyp"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intermediate type"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.late" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spättyp"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Late type"
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.meaning.early" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du schläfst und wachst von Natur aus früh; morgens bist du am stärksten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You naturally sleep and wake early; mornings are your strong time."
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.meaning.intermediate" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Rhythmus liegt in der Mitte; die meisten Zeitpläne passen zu dir."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your rhythm sits in the middle; most schedules suit you."
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.meaning.late" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du schläfst und wachst von Natur aus spät; frühe Wecker kosten dich mehr."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You naturally sleep and wake late; early alarms cost you more."
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.advice.early" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schütze deine frühe Bettzeit; späte Abende kosten dich am meisten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Protect your early bedtime; late evenings cost you the most."
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.advice.intermediate" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halte Arbeits- und freie Tage innerhalb einer Stunde zueinander."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep workday and free-day timing within an hour of each other."
+          }
+        }
+      }
+    },
+    "zoop.sleep.chronotype.advice.late" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morgenlicht und eine feste Aufstehzeit ziehen deine Uhr nach vorn."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morning light and a steady wake time pull your clock earlier."
+          }
+        }
+      }
+    },
+    "zoop.body.trends.windowYear" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 Jahr"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 year"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

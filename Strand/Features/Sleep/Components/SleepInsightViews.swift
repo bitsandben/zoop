@@ -90,6 +90,12 @@ struct SleepInsightDetailSheet: View {
                              ("Range", "\(Int(b.spreadPts.rounded()))"),
                              ("Nights", "\(b.nightCount)")])
             }
+        case .consistency:
+            if let c = report.consistency {
+                ChartFooter([("Usual bedtime", SleepInsightFormat.clock(c.usualBedtimeSignedMin)),
+                             ("Regular nights", "\(c.regularCount)"),
+                             ("Other nights", "\(c.irregularCount)")])
+            }
         }
     }
 }
@@ -109,6 +115,7 @@ struct SleepInsightChart: View {
         case .latency: latencyChart
         case .sleepNeed: binChart(report.sleepNeed, label: SleepInsightFormat.duration)
         case .bedtime: binChart(report.bedtime, label: SleepInsightFormat.clock)
+        case .consistency: consistencyChart
         }
     }
 
@@ -135,6 +142,35 @@ struct SleepInsightChart: View {
             .chartXAxis(large ? .automatic : .hidden)
             .chartYAxis(large ? .automatic : .hidden)
             .accessibilityLabel(Text("Time to fall asleep over the last \(l.nightCount) nights"))
+        }
+    }
+
+    /// Average recovery after regular nights against the other nights; the sheet shows every night.
+    @ViewBuilder
+    private var consistencyChart: some View {
+        if let c = report.consistency {
+            if large {
+                Chart {
+                    ForEach(Array(c.points.enumerated()), id: \.offset) { _, p in
+                        PointMark(x: .value("Minutes from usual bedtime", p.deviationMin), y: .value("Recovery", p.recovery))
+                            .foregroundStyle(p.deviationMin <= SleepInsights.regularToleranceMin ? highlight : muted)
+                            .symbolSize(40)
+                    }
+                    RuleMark(x: .value("Tolerance", SleepInsights.regularToleranceMin)).zoopReferenceRule()
+                }
+                .chartYScale(domain: 0...100)
+            } else {
+                Chart {
+                    BarMark(x: .value("Recovery", c.regularMeanRecovery), y: .value("Group", String(localized: "Regular")))
+                        .foregroundStyle(highlight)
+                        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                    BarMark(x: .value("Recovery", c.irregularMeanRecovery), y: .value("Group", String(localized: "Other nights")))
+                        .foregroundStyle(muted)
+                        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                }
+                .chartXScale(domain: 0...100)
+                .chartXAxis(.hidden)
+            }
         }
     }
 

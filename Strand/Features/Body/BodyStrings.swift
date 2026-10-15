@@ -24,6 +24,7 @@ enum BodyStrings {
     static let trendWindowPicker = LocalizedStringResource("zoop.body.trends.window", defaultValue: "Period")
     static let trendRecovery = LocalizedStringResource("zoop.body.trends.recovery", defaultValue: "Recovery")
     static let trendStrain = LocalizedStringResource("zoop.body.trends.strain", defaultValue: "Strain")
+    static let windowYear = LocalizedStringResource("zoop.body.trends.windowYear", defaultValue: "1 year")
     static func windowDays(_ days: Int) -> LocalizedStringResource {
         LocalizedStringResource("zoop.body.trends.windowDays", defaultValue: "\(days) days")
     }

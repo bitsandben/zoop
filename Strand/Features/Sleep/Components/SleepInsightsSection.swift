@@ -6,16 +6,16 @@ import WhoopStore
 
 // MARK: - What your nights show
 //
-// At most two interpretations `SleepInsights` can make from the stored nights, and only those that
-// found a real difference. Regularity and the weekend shift live in the rhythm card, and debt in its
-// own row, so none of them repeats here. Each card opens a sheet with the larger chart and the method.
+// At most three interpretations `SleepInsights` can make from the stored nights, and only those that
+// found a real difference. Regularity lives in the rhythm card, the weekend shift (social jetlag) in
+// the sleep-type card and debt in its own row, so none of them repeats here. Each card opens a sheet with the larger chart and the method.
 
 struct SleepInsightsSection: View {
     @EnvironmentObject private var repo: Repository
     @State private var report: SleepInsights.Report?
     @State private var detail: SleepInsightKind?
 
-    static let maxShown = 2
+    static let maxShown = 3
 
     var body: some View {
         let kinds = report.map(SleepInsightKind.shown) ?? []
@@ -40,7 +40,9 @@ struct SleepInsightsSection: View {
 
     /// Main nights (at least three hours in bed), joined to the daily row of their wake day for time
     /// asleep and the next-morning recovery.
-    static func nights(sleeps: [CachedSleepSession], days: [DailyMetric]) -> [SleepInsights.Night] {
+    /// `withLatency: false` skips decoding each night's stages, for readers that only need timing.
+    static func nights(sleeps: [CachedSleepSession], days: [DailyMetric],
+                       withLatency: Bool = true) -> [SleepInsights.Night] {
         var rows: [String: DailyMetric] = [:]
         for d in days { rows[d.day] = d }
         let cal = Calendar.current
@@ -60,7 +62,7 @@ struct SleepInsightsSection: View {
                 bedtimeClockMin: Double((bed.hour ?? 0) * 60 + (bed.minute ?? 0)),
                 inBedMin: inBed,
                 asleepMin: row?.totalSleepMin ?? efficiencyAsleep,
-                latencyMin: latency(s, start: start),
+                latencyMin: withLatency ? latency(s, start: start) : nil,
                 recovery: row?.recovery,
                 isFreeDay: weekday == 1 || weekday == 7)
         }
@@ -79,7 +81,7 @@ struct SleepInsightsSection: View {
 // MARK: - Kinds and copy
 
 enum SleepInsightKind: String, CaseIterable, Identifiable {
-    case latency, sleepNeed, bedtime
+    case latency, sleepNeed, bedtime, consistency
     var id: String { rawValue }
 
     /// The kinds that found a difference worth naming, at most `maxShown`.
@@ -92,6 +94,7 @@ enum SleepInsightKind: String, CaseIterable, Identifiable {
         case .latency: return r.latency.map { $0.trend != .steady } ?? false
         case .sleepNeed: return r.sleepNeed.map { !$0.isFlat } ?? false
         case .bedtime: return r.bedtime.map { !$0.isFlat } ?? false
+        case .consistency: return r.consistency.map { $0.effect != .none } ?? false
         }
     }
 
@@ -100,6 +103,7 @@ enum SleepInsightKind: String, CaseIterable, Identifiable {
         case .latency: return String(localized: "Falling asleep")
         case .sleepNeed: return String(localized: "Sleep for recovery")
         case .bedtime: return String(localized: "Best bedtime")
+        case .consistency: return String(localized: "Regular bedtime")
         }
     }
 
@@ -111,6 +115,8 @@ enum SleepInsightKind: String, CaseIterable, Identifiable {
             return String(localized: "Nights from the last 90 days are grouped by time asleep in 30-minute steps, each bar is the average recovery the next morning, and the shortest step within 5 points of the best one is named.")
         case .bedtime:
             return String(localized: "Nights from the last 90 days are grouped by bedtime in 30-minute steps, and each bar is the average recovery the next morning, counting steps with at least 3 nights.")
+        case .consistency:
+            return String(localized: "Nights within 30 minutes of your median bedtime count as regular, and the bars compare the average recovery after regular and other nights over the last 90 days.")
         }
     }
 
@@ -133,6 +139,17 @@ enum SleepInsightKind: String, CaseIterable, Identifiable {
             guard let b = r.bedtime else { return nil }
             let lo = SleepInsightFormat.clock(b.best.lower), hi = SleepInsightFormat.clock(b.best.upper)
             return String(localized: "Your best recoveries follow bedtimes between \(lo) and \(hi).")
+        case .consistency:
+            guard let c = r.consistency else { return nil }
+            let d = Int(abs(c.deltaPts).rounded())
+            switch c.effect {
+            case .regularBetter:
+                return String(localized: "After nights within 30 min of your usual bedtime you recover \(d) points better.")
+            case .irregularBetter:
+                return String(localized: "Nights away from your usual bedtime have recovered \(d) points better so far.")
+            case .none:
+                return String(localized: "A regular bedtime makes no clear difference to your recovery yet.")
+            }
         }
     }
 }

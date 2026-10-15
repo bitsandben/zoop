@@ -64,9 +64,12 @@ enum BodyTrendMetric: String, CaseIterable, Identifiable {
 }
 
 enum BodyTrendWindow: Int, CaseIterable, Identifiable {
-    case week = 7, month = 30, quarter = 90
+    /// A year shows the long-term drift (HRV, resting HR) against the year before.
+    case week = 7, month = 30, quarter = 90, year = 365
     var id: Int { rawValue }
-    var label: LocalizedStringResource { BodyStrings.windowDays(rawValue) }
+    var label: LocalizedStringResource {
+        self == .year ? BodyStrings.windowYear : BodyStrings.windowDays(rawValue)
+    }
 }
 
 struct BodyTrend: Equatable {
