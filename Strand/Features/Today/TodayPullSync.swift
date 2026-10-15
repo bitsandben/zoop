@@ -108,8 +108,10 @@ struct PullToSync: ViewModifier {
         // Only while the finger is pulling: the bounce after release belongs to the header capsule.
         if dragging, !isBusy, pull > 6 {
             PullToSyncIndicator(progress: progress, armed: armed)
-                .padding(.top, topInset + max(0, (pull - PullToSyncIndicator.height) / 2))
-                .opacity(Double(min(1, pull / 32)))
+                // Pinned to the bottom of the gap the pull opens, so it sits just above the header
+                // and never over it; it only fades in once the gap is tall enough to hold it.
+                .padding(.top, topInset + max(0, pull - PullToSyncIndicator.height - ZoopSpacing.s))
+                .opacity(Double(max(0, min(1, (pull - PullToSyncIndicator.height) / 24))))
                 .allowsHitTesting(false)
         }
     }
