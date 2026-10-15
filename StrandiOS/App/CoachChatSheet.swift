@@ -578,6 +578,7 @@ private struct TypingBubble: View {
 private struct CoachSetup: View {
     @EnvironmentObject private var coach: AICoachEngine
     @State private var keyDraft = ""
+    @State private var keyRevealed = false
     @State private var picked: AIProvider?
     @FocusState private var keyFocused: Bool
 
@@ -692,18 +693,48 @@ private struct CoachSetup: View {
     private func keyStep(_ p: AIProvider) -> some View {
         let empty = keyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         return VStack(alignment: .leading, spacing: 18) {
-            SecureField("API key", text: $keyDraft)
-                .font(StrandFont.mono(17))
-                .foregroundStyle(StrandPalette.textPrimary)
-                .focused($keyFocused)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .submitLabel(.done)
-                .onSubmit(connect)
-                .padding(16)
-                .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(StrandPalette.surfaceRaised))
-                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+            VStack(alignment: .leading, spacing: ZoopSpacing.s) {
+                Text("zoop.coach.key.label")
+                    .font(ZoopType.caption)
+                    .foregroundStyle(StrandPalette.textSecondary)
+                HStack(spacing: ZoopSpacing.s) {
+                    keyField
+                        .focused($keyFocused)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .onSubmit(connect)
+                        .accessibilityLabel(Text("zoop.coach.key.label"))
+                    if keyDraft.isEmpty {
+                        Button { pasteKey() } label: {
+                            Text("zoop.coach.key.paste")
+                                .font(ZoopType.body.weight(.semibold))
+                                .foregroundStyle(StrandPalette.accent)
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        Button { keyRevealed.toggle() } label: {
+                            Image(systemName: keyRevealed ? "eye.slash" : "eye")
+                                .font(ZoopType.body)
+                                .foregroundStyle(StrandPalette.textSecondary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(Text(keyRevealed ? "zoop.coach.key.hide" : "zoop.coach.key.show"))
+                        Button { keyDraft = "" } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(ZoopType.body)
+                                .foregroundStyle(StrandPalette.textTertiary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(Text("zoop.coach.key.clear"))
+                    }
+                }
+                .padding(ZoopSpacing.m)
+                .background(RoundedRectangle(cornerRadius: ZoopRadius.button, style: .continuous)
+                    .fill(StrandPalette.surfaceRaised))
+                .overlay(RoundedRectangle(cornerRadius: ZoopRadius.button, style: .continuous)
                     .strokeBorder(keyFocused ? StrandPalette.accent : .clear, lineWidth: 1.5))
+            }
 
             Toggle(isOn: $coach.dataConsent) {
                 VStack(alignment: .leading, spacing: 3) {
@@ -736,6 +767,26 @@ private struct CoachSetup: View {
             }
             .buttonStyle(.plain)
             .disabled(empty)
+        }
+    }
+
+    /// Placeholder and label use the body token; only the key text itself is monospaced (so a pasted
+    /// key reads character by character once revealed). Masked dots stay in the body face.
+    @ViewBuilder private var keyField: some View {
+        if keyRevealed {
+            TextField("zoop.coach.key.placeholder", text: $keyDraft)
+                .font(StrandFont.mono(15))
+                .foregroundStyle(StrandPalette.textPrimary)
+        } else {
+            SecureField("zoop.coach.key.placeholder", text: $keyDraft)
+                .font(ZoopType.body)
+                .foregroundStyle(StrandPalette.textPrimary)
+        }
+    }
+
+    private func pasteKey() {
+        if let text = UIPasteboard.general.string {
+            keyDraft = text.trimmingCharacters(in: .whitespacesAndNewlines)
         }
     }
 

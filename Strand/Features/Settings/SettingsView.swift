@@ -1,19 +1,25 @@
 import SwiftUI
 import StrandDesign
 
-/// Settings root: eight rows, one per page (Zoop 2.0 §3.9). Each page owns its own preferences and
+/// Settings root: profile card, appearance block, then one row per page (Zoop 2.0 §3.9). Each page owns its own preferences and
 /// state, so this view only orders the list. Every host wraps it in a `NavigationStack` (the More tab,
 /// the Home avatar sheet, the macOS detail pane), which the value-pushed pages rely on.
 struct SettingsView: View {
     var body: some View {
         ScreenScaffold(title: "Settings") {
-            ListCard {
-                ForEach(Array(SettingsPage.visible.enumerated()), id: \.element) { index, page in
-                    NavigationLink(value: page) {
-                        ZoopIconRow(page.title, subtitle: page.subtitle, icon: page.icon)
+            VStack(alignment: .leading, spacing: ZoopSpacing.sectionGap) {
+                SettingsProfileHeader()
+                SettingsLookBlock()
+                ForEach(Array(SettingsPage.groups.enumerated()), id: \.offset) { _, pages in
+                    ListCard {
+                        ForEach(Array(pages.enumerated()), id: \.element) { index, page in
+                            NavigationLink(value: page) {
+                                ZoopIconRow(page.title, subtitle: page.subtitle, icon: page.icon)
+                            }
+                            .buttonStyle(.plain)
+                            .listCardRow(isFirst: index == 0)
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .listCardRow(isFirst: index == 0)
                 }
             }
         }
@@ -39,12 +45,19 @@ enum SettingsPage: String, Hashable, CaseIterable, Identifiable {
         #endif
     }
 
+    /// The rows listed under the profile card and the appearance block. Profile has its own card, and
+    /// Appearance (language, charts) follows the look block it extends.
+    static var groups: [[SettingsPage]] {
+        [[.strap, .notifications, .appearance, .features], [.data, .advanced, .about]]
+            .map { $0.filter { visible.contains($0) } }
+    }
+
     var title: LocalizedStringKey {
         switch self {
         case .profile: return "zoop.settings.profile.title"
         case .strap: return "Strap"
         case .notifications: return "zoop.settings.notifications.title"
-        case .appearance: return "zoop.settings.appearance.title"
+        case .appearance: return "zoop.settings.language.title"
         case .features: return "Features"
         case .data: return "Data"
         case .advanced: return "Advanced"
@@ -58,7 +71,7 @@ enum SettingsPage: String, Hashable, CaseIterable, Identifiable {
         case .profile: return "zoop.settings.profile.subtitle"
         case .strap: return "zoop.settings.strap.subtitle"
         case .notifications: return "zoop.settings.notifications.subtitle"
-        case .appearance: return "zoop.settings.appearance.subtitle"
+        case .appearance: return "zoop.settings.language.subtitle"
         case .features: return "zoop.settings.features.subtitle"
         case .data: return "zoop.settings.data.subtitle"
         case .advanced: return "zoop.settings.advanced.subtitle"

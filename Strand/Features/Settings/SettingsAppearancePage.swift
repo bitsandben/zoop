@@ -7,12 +7,10 @@ import AppKit
 import StrandDesign
 import StrandAnalytics
 
-/// Appearance: the look (design, light/dark, icon), language and clock, and the chart styles. The
+/// Language, clock, motion and charts (the look itself lives in the Settings root), and the chart styles. The
 /// day-cycle sky, transparent cards and the custom background left with Zoop 2.0; the design owns
 /// the backdrop now (see `SettingsMigration`).
 struct SettingsAppearancePage: View {
-    /// Light / Dark / System, read by both app roots' `.preferredColorScheme`.
-    @AppStorage(AppearanceMode.storageKey) private var appearanceRaw = AppearanceMode.system.rawValue
     /// Poses looping animations still and stops the tilt sensor without needing Low Power Mode.
     @AppStorage(QuietMotionPrefs.enabledKey) private var quietMotion = false
     /// Apple binds a bundle localization at launch, so this writes the AppleLanguages override and
@@ -27,36 +25,18 @@ struct SettingsAppearancePage: View {
     @AppStorage(AccentColor.customHexKey) private var accentCustomHex = AccentColor.defaultCustomHex
 
     var body: some View {
-        SettingsPageScaffold(title: "zoop.settings.appearance.title") {
-            lookGroup
+        SettingsPageScaffold(title: "zoop.settings.language.title") {
             languageGroup
             chartsGroup
+            motionGroup
         }
     }
 
-    private var lookGroup: some View {
+    private var motionGroup: some View {
         SettingsGroup {
-            #if os(iOS)
-            SettingsDesignPicker().listCardRow(isFirst: true)
-            #endif
-            // "Theme" reads as "Design" in German, which the picker above owns; this is only light/dark.
-            SettingsMenuRow(label: "appearance.mode", selection: $appearanceRaw, isFirst: !Self.hasDesignPicker) {
-                ForEach(AppearanceMode.allCases) { mode in Text(mode.label).tag(mode.rawValue) }
-            }
-            #if os(iOS)
-            SettingsAppIconPicker().listCardRow()
-            #endif
             SettingsToggleRow(label: "Reduce motion in Zoop", isOn: $quietMotion,
-                              note: "zoop.settings.appearance.motionNote")
+                              note: "zoop.settings.appearance.motionNote", isFirst: true)
         }
-    }
-
-    private static var hasDesignPicker: Bool {
-        #if os(iOS)
-        true
-        #else
-        false
-        #endif
     }
 
     private var languageGroup: some View {
