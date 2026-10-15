@@ -65,6 +65,7 @@ struct TodayContentStack: View {
         TodayMyDayCard(moment: content.moment, activities: content.activities,
                        onOpen: actions.openActivity, onEditNap: actions.editNap)
         if content.isToday { ActiveWorkoutIndicatorSection(showStart: false) }
+        if content.isToday { TodayFastingCard() }
         if content.showsCycle { HomeCycleCard() }
 
         sectionTitle(TodayCopy.dashboard, id: "dashboard") { EmptyView() }

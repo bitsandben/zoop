@@ -43,6 +43,12 @@ extension FastingInterval {
 
 @MainActor
 enum FastingLog {
+    /// Posted after every write so other screens (Today's fasting card) reload. Shortcuts run in this
+    /// process, so the same signal covers them.
+    static let didChange = Notification.Name("zoop.fasting.didChange")
+
+    private static func notifyChanged() { NotificationCenter.default.post(name: didChange, object: nil) }
+
     enum Source: String { case app, shortcut }
 
     /// How far back the screen reads. The 30-day consistency window plus room for the pattern split,
@@ -67,6 +73,7 @@ enum FastingLog {
                                     goalSec: Int(plan.goal), planId: plan.id, source: source.rawValue)
         try await store.saveFastingSession(row)
         FastingReminder.sync(active: row)
+        notifyChanged()
         return row
     }
 
@@ -77,12 +84,14 @@ enum FastingLog {
         row.endTs = max(row.startTs + 1, Int(end.timeIntervalSince1970))
         try await store.saveFastingSession(row)
         FastingReminder.sync(active: nil)
+        notifyChanged()
         return row
     }
 
     /// Saves an edited (backdated) fast. The caller validated it with `FastingEngine.validate`.
     static func save(store: WhoopStore, _ row: FastingSessionRow) async throws {
         try await store.saveFastingSession(row)
+        defer { notifyChanged() }
         if row.endTs == nil {
             FastingReminder.sync(active: row)
         } else if (try? await store.activeFastingSession()) == nil {
@@ -92,6 +101,7 @@ enum FastingLog {
 
     static func delete(store: WhoopStore, _ row: FastingSessionRow) async throws {
         try await store.deleteFastingSession(id: row.id)
+        defer { notifyChanged() }
         if row.endTs == nil { FastingReminder.sync(active: nil) }
     }
 }

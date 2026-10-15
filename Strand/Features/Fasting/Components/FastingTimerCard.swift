@@ -62,19 +62,11 @@ struct FastingTimerCard: View {
 /// Progress ring with clock marks. The marks are hours since the last meal, nothing more (§3.8).
 private struct FastingRing: View {
     let state: FastingTimerState.Running
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let lineWidth: CGFloat = 16
 
     var body: some View {
         ZStack {
-            // Strokes straddle the path, so inset by half the width to keep the ring inside its frame.
-            Circle().stroke(StrandPalette.surfaceInset, lineWidth: lineWidth).padding(lineWidth / 2)
-            Circle()
-                .trim(from: 0, to: state.progress)
-                .stroke(StrandPalette.metricCyan, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .padding(lineWidth / 2)
-                .animation(reduceMotion ? nil : .easeOut(duration: 0.6), value: state.progress)
+            FastingProgressRing(progress: state.progress, lineWidth: lineWidth)
             ForEach(state.markers, id: \.self) { marker in
                 MarkerTick(marker: marker, lineWidth: lineWidth)
             }
