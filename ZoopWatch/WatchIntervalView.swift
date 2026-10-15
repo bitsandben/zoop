@@ -217,7 +217,7 @@ struct WatchIntervalView: View {
                 stopAndReset()
             } label: {
                 Image(systemName: "arrow.counterclockwise")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(ZoopType.icon(15, weight: .semibold))
                     .frame(maxWidth: .infinity)
             }
             .tint(StrandPalette.surfaceRaised)

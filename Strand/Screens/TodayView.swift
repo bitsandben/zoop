@@ -1089,7 +1089,7 @@ struct TodayView: View {
                 // they can change the day by swiping across or tapping here. fixedSize makes it claim its own
                 // width so a tight top bar never compresses it, and the trailing icon cluster keeps its room.
                 Text(dayNavHint ?? dayNavDateText)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(ZoopType.caption.weight(.semibold))
                     .foregroundStyle(dayNavHint != nil ? StrandPalette.accent : StrandPalette.textPrimary)
                     .lineLimit(1)
                     .fixedSize()
@@ -1124,7 +1124,7 @@ struct TodayView: View {
                 // Updates bell.
                 Button { showUpdatesInbox = true } label: {
                     Image(systemName: updateStore.unreadCount > 0 ? "bell.badge" : "bell")
-                        .font(.system(size: 15, weight: .medium))
+                        .font(ZoopType.icon(15, weight: .medium))
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(StrandPalette.textSecondary)
                         .frame(width: 36, height: 36)
@@ -1132,7 +1132,7 @@ struct TodayView: View {
                         .overlay(alignment: .topTrailing) {
                             if updateStore.unreadCount > 0 {
                                 Text("\(min(updateStore.unreadCount, 99))")
-                                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                                    .font(ZoopType.icon(9, weight: .bold))
                                     .monospacedDigit()
                                     .foregroundStyle(StrandPalette.goldDeepText)
                                     .padding(.horizontal, 3.5).padding(.vertical, 1)
@@ -1148,7 +1148,7 @@ struct TodayView: View {
                 // Quick-action + (the accented primary, gold, same 36 size as the rest).
                 Button { router.requestQuickActions() } label: {
                     Image(systemName: "plus")
-                        .font(.system(size: 17, weight: .bold))
+                        .font(ZoopType.icon(17, weight: .bold))
                         .foregroundStyle(StrandPalette.goldDeepText)
                         .frame(width: 36, height: 36)
                         .background(Circle().fill(StrandPalette.accent))
@@ -1203,14 +1203,14 @@ struct TodayView: View {
     private var updateBell: some View {
         Button { showUpdatesInbox = true } label: {
             Image(systemName: updateStore.unreadCount > 0 ? "bell.badge" : "bell")
-                .font(.system(size: 18))
+                .font(ZoopType.icon(18))
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(StrandPalette.textSecondary)
                 .frame(width: 34, height: 34)
                 .overlay(alignment: .topTrailing) {
                     if updateStore.unreadCount > 0 {
                         Text("\(min(updateStore.unreadCount, 99))")
-                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .font(ZoopType.icon(9, weight: .bold))
                             .monospacedDigit()
                             .foregroundStyle(StrandPalette.goldDeepText)
                             // Fixed 14pt square + Circle() = a true CIRCLE on both platforms, kept INSIDE
@@ -1489,7 +1489,7 @@ struct TodayView: View {
     private func todayCardDismissButton(_ action: @escaping () -> Void) -> some View {
         Button { withAnimation(StrandMotion.interactive) { action() } } label: {
             Image(systemName: "xmark")
-                .font(.system(size: 12, weight: .semibold))
+                .font(ZoopType.icon(12, weight: .semibold))
                 .foregroundStyle(StrandPalette.textTertiary)
                 .padding(8)
                 .contentShape(Rectangle())
@@ -1545,7 +1545,7 @@ struct TodayView: View {
                                     // for colour-blind users; hidden from VoiceOver since the
                                     // flag word is folded into the row's combined label below.
                                     Image(systemName: flagSymbol(s.flag))
-                                        .font(.system(size: 9, weight: .semibold))
+                                        .font(ZoopType.icon(9, weight: .semibold))
                                         .foregroundStyle(flagColor(s.flag))
                                         .padding(.top, 4)
                                         .accessibilityHidden(true)
@@ -1853,7 +1853,7 @@ struct TodayView: View {
         ZoopCard(padding: 14, tint: StrandPalette.chargeColor) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "moon.zzz")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(ZoopType.icon(16, weight: .semibold))
                     .foregroundStyle(StrandPalette.icon(StrandPalette.chargeColor))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
@@ -1884,7 +1884,7 @@ struct TodayView: View {
         ZoopCard(padding: 14, tint: StrandPalette.chargeColor) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "gauge.with.dots.needle.bottom.50percent")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(ZoopType.icon(16, weight: .semibold))
                     .foregroundStyle(StrandPalette.icon(StrandPalette.chargeColor))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
@@ -1968,7 +1968,7 @@ struct TodayView: View {
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "function")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(ZoopType.icon(14, weight: .semibold))
                                 .foregroundStyle(StrandPalette.icon(StrandPalette.chargeColor))
                             VStack(alignment: .leading, spacing: 1) {
                                 Text("How Charge is calculated")
@@ -1978,11 +1978,11 @@ struct TodayView: View {
                             }
                             Spacer(minLength: 8)
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(ZoopType.icon(12, weight: .semibold))
                                 .foregroundStyle(StrandPalette.textTertiary)
                         }
                         .padding(14)
-                        .background(ZoopPanelSurface(cornerRadius: 14))
+                        .zoopInsetSurface(radius: 14)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -2152,7 +2152,7 @@ struct TodayView: View {
                         }
                         Spacer(minLength: 8)
                         Image(systemName: "chevron.down")
-                            .font(.system(size: 12, weight: .bold))
+                            .font(ZoopType.icon(12, weight: .bold))
                             .foregroundStyle(StrandPalette.textTertiary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -2292,7 +2292,7 @@ struct TodayView: View {
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .frame(maxWidth: .infinity, minHeight: 60, alignment: .center)
-                        .background(ZoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
+                        .zoopInsetSurface(radius: 12, tint: StrandPalette.restColor)
                 }
             }
         case .nightDetail:
@@ -2307,7 +2307,7 @@ struct TodayView: View {
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .frame(maxWidth: .infinity, minHeight: 60, alignment: .center)
-                        .background(ZoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
+                        .zoopInsetSurface(radius: 12, tint: StrandPalette.restColor)
                 }
             }
         case .sleepDebt:
@@ -2322,7 +2322,7 @@ struct TodayView: View {
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .frame(maxWidth: .infinity, minHeight: 60, alignment: .center)
-                        .background(ZoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
+                        .zoopInsetSurface(radius: 12, tint: StrandPalette.restColor)
                 }
             }
         case .stages:
@@ -2338,7 +2338,7 @@ struct TodayView: View {
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .frame(maxWidth: .infinity, minHeight: 60, alignment: .center)
-                        .background(ZoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
+                        .zoopInsetSurface(radius: 12, tint: StrandPalette.restColor)
                 }
             }
         case .hoursVsNeeded:
@@ -2354,7 +2354,7 @@ struct TodayView: View {
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .frame(maxWidth: .infinity, minHeight: 60, alignment: .center)
-                        .background(ZoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
+                        .zoopInsetSurface(radius: 12, tint: StrandPalette.restColor)
                 }
             }
         case .consistency:
@@ -2370,7 +2370,7 @@ struct TodayView: View {
                         .font(StrandFont.subhead)
                         .foregroundStyle(StrandPalette.textTertiary)
                         .frame(maxWidth: .infinity, minHeight: 60, alignment: .center)
-                        .background(ZoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
+                        .zoopInsetSurface(radius: 12, tint: StrandPalette.restColor)
                 }
             }
         }
@@ -2568,7 +2568,7 @@ struct TodayView: View {
 
     /// One WHOOP "My Dashboard" metric row: a thin-line tinted icon, an UPPERCASE tracked label over a grey
     /// baseline caption, the big white value, and a chevron, the whole row navigates to `route`. Flat
-    /// WHOOP styling (FrostedCardSurface, no glow), tokens only. Pushed by VALUE — the first hop off the
+    /// WHOOP styling (ContentCard, no glow), tokens only. Pushed by VALUE — the first hop off the
     /// Today root must ride the tab's `NavigationPath` so a re-tap of the Today tab can pop it (#198;
     /// see TabRoute.swift).
     private func pinnedCardRow(icon: String, tint: Color, title: String, subtitle: String,
@@ -2595,34 +2595,33 @@ struct TodayView: View {
     @ViewBuilder
     private func pinnedCardRowBody(icon: String, tint: Color, title: String, subtitle: String,
                                    value: String) -> some View {
-        HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(tint.opacity(0.14))
-                .frame(width: 34, height: 34)
-                .overlay(Image(systemName: icon).font(.system(size: 15, weight: .semibold)).foregroundStyle(tint))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title.uppercased())
-                    .font(StrandFont.overline)
-                    .tracking(StrandFont.overlineTracking)
-                    .foregroundStyle(StrandPalette.textPrimary)
-                    .lineLimit(1)
-                Text(subtitle)
-                    .font(StrandFont.footnote)
+        ContentCard {
+            HStack(spacing: 12) {
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fill(tint.opacity(0.14))
+                    .frame(width: 34, height: 34)
+                    .overlay(Image(systemName: icon).font(ZoopType.icon(15, weight: .semibold)).foregroundStyle(tint))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title.uppercased())
+                        .font(StrandFont.overline)
+                        .tracking(StrandFont.overlineTracking)
+                        .foregroundStyle(StrandPalette.textPrimary)
+                        .lineLimit(1)
+                    Text(subtitle)
+                        .font(StrandFont.footnote)
+                        .foregroundStyle(StrandPalette.textTertiary)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 8)
+                // A real number reads white; a placeholder (, / Calibrating) reads dimmed so it doesn't
+                // masquerade as a value.
+                let isPlaceholder = (value == "—" || value == Self.calibratingPlaceholder)
+                Text(value).font(StrandFont.rounded(18, weight: .semibold))
+                    .foregroundStyle(isPlaceholder ? StrandPalette.textTertiary : StrandPalette.textPrimary)
+                Image(systemName: "chevron.right").font(ZoopType.icon(13, weight: .semibold))
                     .foregroundStyle(StrandPalette.textTertiary)
-                    .lineLimit(1)
             }
-            Spacer(minLength: 8)
-            // A real number reads white; a placeholder (, / Calibrating) reads dimmed so it doesn't
-            // masquerade as a value.
-            let isPlaceholder = (value == "—" || value == Self.calibratingPlaceholder)
-            Text(value).font(StrandFont.rounded(18, weight: .semibold))
-                .foregroundStyle(isPlaceholder ? StrandPalette.textTertiary : StrandPalette.textPrimary)
-            Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(StrandPalette.textTertiary)
         }
-        .padding(.horizontal, 13).padding(.vertical, 11)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(FrostedCardSurface(cornerRadius: ZoopMetrics.cardRadius))
         .contentShape(Rectangle())
     }
 
@@ -2768,7 +2767,7 @@ struct TodayView: View {
                 if let prior = provenance {
                     HStack(spacing: 4) {
                         Image(systemName: "clock.arrow.circlepath")
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(ZoopType.icon(10, weight: .semibold))
                             .foregroundStyle(StrandPalette.textTertiary)
                             .accessibilityHidden(true)
                         Text(carriedCaption(prior))
@@ -2809,7 +2808,7 @@ struct TodayView: View {
                                _ unit: String, _ tint: Color, linked: Bool) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
+                .font(ZoopType.icon(15, weight: .semibold))
                 .foregroundStyle(tint)
                 .frame(width: 22)
                 .accessibilityHidden(true)
@@ -2832,7 +2831,7 @@ struct TodayView: View {
             }
             // Only when the row goes somewhere: a row that cannot navigate must not imply it can.
             if linked {
-                Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold))
+                Image(systemName: "chevron.right").font(ZoopType.icon(12, weight: .semibold))
                     .foregroundStyle(StrandPalette.textTertiary)
                     .accessibilityHidden(true)
             }
@@ -3101,7 +3100,7 @@ struct TodayView: View {
                     // plain leading-to-trailing content with no alignment-guide math, so LTR and RTL mirror
                     // identically. Hidden from VoiceOver: it is a spacer, not content.
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(ZoopType.icon(9, weight: .bold))
                         .opacity(0)
                         .accessibilityHidden(true)
                     // The CHARGE/EFFORT/REST hero label is localized: the catalog key is the natural-case
@@ -3112,7 +3111,7 @@ struct TodayView: View {
                         .font(StrandFont.overline)
                         .tracking(StrandFont.overlineTracking)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(ZoopType.icon(9, weight: .bold))
                         .opacity(0.6)
                 }
                 .foregroundStyle(StrandPalette.textSecondary)
@@ -3625,7 +3624,7 @@ struct TodayView: View {
                         .foregroundStyle(StrandPalette.textTertiary)
                 }
                 Image(systemName: metricsExpanded ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(ZoopType.icon(11, weight: .bold))
             }
             .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
             .frame(maxWidth: .infinity)
@@ -3977,7 +3976,7 @@ struct TodayView: View {
                                 Text("Synced from").strandOverline()
                                 Spacer()
                                 Image(systemName: "chevron.up")
-                                    .font(.system(size: 11, weight: .bold))
+                                    .font(ZoopType.icon(11, weight: .bold))
                                     .foregroundStyle(StrandPalette.textTertiary)
                             }
                             .contentShape(Rectangle())
@@ -4056,7 +4055,7 @@ struct TodayView: View {
                         .minimumScaleFactor(0.85)
                     Spacer(minLength: 8)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 11, weight: .bold))
+                        .font(ZoopType.icon(11, weight: .bold))
                         .foregroundStyle(StrandPalette.textTertiary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -4110,7 +4109,7 @@ struct TodayView: View {
             guideSection = section
         } label: {
             Image(systemName: "info.circle")
-                .font(.system(size: 13, weight: .regular))
+                .font(ZoopType.icon(13))
                 .foregroundStyle(StrandPalette.textTertiary)
                 .padding(8)
                 .contentShape(Rectangle())
@@ -4128,7 +4127,7 @@ struct TodayView: View {
             showStepsCalibration = true
         } label: {
             Image(systemName: "slider.horizontal.3")
-                .font(.system(size: 12, weight: .regular))
+                .font(ZoopType.icon(12))
                 .foregroundStyle(StrandPalette.textTertiary)
                 .padding(8)
                 .contentShape(Rectangle())
@@ -4152,7 +4151,7 @@ struct TodayView: View {
         default: symbol = "figure.stand"; label = String(localized: "Still")   // 0 = still
         }
         return Image(systemName: symbol)
-            .font(.system(size: 12, weight: .regular))
+            .font(ZoopType.icon(12))
             .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
             .accessibilityLabel(label)
             .help(label)
@@ -5384,7 +5383,7 @@ private struct StrapBatteryRow: View {
                 Spacer()
                 HStack(spacing: 5) {
                     Image(systemName: symbol(pct))
-                        .font(.system(size: 11, weight: .medium))
+                        .font(ZoopType.icon(11, weight: .medium))
                         .foregroundStyle(tint(pct))
                     Text("\(Int(pct.rounded()))%")
                         .font(StrandFont.captionNumber)

@@ -121,9 +121,7 @@ struct WeeklyDigestContent: View {
     // MARK: Header (scenic hero)
 
     private var header: some View {
-        ZStack(alignment: .leading) {
-            ZoopPanelSurface(cornerRadius: ZoopMetrics.cardRadius,
-                             elevated: true)
+        ContentCard {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: ZoopMetrics.spaceHalf) {
                     Text("Week in review").strandOverline()
@@ -137,7 +135,6 @@ struct WeeklyDigestContent: View {
                     .foregroundStyle(StrandPalette.textSecondary)
                     .accessibilityLabel("\(digest.daysWithData) of 7 days had data this week")
             }
-            .padding(ZoopMetrics.cardPadding)
         }
     }
 
@@ -311,7 +308,7 @@ struct WeeklyDigestContent: View {
         let arrow = s.wowDelta > 0 ? "arrow.up" : (s.wowDelta < 0 ? "arrow.down" : "minus")
         return HStack(spacing: 3) {
             Image(systemName: arrow)
-                .font(.system(size: 9, weight: .bold))
+                .font(ZoopType.icon(9, weight: .bold))
                 .accessibilityHidden(true)
             Text(deltaText(s))
                 .font(StrandFont.captionNumber)
@@ -547,7 +544,7 @@ private struct DigestScoreCard: View {
                 }
                 .padding(ZoopMetrics.cardInnerPadding)
                 .frame(minWidth: 120)
-                .background(ZoopPanelSurface(cornerRadius: ZoopVisualStyle.compactRadius, elevated: true))
+                .zoopControlSurface(radius: ZoopVisualStyle.compactRadius)
                 .accessibilityElement(children: .combine)
                 .digestScalePopoverAdaptation()
             }

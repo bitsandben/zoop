@@ -127,7 +127,7 @@ struct FitnessAgeScreen: View {
         }
         .padding(ZoopSpacing.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(ZoopPanelSurface(cornerRadius: ZoopRadius.tile))
+        .zoopInsetSurface(radius: ZoopRadius.tile)
     }
 }
 #endif

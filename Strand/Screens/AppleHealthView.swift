@@ -374,7 +374,7 @@ struct AppleHealthView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image(systemName: "heart.text.square.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(ZoopType.icon(16, weight: .semibold))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.metricCyan.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))

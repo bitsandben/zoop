@@ -145,7 +145,7 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
                     // iOS uses the redesign's large sentence-case title, matching Home's section titles.
                     // macOS keeps the 28pt face the cohesion pass locked to the liquid home.
                     #if os(iOS)
-                    Text(title).font(.system(size: 30, weight: .bold)).foregroundStyle(StrandPalette.textPrimary)
+                    Text(title).font(ZoopType.title).foregroundStyle(StrandPalette.textPrimary)
                     #else
                     Text(title).font(StrandFont.rounded(28)).foregroundStyle(StrandPalette.textPrimary)
                     #endif
@@ -210,23 +210,23 @@ struct ComingSoon: View {
     let what: LocalizedStringKey
     var symbol: String = "sparkles"
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: symbol)
-                .font(StrandFont.headline)
-                .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 8) {
-                #if !os(iOS)
-                Text("Coming together")
-                    .font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
-                #endif
-                Text(what)
-                    .font(StrandFont.body).foregroundStyle(StrandPalette.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+        ContentCard {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: symbol)
+                    .font(StrandFont.headline)
+                    .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 8) {
+                    #if !os(iOS)
+                    Text("Coming together")
+                        .font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
+                    #endif
+                    Text(what)
+                        .font(StrandFont.body).foregroundStyle(StrandPalette.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
-        .padding(20).frame(maxWidth: .infinity, alignment: .leading)
-        .frostedCardSurface()
     }
 }
 

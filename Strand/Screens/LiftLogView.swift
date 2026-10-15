@@ -87,7 +87,7 @@ struct LiftLogView: View {
             VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 HStack(spacing: ZoopMetrics.rowSpacing) {
                     Image(systemName: "dumbbell.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(ZoopType.icon(16, weight: .semibold))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.effortColor))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.effortColor.opacity(0.14),
@@ -203,7 +203,7 @@ struct LiftLogView: View {
                     planning = ProgramEditTarget(id: program.id, program: program)
                 } label: {
                     Image(systemName: "calendar")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(ZoopType.icon(16, weight: .semibold))
                         .foregroundStyle(StrandPalette.textSecondary)
                         .frame(width: ZoopMetrics.compactControlSize, height: ZoopMetrics.compactControlSize)
                         .contentShape(Rectangle())
@@ -366,7 +366,7 @@ struct LiftLogView: View {
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(ZoopType.icon(12, weight: .semibold))
                     .foregroundStyle(StrandPalette.textSecondary)
                     .accessibilityHidden(true)
             }

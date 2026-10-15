@@ -299,7 +299,7 @@ struct InsightsView: View {
             ZoopCard(tint: StrandPalette.chargeColor) {
                 HStack(spacing: 12) {
                     Image(systemName: "wand.and.sparkles")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(ZoopType.icon(16, weight: .semibold))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
@@ -316,7 +316,7 @@ struct InsightsView: View {
                     }
                     Spacer(minLength: 8)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(ZoopType.icon(12, weight: .semibold))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                 }
@@ -721,7 +721,7 @@ struct InsightsView: View {
         }
         .padding(ZoopMetrics.space3)
         .frame(maxWidth: .infinity, minHeight: 82, alignment: .topLeading)
-        .background(ZoopPanelSurface(cornerRadius: 8))
+        .zoopInsetSurface(radius: 8)
     }
 
     private func experimentMeasure(_ label: LocalizedStringKey,
@@ -746,7 +746,7 @@ struct InsightsView: View {
         }
         .padding(ZoopMetrics.space3)
         .frame(maxWidth: .infinity, minHeight: 92, alignment: .topLeading)
-        .background(ZoopPanelSurface(tint: tint, cornerRadius: 8))
+        .zoopInsetSurface(radius: 8, tint: tint)
     }
 
     /// Behaviours the user actually has data for: distinct logged journal questions
@@ -1184,7 +1184,7 @@ struct InsightsView: View {
             VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 HStack(alignment: .center, spacing: 8) {
                     Image(systemName: sportSymbol(cost.sport))
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(ZoopType.icon(14, weight: .semibold))
                         .foregroundStyle(accent)
                         .frame(width: 20)
                     Text(cost.sport)

@@ -152,7 +152,7 @@ struct LiftProgramItemSheet: View {
                                         forgetting = row
                                     } label: {
                                         Image(systemName: "trash")
-                                            .font(.system(size: 12, weight: .semibold))
+                                            .font(ZoopType.icon(12, weight: .semibold))
                                             .foregroundStyle(StrandPalette.textTertiary)
                                     }
                                     .buttonStyle(.plain)

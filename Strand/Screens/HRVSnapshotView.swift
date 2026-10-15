@@ -118,7 +118,7 @@ struct HRVSnapshotView: View {
                     close()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 18))
+                        .font(ZoopType.icon(18))
                         .foregroundStyle(StrandPalette.textTertiary)
                 }
                 .buttonStyle(.plain)
@@ -337,7 +337,7 @@ struct HRVSnapshotView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(ZoopPanelSurface(tint: accent, cornerRadius: 10))
+        .zoopInsetSurface(radius: 10, tint: accent)
     }
 
     // MARK: - Methodology

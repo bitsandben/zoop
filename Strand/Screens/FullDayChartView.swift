@@ -292,7 +292,7 @@ struct FullDayChartView: View {
     private var emptyState: some View {
         VStack(spacing: ZoopMetrics.space2) {
             Image(systemName: "waveform.slash")
-                .font(.system(size: 26, weight: .light))
+                .font(ZoopType.icon(26, weight: .light))
                 .foregroundStyle(StrandPalette.textTertiary)
             Text("No \(metric.title.lowercased()) here")
                 .font(StrandFont.body)

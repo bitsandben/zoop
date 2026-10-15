@@ -140,12 +140,12 @@ struct ZoopWidgetView: View {
             // Glyph over value, the shape the request asked for. A 9pt word under each number was
             // spending scarce height on text nobody needs twice — the icons carry the metric identity.
             Image(systemName: symbol)
-                .font(.system(size: 11, weight: .semibold))
+                .font(ZoopType.icon(11, weight: .semibold))
                 .foregroundStyle(renderingMode == .fullColor
                                  ? AnyShapeStyle(StrandPalette.textTertiary)
                                  : AnyShapeStyle(HierarchicalShapeStyle.secondary))
             Text(text ?? "–")
-                .font(.system(size: 15, weight: .semibold, design: .default))
+                .font(ZoopType.number(15, weight: .semibold))
                 .foregroundStyle(scoreStyle(hasValue: text != nil, tint: tint))
                 .minimumScaleFactor(0.7)
         }
@@ -232,7 +232,7 @@ struct ZoopWidgetView: View {
     private var headerRow: some View {
         HStack {
             Text("Zoop")
-                .font(.system(size: 13, weight: .bold))
+                .font(ZoopType.caption.weight(.bold))
                 .foregroundStyle(StrandPalette.textSecondary)
             Spacer()
             Circle()
@@ -344,7 +344,7 @@ struct ZoopWidgetView: View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(value ?? "–")
-                    .font(.system(size: 20, weight: .semibold, design: .default))
+                    .font(ZoopType.number(20, weight: .semibold))
                     .foregroundStyle(value == nil ? StrandPalette.textTertiary : tint)
                 if let unit, value != nil {
                     Text(unit).font(.caption2).foregroundStyle(StrandPalette.textTertiary)

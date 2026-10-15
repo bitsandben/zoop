@@ -327,7 +327,7 @@ struct WatchBreatheView: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: running ? "stop.fill" : "play.fill")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(ZoopType.icon(13, weight: .semibold))
                 Text(running ? String(localized: "Stop") : String(localized: "Start"))
                     .font(StrandFont.rounded(14, weight: .semibold))
             }

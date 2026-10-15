@@ -131,7 +131,7 @@ private struct DevicesContent: View {
             Spacer(minLength: 0)
         }
         .padding(ZoopMetrics.space3)
-        .background(ZoopPanelSurface(cornerRadius: 18))
+        .zoopInsetSurface(radius: 18)
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
             .strokeBorder(StrandPalette.statusWarning.opacity(0.5), lineWidth: 1))
         .accessibilityElement(children: .combine)
@@ -684,7 +684,7 @@ private struct DeviceSyncStatusCard: View {
         ZoopCard(tint: tint) {
             HStack(alignment: .center, spacing: ZoopMetrics.space3) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(ZoopType.icon(18, weight: .semibold))
                     .foregroundStyle(tint)
                     .frame(width: 24)
                     .accessibilityHidden(true)
@@ -914,7 +914,7 @@ private struct DeviceCard: View {
                         Text(hint)
                             .font(StrandFont.overlineScaled(10)).tracking(1.0)
                             .foregroundStyle(StrandPalette.accent)
-                        Image(systemName: "chevron.right").font(.system(size: 10, weight: .semibold))
+                        Image(systemName: "chevron.right").font(ZoopType.icon(10, weight: .semibold))
                             .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                     }

@@ -22,7 +22,7 @@ struct FitnessFactorList: View {
                     .buttonStyle(.plain)
             }
         }
-        .background(ZoopPanelSurface(cornerRadius: ZoopRadius.tile))
+        .zoopInsetSurface(radius: ZoopRadius.tile)
         .clipShape(RoundedRectangle(cornerRadius: ZoopRadius.tile, style: .continuous))
     }
 }
@@ -66,7 +66,7 @@ struct FitnessFactorRow: View {
                         .foregroundStyle(StrandPalette.textSecondary)
                     HStack(spacing: 4) {
                         Image(systemName: item.trend.icon)
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(ZoopType.icon(11, weight: .semibold))
                         Text(item.trend.word)
                     }
                     .foregroundStyle(item.trend.tint)

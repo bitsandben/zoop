@@ -122,25 +122,25 @@ struct HeartRateWidgetView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Image(systemName: "heart.fill")
-                    .font(.system(size: 12))
+                    .font(ZoopType.icon(12))
                     .foregroundStyle(accent)
                 Text("Heart rate")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(ZoopType.caption.weight(.medium))
                     .foregroundStyle(StrandPalette.textPrimary)
             }
 
             HStack(alignment: .lastTextBaseline, spacing: 4) {
                 Text(shown.bpm.map(String.init) ?? "—")
-                    .font(.system(size: 30, weight: .bold, design: .default))
+                    .font(ZoopType.number(30, weight: .bold))
                     .foregroundStyle(shown.stale ? StrandPalette.textSecondary : StrandPalette.textPrimary)
                 if shown.bpm != nil {
                     Text("bpm")
-                        .font(.system(size: 12))
+                        .font(ZoopType.small)
                         .foregroundStyle(StrandPalette.textSecondary)
                 }
                 if let stats {
                     Text("Min \(stats.min) • Max \(stats.max)")
-                        .font(.system(size: 11))
+                        .font(ZoopType.micro)
                         .foregroundStyle(StrandPalette.textPrimary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
@@ -179,7 +179,7 @@ struct HeartRateWidgetView: View {
                 HStack {
                     Spacer()
                     Text("Updated \(updated, format: .dateTime.hour().minute())")
-                        .font(.system(size: 10))
+                        .font(ZoopType.micro)
                         .foregroundStyle(StrandPalette.textSecondary)
                     Spacer()
                 }

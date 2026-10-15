@@ -71,7 +71,7 @@ struct WatchGlanceView: View {
     private var heartRate: some View {
         HStack(spacing: 6) {
             Image(systemName: "heart.fill")
-                .font(.system(size: 13))
+                .font(ZoopType.icon(13))
                 .foregroundStyle(StrandPalette.statusCritical)
             if liveHR.denied {
                 Text("HR unavailable")
@@ -98,7 +98,7 @@ struct WatchGlanceView: View {
         if !summary.isEmpty {
             HStack(spacing: 6) {
                 Image(systemName: "bed.double.fill")
-                    .font(.system(size: 11))
+                    .font(ZoopType.icon(11))
                     .foregroundStyle(StrandPalette.restColor)
                 Text(summary)
                     .font(StrandFont.caption)
@@ -126,7 +126,7 @@ struct WatchGlanceView: View {
     private var emptyState: some View {
         VStack(spacing: 10) {
             Image(systemName: "iphone.gen3")
-                .font(.system(size: 28))
+                .font(ZoopType.icon(28))
                 .foregroundStyle(StrandPalette.textTertiary)
             Text("Open Zoop on your iPhone to sync")
                 .font(StrandFont.subhead)

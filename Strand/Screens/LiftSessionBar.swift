@@ -31,7 +31,7 @@ struct LiftSessionBar: View {
                 // of the bar: "more place for writings"). Same sizes as before.
                 HStack(spacing: 10) {
                     Image(systemName: "dumbbell.fill")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(ZoopType.icon(14, weight: .semibold))
                         .foregroundStyle(tint(engine))
                         .accessibilityHidden(true)
 
@@ -78,7 +78,7 @@ struct LiftSessionBar: View {
                     // without opening anything.
                     Button { session.advance() } label: {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 26, weight: .semibold))
+                            .font(ZoopType.icon(26, weight: .semibold))
                             .foregroundStyle(tint(engine))
                     }
                     .buttonStyle(.plain)

@@ -897,7 +897,7 @@ private struct TrendsSparsePlaceholder: View {
             .font(StrandFont.subhead)
             .foregroundStyle(StrandPalette.textTertiary)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .background(ZoopPanelSurface(cornerRadius: 12))
+            .zoopInsetSurface(radius: 12)
     }
 }
 

@@ -160,7 +160,7 @@ struct MorningCheckInSheet: View {
                     Spacer(minLength: ZoopMetrics.space3)
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(ZoopType.icon(14, weight: .bold))
                             .foregroundStyle(StrandPalette.textSecondary)
                             .frame(width: 34, height: 34)
                             .background(Circle().fill(StrandPalette.surfaceInset))
@@ -219,7 +219,7 @@ struct MorningCheckInSheet: View {
             persist()
         } label: {
             Text(verbatim: RecoveryCalibrationCopy.feelingFace(v))
-                .font(.system(size: 34))
+                .font(ZoopType.icon(34))
                 .scaleEffect(selected ? 1.15 : 1)
                 .opacity(feeling == nil || selected ? 1 : 0.45)
                 .frame(maxWidth: .infinity)
@@ -243,7 +243,7 @@ struct MorningCheckInSheet: View {
             VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 HStack {
                     Image(systemName: systemImage)
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(ZoopType.icon(22, weight: .semibold))
                         .foregroundStyle(on ? StrandPalette.accent : StrandPalette.textSecondary)
                     Spacer()
                     Image(systemName: on ? "checkmark.circle.fill" : "circle")
@@ -310,7 +310,7 @@ struct MorningCheckInSummaryRow: View {
                 if let answer {
                     Group {
                         if let f = answer.feeling {
-                            Text(verbatim: RecoveryCalibrationCopy.feelingFace(f)).font(.system(size: 26))
+                            Text(verbatim: RecoveryCalibrationCopy.feelingFace(f)).font(ZoopType.icon(26))
                         } else {
                             Image(systemName: "sun.horizon").foregroundStyle(StrandPalette.accent)
                         }
@@ -332,7 +332,7 @@ struct MorningCheckInSummaryRow: View {
                             Text("Answer morning check-in")
                                 .font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
                             Spacer(minLength: ZoopMetrics.space2)
-                            Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold))
+                            Image(systemName: "chevron.right").font(ZoopType.icon(12, weight: .semibold))
                                 .foregroundStyle(StrandPalette.textTertiary)
                         }
                         .contentShape(Rectangle())
@@ -512,7 +512,7 @@ struct RecoveryCalibrationView: View {
                         Spacer()
                         Text(verbatim: "\(Int((std * 100).rounded())) %")
                             .font(StrandFont.captionNumber).foregroundStyle(StrandPalette.textTertiary)
-                        Image(systemName: "arrow.right").font(.system(size: 10)).foregroundStyle(StrandPalette.textTertiary)
+                        Image(systemName: "arrow.right").font(ZoopType.icon(10)).foregroundStyle(StrandPalette.textTertiary)
                         Text(verbatim: "\(Int((mine * 100).rounded())) %")
                             .font(StrandFont.bodyNumber)
                             .foregroundStyle(abs(mine - std) < 0.005 ? StrandPalette.textSecondary : StrandPalette.accent)
@@ -542,7 +542,7 @@ struct RecoveryCalibrationView: View {
                         Spacer()
                         Text(verbatim: row.felt.feeling.map { "\($0)/5" } ?? "–").font(StrandFont.bodyNumber).foregroundStyle(StrandPalette.textPrimary)
                         if row.felt.symptomLoad > 0 {
-                            Image(systemName: "exclamationmark.circle").font(.system(size: 12))
+                            Image(systemName: "exclamationmark.circle").font(ZoopType.icon(12))
                                 .foregroundStyle(StrandPalette.textTertiary)
                                 .accessibilityLabel(Text("Symptoms reported"))
                         }
@@ -598,7 +598,7 @@ struct RecoveryInsightCard: View {
                             Text("From your logbook answers").font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
                         }
                         Spacer()
-                        Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold))
+                        Image(systemName: "chevron.right").font(ZoopType.icon(12, weight: .semibold))
                             .foregroundStyle(StrandPalette.textTertiary)
                     }
                 }
@@ -616,7 +616,7 @@ struct RecoveryInsightCard: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer()
-                        Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold))
+                        Image(systemName: "chevron.right").font(ZoopType.icon(12, weight: .semibold))
                             .foregroundStyle(StrandPalette.textTertiary)
                     }
                 }

@@ -269,7 +269,7 @@ struct AddDeviceWizard: View {
             Spacer()
             Button(action: { stopAllScans(); onClose() }) {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 20))
+                    .font(ZoopType.icon(20))
                     .foregroundStyle(StrandPalette.textTertiary)
             }
             .buttonStyle(.plain)
@@ -397,7 +397,7 @@ struct AddDeviceWizard: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frostedCardSurface(cornerRadius: 14)
+            .zoopInsetSurface(radius: 14)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(title). \(subtitle)")
@@ -410,7 +410,7 @@ struct AddDeviceWizard: View {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 14) {
                     Image(systemName: typeIcon(type))
-                        .font(.system(size: 30))
+                        .font(ZoopType.icon(30))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text(typeTitle(type)).font(StrandFont.title2)
@@ -448,7 +448,7 @@ struct AddDeviceWizard: View {
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .frostedCardSurface(cornerRadius: 14)
+                .zoopInsetSurface(radius: 14)
 
                 Button {
                     startScan(for: type)
@@ -529,7 +529,7 @@ struct AddDeviceWizard: View {
             if ouraStep == .gate || ouraStep == .prep {
                 HStack(spacing: 14) {
                     Image(systemName: "circle.circle")
-                        .font(.system(size: 30))
+                        .font(ZoopType.icon(30))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text("Oura ring").font(StrandFont.title2)
@@ -679,7 +679,7 @@ struct AddDeviceWizard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frostedCardSurface(cornerRadius: 14)
+        .zoopInsetSurface(radius: 14)
 
         Button {
             startScan(for: .oura)
@@ -797,7 +797,7 @@ struct AddDeviceWizard: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image(systemName: "circle.circle")
-                        .font(.system(size: 22))
+                        .font(ZoopType.icon(22))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text(gen.displayName).font(StrandFont.headline)
@@ -824,7 +824,7 @@ struct AddDeviceWizard: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frostedCardSurface(cornerRadius: 14)
+            .zoopInsetSurface(radius: 14)
 
             Text("Name").strandOverline()
             TextField("Oura ring", text: $nameDraft)
@@ -893,7 +893,7 @@ struct AddDeviceWizard: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frostedCardSurface(cornerRadius: 14)
+        .zoopInsetSurface(radius: 14)
     }
 
     // MARK: Step 5 (Oura, failure) - honest dead-end, never a fabricated success
@@ -943,7 +943,7 @@ struct AddDeviceWizard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frostedCardSurface(cornerRadius: 14)
+        .zoopInsetSurface(radius: 14)
     }
 
     /// The per-generation capability checklist (section 3 of the onboarding UX spec). Each row is a (mark,
@@ -993,7 +993,7 @@ struct AddDeviceWizard: View {
     private func ouraBullet(_ text: String) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "circle.fill")
-                .font(.system(size: 5))
+                .font(ZoopType.icon(5))
                 .foregroundStyle(StrandPalette.textTertiary)
                 .padding(.top, 6)
                 .accessibilityHidden(true)
@@ -1117,7 +1117,7 @@ struct AddDeviceWizard: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frostedCardSurface(cornerRadius: 12)
+            .zoopInsetSurface(radius: 12)
 
             Text("Name").strandOverline()
             TextField("Device name", text: $nameDraft)
@@ -1595,7 +1595,7 @@ private struct OuraPickList: View {
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .frostedCardSurface(cornerRadius: 14)
+                .zoopInsetSurface(radius: 14)
             } else if scanner.discovered.isEmpty {
                 VStack(alignment: .leading, spacing: 10) {
                     SearchingCard()
@@ -1660,7 +1660,7 @@ private struct SearchingCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .frostedCardSurface(cornerRadius: 14)
+        .zoopInsetSurface(radius: 14)
     }
 }
 
@@ -1688,7 +1688,7 @@ private struct DiscoveredRow: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frostedCardSurface(cornerRadius: 12)
+            .zoopInsetSurface(radius: 12)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(name), signal \(SignalBars.level(for: rssi)) of 4")

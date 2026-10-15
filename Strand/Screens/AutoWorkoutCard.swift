@@ -45,7 +45,7 @@ struct AutoWorkoutCard: View {
             VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 HStack(spacing: ZoopMetrics.space2) {
                     Image(systemName: "figure.run")
-                        .font(.system(size: 18))
+                        .font(ZoopType.icon(18))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text("Looks like a workout")
@@ -56,7 +56,7 @@ struct AutoWorkoutCard: View {
                         dismiss(w)
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(ZoopType.icon(13, weight: .semibold))
                             .foregroundStyle(StrandPalette.textTertiary)
                             .padding(ZoopMetrics.space1)
                     }

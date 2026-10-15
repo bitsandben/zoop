@@ -166,7 +166,7 @@ public struct PipBar: View {
 
 /// A card-ready row: UPPERCASE label + big white value/unit on top, the `PipBar` beneath. Matches the
 /// WHOOP metric-row type — bold white number with a smaller-weight unit suffix over a tracked overline
-/// label. Drop into a `StrandCard` for an instant metric tile.
+/// label. Drop into a `ContentCard` for an instant metric tile.
 public struct PipBarRow: View {
 
     /// UPPERCASE-style label (rendered with overline tracking + textCase upper).
@@ -255,7 +255,7 @@ public struct PipBarRow: View {
 
             // Card-ready rows.
             Text("In a card").strandOverline().padding(.top, 8)
-            StrandCard(tint: StrandPalette.chargeColor) {
+            ContentCard {
                 VStack(alignment: .leading, spacing: 18) {
                     PipBarRow(label: "Charge", value: 74, tint: StrandPalette.chargeColor,
                               valueText: "74", unit: "%")

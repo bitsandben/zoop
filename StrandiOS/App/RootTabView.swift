@@ -663,7 +663,7 @@ struct RootTabView: View {
                 .foregroundStyle(StrandPalette.textSecondary)
                 .padding(.horizontal, 4)
             VStack(spacing: 0) { rows() }
-                .background(ZoopPanelSurface())
+                .zoopInsetSurface(radius: ZoopMetrics.cardRadius)
                 .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
         }
     }
@@ -763,7 +763,7 @@ private struct MoreDeviceHeader: View {
                     }
                     Spacer(minLength: 8)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(ZoopType.icon(14, weight: .semibold))
                         .foregroundStyle(StrandPalette.textPrimary)
                 }
             }
@@ -836,7 +836,7 @@ private struct QuickActionSheet: View {
         Button(action: action) {
             HStack(spacing: 13) {
                 Image(systemName: icon)
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(ZoopType.icon(17, weight: .semibold))
                     .foregroundStyle(tint)
                     .frame(width: 38, height: 38)
                     .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(StrandPalette.surfaceInset))
@@ -845,12 +845,12 @@ private struct QuickActionSheet: View {
                     .foregroundStyle(StrandPalette.textPrimary)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(ZoopType.icon(13, weight: .semibold))
                     .foregroundStyle(StrandPalette.textTertiary)
             }
             .padding(.vertical, 10)
             .padding(.horizontal, 12)
-            .background(ZoopPanelSurface(cornerRadius: 14))
+            .zoopInsetSurface(radius: 14)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

@@ -692,7 +692,7 @@ private struct FlowChips: View {
                         onRemove(metric)
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 9, weight: .bold))
+                            .font(ZoopType.icon(9, weight: .bold))
                             .foregroundStyle(StrandPalette.textTertiary)
                     }
                     .buttonStyle(.plain)
@@ -1102,7 +1102,7 @@ private struct MultiTooltip: View {
             }
         }
         .padding(10)
-        .background(ZoopPanelSurface(cornerRadius: 10, elevated: true))
+        .zoopControlSurface(radius: 10)
         .frame(width: tooltipWidth, alignment: .leading)
         .position(x: clampedX, y: tooltipHeight / 2 + 8)
         .allowsHitTesting(false)

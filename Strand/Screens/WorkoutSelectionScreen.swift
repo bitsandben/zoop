@@ -91,7 +91,7 @@ struct WorkoutSelectionScreen: View {
                 ToolbarItem(placement: .topBarTrailingCompat) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(ZoopType.icon(15, weight: .semibold))
                             .foregroundStyle(StrandPalette.textPrimary)
                             .frame(width: 34, height: 34)
                             .contentShape(Circle())
@@ -139,7 +139,7 @@ struct WorkoutSelectionScreen: View {
     private var emptyResults: some View {
         VStack(spacing: ZoopMetrics.space3) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 28, weight: .semibold))
+                .font(ZoopType.icon(28, weight: .semibold))
                 .foregroundStyle(StrandPalette.textTertiary)
             Text("No workouts found")
                 .font(StrandFont.headline)
@@ -234,7 +234,7 @@ struct WorkoutSelectionCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 Image(systemName: "play.fill")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(ZoopType.icon(18, weight: .bold))
                     .foregroundStyle(StrandPalette.goldDeepText)
                     .frame(width: 52, height: 52)
                     .background(Circle().fill(StrandPalette.accent))
@@ -243,9 +243,7 @@ struct WorkoutSelectionCard: View {
             .padding(.horizontal, ZoopMetrics.space5)
             .padding(.vertical, ZoopMetrics.space5)
             .frame(maxWidth: .infinity, minHeight: 96, alignment: .leading)
-            .background {
-                ZoopPanelSurface(tint: accent, cornerRadius: 28, elevated: true)
-            }
+            .zoopControlSurface(radius: 28, tint: accent)
             .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         }
         .buttonStyle(LiquidPressStyle())
@@ -305,7 +303,7 @@ struct WorkoutActivityMetadataView: View {
                 HStack(spacing: 4) {
                     if let symbol = item.symbol {
                         Image(systemName: symbol)
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(ZoopType.icon(11, weight: .semibold))
                     }
                     Text(item.text)
                         .font(StrandFont.footnote)

@@ -159,7 +159,7 @@ struct LiftSessionEditSheet: View {
             Button { addSet(index) } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "plus.circle")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(ZoopType.icon(17, weight: .semibold))
                     Text("Add set").font(StrandFont.caption)
                 }
                 .foregroundStyle(canAdd ? StrandPalette.effortColor : StrandPalette.textTertiary)
@@ -172,7 +172,7 @@ struct LiftSessionEditSheet: View {
 
             Button { removeSet(index) } label: {
                 Image(systemName: "minus.circle")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(ZoopType.icon(17, weight: .semibold))
                     .foregroundStyle(canRemove ? StrandPalette.textSecondary
                                                : StrandPalette.textTertiary.opacity(0.4))
                     .contentShape(Rectangle())

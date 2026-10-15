@@ -146,7 +146,7 @@ struct ZoopLimitationsView: View {
 
     private func supportCell(_ state: LimitState) -> some View {
         Image(systemName: state.glyph)
-            .font(.system(size: 15, weight: .semibold))
+            .font(ZoopType.icon(15, weight: .semibold))
             .foregroundStyle(state.tint)
             .frame(width: 52)
             .accessibilityHidden(true)
