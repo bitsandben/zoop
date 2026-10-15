@@ -157,13 +157,19 @@ private struct BreathingContent: View {
 
     @AppStorage("breathe.lastOutcome") private var lastStoredOutcome = ""
 
-    /// Opt-in audio pacer — a soft tone at each phase change (rising on the inhale, falling on the
-    /// exhale). Default OFF (manual-first). The tones go through an ambient session category, so the
-    /// iOS silent switch mutes them like any other ambient sound. Persists across launches.
-    @AppStorage("breathe.audioCues") private var audioCues = false
-    /// The on-device tone player. View-owned, lazily wired the first time the pacer is enabled, torn
-    /// down on disappear so we never hold the audio session when off-screen.
-    @StateObject private var tonePlayer = BreathTonePlayer()
+    /// Opt-in audio pacer: a synthesised singing bowl, soft gong or beep at each phase change, plus an
+    /// optional drone (`MindfulSoundPlayer`). Default off (manual-first); the legacy beep switch is
+    /// honoured until a sound is picked. Ambient session, so the silent switch mutes it.
+    @AppStorage(BreathSound.legacyAudioCuesKey) private var audioCues = false
+    @AppStorage(BreathSound.storageKey) private var soundRaw = ""
+    @AppStorage(BreathSound.volumeKey) private var soundVolume = 0.7
+    @AppStorage(BreathSound.droneKey) private var drone = false
+    /// View-owned, torn down on disappear so the audio session is never held off-screen.
+    @StateObject private var tonePlayer = MindfulSoundPlayer()
+    /// When the running fixed-pace session started, for the mindfulness log.
+    @State private var sessionStartedAt: Date?
+
+    private var breathSound: BreathSound { BreathSound.resolve(soundRaw, legacyAudioCues: audioCues) }
 
     private let phaseTimer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
     private let secondTimer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
@@ -245,15 +251,18 @@ private struct BreathingContent: View {
             if running { stop() }
             controller.stop()
         }
-        .onChangeCompat(of: audioCues) { on in
-            // Spin the audio engine up the moment the user opts in (so the first phase tone isn't
-            // swallowed by start-up latency); tear it back down when they switch it off.
-            on ? tonePlayer.activate() : tonePlayer.deactivate()
+        .onChangeCompat(of: soundRaw) { _ in
+            // Spin the engine up the moment a sound is picked (so the first cue isn't swallowed by
+            // start-up latency); tear it down when sound goes off. "Haptics only" turns pulses on.
+            applySound()
+            if breathSound == .hapticsOnly { vibration = true }
         }
+        .onChangeCompat(of: soundVolume) { _ in applySound() }
+        .onChangeCompat(of: drone) { on in if running { applySound(); tonePlayer.setDrone(on) } }
         .onAppear {
             model.startRealtimeHR()
             controllerBox.prepare(model: model, live: live)
-            if audioCues { tonePlayer.activate() }
+            applySound()
         }
         .onDisappear { model.stopRealtimeHR(); stop(); controller.stop(); tonePlayer.deactivate() }
         #if os(iOS)
@@ -498,10 +507,8 @@ private struct BreathingContent: View {
                           detail: "A pulse on each breath, on your phone and strap",
                           isOn: $vibration)
                 rowDivider
-                toggleRow(icon: audioCues ? "speaker.wave.2.fill" : "speaker.slash.fill",
-                          title: "Audio cues",
-                          detail: "Soft tone on each phase · respects silent mode",
-                          isOn: $audioCues)
+                BreathSoundRows(sound: Binding(get: { breathSound }, set: { soundRaw = $0.rawValue }),
+                                volume: $soundVolume, drone: $drone)
                 rowDivider
                 Button { showEdu = true } label: {
                     HStack(spacing: 12) {
@@ -825,6 +832,8 @@ private struct BreathingContent: View {
 
     private func start() {
         running = true
+        sessionStartedAt = Date()
+        if drone { applySound(); tonePlayer.setDrone(true) }
         ScreenIdle.keepAwake(true)
         sessionSeconds = 0
         breathCount = 0
@@ -864,6 +873,17 @@ private struct BreathingContent: View {
         // actually buzzing, so a stop on an idle trainer stays silent.
         if wasRunning { model.stopHaptics() }
         if wasRunning { captureOutcome() }
+        tonePlayer.setDrone(false)
+        if wasRunning, let started = sessionStartedAt {
+            MindfulSessionLog.record(kind: .breathing, start: started)
+        }
+        sessionStartedAt = nil
+    }
+
+    /// Matches the audio engine to the chosen sound: up when a sound or the drone is wanted, else down.
+    private func applySound() {
+        tonePlayer.configure(sound: breathSound, volume: soundVolume)
+        if breathSound.playsAudio || drone { tonePlayer.activate() } else { tonePlayer.deactivate() }
     }
 
     /// The shape's size between sessions and for guided patterns, which have no fixed rhythm.
@@ -940,7 +960,7 @@ private struct BreathingContent: View {
             case .textOnly: break
             }
         }
-        if audioCues {
+        if breathSound.playsAudio {
             switch mapped {
             case .inhale: tonePlayer.play(.inhale)
             case .exhale: tonePlayer.play(.exhale)
@@ -1179,112 +1199,6 @@ private final class ControllerBox: ObservableObject {
         let c = BiofeedbackController(model: model, live: live)
         made = c
         return c
-    }
-}
-
-// MARK: - Audio pacer (opt-in soft phase tones)
-
-/// A tiny on-device tone player for the opt-in audio pacer. It synthesises a short, soft sine "ding"
-/// for each phase (a higher note on the inhale, a lower one on the exhale) and plays it through an
-/// **ambient** audio session, so the iOS silent switch mutes it like any other ambient sound and it
-/// never interrupts other audio. No bundled assets — the buffers are generated once and reused.
-///
-/// Self-contained and view-owned: `activate()` spins the engine up when the user opts in, `deactivate()`
-/// tears it down when they switch off or leave the screen, so we hold the audio session only while it's
-/// actually wanted.
-@MainActor
-final class BreathTonePlayer: ObservableObject {
-
-    enum Tone { case inhale, exhale }
-
-    private let engine = AVAudioEngine()
-    private let player = AVAudioPlayerNode()
-    private var inhaleBuffer: AVAudioPCMBuffer?
-    private var exhaleBuffer: AVAudioPCMBuffer?
-    private var active = false
-
-    /// Phase tone frequencies (Hz). A gentle rising/falling pair — a soft cue, not a chime.
-    private let inhaleHz: Double = 440   // A4, brighter for "in"
-    private let exhaleHz: Double = 330   // E4, lower for "out"
-    private let toneSeconds: Double = 0.45
-    private let sampleRate: Double = 44_100
-
-    /// Bring the engine and audio session up. Idempotent — safe to call on every appear.
-    func activate() {
-        guard !active else { return }
-#if os(iOS)
-        // Ambient: obeys the silent switch and mixes politely with anything else playing.
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
-        try? session.setActive(true, options: [])
-#endif
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)
-        guard let format else { return }
-
-        if inhaleBuffer == nil { inhaleBuffer = makeTone(frequency: inhaleHz, format: format) }
-        if exhaleBuffer == nil { exhaleBuffer = makeTone(frequency: exhaleHz, format: format) }
-
-        engine.attach(player)
-        engine.connect(player, to: engine.mainMixerNode, format: format)
-        do {
-            try engine.start()
-            player.play()
-            active = true
-        } catch {
-            // Audio is a nicety, never load-bearing — if it can't start we just stay silent.
-            active = false
-        }
-    }
-
-    /// Stop and release the engine + session so nothing lingers when the pacer is off.
-    func deactivate() {
-        guard active else { return }
-        player.stop()
-        engine.stop()
-        engine.disconnectNodeOutput(player)
-        engine.detach(player)
-#if os(iOS)
-        try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
-#endif
-        active = false
-    }
-
-    /// Play the phase tone. No-op if the engine isn't up (e.g. start-up race) — the haptic + visual cues
-    /// still carry the pace, so a missed tone is harmless.
-    func play(_ tone: Tone) {
-        guard active else { return }
-        let buffer = (tone == .inhale) ? inhaleBuffer : exhaleBuffer
-        guard let buffer else { return }
-        player.scheduleBuffer(buffer, at: nil, options: .interrupts, completionHandler: nil)
-    }
-
-    /// Generate a single soft sine tone with a short attack/decay envelope so it fades in and out rather
-    /// than clicking. Built once per frequency and reused.
-    private func makeTone(frequency: Double, format: AVAudioFormat) -> AVAudioPCMBuffer? {
-        let frameCount = AVAudioFrameCount(toneSeconds * sampleRate)
-        guard frameCount > 0,
-              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount),
-              let channel = buffer.floatChannelData?[0] else { return nil }
-        buffer.frameLength = frameCount
-
-        let total = Int(frameCount)
-        let attack = Int(0.02 * sampleRate)
-        let release = Int(0.18 * sampleRate)
-        let peak: Float = 0.28   // kept quiet — a gentle cue, not a beep
-
-        for i in 0..<total {
-            let t = Double(i) / sampleRate
-            let sample = Float(sin(2.0 * Double.pi * frequency * t))
-            // Linear attack, sustain, then a longer linear release so the tail is soft.
-            var env: Float = 1.0
-            if i < attack {
-                env = Float(i) / Float(max(attack, 1))
-            } else if i > total - release {
-                env = Float(total - i) / Float(max(release, 1))
-            }
-            channel[i] = sample * env * peak
-        }
-        return buffer
     }
 }
 

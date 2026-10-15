@@ -114,6 +114,7 @@ struct TrainingScreen: View {
             #if os(iOS)
             RouteHeatEntry()
             #endif
+            MindfulnessSection(workouts: model.rows)
             TrainingSessionsSection(model: model, effortScale: effortScale, format: format)
         }
     }
@@ -132,6 +133,7 @@ struct TrainingScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             actionRow
+            MindfulnessSection(workouts: model.rows)
         }
     }
 

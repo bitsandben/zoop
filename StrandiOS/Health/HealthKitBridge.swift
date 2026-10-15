@@ -101,6 +101,9 @@ final class HealthKitBridge: ObservableObject {
         // empty and the imported workout shows distance but no map — same as today, so the addition
         // is strictly additive.
         s.insert(HKSeriesType.workoutRoute())
+        // Mindful sessions — READ-ONLY, for the Training page's mindfulness section
+        // (`MindfulHealthReader`), so meditation logged in another app counts. Never written back.
+        if let mindful = HKObjectType.categoryType(forIdentifier: .mindfulSession) { s.insert(mindful) }
         return s
     }
 

@@ -144,6 +144,11 @@ final class BiofeedbackController: ObservableObject {
     /// stop and the disconnect-driven stop; on a graceful drop it can still reach the strap before the radio
     /// closes.
     func stop() {
+        // Paced breathing counts toward mindfulness practice (`MindfulSessionLog` ignores < 1 minute).
+        if running, session != .none {
+            MindfulSessionLog.record(kind: .breathing,
+                                     start: Date().addingTimeInterval(-TimeInterval(elapsedSeconds)))
+        }
         clearSchedule()
         model.stopHaptics()
         ScreenIdle.keepAwake(false)
