@@ -5,7 +5,8 @@ import StrandDesign
 import WhoopStore
 
 /// The cards of one day, top to bottom. At most seven on a regular day; the check-in, the moment and
-/// the cycle only appear when they have something to say.
+/// the cycle only appear when they have something to say. My Dashboard closes the page with the tiles
+/// the user picked.
 struct TodayContentStack: View {
     struct Actions {
         let explain: (MetricReadout) -> Void
@@ -15,6 +16,7 @@ struct TodayContentStack: View {
         let dismissCheckIn: () -> Void
         let answerCheckIn: () -> Void
         let quickActions: () -> Void
+        let customiseDashboard: () -> Void
     }
 
     let content: TodayContent
@@ -32,6 +34,8 @@ struct TodayContentStack: View {
         if content.isToday { HealthAlertBanner() }
 
         TodayRingsView(content: content, onExplain: actions.explain)
+
+        // Coach card mounts here (FB-4): directly under the rings, above the health and stress tiles.
 
         TileGrid {
             TodayLinkedTile(route: .health, readout: nil, onExplain: actions.explain) {
@@ -68,12 +72,9 @@ struct TodayContentStack: View {
         if content.isToday { TodayFastingCard() }
         if content.showsCycle { HomeCycleCard() }
 
-        sectionTitle(TodayCopy.dashboard, id: "dashboard") { EmptyView() }
-        TodayDashboardCard(readouts: content.dashboard, onExplain: actions.explain)
-
-        TodayLinkedTile(route: .fitnessAge, readout: content.fitnessAge, onExplain: actions.explain) {
-            MetricTile(content.fitnessAge)
-        }
+        TodayDashboardSection(tiles: content.dashboard, onExplain: actions.explain,
+                              onCustomise: actions.customiseDashboard)
+            .id("dashboard")
     }
 
     /// `id` is the scroll anchor the DEBUG screenshot hook in `TodayScreen` jumps to.
@@ -101,6 +102,7 @@ enum TodaySheet: Identifiable {
     case nap(CachedSleepSession)
     case napEdit(CachedSleepSession)
     case detected(DetectedWorkout)
+    case customiseDashboard
 
     var id: String {
         switch self {
@@ -110,6 +112,7 @@ enum TodaySheet: Identifiable {
         case .nap(let n): return "nap-\(n.startTs)"
         case .napEdit(let n): return "napEdit-\(n.startTs)"
         case .detected(let d): return "detected-\(d.startSec)"
+        case .customiseDashboard: return "customiseDashboard"
         }
     }
 }
@@ -117,6 +120,7 @@ enum TodaySheet: Identifiable {
 struct TodaySheetContent: View {
     let sheet: TodaySheet
     let onDetectedHandled: () -> Void
+    @Binding var dashboardTiles: String
     @EnvironmentObject private var repo: Repository
     @Environment(\.dismiss) private var dismiss
 
@@ -146,6 +150,10 @@ struct TodaySheetContent: View {
             HomeNapTimeEditor(nap: nap).opaqueSheetBackground()
         case .detected(let workout):
             HomeDetectedWorkoutSheet(workout: workout, onHandled: onDetectedHandled).opaqueSheetBackground()
+        case .customiseDashboard:
+            TodayDashboardEditor(raw: $dashboardTiles)
+                .presentationDetents([.large])
+                .opaqueSheetBackground()
         }
     }
 }

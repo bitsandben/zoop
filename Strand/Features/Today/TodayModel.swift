@@ -12,6 +12,8 @@ struct TodayEnvironment {
     let whoopScale: Bool
     let temperatureUnit: TemperatureUnit
     let dayCycleMode: DayCycleMode
+    /// The tiles of My Dashboard, in the user's order.
+    let dashboardTiles: [TodayTileKind]
 }
 
 /// The Today screen's state and intents. One `load` per data or day change resolves everything the screen
@@ -96,6 +98,7 @@ final class TodayModel {
         updated.stress = live.stress
         updated.energy = live.energy
         updated.moment = live.moment
+        updated.dashboard = TodayDashboardPrefs.replacingEnergyTile(updated.dashboard, with: live.energy)
         stressHours = live.stressHours
         content = updated
     }

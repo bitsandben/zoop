@@ -34,8 +34,8 @@ struct TodayContent: Equatable {
     var activities: [TodayActivity]
     var showsCycle: Bool
 
-    var dashboard: [MetricReadout]
-    var fitnessAge: MetricReadout
+    /// My Dashboard, in the user's order.
+    var dashboard: [TodayDashboardTile]
 }
 
 /// The vitals the Health monitor tile summarises, banded against the user's own ranges.

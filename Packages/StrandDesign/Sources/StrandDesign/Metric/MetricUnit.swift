@@ -25,6 +25,8 @@ public enum MetricUnit: Equatable, Sendable {
     case kilocalories
     case steps
     case years
+    /// A count of days (a streak).
+    case days
     case vo2max
     case duration
 
@@ -94,6 +96,7 @@ public enum MetricUnit: Equatable, Sendable {
         case .breathsPerMinute: return MetricStrings.resolve(MetricStrings.breaths, locale: locale)
         case .steps: return MetricStrings.resolve(MetricStrings.steps, locale: locale)
         case .years: return MetricStrings.resolve(MetricStrings.years, locale: locale)
+        case .days: return MetricStrings.resolve(MetricStrings.days, locale: locale)
         }
     }
 
@@ -146,6 +149,7 @@ public enum MetricUnit: Equatable, Sendable {
         case .breathsPerMinute: return MetricStrings.resolve(MetricStrings.breathsSpoken(n), locale: locale)
         case .steps: return MetricStrings.resolve(MetricStrings.stepsSpoken(n), locale: locale)
         case .years: return MetricStrings.resolve(MetricStrings.yearsSpoken(n), locale: locale)
+        case .days: return MetricStrings.resolve(MetricStrings.daysSpoken(n), locale: locale)
         case .vo2max: return MetricStrings.resolve(MetricStrings.vo2maxSpoken(n), locale: locale)
         }
     }

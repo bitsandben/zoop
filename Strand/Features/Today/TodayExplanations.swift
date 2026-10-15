@@ -16,12 +16,16 @@ enum TodayExplanations {
         var scoreSource: String?
         /// Recovery's signed drivers for the shown night (`ChargeBreakdownWiring`).
         var recoveryDrivers: [ChargeDriver] = []
+        /// Finished explanations from the screens that own a number (vitals, sleep debt, VO₂max), used
+        /// as they are so a dashboard tile explains itself exactly like its home screen.
+        var owned: [MetricID: MetricExplanation] = [:]
     }
 
     static func explanation(for id: MetricID, inputs: Inputs) -> MetricExplanation {
+        if let owned = inputs.owned[id] { return owned }
         let trend = inputs.trends[id] ?? []
         let copy = Self.copy(id)
-        let source = [.recovery, .sleepScore, .strain, .stress].contains(id) ? inputs.scoreSource : nil
+        let source = [.recovery, .sleepScore, .strain, .stress, .stressDaily].contains(id) ? inputs.scoreSource : nil
         let count: MetricExplanation.DataUsed.Count = [.recovery, .sleepScore].contains(id)
             ? .nights(trend.count) : .days(trend.count)
         let window = trend.first.flatMap { first in trend.last.map { DateInterval(start: first.date, end: $0.date) } }
@@ -71,6 +75,14 @@ enum TodayExplanations {
             return Copy(what: r("zoop.today.explain.stress.what", "How strained your nervous system is right now, from 0 to 3."),
                         method: r("zoop.today.explain.stress.method", "Daytime stress"),
                         how: r("zoop.today.explain.stress.how", "Each waking hour's heart rate and HRV against your own resting baseline; workouts are left out."))
+        case .stressDaily:
+            return Copy(what: r("zoop.today.explain.stressDaily.what", "Your average stress over one day, from 0 to 3."),
+                        method: r("zoop.today.explain.stress.method", "Daytime stress"),
+                        how: r("zoop.today.explain.stressDaily.how", "Waking hours' heart rate and HRV against your resting baseline, averaged over the day."))
+        case .fastingStreak:
+            return Copy(what: r("zoop.today.explain.fasting.what", "Days in a row on which you reached your fasting goal."),
+                        method: r("zoop.today.explain.fasting.method", "Fasting streak"),
+                        how: r("zoop.today.explain.fasting.how", "A fast counts for the day it ended; today does not break the streak until it is over."))
         case .energyBank:
             return Copy(what: r("zoop.today.explain.energy.what", "An estimate of the energy you have left today, from 0 to 100."),
                         method: r("zoop.today.explain.energy.method", "Energy Bank"),
@@ -99,4 +111,6 @@ enum TodayExplanations {
 extension MetricID {
     static let activeCalories: MetricID = "active_calories"
     static let energyBank: MetricID = "energy_bank"
+    static let stressDaily: MetricID = "stress_daily"
+    static let fastingStreak: MetricID = "fasting_streak"
 }

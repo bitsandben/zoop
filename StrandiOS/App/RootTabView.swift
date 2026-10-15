@@ -49,6 +49,8 @@ struct RootTabView: View {
 
     @EnvironmentObject private var repo: Repository
     @EnvironmentObject private var intelligence: IntelligenceEngine
+    /// Owns the live workout the "+" sheet's Start workout begins.
+    @EnvironmentObject private var appModel: AppModel
     /// Cross-screen navigation requests (e.g. Live → "Manage devices"). Devices isn't a tab — it lives
     /// behind the More list — so a request presents it as a sheet, matching the quick-action screens.
     @EnvironmentObject private var router: NavRouter
@@ -232,7 +234,7 @@ struct RootTabView: View {
         // animation scoped to the sheet rather than the whole shell.
         .sheet(item: $quickAction) { action in
             quickActionDestination(action)
-                .presentationDetents([.fraction(0.75), .large])
+                .presentationDetents(Self.detents(for: action))
                 .opaqueSheetBackground()
                 .presentationDragIndicator(.visible)
         }
@@ -402,7 +404,7 @@ struct RootTabView: View {
 
         let destination: QuickAction = switch action {
         case .liveHeartRate: .live
-        case .startWorkout: .workout
+        case .startWorkout: .startWorkout
         case .logJournal: .journal
         case .breathe: .breathe
         }
@@ -511,13 +513,25 @@ struct RootTabView: View {
                     withAnimation(Self.sheetEase) { quickAction = picked }
                 }
             }
-            .presentationDetents([.height(458)])
             .opaqueSheetBackground()
-            .presentationDragIndicator(.hidden)
         case .live:
             quickScreen(LiveView())
-        case .workout:
-            quickScreen(WorkoutsView())
+        case .startWorkout:
+            // Name the sport, start the session, then open it through the same path as the Today indicator.
+            StartWorkoutSheet { sport in
+                appModel.startWorkout(sport: sport)
+                quickAction = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { router.openActiveWorkout() }
+            }
+        case .logWorkout:
+            ManualWorkoutSheet(editing: nil) { row, _ in
+                Task {
+                    await repo.saveManualWorkout(row)
+                    // Rescore so its heart rate, effort and calories appear now, as the Training tab does.
+                    await intelligence.analyzeRecent()
+                    await repo.refresh()
+                }
+            }
         case .journal:
             quickScreen(LogbookView(onClose: { quickAction = nil }))
         case .breathe:
@@ -536,6 +550,15 @@ struct RootTabView: View {
                 await intelligence.analyzeRecent()
                 await repo.refresh()
             }
+        }
+    }
+
+    /// The menu is a compact grid sized to its tiles; the sport picker and the log form need the full height.
+    private static func detents(for action: QuickAction) -> Set<PresentationDetent> {
+        switch action {
+        case .menu: return [.height(QuickActionSheet.height)]
+        case .startWorkout, .logWorkout: return [.large]
+        default: return [.fraction(0.75), .large]
         }
     }
 
@@ -777,83 +800,78 @@ private struct MoreDeviceHeader: View {
 // MARK: - Quick actions (centre FAB)
 
 /// The destinations the centre FAB can present. `.menu` is the action sheet itself; the rest
-/// route to existing screens. `Identifiable` so it drives `.sheet(item:)`.
+/// route to existing screens. `.live` is not on the menu: the active-workout indicator and the Home
+/// Screen icon menu still open it. `Identifiable` so it drives `.sheet(item:)`.
 private enum QuickAction: Int, Identifiable {
-    case menu, live, workout, journal, breathe, nap, fasting
+    case menu, live, startWorkout, logWorkout, journal, breathe, nap, fasting
     var id: Int { rawValue }
 }
 
-/// The bottom sheet of quick actions presented by the centre FAB. Spec bottom sheet: surfaceOverlay
-/// fill, gold hairline top edge, grab handle, three flat action rows that route to existing screens.
+/// The "+" sheet: six everyday actions as a compact 3 × 2 grid. Live heart rate lives in the Training
+/// tab now, so the sheet holds only things you log or start.
 private struct QuickActionSheet: View {
     /// Called with the picked destination (the host swaps the menu for that screen).
     let onPick: (QuickAction) -> Void
 
-    var body: some View {
-        VStack(spacing: 0) {
-            // Grab handle (36×4) in the slate hairline tone.
-            Capsule()
-                .fill(StrandPalette.hairlineStrong)
-                .frame(width: 36, height: 4)
-                .padding(.top, 10)
-                .padding(.bottom, 14)
+    /// Title row plus two rows of tiles, at the default text size.
+    static let height: CGFloat = 300
 
-            Text("QUICK ACTIONS")
-                .font(StrandFont.overline)
-                .tracking(1.6)
-                .foregroundStyle(StrandPalette.textTertiary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 10)
-
-            VStack(spacing: 8) {
-                row("Live HR", icon: "waveform.path.ecg", tint: StrandPalette.metricRose) { onPick(.live) }
-                row("Start workout", icon: "figure.run", tint: StrandPalette.effortColor) { onPick(.workout) }
-                row("Fill in logbook", icon: "square.and.pencil", tint: StrandPalette.accent) { onPick(.journal) }
-                row("Breathe", icon: "wind", tint: StrandPalette.restColor) { onPick(.breathe) }
-                row("Add nap", icon: "bed.double.fill", tint: StrandPalette.restColor) { onPick(.nap) }
-                row("zoop.fasting.title", icon: "timer", tint: StrandPalette.metricCyan) { onPick(.fasting) }
-            }
-            .padding(.horizontal, 16)
-
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(
-            ZoopChromeSurface()
-                .overlay(alignment: .top) {
-                    // Gold hairline top edge per the bottom-sheet spec.
-                    Rectangle()
-                        .fill(StrandPalette.gold.opacity(0.35))
-                        .frame(height: 1)
-                }
-                .ignoresSafeArea()
-        )
+    private struct Item: Identifiable {
+        let action: QuickAction
+        let title: LocalizedStringResource
+        let icon: String
+        var id: Int { action.rawValue }
     }
 
-    /// One flat action row: hued line-icon tile + title, inset surface, hairline border.
-    private func row(_ title: LocalizedStringKey, icon: String, tint: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 13) {
-                Image(systemName: icon)
-                    .font(ZoopType.icon(17, weight: .semibold))
-                    .foregroundStyle(tint)
-                    .frame(width: 38, height: 38)
-                    .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(StrandPalette.surfaceInset))
-                Text(title)
-                    .font(StrandFont.headline)
-                    .foregroundStyle(StrandPalette.textPrimary)
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(ZoopType.icon(13, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textTertiary)
+    private let items: [Item] = [
+        Item(action: .startWorkout, title: TodayCopy.quickStartWorkout, icon: "figure.run"),
+        Item(action: .logWorkout, title: TodayCopy.quickLogWorkout, icon: "square.and.pencil"),
+        Item(action: .fasting, title: TodayCopy.quickFasting, icon: "timer"),
+        Item(action: .journal, title: TodayCopy.quickJournal, icon: "book"),
+        Item(action: .breathe, title: TodayCopy.quickBreathe, icon: "wind"),
+        Item(action: .nap, title: TodayCopy.quickNap, icon: "bed.double"),
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: ZoopSpacing.m) {
+            Text(TodayCopy.quickActions)
+                .font(ZoopType.headline)
+                .foregroundStyle(StrandPalette.textPrimary)
+                .accessibilityAddTraits(.isHeader)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ZoopSpacing.cardGap), count: 3),
+                      spacing: ZoopSpacing.cardGap) {
+                ForEach(items) { item in tile(item) }
             }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 12)
-            .zoopInsetSurface(radius: 14)
-            .contentShape(Rectangle())
+            Spacer(minLength: 0)
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, ZoopSpacing.gutter)
+        .padding(.top, ZoopSpacing.xl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(StrandPalette.surfaceBase.ignoresSafeArea())
+    }
+
+    private func tile(_ item: Item) -> some View {
+        Button { onPick(item.action) } label: {
+            VStack(spacing: ZoopSpacing.s) {
+                Image(systemName: item.icon)
+                    .font(ZoopType.headline)
+                    .foregroundStyle(StrandPalette.textPrimary)
+                    .frame(height: 28)
+                    .accessibilityHidden(true)
+                Text(item.title)
+                    .font(ZoopType.caption)
+                    .foregroundStyle(StrandPalette.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+            }
+            .frame(maxWidth: .infinity, minHeight: 76)
+            .padding(.vertical, ZoopSpacing.s)
+            .background(RoundedRectangle(cornerRadius: ZoopRadius.tile, style: .continuous)
+                .fill(StrandPalette.surfaceRaised))
+            .contentShape(RoundedRectangle(cornerRadius: ZoopRadius.tile, style: .continuous))
+        }
+        .buttonStyle(LiquidPressStyle())
     }
 }
 

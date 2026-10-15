@@ -24,7 +24,7 @@ final class FitnessAgeModel: ObservableObject {
     @Published private(set) var loaded = false
 
     /// Days of VO₂max shown on its line. Long enough to see a training block move it.
-    private static let vo2LineDays = 180
+    static let vo2LineDays = 180
 
     func reload(repo: Repository, age: Int, sex: String) async {
         let snap = await FitnessAgeSnapshot.load(repo: repo)
@@ -63,12 +63,12 @@ final class FitnessAgeModel: ObservableObject {
     }
 
     /// Measured VO₂max comes from Apple Health, the waist-based estimate from the strap's own pass.
-    private static func vo2Series(repo: Repository, measured: Bool, days: Int = vo2LineDays) async -> FitnessSeries {
+    static func vo2Series(repo: Repository, measured: Bool, days: Int = vo2LineDays) async -> FitnessSeries {
         await repo.exploreSeries(key: measured ? "vo2max" : "vo2max_est",
                                  source: measured ? "apple-health" : "my-whoop", days: days)
     }
 
-    private static func rollingMean(_ s: FitnessSeries) -> FitnessSeries {
+    static func rollingMean(_ s: FitnessSeries) -> FitnessSeries {
         s.indices.map { i in
             let w = s[max(0, i - 6)...i]
             return (day: s[i].day, value: w.map(\.value).reduce(0, +) / Double(w.count))

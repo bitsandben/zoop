@@ -50,9 +50,11 @@ struct TodayLoader {
         let activities = await activities(key: key)
         let dashboard = await dashboard(key: key, row: row)
         let fitness = await fitnessAge(key: key)
-        let explanations = await explanationInputs(key: key, scoreRow: carriedRow ?? row,
+        let tiles = await dashboardTiles(key: key, counts: dashboard, fitness: fitness, live: live)
+        var explanations = await explanationInputs(key: key, scoreRow: carriedRow ?? row,
                                                    stressTrend: live.daily?.trend ?? [],
                                                    dashboard: dashboard, fitness: fitness.history)
+        explanations.owned = tiles.owned
 
         let content = TodayContent(
             dayKey: key, isToday: isToday,
@@ -73,8 +75,7 @@ struct TodayLoader {
             activities: activities,
             showsCycle: env.profile.cycleAwarenessApplies
                 && !UserDefaults.standard.bool(forKey: AppModel.cycleAwarenessHiddenKey),
-            dashboard: dashboard.readouts,
-            fitnessAge: fitness.readout)
+            dashboard: Self.tiles(tiles, inputs: explanations))
         return Loaded(content: content, explanations: explanations, stressHours: live.stressHours)
     }
 

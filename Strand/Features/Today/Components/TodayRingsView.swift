@@ -3,7 +3,10 @@ import SwiftUI
 import StrandDesign
 
 /// Sleep, Recovery and Strain as three squircle rings with the verdict under each, then the one
-/// synthesis sentence. A ring opens its detail screen; pressing and holding it explains the number.
+/// synthesis sentence. All three read as a plain number (no "%", no "of 100"): Sleep and Recovery on
+/// 0–100, Strain on the user's Effort scale. A ring opens its screen (Strain: Training, whose load
+/// cards explain the day; the legacy metric page printed "/100"); pressing and holding it
+/// explains the number.
 struct TodayRingsView: View {
     let content: TodayContent
     let onExplain: (MetricReadout) -> Void
@@ -12,9 +15,9 @@ struct TodayRingsView: View {
         VStack(spacing: ZoopSpacing.l) {
             HStack(alignment: .top, spacing: ZoopSpacing.s) {
                 cell(content.sleep, route: .sleep)
-                cell(content.recovery, route: .metric(HeroRingMetric.charge))
-                cell(content.strain, route: .metric(HeroRingMetric.effort), maxValue: content.strainRingMax,
-                     target: content.strainTarget, caption: content.strainTargetCaption)
+                cell(content.recovery, route: .recovery)
+                cell(content.strain, route: .workouts, maxValue: content.strainRingMax,
+                     target: content.strainTarget, targetHint: content.strainTargetCaption)
             }
             if let synthesis = content.synthesis {
                 Text(synthesis)
@@ -29,9 +32,9 @@ struct TodayRingsView: View {
     }
 
     private func cell(_ readout: MetricReadout, route: TabRoute, maxValue: Double = 100,
-                      target: ClosedRange<Double>? = nil, caption: LocalizedStringResource? = nil) -> some View {
+                      target: ClosedRange<Double>? = nil, targetHint: LocalizedStringResource? = nil) -> some View {
         NavigationLink(value: route) {
-            TodayRingCell(readout: readout, maxValue: maxValue, target: target, caption: caption)
+            TodayRingCell(readout: readout, maxValue: maxValue, target: target, targetHint: targetHint)
         }
         .buttonStyle(LiquidPressStyle())
         .contextMenu {
@@ -45,7 +48,8 @@ struct TodayRingCell: View {
     let readout: MetricReadout
     var maxValue: Double = 100
     var target: ClosedRange<Double>?
-    var caption: LocalizedStringResource?
+    /// "Target 10–14": drawn as the arc on the ring, spoken as the hint.
+    var targetHint: LocalizedStringResource?
 
     @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -82,11 +86,6 @@ struct TodayRingCell: View {
                 Text(verbatim: p.number == nil ? " " : p.verdict)
                     .font(ZoopType.caption)
                     .foregroundStyle(TodayTint.verdictColor(readout))
-                if let caption {
-                    Text(caption)
-                        .font(ZoopType.caption)
-                        .foregroundStyle(StrandPalette.textTertiary)
-                }
             }
             .lineLimit(1)
             .minimumScaleFactor(0.8)
@@ -96,6 +95,7 @@ struct TodayRingCell: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: p.label))
         .accessibilityValue(Text(verbatim: p.accessibilityValue))
+        .accessibilityHint(targetHint.map { Text($0) } ?? Text(verbatim: ""))
         .onAppear { roll() }
         .onChange(of: fraction) { _, _ in roll() }
     }
@@ -103,8 +103,9 @@ struct TodayRingCell: View {
     @ViewBuilder
     private func center(_ p: MetricPresentation) -> some View {
         if let number = p.number {
-            (Text(verbatim: number).font(ZoopType.metric)
-                + Text(verbatim: p.unit.map { "\u{00A0}" + $0 } ?? "").font(ZoopType.caption))
+            // The number alone: the three rings share one style, so Recovery drops its "%".
+            Text(verbatim: number)
+                .font(ZoopType.metric)
                 .foregroundStyle(readout.isStale ? StrandPalette.textTertiary : StrandPalette.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)

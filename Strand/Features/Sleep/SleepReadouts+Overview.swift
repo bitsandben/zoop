@@ -25,14 +25,17 @@ extension SleepReadouts {
     /// Debt now, against the debts of earlier nights. The meaning names tonight's target: the need plus
     /// the ledger's carry share of the debt, capped at the engine's maximum need (CONCEPT §5.1).
     private static func debt(model: SleepModel) -> SleepMetric {
-        let ledger = model.sleepDebtLedger
+        debt(ledger: model.sleepDebtLedger, keyed: model.sleepDebtHistory)
+    }
+
+    /// The same debt readout from the ledger and its day-keyed history, for Today's dashboard tile.
+    static func debt(ledger: SleepDebtLedger, keyed: [(day: String, value: Double)]) -> SleepMetric {
         let debtMin = ledger.isDebt ? ledger.magnitudeMin : 0
         let needMin = ledger.needMin
         let tonightMin = min(AnalyticsEngine.Rest.maxNeedHours * 60, needMin + SleepDebt.debtCarryFactor * debtMin)
         let meaning: LocalizedStringResource = debtMin >= SleepDebt.minimumDebtMin
             ? SleepStrings.debtSome(durationText(seconds: tonightMin * 60))
             : SleepStrings.debtNone(durationText(seconds: needMin * 60))
-        let keyed = model.sleepDebtHistory
         let hist: History = keyed.dropLast().map { ($0.day, $0.value * 60) }
         return metric(id: SleepMetricID.debt, label: SleepStrings.debt,
                       value: ledger.nightCount > 0 ? debtMin * 60 : nil, unit: .duration,
