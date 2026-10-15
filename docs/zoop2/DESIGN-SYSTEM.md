@@ -42,8 +42,10 @@ Tokens resolve **at draw time** against the active theme (`ZoopTheme.current`: `
 | Inset | `surfaceInset` | Tracks, wells, progress backgrounds. |
 | Hairline | `hairline`, `hairlineStrong` | Row separators, outlines, quiet gridlines. |
 | Text | `textPrimary` / `textSecondary` / `textTertiary` | Values & titles / meaning sentences / units, dates, captions. |
-| Accent | `accent` | **Primary actions, focus, toggles only — never data.** User-selectable. |
+| Accent | `accent` | **Primary actions, focus, toggles only — never data.** User-selectable. Set as SwiftUI tint and UIKit window tint at the app root (`zoopWindowTint`), so no control falls back to system blue. |
 | Primary button | `primaryButtonFill` / `primaryButtonText` | Drawn by `ZoopButtonStyle(.primary)`. |
+| Secondary button | `secondaryButtonFill` / `secondaryButtonBorder` / `secondaryButtonText` | Drawn by `ZoopButtonStyle(.secondary)`; stands off `surfaceRaised` in all four looks. |
+| Verdict text | `textPositive` / `textWarning` | Better / worse verdict words (AA on `surfaceRaised`); set through polarity, never directly. |
 | Status | `statusPositive` / `statusWarning` / `statusCritical` | Only when action is warranted (CONCEPT §1 rule 5). |
 
 **Metric colours (fixed, §7.5)** — set `MetricReadout.tint`, never the colour directly:
@@ -150,8 +152,15 @@ let hrv = MetricReadout(
     typicalRange: 48...58, rangeIsPersonal: true, delta: 8,
     verdict: .vital(62, typicalRange: 48...58),        // .typical / .above / .below
     meaning: "zoop.hrv.meaning.above",                 // one sentence, ≤ 90 chars
-    confidence: .solid, tint: .neutral)
+    confidence: .solid, tint: .neutral,
+    polarity: .higherIsBetter)                         // default from the id; pass it for app ids
 ```
+
+**Polarity.** Every readout carries `higherIsBetter` / `lowerIsBetter` / `neutral` (default
+`MetricID.defaultPolarity`; app-defined ids such as sleep debt pass theirs). With a good side, above /
+below read *Besser / Schlechter als üblich* and the verdict is tinted `textPositive` / `textWarning`;
+neutral metrics (skin temperature, respiration, weight) keep *Über / Unter deinem Bereich* in the
+text colour.
 
 | View | Where |
 |---|---|
@@ -316,7 +325,8 @@ Chart {
 - **German-first.** Write the DE string first, then EN. All user strings live in the catalogue under
   Zoop keys (`zoop.<feature>.<thing>`); never rename legacy NOOP keys in passing.
 - **One sentence**, second person, ≤ 90 characters, no hedging stack ("may possibly"). No ALL CAPS.
-- **Verdicts only from the closed vocabulary** (`MetricVerdict`): Typisch · Über / Unter deinem Bereich;
+- **Verdicts only from the closed vocabulary** (`MetricVerdict`): Typisch · Über / Unter deinem Bereich
+  (neutral metrics) · Besser / Schlechter als üblich (metrics with a good side, via polarity);
   Hoch · Mittel · Niedrig; Erholsam · Aufbauend · Fordernd · Überlastend; Kalibriert · Noch N Nächte ·
   Keine Daten seit …. Never free text.
 - **Numbers**: metric values via `MetricUnit` inside the Metric* components; any other user-visible
