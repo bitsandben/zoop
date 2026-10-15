@@ -6,13 +6,15 @@ import StrandDesign
 
 struct BodyPatternsSection: View {
     @ObservedObject var model: BodyModel
+    /// The weekday and evening-stress patterns; off on the Insights tab, which files them under Body and Sleep.
+    var includesOthers = true
     let onSelect: (BodyFinding) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: ZoopSpacing.s) {
             BodySectionTitle(title: BodyStrings.patternsTitle, note: BodyStrings.patternsNote)
             habits
-            if !model.patterns.others.isEmpty {
+            if includesOthers && !model.patterns.others.isEmpty {
                 ListCard {
                     ForEach(Array(model.patterns.others.enumerated()), id: \.element.id) { i, f in
                         BodyFindingRow(finding: f, isFirst: i == 0, onSelect: onSelect)

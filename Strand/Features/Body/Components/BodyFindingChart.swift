@@ -4,11 +4,10 @@ import Charts
 import StrandAnalytics
 import StrandDesign
 
-// MARK: - Finding charts (explainer only)
+// MARK: - Finding charts (explainer)
 //
 // Every chart has labelled axes and, where a normal exists, the band and a dashed reference line
-// (§7.4). The cards themselves draw no mini charts: an unlabelled sparkline next to a sentence was the
-// audit's complaint about the old Insights page.
+// (§7.4). The tiles draw an axis-free `BodyMiniChart` beside the number and verdict that label it.
 
 struct BodyFindingChart: View {
     let visual: BodyFindingVisual

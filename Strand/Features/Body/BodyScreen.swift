@@ -5,9 +5,10 @@ import WhoopStore
 
 // MARK: - BodyScreen: the Insights tab (CONCEPT §3.6)
 //
-// "How is my body doing over time?" in the order a reader needs it: what the body shows (the
-// interpretations), the five vitals against their personal ranges, the sleep type, one trend to explore, the patterns
-// in habits and weekdays, and the ways out (all metrics, lab book, report). Each fact appears once.
+// "How is my body doing over time?" in the order a reader needs it: four sections (Body, Sleep,
+// Training, Stress), each a header over chart-led tiles (the vitals and sleep type lead their sections),
+// then one trend to explore, the logbook habits, and the ways out (all metrics, lab book, report).
+// Each fact appears once; sentences, samples and methods live in the explainers behind the tiles.
 // The screen holds no logic; `BodyModel` builds everything it shows.
 //
 // Not observing `LiveState`/`AppModel` on purpose: both publish about once a second while a strap
@@ -30,12 +31,10 @@ struct BodyScreen: View {
                 ComingSoon(what: repo.loaded ? "zoop.body.empty" : "zoop.body.loading")
             } else {
                 VStack(alignment: .leading, spacing: ZoopSpacing.sectionGap) {
-                    BodyInterpretationsSection(summary: model.vitalsSummary, findings: model.findings,
-                                               loading: model.loadingSlow) { selectedFinding = $0 }
-                    BodyVitalsSection(vitals: model.vitals) { selectedVital = $0 }
-                    BodySleepTypeSection(content: model.sleepType)
+                    BodyInsightSections(model: model, onFinding: { selectedFinding = $0 },
+                                        onVital: { selectedVital = $0 })
                     BodyTrendCard(model: model)
-                    BodyPatternsSection(model: model) { selectedFinding = $0 }
+                    BodyPatternsSection(model: model, includesOthers: false) { selectedFinding = $0 }
                     BodyLinksCard(onLabBook: { router.openLabBook() }, onReport: { showingReport = true })
                 }
             }
@@ -50,27 +49,26 @@ struct BodyScreen: View {
     }
 }
 
-// MARK: - What your body shows
+// MARK: - Sections (Body, Sleep, Training, Stress)
 
-struct BodyInterpretationsSection: View {
-    let summary: LocalizedStringResource?
-    let findings: [BodyFinding]
-    let loading: Bool
-    let onSelect: (BodyFinding) -> Void
+/// The interpretations grouped by what they are about, each a header over a two-up grid of tiles.
+/// Body opens with the vitals and their one-line summary; Sleep with the sleep type.
+struct BodyInsightSections: View {
+    @ObservedObject var model: BodyModel
+    let onFinding: (BodyFinding) -> Void
+    let onVital: (BodyVital) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ZoopSpacing.s) {
-            BodySectionTitle(title: BodyStrings.showsTitle)
-            if let summary {
-                ContentCard {
-                    Text(summary)
-                        .font(ZoopType.headline)
-                        .foregroundStyle(StrandPalette.textPrimary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+        VStack(alignment: .leading, spacing: ZoopSpacing.sectionGap) {
+            section(.body, note: model.vitalsSummary) {
+                BodyVitalsSection(vitals: model.vitals, showsTitle: false, onSelect: onVital)
             }
-            ForEach(findings) { BodyFindingCard(finding: $0, onSelect: onSelect) }
-            if findings.isEmpty && !loading {
+            section(.sleep, lead: model.sleepType != nil) {
+                BodySleepTypeSection(content: model.sleepType, showsTitle: false)
+            }
+            section(.training)
+            section(.stress)
+            if all.isEmpty && !model.loadingSlow {
                 Text(BodyStrings.showsEmpty)
                     .font(ZoopType.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
@@ -78,6 +76,26 @@ struct BodyInterpretationsSection: View {
                     .padding(.horizontal, ZoopSpacing.xs)
             }
         }
+    }
+
+    /// Interpretations first, then the weekday and evening patterns, in a stable order.
+    private var all: [BodyFinding] { model.findings + model.patterns.others }
+
+    @ViewBuilder
+    private func section<Lead: View>(_ kind: BodyInsightSection, note: LocalizedStringResource? = nil,
+                                     lead: Bool = true, @ViewBuilder content: () -> Lead) -> some View {
+        let items = all.filter { $0.section == kind }
+        if lead || !items.isEmpty {
+            VStack(alignment: .leading, spacing: ZoopSpacing.s) {
+                BodySectionTitle(title: kind.title, note: note)
+                if lead { content() }
+                if !items.isEmpty { BodyInsightGrid(findings: items, onSelect: onFinding) }
+            }
+        }
+    }
+
+    private func section(_ kind: BodyInsightSection) -> some View {
+        section(kind, lead: false) { EmptyView() }
     }
 }
 

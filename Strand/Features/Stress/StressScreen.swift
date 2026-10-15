@@ -8,8 +8,9 @@ typealias StressView = StressScreen
 // MARK: - StressScreen (CONCEPT §3.5)
 //
 // "How activated is my body right now, and what can I do about it?" in a fixed order: the current level
-// and today's curve, today's summary, a breathing action, and the 7/30-day trend. The screen holds no
-// logic: `StressScreenModel` loads and resolves everything through `DaytimeStress`.
+// and today's curve, today's summary, a breathing action, the 7/30-day trend, and the patterns
+// (typical day, workdays vs weekend). The screen holds no logic: `StressScreenModel` loads and resolves
+// everything through `DaytimeStress` and `StressPatterns`.
 
 struct StressScreen: View {
     @EnvironmentObject private var repo: Repository
@@ -82,6 +83,7 @@ struct StressScreen: View {
             if isHigh { breathe }
             if let summary = model.summary { StressTodayCard(summary: summary) }
             StressTrendCard(daily: model.daily, typical: model.typical)
+            StressPatternsSection(timeOfDay: model.timeOfDay, week: model.week, loaded: model.patternsLoaded)
             if !isHigh { breathe }
             StressAdvancedCard(index: model.stressIndex, freq: model.freqHRV)
         }
