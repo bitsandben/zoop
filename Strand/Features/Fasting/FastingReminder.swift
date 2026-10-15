@@ -34,19 +34,30 @@ enum FastingReminder {
 
     /// Replaces the pending request with one at `active`'s goal time, or clears it.
     static func sync(active: FastingSessionRow?) {
-        let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [identifier])
-        guard FastingPreferences.reminderEnabled, let active else { return }
+        let id = identifier
+        guard FastingPreferences.reminderEnabled, let active else {
+            NotificationWork.run { $0.removePendingNotificationRequests(withIdentifiers: [id]) }
+            return
+        }
         let goalDate = Date(timeIntervalSince1970: TimeInterval(active.startTs + active.goalSec))
         let delay = goalDate.timeIntervalSinceNow
-        guard delay > 1 else { return }
+        guard delay > 1 else {
+            NotificationWork.run { $0.removePendingNotificationRequests(withIdentifiers: [id]) }
+            return
+        }
         let content = UNMutableNotificationContent()
         content.title = String(localized: FastingStrings.reminderTitle)
         content.body = String(localized: FastingStrings.reminderBody(
             FastingFormat.duration(TimeInterval(active.goalSec))))
         content.sound = .default
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)
-        center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
+        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+        // Replace off the main thread, once the authorization status is known (the reminder needs a decided one).
+        NotificationWork.withSettings { center, settings in
+            center.removePendingNotificationRequests(withIdentifiers: [id])
+            guard settings.authorizationStatus != .notDetermined else { return }
+            center.add(request)
+        }
     }
 }
 #endif

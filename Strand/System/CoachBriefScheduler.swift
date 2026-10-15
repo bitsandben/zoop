@@ -275,7 +275,7 @@ enum CoachBriefScheduler {
         // Immediate delivery; one id per day so a retry replaces the earlier notification.
         let request = UNNotificationRequest(identifier: requestIdPrefix + dayKey(Date()),
                                             content: content, trigger: nil)
-        UNUserNotificationCenter.current().add(request)
+        NotificationWork.run { $0.add(request) }
     }
 
     /// yyyy-MM-dd local-day key for the once-per-day dedup (POSIX locale for stability).

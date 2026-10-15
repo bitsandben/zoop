@@ -127,9 +127,10 @@ enum BatteryNotifier {
         }
         // The strap dropped below 100%: pull the stale "fully charged" note (delivered and pending).
         if result.clearFull {
-            let center = UNUserNotificationCenter.current()
-            center.removeDeliveredNotifications(withIdentifiers: ["battery-full"])
-            center.removePendingNotificationRequests(withIdentifiers: ["battery-full"])
+            NotificationWork.run { center in
+                center.removeDeliveredNotifications(withIdentifiers: ["battery-full"])
+                center.removePendingNotificationRequests(withIdentifiers: ["battery-full"])
+            }
         }
     }
 
@@ -224,9 +225,8 @@ enum BatteryNotifier {
 
     private static func post(identifier: String, title: String, body: String,
                              interruptionLevel: UNNotificationInterruptionLevel = .active) {
-        let center = UNUserNotificationCenter.current()
         // Authorization is requested once via requestAuthorization(); here only status is checked.
-        center.getNotificationSettings { settings in
+        NotificationWork.withSettings { center, settings in
             guard settings.authorizationStatus == .authorized else { return }
             let content = UNMutableNotificationContent()
             content.title = title

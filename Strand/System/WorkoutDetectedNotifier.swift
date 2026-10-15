@@ -49,8 +49,7 @@ enum WorkoutDetectedNotifier {
               let w = candidate, isSettled(endSec: w.endSec, now: Int(now.timeIntervalSince1970)) else { return }
         d.set(w.startSec, forKey: lastStartKey)
         let copy = copy(for: w)
-        let center = UNUserNotificationCenter.current()
-        center.getNotificationSettings { settings in
+        NotificationWork.withSettings { center, settings in
             let d = UserDefaults.standard
             guard settings.authorizationStatus == .authorized else {
                 if d.object(forKey: lastStartKey) as? Int == w.startSec {

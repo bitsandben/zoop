@@ -163,13 +163,13 @@ enum WindDownNudge {
         guard on else {
             UserDefaults.standard.set(false, forKey: K.enabled)
             // Clear the single trigger and any per-day triggers so disabling leaves nothing behind.
-            UNUserNotificationCenter.current()
-                .removePendingNotificationRequests(withIdentifiers: [requestId] + perDayRequestIds)
+            let ids = [requestId] + perDayRequestIds
+            NotificationWork.run { $0.removePendingNotificationRequests(withIdentifiers: ids) }
             completion?(.off)
             return
         }
 
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
+        NotificationWork.withSettings { _, settings in
             Task { @MainActor in
                 switch settings.authorizationStatus {
                 case .authorized, .provisional, .ephemeral:
@@ -217,11 +217,22 @@ enum WindDownNudge {
     /// Per-weekday request ids, cleared alongside the single id so toggling overrides never leaves a stale trigger.
     private static var perDayRequestIds: [String] { (1...7).map { "\(requestId)-wd\($0)" } }
 
+    /// Builds the requests on the main actor (they read its settings), then hands them to NotificationWork, which
+    /// replaces the pending set off the main thread once the authorization status is known.
     private static func schedule() {
-        let center = UNUserNotificationCenter.current()
-        // Clear both the single and per-day triggers so switching modes never double-fires or orphans a reminder.
-        center.removePendingNotificationRequests(withIdentifiers: [requestId] + perDayRequestIds)
+        let requests = buildRequests()
+        let ids = [requestId] + perDayRequestIds
+        NotificationWork.withSettings { center, settings in
+            // Clear both the single and per-day triggers so switching modes never double-fires or orphans a reminder.
+            center.removePendingNotificationRequests(withIdentifiers: ids)
+            // Enabling requires a decided permission; an undetermined one has nothing to schedule against.
+            guard settings.authorizationStatus != .notDetermined else { return }
+            for request in requests { center.add(request) }
+        }
+    }
 
+    /// The nudge's request(s): one daily trigger, or seven weekday-pinned ones when any wake time varies by day.
+    private static func buildRequests() -> [UNNotificationRequest] {
         let content = UNMutableNotificationContent()
         content.title = String(localized: "Time to wind down")
         if followsSleepNeed, let need = tonightNeedMinutes {
@@ -233,6 +244,7 @@ enum WindDownNudge {
 
         // With per-day overrides, fan out to seven weekday-pinned triggers at each day's nudge time; with none, one daily trigger.
         if hasPerDayOverrides || (1...7).contains(where: { alarmWakeMinutes(forWeekday: $0) != nil }) {
+            var requests: [UNNotificationRequest] = []
             for weekday in 1...7 {
                 let minute = nudgeMinuteOfDay(forWeekday: weekday)
                 // An early wake (e.g. 03:30) wraps the nudge to the previous evening; pin the trigger to the
@@ -244,10 +256,10 @@ enum WindDownNudge {
                 comps.minute = minute % 60
                 let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
                 // The request id stays keyed to the wake's weekday to match `perDayRequestIds`.
-                center.add(UNNotificationRequest(identifier: "\(requestId)-wd\(weekday)",
-                                                 content: content, trigger: trigger))
+                requests.append(UNNotificationRequest(identifier: "\(requestId)-wd\(weekday)",
+                                                      content: content, trigger: trigger))
             }
-            return
+            return requests
         }
 
         let minute = nudgeMinuteOfDay()
@@ -256,6 +268,6 @@ enum WindDownNudge {
         comps.minute = minute % 60
         // repeats: true is a daily calendar trigger that lives in the notification center and survives relaunch.
         let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
-        center.add(UNNotificationRequest(identifier: requestId, content: content, trigger: trigger))
+        return [UNNotificationRequest(identifier: requestId, content: content, trigger: trigger)]
     }
 }

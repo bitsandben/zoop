@@ -64,8 +64,7 @@ enum GoodMorningNotifier {
               let recovery else { return }
         d.set(today, forKey: lastDayKey)
         let copy = copy(recovery: recovery, sleepMinutes: sleepMinutes)
-        let center = UNUserNotificationCenter.current()
-        center.getNotificationSettings { settings in
+        NotificationWork.withSettings { center, settings in
             guard settings.authorizationStatus == .authorized else {
                 if UserDefaults.standard.string(forKey: lastDayKey) == today {
                     UserDefaults.standard.set(previousDay, forKey: lastDayKey)

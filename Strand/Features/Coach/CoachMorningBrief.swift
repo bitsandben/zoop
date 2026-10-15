@@ -95,15 +95,17 @@ enum CoachMorningBrief {
 
     /// Respects the notification permission: nothing is asked here, the good-morning switch owns that.
     private static func post(body: String) {
-        let center = UNUserNotificationCenter.current()
-        center.getNotificationSettings { settings in
+        let title = CoachStrings.pushTitle
+        let text = body.count > pushBodyLimit ? String(body.prefix(pushBodyLimit)) + "…" : body
+        let id = requestId
+        NotificationWork.withSettings { center, settings in
             guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
             else { return }
             let content = UNMutableNotificationContent()
-            content.title = CoachStrings.pushTitle
-            content.body = body.count > pushBodyLimit ? String(body.prefix(pushBodyLimit)) + "…" : body
+            content.title = title
+            content.body = text
             content.sound = .default
-            center.add(UNNotificationRequest(identifier: requestId, content: content, trigger: nil))
+            center.add(UNNotificationRequest(identifier: id, content: content, trigger: nil))
         }
     }
 }

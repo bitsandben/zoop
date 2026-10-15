@@ -53,9 +53,8 @@ enum StrainTargetNotifier {
                                               today: day) else { return }
         // Non-nil: shouldNotify required a target.
         let copy = StrainTargetPolicy.copy(target: target21!)
-        let center = UNUserNotificationCenter.current()
         // Authorization is requested once via requestAuthorization(); here only the status is checked.
-        center.getNotificationSettings { settings in
+        NotificationWork.withSettings { center, settings in
             guard settings.authorizationStatus == .authorized else { return }
             let content = UNMutableNotificationContent()
             content.title = copy.title

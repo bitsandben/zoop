@@ -20,9 +20,8 @@ enum IllnessNotifier {
         guard d.string(forKey: lastDayKey) != day else { return }
         // Mark the day up front so the limit holds even if notifications are declined; never re-prompt.
         d.set(day, forKey: lastDayKey)
-        let center = UNUserNotificationCenter.current()
         // Authorization is requested once in requestAuthorization(); here only the status is checked.
-        center.getNotificationSettings { settings in
+        NotificationWork.withSettings { center, settings in
             guard settings.authorizationStatus == .authorized else { return }
             let content = UNMutableNotificationContent()
             content.title = String(localized: "Early warning: take it easy")

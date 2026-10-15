@@ -367,7 +367,7 @@ struct StrandiOSApp: App {
                 // serialises itself, so overlapping with the sync this foreground also kicks off is safe.
                 Task { await model.runDeferredRescoreIfOwed() }
                 Task {
-                    health.refreshAuthIfPreviouslyGranted()
+                    await health.refreshAuthIfPreviouslyGranted()
                     HealthWritebackBackgroundScheduler.updateSchedule(
                         isAuthorized: health.auth == .authorized)
                     await HealthSyncRefreshCoordinator.run(
