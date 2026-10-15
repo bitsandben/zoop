@@ -34,6 +34,9 @@ final class WorkoutDetailModel: ObservableObject {
     @Published private(set) var afterWorkoutTrend: PostWorkoutRecovery.Trend?
     /// The GPS route captured on-device (#524); empty = none was recorded, so no map is drawn.
     @Published private(set) var route: [RouteMath.LatLng] = []
+    /// The route's recorded fixes with their times (and altitude when captured), for the coloured map.
+    /// Empty for legacy routes saved before per-point data existed; those keep the plain map.
+    @Published private(set) var routePoints: [WorkoutRoutePoint] = []
     @Published private(set) var steps: StepReadout?
     /// "Sessions like this usually..." from `ActivityCostEngine`, only once the sport has enough sessions.
     @Published private(set) var recoveryCost: String?
@@ -46,8 +49,10 @@ final class WorkoutDetailModel: ObservableObject {
 
     func load(repo: Repository, profile: ProfileStore) async {
         // The route is a cheap read keyed by the row's natural key; it only counts with >= 2 points.
-        let decoded = RouteStore.load(startTs: row.startTs, sport: row.sport).map { RouteMath.decode($0.polyline) } ?? []
+        let stored = RouteStore.loadWithPoints(startTs: row.startTs, sport: row.sport)
+        let decoded = stored.map { RouteMath.decode($0.polyline) } ?? []
         let routePoints = decoded.count >= 2 ? decoded : []
+        let fixes = routePoints.isEmpty ? [] : (stored?.points ?? []).filter { $0.tMs > 0 }
 
         // A finer bucket than the 24 h chart, so a short run still reads as a curve.
         let buckets = await repo.workoutHrBuckets(from: row.startTs, to: row.endTs, source: row.source)
@@ -64,6 +69,7 @@ final class WorkoutDetailModel: ObservableObject {
 
         guard !Task.isCancelled else { return }
         route = routePoints
+        self.routePoints = fixes.count >= 2 ? fixes : []
         hrPoints = points
         zoneMinutes = minutes
         zonesFromImport = fromImport

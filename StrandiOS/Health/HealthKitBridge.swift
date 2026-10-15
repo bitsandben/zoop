@@ -1832,7 +1832,8 @@ final class HealthKitBridge: ObservableObject {
                         points.append(WorkoutRoutePoint(lat: loc.coordinate.latitude,
                                                         lon: loc.coordinate.longitude,
                                                         accuracyM: loc.horizontalAccuracy,
-                                                        tMs: Int64(loc.timestamp.timeIntervalSince1970 * 1000)))
+                                                        tMs: Int64(loc.timestamp.timeIntervalSince1970 * 1000),
+                                                        altM: loc.verticalAccuracy >= 0 ? loc.altitude : nil))
                     }
                     if done { cont.resume(returning: ()) }
                 }

@@ -111,6 +111,9 @@ struct TrainingScreen: View {
                 MuscleLoadCard(result: model.lift.muscleLoad, computedAt: model.lift.computedAt)
             }
             TrainingStrengthSection(snapshot: model.lift, unitSystem: unitSystem)
+            #if os(iOS)
+            RouteHeatEntry()
+            #endif
             TrainingSessionsSection(model: model, effortScale: effortScale, format: format)
         }
     }

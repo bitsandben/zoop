@@ -546,6 +546,8 @@ enum DemoScreens {
         case "compare":  return AnyView(CompareView())
         case "settings": return AnyView(SettingsView())
         case "chargebreakdown": return AnyView(ChargeBreakdownDemoHost())
+        // Coloured route card over a synthetic 5 km loop (no recorded run needed).
+        case "routemap": return AnyView(RouteMapDemoHost())
         case "devices":  return AnyView(DevicesView())
         case "devicescatalog": return AnyView(DeviceCardCatalog())
         case "onboarding": return AnyView(OnboardingWizard(onFinished: {}))

@@ -2,6 +2,7 @@ import SwiftUI
 import StrandDesign
 import StrandImport
 import WhoopStore
+import StrandAnalytics
 
 // MARK: - GPS route (#524)
 //
@@ -13,7 +14,20 @@ extension WorkoutDetailView {
 
     @ViewBuilder var routeCard: some View {
         if model.route.count >= 2 {
+            #if os(iOS)
+            if model.routePoints.count >= 2 {
+                WorkoutRouteInsightsCard(
+                    row: row, points: model.routePoints,
+                    heartRate: model.hrPoints.map { RouteTrack.HeartRate(t: $0.date.timeIntervalSince1970, bpm: $0.value) },
+                    zones: profile.hrZoneSet, system: format.distanceSystem,
+                    fallback: AnyView(RouteCard(row: row, route: model.route, format: format)))
+                RouteExportCard(row: row, route: model.route)
+            } else {
+                RouteCard(row: row, route: model.route, format: format)
+            }
+            #else
             RouteCard(row: row, route: model.route, format: format)
+            #endif
         }
     }
 }
@@ -25,7 +39,6 @@ private struct RouteCard: View {
 
     @AppStorage(UnitPrefs.systemKey) private var unitSystemRaw = UnitSystem.metric.rawValue
     @AppStorage(UnitPrefs.distanceSystemKey) private var distanceSystemRaw = ""
-    @State private var showExport = false
 
     var body: some View {
         ContentCard("Route") {
@@ -38,23 +51,7 @@ private struct RouteCard: View {
                 stat(String(localized: "Avg pace"), paceLabel)
                 stat(String(localized: "Points"), route.count.formatted(.number.locale(AppLanguage.activeLocale)))
             }
-            Text(description)
-                .font(ZoopType.caption)
-                .foregroundStyle(StrandPalette.textTertiary)
-                .fixedSize(horizontal: false, vertical: true)
-            Button {
-                showExport = true
-            } label: {
-                Label("Export route", systemImage: "square.and.arrow.up")
-            }
-            .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
-            .confirmationDialog("Export route", isPresented: $showExport, titleVisibility: .visible) {
-                Button("GPX — Strava, Garmin, most apps") { export(.gpx) }
-                Button("FIT — Garmin Connect") { export(.fit) }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("Save this route as a standard file you can import into Strava, Garmin Connect, and other apps.")
-            }
+            RouteExportControl(row: row, route: route)
         }
     }
 
@@ -78,6 +75,34 @@ private struct RouteCard: View {
         let system = UnitPrefs.resolveDistance(system: UnitSystem(rawValue: unitSystemRaw) ?? .metric,
                                                override: distanceSystemRaw)
         return UnitFormatter.paceFromSecPerKm(seconds / (meters / 1000), system: system)
+    }
+}
+
+/// The privacy note and the GPX / FIT export, under either route card.
+private struct RouteExportControl: View {
+    let row: WorkoutRow
+    let route: [RouteMath.LatLng]
+
+    @State private var showExport = false
+
+    var body: some View {
+        Text(description)
+            .font(ZoopType.caption)
+            .foregroundStyle(StrandPalette.textTertiary)
+            .fixedSize(horizontal: false, vertical: true)
+        Button {
+            showExport = true
+        } label: {
+            Label("Export route", systemImage: "square.and.arrow.up")
+        }
+        .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
+        .confirmationDialog("Export route", isPresented: $showExport, titleVisibility: .visible) {
+            Button("GPX — Strava, Garmin, most apps") { export(.gpx) }
+            Button("FIT — Garmin Connect") { export(.fit) }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Save this route as a standard file you can import into Strava, Garmin Connect, and other apps.")
+        }
     }
 
     /// #1205: honest about where the route came from. An imported route (Apple Health, Health Connect) must
@@ -108,5 +133,15 @@ private struct RouteCard: View {
             do { try data.write(to: url) } catch { return }
             await MainActor.run { FileExport.exportFile(at: url, suggestedName: name) }
         }
+    }
+}
+
+/// The export on its own card, under the coloured route and split cards.
+struct RouteExportCard: View {
+    let row: WorkoutRow
+    let route: [RouteMath.LatLng]
+
+    var body: some View {
+        ContentCard { RouteExportControl(row: row, route: route) }
     }
 }

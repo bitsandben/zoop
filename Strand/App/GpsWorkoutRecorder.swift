@@ -173,6 +173,9 @@ struct WorkoutRoutePoint: Equatable, Codable {
     var lon: Double
     var accuracyM: Double
     var tMs: Int64
+    /// Altitude in metres when the fix carried a usable one (vertical accuracy within
+    /// `LiveRouteMetrics.maxVerticalAccuracyM`); nil for older routes and fixes without one.
+    var altM: Double? = nil
 }
 
 /// The route persisted for one finished workout: polyline, GPS distance and, when available, the
@@ -555,8 +558,12 @@ final class GpsWorkoutRecorder: NSObject, ObservableObject {
                 metrics.append(seconds: Double(fix.tMs - startMs - pausedDurationMs) / 1000, addedMeters: added,
                                altitude: alt?.altitude, verticalAccuracy: alt?.accuracy)
                 track.append(pt)
+                let usableAlt = alt.flatMap { a in
+                    a.accuracy >= 0 && a.accuracy <= LiveRouteMetrics.maxVerticalAccuracyM && a.altitude.isFinite
+                        ? a.altitude : nil
+                }
                 routePoints.append(WorkoutRoutePoint(lat: fix.lat, lon: fix.lon,
-                                                     accuracyM: fix.accuracyM, tMs: fix.tMs))
+                                                     accuracyM: fix.accuracyM, tMs: fix.tMs, altM: usableAlt))
                 changed = true
             }
         }
