@@ -107,24 +107,38 @@ private struct FitnessStarField: View {
         }
     }()
 
+    @ObservedObject private var motion = ZoopMotionState.shared
+
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 20, paused: reduceMotion)) { timeline in
-            Canvas { ctx, size in
-                let t = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 100_000)
-                for s in Self.stars {
-                    var x = (s.x * size.width + t * s.speed).truncatingRemainder(dividingBy: size.width)
-                    if x < 0 { x += size.width }
-                    let y = s.y * size.height
-                    let fade = max(0, 1 - y / size.height * 1.15)
-                    let twinkle = 0.5 + 0.5 * sin(t * 0.7 + s.phase)
-                    let alpha = (0.15 + 0.45 * twinkle) * fade
-                    ctx.fill(Path(ellipseIn: CGRect(x: x, y: y, width: s.size, height: s.size)),
-                             with: .color(StrandPalette.textPrimary.opacity(alpha)))
+        // Motion unwanted (Reduce Motion, Low Power, background): one still frame and no timeline at all,
+        // as in `LiquidSky`; a paused TimelineView still keeps the render server busy.
+        Group {
+            if motion.poseStill(reduceMotion) {
+                Canvas { ctx, size in Self.draw(ctx, size, t: 0) }
+            } else {
+                TimelineView(.animation(minimumInterval: 1.0 / 20)) { timeline in
+                    Canvas { ctx, size in
+                        Self.draw(ctx, size, t: timeline.date.timeIntervalSinceReferenceDate
+                            .truncatingRemainder(dividingBy: 100_000))
+                    }
                 }
             }
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+
+    private static func draw(_ ctx: GraphicsContext, _ size: CGSize, t: Double) {
+        for s in Self.stars {
+            var x = (s.x * size.width + t * s.speed).truncatingRemainder(dividingBy: size.width)
+            if x < 0 { x += size.width }
+            let y = s.y * size.height
+            let fade = max(0, 1 - y / size.height * 1.15)
+            let twinkle = 0.5 + 0.5 * sin(t * 0.7 + s.phase)
+            let alpha = (0.15 + 0.45 * twinkle) * fade
+            ctx.fill(Path(ellipseIn: CGRect(x: x, y: y, width: s.size, height: s.size)),
+                     with: .color(StrandPalette.textPrimary.opacity(alpha)))
+        }
     }
 }
 
