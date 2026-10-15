@@ -1,32 +1,23 @@
 import Foundation
 import UserNotifications
 
-// MARK: - Target-strain notification (#593)
+// MARK: - Target-strain notification
 //
-// A single opt-in, default-OFF celebratory nudge: once per day, when the day's Effort (strain) reaches the
-// LOW end of today's recovery-derived OPTIMAL strain band (the #43 coupled read), post an "optimal strain
-// reached" notification. Twin of the Android `StrainTargetNotifier`/`StrainTargetPolicy` — the pure policy
-// must stay byte-identical (feature-level parity).
+// Opt-in, default-OFF nudge: once per day, when the day's Effort reaches the low end of today's
+// recovery-derived optimal strain band, post an "optimal strain reached" notification. The copy is
+// Zoop's own, and the target is Zoop's own recovery-to-strain band.
 //
-// CLEAN-ROOM: this reimplements the BEHAVIOUR only. The copy is Zoop's own — NOT WHOOP's decompiled
-// strings — and the target is Zoop's own recovery→strain band (#43), not a value read off another app.
-//
-// The gate runs on the 0-21 coupled axis: the day's stored Effort (0-100) is converted with the shipped
-// UnitFormatter.effortValue(_, .whoop) at the call site, and the target is the optimal band's lowerBound
-// (already 0-21). It is NOT "the instant" you cross the target — day strain is a per-analytics-pass
-// rollup, so it fires on the first pass at/after the crossing. Once-per-day dedupe via a persisted day
-// string, the same crossing-dedupe idiom as BatteryNotifier / the Android ScheduledReportPolicy.
+// The gate runs on the 0-21 coupled axis: stored Effort (0-100) is converted with
+// UnitFormatter.effortValue(_, .whoop) at the call site and the target is the band's lowerBound.
+// Day strain is a per-pass rollup, so it fires on the first pass at/after the crossing. Once-per-day
+// dedupe via a persisted day string, as in BatteryNotifier.
 enum StrainTargetNotifier {
     private static let lastDayKey = "behavior.strainTargetLastDay"
 
-    /// Pure, testable policy + copy — no notification/UserDefaults runtime, so the decision logic is
-    /// pinned by StrainTargetPolicyTests. Byte-identical twin of the Android `StrainTargetPolicy`.
+    /// Pure, testable policy and copy (pinned by StrainTargetPolicyTests).
     enum StrainTargetPolicy {
-        /// Fire at most once per day: only when enabled, BOTH the day strain and the target are known,
-        /// the day strain has reached the target, and we haven't already posted for `today`. `dayStrain`
-        /// and `target` must be on the SAME axis (the 0-21 coupled axis, per the call site). A nil
-        /// `target` means recovery is unknown (calibrating / unscored) ⇒ no target ⇒ never fires
-        /// (never guess a target).
+        /// Fires at most once per day: enabled, day strain and target both known and on the same 0-21 axis,
+        /// strain at/above target, and not already posted for `today`. A nil target (recovery unknown) never fires.
         static func shouldNotify(enabled: Bool,
                                  dayStrain: Double?,
                                  target: Double?,
@@ -36,27 +27,23 @@ enum StrainTargetNotifier {
             return dayStrain >= target && lastNotifiedDay != today
         }
 
-        /// Title + body for the nudge. `target` is the optimal-band low on the 0-21 coupled axis.
-        /// Zoop's OWN wording — the feature is reimplemented behaviour, not copied copy.
+        /// Title and body for the nudge; `target` is the optimal-band low on the 0-21 axis.
         static func copy(target: Int) -> (title: String, body: String) {
             (String(localized: "Optimal strain reached"),
              String(localized: "You've hit today's optimal strain target of \(target). Nice work — your recovery earned it."))
         }
     }
 
-    /// Ask up front (called when the user enables the nudge) so the system dialog appears at a
-    /// predictable moment, not on the first crossing. BatteryNotifier idiom.
+    /// Ask up front (when the user enables the nudge) so the system dialog appears at a predictable moment.
     static func requestAuthorization() {
         UNUserNotificationCenter.current()
             .requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
-    /// Run the policy against the resolved today-row's values and post at most one notification per day.
-    /// `dayStrain21`/`target21` are on the 0-21 coupled axis (the caller converts the stored 0-100 Effort
-    /// via UnitFormatter and reads the target off the #43 optimal band). No-op on every path that fails
-    /// the policy, so the caller can fire it freely each time the day history republishes. The persisted
-    /// day marker advances only after an authorized post, so a notifications-denied day still notifies
-    /// once they're re-enabled while the same day still shows the reached target (Android twin behaviour).
+    /// Runs the policy against today's values and posts at most one notification per day. `dayStrain21`
+    /// and `target21` are on the 0-21 axis. No-op when the policy fails, so it can fire on every
+    /// republish. The day marker advances only after an authorized post, so a denied day still notifies
+    /// once notifications are re-enabled.
     static func onDayUpdate(day: String, dayStrain21: Double?, target21: Int?, enabled: Bool) {
         let d = UserDefaults.standard
         guard StrainTargetPolicy.shouldNotify(enabled: enabled,
@@ -64,11 +51,10 @@ enum StrainTargetNotifier {
                                               target: target21.map(Double.init),
                                               lastNotifiedDay: d.string(forKey: lastDayKey),
                                               today: day) else { return }
-        // Non-nil: shouldNotify above required a non-nil target before returning true.
+        // Non-nil: shouldNotify required a target.
         let copy = StrainTargetPolicy.copy(target: target21!)
         let center = UNUserNotificationCenter.current()
-        // Authorization is requested once via requestAuthorization() when the toggle is enabled; here we
-        // only check status (no second system prompt) — the BatteryNotifier idiom.
+        // Authorization is requested once via requestAuthorization(); here only the status is checked.
         center.getNotificationSettings { settings in
             guard settings.authorizationStatus == .authorized else { return }
             let content = UNMutableNotificationContent()

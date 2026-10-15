@@ -1,15 +1,10 @@
 import Foundation
 
-/// The language Zoop uses for app-owned copy. Region-specific measurement and clock preferences remain
-/// separate: this changes words, not the user's unit-system choice or time zone.
-///
-/// Only English and German ship. "System" follows a German phone and uses English for every other
-/// phone language, so a French or Chinese device does not surface a leftover translation.
-///
-/// Apple chooses a bundle's localization once, when the process launches. `apply(_:)` therefore writes
-/// the standard `AppleLanguages` override and Settings tells the user to reopen Zoop. Applying only a
-/// SwiftUI `locale` live would be incorrect: `Text` would switch immediately while `String(localized:)`
-/// messages, notifications, and strings owned by `StrandDesign.module` stayed in the old language.
+/// The language Zoop uses for app-owned copy. Only English and German ship; "System" follows a German
+/// phone and uses English otherwise. Units and clock preferences stay separate.
+/// Apple picks a bundle's localization at launch, so `apply(_:)` writes the `AppleLanguages` override and
+/// Settings asks the user to reopen Zoop; a live SwiftUI `locale` alone would leave `String(localized:)`
+/// and `StrandDesign.module` strings in the old language.
 enum AppLanguage: String, CaseIterable, Identifiable {
     case system
     case english = "en"
@@ -19,8 +14,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    /// Language names are autonyms on purpose, so the picker remains understandable while changing from
-    /// an unfamiliar language. The system choice is localized at its call site.
+    /// Autonyms on purpose, so the picker stays understandable from an unfamiliar language.
     var autonym: String {
         switch self {
         case .system:  return ""
@@ -33,8 +27,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         AppLanguage(rawValue: raw) ?? .system
     }
 
-    /// Fold a stored tag from an older build (Spanish, French, …) back to System so the picker has a
-    /// row to show. English, German, and System pass through unchanged.
+    /// Fold a stored tag from an older build back to System; English, German and System pass through.
     static func canonicalizeStoredValue(_ raw: String) -> String {
         let resolved = resolve(raw)
         if resolved == .system && raw != AppLanguage.system.rawValue {
@@ -43,8 +36,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         return resolved.rawValue
     }
 
-    /// The bundle language to force: explicit English or German, or German only when the phone itself
-    /// is set to German. `systemLanguageTag` is the device tag, not the app override.
+    /// The bundle language to force: English or German, or German only when the phone itself is German.
     static func resolvedTag(for raw: String, systemLanguageTag: String) -> String {
         switch resolve(raw) {
         case .english: return "en"
@@ -55,14 +47,13 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Read the phone language from the global domain so the app's own `AppleLanguages` override does
-    /// not echo back as "the device is German" after we wrote that override last launch.
+    /// Read the phone language from the global domain so our own `AppleLanguages` override does not echo back.
     static func deviceLanguageTag() -> String {
         let global = UserDefaults.standard.persistentDomain(forName: UserDefaults.globalDomain)
         return (global?["AppleLanguages"] as? [String])?.first ?? "en"
     }
 
-    /// Persist the bundle-language override. Foundation observes it on the next process launch.
+    /// Persist the bundle-language override; takes effect next launch.
     static func apply(_ raw: String,
                       defaults: UserDefaults = .standard,
                       systemLanguageTag: String? = nil) {
@@ -70,7 +61,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         defaults.set([resolvedTag(for: raw, systemLanguageTag: system)], forKey: "AppleLanguages")
     }
 
-    /// Rewrite a legacy stored tag, then write the English-or-German override for the next launch.
+    /// Rewrite a legacy stored tag, then write the override for the next launch.
     static func installAtLaunch(defaults: UserDefaults = .standard) {
         let stored = defaults.string(forKey: storageKey) ?? system.rawValue
         let canonical = canonicalizeStoredValue(stored)
@@ -80,15 +71,14 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         apply(canonical, defaults: defaults)
     }
 
-    /// Locale used by SwiftUI format styles for the language that the currently-running bundles chose.
-    /// This deliberately follows `Bundle`, not the pending picker value, so changing the setting cannot
-    /// produce a half-new/half-old UI before the requested reopen.
+    /// Locale for SwiftUI format styles in the language the running bundles chose (follows `Bundle`, not the
+    /// pending picker value).
     static var activeLocale: Locale {
         let bundleLanguage = Bundle.main.preferredLocalizations.first ?? "en"
         let language = bundleLanguage.split(separator: "-").first.map(String.init) ?? bundleLanguage
         let words = (language == "de") ? "de" : "en"
-        // Preserve the device's regional conventions (24-hour clock, date order, decimal separator) while
-        // taking month/weekday words from the app language: English on a German device becomes `en_DE`.
+        // Keep the device's regional conventions (clock, date order, separators) with the app language's words,
+        // e.g. English on a German device is `en_DE`.
         if let region = Locale.autoupdatingCurrent.region?.identifier {
             return Locale(identifier: "\(words)_\(region)")
         }

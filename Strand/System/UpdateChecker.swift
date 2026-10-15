@@ -1,20 +1,13 @@
 import Foundation
 import WhoopProtocol
 
-/// "Check for updates": one call to the project's PUBLIC releases API (GitHub), reading the latest
-/// version number and comparing it to the installed one. Nothing about the user is sent, and it never
-/// installs anything — on iOS no API permits that for a sideloaded app.
+/// "Check for updates": one call to the project's public releases API (GitHub), comparing the latest
+/// version to the installed one. Nothing about the user is sent, and it never installs anything.
 ///
-/// TWO callers share this, and the distinction matters to anyone auditing what the app does on its own:
-///  - the Settings button, which runs only when tapped;
-///  - `UpdateWatch`, the #1659 daily check, which runs at most once a day after onboarding and the Terms
-///    gate. It is ON by default and switching it off in Settings stops the request entirely.
-///
-/// This header previously said the read happened ONLY on a tap. That stopped being true the moment the
-/// automatic caller was added, and a false claim here is worse than none: it is the file someone opens to
-/// answer "does this app poll?". Documented for real in docs/PRIVACY_SECURITY.md §1.1c.
-///
-/// (Uses the network-client entitlement, which is otherwise only for the opt-in, off-by-default AI Coach.)
+/// Two callers: the Settings button (only when tapped) and `UpdateWatch`, the daily check (at most
+/// once a day after onboarding and the Terms gate; ON by default, off in Settings stops the request).
+/// See docs/PRIVACY_SECURITY.md section 1.1c. Uses the network-client entitlement, otherwise only
+/// for the opt-in AI Coach.
 @MainActor
 final class UpdateChecker: ObservableObject {
 
@@ -30,9 +23,8 @@ final class UpdateChecker: ObservableObject {
 
     private static let endpoint = URL(string: "https://api.github.com/repos/bitsandben/zoop/releases/latest")!
 
-    /// One release read. Shared by the button and the automatic check (#1659) so there is exactly one
-    /// copy of the endpoint, the headers and the parsing — a second copy is how the two would drift into
-    /// disagreeing about what "latest" means.
+    /// One release read shared by the button and the automatic check, so endpoint, headers and parsing
+    /// exist in one copy.
     struct Release: Equatable {
         let version: String
         let url: URL
@@ -70,8 +62,7 @@ final class UpdateChecker: ObservableObject {
         }
     }
 
-    /// Turn a GitHub release body into a short, readable "what's new" for an inline preview: drop the
-    /// "Downloads"/footer boilerplate, strip the heaviest markdown markers, and cap the length.
+    /// Turns a GitHub release body into a short "what's new": drops the "Downloads" footer, strips heavy markdown, caps the length.
     static func cleanNotes(_ body: String) -> String {
         var s = body.components(separatedBy: "Downloads").first ?? body
         for marker in ["**", "## ", "# "] { s = s.replacingOccurrences(of: marker, with: "") }

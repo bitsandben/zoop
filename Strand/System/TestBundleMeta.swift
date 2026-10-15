@@ -1,10 +1,8 @@
 import Foundation
 import StrandAnalytics
 
-/// The machine-readable tie between a strap log and the test profile that produced it: meta.json,
-/// schema v1 (spec section 5.1). Folds in build-provenance and the storage / DB-size block so a
-/// maintainer sees the version, channel, signing and on-disk footprint without asking. snake_case
-/// wire keys match the spec JSON sample; sortedKeys keeps the Swift and Kotlin output byte-aligned.
+/// meta.json (schema v1): ties a strap log to the test profile that produced it, with build
+/// provenance and the storage / DB-size block. snake_case wire keys; sortedKeys keeps output stable.
 struct TestBundleMeta: Codable {
     let schema: Int                    // always 1
     let appVersion: String
@@ -19,23 +17,18 @@ struct TestBundleMeta: Codable {
     let storage: Storage
     let redaction: String              // "v2"
     let truncated: Bool
-    /// The report-completeness guard result (#812, generalised): per ACTIVE domain, OK (its killer trace
-    /// landed, with a count) or INCOMPLETE (the mode was on but produced no trace). Empty on a non-test
-    /// export. Lets a maintainer see at a glance, from meta alone, that a report is thin and WHICH capture
-    /// failed. Built by CaptureCompleteness.evaluate over the redacted report.txt.
+    /// Report-completeness result: per ACTIVE domain, OK (killer trace landed, with a count) or
+    /// INCOMPLETE. Empty on a non-test export. Built by CaptureCompleteness.evaluate over the redacted report.
     var captureCheck: [CaptureCheck] = []
 
-    /// channel: one of AltStore / App Store / TestFlight / brew / GitHub / sideload. signed is false on
-    /// the sideloaded iOS path; derived from IOSDiagnostics.isSideloaded on iOS, fixed per flavour else.
+    /// channel: AltStore / App Store / TestFlight / brew / GitHub / sideload; signed is false on sideloaded iOS.
     struct Build: Codable { let channel: String; let signed: Bool }
 
-    /// db_bytes plus per-table row counts plus the raw-capture footprint (#590 asked us to surface this).
+    /// db_bytes plus per-table row counts plus the raw-capture footprint.
     struct Storage: Codable {
         let dbBytes: Int; let rows: [String: Int]; let rawCaptureBytes: Int
-        /// #1911: estimated payload bytes per table, keyed as `rows` is. Rows alone cannot say which table
-        /// holds a large store — `ppgWaveformSample`'s rows carry a BLOB, so it is exactly where a row
-        /// model misleads. A sampled payload estimate with no index or page overhead, so read it as a
-        /// lower bound to compare against `db_bytes`, never as a second file size.
+        /// Estimated payload bytes per table, keyed as `rows` is (rows alone mislead for BLOB tables like
+        /// `ppgWaveformSample`). A sampled lower bound with no index or page overhead; compare to `db_bytes`.
         let rowBytes: [String: Int]
         enum CodingKeys: String, CodingKey {
             case rows

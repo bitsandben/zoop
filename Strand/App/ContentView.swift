@@ -1,13 +1,12 @@
 import SwiftUI
 import StrandDesign
 
-/// Root — the sidebar shell, with the first-run onboarding/pairing wizard overlaid until complete,
-/// and a "What's New" changelog sheet shown automatically after an update.
+/// Root sidebar shell, with the onboarding/pairing wizard overlaid until complete and a "What's New" sheet after an update.
 struct ContentView: View {
     @AppStorage("zoop.onboarded") private var onboarded = false
     @AppStorage("zoop.lastSeenChangelogVersion") private var lastSeenChangelog = ""
     @AppStorage("zoop.acceptedTermsVersion") private var acceptedTerms = ""
-    /// Local timestamp of the last terms acceptance — the on-device consent record (version + when).
+    /// Local timestamp of the last terms acceptance (the on-device consent record).
     @AppStorage("zoop.acceptedTermsAt") private var acceptedTermsAt = ""
     @State private var showWhatsNew = false
 
@@ -17,15 +16,13 @@ struct ContentView: View {
             if !onboarded {
                 OnboardingWizard(onFinished: {
                     onboarded = true
-                    // A brand-new user just saw the expectations in onboarding — don't also pop the
-                    // changelog at them; mark them current.
+                    // A brand-new user just saw the expectations in onboarding; mark the changelog current.
                     lastSeenChangelog = AppChangelog.currentVersion
                 })
                 .transition(.opacity)
                 .zIndex(1)
             }
-            // Terms acknowledgment gate — over EVERYTHING (before onboarding/pairing/Bluetooth) until
-            // the current terms version is accepted; re-appears if the terms materially change.
+            // Terms gate sits over everything (before onboarding, pairing, Bluetooth) until the current version is accepted.
             if acceptedTerms != Terms.currentVersion {
                 TermsGateView(onAccept: {
                     acceptedTermsAt = ISO8601DateFormatter().string(from: Date())
@@ -35,8 +32,7 @@ struct ContentView: View {
                     .zIndex(2)
             }
         }
-        // Calm easing cubic-bezier(0.22,1,0.36,1) at the README sheet-present duration (~0.42s) for
-        // the full-screen onboarding / terms overlays — decelerating, nothing overshoots.
+        // Calm decelerating curve (cubic-bezier 0.22,1,0.36,1, ~0.42s) for the full-screen onboarding / terms overlays.
         .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.42), value: onboarded)
         .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.42), value: acceptedTerms)
         .sheet(isPresented: $showWhatsNew) {
@@ -45,20 +41,13 @@ struct ContentView: View {
                 showWhatsNew = false
             })
         }
-        // The Terms gate must stay "over everything" — don't pop What's New on top of it after a
-        // combined terms+version update. Gate on terms being current, and re-check when they're
-        // accepted (onAppear already fired before acceptance), so What's New shows right after.
+        // Do not pop What's New over the Terms gate: gate on terms being current and re-check on acceptance.
         .onAppear {
             showWhatsNewIfDue()
-            // Seed the current What's New into the Updates inbox (idempotent per version) so the bell
-            // collects it even if the user dismisses the auto sheet.
+            // Seed the current What's New into the Updates inbox (idempotent per version).
             UpdateStore.shared.seedWhatsNewIfNeeded()
-            // #1659: Zoop is sideloaded on every platform, so nothing else will tell you a release
-            // happened. On by default and switchable off - see UpdateAvailability.defaultEnabled.
-            //
-            // Gated on the SAME condition as showWhatsNewIfDue below, matching the iOS and Android hooks:
-            // a default-on check must not reach the network during first run, before the Terms gate has
-            // been accepted. (No sideload sentence here - macOS has no seven-day re-sign and no AltStore.)
+            // Update check runs on the same condition as showWhatsNewIfDue: a default-on check must not touch the
+            // network before the Terms gate is accepted (#1659).
             if onboarded && acceptedTerms == Terms.currentVersion {
                 UpdateWatch.runIfDue(currentVersion: UpdateWatch.installedVersion, sideloadHint: false)
             }
@@ -67,7 +56,7 @@ struct ContentView: View {
     }
 
     private func showWhatsNewIfDue() {
-        // Existing users who updated: their last-seen version is behind the current one.
+        // Existing users whose last-seen version is behind the current one.
         if onboarded && acceptedTerms == Terms.currentVersion
             && lastSeenChangelog != AppChangelog.currentVersion {
             showWhatsNew = true

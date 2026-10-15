@@ -1,36 +1,20 @@
 import Foundation
 
-/// Zoop's own scratch area inside the process temporary directory, and the sweep that reclaims it.
+/// Zoop's own scratch area inside the temporary directory, and the sweep that reclaims it.
 ///
-/// Everything Zoop stages in temp lives under one folder it owns, and the sweep removes only what is
-/// inside that folder. It used to stage files flat and sweep every sibling whose name began `noop-`,
-/// on the stated premise that "the temp dir is Zoop's private sandbox".
-///
-/// That premise holds on iOS and does not hold on macOS. `Strand.entitlements` does declare
-/// `com.apple.security.app-sandbox`, but entitlements only apply to a signed build, and the
-/// distributed macOS build is produced with `CODE_SIGNING_ALLOWED=NO` and then ad-hoc re-signed with
-/// no entitlements at all (`project.yml` says so beside the entitlement). So the shipped Mac app is
-/// unsandboxed, its `temporaryDirectory` is the shared per-user `/var/folders/.../T/`, and the sweep
-/// was deleting any process's `noop-*` items more than a minute old, on every launch and on Storage's
-/// "Clean up". #2446 hit exactly that: a verification run's own `$TMPDIR/noop-verify` and
-/// `noop-measure` folders were removed underneath a live `xcodebuild`.
-///
-/// Owning a folder removes the guesswork rather than narrowing it: nothing outside it is a candidate,
-/// whatever it is called.
+/// Everything staged in temp lives under one owned folder and the sweep removes only what is inside
+/// it. The old flat `noop-*` sweep was unsafe on macOS: the distributed build is ad-hoc re-signed
+/// with no entitlements (see `project.yml`), so it is unsandboxed and `temporaryDirectory` is the
+/// shared per-user folder, where the sweep deleted other processes' `noop-*` items (#2446). Owning a
+/// folder means nothing outside it is ever a candidate.
 enum ZoopScratch {
 
     /// The folder Zoop owns inside the temporary directory, named for the running bundle.
     ///
-    /// Not a plain "Zoop". Everything inside this folder is removed by [purge] WITHOUT being matched by
-    /// name, on the grounds that Zoop put it there, so the name has to be one nothing else will have
-    /// taken. A short one would not be: macOS filesystems are case-insensitive by default, so `Zoop`
-    /// and `noop` are the same directory, and the very report behind this change had a process writing
-    /// `noop-verify` and `noop-measure` into that shared folder. Adopting a stranger's directory and
-    /// then emptying it is the bug this change exists to end, one level down.
-    ///
-    /// The bundle identifier is per-install and fork-specific, so a collision needs another program
-    /// shipping under this app's own identifier. The fallback only applies where there is no bundle id
-    /// at all, which in practice is a bare command-line host.
+    /// Not a plain "Zoop": [purge] empties it without name matching, so the name must be one nothing else
+    /// will have taken, and macOS filesystems are case-insensitive by default (`Zoop` and `noop` collide).
+    /// The per-install bundle id makes a collision need another program under this app's own identifier;
+    /// the fallback applies only with no bundle id (a bare command-line host).
     static var folderName: String { (Bundle.main.bundleIdentifier ?? "com.zoopapp.zoop") + ".scratch" }
 
     /// Zoop's scratch folder. Not created; see [directory].
@@ -38,10 +22,8 @@ enum ZoopScratch {
         temporaryDirectory.appendingPathComponent(folderName, isDirectory: true)
     }
 
-    /// Zoop's scratch folder, created if it is not there yet.
-    ///
-    /// Best-effort: a creation failure returns the URL anyway, so a caller fails on its own write with
-    /// its own error rather than on a directory it never asked about.
+    /// Zoop's scratch folder, created if absent. Best-effort: a creation failure returns the URL anyway,
+    /// so a caller fails on its own write.
     @discardableResult
     static func directory(in temporaryDirectory: URL = FileManager.default.temporaryDirectory) -> URL {
         let url = root(in: temporaryDirectory)
@@ -60,37 +42,27 @@ enum ZoopScratch {
                              in temporaryDirectory: URL = FileManager.default.temporaryDirectory) -> URL {
         directory(in: temporaryDirectory).appendingPathComponent(name, isDirectory: true)
     }
-    /// Every legacy flat scratch prefix Zoop itself wrote before it owned a folder.
-    ///
-    /// EXACT prefixes, not the open `noop-` the sweep used to take. These are the names the app
-    /// demonstrably writes, so a stranded multi-GB `noop-health-` extraction from an interrupted
-    /// import (#590) is still reclaimed, while a sibling this app never created is not a candidate:
-    /// the `noop-verify`, `noop-measure` and `noop-canary-a` of #2446 match none of them.
-    ///
-    /// This list only has to cover builds that predate the owned folder, so it can go once those are
-    /// no longer in the field. Nothing new should be added to it.
+    /// Legacy flat scratch prefixes Zoop itself wrote before it owned a folder. Exact prefixes, not the
+    /// open `noop-`: a stranded multi-GB `noop-health-` import extraction (#590) is still reclaimed while
+    /// siblings this app never created are not candidates. Only needs to cover builds that predate the
+    /// owned folder; add nothing new.
     static let legacyFlatPrefixes = [
         "noop-settings-", "noop-manifest-", "noop-import-", "noop-health-", "noop-xiaomi-",
         "noop-export-", "noop-recap-", "noop-5mg-raw-", "noop-strap-log-", "noop-raw-sensors-",
         "noop-route-",
     ]
 
-    /// Legacy flat scratch Zoop wrote before it owned a folder, by exact name.
-    ///
-    /// `noop-last-crash.txt` and `noop-raw-capture-*` are deliberately absent: they are written to the
-    /// caches and documents directories, never to temp, so they were never swept and must not start
-    /// being. Matching a name is only safe for a directory this app stages into.
+    /// Legacy flat scratch by exact name. `noop-last-crash.txt` and `noop-raw-capture-*` are absent on
+    /// purpose: they live in caches/documents, never temp, and must not start being swept.
     static let legacyFlatNames = ["noop-rhythm.csv"]
 
-    /// Whether `name` is flat scratch an earlier build of THIS app wrote.
+    /// Whether `name` is flat scratch an earlier build of this app wrote.
     static func isLegacyFlatScratch(_ name: String) -> Bool {
         legacyFlatNames.contains(name) || legacyFlatPrefixes.contains { name.hasPrefix($0) }
     }
 
-    /// Bytes currently held in Zoop's scratch folder, legacy flat scratch included.
-    ///
-    /// The Storage screen reports this, so it has to count what [purge] would reclaim and nothing
-    /// else. Counting a sibling Zoop did not write would attribute another program's disk to Zoop.
+    /// Bytes in Zoop's scratch folder, legacy flat scratch included: counts exactly what [purge] would
+    /// reclaim (the Storage screen reports it) and nothing another program wrote.
     static func sizeBytes(in temporaryDirectory: URL = FileManager.default.temporaryDirectory,
                           measure: (URL) -> Int64) -> Int64 {
         var total = measure(root(in: temporaryDirectory))
@@ -104,10 +76,8 @@ enum ZoopScratch {
         return total
     }
 
-    /// Remove Zoop's scratch: everything inside the folder it owns, plus legacy flat scratch.
-    ///
-    /// Keeps the 60 s in-flight guard the flat sweep had, so a running import or export is not pulled
-    /// out from under itself.
+    /// Removes Zoop's scratch: everything in the owned folder plus legacy flat scratch. Keeps a 60 s
+    /// in-flight guard so a running import or export isn't pulled out from under itself.
     static func purge(in temporaryDirectory: URL = FileManager.default.temporaryDirectory,
                       now: Date = Date()) {
         let fm = FileManager.default

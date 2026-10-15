@@ -1,16 +1,11 @@
 import Foundation
 
-/// On-device copy of this install's settings, kept beside the database so an update does not start
-/// the app from a blank preferences file.
-///
-/// Apple already keeps `UserDefaults` and the WhoopStore SQLite file in the app container across an
-/// update of the same install. This archive is the safety net for the preferences half: the last
-/// good domain is written to Application Support, and a launch whose domain comes back empty copies
-/// that file back before anything else reads a setting. It never uploads anything, and it does not
-/// replace the database — that file is already durable and copying it would risk a half-written store.
+/// On-device copy of this install's settings, kept beside the database so an update does not start from
+/// blank preferences. The last good `UserDefaults` domain is written to Application Support and copied
+/// back at launch when the domain comes back empty. Never uploaded; the database is not copied (a
+/// half-written store is a risk).
 enum LocalSettingsArchive {
-    /// Restore a previous snapshot when the live domain has no entries. A domain that already has
-    /// settings is left alone, so a newer choice is never overwritten by an older file.
+    /// Restore a previous snapshot only when the live domain is empty, so a newer choice is never overwritten.
     static func restoreIfEmpty(defaults: UserDefaults = .standard,
                                domain: String? = nil,
                                file: URL? = nil) {
@@ -21,8 +16,8 @@ enum LocalSettingsArchive {
         defaults.setPersistentDomain(saved, forName: domainName)
     }
 
-    /// Write the live domain to the private snapshot. An empty domain is not written, so a failed
-    /// restore cannot erase the last good file.
+    /// Write the live domain to the private snapshot. An empty domain is skipped so a failed restore cannot
+    /// erase the last good file.
     static func snapshot(defaults: UserDefaults = .standard,
                          domain: String? = nil,
                          file: URL? = nil) {

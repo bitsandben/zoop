@@ -1,14 +1,11 @@
 import Foundation
 import StrandAnalytics
 
-/// Experimental smart-wake window: wake the wearer when they are in light sleep within the last few
-/// minutes before the alarm, rather than at the alarm from wherever the night happens to be.
-///
-/// Safe by construction. The strap alarm stays armed at the latest time the whole night (`applySmartAlarm`
-/// arms it as usual), so if the app is suspended, the strap is out of range or nothing is detected, it rings
-/// exactly as a plain alarm would. Inside the window this pulls a fresh sync every few minutes and asks
-/// `SmartWake.lightSleepSignal`; on a yes it re-arms the same alarm for a minute from now. It only ever
-/// moves the alarm earlier, never later, and only once per alarm. Default off; unvalidated on hardware.
+/// Experimental smart-wake window: wake the wearer in light sleep within the last few minutes before
+/// the alarm. The strap alarm stays armed at the latest time all night, so if the app is suspended
+/// or nothing is detected it rings as a plain alarm. Inside the window it syncs every few minutes and
+/// asks `SmartWake.lightSleepSignal`; on a yes it re-arms the same alarm a minute from now, only
+/// earlier and once per alarm. Default off; unvalidated on hardware.
 @MainActor
 final class SmartWakeWindow {
     static let windowKey = "zoop.smartWake.windowMinutes"
@@ -20,19 +17,19 @@ final class SmartWakeWindow {
         return choices.contains(v) ? v : 0
     }
 
-    /// How often the window checks, and how long it waits for a sync to land before reading.
+    /// Check interval, and how long to wait for a sync before reading.
     static let checkInterval: TimeInterval = 3 * 60
     static let syncSettle: TimeInterval = 75
 
     private weak var model: AppModel?
     private var timer: Timer?
     private var alarm: Date?
-    /// The earlier wake already armed for `alarm`, so a re-arm of the plain alarm keeps it.
+    /// The earlier wake already armed for `alarm`, so re-arming the plain alarm keeps it.
     private(set) var earlyWake: Date?
 
     init(model: AppModel) { self.model = model }
 
-    /// Follow the next alarm: start checking when its window opens, or stop when there is none.
+    /// Follows the next alarm: starts checking when its window opens, stops when there is none.
     func plan(nextAlarm: Date?) {
         timer?.invalidate()
         timer = nil
@@ -47,7 +44,7 @@ final class SmartWakeWindow {
         }
     }
 
-    /// The alarm time to arm: the early wake once one was chosen, else the plain alarm.
+    /// The alarm time to arm: the early wake once chosen, else the plain alarm.
     func effectiveAlarm(for planned: Date) -> Date {
         if let e = earlyWake, planned == alarm, e < planned, e.timeIntervalSinceNow > -60 { return e }
         return planned

@@ -1,13 +1,11 @@
 import Foundation
 import UserNotifications
 
-// MARK: - Good-morning notification (Zoop)
+// MARK: - Good-morning notification
 //
 // Once a day, the first time the morning's Recovery is scored after the night ended, post a short
-// "Good morning" with the night's Recovery and sleep time. It replaces the smart alarm's backup wake
-// notification as the morning message (that backup is now opt-in, see `AlarmBackupPrefs`). Default on,
-// switchable in Automations. Like the strain-target nudge it is driven by the days republish, so it posts
-// after the morning sync rather than at a fixed clock time.
+// "Good morning" with Recovery and sleep time. Default on (Automations). Driven by the days
+// republish, so it posts after the morning sync rather than at a fixed time.
 
 enum GoodMorningNotifier {
     /// On/off. Absent = on.
@@ -73,8 +71,7 @@ enum GoodMorningNotifier {
     }
 }
 
-/// The smart alarm's backup wake notification at the alarm time. Opt-in (default off): the strap buzz is
-/// the alarm, and a second phone notification every morning was noise for most people.
+/// The smart alarm's backup wake notification at the alarm time. Opt-in (default off).
 enum AlarmBackupPrefs {
     static let enabledKey = "zoop.notif.alarmBackup"
     static var isEnabled: Bool { UserDefaults.standard.bool(forKey: enabledKey) }

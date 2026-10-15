@@ -1,15 +1,9 @@
 import Foundation
 import UserNotifications
 
-/// Foreground presentation delegate for the app's local notifications (wind-down nudge, smart-alarm
-/// backup, battery/illness alerts).
-///
-/// Without a `UNUserNotificationCenterDelegate`, iOS/macOS suppress a notification's banner while the
-/// app is in the FOREGROUND (the default). A user testing a reminder with the app open would see
-/// nothing and conclude notifications are broken. Returning banner + sound + list here makes them
-/// visible whether the app is open or not — matching what the user expects from a reminder.
-///
-/// Cross-platform (iOS + macOS). Register once at launch:
+/// Foreground presentation delegate for local notifications (wind-down, smart-alarm backup,
+/// battery/illness alerts). Without it the OS suppresses banners while the app is in the foreground,
+/// so a reminder tested with the app open would look broken. Register once at launch:
 /// `UNUserNotificationCenter.current().delegate = NotificationPresenter.shared`.
 final class NotificationPresenter: NSObject, UNUserNotificationCenterDelegate {
 
@@ -17,19 +11,14 @@ final class NotificationPresenter: NSObject, UNUserNotificationCenterDelegate {
 
     private override init() { super.init() }
 
-    /// K5: wired by the app root (`StrandApp` on macOS, `StrandiOSApp` on iOS) at launch to route a
-    /// tapped scheduled morning-brief notification to the Coach screen via `NavRouter.openCoach()`. nil
-    /// is a safe no-op (the tap is simply not routed) rather than a crash if this ever fires before the
-    /// root has wired it.
+    /// Wired by the app root at launch to route a tapped morning-brief notification to Coach
+    /// (`NavRouter.openCoach()`); nil is a safe no-op.
     var onCoachBriefTapped: (() -> Void)?
 
-    /// Zoop: wired by the iOS root to open the screen a tapped notification is about. Before this every
-    /// notification except the morning brief only brought the app forward wherever it was, which read
-    /// as "nothing happens".
+    /// Wired by the iOS root to open the screen a tapped notification is about.
     var onTargetTapped: ((NotificationTarget) -> Void)?
 
-    /// Where a tapped notification leads, decided from its request identifier (each poster uses a fixed
-    /// identifier or prefix). nil leaves the app where it was.
+    /// Where a tapped notification leads, from its request identifier; nil leaves the app where it was.
     static func target(forIdentifier id: String) -> NotificationTarget? {
         switch true {
         case id.hasPrefix("smart-alarm-wake"): return .route(.alarms)
@@ -54,8 +43,7 @@ final class NotificationPresenter: NSObject, UNUserNotificationCenterDelegate {
         completionHandler([.banner, .sound, .list])
     }
 
-    /// Handle a tap on a delivered notification: the scheduled morning brief (K5) opens Coach, and every
-    /// other known notification opens its screen through `onTargetTapped`.
+    /// Handles a tap: the morning brief opens Coach, other known notifications open their screen.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
@@ -70,8 +58,7 @@ final class NotificationPresenter: NSObject, UNUserNotificationCenterDelegate {
     }
 }
 
-/// What a tapped notification opens: Home itself, the detected-workout sheet on Home, or a screen pushed
-/// on the Home stack.
+/// What a tapped notification opens: Home, the detected-workout sheet, or a screen on the Home stack.
 enum NotificationTarget: Equatable {
     case home
     case autoWorkout

@@ -8,45 +8,33 @@ import AppKit
 import CoreVideo
 #endif
 
-// DisplayPerformanceMonitor.swift - the app-layer frame-time / hitch / memory monitor for the Display &
-// Performance test mode (Test Centre).
+// Frame-time / hitch / memory monitor for the Display & Performance test mode (Test Centre).
 //
-// CRITICAL CONTRACT: this monitor is a PERFORMANCE tool that must not itself cost performance. It runs
-// ONLY while the Display mode is active. start() is called when the mode toggles on (and on appear if it
-// was already on); stop() is called when it toggles off. There is NO perpetual display link: when the
-// mode is off, no CADisplayLink / CVDisplayLink exists, no frame callback fires, and zero `.display`
-// lines are emitted. A test pins exactly that (DisplayPerformanceMonitorTests).
-//
-// The frame callback samples each frame's duration, counts hitches over a threshold, and emits a ROLLING
-// SUMMARY line once per window of frames (not per frame), so the trace is bounded. Every emitted line
-// rides LiveState.append(log:domain:.display), the single redacting sink. The screenshot + device-metrics
-// readers live here too so the whole Display capture surface is one file.
+// Contract: this is a performance tool that must not cost performance. It runs ONLY while the mode is
+// active (start() on toggle-on, stop() on toggle-off); with the mode off no display link exists, no
+// frame callback fires and no `.display` line is emitted (pinned by DisplayPerformanceMonitorTests).
+// Frames are summarised once per window, not per frame, through LiveState.append(log:domain:.display),
+// the single redacting sink.
 
-/// Owns the live frame monitor for the Display mode. A single shared instance is started / stopped from
-/// the Test Centre toggle. `@MainActor` because it touches the display link, the key window, and the
-/// LiveState sink, all of which are main-thread concerns.
+/// Owns the live frame monitor for the Display mode. `@MainActor`: it touches the display link, key
+/// window and LiveState sink.
 @MainActor
 final class DisplayPerformanceMonitor {
 
     static let shared = DisplayPerformanceMonitor()
     private init() {}
 
-    /// A frame is a "hitch" when its duration exceeds this (ms). 16.7 ms is a 60 Hz frame; 33 ms is a
-    /// dropped frame at 60 Hz / a slow frame at 120 Hz, a sensible "the user felt that" threshold.
+    /// A frame is a hitch when its duration exceeds this (ms); 33 ms is a dropped frame at 60 Hz.
     static let hitchThresholdMs: Double = 33
 
-    /// Emit one rolling summary per this many frames (~1 s at 60 Hz). Per-window, never per-frame, so the
-    /// emission is a natural throttle and the strap log never floods.
+    /// Frames per rolling summary (~1 s at 60 Hz); per-window emission keeps the log from flooding.
     static let windowFrames = 60
 
-    /// The sink that writes a tagged `.display` line. Set by the screen to LiveState.append(log:domain:);
-    /// nil leaves the monitor inert (e.g. before the screen wired it, or in a test with no LiveState).
+    /// Sink for tagged `.display` lines (LiveState.append(log:domain:)); nil leaves the monitor inert.
     var emit: ((String) -> Void)?
 
-    /// CAPTURE-D (#797): reads the on-device DATA VOLUME straight from the STORE (never via the Repository /
-    /// @Published view-models) so import-driven lag shows its READ-SET, not just frame stats. Wired by the
-    /// screen alongside `emit`; nil leaves the dataVolume line unemitted (e.g. a test with no store). Async
-    /// because the store is an actor; `start()` fires it on a detached task and emits the one line on return.
+    /// Reads the on-device data volume straight from the store (not the view-models) so import-driven lag
+    /// shows its read-set. nil leaves the dataVolume line unemitted. Async because the store is an actor.
     var dataVolumeProvider: (() async -> DataVolume?)?
 
     private var running = false
@@ -57,7 +45,7 @@ final class DisplayPerformanceMonitor {
     private var windowHitches = 0
     private var windowWorstMs: Double = 0
 
-    /// Peak resident footprint (MB) seen since start(), emitted on stop() and periodically.
+    /// Peak resident footprint (MB) since start().
     private var memoryPeakMB: Double = 0
 
     #if os(iOS)
@@ -67,14 +55,12 @@ final class DisplayPerformanceMonitor {
     private var cvLink: CVDisplayLink?
     #endif
 
-    /// True only while a display link is live. The test asserts this is false when the mode is off.
+    /// True only while a display link is live.
     var isRunning: Bool { running }
 
-    // MARK: - Lifecycle (the ONLY place a display link is created / destroyed)
+    // MARK: - Lifecycle (the only place a display link is created / destroyed)
 
-    /// Start the monitor: create the platform display link and begin sampling. Idempotent (a second
-    /// start is ignored). Emits one device-metrics line immediately so the report always has the layout
-    /// environment even if the user reports before a frame window completes.
+    /// Starts sampling (idempotent) and emits one device-metrics line immediately.
     func start() {
         guard !running else { return }
         running = true
@@ -94,8 +80,7 @@ final class DisplayPerformanceMonitor {
         var link: CVDisplayLink?
         CVDisplayLinkCreateWithActiveCGDisplays(&link)
         if let link {
-            // The CVDisplayLink callback fires on a private CV thread; hop to the main actor to fold the
-            // sample in, so all monitor state stays main-isolated like the iOS path.
+            // The CVDisplayLink callback fires on a private thread; hop to the main actor.
             CVDisplayLinkSetOutputHandler(link) { [weak self] _, inNow, _, _, _ in
                 let nowSeconds = Double(inNow.pointee.hostTime) / Double(machTimebaseHz())
                 Task { @MainActor in self?.foldFrame(timestamp: nowSeconds) }
@@ -107,9 +92,8 @@ final class DisplayPerformanceMonitor {
         #endif
     }
 
-    /// Stop the monitor: tear the display link DOWN (so nothing keeps firing), flush a final partial
-    /// window if it holds any samples, and emit the memory high-water. After this no callback fires and
-    /// no `.display` line is emitted until the next start(). Idempotent.
+    /// Tears the display link down, flushes a final partial window and emits the memory high-water.
+    /// Idempotent.
     func stop() {
         guard running else { return }
         running = false
@@ -125,7 +109,7 @@ final class DisplayPerformanceMonitor {
         cvLink = nil
         #endif
 
-        // Flush whatever the last partial window holds, then the high-water mark.
+        // Flush the last partial window, then the high-water mark.
         flushWindow()
         emit?(DisplayTrace.memoryHighWaterLine(peakMB: memoryPeakMB))
     }
@@ -138,9 +122,8 @@ final class DisplayPerformanceMonitor {
     }
     #endif
 
-    /// Fold one frame timestamp into the current window. The first frame seeds the previous-timestamp and
-    /// is not counted (no duration yet). Once a window fills (`windowFrames`), it flushes a summary and
-    /// resets. Pure arithmetic plus the periodic emit; no allocation per frame beyond the bounded buffer.
+    /// Folds one frame timestamp into the window; the first frame only seeds the previous timestamp.
+    /// A full window flushes a summary and resets.
     private func foldFrame(timestamp: CFTimeInterval) {
         guard running else { return }
         defer { lastFrameTimestamp = timestamp }
@@ -156,8 +139,7 @@ final class DisplayPerformanceMonitor {
         }
     }
 
-    /// Emit the rolling summary for the just-completed window and reset for the next one. No-op when the
-    /// window is empty (nothing to summarise), so a stop() with no frames does not emit a zero line.
+    /// Emits the rolling summary for the completed window and resets; no-op when empty.
     private func flushWindow() {
         guard !windowDurationsMs.isEmpty else { return }
         let stats = DisplayPerformanceMonitor.windowStats(durationsMs: windowDurationsMs)
@@ -175,17 +157,13 @@ final class DisplayPerformanceMonitor {
         windowWorstMs = 0
     }
 
-    /// Pure window stats: mean and p95 of the frame durations. Static and side-effect-free so a fixture
-    /// can pin the exact summary numbers without a live display link.
+    /// Mean and p95 of the frame durations; pure so fixtures can pin the numbers.
     static func windowStats(durationsMs: [Double]) -> (mean: Double, p95: Double) {
         guard !durationsMs.isEmpty else { return (0, 0) }
         let mean = durationsMs.reduce(0, +) / Double(durationsMs.count)
         let sorted = durationsMs.sorted()
-        // Nearest-rank p95 as a 0-based index: idx = ceil(0.95 * n), clamped to the last element. This
-        // counts the values that fall BELOW the percentile, so at least 95% of frames are at or below the
-        // returned value. For a hitch trace that matters: a window of 20 frames with one 5%-tail hitch
-        // lands p95 ON the hitch (idx = ceil(0.95 * 20) = 19 = the worst of 20), surfacing exactly the
-        // slow frame the user is reporting rather than hiding it under the 95% of healthy frames.
+        // Nearest-rank p95 (idx = ceil(0.95 * n), clamped): a window of 20 with one hitch lands p95 on the
+        // hitch rather than hiding it under the healthy frames.
         let idx = Int((0.95 * Double(sorted.count)).rounded(.up))
         let p95 = sorted[min(idx, sorted.count - 1)]
         return (mean, p95)
@@ -193,15 +171,12 @@ final class DisplayPerformanceMonitor {
 
     // MARK: - Memory high-water
 
-    /// Sample the current resident footprint and raise the high-water mark. Reads phys_footprint via
-    /// task_info (the same number Xcode's memory gauge shows); a read failure leaves the mark unchanged
-    /// rather than fabricating a value.
+    /// Samples the resident footprint and raises the high-water mark; a read failure leaves it unchanged.
     private func sampleMemory() {
         if let mb = Self.residentFootprintMB(), mb > memoryPeakMB { memoryPeakMB = mb }
     }
 
-    /// Current resident footprint in MB via `task_info(TASK_VM_INFO).phys_footprint`, or nil on a read
-    /// failure. The Apple-recommended "real memory" figure for a process.
+    /// Resident footprint in MB via `task_info(TASK_VM_INFO).phys_footprint`, or nil on failure.
     static func residentFootprintMB() -> Double? {
         var info = task_vm_info_data_t()
         var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
@@ -214,19 +189,15 @@ final class DisplayPerformanceMonitor {
         return Double(info.phys_footprint) / (1024.0 * 1024.0)
     }
 
-    // MARK: - Device metrics (read live, formatted by the pure DisplayTrace)
+    // MARK: - Device metrics
 
-    /// Read the live display metrics and emit the device-metrics line. Public so the screen can re-emit
-    /// on a trait / orientation change while the mode is on.
+    /// Reads the live display metrics and emits the device-metrics line (re-emit on trait/orientation change).
     func emitDeviceMetrics() {
         emit?(DisplayTrace.deviceMetricsLine(Self.readMetrics()))
     }
 
-    /// CAPTURE-D (#797): read the on-device DATA VOLUME from the store (via `dataVolumeProvider`) and emit
-    /// ONE `dataVolume` line, so an import-driven-lag report shows the read-set the screens render over, not
-    /// only frame stats. The provider is async (the store is an actor), so this fires a detached task and
-    /// emits the line on the main actor on return. No provider wired (e.g. a test without a store) → no
-    /// line, exactly as before. Side-effect-only; never touches the frame monitor.
+    /// Reads the on-device data volume via `dataVolumeProvider` and emits one `dataVolume` line on the
+    /// main actor; no provider means no line.
     private func emitDataVolume() {
         guard let dataVolumeProvider, emit != nil else { return }
         Task { [weak self] in
@@ -238,9 +209,7 @@ final class DisplayPerformanceMonitor {
         }
     }
 
-    /// Read the current display environment into the pure DisplayMetrics carrier. iOS reads the key
-    /// window's trait collection + safe-area insets + UIScreen; macOS reads the key NSWindow / NSScreen
-    /// and degrades the iOS-only metrics (size class, Dynamic Type) to nil.
+    /// Reads the current display environment into `DisplayMetrics`; macOS degrades iOS-only metrics to nil.
     static func readMetrics() -> DisplayMetrics {
         #if os(iOS)
         let scene = UIApplication.shared.connectedScenes
@@ -293,8 +262,7 @@ final class DisplayPerformanceMonitor {
         }
     }
 
-    /// Short Dynamic Type label from the content-size category ("L" / "XXL" / "AX3"). The accessibility
-    /// sizes map to "AX1"..."AX5", the standard sizes to their short forms, so the line is compact.
+    /// Short Dynamic Type label ("L" / "XXL" / "AX3").
     private static func contentSizeName(_ c: UIContentSizeCategory) -> String {
         switch c {
         case .extraSmall: return "XS"
@@ -316,12 +284,11 @@ final class DisplayPerformanceMonitor {
 }
 
 #if os(macOS)
-/// The mach timebase, cached, so the CVDisplayLink host-time (mach ticks) converts to seconds. Pure read
-/// of the timebase info; the ratio is constant for the process lifetime.
+/// Mach timebase ticks-per-second, so CVDisplayLink host time converts to seconds.
 private func machTimebaseHz() -> UInt64 {
     var info = mach_timebase_info_data_t()
     mach_timebase_info(&info)
-    // hostTime is in mach ticks; ticks * (numer/denom) = nanoseconds. ticks-per-second = 1e9 * denom/numer.
+    // ticks * (numer/denom) = ns, so ticks-per-second = 1e9 * denom/numer.
     guard info.numer != 0 else { return 1_000_000_000 }
     return UInt64(1_000_000_000) * UInt64(info.denom) / UInt64(info.numer)
 }

@@ -1,15 +1,12 @@
 import Foundation
 import StrandAnalytics
 
-/// The Test Centre orchestration surface: per-domain activation, a SINGLE consolidated prefs namespace,
-/// and a one-time read-through migration that gathers the scattered legacy keys behind one accessor
-/// WITHOUT renaming them (spec section 10). `active(_:)` is the zero-cost gate engines check before
-/// emitting a tagged line, so an emitter on the GATT/analytics queue pays one Bool read when a mode is
-/// off. The Kotlin twin is TestCentre.kt, backed by a single "noop_testcentre" SharedPreferences file.
+/// Test Centre orchestration: per-domain activation, a single consolidated prefs namespace, and a
+/// one-time read-through migration over the scattered legacy keys (not renamed). `active(_:)` is the
+/// zero-cost gate engines check before emitting a tagged line.
 public enum TestCentre {
 
-    // SINGLE namespace for all NEW Test Centre flags. The migrated LEGACY keys keep their original
-    // names (see migrate()), so no user loses a setting.
+    // Single namespace for all new Test Centre flags; migrated legacy keys keep their original names.
     private static let activePrefix = "testcentre.active."          // + domain.id  -> Bool
     private static let startedPrefix = "testcentre.startedAt."      // + domain.id  -> Double (unix)
     private static let guidedTargetPrefix = "testcentre.target."    // + domain.id  -> Int (nights/days)
@@ -18,15 +15,15 @@ public enum TestCentre {
 
     private static let master = TestDomain.master
 
-    /// The zero-cost gate. `if TestCentre.active(.sleep) { live.append(log:domain:) }`. `nonisolated`
-    /// plus a single Bool read so an emitter on any actor pays almost nothing when the mode is off.
+    /// The zero-cost gate: `if TestCentre.active(.sleep) { live.append(log:domain:) }`. `nonisolated`
+    /// plus one Bool read so any actor pays almost nothing when the mode is off.
     public nonisolated static func active(_ d: TestDomain) -> Bool {
         if d == .universal { return anyActive }      // universal rides whatever mode is on
         if UserDefaults.standard.bool(forKey: activePrefix + master.id) { return true }  // master = all on
         return UserDefaults.standard.bool(forKey: activePrefix + d.id)
     }
 
-    /// True when ANY non-universal mode is on (drives the "testing on" banner plus the universal traces).
+    /// True when any non-universal mode is on (drives the "testing on" banner and universal traces).
     public nonisolated static var anyActive: Bool {
         TestDomain.allCases.contains {
             $0 != .universal && UserDefaults.standard.bool(forKey: activePrefix + $0.id)
@@ -47,8 +44,7 @@ public enum TestCentre {
         return t > 0 ? Date(timeIntervalSince1970: t) : nil
     }
 
-    /// The guided capture target (nights for Sleep, days for Battery), 0 when unset. Read-through of
-    /// the single namespace; the guided flow (Group E/F) writes it via `setGuidedTarget`.
+    /// The guided capture target (nights for Sleep, days for Battery), 0 when unset.
     public static func guidedTarget(_ d: TestDomain) -> Int {
         UserDefaults.standard.integer(forKey: guidedTargetPrefix + d.id)
     }
@@ -69,43 +65,32 @@ public enum TestCentre {
         }
     }
 
-    // MARK: - All-time drained-rows tally (#990)
+    // MARK: - All-time drained-rows tally
 
-    /// Key for the ALL-TIME drained (persisted) row counter. Sits in the testcentre.* namespace because
-    /// the Connection readout is its consumer, but it accrues UNCONDITIONALLY (the Backfiller's session
-    /// summary is not test-mode gated), so it answers "has this install ever drained anything" across
-    /// sessions - the #990 ask: the per-session counter resets on every reconnect, so a strap stuck in a
-    /// pull-restart loop looked like it never progressed even when rows were landing.
+    /// Key for the all-time drained (persisted) row counter. It accrues unconditionally (not test-mode
+    /// gated), so it answers "has this install ever drained anything" even though the per-session
+    /// counter resets on every reconnect.
     private static let cumulativeDrainedKey = "testcentre.cumulativeDrainedRows"
 
-    /// Fold one session's drained rows into the persisted all-time tally. Called from the LiveState log
-    /// sink when the Backfiller's "session persisted N rows" summary lands (the single emit point), so
-    /// no BLE-path code needs a new seam. `nonisolated` - a UserDefaults read-modify-write only.
+    /// Folds one session's drained rows into the all-time tally; called from the LiveState log sink when
+    /// the Backfiller's "session persisted N rows" summary lands. `nonisolated`.
     public nonisolated static func noteDrainedRows(_ rows: Int) {
         guard rows > 0 else { return }
         let d = UserDefaults.standard
         d.set(d.integer(forKey: cumulativeDrainedKey) + rows, forKey: cumulativeDrainedKey)
     }
 
-    /// The all-time drained-rows tally (0 before anything ever drained). The Connection readout shows it
-    /// beside the per-session count (#990).
+    /// The all-time drained-rows tally (0 before anything drained); shown beside the per-session count.
     public nonisolated static func cumulativeDrainedRows() -> Int {
         UserDefaults.standard.integer(forKey: cumulativeDrainedKey)
     }
 
-    /// One-time migration: fold the scattered @AppStorage / PuffinExperiment / ScheduledDebugExport keys
-    /// behind this surface WITHOUT renaming them (read-through). Existing keys are PRESERVED (spec section
-    /// 10): the experimental toggles keep their PuffinExperiment.*Key names, the scheduled export keeps its
-    /// debugExport.* names. This only seeds the NEW testcentre.* surface and never deletes a legacy key.
-    /// Idempotent, guarded by the migratedKey bool.
+    /// One-time migration: gathers the scattered @AppStorage / PuffinExperiment / ScheduledDebugExport
+    /// keys behind this surface without renaming or deleting them. Idempotent via `migratedKey`.
     @MainActor public static func migrate() {
         guard !UserDefaults.standard.bool(forKey: migratedKey) else { return }
-        // Phase 1 has no testcentre.active.* state to seed from the legacy toggles (those are advanced
-        // experimental flags, gathered by the IA but not domain activations), so the migration only
-        // stamps the guard. The legacy keys are read in place through their existing accessors:
-        //   PuffinExperiment.defaultsKey / .deepDataKey / .broadcastHrKey / .keepRealtimeForDataKey /
-        //   .experimentalSleepV2Key / .autoDetectWorkoutsKey, and the ScheduledDebugExport "debugExport.*"
-        //   keys. Nothing is moved; the Test Centre screen reads them where they already live.
+        // Nothing to seed from the legacy toggles (they aren't domain activations), so this only stamps the
+        // guard. Legacy keys are read in place (PuffinExperiment.*Key, ScheduledDebugExport "debugExport.*").
         UserDefaults.standard.set(true, forKey: migratedKey)
     }
 }
