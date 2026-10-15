@@ -66,7 +66,7 @@ enum RecoveryContentBuilder {
             let nightsLeft = max(Baselines.minNightsSeed - nightsKnown, 1)
             let missing = assessment.reason == .missingInputs
             return MetricReadout(
-                id: .recovery, label: RecoveryStrings.heroLabelLastNight, value: nil, unit: .percent,
+                id: .recovery, label: RecoveryStrings.heroLabelLastNight, value: nil, unit: .score,
                 verdict: .unavailable(missing ? .noData(since: staleSince) : .calibrating(nightsLeft: nightsLeft)),
                 meaning: missing ? RecoveryStrings.heroMeaningMissing : RecoveryStrings.heroMeaningCalibrating,
                 confidence: .calibrating(nightsLeft: nightsLeft), tint: .recovery)
@@ -82,7 +82,7 @@ enum RecoveryContentBuilder {
         return MetricReadout(
             // The nav title already says "Recovery"; the hero names which night the number is from.
             id: .recovery, label: isStale ? RecoveryStrings.heroLabelLastReading : RecoveryStrings.heroLabelLastNight,
-            value: score, unit: .percent, typicalRange: range, delta: mid.map { score - $0 },
+            value: score, unit: .score, typicalRange: range, delta: mid.map { score - $0 },
             verdict: .score(band), meaning: RecoveryStrings.heroMeaning(band),
             confidence: isStale ? .stale(since: staleSince ?? input.now) : confidence, tint: .recovery)
     }

@@ -113,7 +113,7 @@ enum RecoveryContributors {
             return scoring.sleepTerm(row).map { sufficiency in
                 let percent = sufficiency * 100
                 let range = (RecoveryScorer.sleepPerfCenter * 100)...100
-                return Reading(value: percent, unit: .percent, range: range, delta: nil,
+                return Reading(value: percent, unit: .score, range: range, delta: nil,
                                verdict: .vital(percent, typicalRange: range), confidence: .solid,
                                nights: baselines.hrv.nValid)
             }

@@ -50,12 +50,12 @@ enum TodayRings {
             return recoveryReadout(pct, confidence: .stale(since: since))
         case .calibrating(let nights):
             let left = max(1, Baselines.minNightsSeed - nights)
-            return MetricReadout(id: .recovery, label: TodayCopy.recovery, value: nil, unit: .percent,
+            return MetricReadout(id: .recovery, label: TodayCopy.recovery, value: nil, unit: .score,
                                  verdict: .unavailable(.calibrating(nightsLeft: left)),
                                  meaning: TodayCopy.recoveryCalibrating,
                                  confidence: .calibrating(nightsLeft: left), tint: .recovery)
         case .noData:
-            return MetricReadout(id: .recovery, label: TodayCopy.recovery, value: nil, unit: .percent,
+            return MetricReadout(id: .recovery, label: TodayCopy.recovery, value: nil, unit: .score,
                                  verdict: .unavailable(.noData(since: nil)), meaning: TodayCopy.recoveryNoData,
                                  tint: .recovery)
         }
@@ -63,7 +63,7 @@ enum TodayRings {
 
     private static func recoveryReadout(_ pct: Double, confidence: MetricReadout.Confidence) -> MetricReadout {
         let band = ScoreBand(score: pct)
-        return MetricReadout(id: .recovery, label: TodayCopy.recovery, value: pct, unit: .percent,
+        return MetricReadout(id: .recovery, label: TodayCopy.recovery, value: pct, unit: .score,
                              verdict: .score(band), meaning: TodayCopy.recoveryMeaning(band),
                              confidence: confidence, tint: .recovery)
     }
