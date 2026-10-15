@@ -4,9 +4,9 @@ import WhoopStore
 
 // MARK: - Strength
 //
-// This week's working sets and lifted volume, shown only when the Lift Log has a recent session, then
-// the muscle recovery card for any training that loaded a muscle this week. Nothing here is drawn for
-// a user who does not lift, so the page never shows an empty strength card.
+// This week's working sets and lifted volume, shown only when the Lift Log has a recent session. Nothing
+// here is drawn for a user who does not lift, so the page never shows an empty strength card. The muscle
+// recovery card is placed by `TrainingScreen` on its own, since it covers every sport.
 
 struct TrainingStrengthSection: View {
     let snapshot: LiftFitnessSnapshot
@@ -31,9 +31,6 @@ struct TrainingStrengthSection: View {
                     stat("Volume", volume)
                 }
             }
-        }
-        if let load = snapshot.muscleLoad, !MuscleLoadCard.isQuiet(load) {
-            MuscleLoadCard(result: load, computedAt: snapshot.computedAt)
         }
     }
 

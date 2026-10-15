@@ -371,6 +371,10 @@ struct RootTabView: View {
                     // session bar sits on top of the tab labels.
                     .padding(.bottom, ZoopMetrics.tabBarClearance)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+            } else {
+                // The minimized live workout. Its own leaf observes AppModel's 1 Hz heart rate, so the
+                // shell does not re-render every second; it draws nothing without a running workout.
+                ActiveWorkoutBarInset()
             }
         }
         .animation(.easeInOut(duration: 0.25), value: liftSession.isActive)

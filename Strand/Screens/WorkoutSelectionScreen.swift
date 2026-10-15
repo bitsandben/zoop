@@ -43,7 +43,15 @@ struct WorkoutSelectionScreen: View {
     @FocusState private var searchFocused: Bool
 
     private var trimmedQuery: String { query.trimmingCharacters(in: .whitespaces) }
-    private var filtered: [WorkoutCatalog.Sport] { WorkoutCatalog.matching(query) }
+    /// Matches the stored and the translated name, so "Laufen" finds Running in German.
+    private var filtered: [WorkoutCatalog.Sport] {
+        guard !trimmedQuery.isEmpty else { return WorkoutCatalog.all }
+        return WorkoutCatalog.all.filter {
+            $0.name.range(of: trimmedQuery, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+                || WorkoutSource.displaySport($0.name)
+                    .range(of: trimmedQuery, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+        }
+    }
     private var recentSports: [WorkoutCatalog.Sport] {
         RecentSportsPrefs.recent().compactMap { WorkoutCatalog.sport(named: $0) }
     }
@@ -186,7 +194,7 @@ struct RecentWorkoutChip: View {
         Button(action: onTap) {
             HStack(spacing: ZoopMetrics.space2) {
                 WorkoutTypeIcon(workoutType: sport.name, size: 18, weight: .semibold, color: accent)
-                Text(sport.name)
+                Text(WorkoutSource.displaySport(sport.name))
                     .font(StrandFont.subhead)
                     .foregroundStyle(StrandPalette.textPrimary)
                     .lineLimit(1)
@@ -197,7 +205,7 @@ struct RecentWorkoutChip: View {
             .contentShape(Capsule())
         }
         .nativeLiquidGlassWorkoutSelectionControl(capsule: true)
-        .accessibilityLabel(Text("\(sport.name) workout"))
+        .accessibilityLabel(Text("\(WorkoutSource.displaySport(sport.name)) workout"))
         .accessibilityHint(Text("Double tap to start"))
     }
 }
@@ -222,7 +230,7 @@ struct WorkoutSelectionCard: View {
                     .background(accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
                 VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
-                    Text(sport.name)
+                    Text(WorkoutSource.displaySport(sport.name))
                         .font(StrandFont.title2)
                         .foregroundStyle(StrandPalette.textPrimary)
                         .multilineTextAlignment(.leading)
@@ -254,9 +262,10 @@ struct WorkoutSelectionCard: View {
     }
 
     private var accessibilityLabelText: String {
+        let name = WorkoutSource.displaySport(sport.name)
         let labels = meta.map(\.text)
-        if labels.isEmpty { return "\(sport.name) workout" }
-        return "\(sport.name) workout, \(labels.joined(separator: ", "))"
+        if labels.isEmpty { return String(localized: "\(name) workout") }
+        return String(localized: "\(name) workout") + ", " + labels.joined(separator: ", ")
     }
 }
 
@@ -277,15 +286,15 @@ enum WorkoutActivityMeta {
         if let type = KnownWorkoutType.exact(matching: sport.name) {
             switch type {
             case .treadmillRun, .treadmillWalk, .indoorCycle, .poolSwim, .rowMachine, .elliptical:
-                items.append(Item(symbol: nil, text: "Indoor"))
+                items.append(Item(symbol: nil, text: String(localized: "zoop.workout.meta.indoor", defaultValue: "Indoor", bundle: .main)))
             case .running, .walking, .hiking, .cycling, .openWaterSwim, .rowing, .skiing, .snowboarding:
-                items.append(Item(symbol: nil, text: "Outdoor"))
+                items.append(Item(symbol: nil, text: String(localized: "zoop.workout.meta.outdoor", defaultValue: "Outdoor", bundle: .main)))
             case .strength, .bodybuilding, .weightlifting:
-                items.append(Item(symbol: nil, text: "Strength"))
+                items.append(Item(symbol: nil, text: String(localized: "zoop.workout.meta.strength", defaultValue: "Strength", bundle: .main)))
             case .yoga, .pilates, .stretching:
-                items.append(Item(symbol: nil, text: "Mindfulness"))
+                items.append(Item(symbol: nil, text: String(localized: "zoop.workout.meta.mindfulness", defaultValue: "Mindfulness", bundle: .main)))
             case .hiit:
-                items.append(Item(symbol: nil, text: "Cardio"))
+                items.append(Item(symbol: nil, text: String(localized: "zoop.workout.meta.cardio", defaultValue: "Cardio", bundle: .main)))
             default:
                 break
             }

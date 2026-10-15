@@ -106,7 +106,7 @@ struct ActiveWorkoutIndicatorCard: View {
     }
 
     private var sportLabel: some View {
-        Text(model.sport)
+        Text(WorkoutSource.displaySport(model.sport))
             .font(StrandFont.headline)
             .foregroundStyle(StrandPalette.textPrimary)
             .lineLimit(1)
@@ -122,6 +122,14 @@ struct ActiveWorkoutIndicatorCard: View {
 /// Shared by the iOS Today screen and the macOS classic Today, so both draw one leaf. It carries its own
 /// `app`/`router` environment objects, so a caller only needs to place `ActiveWorkoutIndicatorSection()`.
 struct ActiveWorkoutIndicatorSection: View {
+    /// On iOS the running workout already sits in `ActiveWorkoutBar` above the tab bar on every tab; a
+    /// second card with the same sport and clock on Today would show the time twice.
+    #if os(iOS)
+    static let barShowsWorkout = true
+    #else
+    static let barShowsWorkout = false
+    #endif
+
     var showStart = false
     @EnvironmentObject var app: AppModel
     @EnvironmentObject var router: NavRouter
@@ -130,7 +138,7 @@ struct ActiveWorkoutIndicatorSection: View {
         if showStart {
             // Keep this host mounted when a workout starts so its picker and live view survive the update.
             WorkoutStartControl(showsActiveIndicator: true)
-        } else if let model = ActiveWorkoutIndicatorModel.make(from: app.activeWorkout) {
+        } else if !Self.barShowsWorkout, let model = ActiveWorkoutIndicatorModel.make(from: app.activeWorkout) {
             ActiveWorkoutIndicatorCard(model: model) {
                 StrandHaptic.selection.play()
                 router.openActiveWorkout()

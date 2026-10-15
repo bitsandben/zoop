@@ -167,7 +167,7 @@ struct LiveView: View {
         .onChangeCompat(of: live.connected) { _ in reconnectLiveSession() }
         // Live workout mode (#238): open the in-exercise screen the moment a workout starts.
         .onChangeCompat(of: model.activeWorkout != nil) { active in if active { showLiveWorkout = true } }
-        .sheet(isPresented: $showLiveWorkout) {
+        .liveWorkoutCover(isPresented: $showLiveWorkout) {
             LiveWorkoutView(onClose: { showLiveWorkout = false })
                 .environmentObject(model)
                 .environmentObject(live)

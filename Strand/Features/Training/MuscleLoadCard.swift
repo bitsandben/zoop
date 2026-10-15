@@ -100,7 +100,8 @@ extension MuscleLoad.Entry {
 }
 
 struct MuscleLoadCard: View {
-    let result: MuscleLoad.Result
+    /// Nil when no workout ended in the last 14 days: every group is back to full, and the card says so.
+    let result: MuscleLoad.Result?
     let computedAt: Int
 
     @State private var showDetail = false
@@ -108,7 +109,8 @@ struct MuscleLoadCard: View {
     /// Muscles that took load in the last seven days and are not back to full, least recovered first.
     /// Muscles at 100 % say nothing the sentence above does not, so they stay out of the grid.
     private var cells: [MuscleLoad.Entry] {
-        Array(result.entries
+        guard let result else { return [] }
+        return Array(result.entries
             .filter { $0.weekLoad > 0 && $0.percentRecovered < 100 }
             .sorted { ($0.percentRecovered, -$0.weekLoad) < ($1.percentRecovered, -$1.weekLoad) }
             .prefix(8))
@@ -121,17 +123,25 @@ struct MuscleLoadCard: View {
         return false
     }
 
+    /// The headline sentence: what the week loaded, or that everything is recovered after a quiet week.
+    private var sentence: String {
+        guard let result, !Self.isQuiet(result) else { return TrainingStrings.allMusclesRecovered }
+        return MuscleLoadText.verdict(result.verdict)
+    }
+
     var body: some View {
         Button { showDetail = true } label: {
-            ContentCard("muscle.recovery.title", showsChevron: true) {
-                Text(MuscleLoadText.verdict(result.verdict))
+            ContentCard("muscle.recovery.title", showsChevron: result != nil) {
+                Text(sentence)
                     .font(ZoopType.body)
                     .foregroundStyle(StrandPalette.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                 if cells.isEmpty {
-                    Text(TrainingStrings.allMusclesRecovered)
-                        .font(ZoopType.caption)
-                        .foregroundStyle(StrandPalette.textSecondary)
+                    if let result, !Self.isQuiet(result) {
+                        Text(TrainingStrings.allMusclesRecovered)
+                            .font(ZoopType.caption)
+                            .foregroundStyle(StrandPalette.textSecondary)
+                    }
                 } else {
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: ZoopSpacing.l, alignment: .leading),
                                         GridItem(.flexible(), alignment: .leading)],
@@ -139,11 +149,16 @@ struct MuscleLoadCard: View {
                         ForEach(cells, id: \.group) { MuscleRecoveryCell(entry: $0) }
                     }
                 }
+                Text(TrainingStrings.muscleEstimateNote)
+                    .font(ZoopType.caption)
+                    .foregroundStyle(StrandPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .buttonStyle(.plain)
+        .disabled(result == nil)
         .sheet(isPresented: $showDetail) {
-            MuscleLoadSheet(result: result, computedAt: computedAt)
+            if let result { MuscleLoadSheet(result: result, computedAt: computedAt) }
         }
     }
 }

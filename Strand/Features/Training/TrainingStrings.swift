@@ -86,6 +86,11 @@ enum TrainingStrings {
     static var allMusclesRecovered: String {
         String(localized: "zoop.training.muscle.allRecovered", defaultValue: "All muscle groups are recovered.", bundle: .main)
     }
+    static var muscleEstimateNote: String {
+        String(localized: "zoop.training.muscle.estimateNote",
+               defaultValue: "Estimated from each workout's sport, duration and intensity; the strap cannot see muscles.",
+               bundle: .main)
+    }
     static var sessionsTitle: String { String(localized: "zoop.training.sessions.title", defaultValue: "Sessions", bundle: .main) }
     static var nothingArchived: String {
         String(localized: "zoop.training.sessions.nothingArchived", defaultValue: "Nothing archived yet.", bundle: .main)
