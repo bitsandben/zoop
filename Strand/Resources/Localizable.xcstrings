@@ -287829,6 +287829,636 @@
           }
         }
       }
+    },
+    "Sleep need reached" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafbedarf erreicht"
+          }
+        }
+      }
+    },
+    "Recovery reached" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholung erreicht"
+          }
+        }
+      }
+    },
+    "sleep need reached" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlafbedarf erreicht"
+          }
+        }
+      }
+    },
+    "recovery reached" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholung erreicht"
+          }
+        }
+      }
+    },
+    "light sleep" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leichtschlaf"
+          }
+        }
+      }
+    },
+    "Woken at %@ – %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geweckt um %@ – %@"
+          }
+        }
+      }
+    },
+    "Alarm moved to %@ – %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wecker auf %@ vorgezogen – %@"
+          }
+        }
+      }
+    },
+    "Window end %@ – goal not reached" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fensterende %@ – Ziel nicht erreicht"
+          }
+        }
+      }
+    },
+    "Window end %@ – the app wasn't running at night" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fensterende %@ – App lief nachts nicht"
+          }
+        }
+      }
+    },
+    "Fixed time %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feste Zeit %@"
+          }
+        }
+      }
+    },
+    "Today: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute: %@"
+          }
+        }
+      }
+    },
+    "App was active and could decide" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App war aktiv und konnte entscheiden"
+          }
+        }
+      }
+    },
+    "App ran for part of the window" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App lief nur teilweise im Fenster"
+          }
+        }
+      }
+    },
+    "App didn't run in the window" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App lief im Fenster nicht"
+          }
+        }
+      }
+    },
+    "Window not over yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenster läuft noch"
+          }
+        }
+      }
+    },
+    "Plain alarm, nothing to check" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normaler Wecker, nichts zu prüfen"
+          }
+        }
+      }
+    },
+    "In %lld of %lld nights the app could act." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In %lld von %lld Nächten konnte die App eingreifen."
+          }
+        }
+      }
+    },
+    "Strap alarm armed for %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band-Wecker gestellt auf %@"
+          }
+        }
+      }
+    },
+    "Not sent yet: no strap connection" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nicht gesendet: keine Verbindung zum Band"
+          }
+        }
+      }
+    },
+    "newest heart rate %@ old" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "neueste Herzfrequenz %@ alt"
+          }
+        }
+      }
+    },
+    "no heart rate tonight" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keine Herzfrequenz heute Nacht"
+          }
+        }
+      }
+    },
+    "asleep %@ of %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "geschlafen %@ von %@"
+          }
+        }
+      }
+    },
+    "asleep %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "geschlafen %@"
+          }
+        }
+      }
+    },
+    "recovery estimate %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholung geschätzt %@"
+          }
+        }
+      }
+    },
+    "light sleep signal" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leichtschlaf-Signal"
+          }
+        }
+      }
+    },
+    "no light sleep signal" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kein Leichtschlaf-Signal"
+          }
+        }
+      }
+    },
+    "strap connected" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band verbunden"
+          }
+        }
+      }
+    },
+    "strap not connected" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band nicht verbunden"
+          }
+        }
+      }
+    },
+    "wake now" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jetzt wecken"
+          }
+        }
+      }
+    },
+    "window not open" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenster noch nicht offen"
+          }
+        }
+      }
+    },
+    "deadline too close" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fensterende zu nah"
+          }
+        }
+      }
+    },
+    "goal not reached" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ziel nicht erreicht"
+          }
+        }
+      }
+    },
+    "not enough data" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "zu wenig Daten"
+          }
+        }
+      }
+    },
+    "waiting for light sleep" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "wartet auf Leichtschlaf"
+          }
+        }
+      }
+    },
+    "sync finished" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync abgeschlossen"
+          }
+        }
+      }
+    },
+    "sync still running" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync läuft noch"
+          }
+        }
+      }
+    },
+    "sync ended without finishing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync ohne Abschluss beendet"
+          }
+        }
+      }
+    },
+    "no sync started" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kein Sync gestartet"
+          }
+        }
+      }
+    },
+    "no sync: strap not connected" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kein Sync: Band nicht verbunden"
+          }
+        }
+      }
+    },
+    "App opened" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App geöffnet"
+          }
+        }
+      }
+    },
+    "App went to the background" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App in den Hintergrund"
+          }
+        }
+      }
+    },
+    "iOS started the app in the background" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS hat die App im Hintergrund gestartet"
+          }
+        }
+      }
+    },
+    "iOS woke the app for Bluetooth" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS hat die App für Bluetooth geweckt"
+          }
+        }
+      }
+    },
+    "Sync finished" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync abgeschlossen"
+          }
+        }
+      }
+    },
+    "Strap reported its alarm went off" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band meldet: Wecker hat ausgelöst"
+          }
+        }
+      }
+    },
+    "No report from the strap: window end armed again" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Meldung vom Band: Fensterende wieder gestellt"
+          }
+        }
+      }
+    },
+    "Strap reports the same alarm time" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band meldet dieselbe Weckzeit"
+          }
+        }
+      }
+    },
+    "Strap reports a different alarm time" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band meldet eine andere Weckzeit"
+          }
+        }
+      }
+    },
+    "Strap's alarm time can't be compared" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weckzeit des Bands nicht vergleichbar"
+          }
+        }
+      }
+    },
+    "Prefer light sleep" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leichtschlaf bevorzugen"
+          }
+        }
+      }
+    },
+    "The strap always wakes you by the window end; earlier needs Zoop running in the background with the strap in range." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Band weckt dich immer spätestens am Fensterende; früher nur, wenn Zoop im Hintergrund läuft und das Band in Reichweite ist."
+          }
+        }
+      }
+    },
+    "Wake me" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wecken bei"
+          }
+        }
+      }
+    },
+    "Recovery at least" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholung mindestens"
+          }
+        }
+      }
+    },
+    "%lld %% (green)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %% (grün)"
+          }
+        }
+      }
+    },
+    "No smart alarm nights yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Smart-Wecker-Nächte"
+          }
+        }
+      }
+    },
+    "Turn on the alarm with a wake window; each night is listed here the morning after." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stell den Wecker mit Weckfenster; jede Nacht erscheint hier am Morgen danach."
+          }
+        }
+      }
+    },
+    "Newest first, the last 30 nights." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neueste zuerst, die letzten 30 Nächte."
+          }
+        }
+      }
+    },
+    "Smart alarm nights" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart-Wecker Nächte"
+          }
+        }
+      }
+    },
+    "Timeline" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeitverlauf"
+          }
+        }
+      }
+    },
+    "%@ · %@–%@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · %@–%@"
+          }
+        }
+      }
+    },
+    "At a fixed time" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feste Zeit"
+          }
+        }
+      }
+    },
+    "Check missed – app not running" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfung verpasst – App lief nicht"
+          }
+        }
+      }
+    },
+    "Check: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfung: %@"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

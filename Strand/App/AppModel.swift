@@ -235,6 +235,8 @@ final class AppModel: ObservableObject {
         // Re-arm the next day's firmware alarm when the strap reports it fired (STRAP_DRIVEN_ALARM_EXECUTED,
         // if the firmware pushes it). Gated on enabled inside applySmartAlarm.
         live.onSmartAlarmFired = { [weak self] in
+            // Filed under tonight's smart-alarm night before the re-arm, which reads it to skip this morning.
+            SmartAlarmNightLog.shared.recordEvent(.strapAlarmFired)
             guard let self, self.behavior.smartAlarmEnabled else { return }
             // iOS: mirror the strap's wake buzz to a local notification for a phone-in-pocket user (#577). No-op on
             // macOS or when wrist alerts are off.
@@ -1361,10 +1363,24 @@ final class AppModel: ObservableObject {
     /// `nextSmartAlarmDate` the strap is armed from. A WHOOP 5/MG arms only with Experimental on (#864).
     func nextArmedStrapAlarm(from now: Date = Date()) -> Date? {
         guard behavior.smartAlarmEnabled, !(whoop5Detected && !PuffinExperiment.isEnabled) else { return nil }
-        return Self.nextSmartAlarmDate(minutes: behavior.smartAlarmMinutes,
-                                       weekdays: behavior.smartAlarmWeekdays,
-                                       overrides: WindDownNudge.perDayWakeOverrides,
-                                       from: now)
+        return resolvedSmartAlarm(overrides: WindDownNudge.perDayWakeOverrides, from: now)?.arm
+    }
+
+    /// The window end the next alarm is armed against (the plain alarm, before any early wake).
+    func nextSmartAlarmDeadline(from now: Date = Date()) -> Date? {
+        guard behavior.smartAlarmEnabled, !(whoop5Detected && !PuffinExperiment.isEnabled) else { return nil }
+        return resolvedSmartAlarm(overrides: WindDownNudge.perDayWakeOverrides, from: now)?.deadline
+    }
+
+    /// The instant to arm and the night's deadline: the plain next alarm, moved earlier by a smart-alarm early
+    /// wake, or past this morning once the strap reported it fired. One resolver for arming and every readout.
+    private func resolvedSmartAlarm(overrides: [Int: Int], from now: Date) -> (arm: Date, deadline: Date)? {
+        let minutes = behavior.smartAlarmMinutes, weekdays = behavior.smartAlarmWeekdays
+        guard let planned = Self.nextSmartAlarmDate(minutes: minutes, weekdays: weekdays, overrides: overrides,
+                                                    from: now) else { return nil }
+        return smartWake.resolve(planned: planned, now: now) {
+            Self.nextSmartAlarmDate(minutes: minutes, weekdays: weekdays, overrides: overrides, from: $0)
+        }
     }
 
     /// Arm (or clear) the strap's firmware alarm from the smart-alarm settings; it fires even with the app
@@ -1377,19 +1393,18 @@ final class AppModel: ObservableObject {
         guard behavior.smartAlarmEnabled else {
             ble.disableStrapAlarm()
             Self.cancelSmartAlarmBackupNotification()
-            smartWake.plan(nextAlarm: nil)
+            smartWake.didArm(nil, deadline: nil)
             return
         }
-        guard let next = Self.nextSmartAlarmDate(minutes: behavior.smartAlarmMinutes,
-                                                 weekdays: behavior.smartAlarmWeekdays,
-                                                 overrides: overrides) else {
+        guard let next = resolvedSmartAlarm(overrides: overrides, from: Date()) else {
             // No enabled weekday in the next week (only from a corrupted set): disarm rather than arm a time nobody asked for.
             ble.disableStrapAlarm()
             Self.cancelSmartAlarmBackupNotification()
+            smartWake.didArm(nil, deadline: nil)
             return
         }
-        ble.armStrapAlarm(at: smartWake.effectiveAlarm(for: next))
-        smartWake.plan(nextAlarm: next)
+        ble.armStrapAlarm(at: next.arm)
+        smartWake.didArm(next.arm, deadline: next.deadline)
         // Replace (remove and re-add by stable id) on every re-arm so the backup never stacks. The log sink hops
         // to the main actor because the auth check completes off-main (as `importTraceSink` does).
         Self.scheduleSmartAlarmBackupNotification(minutes: behavior.smartAlarmMinutes,

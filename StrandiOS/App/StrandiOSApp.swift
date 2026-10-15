@@ -168,6 +168,11 @@ struct StrandiOSApp: App {
             _ = await bridge?.writeBackAfterNewData()
         }
         LocalSettingsArchive.snapshot()
+        // A launch while the app is not in front is iOS starting it in the background (Bluetooth restore,
+        // a background task); filed under tonight's smart-alarm night when there is one.
+        if UIApplication.shared.applicationState == .background {
+            SmartAlarmNightLog.shared.recordEvent(.backgroundLaunch)
+        }
     }
 
     /// The Shortcut-import alert's presentation binding, hoisted OUT of the `.alert` chain.
@@ -345,6 +350,9 @@ struct StrandiOSApp: App {
         // HealthKitBridge.sync guards on `auth == .authorized`, so the scenePhase trigger stays a
         // safe no-op until the user opts in.
         .onChange(of: scenePhase, initial: true) { _, phase in
+            // Smart-alarm night diagnostics: when the app was in front or sent to the background.
+            if phase == .active { SmartAlarmNightLog.shared.recordEvent(.foreground) }
+            if phase == .background { SmartAlarmNightLog.shared.recordEvent(.background) }
             if phase == .active {
                 CoachBriefScheduler.activateIfEnabled { await model.coach.generateBrief() }
                 model.drainPendingIntents(router: router)
@@ -572,6 +580,9 @@ enum DemoScreens {
         // + self-service pairing guidance, screenshot-able WITHOUT reproducing the bond refusal on real
         // hardware.
         case "bondrefused": return AnyView(BondRefusedDemoScreen())
+        // The sleep planner (smart-alarm mode card) and the Test Centre's smart-alarm nights page.
+        case "sleepplanner": return AnyView(NavigationStack { SleepPlannerHost() })
+        case "smartalarmnights": return AnyView(NavigationStack { SmartAlarmNightsView() })
         // `settings.<page>` (profile, strap, appearance, …) opens one Settings page directly.
         case let name where name.hasPrefix("settings."):
             return SettingsPage(rawValue: String(name.dropFirst("settings.".count))).map { AnyView($0.destination) }

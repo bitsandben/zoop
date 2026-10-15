@@ -333,6 +333,14 @@ struct TestCentreView: View {
                 }
                 .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
 
+                // Whether the app could act during each smart-alarm night (SmartAlarmNightLog).
+                NavigationLink {
+                    SmartAlarmNightsView()
+                } label: {
+                    Label("Smart alarm nights", systemImage: "alarm")
+                }
+                .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
+
                 Divider().overlay(StrandPalette.hairline)
 
                 // Strap log, the same exportableLogText the Settings + Live strap-log cards share.

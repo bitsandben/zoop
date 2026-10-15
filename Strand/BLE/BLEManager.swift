@@ -6375,6 +6375,8 @@ extension BLEManager: @preconcurrency CBCentralManagerDelegate {
         self.peripheral = p
         self.restoredPeripheral = p
         p.delegate = self
+        // Smart-alarm night diagnostics: iOS woke the app for Bluetooth. Log only; no command is sent.
+        Task { @MainActor in SmartAlarmNightLog.shared.recordEvent(.bleRestore) }
         resetCharacteristics()
         // Re-derive the inbound-decode family from the persisted model. connect()/startScan() set the
         // reassembler + router family, but NEITHER runs on the restore path — so without this a restored

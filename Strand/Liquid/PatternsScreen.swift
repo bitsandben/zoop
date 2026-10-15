@@ -33,12 +33,8 @@ final class PatternsModel: ObservableObject {
     func loadQuick(repo: Repository, alarm: Date? = nil) async {
         let days = repo.days
         guard !days.isEmpty else { return }
-        let today = days.last
-        let need = SleepModel.debtNeedMin(days: days)
-        let ledger = SleepModel.debtLedger(days: days, napSleepMinByDay: [:])
-        let strain21 = today?.strain.map { $0 * 0.21 }
-        let sleepNeed = SleepDebt.needTonight(baseNeedMin: need, strain21: strain21,
-                                              debtMin: ledger.isDebt ? ledger.magnitudeMin : 0)
+        // The same need the smart alarm's sleep-need mode waits for.
+        let sleepNeed = SmartWakeProbe.needTonight(days: days)
         // Time in bed for the chosen goal, from the recent share of time in bed spent asleep.
         let effs = days.suffix(14).compactMap(\.efficiency)
         let eff = effs.isEmpty ? nil : effs.reduce(0, +) / Double(effs.count)
