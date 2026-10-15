@@ -41,7 +41,7 @@ struct RouteMapDemoHost: View {
             }
         }
         .background(StrandPalette.surfaceBase.ignoresSafeArea())
-        .navigationTitle("Running")
+        .navigationTitle(WorkoutSource.displaySport("Running"))
     }
 
     /// An ellipse around a park, ~5 km, one fix every 2 s.
