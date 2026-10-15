@@ -21,6 +21,8 @@ struct SleepNightPage {
     /// Why this block is the day's main sleep; only when the day had more than one block.
     let mainSleepReason: String?
     let naps: [CachedSleepSession]
+    /// Movement during the night against earlier nights; nil without stored motion or on a ring.
+    let restlessness: SleepRestlessContent?
 }
 
 enum SleepCaveat: Hashable {
@@ -58,6 +60,7 @@ final class SleepScreenModel: ObservableObject {
     private var allSessions: [CachedSleepSession] = []
     private var habitual: Int?
     private var motions: [Int: [Double]] = [:]
+    private var restEntries: [Int: SleepRestlessReadouts.Entry] = [:]
     private var loadedRefresh: Int?
     var resultTracker = SleepResultChangeTracker()
     var resultScope: String?
@@ -112,6 +115,9 @@ final class SleepScreenModel: ObservableObject {
         guard let repo else { return }
         if resetOffset { offset = 0 }
         navDays = SleepModel.navDays(navSessions: navSessions)
+        // A ring stores its own 1–4 movement classes, not gravity counts, so it gets no stillness card.
+        restEntries = repo.activeDeviceIsOura ? [:]
+            : SleepRestlessReadouts.entries(navDays: navDays, habitualMidsleepSec: habitual, motions: motions)
         base = SleepModel.build(SleepModelInputs(
             days: repo.days, sleeps: repo.sleeps, allSessions: allSessions,
             importedSleep: repo.importedSleep, habitualMidsleepSec: habitual, motionByStart: motions))
@@ -153,7 +159,8 @@ final class SleepScreenModel: ObservableObject {
             stageSource: repo.activeDeviceIsOura ? .ring : (night.hasRealTimeline ? .estimated : .imported),
             editTarget: night.editTarget,
             mainSleepReason: night.sourceBlocks.count > 1 ? mainSleepReason(night) : nil,
-            naps: night.naps)
+            naps: night.naps,
+            restlessness: hasStages ? SleepRestlessReadouts.content(offset: offset, entries: restEntries) : nil)
     }
 
     /// "Last night" / "N nights ago", counted in calendar nights from today, so a night the strap was

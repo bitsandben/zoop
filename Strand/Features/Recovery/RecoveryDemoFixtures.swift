@@ -19,8 +19,9 @@ import WhoopStore
             return DailyMetric(
                 day: key, totalSleepMin: last ? 441 : 420 + 30 * wave, efficiency: 0.9, deepMin: 80, remMin: 100,
                 lightMin: 240, disturbances: 2, restingHr: last ? 51 : Int(55 + 3 * wave),
-                avgHrv: last ? 74 : 60 + 8 * wave, recovery: nights >= 4 ? (last ? 78 : 62 + 14 * wave) : nil,
-                strain: 30 + 10 * wave, exerciseCount: 1, skinTempDevC: last ? 0.1 : 0.1 * wave,
+                avgHrv: last ? 50 : 60 + 8 * wave, recovery: nights >= 4 ? (last ? 44 : 62 + 14 * wave) : nil,
+                // Yesterday was a hard day, so the factors card has a training line to show.
+                strain: offset == nights - 2 ? 58 : 30 + 10 * wave, exerciseCount: 1, skinTempDevC: last ? 0.1 : 0.1 * wave,
                 respRateBpm: last ? 14.9 : 14.2 + 0.3 * wave)
         }
         func state(_ base: Double, _ spread: Double) -> BaselineState {

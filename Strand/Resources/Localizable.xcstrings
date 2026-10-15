@@ -284813,6 +284813,941 @@
           }
         }
       }
+    },
+    "zoop.sleep.restless.card" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhe im Schlaf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stillness in sleep"
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.lowNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenige Bewegungsdaten in dieser Nacht, die Werte sind daher unsicher."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Little motion data this night, so these values are uncertain."
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.learning" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoop lernt noch, wie viel du dich nachts üblicherweise bewegst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoop is still learning how you usually move at night."
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.label.bouts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewegungsphasen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Movement bouts"
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.label.restless" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unruhige Zeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restless time"
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.label.still" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Längste ruhige Phase"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Longest still stretch"
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.meaning.still.better" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast länger als sonst ruhig gelegen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You lay still for longer than usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.meaning.still.worse" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine ruhigen Phasen waren kürzer als sonst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your still stretches were shorter than usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.meaning.still.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine längste ruhige Phase war so lang wie sonst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your longest still stretch was as usual."
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.meaning.calmer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast dich weniger bewegt als in deinen üblichen Nächten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You moved less than on your usual nights."
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.meaning.moreRestless" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast dich mehr bewegt als in deinen üblichen Nächten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You moved more than on your usual nights."
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.meaning.typical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etwa so ruhig wie deine üblichen Nächte."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About as calm as your usual nights."
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.explain.bouts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie oft sich dein Handgelenk nachts deutlich bewegt hat, etwa beim Umdrehen. Weniger Phasen bedeuten eine ruhigere Nacht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How often your wrist moved clearly during the night, such as turning over. Fewer bouts mean a calmer night."
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.explain.restless" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die gesamte Zeit, in der sich dein Handgelenk zwischen Einschlafen und Aufwachen deutlich bewegt hat."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The total time your wrist moved clearly between falling asleep and waking up."
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.explain.still" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der längste Abschnitt ohne deutliche Bewegung. Lange ruhige Phasen sprechen meist für ungestörten Schlaf."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The longest stretch without any clear movement. Long still stretches usually mean undisturbed sleep."
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.method.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewegung gegenüber dem Ruhepegel der Nacht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Movement against the night's resting level"
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.method.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein 30-Sekunden-Abschnitt zählt als unruhig, wenn die Bewegung mindestens viermal so stark ist wie der Ruhepegel der Nacht. Pausen bis 1 Minute bleiben eine Phase."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A 30-second epoch counts as restless when the strap's motion is at least four times the night's resting level. Pauses up to 1 minute stay one bout."
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.limits" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewegung am Handgelenk ist nicht Schlafqualität: Ein Partner kann das Bett bewegen, ein unruhiger Kopf still liegen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wrist movement is not sleep quality: a partner can move the bed, and a busy mind can lie still."
+          }
+        }
+      }
+    },
+    "zoop.sleep.restless.lowReason" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Nacht hat wenige Bewegungsdaten, typisch für WHOOP 4.0. Lücken zählen als ruhig, die Werte sind daher unsicher."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This night has little motion data, common on WHOOP 4.0. Gaps count as still, so the values are uncertain."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factors.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was deine Erholung heute bestimmt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What set your recovery today"
+          }
+        }
+      }
+    },
+    "zoop.recovery.factors.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschätzt aus deinen eigenen Tagen. Die Faktoren überlappen, die Punkte addieren sich nicht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estimated from your own days. Factors overlap, so the points do not add up."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factors.none" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts fiel auf: Gestern, dein Schlaf und deine Vitalwerte lagen nahe an deinem Normalwert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing stood out: yesterday, your sleep and your vitals were close to your normal."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.lowers" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hat deine Erholung gesenkt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lowered your recovery"
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.raises" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hat deine Erholung gestützt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supported your recovery"
+          }
+        }
+      }
+    },
+    "zoop.recovery.helps.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was hilft"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What helps"
+          }
+        }
+      }
+    },
+    "zoop.recovery.helps.coach" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr im Coach"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More in the coach"
+          }
+        }
+      }
+    },
+    "zoop.recovery.measurements.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Messwerte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your measurements"
+          }
+        }
+      }
+    },
+    "zoop.recovery.logged.alcohol" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alkohol"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "alcohol"
+          }
+        }
+      }
+    },
+    "zoop.recovery.logged.caffeine" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "späten Koffein"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "late caffeine"
+          }
+        }
+      }
+    },
+    "zoop.recovery.logged.lateMeal" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "spätes Essen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a late meal"
+          }
+        }
+      }
+    },
+    "zoop.recovery.logged.stress" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stress"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "stress"
+          }
+        }
+      }
+    },
+    "zoop.recovery.logged.sick" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Krankheitsgefühl"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "feeling ill"
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.illness" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehrere Körpersignale liegen außerhalb deines Bereichs. Das können Belastung, Alkohol, Hitze oder ein beginnender Infekt sein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Several body signals are outside your range. Strain, alcohol, heat or an infection starting can do this."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.strain.up.sized" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Training gestern lag %lld %% über deinem Schnitt. Nach solchen Tagen liegt deine Erholung meist %lld Punkte tiefer."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your training yesterday was %lld%% above your average. After days like that your recovery is usually %lld points lower."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.strain.up.little" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Training gestern lag %lld %% über deinem Schnitt. Bei dir verändert das die Erholung kaum."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your training yesterday was %lld%% above your average. For you, that rarely moves recovery."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.strain.up" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Training gestern lag %lld %% über deinem Schnitt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your training yesterday was %lld%% above your average."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.strain.down.sized" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestern war %lld %% leichter als dein Schnitt. Nach solchen Tagen liegt deine Erholung meist %lld Punkte höher."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yesterday was %lld%% lighter than your average. After days like that your recovery is usually %lld points higher."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.strain.down" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestern war %lld %% leichter als dein Schnitt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yesterday was %lld%% lighter than your average."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.sleep.short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast %@ weniger geschlafen, als du brauchst. Das kostete etwa %lld Punkte."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You slept %@ less than you need, which cost about %lld points."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.sleep.enough" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Schlaf hat deinen Bedarf gedeckt. Das brachte etwa %lld Punkte."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your sleep covered your need, worth about %lld points."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.bedtime.sized" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du bist %@ später als sonst ins Bett gegangen. Bei dir bedeutet das meist %lld Punkte weniger."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You went to bed %@ later than usual. For you, that usually means %lld points less."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.bedtime" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du bist %@ später als sonst ins Bett gegangen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You went to bed %@ later than usual."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.hrv.low" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine HRV lag %lld %% unter deinem Normalwert. Das kostete etwa %lld Punkte."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your HRV was %lld%% below your normal, which cost about %lld points."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.hrv.high" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine HRV lag %lld %% über deinem Normalwert. Das brachte etwa %lld Punkte."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your HRV was %lld%% above your normal, worth about %lld points."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.rhr.high" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Ruhepuls lag %lld S/min über deinem Normalwert. Das kostete etwa %lld Punkte."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your resting heart rate was %lld bpm above your normal, which cost about %lld points."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.rhr.low" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Ruhepuls lag %lld S/min unter deinem Normalwert. Das brachte etwa %lld Punkte."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your resting heart rate was %lld bpm below your normal, worth about %lld points."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.logged" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast %@ geloggt. Für eine Schätzung der Wirkung braucht Zoop mehr geloggte Tage."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You logged %@. Zoop needs more logged days to size its effect."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.logged.lower" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast %@ geloggt. An solchen Tagen liegt deine Erholung meist %lld Punkte tiefer."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You logged %@. On those days your recovery is usually %lld points lower."
+          }
+        }
+      }
+    },
+    "zoop.recovery.factor.logged.higher" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast %@ geloggt. An solchen Tagen liegt deine Erholung meist %lld Punkte höher."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You logged %@. On those days your recovery is usually %lld points higher."
+          }
+        }
+      }
+    },
+    "zoop.recovery.advice.rest" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhe heute mehr und verschiebe hartes Training."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rest more today and move hard training to later."
+          }
+        }
+      }
+    },
+    "zoop.recovery.advice.lightDay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halte den Tag leicht: Lockere Bewegung hilft mehr als noch eine harte Einheit."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep today light: easy movement helps more than another hard session."
+          }
+        }
+      }
+    },
+    "zoop.recovery.advice.earlierBed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geh heute früher ins Bett, um den fehlenden Schlaf aufzuholen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go to bed earlier tonight to make up the missing sleep."
+          }
+        }
+      }
+    },
+    "zoop.recovery.advice.usualBedtime" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geh heute zu deiner üblichen Zeit ins Bett."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aim for your usual bedtime tonight."
+          }
+        }
+      }
+    },
+    "zoop.recovery.advice.calmDay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plane einen ruhigeren Tag. Ein Spaziergang oder eine Atemübung hilft beim Runterfahren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plan a calmer day; a walk or a breathing session helps your body settle."
+          }
+        }
+      }
+    },
+    "zoop.recovery.advice.skipLogged" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lass heute weg, was du geloggt hast, und schau, wie deine Erholung reagiert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leave out what you logged today and see how your recovery responds."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
