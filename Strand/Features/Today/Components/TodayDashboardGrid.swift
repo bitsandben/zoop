@@ -22,8 +22,15 @@ struct TodayDashboardSection: View {
                         .buttonStyle(ZoopButtonStyle(.secondary))
                 }
             } else {
-                TileGrid {
-                    ForEach(paired) { tile in cell(tile) }
+                // Rows, not a lazy grid: both tiles of a row take the taller one's height, so an empty
+                // tile next to one with a sparkline does not leave a ragged edge.
+                VStack(spacing: ZoopSpacing.cardGap) {
+                    ForEach(rows, id: \.first?.id) { row in
+                        HStack(alignment: .top, spacing: ZoopSpacing.cardGap) {
+                            ForEach(row) { tile in cell(tile).frame(maxWidth: .infinity, maxHeight: .infinity) }
+                        }
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 // An odd tile spans the width instead of leaving a hole in the grid.
                 if let single { cell(single) }
@@ -33,6 +40,9 @@ struct TodayDashboardSection: View {
     }
 
     private var paired: [TodayDashboardTile] { tiles.count % 2 == 0 ? tiles : Array(tiles.dropLast()) }
+    private var rows: [[TodayDashboardTile]] {
+        stride(from: 0, to: paired.count, by: 2).map { Array(paired[$0..<min($0 + 2, paired.count)]) }
+    }
     private var single: TodayDashboardTile? { tiles.count % 2 == 0 ? nil : tiles.last }
 
     @ViewBuilder
