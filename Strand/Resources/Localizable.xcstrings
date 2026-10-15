@@ -31783,6 +31783,74 @@
         }
       }
     },
+    "zoop.metric.verdict.better" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Besser als üblich"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Better than usual"
+          }
+        }
+      }
+    },
+    "zoop.metric.verdict.betterTypical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Besser als typisch"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Better than typical"
+          }
+        }
+      }
+    },
+    "zoop.metric.verdict.worse" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlechter als üblich"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Worse than usual"
+          }
+        }
+      }
+    },
+    "zoop.metric.verdict.worseTypical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlechter als typisch"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Worse than typical"
+          }
+        }
+      }
+    },
     "≈ %@ estimated 1RM" : {
       "localizations" : {
         "de" : {

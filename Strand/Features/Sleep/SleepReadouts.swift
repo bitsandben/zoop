@@ -30,6 +30,7 @@ enum SleepReadouts {
                                                population: population,
                                                lastSample: history.last.map { date($0.day) })
         let readout = range.readout(id: id, label: label, value: value, unit: unit, tint: tint,
+                                    polarity: SleepMetricID.polarity(id),
                                     meaning: meaning ?? { SleepMeanings.meaning(id, $0) })
         return SleepMetric(readout: readout,
                            explanation: explanation(id, range: range, history: history,

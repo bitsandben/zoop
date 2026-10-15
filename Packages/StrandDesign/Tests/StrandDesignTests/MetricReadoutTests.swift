@@ -25,6 +25,40 @@ final class MetricReadoutTests: XCTestCase {
         XCTAssertEqual(MetricVerdict.vital(47.9, typicalRange: 48...58), .below)
     }
 
+    // MARK: Polarity
+
+    func testPolarityMapsAboveAndBelowToBetterOrWorse() {
+        XCTAssertEqual(MetricAssessment(verdict: .above, polarity: .higherIsBetter), .better)
+        XCTAssertEqual(MetricAssessment(verdict: .below, polarity: .higherIsBetter), .worse)
+        XCTAssertEqual(MetricAssessment(verdict: .above, polarity: .lowerIsBetter), .worse)
+        XCTAssertEqual(MetricAssessment(verdict: .below, polarity: .lowerIsBetter), .better)
+        XCTAssertEqual(MetricAssessment(verdict: .above, polarity: .neutral), .neutral)
+        XCTAssertEqual(MetricAssessment(verdict: .typical, polarity: .higherIsBetter), .neutral)
+        XCTAssertEqual(MetricAssessment(verdict: .score(.low), polarity: .higherIsBetter), .neutral)
+        XCTAssertEqual(MetricAssessment(verdict: .unavailable(.noData(since: nil)), polarity: .lowerIsBetter), .neutral)
+    }
+
+    func testDefaultPolarityPerMetric() {
+        XCTAssertEqual(MetricID.hrv.defaultPolarity, .higherIsBetter)
+        XCTAssertEqual(MetricID.restingHeartRate.defaultPolarity, .lowerIsBetter)
+        XCTAssertEqual(MetricID.fitnessAge.defaultPolarity, .lowerIsBetter)
+        XCTAssertEqual(MetricID.skinTemperature.defaultPolarity, .neutral)
+        XCTAssertEqual(MetricID("app_defined").defaultPolarity, .neutral)
+    }
+
+    func testDirectionalVerdictWording() {
+        let age = MetricReadout(id: .fitnessAge, label: "Fitness age", value: 31, unit: .years,
+                                typicalRange: 35...37, verdict: .below, meaning: "x")
+        XCTAssertEqual(MetricPresentation(age, locale: en).verdict, "Better than usual")
+        let debt = MetricReadout(id: "sleep_debt", label: "Debt", value: 90, unit: .duration,
+                                 typicalRange: 10...40, rangeIsPersonal: false, verdict: .above, meaning: "x",
+                                 polarity: .lowerIsBetter)
+        XCTAssertEqual(MetricPresentation(debt, locale: en).verdict, "Worse than typical")
+        let temp = MetricReadout(id: .skinTemperature, label: "Temp", value: 36, unit: .celsius,
+                                 typicalRange: 34...35, verdict: .above, meaning: "x")
+        XCTAssertEqual(MetricPresentation(temp, locale: en).verdict, "Above your range")
+    }
+
     func testDeltaArrowOnlyPastSmallestWorthwhileChange() {
         // Range 48…58: SD 5, SWC 2.5.
         XCTAssertEqual(DeltaDirection(delta: 2.5, typicalRange: 48...58), .up)
@@ -40,12 +74,12 @@ final class MetricReadoutTests: XCTestCase {
         XCTAssertEqual(p.label, "HRV")
         XCTAssertEqual(p.number, "62")
         XCTAssertEqual(p.unit, "ms")
-        XCTAssertEqual(p.verdict, "Above your range")
+        XCTAssertEqual(p.verdict, "Better than usual")
         XCTAssertEqual(p.delta, "+8\u{00A0}ms vs. typical")
         XCTAssertEqual(p.deltaDirection, .up)
         XCTAssertEqual(p.range, "Your range 48–58\u{00A0}ms")
         XCTAssertNil(p.confidenceNote)
-        XCTAssertEqual(p.accessibilityValue, "62 milliseconds, Above your range")
+        XCTAssertEqual(p.accessibilityValue, "62 milliseconds, Better than usual")
     }
 
     func testUnavailableNeverShowsANumber() {

@@ -26,6 +26,35 @@ public struct MetricID: RawRepresentable, Hashable, Sendable, ExpressibleByStrin
     public static let steps: MetricID = "steps"
     public static let weight: MetricID = "weight"
     public static let sleepDuration: MetricID = "sleep_duration"
+
+    /// Which direction is good for the package's own metrics; app-defined ids pass theirs to the readout.
+    public var defaultPolarity: MetricPolarity {
+        switch self {
+        case .hrv, .spo2, .vo2max, .steps, .sleepDuration, .recovery, .sleepScore: return .higherIsBetter
+        case .restingHeartRate, .stress, .fitnessAge: return .lowerIsBetter
+        default: return .neutral
+        }
+    }
+}
+
+/// Which side of the typical range is good. Decides whether "above" / "below" read as better or worse.
+public enum MetricPolarity: Equatable, Sendable {
+    case higherIsBetter, lowerIsBetter
+    /// Either side is just different (skin temperature, respiratory rate, weight).
+    case neutral
+}
+
+/// How a verdict reads once polarity is applied: the tint and the wording follow it.
+public enum MetricAssessment: Equatable, Sendable {
+    case better, worse, neutral
+
+    public init(verdict: MetricVerdict, polarity: MetricPolarity) {
+        switch (verdict, polarity) {
+        case (.above, .higherIsBetter), (.below, .lowerIsBetter): self = .better
+        case (.above, .lowerIsBetter), (.below, .higherIsBetter): self = .worse
+        default: self = .neutral
+        }
+    }
 }
 
 public struct MetricReadout: Equatable, Sendable, Identifiable {
@@ -62,6 +91,7 @@ public struct MetricReadout: Equatable, Sendable, Identifiable {
     public let meaning: LocalizedStringResource
     public let confidence: Confidence
     public let tint: Tint
+    public let polarity: MetricPolarity
 
     public init(
         id: MetricID,
@@ -75,7 +105,8 @@ public struct MetricReadout: Equatable, Sendable, Identifiable {
         verdict: MetricVerdict,
         meaning: LocalizedStringResource,
         confidence: Confidence = .solid,
-        tint: Tint = .neutral
+        tint: Tint = .neutral,
+        polarity: MetricPolarity? = nil
     ) {
         self.id = id
         self.label = label
@@ -89,7 +120,11 @@ public struct MetricReadout: Equatable, Sendable, Identifiable {
         self.meaning = meaning
         self.confidence = confidence
         self.tint = tint
+        self.polarity = polarity ?? id.defaultPolarity
     }
+
+    /// Better / worse than the range once polarity is applied; neutral for everything else.
+    public var assessment: MetricAssessment { MetricAssessment(verdict: verdict, polarity: polarity) }
 
     /// The value to draw: none when the verdict says unavailable, so number and "no data" wording cannot disagree.
     public var displayValue: Double? {

@@ -19,13 +19,18 @@ enum MetricStyle {
         }
     }
 
-    /// Score bands carry the green / amber / red colour; every other verdict stays neutral, because
-    /// "above" is good for HRV and bad for resting heart rate.
+    /// Score bands carry the green / amber / red colour; a range verdict is tinted only through the
+    /// metric's polarity (better positive, worse warning), because "above" is good for HRV and bad for
+    /// resting heart rate.
     static func verdictColor(_ readout: MetricReadout) -> Color {
         if readout.isStale { return StrandPalette.textTertiary }
         if case .score = readout.verdict { return recoveryColor(readout.verdict) }
         if case .unavailable = readout.verdict { return StrandPalette.textSecondary }
-        return StrandPalette.textPrimary
+        switch readout.assessment {
+        case .better: return StrandPalette.textPositive
+        case .worse: return StrandPalette.textWarning
+        case .neutral: return StrandPalette.textPrimary
+        }
     }
 
     static func valueColor(_ readout: MetricReadout) -> Color {

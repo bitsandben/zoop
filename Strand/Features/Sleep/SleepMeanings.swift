@@ -83,4 +83,13 @@ enum SleepMetricID {
     static let awake: MetricID = "sleep_stage_awake"
     static let debt: MetricID = "sleep_debt"
     static let regularity: MetricID = "sleep_regularity"
+
+    /// Which side is good: more deep, REM and efficiency, less time awake and less debt.
+    static func polarity(_ id: MetricID) -> MetricPolarity {
+        switch id {
+        case efficiency, deep, rem: return .higherIsBetter
+        case awake, debt: return .lowerIsBetter
+        default: return id.defaultPolarity
+        }
+    }
 }

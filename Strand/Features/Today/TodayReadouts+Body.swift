@@ -76,7 +76,8 @@ enum TodayBodyReadouts {
             ? .calibrating(nightsLeft: max(1, minOwnDays - history.count)) : .solid
         return MetricReadout(id: id, label: label, value: value, unit: unit, typicalRange: range,
                              rangeIsPersonal: personal != nil, verdict: word.verdict,
-                             meaning: TodayCopy.vitalMeaning(copy, word), confidence: confidence)
+                             meaning: TodayCopy.vitalMeaning(copy, word), confidence: confidence,
+                             polarity: .higherIsBetter)
     }
 
     /// The newest weigh-in on or before the day, against the weigh-ins of the 90 days before it.

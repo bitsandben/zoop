@@ -51,7 +51,8 @@ enum FitnessAgeFactorBuilder {
             label: spec.label, value: value, unit: spec.unit,
             typicalRange: spec.range, rangeIsPersonal: false,
             verdict: .vital(value, typicalRange: spec.range),
-            meaning: meaning(years: years), tint: .neutral)
+            meaning: meaning(years: years), tint: .neutral,
+            polarity: factor == .restingHR || factor == .body ? .lowerIsBetter : .higherIsBetter)
 
         let copy = FitnessAgeExplanations.copy(factor, bodyFatMeasured: ctx.snapshot.inputs[FitnessAgeKeys.bodyFat] != nil)
         let explanation = MetricExplanation(

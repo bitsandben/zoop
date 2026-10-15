@@ -222,6 +222,10 @@ public enum StrandPalette {
     public static var statusWarning:  Color { isClassic ? Color(light: "#CFA528", dark: "#F2C53D") : t_statusWarning }
     public static var statusCritical: Color { isClassic ? Color(light: "#CB3A2F", dark: "#E5483B") : t_statusCritical }
 
+    /// Verdict words in the status colours, darkened to meet AA (4.5:1) as body text on `surfaceRaised`.
+    public static let textPositive = Color(classic: (light: "#2F6B0E", dark: "#BFEB7B"), pastel: (light: "#2F7346", dark: "#9FD6AF"))
+    public static let textWarning = Color(classic: (light: "#94531C", dark: "#E8954F"), pastel: (light: "#93561A", dark: "#F3C99A"))
+
     /// A decorative glyph's colour. The iOS redesign draws icons white and keeps colour for data and
     /// status, so this returns the primary text colour there and `color` elsewhere.
     public static func icon(_ color: Color) -> Color {

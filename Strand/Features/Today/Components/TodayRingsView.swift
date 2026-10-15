@@ -141,11 +141,16 @@ enum TodayTint {
         }
     }
 
-    /// Score bands carry their band colour; every other verdict stays neutral (calm by default).
+    /// Score bands carry their band colour; a range verdict is tinted only through the metric's
+    /// polarity (better / worse), everything else stays neutral (calm by default).
     static func verdictColor(_ readout: MetricReadout) -> Color {
         if readout.isStale { return StrandPalette.textTertiary }
         if case .score = readout.verdict, let v = readout.displayValue { return StrandPalette.recoveryColor(v) }
-        return StrandPalette.textSecondary
+        switch readout.assessment {
+        case .better: return StrandPalette.textPositive
+        case .worse: return StrandPalette.textWarning
+        case .neutral: return StrandPalette.textSecondary
+        }
     }
 }
 #endif

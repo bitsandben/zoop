@@ -23,7 +23,8 @@ extension TodayBodyReadouts {
         let confidence: MetricReadout.Confidence = (daily?.baselineNights ?? 0) >= minOwnDays ? .solid : .building
         return MetricReadout(id: .stressDaily, label: TodayCopy.tileStressDaily, value: level, unit: unit,
                              typicalRange: stressTypical, verdict: word.verdict,
-                             meaning: TodayCopy.vitalMeaning(.stress, word), confidence: confidence, tint: .stress)
+                             meaning: TodayCopy.vitalMeaning(.stress, word), confidence: confidence, tint: .stress,
+                             polarity: .lowerIsBetter)
     }
 
     /// Goal-met days in a row, with the verdict from the last 30 days' consistency (High / Medium / Low).

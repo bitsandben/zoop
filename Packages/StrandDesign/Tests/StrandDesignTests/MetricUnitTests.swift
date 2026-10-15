@@ -78,7 +78,7 @@ final class MetricUnitTests: XCTestCase {
     }
 
     func testPopulationRangeVerdictDoesNotSayYour() {
-        let r = MetricReadout(id: .hrv, label: "HRV", value: 80, unit: .milliseconds, typicalRange: 50...70,
+        let r = MetricReadout(id: .skinTemperature, label: "Temp", value: 36, unit: .celsius, typicalRange: 34...35,
                               rangeIsPersonal: false, verdict: .above, meaning: "m")
         XCTAssertEqual(MetricPresentation(r, locale: en).verdict, "Above the typical range")
         XCTAssertTrue(MetricPresentation(r, locale: en).accessibilityValue.hasSuffix("Above the typical range"))

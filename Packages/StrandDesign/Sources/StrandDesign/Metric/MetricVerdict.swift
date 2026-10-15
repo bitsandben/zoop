@@ -30,6 +30,15 @@ public enum MetricVerdict: Equatable, Sendable {
         }
     }
 
+    /// Wording with direction: for a metric with a good side, "above" / "below" become "better" / "worse".
+    public func text(rangeIsPersonal: Bool, polarity: MetricPolarity) -> LocalizedStringResource {
+        switch MetricAssessment(verdict: self, polarity: polarity) {
+        case .better: return rangeIsPersonal ? MetricStrings.verdictBetter : MetricStrings.verdictBetterTypical
+        case .worse: return rangeIsPersonal ? MetricStrings.verdictWorse : MetricStrings.verdictWorseTypical
+        case .neutral: return text(rangeIsPersonal: rangeIsPersonal)
+        }
+    }
+
     public var compactText: LocalizedStringResource {
         if case .unavailable(let reason) = self { return reason.compactText }
         return text
