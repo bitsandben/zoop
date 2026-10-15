@@ -70,6 +70,11 @@ struct SmartAlarmNightRow: View {
                         .font(ZoopType.caption)
                         .foregroundStyle(StrandPalette.textSecondary)
                 }
+                if let live = SmartAlarmNightText.liveLine(night, now: now) {
+                    Text(live)
+                        .font(ZoopType.caption)
+                        .foregroundStyle(StrandPalette.textSecondary)
+                }
             }
             Spacer(minLength: 0)
             Image(systemName: "chevron.right")
@@ -121,6 +126,13 @@ struct SmartAlarmNightDetailView: View {
                     .foregroundStyle(StrandPalette.textPrimary)
                 if let outcome = SmartAlarmNightText.outcome(night, now: now) {
                     Text(outcome).font(ZoopType.body).foregroundStyle(StrandPalette.textSecondary)
+                }
+                ForEach([SmartAlarmNightText.liveLine(night, now: now), SmartAlarmNightText.evaluationsLine(night)]
+                    .compactMap { $0 }, id: \.self) { line in
+                    Text(line)
+                        .font(ZoopType.caption)
+                        .foregroundStyle(StrandPalette.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

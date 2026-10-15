@@ -717,10 +717,15 @@ public final class LiveState: ObservableObject {
     private var heartRateSilenceTimer: DispatchSourceTimer?
     private var heartRateSilenceArmedAt: DispatchTime?
 
+    /// Called with every readable sample's bpm (not published, so it re-renders nothing). The smart alarm's live
+    /// stream (`SmartWakeLiveStream`) reads samples here; `heartRate` publishes only on a change of value.
+    public var onReadableHeartRate: ((Int) -> Void)?
+
     /// A readable heart-rate sample arrived (`BLEManager`'s standard profile, `FrameRouter`'s realtime frames): move the
     /// silence deadline on. One timer, rescheduled at most every tenth of the wait (once a second in use), so it costs
     /// nothing while samples flow and fires once when they stop.
-    public func noteReadableHeartRate() {
+    public func noteReadableHeartRate(_ bpm: Int? = nil) {
+        if let bpm { onReadableHeartRate?(bpm) }
         let now = DispatchTime.now()
         let rearmNanos = UInt64(heartRateSilence / 10 * 1_000_000_000)
         if let armed = heartRateSilenceArmedAt, now.uptimeNanoseconds &- armed.uptimeNanoseconds < rearmNanos { return }

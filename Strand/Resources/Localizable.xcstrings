@@ -288459,6 +288459,336 @@
           }
         }
       }
+    },
+    "Keep the app awake in the window" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App im Weckfenster wach halten"
+          }
+        }
+      }
+    },
+    "Streams live heart rate from 10 min before the window until you wake, so strap and phone use more battery for about that long." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streamt den Live-Puls ab 10 Min. vor dem Weckfenster bis zum Wecken, Band und Handy brauchen so lange mehr Akku."
+          }
+        }
+      }
+    },
+    "Live heart rate: requested, no values received" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live-Puls: angefordert, keine Werte empfangen"
+          }
+        }
+      }
+    },
+    "Live heart rate: %@ values" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live-Puls: %@ Werte"
+          }
+        }
+      }
+    },
+    "off at %@ (%@)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aus um %@ (%@)"
+          }
+        }
+      }
+    },
+    "still on" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "noch an"
+          }
+        }
+      }
+    },
+    "Evaluations: %lld from live heart rate, %lld by timer, %lld on app wake" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auswertungen: %lld per Live-Puls, %lld per Timer, %lld beim Aufwecken der App"
+          }
+        }
+      }
+    },
+    "no gaps" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keine Lücken"
+          }
+        }
+      }
+    },
+    "1 gap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 Lücke"
+          }
+        }
+      }
+    },
+    "%lld gaps" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Lücken"
+          }
+        }
+      }
+    },
+    "Live heart rate on again – strap reconnected" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live-Puls wieder an – Band neu verbunden"
+          }
+        }
+      }
+    },
+    "Live heart rate taken back after the Live screen" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live-Puls nach der Live-Ansicht wieder übernommen"
+          }
+        }
+      }
+    },
+    "Live heart rate on – window opens soon" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live-Puls an – Weckfenster beginnt bald"
+          }
+        }
+      }
+    },
+    "woken" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "geweckt"
+          }
+        }
+      }
+    },
+    "after the early wake" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nach dem frühen Wecken"
+          }
+        }
+      }
+    },
+    "window over" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenster vorbei"
+          }
+        }
+      }
+    },
+    "Live screen took over" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live-Ansicht übernommen"
+          }
+        }
+      }
+    },
+    "strap disconnected" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band getrennt"
+          }
+        }
+      }
+    },
+    "app closed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App beendet"
+          }
+        }
+      }
+    },
+    "safety cut-off" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sicherheitsabschaltung"
+          }
+        }
+      }
+    },
+    "turned off" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ausgeschaltet"
+          }
+        }
+      }
+    },
+    "left on, turned off at launch" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "war noch an, beim Start ausgeschaltet"
+          }
+        }
+      }
+    },
+    "awake" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "wach"
+          }
+        }
+      }
+    },
+    "deep sleep" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiefschlaf"
+          }
+        }
+      }
+    },
+    "no clear signal" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kein klares Signal"
+          }
+        }
+      }
+    },
+    "Live heart rate off – %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live-Puls aus – %@"
+          }
+        }
+      }
+    },
+    "First live heart rate received" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erster Live-Puls empfangen"
+          }
+        }
+      }
+    },
+    "No live heart rate for %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Live-Puls für %@"
+          }
+        }
+      }
+    },
+    "Cause unknown: app suspended, strap out of range or not sending" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ursache offen: App pausiert, Band außer Reichweite oder sendet nicht"
+          }
+        }
+      }
+    },
+    "awake (live heart rate)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "wach (Live-Puls)"
+          }
+        }
+      }
+    },
+    "no sync: live heart rate only" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kein Sync: nur Live-Puls"
+          }
+        }
+      }
+    },
+    "live heart rate: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live-Puls: %@"
+          }
+        }
+      }
+    },
+    "Live check: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live-Prüfung: %@"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

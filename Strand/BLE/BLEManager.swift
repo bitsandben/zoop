@@ -3363,6 +3363,19 @@ public final class BLEManager: NSObject, ObservableObject {
         send(.toggleRealtimeHR, payload: [want ? 0x01 : 0x00])
     }
 
+    /// Smart-alarm launch cleanup: a previous run held the realtime stream for the wake window and may have been
+    /// closed before its off reached the strap (a restored link can outlive the process). A fresh process does
+    /// not know what the strap was left with, so when nothing wants the stream now this sends the same two off
+    /// payloads `stopRealtime` and the reconciler send, regardless of the edge tracker. Existing commands only.
+    public func disarmRealtimeLeftByPreviousRun() {
+        guard !screenWantsRealtime, !continuousCaptureWantsNow() else { return }
+        guard selectedModel.deviceFamily == .whoop4 || state.bonded else { return }
+        send(.sendR10R11Realtime, payload: [0x00])
+        realtimeArmed = false
+        wantsRealtime = false
+        send(.toggleRealtimeHR, payload: [0x00])
+    }
+
     /// EXPERIMENTAL R22 telemetry (#174): give the user (and us) live proof of what the strap is doing.
     /// (1) Every `COMMAND_RESPONSE` (type 0x24) to a `SET_CONFIG` (0x78) is the strap ACKing one
     ///     `enable_r22_*` flag — hardware-confirmed in sebastianwoo's capture. 15 ACKs = full acceptance.
@@ -5598,7 +5611,7 @@ public final class BLEManager: NSObject, ObservableObject {
         // live perf: only publish on a real change so a steady resting HR doesn't re-render the whole
         // Live console every second.
         if readable {
-            state.noteReadableHeartRate()
+            state.noteReadableHeartRate(m.hr)
             if state.heartRate != m.hr { state.heartRate = m.hr }
         }
         // Record it continuously — independent of the realtime stream or the open screen.

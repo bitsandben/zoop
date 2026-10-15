@@ -56,6 +56,45 @@ design Zoop uses too.
   as soon as the app is woken inside the window (Bluetooth restore, a background sync finishing,
   foreground) when none ran for a full interval.
 
+## Keeping the app awake: the live heart-rate stream
+
+Setting: **Keep the app awake in the window** (smart alarm card, shown whenever a window is in effect,
+on by default). Owner decision: hold the strap's live heart-rate stream open around the window so iOS
+keeps waking the app for each BLE notification (`bluetooth-central` background mode), and use that heart
+rate to read awake / light / deep.
+
+- **Same stream as the Live screen.** `SmartWakeLiveStream` arms through `AppModel.setSmartWakeRealtime`
+  → `BLEManager.startRealtime()` / `stopRealtime()`, exactly the path the Live screen uses
+  (TOGGLE_REALTIME_HR plus the R10/R11 burst on a 4.0; the puffin toggle on a 5/MG). No new strap
+  command. The smart alarm holds its **own** reference, separate from the Live-surface count, so an
+  unbalanced Live `stopRealtimeHR` cannot release it and it never switches off a stream a surface holds.
+- **On** at window start − 10 min when the strap is connected and bonded (`live.connected && live.bonded`,
+  the same gate the realtime reconciler uses). Re-acquired when the strap reconnects inside the window,
+  and taken back when the Live screen closes inside the window.
+- **Off** when: the strap reports the alarm fired (event 57) or the early wake is 2 min past; the window
+  end + 2 min passes; the Live screen opens (the screen owns the stream from then on, it stays on); the
+  strap disconnects; the setting or alarm is turned off or moved; iOS is terminating the app.
+  **Watchdog:** still held 15 min after the window end → off, recorded as such. **Next launch:** a
+  persisted marker (`zoop.smartWake.liveHeldDeadline`) tells the app a previous run held the stream; on the
+  first connected + bonded state with no Live surface and no window in progress it sends the existing off
+  payloads (`BLEManager.disarmRealtimeLeftByPreviousRun`), because a restored link can outlive the process.
+- **Evaluations from samples.** Every readable live sample (`LiveState.onReadableHeartRate`, one per second
+  kept) inside the window drives an evaluation at most once a minute: a full check (sync + store read)
+  when one is due, else a quick *live check* that re-reads the live state against the last full check's
+  synced data. Timers stay as a second driver; they only fire while iOS lets the app run.
+- **Live read (`LiveWake`, StrandAnalytics, heuristic, tested on synthetic streams).** Sleeping level =
+  lower quartile of the night's 5-min heart-rate medians (≥ 30 min of data, the last 10 min left out).
+  Over the last 2 min (≥ 40 samples, newest ≤ 20 s old), 10-s bin medians:
+  awake = ≥ +10 bpm for ≥ 90 s with movement, or ≥ +20 bpm for ≥ 120 s;
+  light = ≥ +10 bpm for ≥ 90 s without movement, ≥ +5 bpm for ≥ 60 s, or movement;
+  deep = median within +3 bpm and bins within 4 bpm; otherwise no clear signal.
+  Movement comes from the synced motion of the last full check (minutes old; the live stream carries no
+  motion). **Decision:** live *awake* inside the window wakes now in every mode (reason "awake (live
+  heart rate)"); live *light* counts as light sleep, live *deep* overrides a stale synced light signal, no
+  clear signal falls back to the synced signal. The deadline invariant is unchanged.
+- **Cost.** The stream runs about window + 10 min (+ up to 2 min). Battery cost on the strap and phone is
+  unmeasured.
+
 ## Reliability limits
 
 - Earlier waking needs the app to **run during the window**: iOS must keep Zoop alive or wake it
@@ -76,12 +115,20 @@ readable while the phone is locked). The list shows, per night:
 | ⚠ App ran for part of the window | Some checks ran, some did not. |
 | ✗ App didn't run in the window | No check ran; only the strap's deadline could wake you. |
 
-The summary reads "In N of M nights the app could act" (nights with at least one check in the window).
+A check counts only when its evaluation landed inside the window. The summary reads "In N of M nights the
+app could act" (nights with at least one evaluation in the window).
+
+With the live stream on, the row adds one line, e.g. *"Live heart rate: 1,108 values, 2 gaps, off at
+06:42 (woken)"*: samples received inside the window, pauses > 60 s while the app held the stream (the
+record cannot tell a suspended app from a strap out of range or not sending, so it does not guess), and
+who turned it off and why. The night page adds the evaluation split (*from live heart rate / by timer /
+on app wake*) and timeline lines for each on/off request, the first live sample and each gap.
 The night's timeline lists: each strap arm (and whether it went out or was queued with no strap
 connection), the arm readback when it is attributable to the same strap and arm (`AlarmReadback`),
 app foreground / background, background launches, Bluetooth restores, finished syncs, every check
 (planned slot, actual time, sync result, strap connected, age of the newest heart-rate sample, asleep
-vs need, recovery estimate, light-sleep signal, decision), each planned check that never ran
+vs need, recovery estimate, light-sleep signal, live read, decision; "Live check" for the
+evaluations driven by live samples), each planned check that never ran
 ("missed – app not running"), the early wake, and the strap's fire report.
 
 The planner shows the morning's result in one line: *"Today: woken at 06:41 – sleep need reached"*
@@ -95,3 +142,12 @@ reached"* or *"window end 06:50 – the app wasn't running at night"*.
 2. Does `detectSleep` find the open session mid-night, and do asleep minutes match the morning's total?
 3. Does the recovery estimate land near the morning recovery on nights with different recoveries?
 4. Does the strap buzz at the early-wake instant, and does event 57 arrive (WHOOP 4.0 vs 5/MG)?
+5. **Live stream keeps the app alive:** with the phone locked, do live samples keep arriving through the
+   window, and do "Live check" evaluations run every minute? (Nights page: values, gaps, evaluation split.)
+6. **Battery:** strap and phone drain over window + 10 min with the stream on vs off.
+7. **4.0 vs 5/MG:** a 4.0 gets the toggle plus the R10/R11 burst; a 5/MG gets only the puffin toggle
+   (needs a bonded link). Does a 5/MG stream in the background, and does the off request stop it?
+8. **Ownership:** open and close the Live screen inside the window; disconnect/reconnect the strap inside
+   the window; force-quit inside the window and relaunch after it (the stream must be off).
+9. **Live read:** does *awake* match actually being awake, and *deep* not fire while stirring? Treat as
+   heuristic until checked across several nights and people.

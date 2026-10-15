@@ -15,6 +15,7 @@ struct SmartAlarmModeCard: View {
     @AppStorage(GoalWakeSettings.thresholdKey) private var threshold = GoalWake.defaultRecoveryThreshold
     @AppStorage(GoalWakeSettings.preferLightKey) private var preferLight = true
     @AppStorage(SmartWakeWindow.windowKey) private var windowMinutes = 0
+    @AppStorage(SmartWakeLiveStream.keepAwakeKey) private var keepAwake = true
     /// The deadline the window ends at (the next plain alarm), for the "06:20–06:50" readout.
     let deadline: Date?
 
@@ -42,6 +43,10 @@ struct SmartAlarmModeCard: View {
                     .tint(StrandPalette.accent)
                     .frame(minHeight: 54)
                 }
+                if effectiveWindow > 0 {
+                    Divider().overlay(StrandPalette.hairline)
+                    keepAwakeRow
+                }
             }
             Text("The strap always wakes you by the window end; earlier needs Zoop running in the background with the strap in range.")
                 .font(ZoopType.caption)
@@ -49,6 +54,24 @@ struct SmartAlarmModeCard: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, ZoopSpacing.xs)
         }
+    }
+
+    /// Holds the strap's live heart rate open around the window so iOS keeps waking the app (`SmartWakeLiveStream`).
+    private var keepAwakeRow: some View {
+        Toggle(isOn: Binding(get: { keepAwake }, set: { keepAwake = $0; model.applySmartAlarm() })) {
+            VStack(alignment: .leading, spacing: ZoopSpacing.xs) {
+                Text("Keep the app awake in the window")
+                    .font(ZoopType.body)
+                    .foregroundStyle(StrandPalette.textPrimary)
+                Text("Streams live heart rate from 10 min before the window until you wake, so strap and phone use more battery for about that long.")
+                    .font(ZoopType.caption)
+                    .foregroundStyle(StrandPalette.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .tint(StrandPalette.accent)
+        .padding(.vertical, ZoopSpacing.s)
+        .frame(minHeight: 54)
     }
 
     private var modeRow: some View {

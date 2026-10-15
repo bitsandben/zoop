@@ -26,6 +26,8 @@ public struct SmartAlarmNight: Codable, Equatable, Identifiable, Sendable {
     public var strapFiredAt: Int?
     /// The arm-readback verdict (`AlarmReadback.Verdict`) for the last arm, when one was attributable.
     public var readback: String?
+    /// The live heart-rate stream held open around the window (`SmartAlarmNightLive.swift`); nil when not used.
+    public var liveStream: LiveStream?
 
     public init(deadline: Int, windowStart: Int, settings: GoalWake.Settings, needMin: Double?,
                 plannedChecks: [Int]) {
@@ -57,6 +59,8 @@ public struct SmartAlarmNight: Codable, Equatable, Identifiable, Sendable {
         case notStarted
         /// No strap connection at the check.
         case noStrap
+        /// A between-checks evaluation from live heart rate: no sync asked, the last check's synced data reused.
+        case notRequested
     }
 
     public struct Check: Codable, Equatable, Sendable {
@@ -75,14 +79,29 @@ public struct SmartAlarmNight: Codable, Equatable, Identifiable, Sendable {
         public var lightSleep: String?
         /// "wake" or a `GoalWake.Hold` raw value.
         public var decision: String
+        /// What started the evaluation; nil in records written before it was tracked.
+        public var trigger: Trigger?
+        /// `LiveWake.State` raw value when live heart rate was read, nil when it was not flowing.
+        public var liveState: String?
         public init(ranAt: Int, evaluatedAt: Int, connected: Bool, sync: SyncResult, hrAgeS: Int?, gravityAgeS: Int?,
                     asleepMin: Double?, needMin: Double?, recoveryEstimate: Double?, lightSleep: String?,
-                    decision: String) {
+                    decision: String, trigger: Trigger? = nil, liveState: String? = nil) {
             self.ranAt = ranAt; self.evaluatedAt = evaluatedAt; self.connected = connected; self.sync = sync
             self.hrAgeS = hrAgeS; self.gravityAgeS = gravityAgeS; self.asleepMin = asleepMin
             self.needMin = needMin; self.recoveryEstimate = recoveryEstimate; self.lightSleep = lightSleep
-            self.decision = decision
+            self.decision = decision; self.trigger = trigger; self.liveState = liveState
         }
+    }
+
+    /// What ran an evaluation. A timer only fires while iOS lets the app run; a live heart-rate sample is
+    /// itself the event iOS woke the app for.
+    public enum Trigger: String, Codable, Sendable {
+        /// A planned-slot timer fired.
+        case timer
+        /// The app was woken (sync finished, Bluetooth restore, foreground) after a missed slot.
+        case appWake
+        /// A live heart-rate sample arrived (throttled to one evaluation a minute).
+        case stream
     }
 
     public enum EventKind: String, Codable, Sendable {
@@ -151,8 +170,11 @@ extension SmartAlarmNight {
         relevantChecks.filter { !slotIsCovered($0, intervalS: intervalS) }
     }
 
+    /// Checks that actually evaluated inside the window (a check started just before the start counts only if
+    /// its evaluation landed in the window).
     public var checksInWindow: [Check] {
-        checks.filter { $0.ranAt >= windowStart - Self.coverSlackS && $0.ranAt <= deadline }
+        checks.filter { $0.ranAt >= windowStart - Self.coverSlackS && $0.evaluatedAt >= windowStart
+            && $0.ranAt <= deadline }
     }
 
     public func coverage(now: Int, intervalS: Int) -> Coverage {

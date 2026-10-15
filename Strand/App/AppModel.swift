@@ -1141,19 +1141,42 @@ final class AppModel: ObservableObject {
             ble.startRealtime()
         }
         realtimeWanters += 1
+        // The smart alarm held the stream for its window: the surface owns it now (it stays on).
+        if smartWakeHoldsRealtime { smartWake.liveStream.screenTookOver() }
     }
-    /// A live-HR surface went away. Stops the stream on the 1-to-0 edge (the 0x2A37 HR keeps recording).
-    /// Clamped at 0 so an unbalanced stop cannot wedge the stream off.
+    /// A live-HR surface went away. Stops the stream on the 1-to-0 edge (the 0x2A37 HR keeps recording),
+    /// unless the smart alarm holds it or takes it back for its window. Clamped at 0 so an unbalanced stop
+    /// cannot wedge the stream off, and an unbalanced stop never releases the smart alarm's own reference.
     func stopRealtimeHR() {
         realtimeWanters = max(0, realtimeWanters - 1)
-        if realtimeWanters == 0 { ble.stopRealtime() }
+        guard realtimeWanters == 0, !smartWakeHoldsRealtime else { return }
+        if smartWake.liveStream.takeBackFromScreen() {
+            smartWakeHoldsRealtime = true   // the stream the screen armed simply stays on
+            return
+        }
+        ble.stopRealtime()
     }
 
     /// Re-issue the BLE realtime arm without touching the ref-count, for a fresh connection/bond while a
     /// surface is already showing live HR. No-op when nothing wants the stream.
     func rearmRealtimeIfWanted() {
-        guard realtimeWanters > 0 else { return }
+        guard realtimeWanters > 0 || smartWakeHoldsRealtime else { return }
         ble.startRealtime()
+    }
+
+    /// True while a Live surface holds the realtime stream.
+    var realtimeSurfaceActive: Bool { realtimeWanters > 0 }
+
+    /// The smart alarm's own reference on the realtime stream (`SmartWakeLiveStream`), kept apart from the
+    /// surface count so neither can release the other's. Arms through the same `BLEManager.startRealtime` /
+    /// `stopRealtime` path the Live screen uses, and only when no surface already holds the stream.
+    private(set) var smartWakeHoldsRealtime = false
+
+    func setSmartWakeRealtime(_ on: Bool) {
+        guard on != smartWakeHoldsRealtime else { return }
+        smartWakeHoldsRealtime = on
+        guard realtimeWanters == 0 else { return }
+        if on { ble.startRealtime() } else { ble.stopRealtime() }
     }
     func getBattery() { ble.refreshBattery() }
 

@@ -10,7 +10,8 @@ import UIKit
 /// hard deadline, so if the app is suspended or nothing is met it rings as a plain alarm. Inside the window the
 /// app checks every few minutes (sync, then `GoalWake.decide`); on a wake it re-arms the same strap alarm to
 /// 30 s from now, only earlier and once per night. Every check and what the app could see is written to
-/// `SmartAlarmNightLog`. No new strap command: only `armStrapAlarm(at:)` and the existing sync request.
+/// `SmartAlarmNightLog`. No new strap command: only `armStrapAlarm(at:)`, the existing sync request, and the Live
+/// screen's realtime-HR stream held around the window (`SmartWakeLiveStream`), whose samples also drive checks.
 @MainActor
 final class SmartWakeWindow {
     nonisolated static let windowKey = "zoop.smartWake.windowMinutes"
@@ -35,11 +36,17 @@ final class SmartWakeWindow {
     private var deadline: Int?
     private var running = false
     private var lastRunAt = 0
+    /// The last full check's reading, reused by the live evaluations between checks.
+    private var lastReading: (deadline: Int, at: Int, reading: SmartWakeProbe.Reading)?
     private var cancellables = Set<AnyCancellable>()
+    let liveStream: SmartWakeLiveStream
 
     init(model: AppModel, log: SmartAlarmNightLog = .shared) {
         self.model = model
         self.log = log
+        liveStream = SmartWakeLiveStream(model: model, log: log)
+        liveStream.activeNight = { [weak self] in self?.activeNight }
+        liveStream.onEvaluate = { [weak self] in self?.streamTick() }
         model.live.$lastSyncedAt.dropFirst().removeDuplicates().sink { [weak self] _ in
             Task { @MainActor in
                 self?.log.recordEvent(.syncCompleted)
@@ -71,6 +78,7 @@ final class SmartWakeWindow {
         guard let next else {
             deadline = nil
             timer?.invalidate(); timer = nil
+            liveStream.reconcile()
             return
         }
         let dl = Int(next.timeIntervalSince1970)
@@ -105,6 +113,7 @@ final class SmartWakeWindow {
     /// Schedules the next check: the next planned slot, or now when the app wakes inside the window and no
     /// check ran for a full interval (a late wake still gets to decide).
     func scheduleNextCheck() {
+        liveStream.reconcile()
         timer?.invalidate(); timer = nil
         guard !running, let night = activeNight, night.earlyWake == nil else { return }
         let now = Int(Date().timeIntervalSince1970)
@@ -112,18 +121,73 @@ final class SmartWakeWindow {
         guard !night.plannedChecks.isEmpty, GoalWake.wakeTime(now: max(now, window.start), window: window) != nil
         else { return }
         let fireAt: Int
-        if now >= window.start {
-            fireAt = now - lastRunAt >= Self.checkInterval ? now + 1
-                : (night.plannedChecks.first { $0 > now } ?? lastRunAt + Self.checkInterval)
+        let trigger: SmartAlarmNight.Trigger
+        if now >= window.start, now - lastRunAt >= Self.checkInterval {
+            fireAt = now + 1
+            trigger = .appWake
+        } else if now >= window.start {
+            fireAt = night.plannedChecks.first { $0 > now } ?? lastRunAt + Self.checkInterval
+            trigger = .timer
         } else {
             fireAt = window.start
+            trigger = .timer
         }
         timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(max(1, fireAt - now)), repeats: false) { [weak self] _ in
-            Task { @MainActor in await self?.runCheck() }
+            Task { @MainActor in await self?.runCheck(trigger: trigger) }
         }
     }
 
-    private func runCheck() async {
+    /// A live sample arrived inside the window (at most once a minute): the samples are what iOS woke the app
+    /// for, so they drive the checks while timers cannot fire. A full check when one is due, else a quick
+    /// evaluation of the live read against the last check's synced data.
+    private func streamTick() {
+        guard !running, let night = activeNight, night.earlyWake == nil else { return }
+        let now = Int(Date().timeIntervalSince1970)
+        let window = GoalWake.Window(start: night.windowStart, end: night.deadline)
+        guard now >= window.start, GoalWake.wakeTime(now: now, window: window) != nil else { return }
+        guard now - lastRunAt < Self.checkInterval, let last = lastReading, last.deadline == night.deadline else {
+            timer?.invalidate(); timer = nil
+            Task { await runCheck(trigger: .stream) }
+            return
+        }
+        liveEvaluate(night: night, window: window, last: last, now: now)
+    }
+
+    private func liveEvaluate(night: SmartAlarmNight, window: GoalWake.Window,
+                              last: (deadline: Int, at: Int, reading: SmartWakeProbe.Reading), now: Int) {
+        guard let model else { return }
+        let r = last.reading
+        let liveRead = liveStream.read(now: now, sleepingBpm: r.sleepingBpm, moving: r.signal == .moving)
+        var inputs = r.inputs
+        inputs.now = now
+        inputs.live = liveRead.state
+        let decision = GoalWake.decide(window: window, settings: night.settings, inputs: inputs)
+        liveStream.didEvaluate(at: now)
+        let hrAge = liveStream.newestSampleAt.map { now - $0 }
+        log.update(deadline: night.deadline) {
+            $0.checks.append(.init(ranAt: now, evaluatedAt: now, connected: model.live.connected, sync: .notRequested,
+                                   hrAgeS: hrAge,
+                                   gravityAgeS: r.gravityAgeS.map { $0 + now - last.at },
+                                   asleepMin: inputs.asleepMin, needMin: inputs.needMin,
+                                   recoveryEstimate: r.estimate?.score, lightSleep: r.signal?.rawValue,
+                                   decision: Self.label(decision), trigger: .stream,
+                                   liveState: liveRead.state?.rawValue))
+        }
+        if case .wake(let at, let reason) = decision {
+            let task = BackgroundTime.begin()
+            wake(at: at, reason: reason, night: night, decidedAt: now)
+            task.end()
+        }
+    }
+
+    static func label(_ d: GoalWake.Decision) -> String {
+        switch d {
+        case .hold(let h): return h.rawValue
+        case .wake: return "wake"
+        }
+    }
+
+    private func runCheck(trigger: SmartAlarmNight.Trigger) async {
         guard !running, let model, let night = activeNight, night.earlyWake == nil else { return }
         let ranAt = Int(Date().timeIntervalSince1970)
         let window = GoalWake.Window(start: night.windowStart, end: night.deadline)
@@ -141,18 +205,20 @@ final class SmartWakeWindow {
                                                 deadline: night.deadline, needMin: night.needMin)
         var inputs = reading.inputs
         inputs.now = Int(Date().timeIntervalSince1970)
+        let liveRead = liveStream.read(now: inputs.now, sleepingBpm: reading.sleepingBpm,
+                                       moving: reading.signal == .moving)
+        inputs.live = liveRead.state
+        lastReading = (night.deadline, inputs.now, reading)
+        liveStream.didEvaluate(at: inputs.now)
         let decision = GoalWake.decide(window: window, settings: night.settings, inputs: inputs)
-        let label: String
-        switch decision {
-        case .hold(let h): label = h.rawValue
-        case .wake: label = "wake"
-        }
+        let label = Self.label(decision)
         log.update(deadline: night.deadline) {
             $0.checks.append(.init(ranAt: ranAt, evaluatedAt: inputs.now, connected: connected, sync: sync,
                                    hrAgeS: reading.hrAgeS, gravityAgeS: reading.gravityAgeS,
                                    asleepMin: inputs.asleepMin, needMin: inputs.needMin,
                                    recoveryEstimate: reading.estimate?.score,
-                                   lightSleep: reading.signal?.rawValue, decision: label))
+                                   lightSleep: reading.signal?.rawValue, decision: label,
+                                   trigger: trigger, liveState: liveRead.state?.rawValue))
         }
         model.live.append(log: AppModel.stamped("Smart alarm check: \(label), sync \(sync.rawValue)"))
         if case .wake(let at, let reason) = decision {
@@ -176,6 +242,7 @@ final class SmartWakeWindow {
         guardTimer = Timer.scheduledTimer(withTimeInterval: max(1, delay), repeats: false) { [weak self] _ in
             Task { @MainActor in self?.restoreDeadlineIfUnconfirmed(night.deadline) }
         }
+        liveStream.reconcile()
     }
 
     private func restoreDeadlineIfUnconfirmed(_ deadline: Int) {

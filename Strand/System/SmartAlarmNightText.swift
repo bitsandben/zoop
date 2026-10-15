@@ -35,6 +35,7 @@ enum SmartAlarmNightText {
         case .sleepNeedReached: return String(localized: "sleep need reached")
         case .recoveryReached: return String(localized: "recovery reached")
         case .lightSleep: return String(localized: "light sleep")
+        case .awake: return String(localized: "awake (live heart rate)")
         }
     }
 
@@ -111,6 +112,7 @@ enum SmartAlarmNightText {
                              tone: .critical))
         }
         for c in n.checks { out.append(check(c)) }
+        out += liveTimeline(n, now: now)
         if let e = n.earlyWake {
             out.append(Entry(at: e.decidedAt, title: String(localized: "Alarm moved to \(clock(e.wakeAt)) – \(reason(e.reason))"),
                              tone: .positive))
@@ -130,7 +132,11 @@ enum SmartAlarmNightText {
         }
         if let r = c.recoveryEstimate { parts.append(String(localized: "recovery estimate \(percent(r))")) }
         parts.append(c.lightSleep != nil ? String(localized: "light sleep signal") : String(localized: "no light sleep signal"))
-        return Entry(at: c.ranAt, title: String(localized: "Check: \(decision(c.decision))"),
+        if let s = c.liveState { parts.append(String(localized: "live heart rate: \(liveState(s))")) }
+        let title = c.trigger == .stream
+            ? String(localized: "Live check: \(decision(c.decision))")
+            : String(localized: "Check: \(decision(c.decision))")
+        return Entry(at: c.ranAt, title: title,
                      detail: parts.joined(separator: " · "),
                      tone: c.decision == "wake" ? .positive : .neutral)
     }
@@ -154,6 +160,7 @@ enum SmartAlarmNightText {
         case .failed: return String(localized: "sync ended without finishing")
         case .notStarted: return String(localized: "no sync started")
         case .noStrap: return String(localized: "no sync: strap not connected")
+        case .notRequested: return String(localized: "no sync: live heart rate only")
         }
     }
 

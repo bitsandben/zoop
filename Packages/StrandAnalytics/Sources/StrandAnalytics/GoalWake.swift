@@ -65,10 +65,22 @@ public enum GoalWake {
         public var needMin: Double?
         public var recovery: Double?
         public var lightSleep: Bool
+        /// The live heart-rate read (`LiveWake`, heuristic) when the strap's live stream was flowing; nil otherwise.
+        public var live: LiveWake.State?
         public init(now: Int, asleepMin: Double? = nil, needMin: Double? = nil,
-                    recovery: Double? = nil, lightSleep: Bool = false) {
+                    recovery: Double? = nil, lightSleep: Bool = false, live: LiveWake.State? = nil) {
             self.now = now; self.asleepMin = asleepMin; self.needMin = needMin
-            self.recovery = recovery; self.lightSleep = lightSleep
+            self.recovery = recovery; self.lightSleep = lightSleep; self.live = live
+        }
+
+        /// Light sleep as the decision reads it: the live read when it has a clear answer (light or awake yes,
+        /// deep no), else the synced-data signal (`lightSleep`).
+        public var effectiveLightSleep: Bool {
+            switch live {
+            case .awake?, .light?: return true
+            case .deep?: return false
+            case .steady?, nil: return lightSleep
+            }
         }
     }
 
@@ -81,6 +93,8 @@ public enum GoalWake {
     /// Why an early wake was chosen.
     public enum Reason: String, Codable, Sendable {
         case sleepNeedReached, recoveryReached, lightSleep
+        /// The live heart rate read clearly awake inside the window: waking now beats a later wake from deep sleep.
+        case awake
     }
 
     /// Why a check did not wake.
@@ -122,12 +136,15 @@ public enum GoalWake {
         return at
     }
 
-    /// The decision for one check inside the window.
+    /// The decision for one check inside the window. A clear live "awake" wakes in every mode (the wearer is
+    /// already up; the goal no longer protects any sleep), light sleep follows `effectiveLightSleep`.
     public static func decide(window: Window, settings s: Settings, inputs i: Inputs) -> Decision {
         guard i.now >= window.start else { return .hold(.beforeWindow) }
         guard let at = wakeTime(now: i.now, window: window) else { return .hold(.deadlineClose) }
+        if i.live == .awake { return .wake(at: at, reason: .awake) }
+        let light = i.effectiveLightSleep
         if s.mode == .fixedTime {
-            return i.lightSleep ? .wake(at: at, reason: .lightSleep) : .hold(.waitingForLightSleep)
+            return light ? .wake(at: at, reason: .lightSleep) : .hold(.waitingForLightSleep)
         }
         switch condition(s, i) {
         case .unknown: return .hold(.noData)
@@ -135,7 +152,7 @@ public enum GoalWake {
         case .met:
             let reason: Reason = s.mode == .sleepNeed ? .sleepNeedReached : .recoveryReached
             let intoWindowMin = (i.now - window.start) / 60
-            if !s.preferLightSleep || i.lightSleep || intoWindowMin >= s.lightSleepGraceMin {
+            if !s.preferLightSleep || light || intoWindowMin >= s.lightSleepGraceMin {
                 return .wake(at: at, reason: reason)
             }
             return .hold(.waitingForLightSleep)

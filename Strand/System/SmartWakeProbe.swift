@@ -17,7 +17,12 @@ enum SmartWakeProbe {
         var gravityAgeS: Int?
         var signal: SmartWake.Signal?
         var estimate: PartialNightRecovery.Estimate?
+        /// The night's sleeping heart-rate level the live read compares against (`LiveWake.sleepingLevel`).
+        var sleepingBpm: Double?
     }
+
+    /// The sleeping level leaves out the last few minutes, so a rise now does not lift its own baseline.
+    static let sleepingLevelHoldOffS = 10 * 60
 
     // MARK: Sync
 
@@ -67,7 +72,9 @@ enum SmartWakeProbe {
         return Reading(inputs: inputs,
                        hrAgeS: hr.map(\.ts).max().map { now - $0 },
                        gravityAgeS: gravity.map(\.ts).max().map { now - $0 },
-                       signal: signal, estimate: estimate)
+                       signal: signal, estimate: estimate,
+                       sleepingBpm: LiveWake.sleepingLevel(hr, from: progress?.onset ?? from,
+                                                           to: now - sleepingLevelHoldOffS))
     }
 
     /// The sleep detector, off the main actor (it sorts a night of motion).
