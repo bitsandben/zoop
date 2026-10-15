@@ -7,7 +7,7 @@ import Foundation
 //
 // Vitaltrends-style, instrument-grade, uniform. ONE range control at the top
 // (SegmentedPillControl), a LazyVGrid of fixed-height StatTiles (every metric the
-// same 104pt tall), then ChartCard sections — Heart & Vitals, Activity & Energy,
+// same 104pt tall), then chart ContentCard sections — Heart & Vitals, Activity & Energy,
 // Body Composition, Sleep — each chart the same height with an avg/min/max footer.
 //
 // Everything reads from the "apple-health" source. ALL history is loaded once; the
@@ -78,7 +78,7 @@ struct AppleHealthView: View {
     /// Memoized per-metric resolved window. Resolving a key (effective range +
     /// trimmed rows) re-slices the full multi-year series and, on auto-widen, slices
     /// it once per candidate range. The view body asks for the same key many times
-    /// per render (every StatTile, every ChartCard, plus rangeNote/rangeSummary), and
+    /// per render (every StatTile, every chart ContentCard, plus rangeNote/rangeSummary), and
     /// SwiftUI re-evaluates the body on hover / animation / 1Hz HR ticks. The inputs
     /// (`series`, `range`) only change on load or pill tap, so we compute once and
     /// cache, recomputing via .onChangeCompat(of:) when an input actually changes.
@@ -564,7 +564,7 @@ struct AppleHealthView: View {
         )
     }
 
-    // MARK: - Chart sections (uniform ChartCard, same height per page)
+    // MARK: - Chart sections (uniform chart ContentCard, same height per page)
 
     private var heartSection: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
@@ -627,7 +627,7 @@ struct AppleHealthView: View {
         }
     }
 
-    /// One uniform ChartCard for a metric series: header + TrendChart body (same
+    /// One uniform chart ContentCard for a metric series: header + TrendChart body (same
     /// height) + avg/min/max ChartFooter. Sparse-safe via resolvedWindow.
     @ViewBuilder
     private func chartCard(title: LocalizedStringKey, key: String, gradient: Gradient,
@@ -645,7 +645,7 @@ struct AppleHealthView: View {
             }
             return [("Avg", fmt(avg)), ("Min", fmt(lo)), ("Max", fmt(hi)), ("Points", "\(vals.count)")]
         }()
-        ChartCard(
+        ContentCard(
             title: title,
             subtitle: rangeNote(forKey: key),
             trailing: trailing,

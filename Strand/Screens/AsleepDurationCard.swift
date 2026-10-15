@@ -47,12 +47,11 @@ struct AsleepDurationCard: View {
         let avg = data.typicalTotalMin.map { $0 / 60.0 }
         VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Asleep duration", overline: "Trend")
-            ChartCard(
+            ContentCard(
                 title: "Hours asleep",
                 subtitle: String(localized: "Per night, trailing 30 days"),
                 trailing: avg.map { String(localized: "\(ZoopNumber.decimal($0, digits: 1)) h avg") },
                 height: ZoopMetrics.chartHeight,
-                tint: StrandPalette.restColor,
                 chart: {
                     if pts.count >= 2 {
                         TrendChart(points: pts,

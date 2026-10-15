@@ -138,12 +138,11 @@ struct StageDetailView: View {
                     steppedHypnogramCard(s, subtitle: subtitle, intervals: intervals, style: chartStyle)
                 }
             } else {
-                ChartCard(
+                ContentCard(
                     title: "Stage breakdown",
                     subtitle: subtitle,
                     trailing: ZoopDuration.text(minutes: s.asleep),
                     height: ZoopMetrics.chartHeight,
-                    tint: StrandPalette.restColor,
                     chart: { stageBar(s) },
                     footer: { stageBreakdownRows(s) }
                 )
@@ -151,7 +150,7 @@ struct StageDetailView: View {
             // #407 — subordinate movement/restlessness trace UNDER the hypnogram, on the SAME timeline, for
             // the SAME main-night GROUP blocks the hero resolved (mergeDay's group). Shown only for a real
             // (≥2-segment) hypnogram so the strip aligns with a genuine timeline; the proportional stage-bar
-            // fallback has no timeline to anchor to. Placed OUTSIDE the fixed-height ChartCard so it doesn't
+            // fallback has no timeline to anchor to. Placed OUTSIDE the fixed-height chart ContentCard so it doesn't
             // clip the hypnogram. Honest empty state inside `motionStrip` when no group fragment has motion.
             if intervals.count >= 2 {
                 motionStrip(night)
@@ -218,12 +217,11 @@ struct StageDetailView: View {
     @ViewBuilder
     private func steppedHypnogramCard(_ s: Stages, subtitle: String, intervals: [SleepInterval],
                                       style: SleepChartStyle) -> some View {
-        ChartCard(
+        ContentCard(
             title: "Stage breakdown",
             subtitle: subtitle,
             trailing: ZoopDuration.text(minutes: s.asleep),
             height: ZoopMetrics.chartHeight,
-            tint: StrandPalette.restColor,
             chart: {
                 Hypnogram(
                     intervals: intervals,

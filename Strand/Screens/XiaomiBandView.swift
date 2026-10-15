@@ -6,7 +6,7 @@ import Foundation
 // MARK: - Xiaomi Smart Band (Mi Band) — per-source page
 //
 // Mirrors AppleHealthView: ONE range control (SegmentedPillControl), a LazyVGrid of
-// uniform StatTiles, then ChartCard sections. Everything reads from the "xiaomi-band"
+// uniform StatTiles, then chart ContentCard sections. Everything reads from the "xiaomi-band"
 // source — the data imported from the Mi Fitness app in Data Sources. ALL history is
 // loaded once and the range control windows it client-side, RELATIVE TO THE LATEST data
 // point (not "now"); a sparse series auto-widens to the smallest range that holds data.
@@ -265,14 +265,13 @@ struct XiaomiBandView: View {
             VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 SectionHeader("Last sleep", overline: "Hypnogram",
                               trailing: Self.nightFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(night.startTs))))
-                ChartCard(
+                ContentCard(
                     title: "Stage breakdown",
                     subtitle: night.efficiency.map { eff in
                         String(localized: "\(ZoopDuration.text(minutes: Double(night.endTs - night.startTs) / 60)) in bed · \(Int(eff.rounded()))% efficiency")
                     } ?? String(localized: "\(ZoopDuration.text(minutes: Double(night.endTs - night.startTs) / 60)) in bed"),
                     trailing: ZoopDuration.text(minutes: s.asleepMin),
                     height: ZoopMetrics.chartHeight,
-                    tint: StrandPalette.restColor,
                     chart: {
                         Hypnogram(intervals: decoded.intervals,
                                   height: ZoopMetrics.chartHeight,
@@ -402,7 +401,7 @@ struct XiaomiBandView: View {
             }
             return [("Avg", fmt(avg)), ("Min", fmt(lo)), ("Max", fmt(hi)), ("Points", "\(vals.count)")]
         }()
-        ChartCard(
+        ContentCard(
             title: title,
             subtitle: rangeNote(forKey: key),
             trailing: trailing,

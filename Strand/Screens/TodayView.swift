@@ -16,7 +16,7 @@ import Foundation
 //
 // Composition (top → bottom):
 //   (a) HERO, full-width HStack that fills the width EQUALLY: RecoveryRing (left card)
-//               + InsightCard "Today's Synthesis" (right card). No lone card, no gap.
+//               + Synthesis card "Today's Synthesis" (right card). No lone card, no gap.
 //   (b) METRICS, one adaptive LazyVGrid of fixed-104pt StatTiles (Recovery, Strain,
 //               Sleep, HRV, RHR, SpO2, Respiratory, Steps, Weight, Calories) each with
 //               a 14-day sparkline so the grid tiles perfectly with no empty cells.
@@ -2093,8 +2093,7 @@ struct TodayView: View {
     }
 
     /// S4: the Synthesis card, collapsed to a one-liner that expands on tap. Collapsed: the category +
-    /// status headline + a chevron. Expanded: the FULL `InsightCard` (status + detail), the existing locked
-    /// component, unchanged. The headline is the SAME `synthesisCardStatus` / calibration / DEBUG-frame copy
+    /// status headline + a chevron. Expanded: the full status + detail in a `ContentCard`. The headline is the SAME `synthesisCardStatus` / calibration / DEBUG-frame copy
     /// in both states (#506 content untouched), so only the chrome folds, never the read.
     /// Plain (non-ViewBuilder) resolver for the Synthesis headline + detail. Kept OUT of the @ViewBuilder
     /// body below because an if/else of assignments inside a ViewBuilder is read as a Void "view" and fails
@@ -2117,17 +2116,20 @@ struct TodayView: View {
         let detail = copy.detail
 
         if synthesisExpanded {
-            // Expanded: the full locked InsightCard, then a tap target to collapse it again.
+            // Expanded: the full status + detail card, then a tap target to collapse it again.
             Button {
                 withAnimation(StrandMotion.interactive) { synthesisExpanded = false }
             } label: {
-                InsightCard(
-                    category: "Synthesis",
-                    status: status,
-                    detail: detail,
-                    statusColor: StrandPalette.textPrimary,
-                    tint: StrandPalette.chargeColor
-                )
+                ContentCard {
+                    VStack(alignment: .leading, spacing: ZoopSpacing.s) {
+                        Text("Synthesis").strandOverline()
+                        Text(status).font(StrandFont.rounded(28, weight: .bold))
+                            .foregroundStyle(StrandPalette.textPrimary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(detail).font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -2247,7 +2249,7 @@ struct TodayView: View {
         switch card {
         case .sleepMarks: SleepMarkCard()
         case .trendHRV, .trendRestingHR, .trendEffort:
-            // The Trends charts, drawn by the tab's own ChartCard + TrendChart from the SAME resolved
+            // The Trends charts, drawn by the tab's own chart ContentCard + TrendChart from the SAME resolved
             // points. `HostedTrendData` walks the `days` already in hand, so unlike the sleep model and
             // the stress curve there is no read behind these and nothing to gate.
             HostedTrendCard(card: card, days: repo.days, effortScale: effortScale)
@@ -3350,11 +3352,10 @@ struct TodayView: View {
             let v = hrPoints.map(\.value)
             VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 SectionHeader("Heart Rate", overline: "\(selectedDayOverline)")
-                ChartCard(
+                ContentCard(
                     title: "Beats per minute",
                     subtitle: selectedDayOffset == 0 ? String(localized: "5-minute average · since midnight") : String(localized: "5-minute average · selected day"),
-                    trailing: v.last.map { String(localized: "\(Int($0.rounded())) bpm") },
-                    tint: StrandPalette.metricRose
+                    trailing: v.last.map { String(localized: "\(Int($0.rounded())) bpm") }
                 ) {
                     OverviewHRChart(
                         points: hrPoints,
@@ -3407,13 +3408,12 @@ struct TodayView: View {
             // state is the parity-matched fix. Mirrors the Android HeartRateTrendCard empty branch.
             VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 SectionHeader("Heart Rate", overline: "\(selectedDayOverline)")
-                ChartCard(
+                ContentCard(
                     title: "Beats per minute",
                     subtitle: selectedDayOffset == 0
                         ? String(localized: "Calibrating, no heart rate banked yet today")
                         : String(localized: "No heart rate for this day"),
-                    trailing: nil,
-                    tint: StrandPalette.metricRose
+                    trailing: nil
                 ) {
                     Text(selectedDayOffset == 0
                         ? String(localized: "Your curve fills in as the strap offloads its history.")

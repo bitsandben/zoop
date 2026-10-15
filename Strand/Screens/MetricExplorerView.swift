@@ -9,7 +9,7 @@ import WhoopStore
 // The catalog-driven "Explore" surface. The root is a grouped list — one
 // SectionHeader per MetricCatalog.category, then a row per metric — pushing a
 // MetricDetailView. The detail is a uniform analytic dossier built ONLY from the
-// locked StrandDesign components (ZoopCard / ChartCard / StatTile / InsightCard /
+// locked StrandDesign components (ZoopCard / chart ContentCard / StatTile /
 // SegmentedPillControl). No custom card heights, paddings, or surfaces anywhere.
 //
 // Sparse-metric rule (owner saw "no data" on metrics that HAVE data): a series may
@@ -731,7 +731,7 @@ private struct MetricRow: View {
 // MARK: - Detail / drill-down
 
 /// The full analytic dossier for one metric, built ONLY from locked components:
-/// a SegmentedPillControl range, a hero ChartCard (line + latest "as of"), a uniform
+/// a SegmentedPillControl range, a hero chart ContentCard (line + latest "as of"), a uniform
 /// StatTile row (Average / Min / Max / Latest / Δ), and a "What correlates" ZoopCard.
 struct MetricDetailView: View {
     let metric: MetricDescriptor
@@ -1536,12 +1536,11 @@ struct MetricDetailView: View {
             ? MetricDetailSteps.presentation(readings: series, range: effectiveRange).accessibilitySummary
             : nil
         let stepsResolution = MetricDetailSteps.resolution(for: effectiveRange)
-        return ChartCard(
+        return ContentCard(
             title: isStepsDetail ? LocalizedStringKey("Historical trend") : LocalizedStringKey("\(metric.title)"),
             subtitle: subtitle,
             trailing: "\(heroValue) · \(asOf)",
-            height: ZoopMetrics.chartHeight + (isStepsDetail ? 70 : 0),
-            tint: metricDomain(metric).color
+            height: ZoopMetrics.chartHeight + (isStepsDetail ? 70 : 0)
         ) {
             TrendChart(
                 points: trendPoints(windowed),
@@ -1579,7 +1578,7 @@ struct MetricDetailView: View {
             // as "something weird with a broken line". Shown only when a break actually exists, so it
             // explains the chart in front of the reader rather than a behaviour they cannot see.
             //
-            // In the FOOTER, not beside the chart: `ChartCard` applies `chart().frame(height:)` to that
+            // In the FOOTER, not beside the chart: chart `ContentCard` applies `chart().frame(height:)` to that
             // whole closure, so a caption in there would be squeezed into the chart's fixed height and
             // steal space from the line it is explaining. The footer is the only full-height slot under
             // the chart. Android places it directly under the plot because its card has no such frame -

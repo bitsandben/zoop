@@ -339,60 +339,9 @@ public struct TrendChip: View {
     }
 }
 
-// MARK: - Chart card (UNIFORM: header + fixed chart body + footer)
+// MARK: - Chart footer
 
-public struct ChartCard<ChartBody: View, Footer: View>: View {
-    let title: LocalizedStringKey
-    var subtitle: String? = nil
-    var trailing: String? = nil
-    var height: CGFloat = ZoopMetrics.chartHeight
-    var tint: Color? = nil
-    /// Draws a small chevron right after the title, for a card that opens a page. Beside the title it
-    /// never collides with the trailing value the way a corner overlay did.
-    var showsChevron: Bool = false
-    @ViewBuilder let chart: () -> ChartBody
-    @ViewBuilder let footer: () -> Footer
-
-    public init(title: LocalizedStringKey, subtitle: String? = nil, trailing: String? = nil,
-                height: CGFloat = ZoopMetrics.chartHeight, tint: Color? = nil, showsChevron: Bool = false,
-                @ViewBuilder chart: @escaping () -> ChartBody,
-                @ViewBuilder footer: @escaping () -> Footer = { EmptyView() }) {
-        self.title = title; self.subtitle = subtitle; self.trailing = trailing
-        self.height = height; self.tint = tint; self.showsChevron = showsChevron
-        self.chart = chart; self.footer = footer
-    }
-
-    public var body: some View {
-        ZoopCard(tint: tint) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 4) {
-                            Text(title).strandOverline()
-                            if showsChevron {
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(StrandPalette.textTertiary)
-                                    .accessibilityHidden(true)
-                            }
-                        }
-                        if let subtitle { Text(subtitle).font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary) }
-                    }
-                    Spacer()
-                    if let trailing { Text(trailing).font(StrandFont.bodyNumber).foregroundStyle(StrandPalette.textPrimary) }
-                }
-                chart().frame(height: height)
-                let f = footer()
-                if !(f is EmptyView) {
-                    Divider().overlay(StrandPalette.hairline)
-                    f
-                }
-            }
-        }
-    }
-}
-
-/// A footer row of small "label / value" stats for ChartCard.
+/// A footer row of small "label / value" stats under a chart `ContentCard`.
 public struct ChartFooter: View {
     let items: [(LocalizedStringKey, String)]
     public init(_ items: [(LocalizedStringKey, String)]) { self.items = items }
@@ -404,41 +353,6 @@ public struct ChartFooter: View {
                     Text(it.1).font(StrandFont.captionNumber).foregroundStyle(StrandPalette.textSecondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
-}
-
-// MARK: - Insight card
-
-public struct InsightCard: View {
-    let category: LocalizedStringKey, status: LocalizedStringKey, detail: LocalizedStringKey
-    var statusColor: Color = StrandPalette.accent
-    var tint: Color? = nil
-    /// Extra trailing inset reserved on the overline + status rows so a caller's
-    /// `.overlay(alignment: .topTrailing)` (greeting + state pill) doesn't run over the
-    /// card's own title text on a narrow screen (#69). Defaults to 0 — no effect unless set.
-    var titleTrailingInset: CGFloat = 0
-    public init(category: LocalizedStringKey, status: LocalizedStringKey, detail: LocalizedStringKey, statusColor: Color = StrandPalette.accent, tint: Color? = nil, titleTrailingInset: CGFloat = 0) {
-        self.category = category; self.status = status; self.detail = detail; self.statusColor = statusColor; self.tint = tint; self.titleTrailingInset = titleTrailingInset
-    }
-    public var body: some View {
-        // Defaults the card wash to the status colour so the coaching card sits in the
-        // same colour world as the score it summarises (e.g. gold for Charge). The
-        // insight card reads a touch stronger than a tile: an explicit hue wash
-        // (.14 → .04) + a matching .22 hue border on top of the frosted surface.
-        let hue = tint ?? statusColor
-        // Apple-flat: a plain flat card. Identity comes from the COLOURED status headline alone — no extra
-        // hue-gradient wash, no border (so it reads identical to every other card on the page).
-        return ZoopCard(padding: 18, tint: hue) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(category).strandOverline()
-                    .padding(.trailing, titleTrailingInset)
-                Text(status).font(StrandFont.rounded(28, weight: .bold)).foregroundStyle(statusColor)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.trailing, titleTrailingInset)
-                Text(detail).font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

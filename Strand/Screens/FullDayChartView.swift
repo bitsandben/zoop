@@ -213,12 +213,11 @@ struct FullDayChartView: View {
     // MARK: Chart
 
     @ViewBuilder private var chartCard: some View {
-        ChartCard(
+        ContentCard(
             title: LocalizedStringKey(metric.title),
             subtitle: resolutionSubtitle,
             trailing: latestReadout,
-            height: 280,
-            tint: StrandPalette.metricRose
+            height: 280
         ) {
             if loading && series.points.isEmpty {
                 loadingState

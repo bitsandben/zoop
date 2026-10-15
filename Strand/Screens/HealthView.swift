@@ -5,12 +5,12 @@ import StrandAnalytics
 import WhoopStore
 
 /// Zoop — Health Monitor.
-/// Live heart rate hero (ChartCard with a streaming sparkline + HR-zone footer),
+/// Live heart rate hero (chart ContentCard with a streaming sparkline + HR-zone footer),
 /// then a uniform LazyVGrid of the body's vital signs (respiratory rate, blood
 /// oxygen, resting HR, HRV, skin temp) as fixed-height StatTiles, each tinted and
 /// captioned with its in-range state. Re-skinned to the locked Zoop component
 /// system: every surface is a ZoopCard, every metric is a StatTile, every chart is
-/// a ChartCard — no ad-hoc card heights or paddings.
+/// a chart ContentCard — no ad-hoc card heights or paddings.
 struct HealthView: View {
     @EnvironmentObject var repo: Repository
     @EnvironmentObject var profile: ProfileStore
@@ -302,12 +302,11 @@ private struct HeartRateSection: View {
 
             // The live HR hero is a flat WHOOP card tinted rose — heart-rate's metric accent.
             // No scenic starfield / bloom: fill contrast carries the edge (Apple-flat).
-            ChartCard(
+            ContentCard(
                 title: "Heart Rate",
                 subtitle: hrIsDerived ? String(localized: "Estimated from R-R interval")
                     : (hasLiveHR ? String(localized: "Streaming live") : String(localized: "Awaiting strap")),
-                trailing: hasLiveHR ? "\(displayHR!) bpm" : "—",
-                tint: StrandPalette.metricRose
+                trailing: hasLiveHR ? "\(displayHR!) bpm" : "—"
             ) {
                 heroChart(displayHR: displayHR, hasLiveHR: hasLiveHR,
                           fraction: fraction, zone: zone, series: series)
@@ -333,7 +332,7 @@ private struct HeartRateSection: View {
     }
 
     /// The hero chart body: a tall, time-aware HR line tinted to the current zone, with a
-    /// status pill floated top-trailing. Fixed to ZoopMetrics.chartHeight via ChartCard.
+    /// status pill floated top-trailing. Fixed to ZoopMetrics.chartHeight via chart ContentCard.
     private func heroChart(displayHR: Int?, hasLiveHR: Bool,
                            fraction: Double, zone: Int, series: [LiveHRSample]) -> some View {
         ZStack(alignment: .topTrailing) {

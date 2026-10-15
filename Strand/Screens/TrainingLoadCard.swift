@@ -101,7 +101,7 @@ struct TrainingLoadCard: View {
             } else {
                 let latest = tl.points.last
                 let rows = rows(from: tl)
-                ChartCard(
+                ContentCard(
                     title: "Training Load",
                     subtitle: subtitle(for: tl),
                     trailing: latest.map { signed($0.balance) },
@@ -158,7 +158,7 @@ struct TrainingLoadCard: View {
 
     // Honest empty state: name exactly how many consecutive Effort days are still needed.
     private func unavailableCard(contiguousDays: Int) -> some View {
-        ChartCard(
+        ContentCard(
             title: "Training Load",
             subtitle: String(localized: "Chronic vs acute load"),
             chart: {
