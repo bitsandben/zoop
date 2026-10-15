@@ -1,92 +1,57 @@
 import Foundation
 import WhoopProtocol
 
-/// The ONE place the Oura ring's respiration rows are scaled, displayed and — deliberately — kept out
-/// of scoring. Twin of Kotlin `com.noop.data.OuraRespScale`.
+/// The one place the Oura ring's respiration rows are scaled, displayed and kept out of scoring.
 ///
-/// `respSample` was built for a WHOOP 4.0's raw respiration ADC WAVEFORM (`resp_rate_raw@47`, 1 Hz,
-/// unit `raw_adc`): a signal the stager runs a peak detector over. The ring sends no waveform at all;
-/// its `0x6A sleep_period_info` record carries an already-computed RATE, one value per ~296 s window
-/// (OURA_PROTOCOL.md §6.12). Two different physical quantities now share one table, so the row's OWNER
-/// is what tells them apart — the same discipline `skinTempCelsius(raw:family:)` already applies to
-/// `skinTempSample`, which cannot be reused here because `DeviceFamily` has no Oura case by design
-/// (#1086: a ring resolves to nil, never to a coalesced `.whoop5`).
-///
-/// Everything that reads a respiration row therefore goes through one of the two entry points below —
-/// `displayValue` to show it, `forScoring` to (not) score it — so a future reader is one grep away from
-/// learning that the ring's rows are a rate, not a waveform.
+/// `respSample` was built for a WHOOP 4.0 raw respiration ADC waveform (1 Hz); the ring instead sends an
+/// already-computed RATE, one value per ~296 s window. Two different quantities share one table, so the
+/// row's owner tells them apart (`DeviceFamily` has no Oura case by design, so `skinTempCelsius`'s approach
+/// cannot be reused). Readers go through `displayValue` to show a row and `forScoring` to (not) score it.
 public enum OuraRespScale {
-    /// The unit tag carried on a ring-sourced `RespSample`. `respSample` persists no unit column (only
-    /// `deviceId, ts, raw`), so this rides the in-memory row and documents the stored scale; the durable
+    /// The unit tag on a ring-sourced `RespSample`. `respSample` persists no unit column, so the durable
     /// discriminator is the deviceId, via `isRingRateStream`.
     public static let unitTag = "milli_bpm"
 
-    /// MILLI-breaths-per-minute — the scale a ring respiration row is stored at.
-    ///
-    /// The wire field is a `u8` divided by 8, so every decodable value is an exact multiple of 0.125
-    /// bpm and `× 1000` is LOSSLESS (`raw == wireByte * 125`, integral for all 256 byte values). That
-    /// is why the scale is milli and not the codebase's usual centi: centi would land on `x.5` for half
-    /// the wire alphabet and need a rounding rule that both platforms then have to agree about forever.
-    /// Sub-bpm resolution is not cosmetic here — the whole open question about this channel is a
-    /// residual of about −0.30 bpm, which rounding to whole bpm would erase.
+    /// MILLI-breaths-per-minute: the scale a ring respiration row is stored at. The wire field is a `u8` divided
+    /// by 8, so every value is an exact multiple of 0.125 bpm and `x 1000` is lossless (`raw == wireByte * 125`).
+    /// Centi would land on `x.5` for half the alphabet and need a rounding rule both platforms must agree on, and
+    /// sub-bpm resolution matters here (the open question is a residual of about -0.30 bpm).
     public static let milliBpmPerBpm: Double = 1000.0
 
-    /// Decoded breaths/min → the durable `RespSample.raw` integer. Exact for every wire value; the
-    /// rounding is a floating-point safety net, never a lossy step. PARITY: the Kotlin twin returns the
-    /// IDENTICAL integer (both round half-up, and the input is never negative).
+    /// Decoded breaths/min to the durable `RespSample.raw` integer. Exact for every wire value; rounding is only
+    /// a floating-point safety net (both platforms round half-up on non-negative input).
     public static func milliBpm(fromBreathsPerMin bpm: Double) -> Int {
         Int((bpm * milliBpmPerBpm).rounded())
     }
 
-    /// Durable `raw` → breaths/min.
+    /// Durable `raw` to breaths/min.
     public static func breathsPerMin(raw: Int) -> Double {
         Double(raw) / milliBpmPerBpm
     }
 
-    /// True when this device's `respSample` rows are the ring's per-window RATE (milli-bpm) rather than
-    /// a WHOOP raw ADC waveform.
+    /// True when this device's `respSample` rows are the ring's per-window RATE (milli-bpm), not a WHOOP ADC waveform.
     public static func isRingRateStream(deviceId: String) -> Bool {
         DeviceBrandCatalog.isOura(deviceId)
     }
 
-    /// The number to PLOT for one stored row: breaths/min for a ring, the raw ADC count verbatim for a
-    /// WHOOP. Without this the Deep Timeline's respiration track would plot a ring's 14.375 bpm as
-    /// "14375" beside a WHOOP's ADC counts and call both "Respiration".
+    /// The number to PLOT for one stored row: breaths/min for a ring, the raw ADC count verbatim for a WHOOP.
     public static func displayValue(raw: Int, deviceId: String) -> Double {
         isRingRateStream(deviceId: deviceId) ? breathsPerMin(raw: raw) : Double(raw)
     }
 
-    /// The complement of `forScoring`: the rows a device measured ITSELF as a respiratory RATE, which
-    /// is a night's `dailyMetric.respRateBpm` candidate rather than a stager input. A ring's rows pass;
-    /// a WHOOP's raw ADC waveform does not (it is not a rate, and its night already has one from the
-    /// R-R RSA path).
-    ///
-    /// The two functions partition the same read on the same predicate, deliberately: every caller has
-    /// to say which of the two things it wants, and neither can silently take both.
+    /// The complement of `forScoring`: rows a device measured itself as a respiratory RATE (a ring's), which are
+    /// a night's `dailyMetric.respRateBpm` candidate rather than a stager input. A WHOOP's raw waveform does not pass.
     public static func forVendorRate(_ rows: [RespSample], deviceId: String) -> [RespSample] {
         isRingRateStream(deviceId: deviceId) ? rows : []
     }
 
-    /// The respiration rows the sleep stager is allowed to see: a ring's are REMOVED.
+    /// The respiration rows the sleep stager may see: a ring's are removed.
     ///
-    /// This is a SHAPE refusal, not a trust one — it would hold even for a value nobody doubts, which
-    /// this one increasingly is not (the ring computes it; see `OuraSleepPeriodInfo`). `SleepStager`
-    /// buckets `respSample` into epochs and runs `respRateAndRRV` — a peak detector that assumes a
-    /// ~1 Hz raw WAVEFORM — over a rolling 5-minute window, and its RRV output steers the V1 recipe's
-    /// depth call. A ring row is a per-window RATE: neither a waveform nor 1 Hz, so what it would
-    /// contribute is noise wearing the shape of a signal. Feeding a rate to a peak detector is wrong
-    /// however good the rate is.
-    ///
-    /// Today the ring's ~296 s cadence puts fewer than the required 8 samples in any 5-minute window,
-    /// so the estimate would come back NaN anyway and staging is bit-identical either way (pinned by
-    /// `OuraRespScoringExclusionTests`). That is luck, not a guarantee: a later change to the record
-    /// cadence, or a decoder that expanded one record into per-second rows, would quietly switch the
-    /// path on. Refuse it by provenance instead, where the reason stays legible.
-    ///
-    /// This is about the STAGER only. The same rows DO reach the daily metric by the other door:
-    /// `forVendorRate` hands them to `AnalyticsEngine`, which takes the night's median as
-    /// `dailyMetric.respRateBpm`. Stager input and nightly value are separate questions, and the answer
-    /// differs because the stager wants a waveform and the daily metric wants a rate.
+    /// This is a shape refusal: `SleepStager` runs `respRateAndRRV`, a peak detector that assumes a ~1 Hz raw
+    /// waveform, and its output steers the depth call, so a per-window rate would contribute noise in the shape of
+    /// a signal. Today the ~296 s cadence leaves fewer than the required 8 samples per 5-minute window, so staging
+    /// is identical either way (pinned by `OuraRespScoringExclusionTests`), but that is luck, so refuse by provenance.
+    /// The same rows still reach the daily metric through `forVendorRate`.
     public static func forScoring(_ rows: [RespSample], deviceId: String) -> [RespSample] {
         isRingRateStream(deviceId: deviceId) ? [] : rows
     }

@@ -1,24 +1,16 @@
 import Foundation
 
-/// Honest live-BLE capability set for a WHOOP strap that Zoop can actually drive **without** a CSV /
-/// Health import.
+/// Live-BLE capability set for a WHOOP strap Zoop can drive without a CSV or Health import.
 ///
-/// Calibrated SpO₂ **%** is deliberately **excluded**: AnalyticsEngine nulls `spo2Pct` for every WHOOP
-/// live path (see `Spo2ReTrace` — fabricating a % from raw ADC needs WHOOP's proprietary curve). The
-/// registry used to advertise `spo2` on every paired WHOOP, which made an empty Blood Oxygen tile look
-/// like a bug rather than import-only design (#548).
-///
-/// Steps are 5.0 / MG only over BLE (4.0 has no on-device step counter Zoop can read). Skin temp /
-/// sleep / strain remain listed because Zoop does decode and score them on-device (skin temp as a
-/// nightly ±°C deviation after baseline calibration; firmware layout dependent).
-///
-/// Twin of `com.noop.data.WhoopLiveCapabilities`. Pure — covered by `swift test`.
+/// Calibrated SpO₂ % is excluded: `AnalyticsEngine` nulls `spo2Pct` for every WHOOP live path
+/// (`Spo2ReTrace`), since a % from raw ADC needs WHOOP's proprietary curve. Steps are 5.0/MG only over
+/// BLE. Skin temp, sleep and strain stay listed because Zoop decodes and scores them on-device.
 public enum WhoopLiveCapabilities {
 
     /// Core metrics every WHOOP generation can feed in Zoop over BLE (no calibrated SpO₂ %).
     public static let base: Set<Metric> = [.hr, .hrv, .skinTemp, .sleep, .strainLoad]
 
-    /// True when the model label names a 5.0 or MG (wizard labels: "4.0", "5.0 MG", "WHOOP 5.0", …).
+    /// True when the model label names a 5.0 or MG (wizard labels: "4.0", "5.0 MG", "WHOOP 5.0", ...).
     public static func isFiveOrMG(model: String) -> Bool {
         let m = model.lowercased()
         return m.contains("5") || m.contains("mg")
@@ -36,13 +28,13 @@ public enum WhoopLiveCapabilities {
         metrics(forModel: model).map(\.rawValue).sorted().joined(separator: ",")
     }
 
-    /// Drop calibrated SpO₂ from a stored set — used when reading old registry rows that still list it.
+    /// Drops calibrated SpO₂ from a stored set, for old registry rows that still list it.
     public static func withoutCalibratedSpo2(_ caps: Set<Metric>) -> Set<Metric> {
         caps.subtracting([.spo2])
     }
 
-    /// SQL-safe rewrite of a comma-joined capabilities string: trim tokens and remove bare `spo2` only.
-    /// Does not touch other metrics. Empty result is preserved as empty (caller should not write that).
+    /// SQL-safe rewrite of a comma-joined capabilities string: trims tokens and removes bare `spo2` only.
+    /// An empty result is preserved as empty (the caller should not write that).
     public static func stripSpo2Token(fromEncoded encoded: String) -> String {
         encoded
             .split(separator: ",", omittingEmptySubsequences: true)

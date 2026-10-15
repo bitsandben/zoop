@@ -1,22 +1,15 @@
 import Foundation
 
-/// Build provenance for exports (#1410): a `manifest.json` entry recording which build produced a
-/// `.zoopbak`, and an `APP_VERSION_CHANGED` event marking each in-app version transition so a SINGLE
-/// export answers "what ran when" across the whole retention window. Pure JSON only — the ZIP container
-/// and the event write live in the app layer; these are the byte-parity contract with Android.
-///
-/// Neither is telemetry: both are LOCAL metadata inside the user's own backup, nothing leaves the device.
+/// Build provenance for exports: a `manifest.json` entry naming the build that produced a `.zoopbak`,
+/// and an `APP_VERSION_CHANGED` event per in-app version transition. Pure JSON; local metadata only.
 
-/// The `manifest.json` entry inside a `.zoopbak` — "which build produced this file" (#1410 tier 1).
-/// Sibling to `BackupSettings`; not restored, read only to classify a file (helps #746 route by what a
-/// file SAYS it is rather than probing tables).
+/// The `manifest.json` entry inside a `.zoopbak`. Read only to classify a file; never restored.
 public enum BackupManifest {
-    /// Canonical entry name inside the `.zoopbak` ZIP. Matches the Android exporter byte-for-byte.
+    /// Canonical entry name inside the `.zoopbak` ZIP.
     public static let entryName = "manifest.json"
 
     /// Deterministic (`.sortedKeys`) JSON: `appBuild`, `appVersion`, `exportedAt` (unix ms), `platform`
-    /// ("apple"/"android"), `schemaVersion` (the DB's native schema integer for that platform). The twin
-    /// of Android `BackupManifest.json`; keys + kinds identical, values platform-specific.
+    /// ("apple"/"android"), `schemaVersion`. Keys and kinds are a cross-platform contract.
     public static func json(appVersion: String, appBuild: String, platform: String,
                             schemaVersion: Int, exportedAtMs: Int64) -> String {
         let obj: [String: Any] = [
@@ -31,21 +24,18 @@ public enum BackupManifest {
     }
 }
 
-/// The `APP_VERSION_CHANGED` event appended on an in-app version transition (#1410 tier 2). The one piece
-/// no other means can reconstruct: a single export then answers "what ran when" retroactively.
+/// The `APP_VERSION_CHANGED` event appended on an in-app version transition.
 public enum AppVersionEvent {
-    /// The `event.kind` for a version transition. Rides the existing `event` table (`payloadJSON` string).
+    /// The `event.kind` for a version transition.
     public static let kind = "APP_VERSION_CHANGED"
 
-    /// Record a transition only when a PRIOR version was seen AND it differs — a first launch (nil prior)
-    /// records nothing (there is no transition), so the table never carries a spurious "from null" row.
+    /// True only when a prior version was seen and differs; a first launch records nothing.
     public static func shouldRecord(lastSeen: String?, current: String) -> Bool {
         guard let lastSeen, !lastSeen.isEmpty else { return false }
         return lastSeen != current
     }
 
-    /// Deterministic (`.sortedKeys`) payload: `from`, `schemaVersion`, `to`. Twin of Android
-    /// `AppVersionEvent.payloadJson`.
+    /// Deterministic (`.sortedKeys`) payload: `from`, `schemaVersion`, `to`.
     public static func payloadJson(from: String, to: String, schemaVersion: Int) -> String {
         let obj: [String: Any] = ["from": from, "to": to, "schemaVersion": schemaVersion]
         guard let data = try? JSONSerialization.data(withJSONObject: obj, options: [.sortedKeys]) else { return "{}" }

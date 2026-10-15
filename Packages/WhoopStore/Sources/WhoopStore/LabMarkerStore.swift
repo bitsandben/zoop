@@ -2,28 +2,14 @@ import Foundation
 import GRDB
 
 // MARK: - v17 store: Lab Book markers
+// GRDB CRUD over `labMarker` (one row per user-entered dated reading). Every write also upserts the daily
+// `metricSeries` projection under source id `lab-book`, which is how Compare / Explore / Coach see the book.
 //
-// LabMarkerStore.swift — GRDB CRUD over the `labMarker` table (migration v17), the
-// source-of-truth for the Health Records "Lab Book" pillar
-// (spec 2026-06-19-v5-health-records-design.md §"New").
-//
-// The book is `labMarker` (one row per dated reading the user entered themselves);
-// the daily `metricSeries` projection under source id `lab-book` is HOW the book talks
-// to the rest of the app (Compare / Explore / correlation / Coach see it unchanged).
-// On every write this store ALSO upserts that daily projection, exactly as the spec
-// requires, so the two never drift.
-//
-// Mirrors the established `MetricSeriesStore` / `DeviceRegistryStore` idiom precisely:
-// a plain Codable row struct, raw `Row` fetch + manual decode, idempotent upserts keyed
-// by the natural key, all GRDB work via the actor's `syncWrite` / `syncRead` helpers.
-//
-// NON-CLINICAL: stores ONLY user-entered values + an OPTIONAL user-entered
-// `referenceText` (their own report's range, verbatim). No reference-range tables, no
-// normality judgement, ever.
+// NON-CLINICAL: stores only user-entered values plus an optional user-entered `referenceText` (verbatim).
+// No reference-range tables, no normality judgement, ever.
 
-/// One stored Lab Book reading. Natural key (deviceId, markerKey, takenAt, source) is
-/// enforced by a UNIQUE index so re-importing the same reading is idempotent; `id` is a
-/// stable client-generated identifier for edit/delete-by-id and backup round-trips.
+/// One stored Lab Book reading. Natural key (deviceId, markerKey, takenAt, source) is a UNIQUE index so
+/// re-import is idempotent; `id` is a stable client-generated identifier for edit/delete and backups.
 public struct LabMarkerRow: Equatable, Codable, Sendable {
     public var id: String
     public var deviceId: String
@@ -70,7 +56,6 @@ public struct LabMarkerRow: Equatable, Codable, Sendable {
         self.referenceText = referenceText
     }
 
-    /// Decode a GRDB row (raw-Row idiom, matching DeviceRegistryStore.decode).
     static func decode(_ row: Row) -> LabMarkerRow {
         LabMarkerRow(
             id: row["id"],
@@ -91,34 +76,22 @@ public struct LabMarkerRow: Equatable, Codable, Sendable {
 
 extension WhoopStore {
 
-    /// The constant device-id the daily marker projection is written under, so Compare/
-    /// Explore/Coach see markers as a single-source series (spec §"Cross-platform plan").
+    /// The constant device-id the daily marker projection is written under.
     public static let labBookSourceId = "lab-book"
 
     // MARK: - Upsert (idempotent by natural key) + project to metricSeries
 
-    /// Upsert lab-marker rows, then re-project the affected (markerKey, day) cells into
-    /// `metricSeries` under `lab-book`. Idempotent: re-upserting the same
-    /// (deviceId, markerKey, takenAt, source) updates that reading in place (UNIQUE
-    /// index `idx_labMarker_natural`) and the projection reflects the new value.
-    ///
-    /// The daily projection rule is LATEST-per-day: the reading with the greatest
-    /// `takenAt` for a (markerKey, day) wins — byte-identical to
-    /// `LabBookProjection.project(.latest)`. Only NUMERIC readings project (a
-    /// REAL-only `metricSeries` cell can't carry `valueText`).
-    ///
-    /// Returns the number of marker rows written/updated.
+    /// Upserts lab-marker rows, then re-projects the affected (markerKey, day) cells into `metricSeries` under
+    /// `lab-book`. Idempotent on (deviceId, markerKey, takenAt, source). The projection is latest-per-day (greatest
+    /// `takenAt`) and numeric-only, since a REAL-only cell cannot carry `valueText`. Returns rows written.
     @discardableResult
     public func upsertLabMarkers(_ rows: [LabMarkerRow]) async throws -> Int {
         guard !rows.isEmpty else { return 0 }
         return try syncWrite { db in
             var written = 0
-            // Track which (deviceId, markerKey, day) cells need re-projecting.
             var touched: Set<DayCell> = []
             for r in rows {
-                // Upsert keyed on the natural index, NOT on the `id` PK: a re-import of the
-                // "same reading" (same deviceId+markerKey+takenAt+source) must update, not
-                // duplicate, even if the caller minted a fresh id.
+                // Keyed on the natural index, not the `id` PK: a re-import with a freshly minted id must update, not duplicate.
                 try db.execute(sql: """
                     INSERT INTO labMarker
                         (id, deviceId, markerKey, category, day, takenAt,
@@ -146,8 +119,7 @@ extension WhoopStore {
 
     // MARK: - Reads
 
-    /// All readings in a category, oldest first (by takenAt). Served by
-    /// `idx_labMarker_device_category` + the takenAt index.
+    /// All readings in a category, oldest first (by takenAt).
     public func labMarkers(deviceId: String, category: String) async throws -> [LabMarkerRow] {
         try syncRead { db in
             try Row.fetchAll(db, sql: """
@@ -158,8 +130,7 @@ extension WhoopStore {
         }
     }
 
-    /// Full reading history for one marker, oldest first (by takenAt). Served
-    /// index-only by `idx_labMarker_device_marker_takenAt`.
+    /// Full reading history for one marker, oldest first (by takenAt).
     public func labMarkers(deviceId: String, markerKey: String) async throws -> [LabMarkerRow] {
         try syncRead { db in
             try Row.fetchAll(db, sql: """
@@ -183,14 +154,11 @@ extension WhoopStore {
 
     // MARK: - Delete (removes the row AND its now-orphaned projected day)
 
-    /// Delete one reading by `id`. If that was the last numeric reading for its
-    /// (markerKey, day) cell, the projected `metricSeries` day is removed too; otherwise
-    /// the projection is recomputed from the remaining same-day readings. Returns true if
-    /// a row was deleted.
+    /// Deletes one reading by `id`, then recomputes (or removes) the projected `metricSeries` day for its cell.
+    /// Returns true if a row was deleted.
     @discardableResult
     public func deleteLabMarker(id: String) async throws -> Bool {
         try syncWrite { db in
-            // Capture the cell so we can re-project after the delete.
             guard let row = try Row.fetchOne(db, sql:
                 "SELECT * FROM labMarker WHERE id = ?", arguments: [id]).map(LabMarkerRow.decode) else {
                 return false
@@ -210,14 +178,11 @@ extension WhoopStore {
         let day: String
     }
 
-    /// Recompute the `metricSeries` projection (under `lab-book`) for each touched cell
-    /// from the CURRENT `labMarker` rows. Latest-numeric-per-day wins; if no numeric
-    /// reading remains for a cell, its projected day is deleted (so a removed/last
-    /// reading never leaves a stale projected value behind).
+    /// Recomputes the `lab-book` projection for each touched cell from the current `labMarker` rows; a cell with
+    /// no numeric reading left has its projected day deleted.
     private func reprojectCells(_ db: Database, cells: Set<DayCell>) throws {
         for cell in cells {
-            // Latest NUMERIC reading for this (markerKey, day): greatest takenAt with a
-            // non-null value. Matches LabBookProjection.project(.latest) on numeric rows.
+            // Latest numeric reading for this (markerKey, day): greatest takenAt with a non-null value.
             let latest = try Double.fetchOne(db, sql: """
                 SELECT value FROM labMarker
                 WHERE deviceId = ? AND markerKey = ? AND day = ? AND value IS NOT NULL
@@ -232,7 +197,6 @@ extension WhoopStore {
                     ON CONFLICT(deviceId, day, key) DO UPDATE SET value = excluded.value
                     """, arguments: [WhoopStore.labBookSourceId, cell.day, cell.markerKey, v])
             } else {
-                // No numeric reading remains for this cell → drop the projected day.
                 try db.execute(sql: """
                     DELETE FROM metricSeries
                     WHERE deviceId = ? AND day = ? AND key = ?
