@@ -6,15 +6,9 @@ import AppKit
 #endif
 
 // MARK: - Zoop theme (Classic / Pastel & Nature)
-//
-// The whole-app LOOK, independent of the light/dark appearance. `.classic` is the flat near-black /
-// lime design; `.pastel` is "Pastell & Natur": a sage canvas, white cards, lavender / mint / apricot
-// data worlds and SF Rounded numerals, in both light and dark.
-//
-// Tokens declare both looks via `Color(classic:pastel:)`; their dynamic provider reads `current` at
-// RESOLUTION time, so a static `let` token follows a theme switch. `current` is a plain static read
-// (no UserDefaults lookup in the provider): it is loaded once at first use and updated by
-// `.zoopTheme(_:)` at the app root, which also re-keys the content so every view re-resolves.
+// The whole-app LOOK, independent of light/dark. `.classic` is flat near-black/lime; `.pastel` is "Pastell & Natur" (sage canvas, white cards, lavender/mint/apricot data worlds, SF Rounded numerals).
+// Tokens declare both looks via `Color(classic:pastel:)`; the dynamic provider reads `current` at resolution time (a plain static read, loaded once and updated by `.zoopTheme(_:)`
+// at the app root, which re-keys content so every view re-resolves).
 
 public enum ZoopTheme: String, CaseIterable, Identifiable, Sendable {
     case classic
@@ -55,8 +49,7 @@ public enum ZoopTheme: String, CaseIterable, Identifiable, Sendable {
 }
 
 public extension View {
-    /// Applies the theme: sets `ZoopTheme.current` (read by the token providers and fonts) and keys the
-    /// content on it so a switch rebuilds and re-resolves every view. Apply at each app root.
+    /// Applies the theme: sets `ZoopTheme.current` and keys the content on it so a switch re-resolves every view. Apply at each app root.
     func zoopTheme(_ raw: String) -> some View {
         ZoopTheme.current = ZoopTheme.resolve(raw)
         return self.id("zoop.theme.\(ZoopTheme.current.rawValue)")
@@ -64,8 +57,7 @@ public extension View {
 }
 
 public extension Color {
-    /// A token that carries both looks: `classic` and `pastel` (light, dark) hex pairs. All four hexes
-    /// are parsed ONCE here (#2393); the provider only picks a ready tuple per theme + appearance.
+    /// A token carrying both looks: `classic` and `pastel` (light, dark) hex pairs, all parsed ONCE here (#2393); the provider picks a ready tuple.
     init(classic: (light: String, dark: String), pastel: (light: String, dark: String)) {
         let c = (light: Color.sRGBComponents(hex: classic.light), dark: Color.sRGBComponents(hex: classic.dark))
         let p = (light: Color.sRGBComponents(hex: pastel.light), dark: Color.sRGBComponents(hex: pastel.dark))

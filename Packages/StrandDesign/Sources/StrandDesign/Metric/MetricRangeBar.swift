@@ -5,10 +5,8 @@ import SwiftUI
 /// Where the band and the marker sit on the bar, as 0…1 fractions. Pure so the placement is testable.
 public struct MetricRangeLayout: Equatable, Sendable {
     public let band: ClosedRange<Double>
-    /// nil when there is no value to mark (unavailable).
     public let marker: Double?
 
-    /// nil without a typical range: no band, no bar.
     public init?(_ readout: MetricReadout) {
         guard let range = readout.typicalRange else { return nil }
         let value = readout.displayValue
@@ -25,8 +23,7 @@ public struct MetricRangeLayout: Equatable, Sendable {
         return false
     }
 
-    /// The band takes the middle third, then the domain widens just enough to keep the marker on
-    /// the bar with half a band of air, so an outlier never pins to the edge.
+    /// The band takes the middle third; the domain widens just enough to keep the marker on the bar with half a band of air.
     static func domain(range: ClosedRange<Double>, value: Double?, fixedScore: Bool) -> ClosedRange<Double> {
         if fixedScore { return 0...100 }
         let width = range.upperBound - range.lowerBound

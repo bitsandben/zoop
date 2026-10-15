@@ -1,13 +1,8 @@
 import SwiftUI
 
-/// The data-visualisation colour style: the brand "Titanium & Gold" data ramps, or a "Classic"
-/// throwback — the recognizable red → amber → green readiness scale (cool→hot zones, green→red stress,
-/// purple REM) that health apps have always used. Works in BOTH light and dark. It only re-colours the
-/// DATA encodings (gauge rings, charts, sparklines, scales, stage bands) — never the chrome/surfaces.
-///
-/// Read globally via `StrandPalette.chartStyle` (set from `@AppStorage(ChartStyle.storageKey)` at the
-/// app root); the data-ramp accessors in `StrandPalette` branch on it. The app root keys its content on
-/// the raw value so a flip re-renders the visible charts live.
+/// Data-visualisation colour style: brand "Titanium & Gold" ramps, or the "Classic" red → amber → green
+/// readiness scale. Re-colours DATA encodings only, never chrome. Read via `StrandPalette.chartStyle`;
+/// the app root keys its content on the raw value so a flip re-renders live.
 public enum ChartStyle: String, CaseIterable, Identifiable, Sendable {
     case titanium   // brand: gold recovery, amber strain, blue rest
     case classic    // throwback: red→green recovery, cool→hot zones, green→red stress
@@ -25,13 +20,9 @@ public enum ChartStyle: String, CaseIterable, Identifiable, Sendable {
     public static func resolve(_ raw: String) -> ChartStyle { ChartStyle(rawValue: raw) ?? .titanium }
 }
 
-/// The Sleep tab's stage-CHART shape (distinct from `ChartStyle`, which is colours): the long-standing
-/// per-stage-rows timeline, or the WHOOP-style single stepped hypnogram drawn either FILLED to the
-/// baseline or as a slim RIBBON. Display-only — the underlying stages/totals are identical; this only
-/// changes the drawing, and Filled/Ribbon fall back to Classic on a night with no timestamped segments.
-/// The byte-identical twin is Android `SleepChartStyle` (Units.kt): same `classic`/`filled`/`ribbon`
-/// rawValues and the same `sleep.chart.style` key, so a device reads its own choice consistently.
-/// Device-local (NOT in the `.zoopbak` whitelist), like the Android pref.
+/// Sleep stage-chart shape: per-stage rows, or a single stepped hypnogram FILLED or as a slim RIBBON.
+/// Display-only; Filled/Ribbon fall back to Classic on a night without timestamped segments.
+/// Device-local (NOT in the `.zoopbak` whitelist).
 public enum SleepChartStyle: String, CaseIterable, Identifiable, Sendable {
     case classic       // per-stage-rows timeline (the default, unchanged)
     case filled        // stepped hypnogram filled to the baseline, Zoop sleep colours
@@ -50,8 +41,7 @@ public enum SleepChartStyle: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// Whether the stepped chart fills each stage to the baseline (Fill / Garmin Fill) or draws a slim
-    /// ribbon band (Ribbon). Classic doesn't use the stepped chart.
+    /// Whether the stepped chart fills each stage to the baseline rather than drawing a ribbon.
     public var isFilled: Bool { self == .filled || self == .garminFilled }
 
     /// The stage-colour ramp this style draws with.
@@ -66,14 +56,11 @@ public enum SleepChartStyle: String, CaseIterable, Identifiable, Sendable {
     public static func resolve(_ raw: String) -> SleepChartStyle { SleepChartStyle(rawValue: raw) ?? .classic }
 }
 
-/// Which stage-colour ramp a sleep chart draws with: Zoop's own tokens, Oura's ramp (Ribbon), or Garmin's
-/// (Garmin Fill). Twin of the Kotlin `SleepStagePalette`.
+/// Which stage-colour ramp a sleep chart draws with: Zoop's own, Oura's, or Garmin's.
 public enum SleepStagePalette: String, Sendable { case noop, oura, garmin }
 
-/// Applies the chart style: sets the global `StrandPalette.chartStyle` (read by the data-ramp
-/// accessors) AND keys the content on the raw value so a flip re-renders the visible charts. The
-/// global is set during body evaluation, before the keyed content renders, so the new ramps are live
-/// on the rebuild. Apply at each app root: `.chartStyle(chartStyleRaw)`.
+/// Sets the global `StrandPalette.chartStyle` and keys the content on the raw value so a flip
+/// re-renders live. Apply at each app root.
 public extension View {
     func chartStyle(_ raw: String) -> some View {
         StrandPalette.chartStyle = ChartStyle.resolve(raw)
@@ -81,12 +68,8 @@ public extension View {
     }
 }
 
-/// The user's CHROME accent colour (buttons, links, focus rings, selected states). Only the chrome
-/// accent — never the recovery/strain/sleep DATA colour worlds (those follow `ChartStyle`). Read globally
-/// via `StrandPalette.accentChoice` (+ `StrandPalette.customAccentHex` for `.custom`), set from
-/// `@AppStorage(AccentColor.storageKey)` / `@AppStorage(AccentColor.customHexKey)` at the app root; the
-/// `accent`/`accentHover`/`accentMuted`/`focusRing` accessors in `StrandPalette` branch on it. Mirror in
-/// Kotlin via `Palette.accentChoice` + `ZoopPrefs.accentColor`/`accentCustomHex`.
+/// The user's CHROME accent (buttons, links, focus rings, selected states); never the DATA colour
+/// worlds (those follow `ChartStyle`). Read via `StrandPalette.accentChoice` / `customAccentHex`.
 public enum AccentColor: String, CaseIterable, Identifiable, Sendable {
     case mint        // the brand default (#1068 ZoopVisualStyle.mint world)
     case whoopBlue   // the classic WHOOP link blue
@@ -94,14 +77,14 @@ public enum AccentColor: String, CaseIterable, Identifiable, Sendable {
 
     public var id: String { rawValue }
     public static let storageKey = "accent.color"
-    /// The custom colour's hex, kept separate so switching away from `.custom` and back keeps the choice.
+    /// Custom hex, stored separately so switching away from `.custom` and back keeps the choice.
     public static let customHexKey = "accent.customHex"
-    /// Seeds the custom picker (mint) so a fresh `.custom` selection is not black.
+    /// Seeds the custom picker so a fresh `.custom` selection is not black.
     public static let defaultCustomHex = "#149A78"
 
     public var label: String {
         switch self {
-        // Under Pastel & Nature the brand accent resolves to lavender, so it is named for what it shows.
+        // Under Pastel & Nature the brand accent resolves to lavender, so the label follows.
         case .mint:      return ZoopTheme.isPastel ? String(localized: "Lavender", bundle: .module) : String(localized: "Mint", bundle: .module)
         case .whoopBlue: return String(localized: "WHOOP Blue", bundle: .module)
         case .custom:    return String(localized: "Custom", bundle: .module)
@@ -119,7 +102,7 @@ public enum AccentColor: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// The brighter hover/pressed accent. For `.custom` it is the chosen colour lightened toward white.
+    /// The brighter hover/pressed accent; for `.custom` the chosen colour lightened toward white.
     public var accentHover: Color {
         switch self {
         case .mint:      return ZoopVisualStyle.mintGlow
@@ -128,8 +111,7 @@ public enum AccentColor: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// A low-opacity tint of the accent for muted fills (chips, selected rows). Translucent so it
-    /// composites over whatever surface is behind it — the same 0.18 the mint world uses.
+    /// Low-opacity accent tint for muted fills; translucent so it composites over any surface.
     public var accentMuted: Color {
         switch self {
         case .mint:      return ZoopVisualStyle.mintDeep.opacity(0.18)
@@ -140,8 +122,7 @@ public enum AccentColor: String, CaseIterable, Identifiable, Sendable {
 
     public var focusRing: Color { accent }
 
-    /// Blend an sRGB hex toward white by `amount` (0…1) — the deterministic "hover" derivation for a
-    /// custom accent, so a single picked colour still gets a sensible brighter pressed state.
+    /// Blends an sRGB hex toward white by `amount` (0…1): the hover derivation for a custom accent.
     static func lighten(_ hex: String, by amount: Double = 0.24) -> Color {
         let c = Color.sRGBComponents(hex: hex)
         func up(_ x: Double) -> Double { min(1, x + (1 - x) * amount) }
@@ -149,9 +130,8 @@ public enum AccentColor: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-/// Applies the chrome accent: sets `StrandPalette.accentChoice` + `customAccentHex` (read by the accent
-/// accessors) and keys the content so a change re-renders live. Apply at each app root:
-/// `.noopAccent(accentRaw, customHex: accentCustomHex)`.
+/// Sets `StrandPalette.accentChoice` + `customAccentHex` and keys the content so a change re-renders
+/// live. Apply at each app root.
 public extension View {
     func noopAccent(_ raw: String, customHex: String) -> some View {
         StrandPalette.accentChoice = AccentColor.resolve(raw)
@@ -160,12 +140,9 @@ public extension View {
     }
 }
 
-/// A named THEME preset — a one-tap bundle that coordinates the accent, the chart colour world, the
-/// day-cycle backdrop, and the card opacity. Purely an orchestration over settings that already exist:
-/// selecting a preset writes those four prefs, and the granular controls stay available underneath. There
-/// is NO stored "current theme" — it's DERIVED from the live prefs via [matching], so tweaking any one
-/// control simply resolves to `.custom`. Theme MODE (System/Light/Dark) is independent and never bundled.
-/// Twin of Kotlin `ThemePreset`.
+/// A named THEME preset: a one-tap bundle of accent, chart colour world, day-cycle backdrop and card
+/// opacity. There is no stored "current theme"; it is DERIVED from live prefs via `matching`, so
+/// tweaking any control resolves to `.custom`. Theme MODE is independent and never bundled.
 public enum ThemePreset: String, CaseIterable, Identifiable, Sendable {
     case mint       // brand default: mint accent, Titanium charts, backdrop on, solid cards
     case ocean      // WHOOP-blue accent, Titanium charts, backdrop on, solid
@@ -187,9 +164,7 @@ public enum ThemePreset: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// The four coordinated values a preset writes (nil for `.custom`, which sets nothing). Named `Recipe`
-    /// rather than `Bundle` deliberately — `Bundle` would shadow `Foundation.Bundle`, used just above in
-    /// `String(localized:bundle:)`.
+    /// The four values a preset writes (nil for `.custom`). Not named `Bundle`: that would shadow `Foundation.Bundle`.
     public struct Recipe: Sendable {
         public let accent: AccentColor
         public let chart: ChartStyle
@@ -208,7 +183,7 @@ public enum ThemePreset: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// The presets a user can pick (everything except the derived `.custom` sentinel).
+    /// Presets a user can pick (everything except the derived `.custom`).
     public static var selectable: [ThemePreset] { allCases.filter { $0 != .custom } }
 
     public static func resolve(_ raw: String) -> ThemePreset { ThemePreset(rawValue: raw) ?? .mint }
@@ -226,13 +201,9 @@ public enum ThemePreset: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-/// The user's appearance preference for the whole app. Persisted via
-/// `@AppStorage(AppearanceMode.storageKey)`. `.system` follows the OS (the default);
-/// `.light` / `.dark` force a scheme regardless of the system setting.
-///
-/// Applied once at each app root via `.preferredColorScheme(mode.colorScheme)`. Because every
-/// `StrandPalette` token is a dynamic `Color(light:dark:)`, flipping this re-resolves the entire
-/// UI automatically — no per-view plumbing.
+/// The user's appearance preference, persisted via `@AppStorage(AppearanceMode.storageKey)`.
+/// `.system` follows the OS; `.light` / `.dark` force a scheme. Applied once at each app root via
+/// `.preferredColorScheme`; every `StrandPalette` token is dynamic, so no per-view plumbing.
 public enum AppearanceMode: String, CaseIterable, Identifiable, Sendable {
     case system
     case light
@@ -245,13 +216,8 @@ public enum AppearanceMode: String, CaseIterable, Identifiable, Sendable {
 
     /// Human label for the Settings control.
     ///
-    /// `.light` carries an EXPLICIT key rather than using its English text as the key, because
-    /// "Light" is also the name of a SLEEP STAGE (`Palette.swift`, Awake / Light / Deep / REM) and a
-    /// catalogue key IS its English string, so both shared one entry and one translation. Every
-    /// locale then had to pick a meaning, and each picked the sleep one: French offered "Léger"
-    /// (lightweight) as an appearance, Portuguese and Polish offered "Luz" and "Światło"
-    /// (illumination), and Chinese offered 浅睡, "shallow sleep", as a theme. No translation could
-    /// fix that while one key served both. `.dark` and `.system` are unambiguous and keep theirs.
+    /// `.light` has an EXPLICIT key because "Light" is also a SLEEP STAGE name and a catalogue key is its
+    /// English string; sharing one entry made locales translate it as the sleep stage.
     public var label: String {
         switch self {
         case .system: return String(localized: "System", bundle: .module)
@@ -278,64 +244,49 @@ public enum AppearanceMode: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// Resolve a stored raw value (tolerant of an unknown/missing value → `.system`).
+    /// Resolves a stored raw value; unknown/missing falls back to `.system`.
     public static func resolve(_ raw: String) -> AppearanceMode {
         AppearanceMode(rawValue: raw) ?? .system
     }
 }
 
-/// The day-cycle scene backdrop behind the Today screen (sunrise / day / dusk / night). Default ON —
-/// the scene is the v7 atmosphere. Some people find it distracting and want a plain dark canvas (#698),
-/// so this gates whether Today passes a `SceneScreenBackground` into its scaffold. When OFF, Today drops
-/// the scene and falls back to the opaque `surfaceBase`; the cards already sit on an opaque canvas, so
-/// they stay perfectly readable. Read in `TodayView` via `@AppStorage(SceneBackgroundPrefs.enabledKey)`
-/// and toggled from Settings → Appearance. Mirror in Kotlin via `ZoopPrefs.showDayCycleBackground`.
+/// Day-cycle scene backdrop behind Today (default ON). When OFF, Today falls back to the opaque
+/// `surfaceBase`. Read in `TodayView`; toggled from Settings → Appearance.
 public enum SceneBackgroundPrefs {
-    /// The @AppStorage key shared by TodayView and the Settings toggle. Default value is `true`.
+    /// The @AppStorage key shared by TodayView and the Settings toggle. Default `true`.
     public static let enabledKey = "zoop.showDayCycleBackground"
 }
 
-/// Card-surface opacity as a PERCENT (0 = fully see-through, 100 = solid; default 100). `FrostedCardSurface`
-/// reads it via `@AppStorage(CardAppearancePrefs.opacityKey)` and fades the whole glass by it, so cards
-/// (Heart Rate, Key Metrics, Recovery Vitals, …) can be made see-through from Settings → Appearance; the
-/// card content stays fully readable. Mirror in Kotlin via `ZoopPrefs.cardOpacityPercent`.
+/// Card-surface opacity as a PERCENT (0 = see-through, 100 = solid; default 100), read by
+/// `FrostedCardSurface`. Card content stays fully readable.
 public enum CardAppearancePrefs {
     public static let opacityKey = "zoop.cardOpacityPercent"
     public static let defaultPercent = 100
 }
 
-/// "Sky behind cards" (opt-in, default OFF): extend the day-cycle sky behind the WHOLE Today scroll (not
-/// just the top band) so the Card-transparency setting reveals it under every card. Read in `LiquidTodayView`
-/// via `@AppStorage(SkyBehindCardsPrefs.enabledKey)` and toggled from Settings → Appearance. Mirror in
-/// Kotlin via `ZoopPrefs.skyBehindCards`.
+/// "Sky behind cards" (opt-in, default OFF): extends the day-cycle sky behind the whole Today scroll
+/// so card transparency reveals it. Read in `LiquidTodayView`.
 public enum SkyBehindCardsPrefs {
     public static let enabledKey = "zoop.skyBehindCards"
 }
 
-/// Custom background image (#custom-background): a user-picked photo drawn full-bleed behind every screen,
-/// REPLACING the day-cycle sky when enabled (precedence: image > sky > plain canvas). The image itself is
-/// a device-local file (Application Support on Apple, `filesDir` on Android) — like the avatar it is
-/// deliberately kept OUT of the `.zoopbak` whitelist. Read in the scaffold sky provider + Today's inline
-/// sky. Mirror in Kotlin via `ZoopPrefs.backgroundImageEnabled` / `.backgroundFillMode` /
-/// `.backgroundImagePresent` — the three key strings are byte-identical across platforms.
+/// Custom background image: a user-picked photo drawn behind every screen, REPLACING the day-cycle sky
+/// when enabled (image > sky > plain canvas). The file is device-local and kept OUT of the `.zoopbak`
+/// whitelist; the three key strings are byte-identical across platforms.
 public enum BackgroundImagePrefs {
-    /// Master gate — when true AND an image is present, the custom image overrides the sky. Default false.
+    /// Master gate: when true AND an image is present, the image overrides the sky. Default false.
     public static let enabledKey = "zoop.backgroundImageEnabled"
     /// The `BackgroundFillMode` rawValue. Default `"fill"`.
     public static let fillModeKey = "zoop.backgroundFillMode"
-    /// Whether a background image file has been stored (so the UI can offer Remove and the provider can
-    /// skip a decode when absent). Default false.
+    /// Whether a background image file is stored (lets the UI offer Remove and skips a decode). Default false.
     public static let presentKey = "zoop.backgroundImagePresent"
-    /// The recent-images list (MRU, up to 3), serialized as `"<file>,<fillMode>;<file>,<fillMode>;…"`.
-    /// Device-local like the image files — the filenames differ per device, so only the KEY is shared,
-    /// not the value. Default `""`.
+    /// Recent images (MRU, up to 3) as `"<file>,<fillMode>;…"`. Device-local: filenames differ per device,
+    /// so only the KEY is shared. Default `""`.
     public static let recentsKey = "zoop.backgroundRecents"
 }
 
-/// How a custom background image is scaled to the screen. RawValues are byte-identical to the Kotlin
-/// `BackgroundFillMode` twin so a backup/restore (if ever whitelisted) would read the same, and the two
-/// platforms map them onto the same intent: fill → aspect-fill/crop, fit → aspect-fit, stretch →
-/// no-aspect fill, tile → repeat.
+/// How a custom background is scaled: fill → aspect-fill/crop, fit → aspect-fit, stretch, tile → repeat.
+/// RawValues are byte-identical across platforms.
 public enum BackgroundFillMode: String, CaseIterable, Identifiable, Sendable {
     case fill, fit, stretch, tile
 
@@ -350,6 +301,6 @@ public enum BackgroundFillMode: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// Tolerant parse — an unknown/legacy rawValue falls back to `.fill` (the default).
+    /// Tolerant parse; unknown/legacy rawValues fall back to `.fill`.
     public static func resolve(_ raw: String) -> BackgroundFillMode { BackgroundFillMode(rawValue: raw) ?? .fill }
 }

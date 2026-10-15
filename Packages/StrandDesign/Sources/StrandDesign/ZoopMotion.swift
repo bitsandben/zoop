@@ -1,50 +1,30 @@
 import SwiftUI
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-// For the #2393 window-visibility gate. SwiftUI already makes AppKit types reachable on macOS (the
-// palette's NSColor path relies on it), but the dependency is explicit here because this file names
-// NSApplication and NSWindow directly rather than a type SwiftUI itself vends.
+// Explicit AppKit import: this file names NSApplication/NSWindow directly for the window-visibility gate (#2393).
 import AppKit
 #endif
 
-// MARK: - ZoopMotion — the "Design Reset" motion set (WHOOP design language, 2026-06-22)
-//
-// The house motion language for the WHOOP-flavoured redesign: smooth, snappy, almost no
-// bounce. Beauty is in the restraint — type, spacing and a single confident settle, NOT
-// effects. There is NO glow here and nothing that pulses or loops; that lives elsewhere
-// and is being retired. This file adds three things screens reach for constantly:
-//
-//   • a refined spring/transition set (screen / card / value)
-//   • `CountUpText` — big scores/metrics tick up to their new value
-//   • `.staggeredAppear(index:)` — list/grid items fade + rise in, once, in sequence
-//   • `.softCardTransition()` — card insert/remove (opacity + a hair of scale)
-//
-// Count-up values and staggered entrances use the shared quiet-motion gate so
-// Low Power Mode and the in-app preference also suppress their one-shot work.
-//
-// This complements `StrandMotion` (the physiological breathe/pulse set) rather than
-// replacing it: where StrandMotion leans organic, ZoopMotion leans crisp and mechanical,
-// matching the white-on-near-black WHOOP target.
+// MARK: - ZoopMotion — the house motion set
+// Smooth, snappy, almost no bounce; no glow and nothing that pulses or loops. Provides a spring/transition set, `CountUpText`,
+// `.staggeredAppear(index:)` and `.softCardTransition()`. Count-up and stagger honour the shared quiet-motion gate.
+// Complements `StrandMotion` (organic breathe/pulse); this set is crisp and mechanical.
 
 public enum ZoopMotion {
 
     // MARK: Springs — smooth, snappy, minimal bounce
 
-    /// Screen-level spring — page pushes, sheet/tab swaps, large layout moves. A touch
-    /// slower so big surfaces feel weighted, still effectively bounce-free.
+    /// Screen-level spring: page pushes, sheet/tab swaps, large layout moves.
     public static let screen = Animation.spring(response: 0.46, dampingFraction: 0.88)
 
-    /// Card-level spring — the default for card insert/remove, row reflow, expand/collapse.
-    /// The house tempo: `spring(response: 0.4, dampingFraction: 0.85)`.
+    /// Card-level spring, the house tempo: card insert/remove, row reflow, expand/collapse.
     public static let card = Animation.spring(response: 0.40, dampingFraction: 0.85)
 
-    /// Value-level spring — number ticks, gauge fraction, small chip/state changes. Snappy
-    /// and tightly damped so a changing read-out settles cleanly without overshoot.
+    /// Value-level spring: number ticks, gauge fraction, chip changes; tightly damped, no overshoot.
     public static let value = Animation.spring(response: 0.34, dampingFraction: 0.90)
 
     // MARK: Stagger
 
-    /// Per-item delay for a staggered list/grid reveal. Index 0 fires immediately; each
-    /// subsequent item waits `index * stagger` so a column ripples in top-to-bottom.
+    /// Per-item delay for a staggered reveal: item n waits `n * stagger`.
     public static let stagger: Double = 0.04
 
     /// The pre-reveal vertical offset for a staggered/appear item (rises UP into place).
@@ -52,9 +32,7 @@ public enum ZoopMotion {
 
     // MARK: Reduce-Motion gating
 
-    /// Returns `animation` normally, or `nil` (instant, no animation) when Reduce Motion is on,
-    /// so a `withAnimation` / `.animation(_:value:)` call site snaps straight to the final frame.
-    /// Mirrors `StrandMotion.drawIn(reduced:)`.
+    /// Returns `animation`, or `nil` (snap to the final frame) when Reduce Motion is on. Mirrors `StrandMotion.drawIn(reduced:)`.
     @inline(__always)
     public static func gated(_ animation: Animation, reduced: Bool) -> Animation? {
         reduced ? nil : animation
@@ -62,72 +40,34 @@ public enum ZoopMotion {
 }
 
 // MARK: - Quiet Motion — the ONE gate every never-settling animation consults
-//
-// #909 taught the live gauges to pose still in Low Power Mode, but it read the flag inside
-// `Strand/Liquid` and so could only reach the liquid layer. Everything else that never settles —
-// the day-cycle atmosphere drift, the guardian breath, the connection halo — kept running, and a
-// user in Low Power Mode still paid for it. The Android half (#911) had already put its gate in
-// `com.noop.ui.ZoopMotion`, one process-wide monitor read through `rememberPoseStill()`; this is
-// that same shape on Apple, moved down into StrandDesign so the design system's own surfaces can
-// reach it too (`LiquidPowerMonitor` in the app target could not).
-//
-// Three signals, OR-ed:
-//   1. `@Environment(\.accessibilityReduceMotion)` — the system-wide setting. Supplied by the call
-//      site, because only a View can read the environment.
-//   2. Low Power Mode — the OS-level "stop discretionary work" signal.
-//   3. "Reduce motion in Zoop" — an in-app preference, default OFF, for people who want the app
-//      quiet without putting the whole phone in battery saver.
+// Covers the liquid layer, atmosphere drift, guardian breath and connection halo. Three signals, OR-ed:
+// 1. `accessibilityReduceMotion`, supplied by the call site (only a View can read the environment).
+// 2. Low Power Mode.
+// 3. "Reduce motion in Zoop", an in-app preference, default OFF.
 
-/// "Reduce motion in Zoop" (opt-in, default OFF): pose every looping animation still and stop the
-/// decorative motion sensor, without requiring system Low Power Mode or system Reduce Motion.
-/// Toggled from Settings → Appearance.
-///
-/// **Apple-only for now — there is no Kotlin twin yet, and no parity to claim.** Android's
-/// `rememberPoseStill()` reads two signals (system Reduce Motion ‖ battery saver); this third one is
-/// tracked as #941. The KEY STRING is the cross-platform contract, so it is fixed here and Android must
-/// adopt `"zoop.quietMotion"` verbatim when it lands — a `.zoopbak` round-trip carries the setting by
-/// key, not by symbol name.
+/// "Reduce motion in Zoop" (opt-in, default OFF): poses every looping animation still and stops the decorative motion sensor. Toggled from Settings → Appearance.
+/// Apple-only for now (#941). The key string is the cross-platform contract: Android must adopt "zoop.quietMotion" verbatim so a `.zoopbak` round-trip carries it.
 public enum QuietMotionPrefs {
     /// The `@AppStorage` / `UserDefaults` key shared by the Settings toggle and `ZoopMotionState`.
     public static let enabledKey = "zoop.quietMotion"
 }
 
-/// Publishes the two motion signals that have no SwiftUI environment key — Low Power Mode and the
-/// in-app "Reduce motion in Zoop" preference — so any view can pose its looping animation still.
-///
-/// A singleton with ONE `NotificationCenter` observer rather than a per-view `DisposableEffect`,
-/// for the reason #911 gives on the Android side: the liquid primitives alone have dozens of call
-/// sites, and registering/unregistering an observer as gauges scroll in and out of view would be
-/// churn introduced by the very change that exists to remove per-frame work.
-///
-/// Worth doing because a continuously-animating `Canvas` is not free: measured on an iPhone 17 Pro
-/// simulator seeded with a real 746 MB store, the default Today screen sitting idle costs ~18% of a
-/// CPU core in BOTH Debug and Release, and 0.0% once the live surfaces pose still.
+/// Publishes the motion signals with no SwiftUI environment key (Low Power Mode, the in-app preference) so any view can pose its looping animation still.
+/// One `NotificationCenter` observer rather than per-view registration: the liquid primitives have dozens of call sites. A continuously animating `Canvas`
+/// is not free: ~18% of a core idle on Today in a simulator, 0% once the live surfaces pose still.
 @MainActor
 public final class ZoopMotionState: ObservableObject {
     public static let shared = ZoopMotionState()
 
-    /// System Low Power Mode / battery saver. Live: `.NSProcessInfoPowerStateDidChange` means
-    /// toggling the setting takes effect without a relaunch.
+    /// System Low Power Mode / battery saver. Live via `.NSProcessInfoPowerStateDidChange`, so toggling needs no relaunch.
     @Published public private(set) var isLowPower: Bool
 
-    /// #2393, macOS only: every window of this app is hidden, minimised or fully covered, so nothing
-    /// a frame loop draws can be seen.
-    ///
-    /// A decorative `TimelineView(.animation…)` keeps running when the app is hidden. A reporter
-    /// measured Zoop at a third to half a core permanently on an M1 Pro, the largest single process on
-    /// their machine, ahead of `WindowServer` — and Cmd+H did not reduce it, it RAISED it (28.8% to
-    /// 49.3% of a core in one run, 34.2% to 41.8% in another, returning to baseline exactly on
-    /// re-show). Their hypothesis is that the display link paces the timeline while the window is on
-    /// screen and the schedule free-runs once it is not. That is unproven and does not need to be true:
-    /// drawing frames nobody can see is not worth doing either way.
-    ///
-    /// iOS and watchOS never set this. The system already stops rendering a backgrounded app there, and
-    /// `scenePhase` covers what it does not; this is the gap AppKit leaves.
+    /// macOS only (#2393): every app window is hidden, minimised or fully covered, so nothing a frame loop draws can be seen.
+    /// A decorative `TimelineView(.animation…)` keeps running when hidden (Cmd+H even raised it, 28.8% to 49.3% of a core); drawing unseen frames is not worth it.
+    /// iOS and watchOS never set this: the system stops rendering a backgrounded app and `scenePhase` covers the rest.
     @Published public private(set) var windowObscured: Bool = false
 
-    /// The in-app "Reduce motion in Zoop" preference. Kept in step with `UserDefaults` so a
-    /// non-SwiftUI reader (the motion sensor) and the `@AppStorage` toggle never disagree.
+    /// The in-app "Reduce motion in Zoop" preference, kept in step with `UserDefaults` so the motion sensor and the `@AppStorage` toggle never disagree.
     @Published public private(set) var quietMotion: Bool
 
     private init() {
@@ -140,8 +80,7 @@ public final class ZoopMotionState: ObservableObject {
                 self?.isLowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
             }
         }
-        // `@AppStorage` writes straight to UserDefaults without telling us, so mirror the store.
-        // `.didChangeNotification` is the only signal that covers a write from any target.
+        // `@AppStorage` writes UserDefaults without notifying us, so mirror it via `.didChangeNotification` (covers a write from any target).
         NotificationCenter.default.addObserver(
             forName: UserDefaults.didChangeNotification, object: UserDefaults.standard, queue: .main
         ) { [weak self] _ in
@@ -151,10 +90,8 @@ public final class ZoopMotionState: ObservableObject {
             }
         }
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        // #2393: hide/unhide covers Cmd+H, occlusion covers "another window is over it" and, with the
-        // miniaturise pair, the Dock. They all land on one recompute rather than each setting the flag
-        // its own way: the states overlap (hiding an app also occludes its windows) and a flag written
-        // from five places would disagree with itself the moment two of them arrived out of order.
+        // Hide/unhide, occlusion and miniaturise notifications all land on one recompute: the states overlap (hiding occludes windows),
+        // so a flag written from several places would disagree with itself on out-of-order arrival.
         for name in [NSApplication.didHideNotification,
                      NSApplication.didUnhideNotification,
                      NSWindow.didChangeOcclusionStateNotification,
@@ -168,25 +105,10 @@ public final class ZoopMotionState: ObservableObject {
     }
 
     #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-    /// Recompute [windowObscured] from AppKit's current window list. Cheap: a handful of windows, and
-    /// it runs on notifications a user generates by hand, not on a clock.
+    /// Recompute [windowObscured] from AppKit's window list; cheap, and runs only on user-driven notifications.
     private func refreshWindowObscured() {
-        // `.titled` is what separates a real app window from the `MenuBarExtra`'s status-item window,
-        // which lives in `NSApplication.shared.windows` for the whole life of the process and would
-        // otherwise report something on screen forever.
-        //
-        // #2397: this was `canBecomeMain`, and that was wrong in the one case the gate exists for.
-        // `canBecomeMain` describes a window's CURRENT STATE, not its kind: a hidden or miniaturised
-        // window answers false, so the real window left the filtered list at exactly the moment the gate
-        // should have closed, the list went empty, and the empty-list rule below then read that as "not
-        // obscured". Two individually reasonable decisions cancelling out. @nichtlegacy measured it:
-        //
-        //     visible     all=3  cbm=1  titled=2 (one on screen)   obscured=N
-        //     hidden      all=4  cbm=0  titled=2 (none on screen)  obscured=N, should be Y
-        //     minimised   all=4  cbm=0  titled=2 (none on screen)  obscured=N, should be Y
-        //
-        // `NSStatusBarWindow` reported `titled=N` in every state they logged, and the app window kept
-        // `titled=Y` in all three, which is the property this needs and `canBecomeMain` never had.
+        // Filter on `.titled`: it separates real app windows from the `MenuBarExtra` status-item window, which lives for the whole process and would report something on screen forever.
+        // Not `canBecomeMain`: it describes current state, so a hidden or miniaturised window answered false, the list emptied, and the empty-list rule below read that as not obscured (#2397).
         let windows = NSApplication.shared.windows
             .filter { $0.styleMask.contains(.titled) }
             .map { WindowVisibility(onScreen: $0.isVisible && $0.occlusionState.contains(.visible)) }
@@ -195,44 +117,20 @@ public final class ZoopMotionState: ObservableObject {
     }
     #endif
 
-    /// One app window's contribution to the gate, as the pure decision sees it.
-    ///
-    /// #2397: a struct rather than two loose Bools because the decision is about a LIST of windows, and
-    /// the bug it replaces was invisible to a test that could only be handed a summary. Given
-    /// `hasWindows`/`anyWindowOnScreen` there was no way to express "the app window is hidden while the
-    /// status-item window is on screen", which is the exact state that was misread.
+    /// One app window's contribution to the gate. A struct so the decision is tested over a LIST (e.g. app window hidden while the status-item window is on screen, which was misread, #2397).
     struct WindowVisibility: Equatable {
         /// Visible AND not fully occluded: what `isVisible && occlusionState.contains(.visible)` answers.
         let onScreen: Bool
     }
 
-    /// Pure half of the recompute, so the rule can be tested without AppKit.
-    ///
-    /// Takes the already-filtered app windows: every entry is a titled window, the status-item window
-    /// having been dropped by the caller. Obscured means "there are app windows and none of them is on
-    /// screen".
-    ///
-    /// NO WINDOWS is deliberately NOT obscured, and the case is more common than it sounds: before the
-    /// first window exists during launch, and again when someone closes the window and leaves Zoop
-    /// running as a menu-bar app. Treating an empty list as "nothing on screen" would pose every surface
-    /// still until the next occlusion notification arrived — a first frame of static gauges on the way
-    /// to a live screen, caused by the optimisation. Nothing is lost by the other reading: with no
-    /// window there is no view hierarchy, so there is no frame loop to stop.
-    ///
-    /// That rule is only safe while the filter is state-INDEPENDENT. Under #2394's `canBecomeMain` the
-    /// list emptied whenever the window was hidden, so this clause silently answered the live question
-    /// instead of the launch one. `.titled` keeps a hidden window in the list, which is what returns this
-    /// rule to the case it was written for.
-    ///
-    /// `nonisolated` because the enclosing class is `@MainActor` and this decides nothing that needs the
-    /// main actor — without it a test could not call it off the main actor at all.
+    /// Pure half of the recompute, testable without AppKit. Takes already-filtered titled app windows; obscured means there are app windows and none is on screen.
+    /// No windows is deliberately NOT obscured (launch, or window closed with Zoop running as a menu-bar app): treating it as obscured would pose static gauges until the next notification.
+    /// That is only safe while the filter is state-independent, hence `.titled` (#2394/#2397). `nonisolated` so tests can call it off the main actor.
     nonisolated static func obscured(_ windows: [WindowVisibility]) -> Bool {
         !windows.isEmpty && !windows.contains { $0.onScreen }
     }
 
-    /// The gate. `reduceMotion` comes from `@Environment(\.accessibilityReduceMotion)` at the call
-    /// site — the environment is the only place SwiftUI publishes it, and reading it imperatively
-    /// would not invalidate the view when the user changes the setting.
+    /// The gate. `reduceMotion` comes from `@Environment(\.accessibilityReduceMotion)` at the call site; only the environment invalidates the view when the setting changes.
     ///
     /// ```swift
     /// @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -247,16 +145,10 @@ public final class ZoopMotionState: ObservableObject {
 }
 
 // MARK: - CountUpText
-//
-// Animates a numeric value counting up (or down) to its latest value whenever `value`
-// changes, and on first appear (from 0 → value). Driven by a custom `Animatable` modifier
-// so it works on the iOS 16 / macOS 13 floor (no TimelineView spring / PhaseAnimator needed)
-// and rides whatever animation the environment supplies — by default `ZoopMotion.value`.
-//
-// Quiet motion → the final value is shown instantly, with no tick.
+// Counts a number up or down on change and on first appear (0 → value). A custom `Animatable` keeps it working on the iOS 16 / macOS 13 floor and it rides the
+// environment's animation (default `ZoopMotion.value`). Quiet motion shows the final value instantly.
 
-/// A text view whose number animates from its previous value to the new one.
-/// Use for the big scores / hero metric read-outs.
+/// A text view whose number animates from its previous value to the new one; for big scores and hero read-outs.
 ///
 /// ```swift
 /// CountUpText(value: score,
@@ -272,14 +164,12 @@ public struct CountUpText: View {
     private let color: Color
     private let animation: Animation
 
-    /// The value currently being animated TO. `_AnimatableNumber` interpolates from the
-    /// last committed `target` to this one; on appear it starts the run from 0.
+    /// The value currently animated TO; on appear the run starts from 0.
     @State private var target: Double = 0
     @State private var hasAppeared = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    // The system flag alone misses Zoop's own preference and Low Power Mode. Use the same
-    // live gate as the decorative loops so a refresh cannot restart suppressed count-up work.
+    // The system flag alone misses Zoop's own preference and Low Power Mode; use the shared gate so a refresh cannot restart suppressed work.
     @ObservedObject private var motion = ZoopMotionState.shared
     private var poseStill: Bool { motion.poseStill(reduceMotion) }
 
@@ -302,8 +192,6 @@ public struct CountUpText: View {
     }
 
     public var body: some View {
-        // `_AnimatableNumber` conforms to `Animatable`, so SwiftUI interpolates `number`
-        // frame-by-frame under whatever animation wraps the `target` change.
         _AnimatableNumber(number: target, format: format, font: font, color: color)
             .onAppear {
                 guard !hasAppeared else { return }
@@ -323,18 +211,14 @@ public struct CountUpText: View {
                     withAnimation(animation) { target = newValue }
                 }
             }
-            // Expose the formatted value to assistive tech as a single, stable label
-            // (the visual ticking is decorative; VoiceOver reads the final number).
+            // Single stable VoiceOver label; the ticking is decorative.
             .accessibilityElement()
             .accessibilityLabel(Text(format(value)))
     }
 }
 
-/// A `View` whose `number` is the animatable channel: SwiftUI interpolates it frame-by-frame
-/// under whatever animation wraps the value change, and `body` re-renders `format(number)`
-/// each frame. Conforming the VIEW to `Animatable` (rather than using the deprecated
-/// `AnimatableModifier`) keeps this warning-clean on the iOS-17 / macOS-14 build while still
-/// compiling on the iOS-16 / macOS-13 floor.
+/// Animatable view: SwiftUI interpolates `number` per frame under the wrapping animation and `body` re-renders `format(number)`. A View (not the deprecated
+/// `AnimatableModifier`) stays warning-clean on iOS 17 while compiling on the iOS 16 floor.
 private struct _AnimatableNumber: View, Animatable {
     var number: Double
     let format: (Double) -> String
@@ -356,10 +240,7 @@ private struct _AnimatableNumber: View, Animatable {
 }
 
 // MARK: - Staggered appear
-//
-// Fade-in + 8pt rise, sequenced by `index`. Runs ONCE per element (guarded by `hasAppeared`),
-// so re-renders / scroll recycling don't re-trigger it. Quiet motion → visible instantly,
-// no offset.
+// Fade-in + 8pt rise by `index`, once per element (`hasAppeared`) so re-renders and scroll recycling don't retrigger. Quiet motion → visible instantly.
 
 private struct StaggeredAppear: ViewModifier {
     let index: Int
@@ -367,13 +248,11 @@ private struct StaggeredAppear: ViewModifier {
 
     @State private var hasAppeared = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    // Lazy sections enter repeatedly while scrolling. Quiet motion must expose their final pose
-    // immediately rather than scheduling another delayed entrance when they become visible.
+    // Lazy sections re-enter while scrolling; quiet motion must show the final pose rather than schedule another delayed entrance.
     @ObservedObject private var motion = ZoopMotionState.shared
     private var poseStill: Bool { motion.poseStill(reduceMotion) }
 
     func body(content: Content) -> some View {
-        // Show immediately when the shared quiet-motion gate is closed.
         let shown = hasAppeared || poseStill
         content
             .opacity(isVisible ? (shown ? 1 : 0) : 1)
@@ -394,8 +273,7 @@ private struct StaggeredAppear: ViewModifier {
 }
 
 public extension View {
-    /// Fade-in + 8pt rise on first appearance, delayed by `index * 0.04s` for a sequenced
-    /// list/grid reveal. Runs ONCE per element. The quiet-motion gate shows it instantly.
+    /// Fade-in + 8pt rise on first appearance, delayed `index * 0.04s`, once per element. Quiet motion shows it instantly.
     ///
     /// - Parameters:
     ///   - index: position in the sequence (0 = first / no delay).
@@ -406,15 +284,10 @@ public extension View {
 }
 
 // MARK: - Soft card transition
-//
-// For card insertion/removal inside an animated container (`if`/`ForEach`). Opacity + a
-// tiny scale (0.98), asymmetric so an inserted card grows in and a removed card fades out
-// without a jarring collapse. Reduce Motion → a plain opacity fade (no scale).
+// Card insert/remove inside an animated container: opacity + 0.98 scale, asymmetric so an inserted card grows in and a removed one fades out. Reduce Motion → plain fade.
 
 public extension AnyTransition {
-    /// The house card insert/remove transition: opacity + a hair of scale. Pass
-    /// `reduced:` from `@Environment(\.accessibilityReduceMotion)` so it degrades to a
-    /// plain fade when Reduce Motion is on.
+    /// The house card insert/remove transition; pass `reduced:` from `accessibilityReduceMotion` to degrade to a fade.
     static func softCard(reduced: Bool) -> AnyTransition {
         if reduced {
             return .opacity
@@ -433,9 +306,7 @@ private struct SoftCardTransition: ViewModifier {
 }
 
 public extension View {
-    /// Applies the house card insert/remove transition (`opacity` + tiny `scale`), wired to
-    /// Reduce Motion automatically. Drive the change with `ZoopMotion.card`, e.g.
-    /// `withAnimation(ZoopMotion.card) { cards.append(...) }`.
+    /// Applies the house card transition, wired to Reduce Motion. Drive with `ZoopMotion.card`.
     func softCardTransition() -> some View {
         modifier(SoftCardTransition())
     }

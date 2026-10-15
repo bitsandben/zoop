@@ -3,8 +3,8 @@ import SwiftUI
 // MARK: - Hex Color Helper
 
 public extension Color {
-    /// Parse a hex string ("#0B0D12" / "0B0D12" RGB, or "#AARRGGBB"/"RRGGBBAA" RGBA) to sRGB
-    /// components in 0...1. Shared by `Color(hex:)` and the dynamic `Color(light:dark:)` provider.
+    /// Parse "#RRGGBB" or "#AARRGGBB"/"RRGGBBAA" hex into sRGB components in 0...1.
+    /// Shared by `Color(hex:)` and the dynamic `Color(light:dark:)` provider.
     static func sRGBComponents(hex: String) -> (r: Double, g: Double, b: Double, a: Double) {
         let raw = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
@@ -19,38 +19,21 @@ public extension Color {
         }
     }
 
-    /// Create a Color from a hex string like "#0B0D12" or "0B0D12" (RGB) or "#AARRGGBB" / "RRGGBBAA".
-    /// Supported lengths: 6 (RGB), 8 (RGBA).
+    /// Create a Color from "#RRGGBB" (6) or "#AARRGGBB" / "RRGGBBAA" (8) hex.
     init(hex: String) {
         let c = Color.sRGBComponents(hex: hex)
         self.init(.sRGB, red: c.r, green: c.g, blue: c.b, opacity: c.a)
     }
 
-    /// A colour that resolves to `light` or `dark` (both hex strings) per the active appearance.
-    /// Backed by a `UIColor`/`NSColor` dynamic provider, so a single token automatically re-resolves
-    /// at every one of its call sites when the colour scheme flips — no per-view environment plumbing.
-    /// This is the whole light-theme strategy: only the token definitions change, never the call sites.
+    /// A colour that resolves to `light` or `dark` (hex strings) per the active appearance.
+    /// Only token definitions change per theme, never call sites.
     init(light: String, dark: String) {
-        // #2393: parse BOTH hexes ONCE, here, and let the provider pick between two ready tuples.
-        //
-        // The provider closure is not called once per token — it is called once per RESOLUTION, and the
-        // liquid layer resolves on every frame: `Color.liquidComponents()` asks for
-        // `NSColor(self).usingColorSpace(.sRGB)` (`LiquidCore.swift`), which re-invokes this closure,
-        // which used to run `trimmingCharacters` + `Scanner.scanHexInt64` over a string. A reporter
-        // profiling Zoop at a third to half a CPU core on macOS found `Color.sRGBComponents(hex:)` and
-        // `closure #1 in Color.init(light:dark:)` among the hot leaves (#2393).
-        //
-        // A cache would also have removed the cost, and a cache is the wrong shape for it: it needs a
-        // key, a lock (a dynamic provider can resolve off the main thread) and an eviction story, to
-        // re-derive per frame a value that cannot change after this line. The tokens are `static let`
-        // (`ZoopVisualStyle`, `StrandPalette`), so this runs once per token for the life of the process.
-        // One declaration rather than two `let`s: watchOS resolves straight to the dark hex, so a separate
-        // `lightComponents` would be unused on that platform and warn. A pair that is always read as a
-        // whole has no such half.
+        // Parse both hexes once here: the provider runs per resolution (the liquid layer resolves every frame), so parsing inside it
+        // was a hot path (#2393). A cache would need a key, lock and eviction for a value fixed at this line; tokens are `static let`.
+        // One tuple, not two `let`s: watchOS resolves straight to dark, so a separate light value would be unused there and warn.
         let components = (light: Color.sRGBComponents(hex: light), dark: Color.sRGBComponents(hex: dark))
         #if os(watchOS)
-        // watchOS has no UITraitCollection / dynamic-provider UIColor, and our watch app is effectively
-        // always dark, so a token resolves straight to its dark hex. No per-scheme plumbing on the wrist.
+        // watchOS has no dynamic-provider UIColor and the watch app is always dark, so a token resolves straight to its dark hex.
         self.init(.sRGB, red: components.dark.r, green: components.dark.g,
                   blue: components.dark.b, opacity: components.dark.a)
         #elseif canImport(UIKit)
@@ -73,20 +56,13 @@ public extension Color {
 
 // MARK: - Strand Palette
 //
-// The "Titanium & Gold" re-skin: a premium dark theme built on a deep navy canvas with
-// per-domain accent "colour worlds" (Charge = gold, Effort = amber, Rest = blue,
-// Stress = blue→gold→orange). GOLD is the dominant brand anchor; titanium drives the
-// neutral chrome (tiles, avatars, icons).
-//
-// PUBLIC API IS FROZEN: every property name below is depended on by screens across
-// macOS / iOS, so the names never change — only the VALUES were re-themed. New
-// Titanium & Gold tokens (gold ramp, titanium ramp, gradients) are ADDED at the end
-// of the type; nothing existing was removed or renamed.
+// Dark navy canvas with per-domain accent worlds (Charge gold, Effort amber, Rest blue, Stress blue-gold-orange); titanium drives neutral chrome.
+// Public API is frozen: property names are used across macOS/iOS and only values are themed.
 
 public enum StrandPalette {
 
     // MARK: Surfaces — deep navy canvas, tinted frosted cards
-    // Background is a near-black navy (NOT pure black); cards float just above it.
+    // Background is near-black navy, not pure black; cards float just above it.
     public static let surfaceBase    = ZoopVisualStyle.canvas
     public static let surfaceRaised  = ZoopVisualStyle.surface
     public static let surfaceOverlay = ZoopVisualStyle.surfaceTop
@@ -100,36 +76,25 @@ public enum StrandPalette {
     public static let textTertiary   = ZoopVisualStyle.tertiaryText
 
     // MARK: Text ON a permanently-dark surface (scheme-invariant)
-    // Use these — NOT textPrimary/Secondary/Tertiary — for labels/pills drawn over a fill that is pinned
-    // dark in BOTH themes (e.g. the over-sky ScreenScaffold title, on the time-of-day sky backdrop). The
-    // regular text tokens FLIP to dark ink in Light mode, so on a fixed-dark surface they render
-    // dark-on-near-black and vanish (#1013). These hold the light-on-dark values in BOTH schemes, so a
-    // label always reads. (The Liquid hero card USED to need these, but its `heroFill` is theme-aware as of
-    // #1160, so the hero now uses the normal text* tokens.)
+    // Use these, not textPrimary/Secondary/Tertiary, over a fill pinned dark in BOTH themes (e.g. the over-sky ScreenScaffold title):
+    // the regular tokens flip to dark ink in Light and vanish (#1013).
     public static let onDarkPrimary   = Color(hex: "#F4F6F8")
 
     // MARK: Liquid hero card surface (#1160/#1161)
-    // Was pinned near-black in BOTH themes, which read as a broken dark block in Light mode (#1160) and
-    // never honoured card transparency (#1161). Now THEME-AWARE: near-black in Dark, frosted white in
-    // Light, so the hero fits in with the other cards. Its own text uses the regular text*/tint tokens
-    // (which flip) — NOT onDark*, which stays fixed for the genuinely-always-dark SKY backdrop
-    // (ScreenScaffold's over-sky title). 8-digit hex = RRGGBBAA (alpha last).
+    // Theme-aware (near-black in Dark, frosted white in Light) and honours card transparency. Its text uses the regular flipping tokens;
+    // onDark* is for the always-dark sky backdrop. 8-digit hex = RRGGBBAA.
     public static let heroFill   = Color(light: "FFFFFFD9", dark: "0D0E14CC", pastel: ("FFFFFFF2", "202824E6"))
     public static let heroBorder = Color(light: "0000001A", dark: "FFFFFF1C", pastel: ("2F3A3312", "FFFFFF14"))
 
     // MARK: Primary pill controls
-    // The solid primary control ("+" beside My Day, Save / Start pills, ZoopButton .primary). Classic keeps
-    // the ink-on-canvas inversion (exactly textPrimary / surfaceBase); Pastel & Nature uses a soft lavender
-    // fill with deep lavender ink so the strongest control on a screen still reads gentle.
+    // Classic keeps the ink-on-canvas inversion (textPrimary / surfaceBase); Pastel & Nature uses soft lavender fill with deep lavender ink.
     public static let primaryButtonFill = Color(classic: (light: "#17181C", dark: "#F5F5F5"),
                                                 pastel: (light: "#DCD6F7", dark: "#B9AFF0"))
     public static let primaryButtonText = Color(classic: (light: "#F3F4F6", dark: "#0A0A0A"),
                                                 pastel: (light: "#4A3F8F", dark: "#221D45"))
 
     // MARK: Decorative shadow
-    /// A decorative drop-shadow colour at `opacity`. Classic keeps plain black; Pastel & Nature light
-    /// uses a faint sage-ink tint at a third of the strength (black reads as dirt on the pale canvas),
-    /// pastel dark keeps black.
+    /// A decorative drop-shadow colour at `opacity`. Classic keeps black; Pastel & Nature light uses a faint sage-ink tint at a third of the strength.
     public static func shadow(_ opacity: Double) -> Color {
         guard ZoopTheme.isPastel else { return .black.opacity(opacity) }
         let a = { (v: Double) in String(format: "%02X", Int((min(1, max(0, v)) * 255).rounded())) }
@@ -137,11 +102,9 @@ public enum StrandPalette {
     }
 
 
-    // MARK: Accent — chrome anchor (links, selection, focus, generic accent). USER-SELECTABLE (mint /
-    // WHOOP blue / custom) via `accentChoice` below, default mint (#1068). Only the chrome accent is
-    // user-themed — the recovery/strain/sleep DATA worlds follow `chartStyle`, never this.
-    /// The user's chrome-accent choice. Set from `@AppStorage(AccentColor.storageKey)` at the app root
-    /// via `.noopAccent(...)`; the four accessors below branch on it. Default mint.
+    // MARK: Accent — chrome anchor (links, selection, focus). User-selectable via `accentChoice`, default mint (#1068).
+    // Only chrome is user-themed; the recovery/strain/sleep data worlds follow `chartStyle`.
+    /// The user's chrome-accent choice, set from `@AppStorage(AccentColor.storageKey)` via `.noopAccent(...)`. Default mint.
     public static var accentChoice: AccentColor = .mint
     /// The custom accent's hex, used only when `accentChoice == .custom`. Set alongside `accentChoice`.
     public static var customAccentHex: String = AccentColor.defaultCustomHex
@@ -156,12 +119,8 @@ public enum StrandPalette {
     public static let liquidHeart = Color(light: "#B86A2A", dark: "#D9823E", pastel: ("#C2617F", "#F0A9BF"))
 
     // MARK: - Chart style (data-viz colour mode) — Titanium (brand) or Classic (throwback)
-    //
-    // Set from `@AppStorage(ChartStyle.storageKey)` at the app root. The DATA-RAMP accessors below
-    // (recoveryStops, strainStops, hrZones, sleepStageColor, stress gradient, status, metric, and the
-    // DomainTheme worlds) branch on this — so flipping it re-colours every gauge/chart/scale to the
-    // classic red→green readiness scale, in BOTH light and dark, with NO call-site changes. Chrome
-    // (surfaces, text, accent) is never touched.
+    // Set from `@AppStorage(ChartStyle.storageKey)`. The data-ramp accessors below (stops, hrZones, sleep stages, stress, status, metric, DomainTheme) branch on it;
+    // chrome (surfaces, text, accent) is never touched.
     public static var chartStyle: ChartStyle = .titanium
     @inline(__always) static var isClassic: Bool { chartStyle == .classic }
 
@@ -198,11 +157,9 @@ public enum StrandPalette {
     static let cZone4 = Color(light: "#D87328", dark: "#EE8B3C")
     static let cZone5 = Color(light: "#CB3A2F", dark: "#E5483B")
 
-    // MARK: Recovery / Charge gradient — the gold "Charge" colour world.
-    // A single warm metal ramp: a deep bronze floor climbs through brand gold into a
-    // bright champagne peak — no green anywhere; depleted reads as dim gold, not coral.
-    // 0.00 bronze → 0.30 antique gold → 0.55 brand gold → 0.78 soft gold → 1.00 champagne.
-    // Three flat bands: red below 34, orange to 66, lime from 67 (the app icon's green).
+    // MARK: Recovery / Charge gradient — the gold "Charge" colour world
+    // Warm metal ramp with no green: 0.00 bronze → 0.30 antique gold → 0.55 brand gold → 0.78 soft gold → 1.00 champagne.
+    // Three flat bands: red below 34, orange to 66, lime from 67.
     public static let recovery000 = Color(light: "#C23B3B", dark: "#D64545", pastel: ("#C2617F", "#F0A9BF")) // red band
     public static let recovery030 = Color(light: "#C23B3B", dark: "#D64545", pastel: ("#C2617F", "#F0A9BF")) // red band
     public static let recovery055 = Color(light: "#B25C2E", dark: "#C26A38", pastel: ("#C98232", "#F3C99A")) // orange band
@@ -224,10 +181,8 @@ public enum StrandPalette {
     /// The signature recovery gradient (bronze → champagne, or Classic red→green).
     public static var recoveryGradient: Gradient { Gradient(stops: recoveryStops) }
 
-    // MARK: Strain / Effort ramp — the amber "Effort" colour world.
-    // Deep ember → warm amber → bright amber → soft amber peak: heat/output, all in the
-    // Effort accent family rather than veering into magenta.
-    // The concept's strain blue, deepening toward low load and brightening toward the top.
+    // MARK: Strain / Effort ramp — the amber "Effort" colour world
+    // Next four stops: the concept's strain blue, deepening toward low load and brightening toward the top.
     public static let strain000 = Color(light: "#1D4E94", dark: "#22559F", pastel: ("#B06F26", "#D9A066"))
     public static let strain033 = Color(light: "#2860B4", dark: "#2D6CC8", pastel: ("#C4823A", "#E6B27E"))
     public static let strain066 = Color(light: "#336CC0", dark: "#3C7AD4", pastel: ("#D4964F", "#F0C392"))
@@ -245,20 +200,14 @@ public enum StrandPalette {
     /// The strain gradient (output / heat, or the Classic blue ramp).
     public static var strainGradient: Gradient { Gradient(stops: strainStops) }
 
-    // MARK: Sleep stages — the blue "Rest" colour world (Titanium); Classic adds a purple REM.
-    // WHOOP sleep-stage palette (adopted from ryanAtriumAi #988): four distinct hues per stage —
-    // Awake white-grey #CAC8CB, Light periwinkle #A7A4F4, SWS/Deep orchid-pink #FD96FD, REM purple
-    // #AE5BEF — because the previous three near-identical blues made a fragmented on-device
-    // hypnogram unreadable. Light-mode variants are the same hues darkened for contrast on white.
-    // The redesign's cool set: four distinct hues drawn only from the concept palette (grey awake,
-    // blue-grey light, strain blue deep, lime REM), replacing the earlier periwinkle/orchid/purple.
+    // MARK: Sleep stages — the blue "Rest" colour world (Titanium); Classic adds a purple REM
+    // Four distinct hues from the concept palette (grey awake, blue-grey light, strain blue deep, lime REM) so a fragmented hypnogram stays readable.
     public static var sleepAwake: Color { isClassic ? cSleepAwake : t_sleepAwake }
     public static var sleepLight: Color { isClassic ? cSleepLight : t_sleepLight }
     public static var sleepDeep:  Color { isClassic ? cSleepDeep  : t_sleepDeep }
     public static var sleepREM:   Color { isClassic ? cSleepREM   : t_sleepREM }
 
-    // MARK: HR zones — Titanium cool→warm (no green), or the Classic grey→green→yellow→orange→red.
-    // Zones climb through the redesign's palette: blue-grey, teal, gold, orange, red.
+    // MARK: HR zones — Titanium cool→warm (no green), or the Classic grey→green→yellow→orange→red
     public static var zone1: Color { isClassic ? cZone1 : t_zone1 }
     public static var zone2: Color { isClassic ? cZone2 : t_zone2 }
     public static var zone3: Color { isClassic ? cZone3 : t_zone3 }
@@ -283,29 +232,21 @@ public enum StrandPalette {
         #endif
     }
 
-    // Stress bands: blue-grey when calm, lime in the middle,
-    // orange when high. The `Muted` variants are the darker "typical day" comparison bars.
+    // Stress bands: blue-grey calm, lime middle, orange high. `Muted` variants are the darker "typical day" bars.
     public static let stressLow         = Color(light: "#5C8FB0", dark: "#6E9CBC", pastel: ("#7DB592", "#9FD6AF"))
     public static let stressMedium      = Color(light: "#4C7A12", dark: "#BFEB7B", pastel: ("#8C80D6", "#B9AFF0"))
     public static let stressHigh        = Color(light: "#B86A2A", dark: "#D9823E", pastel: ("#D27B97", "#F0A9BF"))
 
-    // MARK: Per-metric accents — HRV / SpO₂ / energy / risk. Classic leans the traditional hues (purple HRV, red risk).
-    // Metric identities drawn from the redesign palette only.
+    // MARK: Per-metric accents — HRV / SpO₂ / energy / risk (Classic leans traditional: purple HRV, red risk)
     public static var metricCyan:   Color { isClassic ? Color(light: "#2E92B4", dark: "#3FA9C9") : t_metricCyan }
     public static var metricPurple: Color { isClassic ? Color(light: "#6A4FC0", dark: "#8E6FD6") : t_metricPurple }
     public static var metricAmber:  Color { isClassic ? Color(light: "#CFA528", dark: "#F2C53D") : t_metricAmber }
     public static var metricRose:   Color { isClassic ? Color(light: "#CB3A2F", dark: "#E5483B") : t_metricRose }
 
-    // MARK: - Titanium & Gold domain "colour worlds" (NEW)
-    //
-    // Each daily score owns a two-stop accent gradient (deep → bright) plus a glow.
-    // These drive the layered gauges, frosted-card tints and scenic heroes. Charge
-    // owns the brand gold; Effort the amber ramp; Rest the blue scale.
+    // MARK: - Titanium & Gold domain "colour worlds"
+    // Each daily score owns a two-stop accent gradient (deep → bright) plus a glow for gauges, card tints and heroes.
 
-    // Each domain's accent / glow follows the chart style: Titanium (gold/amber/blue) or Classic
-    // (Charge=green, Effort=blue, Rest=indigo, Stress=amber) so card tints + gauge tips + glows match
-    // the data scale. The gauge ARC itself samples the recovery/strain/stress STOPS above, so it goes
-    // full red→green / blue / green→red in Classic regardless of these.
+    // Accent/glow follow the chart style (Classic: Charge green, Effort blue, Rest indigo, Stress amber); the gauge ARC samples the data STOPS above regardless.
 
     /// Charge (recovery) — gold world / Classic green.
     public static var chargeColor: Color  { isClassic ? Color(light: "#2E9E4F", dark: "#46B45A") : t_chargeColor }
@@ -327,14 +268,9 @@ public enum StrandPalette {
     public static var restDeep: Color      { isClassic ? Color(light: "#203E73", dark: "#2A4C8F") : t_restDeep }
     public static var restBright: Color    { isClassic ? Color(light: "#6A4FC0", dark: "#8E6FD6") : t_restBright }
     public static var restGlow: Color      { isClassic ? Color(light: "#3A80D6", dark: "#6FA8E8") : t_restGlow }
-    /// The Rest family's most legible LINE colour — for strokes that must read on a busy or translucent
-    /// surface, such as the body-clock dial's arcs over a custom background image.
-    ///
-    /// Introduces no new value: it selects the existing token that is the bright blue in each palette.
-    /// The families are not parallel — classic's `restBright` is a PURPLE accent while modern's is the
-    /// blue, and classic's `restColor` is the blue where modern's is a muted steel — so a card naming
-    /// either token directly gets the right colour in one palette and the wrong one in the other. Both
-    /// resolve to #6FA8E8 in dark.
+    /// The Rest family's most legible LINE colour, for strokes over a busy or translucent surface (e.g. body-clock dial arcs).
+    /// No new value: it selects the bright blue in each palette (#6FA8E8 in dark). The families are not parallel (classic `restBright` is purple,
+    /// modern `restColor` is muted steel), so naming either token directly is wrong in one palette.
     public static var restLine: Color { isClassic || ZoopTheme.isPastel ? restColor : restBright }
 
     public static var restGradient: Gradient { Gradient(colors: [restDeep, restBright]) }
@@ -354,33 +290,26 @@ public enum StrandPalette {
     /// Star tint for the scenic starfield (very faint on light; the hero suppresses stars there).
     public static let scenicStar       = Color(light: "#D8CDB6", dark: "#C8CFD8", pastel: ("#DCE2DA", "#C8D2CB"))
 
-    // MARK: - Titanium & Gold core tokens (NEW)
-    //
-    // The brand gold ramp (buttons, ring fills, FAB, active chrome) and the neutral
-    // titanium ramp (tiles, avatars, icon plates). Same names + hexes on Android so
-    // Apple and Android match byte-for-byte.
+    // MARK: - Titanium & Gold core tokens
+    // Brand gold ramp (buttons, ring fills, FAB) and neutral titanium ramp (tiles, avatars, icon plates); same names and hexes on Android.
 
-    /// Brand gold — primary accent. Gold FILLS stay bright (dark text on them is legible in both schemes);
-    /// only a hair deeper on light so the fill doesn't wash out against white.
+    /// Brand gold — primary accent. Fills stay bright (dark text legible in both schemes); a hair deeper on light.
     public static let gold          = Color(light: "#3A78C8", dark: "#60A0E0", pastel: ("#5E52B0", "#B9AFF0")) // repointed to WHOOP blue (gold killed 2026-06-22)
-    /// Bright blue — accent highlight / hover (was champagne).
+    /// Bright blue — accent highlight / hover.
     public static let goldLight     = Color(light: "#6FA8E0", dark: "#9FC8F0", pastel: ("#8C80D6", "#D3CCF7"))
-    /// Deep blue — accent low stop (was bronze).
+    /// Deep blue — accent low stop.
     public static let goldDeep      = Color(light: "#2A5C9E", dark: "#3A78C8", pastel: ("#4A3F8F", "#9E92E6"))
     /// Near-black brown — text / icons placed ON gold surfaces (scheme-invariant; gold fills stay gold).
     // Text and icons on accent fills: dark on the bright lime of dark mode, white on light mode's deep green.
     public static let goldDeepText  = Color(light: "#FFFFFF", dark: "#0A0A0A", pastel: ("#FFFFFF", "#1B2420"))
-    /// The bright core dot at a gauge arc tip / sparkline head. White reads as a highlight on the dark
-    /// canvas; on light it would vanish into the white card, so it flips to a deep ink that reads as a
-    /// crisp centre on the (deepened) coloured tip bead.
+    /// The bright core dot at a gauge arc tip / sparkline head. White on dark; flips to deep ink on light, where white would vanish into the card.
     public static let tipCore       = Color(light: "#241B06", dark: "#FFFFFF", pastel: ("#FFFFFF", "#1B2420"))
     /// High-vis signal yellow — sparing emphasis (badges / alerts); deepened on light to stay visible.
     public static let signalYellow  = Color(light: "#E8A800", dark: "#FFD63D", pastel: ("#C98232", "#F3C99A"))
     /// 135–155° gold ramp for buttons, ring fills, FAB (light → gold → deep).
     public static let goldGradient  = Gradient(colors: [goldLight, gold, goldDeep])
 
-    /// Brushed-titanium ramp (top highlight → mid body → low → deep) for tiles, avatars and icon plates.
-    /// Shifted to a MID-grey ramp on light so brushed-metal tiles stay visible against white cards.
+    /// Brushed-titanium ramp (highlight → body → low → deep) for tiles, avatars and icon plates; mid-grey on light so tiles stay visible on white.
     public static let titaniumTop   = Color(light: "#DDE1E6", dark: "#F1F3F5", pastel: ("#E3E8E1", "#DDE5DD"))
     public static let titaniumMid   = Color(light: "#BBC2C9", dark: "#C9CFD4", pastel: ("#C9D2C7", "#B7C4BA"))
     public static let titaniumLow   = Color(light: "#98A0A8", dark: "#969DA4", pastel: ("#A9B5A8", "#8C9C91"))
@@ -388,8 +317,7 @@ public enum StrandPalette {
 
 
     // MARK: - Themed (default chart style) values, parsed once
-    // The non-Classic branch of each data accessor above, carrying its Pastel & Nature pair too, so the
-    // accessor picks a ready token instead of parsing hexes on every call.
+    // The non-Classic branch of each data accessor (with its Pastel & Nature pair), so accessors pick a ready token instead of parsing hexes per call.
     static let t_sleepAwake = Color(light: "#8E949E", dark: "#9A9A9A", pastel: ("#D58FA7", "#F0A9BF"))
     static let t_sleepLight = Color(light: "#5C8FB0", dark: "#6E9CBC", pastel: ("#A99FE8", "#D3CCF7"))
     static let t_sleepDeep = Color(light: "#2860B4", dark: "#2D6CC8", pastel: ("#5E52B0", "#8C80E0"))
@@ -425,8 +353,7 @@ public enum StrandPalette {
 
     // MARK: - Sampling helpers
 
-    /// Sample the recovery gradient (bronze → champagne) at a recovery score 0...100.
-    /// Returns the exact interpolated color used everywhere recovery is tinted.
+    /// Sample the recovery gradient at a recovery score 0...100.
     public static func recoveryColor(_ score: Double) -> Color {
         sample(stops: recoveryStops, at: score / 100.0)
     }
@@ -436,15 +363,13 @@ public enum StrandPalette {
         sample(stops: strainStops, at: strain / 100.0)
     }
 
-    /// Effort tint sampled by a 0...1 fraction (e.g. value/scaleMax), spreading the full ember→amber
-    /// ramp. Prefer this for gauge tips / value-tinted accents so a high Effort reads as bright amber
-    /// rather than ember. `strainColor(_:)` stays for callers holding a 0...100 value.
+    /// Effort tint sampled by a 0...1 fraction (e.g. value/scaleMax), spreading the full ember→amber ramp.
+    /// `strainColor(_:)` stays for callers holding a 0...100 value.
     public static func effortTint(fraction: Double) -> Color {
         sample(stops: strainStops, at: min(max(fraction, 0), 1))
     }
 
-    /// The state word for a recovery score, per spec §9.3.
-    /// DEPLETED · LOW · MODERATE · PRIMED · PEAK
+    /// The state word for a recovery score: DEPLETED · LOW · MODERATE · PRIMED · PEAK.
     public static func recoveryState(_ score: Double) -> String {
         switch score {
         case ..<25:  return String(localized: "DEPLETED", bundle: .module)
@@ -471,24 +396,11 @@ public enum StrandPalette {
         }
     }
 
-    // Brand sleep ramps for the two stepped-hypnogram styles, so the chart reads like the app it's modelled
-    // on. Ribbon = Oura's ramp (cream awake + blues, sampled from the ring's app); Filled = Garmin's
-    // (blue light/deep + magenta REM). Opt-in only (Sleep-tab stepped chart) — every other Hypnogram caller
-    // keeps `sleepStageColor`. (#sleep-chart-style)
-    //
-    // WHY THERE IS A LIGHT VARIANT. Both source apps are dark-tuned, so the ramps shipped flat — the same
-    // hex in both schemes. On the light card those bands are drawn on near-white (`ZoopVisualStyle.surface`
-    // = #FFFFFF; a real Sleep-screen capture samples #FEFEFF), and measured there the Oura ramp collapses:
-    // three of its four bands fall under the 3:1 non-text minimum and `awake` #EAE3D3 sits at **1.28:1**,
-    // i.e. not drawn. That is not a rare band — on one real ring night awake was 64% of the chart.
-    //
-    // HOW THE LIGHT VALUES WERE DERIVED (not eyeballed, and not invented hues). Clamping each band on its
-    // own to 3:1 is the obvious fix and it BREAKS THE RAMP: Oura `rem` → #1E9EDD and `light` → #239FD5 land
-    // 1.00:1 apart, two adjacent stages the same colour. Instead ONE uniform HLS-lightness scale is applied
-    // per ramp, pinned so the ramp's lightest band reaches 3:1 on white — Oura ×0.575, Garmin ×0.912. Hue
-    // and saturation are untouched, so it is still recognisably the brand ramp; stage ORDERING survives;
-    // and the intra-ramp separation is no worse than the shipped dark ramp's (pinned in
-    // `BrandSleepRampTests`, twin `BrandSleepRampTest` on Android).
+    // Brand sleep ramps for the stepped hypnogram styles: Ribbon = Oura's (cream awake + blues), Filled = Garmin's (blue light/deep + magenta REM).
+    // Opt-in only (Sleep-tab stepped chart); every other Hypnogram caller keeps `sleepStageColor`.
+    // Light variants exist because both ramps are dark-tuned: on the near-white light card Oura's awake #EAE3D3 is 1.28:1 and three bands fall under 3:1.
+    // Clamping each band alone collapses adjacent stages (Oura rem/light land 1.00:1 apart), so ONE uniform HLS-lightness scale per ramp is applied,
+    // pinned so the ramp's lightest band reaches 3:1 on white (Oura ×0.575, Garmin ×0.912). Hue, saturation and stage ordering survive (`BrandSleepRampTests`).
     static let oSleepAwake = Color(light: BrandSleepRamp.ouraAwake.light, dark: BrandSleepRamp.ouraAwake.dark)
     static let oSleepREM   = Color(light: BrandSleepRamp.ouraREM.light,   dark: BrandSleepRamp.ouraREM.dark)
     static let oSleepLight = Color(light: BrandSleepRamp.ouraLight.light, dark: BrandSleepRamp.ouraLight.dark)
@@ -498,10 +410,7 @@ public enum StrandPalette {
     static let gSleepLight = Color(light: BrandSleepRamp.garminLight.light, dark: BrandSleepRamp.garminLight.dark)
     static let gSleepDeep  = Color(light: BrandSleepRamp.garminDeep.light,  dark: BrandSleepRamp.garminDeep.dark)
 
-    /// The brand ramps as hex PAIRS, so the properties above can be asserted in a test — a `SwiftUI.Color`
-    /// built from a dynamic provider cannot be read back, and these are also the values the Kotlin twin
-    /// must match byte for byte (`stageColorForBrand` in `SleepStageBreakdownUi.kt`). `.dark` is the
-    /// shipped ramp, unchanged.
+    /// The brand ramps as hex pairs so tests can assert them (a dynamic `Color` cannot be read back). `.dark` is the shipped ramp.
     enum BrandSleepRamp {
         static let ouraAwake   = (light: "#AD9153", dark: "#EAE3D3")
         static let ouraREM     = (light: "#1A8AC2", dark: "#90D0F0")
@@ -512,9 +421,7 @@ public enum StrandPalette {
         static let garminLight = (light: "#3099F0", dark: "#4AA6F2")
         static let garminDeep  = (light: "#2168C5", dark: "#2472D8")
 
-        /// Oura's ramp in STAGE order (awake → rem → light → deep), which is not the same as luminance
-        /// order — Garmin's `light` is lighter than its `rem`. What the light pass must preserve is each
-        /// ramp's OWN luminance order, whatever it is; that is what the tests assert.
+        /// Oura's ramp in stage order (awake → rem → light → deep). Tests assert each ramp keeps its OWN luminance order.
         static let oura   = [ouraAwake, ouraREM, ouraLight, ouraDeep]
         /// Garmin's ramp in stage order.
         static let garmin = [garminAwake, garminREM, garminLight, garminDeep]
@@ -550,7 +457,6 @@ public enum StrandPalette {
         guard stops.count > 1 else { return first.color }
         let t = min(max(position, 0.0), 1.0)
 
-        // Find the bracketing pair.
         var lower = stops[0]
         var upper = stops[stops.count - 1]
         for i in 0..<(stops.count - 1) {
@@ -583,18 +489,9 @@ public enum StrandPalette {
 }
 
 // MARK: - Resolved-component memo cache
-//
-// PERF: `interpolate(_:_:_:)` is the leaf of ALL gradient sampling — every sparkline point, every pip
-// segment, every gauge tip, every heat-strip cell calls `sample(stops:at:)` → `interpolate`, which used
-// to build a fresh UIColor/NSColor and run `getRed()` on BOTH endpoints on every single call. The stop
-// colours are a tiny fixed set of static `let`s, so resolving them over and over dominated the draw.
-//
-// This memoizes the resolved sRGB components per Color. Crucially the cache is keyed on the CURRENT
-// resolved appearance as well as the Color, because the palette tokens are dynamic `Color(light:dark:)`
-// providers that resolve to DIFFERENT components per light/dark — so a bare Color key would return a
-// stale, wrong-scheme value after an appearance flip. Including the appearance token in the key makes
-// the cache miss (and re-resolve) exactly when the scheme changes, so the output stays byte-identical to
-// calling `rgbaComponents` directly. Bounded so a pathological caller can't grow it without limit.
+// PERF: `interpolate(_:_:_:)` is the leaf of all gradient sampling (sparkline points, pips, gauge tips, heat cells) and rebuilt a UIColor/NSColor per call.
+// This memoizes resolved sRGB components per Color, keyed on the current appearance too: tokens are dynamic light/dark providers,
+// so a bare Color key would go stale after a flip. Bounded so a pathological caller cannot grow it.
 enum ColorComponentCache {
     private static var store: [Key: (r: Double, g: Double, b: Double, a: Double)] = [:]
     private static let lock = NSLock()
@@ -604,8 +501,7 @@ enum ColorComponentCache {
         let appearance: Int
     }
 
-    /// A small integer identifying the current resolved appearance (light vs dark), matching the trait
-    /// that `UIColor(color)` / `NSColor(color)` resolves against at this call site.
+    /// A small integer identifying the current resolved appearance (light vs dark) at this call site.
     private static var appearanceToken: Int {
         #if os(watchOS)
         // No UITraitCollection on watchOS; the watch app is always dark, so the cache key is constant.
@@ -631,8 +527,7 @@ enum ColorComponentCache {
         lock.unlock()
         let resolved = color.rgbaComponents
         lock.lock()
-        // Cap the cache so an adversarial stream of unique colours can't grow it unboundedly; the real
-        // working set is the handful of static palette stops, so this ceiling is never hit in practice.
+        // Cap the cache; the real working set is the handful of static palette stops, so this is never hit in practice.
         if store.count > 512 { store.removeAll(keepingCapacity: true) }
         store[key] = resolved
         lock.unlock()
@@ -648,7 +543,6 @@ public enum SleepStage: String, CaseIterable, Sendable {
     case deep
     case rem
 
-    /// Display label.
     public var label: String {
         switch self {
         case .awake: return String(localized: "Awake", bundle: .module)

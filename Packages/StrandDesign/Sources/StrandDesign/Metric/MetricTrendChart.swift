@@ -1,10 +1,10 @@
 import SwiftUI
 import Charts
 
-// MARK: - MetricTrendChart (explainer "Your trend", CONCEPT §7.4)
+// MARK: - MetricTrendChart (explainer "Your trend")
 //
-// 30-day line against the personal band: band as a 15 % area, its mean as a 1 pt dashed rule. A day
-// without data breaks the line rather than bridging it, so a gap never reads as a trend.
+// 30-day line against the personal band (15 % area, mean as a 1 pt dashed rule). A day without data
+// breaks the line rather than bridging it, so a gap never reads as a trend.
 
 enum MetricTrendSegments {
     /// Splits points (oldest first) wherever consecutive days are more than `maxGap` apart.

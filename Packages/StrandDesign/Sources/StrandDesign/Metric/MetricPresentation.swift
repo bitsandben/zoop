@@ -2,13 +2,11 @@ import Foundation
 
 // MARK: - MetricPresentation
 //
-// Every string a Metric* view shows or speaks, resolved once per readout and locale. Keeping this pure
-// lets the formatting and VoiceOver wording be unit-tested, and guarantees the hero, tile, row and
-// explainer word one readout identically.
+// Every string a Metric* view shows or speaks, resolved once per readout and locale, so hero, tile, row
+// and explainer word one readout identically and the wording is unit-testable.
 
 public struct MetricPresentation: Equatable, Sendable {
     public let label: String
-    /// The number alone ("62", "7h 43min"); nil when the metric is unavailable.
     public let number: String?
     public let unit: String?
     /// The verdict word, or the unavailable reason that stands in for the number.
@@ -16,7 +14,6 @@ public struct MetricPresentation: Equatable, Sendable {
     /// Short form of `verdict` for small rings and tiles ("No data" for a long reason).
     public let compactVerdict: String
     public let meaning: String
-    /// "+8 ms vs. typical"; nil without a delta.
     public let delta: String?
     public let deltaDirection: DeltaDirection
     /// "Your range 52–68 ms" or "Population range 52–68 ms".
@@ -66,7 +63,6 @@ public struct MetricPresentation: Equatable, Sendable {
         confidenceNote = Self.note(for: readout).map(text)
     }
 
-    /// No note for a solid readout or when the verdict already states the data problem.
     static func note(for readout: MetricReadout) -> LocalizedStringResource? {
         if case .unavailable = readout.verdict { return nil }
         switch readout.confidence {
@@ -77,7 +73,6 @@ public struct MetricPresentation: Equatable, Sendable {
         }
     }
 
-    /// Confidence wording for the explainer's Confidence section.
     static func confidenceTitle(_ confidence: MetricReadout.Confidence) -> LocalizedStringResource {
         switch confidence {
         case .solid: return MetricStrings.calibrated

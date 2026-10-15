@@ -1,24 +1,13 @@
 import Foundation
 
-/// The phone to watch payload. The iPhone is the brain (M1 computes Charge / Effort / Rest with
-/// confidence + provenance); this is the small, honest snapshot it pushes over WatchConnectivity for
-/// the watch app + its complication to DISPLAY. The watch never recomputes a score, it only renders
-/// what arrived here.
-///
-/// It lives in StrandDesign so BOTH sides import one definition: the iOS `WatchSessionBridge` encodes
-/// it, the watchOS app + complication decode it (read from the shared app group's UserDefaults under
-/// `latestWatchSnapshot`). One type, one wire shape, so the glance and the complication can never
-/// disagree about what the phone said.
-///
-/// The honesty rule carries through: a calibrating score is the number being `nil` AND the matching
-/// `Calibrating` flag set true. The watch UI must render that as "needs more data" (a dash + a small
-/// cal marker), NEVER a fabricated number. A score that simply has not been computed yet is also `nil`
-/// but with its flag false (missing data, not mid-calibration) and reads as a plain dash.
+/// The phone-to-watch payload: the small snapshot the iPhone pushes over WatchConnectivity for the watch app and complication to DISPLAY. The watch never recomputes a score.
+/// Lives in StrandDesign so the iOS `WatchSessionBridge` (encode) and the watchOS app + complication (decode, from the shared app group's UserDefaults under `latestWatchSnapshot`) share one wire shape.
+/// A calibrating score is the number being `nil` AND its `Calibrating` flag true: render "needs more data" (dash + cal marker), NEVER a fabricated number.
+/// `nil` with the flag false is missing data and reads as a plain dash.
 public struct WatchScoreSnapshot: Codable, Equatable, Sendable {
     /// Charge (recovery), 0 to 100. `nil` when there is no earned number for the day.
     public var charge: Double?
-    /// True when Charge is still calibrating (the baseline is not usable yet). When true, `charge` is
-    /// `nil` and the watch shows a cal marker rather than a number.
+    /// True while Charge is calibrating (baseline not usable yet); `charge` is then `nil`.
     public var chargeCalibrating: Bool
 
     /// Effort (strain) on Zoop's 0 to 100 axis. `nil` when there is no usable HR window for the day.
@@ -31,23 +20,17 @@ public struct WatchScoreSnapshot: Codable, Equatable, Sendable {
     /// True when Rest is still calibrating. `rest` is `nil` while this is true.
     public var restCalibrating: Bool
 
-    /// Most recent heart rate the phone knows about (bpm). The watch shows its OWN live HR off its
-    /// sensor; this is just the last value the phone had, used as a fallback / sync indicator.
+    /// Last heart rate (bpm) the phone had; the watch shows its OWN live HR, so this is a fallback / sync indicator.
     public var hr: Int?
 
-    /// A one line sleep summary for the glance (e.g. "7h 12m · 81% efficiency"), already formatted by
-    /// the phone. Empty string when there is nothing to show.
+    /// One-line sleep summary for the glance (e.g. "7h 12m · 81% efficiency"), preformatted by the phone; empty when nothing to show.
     public var sleepSummary: String
 
-    /// When the phone built this snapshot. The watch shows its age ("as of 2h ago") rather than
-    /// implying the numbers are live.
+    /// When the phone built this snapshot; the watch shows its age rather than implying live numbers.
     public var asOf: Date
 
-    /// The anchor day these scores describe, as a "YYYY-MM-DD" local day key (nil when unknown). This is
-    /// the day the numbers are ABOUT, which is not the same as `asOf` (when the phone built the snapshot):
-    /// you can build a snapshot at 9am that still describes yesterday's scores until today's are computed.
-    /// The watch prefers this for its recency label so it reads honestly ("Yesterday") even when the build
-    /// is recent. Optional + decodes as nil when absent so older payloads on the wire stay compatible.
+    /// The "YYYY-MM-DD" local day key these scores describe (nil when unknown). Distinct from `asOf`: a 9am snapshot may still describe yesterday.
+    /// The watch prefers it for its recency label. Decodes as nil when absent so older payloads stay compatible.
     public var scoreDay: String?
 
     public init(charge: Double?, chargeCalibrating: Bool,
@@ -68,17 +51,11 @@ public struct WatchScoreSnapshot: Codable, Equatable, Sendable {
     }
 
     // MARK: - Shared app group transport
-    //
-    // The watch app + its complication read the latest snapshot from the shared app group's
-    // UserDefaults under this key. The phone side writes the same key on its own UserDefaults view of
-    // the group too (belt and braces alongside updateApplicationContext), so a freshly launched watch
-    // reads the last known value immediately.
+    // The watch and complication read the latest snapshot from the shared app group's UserDefaults under this key; the phone also writes it there
+    // (alongside updateApplicationContext) so a fresh launch reads the last value immediately.
 
-    /// The shared app group both the watch app and its complication read the snapshot from. Injected
-    /// from the `APP_GROUP_ID` build setting (see project.yml) via the `AppGroupIdentifier` Info.plist
-    /// key on every target that touches it (ZoopiOS, ZoopWatch, ZoopWatchComplications), mirroring
-    /// `WidgetSnapshot.suiteName` — this package builds standalone (`swift test`) with no host bundle,
-    /// so the fallback below is the canonical upstream group and only applies there.
+    /// The shared app group, injected from `APP_GROUP_ID` via the `AppGroupIdentifier` Info.plist key on ZoopiOS, ZoopWatch and ZoopWatchComplications (mirrors `WidgetSnapshot.suiteName`).
+    /// The fallback below only applies when this package builds standalone (`swift test`) with no host bundle.
     public static let appGroupId: String = {
         Bundle.main.object(forInfoDictionaryKey: "AppGroupIdentifier") as? String
             ?? "group.com.zoopapp.zoop"
@@ -86,8 +63,7 @@ public struct WatchScoreSnapshot: Codable, Equatable, Sendable {
     /// The UserDefaults key the latest snapshot is stored under in the shared app group.
     public static let storageKey = "latestWatchSnapshot"
 
-    /// A neutral placeholder for previews / a not-yet-synced watch. Everything calibrating + empty so
-    /// nothing fake is ever drawn.
+    /// Neutral placeholder for previews / a not-yet-synced watch: everything calibrating and empty, nothing fake drawn.
     public static var placeholder: WatchScoreSnapshot {
         WatchScoreSnapshot(charge: nil, chargeCalibrating: true,
                            effort: nil, effortCalibrating: true,
@@ -96,29 +72,17 @@ public struct WatchScoreSnapshot: Codable, Equatable, Sendable {
     }
 
     // MARK: - Freshness
-    //
-    // The phone is the only thing that computes scores; the watch just renders the last snapshot it has.
-    // If the wrist hasn't seen the phone for a long stretch (off the charger, phone dead, app not opened),
-    // the numbers it's holding can quietly go stale. These two helpers let the watch UI stay honest about
-    // that: degrade a too-old snapshot to a dash, and always show a short recency label next to the rings.
+    // The watch only renders the last snapshot, which goes stale if it hasn't seen the phone. These helpers degrade a too-old snapshot to a dash and always show a short recency label.
 
-    /// How old a snapshot may be before the watch should stop presenting it as the current day's scores.
-    /// ~36h, not 24h: scores anchor on a logical day and Rest in particular lands the morning after, so a
-    /// little past a full day is normal. Beyond this it's almost certainly a phone the watch lost touch with.
+    /// How old a snapshot may be before it stops being presented as current. ~36h, not 24h: Rest lands the morning after, so a little over a day is normal.
     private static let stalenessThreshold: TimeInterval = 36 * 3600
 
-    /// True when this snapshot is too old to present as current. Callers degrade the rings + number to a
-    /// dash (and lean on `freshnessText` to explain why) rather than drawing a confidently wrong figure.
-    /// The placeholder (asOf at the epoch) always reads stale, which is what we want for a never-synced watch.
+    /// True when too old to present as current: callers degrade rings + number to a dash (with `freshnessText` explaining). The placeholder (asOf at the epoch) always reads stale.
     public func isStale(now: Date = Date()) -> Bool {
         now.timeIntervalSince(asOf) > Self.stalenessThreshold
     }
 
-    /// The semantic freshness buckets behind `freshnessText`. Display code that needs to REASON about
-    /// recency (e.g. "the label adds nothing while the scores are current, hide it") goes through
-    /// `isFreshToday`, which switches on this classification. It must never compare the localized
-    /// display string ("Today" / "just now") instead: that reads fine in English and silently breaks
-    /// in every translated language.
+    /// The semantic freshness buckets behind `freshnessText`. Reason about recency through `isFreshToday` (which switches on this), never by comparing the localized display string, which breaks in translations.
     private enum FreshnessKind {
         case today
         case yesterday
@@ -130,14 +94,11 @@ public struct WatchScoreSnapshot: Codable, Equatable, Sendable {
         case builtDaysAgo(Int)
     }
 
-    /// Classify this snapshot's recency. Prefers `scoreDay` (the day the scores are ABOUT) when the
-    /// phone supplied it, so the label can read "Today" / "Yesterday" / a weekday rather than implying
-    /// live numbers. Falls back to the `asOf` build age for older payloads that predate `scoreDay`.
+    /// Classify recency, preferring `scoreDay` (the day the scores are ABOUT) and falling back to the `asOf` build age for older payloads.
     private func freshnessKind(now: Date) -> FreshnessKind {
         let cal = Calendar.current
 
-        // Preferred path: we know which day the scores describe. Compare day keys against "now" so the
-        // label tracks the actual calendar day, not the build clock.
+        // Preferred path: compare day keys against now so the label tracks the calendar day, not the build clock.
         if let scoreDay, let scored = Self.dayKeyFormatter.date(from: scoreDay) {
             if cal.isDateInToday(scored) { return .today }
             if cal.isDateInYesterday(scored) { return .yesterday }
@@ -156,8 +117,7 @@ public struct WatchScoreSnapshot: Codable, Equatable, Sendable {
         return .builtDaysAgo(Int(age / 86_400))
     }
 
-    /// A short, honest recency label for the glance + complication ("Today" / "Yesterday" / "2h ago").
-    /// Rendered off `freshnessKind` so the words and the semantics (`isFreshToday`) can never drift.
+    /// Short recency label for the glance + complication, rendered off `freshnessKind` so the words and `isFreshToday` cannot drift.
     public func freshnessText(now: Date = Date()) -> String {
         switch freshnessKind(now: now) {
         case .today:                  return String(localized: "Today", bundle: .module)
@@ -174,13 +134,8 @@ public struct WatchScoreSnapshot: Codable, Equatable, Sendable {
         }
     }
 
-    /// True when the scores read as CURRENT: they describe today's local day, or (for older payloads
-    /// without `scoreDay`) the snapshot was built under a minute ago. This is the semantic twin of
-    /// `freshnessText` returning "Today" / "just now", and it is what display code must key off when it
-    /// appends the freshness label only where it adds information. Never compare the localized display
-    /// text for that decision: it breaks the moment a string catalog translates "Today". Derived at
-    /// read time from fields already on the wire (`scoreDay` + `asOf`), so the encoded payload is
-    /// unchanged and a snapshot from an older phone build classifies exactly as before.
+    /// True when the scores read as CURRENT: they describe today's local day or (without `scoreDay`) the snapshot is under a minute old.
+    /// Key display decisions off this, never the localized text. Derived at read time from fields already on the wire, so the payload is unchanged.
     public func isFreshToday(now: Date = Date()) -> Bool {
         switch freshnessKind(now: now) {
         case .today, .builtJustNow: return true
@@ -188,8 +143,7 @@ public struct WatchScoreSnapshot: Codable, Equatable, Sendable {
         }
     }
 
-    /// Shared "YYYY-MM-DD" parser/formatter for `scoreDay`. Fixed locale + POSIX so it round-trips the
-    /// phone's `Repository.localDayKey` keys identically regardless of the watch's region settings.
+    /// Shared "YYYY-MM-DD" parser/formatter for `scoreDay`; fixed POSIX locale so it matches the phone's `Repository.localDayKey` in any region.
     private static let dayKeyFormatter: DateFormatter = {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)

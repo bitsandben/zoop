@@ -5,12 +5,9 @@ import UIKit
 import AppKit
 #endif
 
-// MARK: - ZoopType: the six semantic type tokens (Zoop 2.0 §7.1)
-//
-// The ONLY sizes a 2.0 screen may use. Every token scales with Dynamic Type, and both themes expose
-// the same six names, so a view never branches on the theme: Classic keeps the square default face,
-// Pastel & Nature swaps to SF Rounded where the table asks for it. Additive: the older `StrandFont`
-// scale keeps working until the call sites are migrated.
+// MARK: - ZoopType: the six semantic type tokens
+// The ONLY sizes a 2.0 screen may use. All scale with Dynamic Type and both themes expose the same names (Classic keeps the default face, Pastel swaps to SF Rounded where themed).
+// Additive until call sites migrate off the older `StrandFont` scale.
 
 public enum ZoopType {
 
@@ -40,7 +37,6 @@ public enum ZoopType {
     /// Units, deltas, data age.
     public static var caption: Font { Font.system(.footnote) }
 
-    // Why: Classic = default design, Pastel = rounded, for the tokens the table marks as themed.
     private static var design: Font.Design { ZoopTheme.isPastel ? .rounded : .default }
 
     /// A fixed point size that still follows Dynamic Type (`Font.system(size:)` does not scale).
@@ -71,7 +67,7 @@ private extension Font.Weight {
 }
 #endif
 
-// MARK: - Spacing and radius (§7.2)
+// MARK: - Spacing and radius
 
 /// 4-pt grid.
 public enum ZoopSpacing {

@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// A two-up grid of metric tiles with the 2.0 gap. The cells own their surface
-/// (`zoopTileSurface()`), so the grid is pure layout.
+/// A two-up grid of metric tiles; the cells own their surface, so the grid is pure layout.
 public struct TileGrid<Content: View>: View {
     private let content: Content
     public init(@ViewBuilder content: () -> Content) { self.content = content() }
@@ -16,8 +15,7 @@ public struct TileGrid<Content: View>: View {
 }
 
 public extension View {
-    /// The tile surface (radius 18). Why a modifier and not a view: `MetricTile` is owned by the
-    /// metric work package, which composes its own content and only needs the shared surface.
+    /// The shared tile surface (radius 18), as a modifier so `MetricTile` can compose its own content.
     func zoopTileSurface() -> some View {
         padding(ZoopSpacing.m)
             .frame(maxWidth: .infinity, alignment: .leading)

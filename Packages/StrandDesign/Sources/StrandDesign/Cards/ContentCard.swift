@@ -1,10 +1,9 @@
 import SwiftUI
 
-// MARK: - The four card types (Zoop 2.0 §7.3)
+// MARK: - The four card types
 //
-// HeroCard, ContentCard, TileGrid/zoopTileSurface, ListCard. They share ONE surface so the card look
-// lives in a single place: the existing frosted surface at the 2.0 radius. The surface is a
-// `.background` so animations never reach the content subtree (#104).
+// HeroCard, ContentCard, TileGrid/zoopTileSurface, ListCard share ONE surface: the frosted surface at
+// the 2.0 radius. It is a `.background` so animations never reach the content subtree (#104).
 
 /// Surface shared by every 2.0 card type.
 struct ZoopCardSurface: ViewModifier {
@@ -14,7 +13,7 @@ struct ZoopCardSurface: ViewModifier {
     }
 }
 
-/// Any grouped content: a title row (with an optional `›` when the card navigates) and a body.
+/// Grouped content: a title row (with an optional `›` when the card navigates) and a body.
 public struct ContentCard<Content: View>: View {
     private let title: LocalizedStringKey?
     private let showsChevron: Bool
@@ -52,8 +51,7 @@ public struct ContentCard<Content: View>: View {
     }
 }
 
-/// Top of a screen: hosts the metric hero and one chart. Same surface as `ContentCard`, no title row,
-/// and extra bottom room so the chart does not crowd the card edge.
+/// Top of a screen: hosts the metric hero and one chart. No title row; extra bottom room for the chart.
 public struct HeroCard<Content: View>: View {
     private let content: Content
     public init(@ViewBuilder content: () -> Content) { self.content = content() }
@@ -68,8 +66,7 @@ public struct HeroCard<Content: View>: View {
     }
 }
 
-/// Rows with hairline separators (metric rows, settings, sessions). Separators are drawn by
-/// `listCardRow(isFirst:)`, so the card needs no knowledge of its children.
+/// Rows with hairline separators, drawn by `listCardRow(isFirst:)`.
 public struct ListCard<Content: View>: View {
     private let content: Content
     public init(@ViewBuilder content: () -> Content) { self.content = content() }

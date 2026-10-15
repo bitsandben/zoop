@@ -1,13 +1,9 @@
 #if !os(watchOS)
-// Sparkline uses .onContinuousHover + ChartHover helpers (unavailable on watchOS); the watch
-// doesn't draw sparklines, so the whole view is excluded there. iOS/macOS unchanged.
+// Uses .onContinuousHover + ChartHover helpers (unavailable on watchOS), so the view is excluded there.
 import SwiftUI
 
-// MARK: - Sparkline (§9.4 Today / Live HR tile)
-//
-// A tiny inline line for live HR (or any short numeric series). Gradient-stroked,
-// with an optional crisp leading dot at the latest sample and a faint area
-// wash (WHOOP-flat: no bloom). Designed to sit in a card/tile or the menu-bar popover.
+// MARK: - Sparkline
+// Tiny inline gradient-stroked line for live HR or any short series, with an optional crisp leading dot and a faint area wash (flat, no bloom). Sits in a card/tile or the menu-bar popover.
 
 public struct Sparkline: View {
 
@@ -65,8 +61,7 @@ public struct Sparkline: View {
         return (lo - pad, hi + pad)
     }
 
-    /// The area-wash top colour (gradient sampled at 0.7, dimmed). Computed once per body eval instead of
-    /// re-sampling the gradient inside the ZStack on every draw.
+    /// Area-wash top colour (gradient at 0.7, dimmed), computed once per body eval.
     private var areaWashColor: Color {
         StrandPalette.sample(stops: gradient.stops, at: 0.7).opacity(0.22)
     }
@@ -79,12 +74,8 @@ public struct Sparkline: View {
         GeometryReader { geo in
             let pts = points(in: geo.size)
             ZStack {
-                // STATIC LAYER: area wash + gradient line + head dot. Drawn INLINE — NO .drawingGroup().
-                // A ~14-point polyline + fill + 2 dots is trivially cheap, and a per-sparkline offscreen
-                // flatten costs FAR more (a dedicated MTLTexture + an extra composite pass) than it saves.
-                // Today shows ~10-16 tiles at once, so per-tile .drawingGroup() piled up ~16 offscreen
-                // passes that re-rasterised on every scroll / body re-eval — the v7.0.2 lag regression.
-                // CoreAnimation already caches this flat layer natively.
+                // STATIC LAYER drawn INLINE with no .drawingGroup(): the polyline is trivially cheap, and Today shows ~10-16 tiles, so per-tile offscreen flattening piled up passes
+                // that re-rasterised on every scroll (a lag regression). CoreAnimation caches the flat layer.
                 ZStack {
                     if showsArea, pts.count > 1 {
                         areaPath(pts, in: geo.size)
@@ -103,8 +94,7 @@ public struct Sparkline: View {
                             )
                     }
                     if showsHead, let head = pts.last {
-                        // Design Reset (WHOOP): a crisp solid leading dot, no blurred bloom halo.
-                        // The line colour reads as the head ring; a small core sits inside it.
+                        // Crisp solid leading dot, no bloom halo; the line colour reads as the head ring with a small core inside.
                         Circle().fill(headColor).frame(width: lineWidth * 2.2, height: lineWidth * 2.2)
                             .position(head)
                         Circle().fill(StrandPalette.tipCore).frame(width: lineWidth * 1.0, height: lineWidth * 1.0)
@@ -152,8 +142,7 @@ public struct Sparkline: View {
         }
     }
 
-    /// A spoken summary of the series for VoiceOver: count + latest/low/high,
-    /// formatted via the same `valueFormat` closure so units match the call site.
+    /// Spoken VoiceOver summary: count + latest/low/high via `valueFormat` so units match.
     private var axSummary: String {
         guard let last = values.last, let lo = values.min(), let hi = values.max() else {
             return String(localized: "No data", bundle: .module)

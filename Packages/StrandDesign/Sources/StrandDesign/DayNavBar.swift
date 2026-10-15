@@ -1,20 +1,14 @@
 #if !os(watchOS)
-// The watch app never shows the day navigator (no DatePicker(.graphical) / .popover on watchOS),
-// so this whole control is excluded there; iOS/macOS are unchanged.
+// Excluded on watchOS (no DatePicker(.graphical) / .popover there).
 import SwiftUI
 
-// MARK: - DayNavBar — chevron + date-jump day selector
+// MARK: - DayNavBar: chevron + date-jump day selector
 //
-// The Today screen's day navigator: ◀/▶ chevrons step one day at a time (◀ older, ▶ newer,
-// disabled at today so a future day can't be selected), and the centre accent block shows the
-// selected day's label + date and opens a graphical DatePicker capped at today for a direct jump.
-// Replaces the fixed three-day strip so navigation reaches arbitrarily far back. The same control
-// renders on macOS and iOS — the DatePicker is shown in a popover on both. Mirrors the Android
-// DayNavBar (StrandComponents.kt). Offset is days-back-from-today (0 = today).
+// The Today day navigator: ◀ older / ▶ newer chevrons (▶ disabled at today), and a centre block showing
+// the selected day that opens a graphical DatePicker capped at today. Offset is days-back-from-today (0 = today).
 
 public struct DayNavBar: View {
-    /// `standard` is the full-width navigator with a date block; `pill` is the compact capsule the
-    /// iPhone Home header uses, with the day label in an inner pill between the two chevrons.
+    /// `standard` is the full-width navigator with a date block; `pill` is the compact capsule for the iPhone Home header.
     public enum Style: Sendable { case standard, pill }
 
     private let selectedOffset: Int
@@ -25,10 +19,8 @@ public struct DayNavBar: View {
     @State private var showingPicker = false
     @Environment(\.locale) private var locale
 
-    /// `today` is the caller's LOGICAL day (the same anchor the rest of Today uses, rolling at 04:00),
-    /// so every label here counts back from it. Passing it in instead of reading `Date()` keeps the
-    /// macOS full-date label in step with the data shown in the 00:00-04:00 window, where a raw
-    /// `Date()` already reads the next calendar day while the screen still shows the logical day (#14).
+    /// `today` is the caller's LOGICAL day (rolls at 04:00); passed in rather than read from `Date()`, which
+    /// already reads the next calendar day in the 00:00-04:00 window (#14).
     public init(selectedOffset: Int, today: Date, style: Style = .standard, onSelect: @escaping (Int) -> Void) {
         self.selectedOffset = selectedOffset
         self.today = today
@@ -36,7 +28,7 @@ public struct DayNavBar: View {
         self.onSelect = onSelect
     }
 
-    /// The calendar day the current offset resolves to, counting back from the caller's logical day.
+    /// The calendar day the current offset resolves to, counting back from the logical day.
     private var selectedDay: Date {
         Calendar.current.date(byAdding: .day, value: -selectedOffset, to: today) ?? today
     }
@@ -118,15 +110,14 @@ public struct DayNavBar: View {
             .buttonStyle(.plain)
             .accessibilityLabel(Text("Previous day", bundle: .module))
 
-            // Centre accent block — the selected day's label + full date, tappable to jump.
+            // Centre block: the selected day's label + date, tappable to jump.
             Button { showingPicker = true } label: {
                 VStack(spacing: 2) {
                     Text(label, bundle: .module)
                         .font(StrandFont.caption)
                         .foregroundStyle(StrandPalette.textPrimary)
                         .lineLimit(1)
-                    // On today the label already reads "Today"; the full date would just duplicate the
-                    // header, so it's shown only once you've navigated to another day (for orientation).
+                    // On today the label already reads "Today", so the full date shows only on other days.
                     if selectedOffset > 0 {
                         Text(selectedDay.formatted(
                             .dateTime.day().month(.abbreviated).year().locale(locale)
@@ -138,10 +129,7 @@ public struct DayNavBar: View {
                 }
                 .padding(.vertical, 9)
                 .padding(.horizontal, 20)
-                // Reads as one of the flat WHOOP-grey cards, not a black bar. On macOS the full-width
-                // pill sits over the bright Today day-scene, where the darker inset well read as black;
-                // surfaceRaised (the card fill) lifts it to card level so it matches the dashboard
-                // cards. No gold wash behind the date — the gold pop lives only on the date text.
+                // Flat card fill, not a black bar: the full-width pill sits over the bright day-scene on macOS.
                 .background(blockFill, in: blockShape)
                 .overlay(blockShape.strokeBorder(StrandPalette.hairline, lineWidth: 1))
             }
@@ -165,17 +153,14 @@ public struct DayNavBar: View {
         }
     }
 
-    /// Graphical date jump, capped at today so a future day can't be picked. Converting the chosen
-    /// date back to a whole-day offset keeps the rest of the screen driven by the single offset value.
+    /// Graphical date jump capped at today; the chosen date converts back to a whole-day offset.
     private var datePickerPopover: some View {
-        // A local binding so the picker writes straight through to an offset via onSelect.
         let pickedBinding = Binding<Date>(
             get: { selectedDay },
             set: { newValue in
                 let cal = Calendar.current
                 let start = cal.startOfDay(for: newValue)
-                // Offset is measured from the caller's LOGICAL day (not raw Date()), so a date picked in
-                // the 00:00-04:00 window maps to the same offset the labels count back from (#14).
+                // Offset is measured from the LOGICAL day, so a date picked in 00:00-04:00 maps to the offset the labels count from (#14).
                 let anchor = cal.startOfDay(for: today)
                 let days = cal.dateComponents([.day], from: start, to: anchor).day ?? 0
                 onSelect(max(0, days))
@@ -186,12 +171,10 @@ public struct DayNavBar: View {
             .datePickerStyle(.graphical)
             .labelsHidden()
             .padding(12)
-            // #840 — iPad popover needs an explicit size or the graphical picker clips. Safe on macOS 13
-            // and iPhone (the popover/sheet sizes to this); avoids the macOS 13.3-only compact-adaptation API.
+            // iPad popover needs an explicit size or the graphical picker clips (#840).
             .frame(minWidth: 320, minHeight: 360)
             #if os(iOS)
-            // iPhone: a compact popover under the day pill instead of a full-height sheet that left the
-            // calendar floating in empty space.
+            // iPhone: compact popover under the day pill instead of a full-height sheet.
             .tint(StrandPalette.accent)
             .modifier(CompactPopoverOnPhone())
             #endif
@@ -199,13 +182,10 @@ public struct DayNavBar: View {
 
     private var blockShape: RoundedRectangle { RoundedRectangle(cornerRadius: 14, style: .continuous) }
 
-    /// Fill for the centre day block. On macOS the bar spans the bright Today day-scene, so it uses the
-    /// raised WHOOP-grey card fill to read as a card rather than a black bar; iOS (which uses the compact
-    /// top-bar day-nav, not this control) keeps the inset well fill unchanged.
+    /// Fill for the centre day block: raised card fill on macOS (the bar spans the bright day-scene); iOS keeps the inset well.
     private var blockFill: Color {
         #if os(macOS)
-        // Compact translucent pill (not a full-width bar) — the scene shows through so it reads as a
-        // floating control over the day-scene, never a solid black bar; white label stays legible at 0.72.
+        // Translucent pill so the scene shows through; white label stays legible at 0.72.
         StrandPalette.surfaceBase.opacity(0.72)
         #else
         StrandPalette.surfaceInset
@@ -216,7 +196,7 @@ public struct DayNavBar: View {
 #endif
 
 #if os(iOS)
-/// Keeps a popover a popover on iPhone (iOS 16.4+), where it otherwise adapts to a full-height sheet.
+/// Keeps a popover a popover on iPhone (iOS 16.4+), where it otherwise adapts to a sheet.
 private struct CompactPopoverOnPhone: ViewModifier {
     func body(content: Content) -> some View {
         if #available(iOS 16.4, *) {

@@ -1,10 +1,9 @@
 import SwiftUI
 import Charts
 
-// MARK: - Chart style helpers (Zoop 2.0 §7.4)
+// MARK: - Chart style helpers
 //
-// Small, composable pieces so every Swift Charts chart gets the same axes, gridlines, band and
-// reference line without re-deriving them. Pure styling: no data logic.
+// Shared axes, gridlines, band and reference line for Swift Charts. Pure styling.
 
 public enum ZoopChartStyle {
     /// Band fill opacity (personal range) in the metric colour.
@@ -20,8 +19,7 @@ public enum ZoopChartStyle {
 }
 
 public extension View {
-    /// Y axis on the trailing edge with at most four labels and quiet gridlines. `format` renders a
-    /// label (pass a locale-aware formatter; the default is plain `description`).
+    /// Y axis on the trailing edge with at most four labels and quiet gridlines; `format` renders a label.
     func zoopYAxis(format: @escaping (Double) -> String = { "\(Int($0.rounded()))" }) -> some View {
         chartYAxis {
             AxisMarks(position: .trailing, values: .automatic(desiredCount: ZoopChartStyle.maxYLabels)) { value in
@@ -34,8 +32,7 @@ public extension View {
         }
     }
 
-    /// X axis for a day range: weekday letters for 7 days, short dates for 30/90 days. Locale-aware
-    /// through `Date.FormatStyle`.
+    /// X axis for a day range: weekday letters for 7 days, short dates for 30/90.
     func zoopDayXAxis(days: Int) -> some View {
         chartXAxis {
             if days <= 7 {

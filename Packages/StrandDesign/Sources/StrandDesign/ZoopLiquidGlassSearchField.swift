@@ -1,12 +1,7 @@
 import SwiftUI
 
 // MARK: - Native Liquid Glass search field
-//
-// Shared search chrome for every in-app filter/search bar. iOS 26 uses the platform
-// `glassEffect` capsule; macOS and older iOS keep a solid elevated pill (not a
-// hand-rolled blur stack). Liquid Glass is intentionally iOS-only — macOS stays on
-// the standard surface. Clear control, magnifying-glass glyph, and accessibility
-// wiring stay identical across call sites.
+// Shared search chrome for every in-app filter/search bar. iOS 26 uses the platform `glassEffect` capsule; macOS and older iOS keep a solid elevated pill.
 
 /// Full-width rounded search field with native Liquid Glass on iOS 26+.
 public struct ZoopLiquidGlassSearchField: View {
@@ -69,9 +64,7 @@ public struct ZoopLiquidGlassSearchField: View {
 }
 
 public extension View {
-    /// Capsule Liquid Glass search chrome. iOS 26 uses interactive `glassEffect`; macOS and older
-    /// iOS use the shared elevated pill surface. Glass APIs stay behind `#if os(iOS)` so macOS
-    /// (deployment 13) never type-checks or applies Liquid Glass.
+    /// Capsule Liquid Glass search chrome (iOS 26 `glassEffect`; otherwise the shared elevated pill). Glass APIs stay behind `#if os(iOS)` so macOS 13 never type-checks them.
     @ViewBuilder
     func nativeLiquidGlassSearchChrome() -> some View {
         #if os(iOS)
@@ -85,9 +78,7 @@ public extension View {
         #endif
     }
 
-    /// Circular / capsule interactive Liquid Glass button chrome (Home header, live-workout controls,
-    /// workout-selection close/chips). iOS 26 only; every other platform keeps the caller's
-    /// `fallback` (standard material / press style) unchanged.
+    /// Circular/capsule interactive Liquid Glass button chrome (Home header, live-workout controls). iOS 26 only; other platforms keep the caller's `fallback`.
     @ViewBuilder
     func nativeLiquidGlassButtonChrome<Fallback: View>(
         controlSize: ControlSize = .small,

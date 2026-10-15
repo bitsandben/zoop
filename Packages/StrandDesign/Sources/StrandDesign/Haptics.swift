@@ -7,10 +7,8 @@ import UIKit
 
 // MARK: - Strand Haptics (the tactile sibling of the Motion tokens)
 //
-// One tasteful tactile vocabulary shared across the app, mirroring StrandMotion. iOS fires
-// the Taptic engine; macOS is a no-op. Keep it SPARSE — confirmations and state landings
-// only, never per-keystroke or per-frame. The system already honours the user's
-// Settings ▸ Sounds & Haptics master switch.
+// One sparse tactile vocabulary mirroring StrandMotion: Taptic on iOS, no-op on macOS. Confirmations and
+// state landings only, never per-keystroke or per-frame.
 
 public enum StrandHaptic {
     case selection   // segmented-pill / tab switch / toggle — light, frequent-safe
@@ -20,9 +18,7 @@ public enum StrandHaptic {
     case warning     // a soft "not allowed / invalid"
 
     #if os(watchOS)
-    // watchOS has no UIKit feedback generators; the Taptic engine is driven through WatchKit's
-    // `WKHapticType`. Map our vocabulary onto the closest watch haptics so the breathing / interval
-    // features (which depend on a real tactile cue) actually buzz on the wrist.
+    // watchOS has no UIKit feedback generators; map the vocabulary onto the closest `WKHapticType`.
     private func fire() {
         let device = WKInterfaceDevice.current()
         switch self {
@@ -34,8 +30,7 @@ public enum StrandHaptic {
         }
     }
     #elseif canImport(UIKit)
-    // Generators are cheap to make; UIKit pools the engine. We don't retain selection
-    // generators (tab/pill taps are bursty).
+    // Generators are cheap and UIKit pools the engine, so none are retained.
     private func fire() {
         switch self {
         case .selection: UISelectionFeedbackGenerator().selectionChanged()
@@ -47,7 +42,7 @@ public enum StrandHaptic {
     }
     #endif
 
-    /// Fire this haptic now. No-op on macOS.
+    /// Fires this haptic now. No-op on macOS.
     public func play() {
         #if os(watchOS)
         fire()
@@ -58,9 +53,8 @@ public enum StrandHaptic {
 }
 
 public extension View {
-    /// Declarative haptic fired when `trigger` changes (iOS 17+ `.sensoryFeedback`; no-op
-    /// below / on macOS). Use for value-driven landings: score reveal, bond success,
-    /// refresh-done — anything where a state change, not a tap, is the cue.
+    /// Declarative haptic fired when `trigger` changes (iOS 17+ `.sensoryFeedback`; no-op elsewhere), for
+    /// state-change cues such as score reveal or bond success.
     @ViewBuilder
     func strandHaptic<V: Equatable>(_ haptic: StrandHaptic, trigger: V) -> some View {
         #if os(iOS)

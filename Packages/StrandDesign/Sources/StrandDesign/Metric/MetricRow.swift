@@ -2,8 +2,8 @@ import SwiftUI
 
 // MARK: - MetricRow (list)
 //
-// One line in a list card: label and verdict on the left, value and delta on the right, a chevron to
-// the explainer. At accessibility text sizes the two sides stack, so nothing truncates.
+// One list-card line: label and verdict left, value and delta right, chevron to the explainer.
+// At accessibility text sizes the two sides stack so nothing truncates.
 
 public struct MetricRow: View {
     private let readout: MetricReadout

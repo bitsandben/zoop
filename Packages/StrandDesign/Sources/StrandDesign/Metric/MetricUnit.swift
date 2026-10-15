@@ -1,30 +1,24 @@
 import Foundation
 
-// MARK: - MetricUnit (CONCEPT §1.1 "Value", §7.7 Locale)
+// MARK: - MetricUnit
 //
-// The single place a metric number becomes text. Everything goes through `FormatStyle` with an
-// explicit locale, so German reads "36,4 °C" and "12.345 Schritte" while English reads "36.4 °C" and
-// "12,345 steps". Spoken forms come from catalogue templates rather than Foundation's wide unit names:
-// those are missing for some units depending on the ICU data the process loads ("62 ms" is read
-// as "62 m s"), and VoiceOver wording must not depend on that.
+// The single place a metric number becomes text, via `FormatStyle` with an explicit locale ("36,4 °C" in
+// German, "36.4 °C" in English). Spoken forms come from catalogue templates, not Foundation's wide unit
+// names, which are missing for some units depending on ICU data ("62 ms" reads as "62 m s").
 
 public enum MetricUnit: Equatable, Sendable {
-    /// Unitless score (Sleep score 0–100, Strain 0–21 with one decimal).
     case score(fractionDigits: Int)
-    /// A 0–100 value shown with the locale's percent sign (Recovery, SpO₂).
     case percent
     case milliseconds
     case beatsPerMinute
     case breathsPerMinute
-    /// Absolute temperature, value in °C.
     case celsius
-    /// Absolute temperature, value in °C, shown in °F (converted when formatting).
+    /// Absolute temperature, value in °C, shown in °F.
     case fahrenheit
-    /// Temperature deviation from baseline, value in °C; always signed ("+0,4 °C").
+    /// Temperature deviation, value in °C; always signed.
     case celsiusDeviation
-    /// Temperature deviation, value in °C, shown in °F. A difference scales by 9/5 without the +32.
+    /// Temperature deviation, value in °C, shown in °F: a difference scales by 9/5 without the +32.
     case fahrenheitDeviation
-    /// Mass, value in kg.
     case kilograms
     /// Mass, value in kg, shown in pounds.
     case pounds
@@ -32,7 +26,6 @@ public enum MetricUnit: Equatable, Sendable {
     case steps
     case years
     case vo2max
-    /// Value in seconds, shown as hours and minutes.
     case duration
 
     public static let score = MetricUnit.score(fractionDigits: 0)
@@ -40,11 +33,8 @@ public enum MetricUnit: Equatable, Sendable {
     /// Display system chosen by the user; the package cannot see the app's `UnitSystem`, so callers map it.
     public enum System: Sendable { case metric, imperial }
 
-    /// Body mass in the user's system. Values stay in kilograms.
     public static func mass(_ system: System) -> MetricUnit { system == .imperial ? .pounds : .kilograms }
-    /// Absolute temperature in the user's system. Values stay in °C.
     public static func temperature(_ system: System) -> MetricUnit { system == .imperial ? .fahrenheit : .celsius }
-    /// Temperature deviation in the user's system. Values stay in °C.
     public static func temperatureDeviation(_ system: System) -> MetricUnit {
         system == .imperial ? .fahrenheitDeviation : .celsiusDeviation
     }
@@ -109,7 +99,6 @@ public enum MetricUnit: Equatable, Sendable {
 
     // MARK: Whole strings
 
-    /// "62 ms", "62 %", "7h 43min".
     public func format(_ value: Double, locale: Locale) -> String {
         switch self {
         case .percent:
@@ -119,7 +108,6 @@ public enum MetricUnit: Equatable, Sendable {
         }
     }
 
-    /// Signed delta with its unit: "+8 ms", "-0,3 °C", "+25min".
     public func formatDelta(_ delta: Double, locale: Locale) -> String {
         switch self {
         case .duration:
@@ -134,7 +122,6 @@ public enum MetricUnit: Equatable, Sendable {
         }
     }
 
-    /// "52–68 ms": both bounds share one unit.
     public func formatRange(_ range: ClosedRange<Double>, locale: Locale) -> String {
         if case .percent = self {
             return format(range.lowerBound, locale: locale) + "–" + format(range.upperBound, locale: locale)
@@ -144,7 +131,6 @@ public enum MetricUnit: Equatable, Sendable {
         return Self.join("\(lo)–\(hi)", symbol(locale: locale))
     }
 
-    /// The form VoiceOver reads: "62 Millisekunden", not "62 m s".
     public func spoken(_ value: Double, locale: Locale) -> String {
         let n = number(value, locale: locale)
         switch self {

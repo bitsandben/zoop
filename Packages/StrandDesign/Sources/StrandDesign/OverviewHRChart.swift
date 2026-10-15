@@ -1,20 +1,13 @@
 #if !os(watchOS)
-// OverviewHRChart is a Swift Charts view with .onContinuousHover / MagnificationGesture pan-zoom
-// (none available on watchOS); the watch never shows it, so the whole file is excluded there.
+// Excluded on watchOS (.onContinuousHover / MagnificationGesture are unavailable there).
 import SwiftUI
 import Charts
 
-// MARK: - Overview HR Chart (§ Today — day-in-review)
+// MARK: - Overview HR Chart (Today day-in-review)
 //
-// The Today screen's 24h heart-rate line, annotated like WHOOP's "Overview HR":
-// the warm HR curve overlaid with a sleep band, a recovery marker at wake, a
-// strain marker at "now", and a sport glyph at each workout's HR peak. The line +
-// hover affordance mirror `TrendChart`; this view adds the marker layers and pins
-// the x-axis to the HR window so markers never stretch the timeline.
-//
-// Colours stay in Zoop's Titanium & Gold language (burnt-orange HR line, gold
-// recovery, amber strain, blue sleep) rather than copying WHOOP's blue. Tokens
-// only — never hardcode hex.
+// The 24h heart-rate line with a sleep band, a recovery marker at wake, a strain marker at "now" and a
+// sport glyph at each workout's HR peak. The line and hover mirror `TrendChart`; the x-axis is pinned to
+// the HR window so markers never stretch the timeline. Tokens only.
 
 public struct OverviewHRChart: View {
 
@@ -28,7 +21,7 @@ public struct OverviewHRChart: View {
         }
     }
 
-    /// A workout window; the sport glyph is placed at the HR peak inside [start, end].
+    /// A workout window; the sport glyph sits at the HR peak inside [start, end].
     public struct WorkoutSpan: Identifiable, Sendable {
         public let id = UUID()
         public var start: Date
@@ -39,7 +32,7 @@ public struct OverviewHRChart: View {
         }
     }
 
-    /// A labelled vertical marker pinned to a moment in the day (recovery at wake, strain at now).
+    /// A labelled vertical marker pinned to a moment in the day.
     public struct EdgeMarker: Sendable {
         public var date: Date
         public var label: String
@@ -57,25 +50,21 @@ public struct OverviewHRChart: View {
     public var effort: EdgeMarker?
     public var gradient: Gradient
     public var valueRange: ClosedRange<Double>
-    /// Explicit x-axis window. When set, the axis spans exactly this range (so missing data shows as
-    /// empty space); when nil, the axis is derived from the data extent.
+    /// Explicit x-axis window: when set the axis spans exactly this range (missing data shows as empty space); nil derives it from the data.
     public var xRange: ClosedRange<Date>?
     public var height: CGFloat
     public var showsHover: Bool
-    /// Legacy opt-in for the iPhone touch scrub (#979 spin-off). Every chart now scrubs on touch through the
-    /// shared `zoopChartScrub` whenever `showsHover` is on; the flag is kept so call sites still compile.
+    /// Legacy opt-in for the iPhone touch scrub; every chart now scrubs through `zoopChartScrub` when `showsHover` is on. Kept so call sites compile.
     public var touchScrub: Bool
     public var valueFormat: (Double) -> String
     public var dateFormat: (Date) -> String
 
-    /// Deep-Timeline zoom/pan window. When bound (Deep Timeline only), it OVERRIDES `xRange`/data extent
-    /// as the visible x-domain, and pinch-magnify (iOS) / scroll-to-zoom (macOS) + drag-pan mutate it.
-    /// `bounds` is the full clamp the window can never escape (the day's full extent). nil on every other
-    /// call site, so the existing static chart is byte-for-byte unchanged.
+    /// Deep-Timeline zoom/pan window. When bound it OVERRIDES `xRange`/data extent as the visible x-domain
+    /// and is mutated by pinch/scroll zoom and drag-pan. `bounds` is the full clamp it can never escape. nil elsewhere.
     @Binding public var zoomDomain: ClosedRange<Date>?
     public var zoomBounds: ClosedRange<Date>?
 
-    /// Tint for the workout glyph badges (Zoop's warm strain accent by default).
+    /// Tint for the workout glyph badges.
     public var workoutTint: Color
 
     private let averageValue: Double
@@ -118,10 +107,9 @@ public struct OverviewHRChart: View {
         self.averageValue = sorted.isEmpty
             ? valueRange.lowerBound
             : sorted.map(\.value).reduce(0, +) / Double(sorted.count)
-        // Deep Timeline (the only caller that supplies `zoomBounds`) keeps full resolution so pinch-zoom
-        // into sub-windows stays crisp. The default-binding case here is `zoomBounds == nil`, so the
-        // static Today chart downsamples. `zoomBounds` is the stable discriminator (set once, never
-        // toggles) — unlike the live `zoomDomain`, which is nil until the user first zooms.
+        // Deep Timeline (the only caller supplying `zoomBounds`) keeps full resolution so pinch-zoom stays
+        // crisp; the static Today chart downsamples. `zoomBounds` is the stable discriminator (set once),
+        // unlike `zoomDomain`, which is nil until the first zoom.
         self.displayPoints = (zoomBounds != nil)
             ? sorted
             : ChartDownsample.minMaxBucketed(sorted, threshold: ChartDownsample.markThreshold,
@@ -129,30 +117,24 @@ public struct OverviewHRChart: View {
     }
 
     @State private var hoverX: CGFloat? = nil
-    /// The zoom window captured at the start of a magnify/drag gesture, so the gesture is applied
-    /// against a stable anchor instead of compounding each frame.
+    /// Zoom window captured at the start of a gesture, so it applies against a stable anchor instead of compounding per frame.
     @State private var gestureAnchorDomain: ClosedRange<Date>? = nil
     #if os(iOS)
-    /// True while a touch scrub is engaged, so the zoom pan is masked off and cannot slide the window
-    /// sideways out from under the crosshair (#1342).
+    /// True while a touch scrub is engaged, so the zoom pan is masked off and cannot slide the window from under the crosshair (#1342).
     @State private var scrubEngaged = false
     #endif
 
-    /// PERF: the 24h HR line can carry hundreds of samples — more than the ~360pt plot has pixels, so most
-    /// are sub-pixel pure draw cost. This is the point set actually handed to the line/area marks:
-    /// full resolution in the Deep Timeline (where the user pinches into sub-windows), else
-    /// min/max-per-bucket down to ~the plot pixel width. Min/max bucketing keeps every visible spike, so
-    /// the static Today chart is pixel-identical. Computed ONCE in `init` (not per body/hover eval) so
-    /// it's memoized on `points`; hover / markers / accessibility stay on the full `points`.
+    /// PERF: the point set handed to the line/area marks. The 24h series can exceed the plot's pixel width;
+    /// outside the Deep Timeline it is min/max-bucketed to ~pixel width (keeps every visible spike).
+    /// Computed ONCE in `init`; hover, markers and accessibility use the full `points`.
     private let displayPoints: [TrendPoint]
 
-    /// Smallest zoom window we allow (1 minute) — past this the line is just two points and pinch jitters.
+    /// Smallest zoom window (1 minute); past this the line is two points and pinch jitters.
     public static let minZoomSpan: TimeInterval = 60
 
-    // MARK: Zoom / pan math (pure, testable in isolation)
+    // MARK: Zoom / pan math (pure, testable)
 
-    /// The visible domain after scaling `base` about `anchorFraction` (0…1 across the window) by
-    /// `scale` (>1 zooms in), clamped into `bounds` and floored at `minZoomSpan`. Pure.
+    /// The visible domain after scaling `base` about `anchorFraction` (0…1) by `scale` (>1 zooms in), clamped into `bounds` and floored at `minZoomSpan`.
     public static func zoomed(_ base: ClosedRange<Date>, scale: Double, anchorFraction: Double,
                               bounds: ClosedRange<Date>, minSpan: TimeInterval = minZoomSpan) -> ClosedRange<Date> {
         let lo = base.lowerBound.timeIntervalSince1970
@@ -164,7 +146,6 @@ public struct OverviewHRChart: View {
         let newSpan = min(max(span / scale, minSpan), max(boundsSpan, minSpan))
         var newLo = pivot - (pivot - lo) * (newSpan / span)
         var newHi = newLo + newSpan
-        // Clamp inside bounds, preserving span.
         if newLo < bounds.lowerBound.timeIntervalSince1970 {
             newLo = bounds.lowerBound.timeIntervalSince1970; newHi = newLo + newSpan
         }
@@ -175,27 +156,23 @@ public struct OverviewHRChart: View {
         return Date(timeIntervalSince1970: newLo)...Date(timeIntervalSince1970: max(newLo + 1, newHi))
     }
 
-    // MARK: Annotation scoping (pure, testable in isolation)
+    // MARK: Annotation scoping (pure, testable)
 
-    /// The single sleep to band for a visible window: the LONGEST candidate overlapping it — the main
-    /// night, never an afternoon nap — the same pick the classic Today makes for its whole-day HR chart.
-    /// Extracted pure so the Deep Timeline's annotation parity (#979 spin-off) is headless-testable.
-    /// Overlap is half-open-ish like Today's filter: a sleep ending exactly at the window start (or
-    /// starting exactly at its end) does NOT count — it contributes zero visible band.
+    /// The single sleep to band for a visible window: the LONGEST overlapping candidate (the main night,
+    /// never a nap). A sleep ending exactly at the window start (or starting at its end) does NOT count.
     public static func mainSleep(_ candidates: [SleepSpan], overlapping window: ClosedRange<Date>) -> SleepSpan? {
         candidates
             .filter { $0.end > window.lowerBound && $0.start < window.upperBound }
             .max(by: { $0.end.timeIntervalSince($0.start) < $1.end.timeIntervalSince($1.start) })
     }
 
-    /// The workout spans overlapping a visible window (a glyph for an out-of-window workout would be
-    /// clamp-dragged to the plot edge and lie about its time). Edge-touching spans are kept — mirrors
-    /// the classic Today's inclusive workout filter. Order preserved. Pure.
+    /// The workout spans overlapping a visible window (an out-of-window glyph would be clamp-dragged to the
+    /// plot edge and lie about its time). Edge-touching spans are kept; order preserved.
     public static func workouts(_ candidates: [WorkoutSpan], overlapping window: ClosedRange<Date>) -> [WorkoutSpan] {
         candidates.filter { $0.end >= window.lowerBound && $0.start <= window.upperBound }
     }
 
-    /// The visible domain after panning `base` by `deltaSeconds`, clamped into `bounds` (span preserved). Pure.
+    /// The visible domain after panning `base` by `deltaSeconds`, clamped into `bounds` (span preserved).
     public static func panned(_ base: ClosedRange<Date>, deltaSeconds: Double,
                               bounds: ClosedRange<Date>) -> ClosedRange<Date> {
         let lo = base.lowerBound.timeIntervalSince1970
@@ -210,12 +187,10 @@ public struct OverviewHRChart: View {
 
     // MARK: Geometry helpers
 
-    /// The x-axis window. When the caller supplies `xRange` (e.g. a full calendar day for a past
-    /// date), that wins — so a stretch with no samples reads as visible empty space rather than the
-    /// axis silently collapsing to the data extent. Otherwise it's pinned to the HR data so markers
-    /// (sleep onset the night before, etc.) can't stretch the timeline. Safe even for sparse input.
+    /// The x-axis window: the caller's `xRange` wins (so a gap in samples reads as empty space), otherwise
+    /// it is pinned to the HR data so markers cannot stretch the timeline.
     private var xDomain: ClosedRange<Date> {
-        // Deep Timeline: the bound zoom window wins over everything (it's what gestures drive).
+        // Deep Timeline: the bound zoom window wins over everything.
         if let zoomDomain, zoomDomain.upperBound > zoomDomain.lowerBound { return zoomDomain }
         if let xRange, xRange.upperBound > xRange.lowerBound { return xRange }
         let lo = points.first?.date ?? Date(timeIntervalSince1970: 0)
@@ -223,7 +198,7 @@ public struct OverviewHRChart: View {
         return hi > lo ? lo...hi : lo...lo.addingTimeInterval(3600)
     }
 
-    /// The hard clamp a zoom/pan window may never escape: the caller-supplied bounds, else the data extent.
+    /// The hard clamp a zoom/pan window may never escape: the caller's bounds, else the data extent.
     private var zoomClampBounds: ClosedRange<Date> {
         if let zoomBounds, zoomBounds.upperBound > zoomBounds.lowerBound { return zoomBounds }
         if let xRange, xRange.upperBound > xRange.lowerBound { return xRange }
@@ -236,7 +211,7 @@ public struct OverviewHRChart: View {
         min(max(d, xDomain.lowerBound), xDomain.upperBound)
     }
 
-    /// Map a value onto 0...1 over the value range, for the gradient stops.
+    /// Maps a value onto 0...1 over the value range, for the gradient stops.
     private func unit(_ value: Double) -> Double {
         let lo = valueRange.lowerBound, hi = valueRange.upperBound
         guard hi > lo else { return 0 }
@@ -263,18 +238,16 @@ public struct OverviewHRChart: View {
 
     // MARK: Mark layers
     //
-    // Only lines/bands live as Chart marks. All text labels + workout glyphs are drawn in the
-    // overlay (below) via the proxy — Swift Charts' `.annotation` overflow-clamping needs macOS 14
-    // and gets clipped by the card's fixed height on 13, so we position labels ourselves.
+    // Only lines/bands are Chart marks; text labels and workout glyphs are drawn in the overlay via the
+    // proxy, because `.annotation` overflow-clamping needs macOS 14 and clips on 13.
 
     @ChartContentBuilder private var marks: some ChartContent {
-        // Styles depend on the chart, not the individual sample. Share them across marks so a
-        // dense HR series does not recreate the same gradient for every line and area vertex.
+        // Share styles across marks so a dense series does not recreate the gradient per vertex.
         let areaFill = LinearGradient(
             colors: [StrandPalette.sample(stops: gradient.toStops(), at: unit(averageValue)).opacity(0.28), .clear],
             startPoint: .top, endPoint: .bottom)
         let lineStroke = valueGradient
-        // Sleep band — shaded region behind the curve (drawn first so the HR line/area sit on top).
+        // Sleep band, drawn first so the HR line/area sit on top.
         if let sleep, sleep.end > xDomain.lowerBound {
             RectangleMark(
                 xStart: .value("Sleep start", clampX(sleep.start)),
@@ -295,8 +268,7 @@ public struct OverviewHRChart: View {
                 .foregroundStyle(lineStroke)
         }
 
-        // Wake divider — the sleep→day boundary. Always shown with a sleep band so the band reads
-        // even before recovery calibrates (when the gold recovery rule is absent).
+        // Wake divider (sleep→day boundary), shown with the band even before recovery calibrates.
         if let sleep, sleep.end > xDomain.lowerBound, sleep.end < xDomain.upperBound {
             RuleMark(x: .value("Wake", clampX(sleep.end)))
                 .foregroundStyle(StrandPalette.sleepLight.opacity(0.5))
@@ -316,15 +288,15 @@ public struct OverviewHRChart: View {
 
     // MARK: Overlay helpers
 
-    /// Screen x for a date (plot-relative position offset into container coords). nil if off-scale.
+    /// Screen x for a date in container coords; nil if off-scale.
     private func xPos(_ date: Date, _ proxy: ChartProxy, _ plot: CGRect) -> CGFloat? {
         proxy.position(forX: date).map { $0 + plot.minX }
     }
 
-    /// Rough label width for edge-clamping (footnote ≈ 6.5pt/char + padding/glyph).
+    /// Rough label width for edge-clamping.
     private func estWidth(_ s: String, extra: CGFloat = 18) -> CGFloat { CGFloat(s.count) * 6.5 + extra }
 
-    /// Place a label centred on `x`, clamped so it never spills past the plot edges.
+    /// Places a label centred on `x`, clamped inside the plot edges.
     @ViewBuilder
     private func placed<V: View>(_ view: V, atX x: CGFloat, topY: CGFloat, width: CGFloat, plot: CGRect) -> some View {
         let half = width / 2
@@ -379,11 +351,9 @@ public struct OverviewHRChart: View {
     }
 
     #if os(iOS)
-    /// Touch scrub (#979 spin-off), through the shared `zoopChartScrub`. Wherever a plain horizontal drag
-    /// pans the window (zoomed in, or a visible window narrower than its pan bounds, as on the Deep
-    /// Timeline's three-day clamp), only the short hold engages a scrub; where a pan has nothing to move, a
-    /// sideways drag scrubs straight away. Vertical drags never engage it, so the page keeps scrolling.
-    /// Drives the SAME `hoverX` the Mac pointer hover drives, so the readout is identical across inputs.
+    /// Touch scrub via `zoopChartScrub`. Where a plain horizontal drag pans the window (zoomed in, or a window
+    /// narrower than its pan bounds), only the short hold engages a scrub; otherwise a sideways drag scrubs.
+    /// Drives the SAME `hoverX` as Mac pointer hover.
     private var scrubStart: ZoopChartScrubStart {
         guard zoomBounds != nil else { return .horizontalDragOrHold }
         let canPan = zoomDomain != nil || xDomain != zoomClampBounds
@@ -403,12 +373,8 @@ public struct OverviewHRChart: View {
 
     // MARK: Body
 
-    /// Round wall-clock x-axis ticks for the visible domain, chosen by span.
-    ///
-    /// The sub-hour tiers are opened only for the Deep Timeline, keyed on `zoomBounds` rather than the
-    /// live `zoomDomain` for the reason this file already records twice: `zoomBounds` is set once by the
-    /// zooming call sites, while `zoomDomain` is nil until the first pinch, so keying on it would give a
-    /// not-yet-zoomed Deep Timeline the static tiers and then switch them under the user (#829).
+    /// Round wall-clock x-axis ticks for the visible domain, chosen by span. Sub-hour tiers open only for the
+    /// Deep Timeline, keyed on `zoomBounds` (set once), not `zoomDomain` (nil until first pinch), or the tiers would switch under the user (#829).
     private var xTicks: [Date] {
         chartTimeTicks(start: xDomain.lowerBound, end: xDomain.upperBound,
                        deepZoom: zoomBounds != nil)
@@ -418,12 +384,10 @@ public struct OverviewHRChart: View {
         Chart { marks }
         .chartXScale(domain: xDomain)
         .chartYScale(domain: valueRange)
-        // catmullRom overshoots past the data on sharp turns and the area gradient draws
-        // unclipped — clip the plot so a spiky HR curve doesn't bleed past the chart (see TrendChart).
+        // catmullRom overshoots on sharp turns and the area gradient draws unclipped: clip the plot (see TrendChart).
         .chartPlotStyle { plotArea in plotArea.clipped() }
         .chartXAxis {
-            // Manual ticks chosen by visible span (6h down to 1min), matching Android chartTimeTicks.
-            // Swift Charts' .automatic(desiredCount:) doesn't guarantee per-minute ticks at deep zoom.
+            // Manual ticks by visible span (6h down to 1min); `.automatic(desiredCount:)` can't guarantee per-minute ticks at deep zoom.
             AxisMarks(values: xTicks) { _ in
                 AxisGridLine().foregroundStyle(StrandPalette.hairline.opacity(0.4))
                 AxisValueLabel().foregroundStyle(StrandPalette.textTertiary)
@@ -448,8 +412,7 @@ public struct OverviewHRChart: View {
                 .contentShape(Rectangle())
                 .onContinuousHover(coordinateSpace: .local) { phase in
                     guard showsHover else { return }
-                    // Non-animating transaction: otherwise crossing the plot edge re-runs the
-                    // line's draw-on animation and flickers the curve (mirrors TrendChart #104).
+                    // Non-animating transaction: crossing the plot edge would re-run the line's draw-on animation and flicker (TrendChart #104).
                     var tx = Transaction()
                     tx.disablesAnimations = true
                     withTransaction(tx) {
@@ -460,25 +423,17 @@ public struct OverviewHRChart: View {
                     }
                 }
                 #if os(iOS)
-                // #979 spin-off — touch scrub on every call site (`touchScrub` is kept for source
-                // compatibility). onContinuousHover above is pointer-only; the shared scrub claims a
-                // sideways drag or a short hold, leaves vertical drags to the page, and, while zoomed,
-                // leaves horizontal drags to the pan (ZoomPanModifier), pinch to zoom, double-tap to reset.
+                // Touch scrub on every call site (`touchScrub` is kept for source compatibility). onContinuousHover is
+                // pointer-only; while zoomed, horizontal drags go to the pan (ZoomPanModifier).
                 .zoopChartScrub(isEnabled: showsHover, start: scrubStart,
                                 onChange: { scrubMoved($0) }, onEnd: { scrubEnded() })
                 #endif
             }
         }
         .frame(height: height)
-        // Zoom/pan: active whenever a zoom binding is supplied (the Deep Timeline and the Today HR chart).
-        // Every other call site passes the default `.constant(nil)`, so those static charts keep their exact
-        // gestures. The modifier itself reads Reduce Motion, so the double-tap reset snaps when it's on.
-        // #829 follow-up: keyed on `zoomBounds` (the stable "a zoom binding was supplied" discriminator the
-        // init comment names, set once by the two zooming call sites, nil everywhere else), NOT on the live
-        // `zoomDomain`, which is nil until the user first zooms, so keying on it left the gestures unmounted
-        // in exactly the state where the first pinch has to land. `apply` below normalises a window that
-        // covers the full clamp bounds back to nil, so an un-zoomed drag (a pan of the whole day into
-        // itself) never flips the hint/Reset row into its "Zoomed in" state.
+        // Zoom/pan: active whenever a zoom binding is supplied. Keyed on `zoomBounds` (stable), NOT the live
+        // `zoomDomain` (nil until first zoom), or the gestures would be unmounted when the first pinch must land (#829).
+        // `apply` normalises a window covering the full clamp back to nil so an un-zoomed drag never flips to "Zoomed in".
         .modifier(ZoomPanModifier(
             isActive: zoomBounds != nil,
             scrubActive: {
@@ -499,24 +454,18 @@ public struct OverviewHRChart: View {
             reset: { zoomDomain = nil },
             zoom: { base, scale, frac, bounds in Self.zoomed(base, scale: scale, anchorFraction: frac, bounds: bounds) },
             pan: { base, dx, plotWidth, bounds in
-                // Map a horizontal drag (points) to seconds across the current visible span.
                 let span = base.upperBound.timeIntervalSince1970 - base.lowerBound.timeIntervalSince1970
                 let secPerPoint = plotWidth > 0 ? span / Double(plotWidth) : 0
                 return Self.panned(base, deltaSeconds: -dx * secPerPoint, bounds: bounds)
             }
         ))
-        // Collapse the Charts marks into ONE meaningful VoiceOver element with a summary, instead of
-        // letting VoiceOver walk every line/area/rule/rect mark as a separate, contextless axis value
-        // (matches the sibling TrendChart). The only datum affordance otherwise is hover, which is
-        // dead on touch — so on iPhone this chart spoke no heart rate at all.
+        // Collapse the Charts marks into ONE VoiceOver element with a summary (hover is dead on touch, so the chart otherwise spoke no heart rate).
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("Heart rate, 24 hours"))
         .accessibilityValue(Text(accessibilitySummary))
     }
 
-    /// One-line VoiceOver summary: the day's HR (count, mean, range) plus the band/marker context the
-    /// chart shows visually, so the collapsed element still conveys the whole picture (cf. the Android
-    /// OverviewHRChart semantics).
+    /// One-line VoiceOver summary: the day's HR (count, mean, range) plus the band/marker context.
     private var accessibilitySummary: String {
         guard !points.isEmpty else { return String(localized: "No heart-rate data", bundle: .module) }
         let values = points.map(\.value)
@@ -546,27 +495,18 @@ public struct OverviewHRChart: View {
 
 // MARK: - Chart time ticks (x-axis)
 
-/// Round wall-clock x-axis tick DATES for a `[start, end]` window, at fixed round intervals chosen by
-/// the visible span (a full day ticks every 6h, a 1h window every 15min). Ticks step in LOCAL
-/// wall-clock time from the window's local midnight, so a window crossing midnight lands on 00:00 and
-/// DST labels stay round. Pure and clock-free.
+/// Round wall-clock x-axis tick DATES for a `[start, end]` window at intervals chosen by span (a full day
+/// ticks every 6h, a 1h window every 15min), stepping in LOCAL wall-clock time from local midnight so
+/// midnight crossings and DST stay round. Pure and clock-free; returns dates, never strings.
 ///
-/// `deepZoom` opens the sub-hour tiers (5min/2min/1min) that the Deep Timeline's pinch-to-zoom wants.
-/// It is OFF by default because the Today cards share this chart and hand it the RENDERED extent of
-/// their banked buckets, not a nominal window: a morning holding ten minutes of HR would otherwise
-/// draw ten 1-minute gridlines on a small card.
-///
-/// Tick POSITIONS are the twin of Android `chartTimeTicks` (Charts.kt), thresholds included. The
-/// labels are not, and deliberately: Swift draws them with `AxisValueLabel()` in the viewer's locale,
-/// where the Kotlin side formats "HH:mm" itself. So this returns dates and never formats a string.
+/// `deepZoom` opens the sub-hour tiers (5/2/1 min) for the Deep Timeline. Off by default: Today cards
+/// hand this the RENDERED extent of banked buckets, and ten minutes of HR would draw ten 1-minute gridlines.
 public func chartTimeTicks(start: Date, end: Date, calendar: Calendar = .current,
                            deepZoom: Bool = false) -> [Date] {
     guard end > start else { return [] }
     let spanMinutes = end.timeIntervalSince(start) / 60.0
-    // Thresholds sit below the nominal Today-card windows (24h/12h/6h/3h/1h) so a window whose
-    // banked data covers slightly less than nominal still lands on its intended interval. The
-    // deep-zoom tiers (≤30min down to 1-min steps) serve the Deep Timeline's pinch-to-zoom, so
-    // a user zoomed onto a 5-minute window sees per-minute ticks instead of 15-min gaps.
+    // Thresholds sit below the nominal Today-card windows (24h/12h/6h/3h/1h) so a window with slightly less
+    // banked data still lands on its interval; deep-zoom tiers (≤30min to 1-min) serve the Deep Timeline.
     let stepMinutes: Int = {
         switch spanMinutes {
         case (20 * 60)...: return 360   // 6h ticks above 20h
@@ -575,7 +515,7 @@ public func chartTimeTicks(start: Date, end: Date, calendar: Calendar = .current
         case (2 * 60)...:  return 60    // 1h ticks above 2h
         default: break
         }
-        // Below 2h the static cards stop at 15min; only the zooming surface goes finer.
+        // Below 2h the static cards stop at 15min.
         guard deepZoom else { return 15 }
         switch spanMinutes {
         case 60...: return 15   // 15min ticks above 1h
@@ -585,14 +525,12 @@ public func chartTimeTicks(start: Date, end: Date, calendar: Calendar = .current
         }
     }()
 
-    // Start at local midnight of the start date, then step by stepMinutes.
     var components = calendar.dateComponents([.year, .month, .day], from: start)
     components.hour = 0; components.minute = 0; components.second = 0
     var tick = calendar.date(from: components) ?? start
     var out: [Date] = []
     var last = Date.distantPast
-    // Bounded walk, so a malformed window cannot spin: a multi-day span at 6h steps, or a 10-minute
-    // span at 1-minute steps, both stay far below this.
+    // Bounded walk so a malformed window cannot spin.
     var steps = 0
     while steps < 4096 {
         steps += 1
@@ -626,7 +564,7 @@ private struct WorkoutBadge: View {
     }
 }
 
-/// Small caps read-out for the recovery / strain edge markers (e.g. "67% Recovery").
+/// Small caps read-out for the recovery / strain edge markers.
 private struct MarkerLabel: View {
     let text: String
     let color: Color
@@ -643,7 +581,7 @@ private struct MarkerLabel: View {
     }
 }
 
-/// Moon glyph + sleep duration, shown at the leading corner of the sleep band.
+/// Moon glyph + sleep duration at the leading corner of the sleep band.
 private struct SleepBandLabel: View {
     let text: String
     var body: some View {
@@ -662,32 +600,27 @@ private struct SleepBandLabel: View {
 
 // MARK: - Zoom / pan gesture host
 //
-// Kept as a standalone modifier so the chart body stays readable and so the platform split (pinch on
-// iOS, scroll-to-zoom on macOS; drag-pan on both) lives in one place. No-op when `isActive` is false.
+// A standalone modifier so the platform split (pinch on iOS, scroll-to-zoom on macOS, drag-pan on both) lives in one place. No-op when `isActive` is false.
 
 private struct ZoomPanModifier: ViewModifier {
     let isActive: Bool
-    /// #1342: true while a touch scrub is engaged, so the pan drag is masked off (`.subviews`) and can't
-    /// ALSO slide the window sideways out from under the crosshair. Always false on macOS (no touch scrub).
+    /// True while a touch scrub is engaged, so the pan drag is masked off and cannot also slide the window (#1342). Always false on macOS.
     let scrubActive: () -> Bool
-    /// True while the window is zoomed in (a reset is meaningful). Read at double-tap time so a tap on the
-    /// already-full-day chart does nothing rather than re-triggering a no-op animation.
+    /// True while zoomed in (a reset is meaningful), read at double-tap time.
     let isZoomed: () -> Bool
     let current: () -> ClosedRange<Date>
     let bounds: ClosedRange<Date>
     @Binding var anchor: ClosedRange<Date>?
     let apply: (ClosedRange<Date>) -> Void
-    /// Drop the zoom window back to the full extent (sets the bound `zoomDomain` to nil).
     let reset: () -> Void
     let zoom: (ClosedRange<Date>, Double, Double, ClosedRange<Date>) -> ClosedRange<Date>
     let pan: (ClosedRange<Date>, CGFloat, CGFloat, ClosedRange<Date>) -> ClosedRange<Date>
 
     @State private var plotWidth: CGFloat = 1
-    // Reduce Motion: the reset snaps instantly when on, otherwise it eases out (the gesture frames
-    // themselves are never animated, per the per-frame apply below, so only the reset honours this).
+    // Reduce Motion: the reset snaps; gesture frames are never animated.
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// Reset the window, snapping when Reduce Motion is on and easing otherwise.
+    /// Resets the window, snapping when Reduce Motion is on.
     private func resetZoom() {
         guard isZoomed() else { return }
         withAnimation(ZoopMotion.gated(StrandMotion.interactive, reduced: reduceMotion)) { reset() }
@@ -695,8 +628,7 @@ private struct ZoomPanModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         guard isActive else { return AnyView(content) }
-        // #1342: 10 pt (not 6) so the pan can't start inside the scrub long-press's 8 pt hold window —
-        // the 6–8 pt overlap band is what let a held-then-dragged finger begin panning during a scrub.
+        // 10 pt (not 6) so the pan cannot start inside the scrub long-press's 8 pt hold window (#1342).
         let drag = DragGesture(minimumDistance: 10)
             .onChanged { value in
                 let base = anchor ?? current()
@@ -709,15 +641,12 @@ private struct ZoomPanModifier: ViewModifier {
             .onChanged { scale in
                 let base = anchor ?? current()
                 if anchor == nil { anchor = base }
-                // Pinch zooms about the window centre (we don't get a focal point from MagnificationGesture).
+                // Pinch zooms about the window centre (MagnificationGesture gives no focal point).
                 apply(zoom(base, Double(scale), 0.5, bounds))
             }
             .onEnded { _ in anchor = nil }
 
-        // Double-tap anywhere on the plot resets to the full window: the discoverable "back out" affordance
-        // both platforms share (alongside the explicit Reset button the host shows). It does NOT add an
-        // accessibility action: the chart collapses to one labelled VoiceOver element with a static value, so
-        // a hidden tap gesture here is invisible to VoiceOver and never steals its double-tap-to-activate.
+        // Double-tap resets to the full window. No accessibility action: the chart is one labelled VoiceOver element, so the tap never steals double-tap-to-activate.
         let doubleTapReset = TapGesture(count: 2).onEnded { resetZoom() }
 
         let measured = content.background(
@@ -728,12 +657,10 @@ private struct ZoomPanModifier: ViewModifier {
         )
 
         #if os(macOS)
-        // macOS has no pinch in this context; drag pans. Scroll-to-zoom is handled by the Deep Timeline
-        // host's scroll modifier (it owns the NSEvent monitor); here we wire pan + the double-tap reset.
+        // macOS: drag pans; scroll-to-zoom is handled by the Deep Timeline host's scroll modifier.
         return AnyView(measured.gesture(drag).simultaneousGesture(doubleTapReset))
         #else
-        // #1342: mask the pan off while a scrub is engaged so a horizontal scrub no longer ALSO slides
-        // the window (the pan is `.simultaneous`, so it otherwise co-recognises alongside the scrub).
+        // Mask the pan off while a scrub is engaged (the pan is `.simultaneous`, so it would otherwise co-recognise with the scrub) (#1342).
         return AnyView(measured.gesture(magnify)
             .simultaneousGesture(drag, including: scrubActive() ? .subviews : .all)
             .simultaneousGesture(doubleTapReset))
