@@ -322,6 +322,15 @@ struct StrandiOSApp: App {
                     watch.activate()
                     await watch.pushLatest(from: model)
                 }
+                #if DEBUG
+                // Screenshot harness: `-zoopCoachBriefNow YES` writes today's coach brief on launch,
+                // without waiting for a morning sync.
+                .task {
+                    guard UserDefaults.standard.bool(forKey: "zoopCoachBriefNow") else { return }
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
+                    await CoachMorningBrief.generate(repo: model.repo, coach: model.coach)
+                }
+                #endif
         }
         // HealthKit authorization is intentionally NOT requested on launch. The system permission
         // dialog without prior in-app rationale violates Apple HIG / App Review guidance — the user

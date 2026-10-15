@@ -1687,6 +1687,14 @@ final class AppModel: ObservableObject {
         guard !live.backfilling, !live.historyPendingSync, !intelligence.computing else { return }
         guard let row = repo.today else { return }
         let nightEnd = repo.sleeps.map(\.endTs).max()
+        #if os(iOS)
+        // With the Coach on, the morning goes out as the coach brief instead of the plain text.
+        if CoachMorningBrief.isActive {
+            CoachMorningBrief.onDayUpdate(today: Repository.localDayKey(Date()), recovery: row.recovery,
+                                          nightEndTs: nightEnd, repo: repo, coach: coach)
+            return
+        }
+        #endif
         GoodMorningNotifier.onDayUpdate(today: Repository.localDayKey(Date()), recovery: row.recovery,
                                         sleepMinutes: row.totalSleepMin, nightEndTs: nightEnd)
     }

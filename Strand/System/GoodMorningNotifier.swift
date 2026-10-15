@@ -26,6 +26,16 @@ enum GoodMorningNotifier {
         enabled && recovery != nil && nightEndedToday && hour < latestHour && lastPostedDay != today
     }
 
+    /// Whether the morning message for `today` already went out (plain or through the coach).
+    static func hasPosted(today: String) -> Bool {
+        UserDefaults.standard.string(forKey: lastDayKey) == today
+    }
+
+    /// Marks the day as announced, so a coach brief and the plain text can never both post.
+    static func markPosted(today: String) {
+        UserDefaults.standard.set(today, forKey: lastDayKey)
+    }
+
     static func copy(recovery: Double, sleepMinutes: Double?) -> (title: String, body: String) {
         let pct = Int(recovery.rounded())
         let body: String

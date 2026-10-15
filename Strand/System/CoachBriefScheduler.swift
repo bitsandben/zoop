@@ -236,8 +236,21 @@ enum CoachBriefScheduler {
         #if os(iOS)
         publishToWidget(text)  // K10: mirror into the App Group for the widget
         #endif
-        postNotification(title: String(localized: "Today's coaching brief"),
-                          body: oneLineSummary(from: text))
+        // The proactive morning brief may already have announced today; one coach push per morning.
+        if claimMorningPush(day: dayKey(now)) {
+            postNotification(title: String(localized: "Today's coaching brief"),
+                              body: oneLineSummary(from: text))
+        }
+        return true
+    }
+
+    /// The local day a coach push (this scheduled brief or the proactive morning brief) last went out.
+    private static let morningPushDayKey = "zoop.coach.morningPushDay"
+
+    /// Claims today's single coach push. False when one already went out for `day`.
+    static func claimMorningPush(day: String) -> Bool {
+        guard UserDefaults.standard.string(forKey: morningPushDayKey) != day else { return false }
+        UserDefaults.standard.set(day, forKey: morningPushDayKey)
         return true
     }
 

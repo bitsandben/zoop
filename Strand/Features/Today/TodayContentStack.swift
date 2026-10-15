@@ -32,6 +32,7 @@ struct TodayContentStack: View {
         if content.isToday { HealthAlertBanner() }
 
         TodayRingsView(content: content, onExplain: actions.explain)
+        if content.isToday { CoachTodayCard() } // Coach card mounts here
 
         TileGrid {
             TodayLinkedTile(route: .health, readout: nil, onExplain: actions.explain) {
