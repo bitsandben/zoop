@@ -557,6 +557,7 @@ enum DemoScreens {
         case "onboarding": return AnyView(OnboardingWizard(onFinished: {}))
         case "recovery": return AnyView(RecoveryDemoHost(nights: 40, scale: 0.62))
         case "recoverycalibrating": return AnyView(RecoveryDemoHost(nights: 2, scale: 0.8))
+        case "sleeprestless": return AnyView(SleepRestlessDemoHost())
         case "fitnessage": return AnyView(NavigationStack { FitnessAgeScreen() })
         case "fasting": return AnyView(FastingScreen())
         case "addwizard": return AnyView(AddWizardDemoHost())

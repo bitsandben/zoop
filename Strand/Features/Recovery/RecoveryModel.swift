@@ -1,6 +1,7 @@
 import Foundation
 import StrandAnalytics
 import StrandDesign
+import WhoopStore
 
 // MARK: - RecoveryModel
 //
@@ -14,15 +15,15 @@ final class RecoveryModel: ObservableObject {
     func load(repo: Repository) async {
         let now = Date()
         let calibrationOn = RecoveryCalibrationStore.isEnabled
-        // Show the score first; the check-in read hits the store and must never hold the screen blank.
-        content = build(repo: repo, now: now, calibrationOn: calibrationOn, checkIns: [:])
-        guard calibrationOn else { return }
-        let checkIns = await repo.morningCheckIns()
-        content = build(repo: repo, now: now, calibrationOn: true, checkIns: checkIns)
+        // Show the score first; the store reads must never hold the screen blank.
+        content = build(repo: repo, now: now, calibrationOn: calibrationOn, checkIns: [:], journal: [])
+        let checkIns = calibrationOn ? await repo.morningCheckIns() : [:]
+        let journal = await repo.journalEntries(days: 400)
+        content = build(repo: repo, now: now, calibrationOn: calibrationOn, checkIns: checkIns, journal: journal)
     }
 
     private func build(repo: Repository, now: Date, calibrationOn: Bool,
-                       checkIns: [String: MorningCheckIn]) -> RecoveryContent {
+                       checkIns: [String: MorningCheckIn], journal: [JournalEntry]) -> RecoveryContent {
         RecoveryContentBuilder.build(RecoveryInput(
             days: repo.days,
             // The same anchor Home resolves its Recovery ring through, so the two cannot disagree.
@@ -33,6 +34,18 @@ final class RecoveryModel: ObservableObject {
             calibrationEnabled: calibrationOn,
             calibration: RecoveryCalibrationStore.lastResult,
             now: now,
-            todayKey: Repository.logicalDayKey(now)))
+            todayKey: Repository.logicalDayKey(now),
+            sleeps: repo.sleeps,
+            journal: journal,
+            illnessSignals: illnessSignals))
+    }
+
+    /// The illness engine's one decision for today; a quiet or confounded result names no signals.
+    private var illnessSignals: Int {
+        guard let result = AppModel.shared?.illnessSignal else { return 0 }
+        switch result.level {
+        case .mild, .raised: return result.signalCount
+        case .quiet, .suppressed, .alreadyUnwell: return 0
+        }
     }
 }

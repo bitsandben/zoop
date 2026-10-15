@@ -21,6 +21,12 @@ struct RecoveryInput {
     var now: Date
     /// Today's logical day key, from the app's one day-rollover rule.
     var todayKey: String
+    /// One main sleep block per night (`Repository.sleeps`), for bedtime against the usual.
+    var sleeps: [CachedSleepSession] = []
+    /// Logged journal answers, for the factors list.
+    var journal: [JournalEntry] = []
+    /// Signals out of range today per `IllnessSignalEngine` (0 when quiet or not evaluated).
+    var illnessSignals: Int = 0
 }
 
 struct RecoveryContributor: Identifiable {
@@ -73,6 +79,8 @@ struct RecoveryContent {
     let hero: MetricReadout
     let heroExplanation: MetricExplanation
     let contributors: [RecoveryContributor]
+    /// What set this morning's score, ranked; nil unless the score is this morning's.
+    let factors: RecoveryFactorsContent?
     /// Up to 90 days, oldest first. Days without a score are absent, never zero.
     let trend: [RecoveryTrendDay]
     /// The personal range over the last 30 scored days, drawn as the band behind the bars.

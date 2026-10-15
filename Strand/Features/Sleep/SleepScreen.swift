@@ -110,6 +110,9 @@ struct SleepScreen: View {
         if page.hasStages {
             SleepMetricListCard(title: SleepStrings.stagesCard, metrics: page.metrics.stages) { selected = $0 }
         }
+        if let restlessness = page.restlessness {
+            SleepRestlessCard(content: restlessness) { selected = $0 }
+        }
         if !page.naps.isEmpty {
             SleepNapsCard(naps: page.naps,
                           onEdit: { edit = model.editRequest(nap: $0) },

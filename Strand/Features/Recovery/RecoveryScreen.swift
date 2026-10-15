@@ -41,6 +41,7 @@ struct RecoveryContentView: View {
             VStack(alignment: .leading, spacing: ZoopSpacing.cardGap) {
                 hero
                 if !content.timeline.isEmpty { RecoveryTimelineCard(steps: content.timeline) }
+                if let factors = content.factors { RecoveryFactorsCard(content: factors) }
                 if !content.contributors.isEmpty { contributors }
                 if content.state == .scored { RecoveryTrendCard(days: content.trend, band: content.typicalRange) }
                 if let forecast = content.forecast { RecoveryForecastCard(forecast: forecast) }
@@ -64,7 +65,7 @@ struct RecoveryContentView: View {
     private var contributors: some View {
         VStack(alignment: .leading, spacing: ZoopSpacing.s) {
             VStack(alignment: .leading, spacing: ZoopSpacing.xs) {
-                Text(RecoveryStrings.contributorsTitle).font(ZoopType.headline).foregroundStyle(StrandPalette.textPrimary)
+                Text(content.factors == nil ? RecoveryStrings.contributorsTitle : RecoveryStrings.measurementsTitle).font(ZoopType.headline).foregroundStyle(StrandPalette.textPrimary)
                 Text(RecoveryStrings.contributorsNote).font(ZoopType.caption).foregroundStyle(StrandPalette.textTertiary)
             }
             .padding(.top, ZoopSpacing.s)

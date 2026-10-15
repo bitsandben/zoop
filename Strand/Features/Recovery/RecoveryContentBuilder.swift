@@ -33,14 +33,18 @@ enum RecoveryContentBuilder {
         let hero = heroReadout(input, assessment: assessment, range: range, nightsKnown: hrvNights)
         let window = history.first.flatMap { first in history.last.map { DateInterval(start: first.date, end: $0.date) } }
         var contributors: [RecoveryContributor] = []
+        var factors: RecoveryFactorsContent?
         if state == .scored, let row = input.anchor, let baselines {
             contributors = RecoveryContributors.build(row: row, baselines: baselines, input: input)
+            let drivers = ChargeBreakdownWiring.breakdown(baselines: baselines, row: row, charge: input.scoring)?.drivers
+            factors = RecoveryFactorsBuilder.build(input, drivers: drivers ?? [])
         }
         return RecoveryContent(
             state: state,
             hero: hero,
             heroExplanation: RecoveryExplanations.hero(confidence: assessment.confidence, hrvNights: hrvNights, window: window),
             contributors: contributors,
+            factors: factors,
             trend: history.suffix(90).map { RecoveryTrendDay(date: $0.date, value: $0.value) },
             typicalRange: range,
             forecast: state == .scored ? forecast(input) : nil,
