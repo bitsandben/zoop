@@ -20,11 +20,13 @@ struct BodyVitalsBlock: View {
 
 struct BodyVitalsSection: View {
     let vitals: [BodyVital]
+    /// Off inside the Insights "Body" section, which carries its own header.
+    var showsTitle = true
     let onSelect: (BodyVital) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: ZoopSpacing.s) {
-            BodySectionTitle(title: BodyStrings.vitalsTitle, note: BodyStrings.vitalsNote)
+            if showsTitle { BodySectionTitle(title: BodyStrings.vitalsTitle, note: BodyStrings.vitalsNote) }
             TileGrid {
                 ForEach(paired) { vital in tile(vital) }
             }

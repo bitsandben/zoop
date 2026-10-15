@@ -21,10 +21,37 @@ struct BodyFinding: Identifiable, Equatable {
     /// What the value is measured against ("vs. your normal of the 30 days before").
     let comparison: LocalizedStringResource
     let verdict: BodyVerdict
-    /// The sample the reading rests on ("14 days with · 20 without").
+    /// The sample the reading rests on ("14 days with · 20 without"). Shown in the explainer only.
     let sample: LocalizedStringResource
     let explanation: BodyFindingExplanation
     let visual: BodyFindingVisual?
+}
+
+/// The Insights section a finding is grouped under. Habits stay in their own logbook card.
+enum BodyInsightSection: CaseIterable {
+    case body, sleep, training, stress, habits
+
+    var title: LocalizedStringResource {
+        switch self {
+        case .body: return BodyStrings.sectionBody
+        case .sleep: return BodyStrings.sectionSleep
+        case .training: return BodyStrings.sectionTraining
+        case .stress: return BodyStrings.sectionStress
+        case .habits: return BodyStrings.patternsTitle
+        }
+    }
+}
+
+extension BodyFinding {
+    var section: BodyInsightSection {
+        switch id {
+        case "hrv", "rhr", "weekday": return .body
+        case "evening": return .sleep
+        case "sensitivity", "bounce", "zones", "hrr": return .training
+        case "stressTiming": return .stress
+        default: return .habits
+        }
+    }
 }
 
 /// Closed verdict vocabulary for findings and patterns. Vital-style words reuse the metric catalogue
@@ -39,8 +66,10 @@ enum BodyVerdict: Equatable {
     case clearPattern, weakPattern
     case clearDifference, noClearDifference
 
-    /// Attention verdicts get the warning tint; everything else stays neutral (§1 "calm by default").
+    /// Attention verdicts get the warning tint, good ones the positive tint; everything else stays
+    /// neutral (§1 "calm by default").
     var needsAttention: Bool { self == .strong || self == .slow || self == .worse }
+    var isGood: Bool { self == .better || self == .quick }
 
     var text: LocalizedStringResource {
         switch self {

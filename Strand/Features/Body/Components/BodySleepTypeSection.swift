@@ -10,11 +10,13 @@ import StrandDesign
 
 struct BodySleepTypeSection: View {
     let content: SleepChronotypeContent?
+    /// Off inside the Insights "Sleep" section, which carries its own header.
+    var showsTitle = true
 
     var body: some View {
         if let content {
             VStack(alignment: .leading, spacing: ZoopSpacing.s) {
-                BodySectionTitle(title: SleepChronotypeStrings.title)
+                if showsTitle { BodySectionTitle(title: SleepChronotypeStrings.title) }
                 ListCard {
                     NavigationLink(value: TabRoute.sleep) { BodySleepTypeRow(content: content) }
                         .buttonStyle(.plain)

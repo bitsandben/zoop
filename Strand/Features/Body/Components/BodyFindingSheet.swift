@@ -50,7 +50,8 @@ struct BodyFindingSheet: View {
                     .minimumScaleFactor(0.6)
                 BodyVerdictText(verdict: finding.verdict)
             }
-            Text(finding.comparison).font(ZoopType.caption).foregroundStyle(StrandPalette.textTertiary)
+            (Text(finding.comparison) + Text(verbatim: " · ") + Text(finding.sample))
+                .font(ZoopType.caption).foregroundStyle(StrandPalette.textTertiary)
             Text(finding.meaning)
                 .font(ZoopType.body)
                 .foregroundStyle(StrandPalette.textPrimary)

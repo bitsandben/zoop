@@ -23,6 +23,12 @@ final class StressScreenModel: ObservableObject {
     /// Test Centre only: alternate stress definitions that never reach a user screen.
     @Published private(set) var stressIndex: StressIndex.Components?
     @Published private(set) var freqHRV: HRVFreqDomain.Bands?
+    /// The typical day over the last 14 days; nil until loaded or with too little data.
+    @Published private(set) var timeOfDay: StressPatterns.TimeOfDay?
+    /// Workdays against the weekend, from the same daily levels as the trend.
+    @Published private(set) var week: StressPatterns.Week?
+    /// The typical day has been read (it walks raw streams, so it arrives after the rest).
+    @Published private(set) var patternsLoaded = false
     /// True while a finished breathing session is waiting for its "Were you stressed?" answer.
     @Published private(set) var asking = false
 
@@ -87,12 +93,16 @@ final class StressScreenModel: ObservableObject {
         loaded = true
         rebuildDaily()
         await refreshDay()
+        timeOfDay = await StressPatternStore.shared.timeOfDay(repo: repo)
+        patternsLoaded = true
     }
 
     /// Cheap enough to call when `repo.days` changes: one pass over the stored days.
     func rebuildDaily() {
         guard let repo else { return }
         daily = DaytimeStress.daily(days: repo.days, stored: stored)
+        let levels = (daily?.trend ?? []).map { BodyInsights.DayValue(day: $0.day, value: $0.level) }
+        week = StressPatterns.week(levels, asOf: Repository.localDayKey(Date()))
     }
 
     /// Reads today's banked HR and R-R and scores the hours. Local-day window [midnight, now].

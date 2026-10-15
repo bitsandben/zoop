@@ -6,7 +6,10 @@ import SwiftUI
 // Generated alongside the German and English catalogue entries; edit both together.
 
 enum BodyStrings {
-    static let showsTitle = LocalizedStringResource("zoop.body.shows.title", defaultValue: "What your body shows")
+    static let sectionBody = LocalizedStringResource("zoop.body.section.body", defaultValue: "Body")
+    static let sectionSleep = LocalizedStringResource("zoop.body.section.sleep", defaultValue: "Sleep")
+    static let sectionTraining = LocalizedStringResource("zoop.body.section.training", defaultValue: "Training")
+    static let sectionStress = LocalizedStringResource("zoop.body.section.stress", defaultValue: "Stress")
     static let showsEmpty = LocalizedStringResource("zoop.body.shows.empty", defaultValue: "Nothing stands out yet. Keep wearing the strap and readings appear here.")
     static let vitalsTitle = LocalizedStringResource("zoop.body.vitals.title", defaultValue: "Vitals")
     static let vitalsNote = LocalizedStringResource("zoop.body.vitals.note", defaultValue: "Last night against your usual range, with the last 30 days.")

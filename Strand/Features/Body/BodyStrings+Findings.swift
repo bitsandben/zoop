@@ -24,6 +24,11 @@ extension BodyStrings {
     }
     static let rhrLowerWeek = LocalizedStringResource("zoop.body.rhr.lowerWeek", defaultValue: "Your resting heart rate has run lower than usual this week.")
     static let rhrHigherWeek = LocalizedStringResource("zoop.body.rhr.higherWeek", defaultValue: "Your resting heart rate has run higher than usual this week.")
+    static let streakAbove = LocalizedStringResource("zoop.body.direction.streakAbove", defaultValue: "in a row above your normal")
+    static let streakBelow = LocalizedStringResource("zoop.body.direction.streakBelow", defaultValue: "in a row below your normal")
+    static func streakData(_ days: Int) -> LocalizedStringResource {
+        LocalizedStringResource("zoop.body.direction.streakData", defaultValue: "The last \(days) nights, each compared with the 30 days before it.")
+    }
     static let weekVsNormal = LocalizedStringResource("zoop.body.direction.comparison", defaultValue: "last 7 days vs. the 30 days before")
     static let hrvTrendWhat = LocalizedStringResource("zoop.body.hrv.what", defaultValue: "Whether your nightly HRV has drifted away from your own normal over the last days.")
     static let rhrTrendWhat = LocalizedStringResource("zoop.body.rhr.what", defaultValue: "Whether your sleeping heart rate has drifted away from your own normal over the last days.")
@@ -90,6 +95,8 @@ extension BodyStrings {
     static func hrrComparison(_ average: String) -> LocalizedStringResource {
         LocalizedStringResource("zoop.body.hrr.comparison", defaultValue: "drop after one minute, last workout; average \(average)")
     }
+    static let hrrLatest = LocalizedStringResource("zoop.body.hrr.latest", defaultValue: "Last workout")
+    static let hrrAverage = LocalizedStringResource("zoop.body.hrr.average", defaultValue: "Average")
     static let hrrWhat = LocalizedStringResource("zoop.body.hrr.what", defaultValue: "How far your heart rate falls in the first minute after a hard workout.")
     static let hrrMethod = LocalizedStringResource("zoop.body.hrr.method", defaultValue: "One-minute heart-rate recovery")
     static let hrrMethodSummary = LocalizedStringResource("zoop.body.hrr.method.summary", defaultValue: "Peak heart rate at the end of the workout minus the median one minute later; 12 bpm or less counts as low.")

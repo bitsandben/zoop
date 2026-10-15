@@ -41,12 +41,19 @@ enum BodyFindings {
         let points = d.series.map { MetricExplanation.TrendPoint(date: BodyFormat.date($0.day), value: $0.value) }
         let recent = unit.format(d.recentMean, locale: BodyFormat.locale)
         let normal = unit.format(d.baselineMean, locale: BodyFormat.locale)
+        // The number and its comparison describe the same reading as the verdict: a run is told as its
+        // length in nights (each against its own trailing month), a weekly drift as the 7-day change.
+        // Mixing them showed "above your normal" beside a negative weekly percentage.
+        let streak = d.trend == .belowStreak || d.trend == .aboveStreak
+        let value = streak ? String(localized: BodyStrings.days(d.streakDays))
+            : MetricUnit.percent.formatDelta(d.deltaPercent, locale: BodyFormat.locale)
+        let comparison = !streak ? BodyStrings.weekVsNormal : below ? BodyStrings.streakBelow : BodyStrings.streakAbove
         return BodyFinding(
             id: hrv ? "hrv" : "rhr",
             title: hrv ? BodyStrings.hrvTrendTitle : BodyStrings.rhrTrendTitle,
             meaning: meaning,
-            value: MetricUnit.percent.formatDelta(d.deltaPercent, locale: BodyFormat.locale),
-            comparison: BodyStrings.weekVsNormal,
+            value: value,
+            comparison: comparison,
             // Lower HRV is worse, lower resting heart rate is better.
             verdict: below == hrv ? .worse : .better,
             sample: BodyStrings.readingsIn30Days(d.series.count),
@@ -55,7 +62,7 @@ enum BodyFindings {
                 methodName: BodyStrings.directionMethod,
                 methodSummary: BodyStrings.directionMethodSummary,
                 citation: hrv ? "Plews et al., 2012" : nil,
-                dataUsed: BodyStrings.recentVsNormal(recent, normal),
+                dataUsed: streak ? BodyStrings.streakData(d.streakDays) : BodyStrings.recentVsNormal(recent, normal),
                 confidence: .confidence(samples: d.series.count, solidAt: 21),
                 confidenceReason: BodyStrings.readingsIn30Days(d.series.count)),
             visual: .line(points: points, normal: d.baselineMean, spread: d.baselineSD, unit: unit))
@@ -202,7 +209,8 @@ enum BodyFindings {
                 dataUsed: BodyStrings.workouts(h.workouts),
                 confidence: .confidence(samples: h.workouts, solidAt: 6),
                 confidenceReason: BodyStrings.sampleReason(h.workouts, 6)),
-            visual: nil)
+            visual: .groups(first: Double(h.latestDrop), second: h.averageDrop,
+                            firstLabel: BodyStrings.hrrLatest, secondLabel: BodyStrings.hrrAverage, unit: bpm))
     }
 }
 

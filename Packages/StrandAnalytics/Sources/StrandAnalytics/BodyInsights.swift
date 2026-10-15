@@ -351,12 +351,8 @@ public enum BodyInsights {
     /// fewer than 7 days of 6+ scored hours, a spread under 0.4 on the 0-3 scale, or a peak leading on
     /// fewer than 60% of days.
     public static func stressTiming(days: [[HourLevel]]) -> StressTiming? {
-        let usable = days.filter { Set($0.map(\.hour)).count >= minScoredHoursPerDay }
-        guard usable.count >= minStressDays else { return nil }
-        var byHour: [Int: [Double]] = [:]
-        for d in usable { for h in d where (0...23).contains(h.hour) { byHour[h.hour, default: []].append(h.level) } }
-        let means = byHour.filter { $0.value.count >= minDaysPerHour }.mapValues(mean)
-        guard means.count >= minScoredHoursPerDay,
+        let (usable, means) = StressPatterns.hourMeans(days)
+        guard usable.count >= minStressDays, means.count >= minScoredHoursPerDay,
               let peak = means.max(by: { $0.value < $1.value || ($0.value == $1.value && $0.key > $1.key) }),
               let calm = means.min(by: { $0.value < $1.value || ($0.value == $1.value && $0.key < $1.key) }),
               peak.value - calm.value >= minStressSpread else { return nil }

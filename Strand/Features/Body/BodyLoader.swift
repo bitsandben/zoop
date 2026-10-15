@@ -8,6 +8,7 @@ import WhoopStore
 // Everything the Insights page reads, fetched once per refresh. The quick readings come from the
 // in-memory daily rows; the four that walk raw streams (zone mix, stress timing, evening stress,
 // heart-rate recovery) are scored at most once per local day, because a refresh fires on every sync.
+// Stress timing comes from `StressPatternStore`, shared with the Stress screen.
 
 /// The outcomes a habit can be measured against.
 enum BodyOutcome: String, CaseIterable, Identifiable {
@@ -86,7 +87,6 @@ final class BodyLoader {
     private var cache: DayCache?
 
     static let zoneWindowDays = 28
-    static let stressDays = 14
     static let eveningDays = 28
 
     /// The in-memory readings: instant, so the page can draw before the slow ones arrive.
@@ -180,17 +180,9 @@ final class BodyLoader {
                        workouts: drops.count)
     }
 
-    /// Hourly stress for the last 14 full days, 07:00–23:00, scored the way the Stress screen scores a day.
+    /// The peak and calmest stress hour of the last 14 days, from the store the Stress screen reads.
     func stressTiming(repo: Repository) async -> BodyInsights.StressTiming? {
-        var perDay: [[BodyInsights.HourLevel]] = []
-        for date in pastDays(Self.stressDays) {
-            let from = Int(date.timeIntervalSince1970) + 7 * 3600
-            let result = await stress(repo: repo, from: from, to: from + 16 * 3600, date: date,
-                                      minSamples: DaytimeStress.minHourHRSamples * 6)
-            let levels = result?.hours.compactMap { h in h.level.map { BodyInsights.HourLevel(hour: h.hour, level: $0) } }
-            if let levels, !levels.isEmpty { perDay.append(levels) }
-        }
-        return BodyInsights.stressTiming(days: perDay)
+        await StressPatternStore.shared.timing(repo: repo)
     }
 
     /// Mean evening stress (17:00–23:00) against the deep sleep of the night that followed.
@@ -198,37 +190,17 @@ final class BodyLoader {
         var deepByDay: [String: Double] = [:]
         for d in repo.days { if let deep = d.deepMin { deepByDay[d.day] = deep } }
         var pairs: [(driver: Double, outcome: Double)] = []
-        for date in pastDays(Self.eveningDays) {
+        for date in StressPatternStore.pastDays(Self.eveningDays) {
             guard let next = Calendar.current.date(byAdding: .day, value: 1, to: date),
                   let deep = deepByDay[Repository.localDayKey(next)] else { continue }
             let from = Int(date.timeIntervalSince1970) + 17 * 3600
-            guard let result = await stress(repo: repo, from: from, to: from + 6 * 3600, date: date,
-                                            minSamples: DaytimeStress.minHourHRSamples) else { continue }
+            guard let result = await StressPatternStore.analyze(repo: repo, from: from, to: from + 6 * 3600, date: date,
+                                                                minSamples: DaytimeStress.minHourHRSamples) else { continue }
             let levels = result.hours.compactMap(\.level)
             guard levels.count >= 3 else { continue }
             pairs.append((levels.reduce(0, +) / Double(levels.count), deep))
         }
         return PatternInsights.splitEffect(pairs)
-    }
-
-    private func stress(repo: Repository, from: Int, to: Int, date: Date,
-                        minSamples: Int) async -> DaytimeStress.Result? {
-        let hr = await repo.hrSamples(from: from, to: to, limit: 80_000)
-        guard hr.count >= minSamples else { return nil }
-        let rr = await repo.rrIntervals(from: from, to: to, limit: 120_000)
-        let gravity = await repo.gravitySamplesUnion(from: from, to: to, limit: 120_000)
-        let tz = TimeZone.current.secondsFromGMT(for: date)
-        return await runUnescalated {
-            DaytimeStress.analyze(hr: hr, rr: rr, gravity: gravity, tzOffsetSeconds: tz,
-                                  mode: .dayRelative, includeTimeline: false)
-        }
-    }
-
-    /// Start of each of the last `n` full days, newest first.
-    private func pastDays(_ n: Int) -> [Date] {
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
-        return (1...n).compactMap { cal.date(byAdding: .day, value: -$0, to: today) }
     }
 }
 #endif
