@@ -953,11 +953,6 @@ public final class BLEManager: NSObject, ObservableObject {
         puffinDeepBufferLog.appendOpticalPhase(phase)
     }
 
-    /// Flush and expose the passive deep-buffer experiment log for a user-initiated export.
-    func whoop5OpticalExperimentURL() -> URL? {
-        puffinDeepBufferLog.opticalExperimentURL()
-    }
-
     // MARK: CoreBluetooth
     private var central: CBCentralManager!
     private var peripheral: CBPeripheral?
@@ -984,7 +979,7 @@ public final class BLEManager: NSObject, ObservableObject {
     /// Non-nil signals that `centralManagerDidUpdateState` should reconnect this
     /// specific peripheral rather than starting a fresh scan.
     private var restoredPeripheral: CBPeripheral?
-    /// #280: true while `lastSyncError` currently holds a radio-state message (off / unauthorized /
+    /// #280: true while `lastSyncIssue` currently holds a radio-state message (off / unauthorized /
     /// unsupported) that `centralManagerDidUpdateState` set. Lets the poweredOn transition clear ONLY
     /// that message, never a genuine mid-sync error (e.g. "Sync interrupted").
     private var radioStateErrorShown = false
@@ -2178,45 +2173,6 @@ public final class BLEManager: NSObject, ObservableObject {
         await collector?.storageStats()
     }
 
-    /// Capture raw accelerometer (type-43 IMU) frames on demand for a bounded window, then stop.
-    /// Persists raw even when the global research toggle is off (that's the point: on-demand, not
-    /// 24/7). The Collector's window auto-expires at its deadline so a dropped stop can't leak raw.
-    public func captureRawAccel(seconds: TimeInterval = 30) {
-        guard !rawCaptureInFlight else {
-            log("Raw-accel capture: already in flight — ignoring")
-            return
-        }
-        rawCaptureInFlight = true
-        let secs = RawCaptureWindow.clamp(seconds)
-        collector?.beginRawCapture(seconds: secs)
-        // Hardware-verified on WHOOP 5/MG: opcode 106 alone acknowledges but does not start the
-        // producer. START_RAW_DATA must precede the two-byte realtime IMU selector.
-        send(.startRawData, payload: [0x01], writeType: .withResponse)
-        if selectedModel.deviceFamily == .whoop5 {
-            send(.toggleIMUMode, payload: [0x01, 0x01], writeType: .withResponse)
-        } else {
-            send(.toggleIMUMode, payload: [0x01], writeType: .withResponse)
-        }
-        log("Raw-accel capture: started for \(secs)s")
-        DispatchQueue.main.asyncAfter(deadline: .now() + secs) { [weak self] in
-            guard let self else { return }
-            // Only stop the raw stream if the 24/7 research toggle is OFF.  When it's ON, the
-            // continuous stream must keep running — we just flush/upload the bounded window we
-            // captured without halting the wider session.
-            if !UserDefaults.standard.bool(forKey: "enableRawCapture") {
-                self.send(.stopRawData, payload: [0x01], writeType: .withResponse)
-                if self.selectedModel.deviceFamily == .whoop5 {
-                    self.send(.toggleIMUMode, payload: [0x01, 0x00], writeType: .withResponse)
-                }
-            }
-            self.rawCaptureInFlight = false
-            Task { @MainActor in
-                await self.collector?.endRawCapture()
-            }
-            self.log("Raw-accel capture: stopped + flushed")
-        }
-    }
-
     /// Start a manually stopped 5/MG raw-data session. Returns false when another capture is active.
     @discardableResult
     public func startGroundTruthRawCapture(sessionId: String) -> Bool {
@@ -2805,7 +2761,7 @@ public final class BLEManager: NSObject, ObservableObject {
         if reason == "HISTORY_COMPLETE" {
             state.lastSyncedAt = Date().timeIntervalSince1970
             // #77 / #91: a sync that COMPLETED but discarded records must not read as a clean
-            // "History synced" — the wording distinguishes bytes saved on this Mac from bytes the
+            // "History synced" — the wording distinguishes bytes saved on this device from bytes the
             // full archive could not preserve, so "saved" is never claimed falsely.
             let archived = state.rejectedFramesThisSession
             let unarchived = state.rejectedFramesUnarchived
@@ -2825,7 +2781,7 @@ public final class BLEManager: NSObject, ObservableObject {
             let bankedNothing = banking.bankedNothing && !productiveBurstTail
             let sustainedEmpty = productiveBurstTail ? false : emptySyncTracker.recordCompletedSync(
                 bankedSensorRecords: bankedSensorRecords, consoleOnly: banking.bankedNothing)
-            // #612: expose the streak as a queryable flag (previously only reached UI as `lastSyncError`
+            // #612: expose the streak as a queryable flag (previously only reached UI as `lastSyncIssue`
             // free text below). Set on EVERY HISTORY_COMPLETE, not just the empty branch, so a productive
             // sync clears it immediately.
             state.sustainedEmptyOffload = sustainedEmpty
@@ -2855,9 +2811,9 @@ public final class BLEManager: NSObject, ObservableObject {
                 if let k = whoStalled { du.set(Date().timeIntervalSince1970, forKey: k) }
             }
             if unarchived > 0 {
-                state.lastSyncError = "Synced, but \(archived + unarchived) record(s) couldn't be decoded (unrecognised strap firmware layout), and the on-device archive is full - the \(unarchived) newest weren't preserved. Please share a strap log so the layout can be mapped."
+                state.lastSyncIssue = .completedWithNote("Synced, but \(archived + unarchived) record(s) couldn't be decoded (unrecognised strap firmware layout), and the on-device archive is full - the \(unarchived) newest weren't preserved. Please share a strap log so the layout can be mapped.")
             } else if archived > 0 {
-                state.lastSyncError = "Synced, but \(archived) record(s) couldn't be decoded (unrecognised strap firmware layout). The raw bytes were saved on this Mac - please share a strap log so the layout can be mapped."
+                state.lastSyncIssue = .completedWithNote("Synced, but \(archived) record(s) couldn't be decoded (unrecognised strap firmware layout). The raw bytes were saved on this device - please share a strap log so the layout can be mapped.")
             } else if bankedNothing {
                 // #77 / #214 family: the offload COMPLETED but the strap handed over no sensor records
                 // at all — either console/diagnostic output across many chunks, OR a near-empty
@@ -2896,20 +2852,21 @@ public final class BLEManager: NSObject, ObservableObject {
                 // that banks no sensor records has a different problem — the sensor front-end or power,
                 // not the clock — and telling the user to charge it sends them away from the real cause.
                 // The two states are distinguished by `backfiller.sawNoFlashCursor`.
-                state.lastSyncError = sustainedEmpty
-                    ? (staleNewest.map { Backfiller.staleRecordBanner(newestUnix: $0, wallNowUnix: wallNowUnix) }
-                        ?? (backfiller?.sawNoFlashCursor == true
-                            ? Backfiller.noFlashCursorBanner
-                            : Backfiller.noSensorRecordsBanner))
+                state.lastSyncIssue = sustainedEmpty
+                    ? .completedWithNote(
+                        staleNewest.map { Backfiller.staleRecordBanner(newestUnix: $0, wallNowUnix: wallNowUnix) }
+                            ?? (backfiller?.sawNoFlashCursor == true
+                                ? Backfiller.noFlashCursorBanner
+                                : Backfiller.noSensorRecordsBanner))
                     : nil
             } else if let futureBanner = futureClockBanner {
                 // #324/#928: the strap banked records but its newest is dated implausibly in the FUTURE
                 // (RTC relatched ahead). #773 drops the future-dated samples so nothing is misfiled, but
                 // the "banked something" path above would otherwise report a clean sync and leave the
                 // user with no data and no reason. Name the real cause + the strap-side remedy.
-                state.lastSyncError = futureBanner
+                state.lastSyncIssue = .completedWithNote(futureBanner)
             } else {
-                state.lastSyncError = nil
+                state.lastSyncIssue = nil
             }
             // #580: a 5/MG that reaches a real HISTORY_COMPLETE with banked sensor records proves its
             // history offload IS working — clear the experimental note + empty streak so the home state
@@ -2949,7 +2906,7 @@ public final class BLEManager: NSObject, ObservableObject {
                 if whoop5EmptyOffload.historyEmpty {
                     // Honest home state (#580): NOT a sync error — connected + live HR, history experimental.
                     state.historySyncExperimental = true
-                    state.lastSyncError = nil
+                    state.lastSyncIssue = nil
                     if crossed {
                         log("Backfill: WHOOP 5/MG offload empty \(whoop5EmptyOffload.consecutiveEmpty)× — history sync is experimental on 5.0; surfacing 'connected, history experimental' (not a sync error) and backing off the bounce loop.")
                     }
@@ -2958,7 +2915,7 @@ public final class BLEManager: NSObject, ObservableObject {
                     // cry failure) OR a banking offload that just cleared the streak (recovery — drop the
                     // experimental note). Both want a clean, error-free state.
                     state.historySyncExperimental = false
-                    state.lastSyncError = nil
+                    state.lastSyncIssue = nil
                 }
             } else {
                 // #324/#928: a future-dated strap TIMES OUT on its deep future-dated backlog — that's not
@@ -2972,8 +2929,9 @@ public final class BLEManager: NSObject, ObservableObject {
                 // sync that worked had failed, which is worse than saying nothing: it trains them to
                 // distrust the one banner that matters when a sync really does stall. `bankedThisOffload`
                 // was already computed above for the 5/MG path and simply never consulted here.
-                state.lastSyncError = BLEManager.timeoutSyncError(futureClockBanner: futureClockBanner,
+                state.lastSyncIssue = BLEManager.timeoutSyncError(futureClockBanner: futureClockBanner,
                                                                   bankedThisOffload: bankedThisOffload)
+                    .map(SyncIssue.stalled)
             }
         }
         checkStrapLiveness()         // safety-net: strap ahead of us AND our frontier frozen ⇒ stuck?
@@ -3405,6 +3363,19 @@ public final class BLEManager: NSObject, ObservableObject {
         send(.toggleRealtimeHR, payload: [want ? 0x01 : 0x00])
     }
 
+    /// Smart-alarm launch cleanup: a previous run held the realtime stream for the wake window and may have been
+    /// closed before its off reached the strap (a restored link can outlive the process). A fresh process does
+    /// not know what the strap was left with, so when nothing wants the stream now this sends the same two off
+    /// payloads `stopRealtime` and the reconciler send, regardless of the edge tracker. Existing commands only.
+    public func disarmRealtimeLeftByPreviousRun() {
+        guard !screenWantsRealtime, !continuousCaptureWantsNow() else { return }
+        guard selectedModel.deviceFamily == .whoop4 || state.bonded else { return }
+        send(.sendR10R11Realtime, payload: [0x00])
+        realtimeArmed = false
+        wantsRealtime = false
+        send(.toggleRealtimeHR, payload: [0x00])
+    }
+
     /// EXPERIMENTAL R22 telemetry (#174): give the user (and us) live proof of what the strap is doing.
     /// (1) Every `COMMAND_RESPONSE` (type 0x24) to a `SET_CONFIG` (0x78) is the strap ACKing one
     ///     `enable_r22_*` flag — hardware-confirmed in sebastianwoo's capture. 15 ACKs = full acceptance.
@@ -3630,9 +3601,6 @@ public final class BLEManager: NSObject, ObservableObject {
         state.r22DisableReport = text
     }
 
-    /// Clear the #174 disable result (Settings card dismissed). Twin of Android clearR22DisableReport().
-    public func clearR22DisableReport() { state.r22DisableReport = nil }
-
     /// #174: one COMMAND_RESPONSE belonging to a disable run — either a `SET_FF_VALUE(120)` write ack or a
     /// `GET_FF_VALUE(128)` read-back. Guarded on a run being IN-FLIGHT so a stray byte match can never
     /// surface a result. Parsing — including the CRC gate — lives in the pure `DeviceConfigReadProbe`.
@@ -3811,9 +3779,6 @@ public final class BLEManager: NSObject, ObservableObject {
         state.ecgRawDataGate = report
         log("ECG gate (#891):\n\(report.render())")
     }
-
-    /// Clear the #891 result (Settings row dismissed / disconnect). Twin of Android clearEcgRawDataGate().
-    public func clearEcgRawDataGate() { state.ecgRawDataGate = nil }
 
     /// The write's own COMMAND_RESPONSE — recorded, never treated as proof (#891). Routed here from the
     /// frame router when a 119 reply lands while a write is being verified.
@@ -5646,7 +5611,7 @@ public final class BLEManager: NSObject, ObservableObject {
         // live perf: only publish on a real change so a steady resting HR doesn't re-render the whole
         // Live console every second.
         if readable {
-            state.noteReadableHeartRate()
+            state.noteReadableHeartRate(m.hr)
             if state.heartRate != m.hr { state.heartRate = m.hr }
         }
         // Record it continuously — independent of the realtime stream or the open screen.
@@ -5692,9 +5657,9 @@ extension BLEManager: @preconcurrency CBCentralManagerDelegate {
         // toggle that already reads "on" from a PRIOR build's grant may not carry over — the
         // message needs to tell the user to re-toggle it, not just check that it's on.
         #if os(macOS)
-        state.lastSyncError = "Zoop isn't allowed to use Bluetooth. Open System Settings → Privacy & Security → Bluetooth — if Zoop is already listed there, toggle it off and back on (a new Zoop build needs a fresh grant), then quit and reopen Zoop."
+        state.lastSyncIssue = .bluetooth("Zoop isn't allowed to use Bluetooth. Open System Settings → Privacy & Security → Bluetooth — if Zoop is already listed there, toggle it off and back on (a new Zoop build needs a fresh grant), then quit and reopen Zoop.")
         #else
-        state.lastSyncError = "Zoop isn't allowed to use Bluetooth. Open iPhone Settings → Zoop → Bluetooth — if it's already on, toggle it off and back on, then quit and reopen Zoop."
+        state.lastSyncIssue = .bluetooth("Zoop isn't allowed to use Bluetooth. Open iPhone Settings → Zoop → Bluetooth — if it's already on, toggle it off and back on, then quit and reopen Zoop.")
         #endif
         log("Bluetooth permission not granted (unauthorized) — cannot scan or connect")
         radioStateErrorShown = true
@@ -5731,7 +5696,7 @@ extension BLEManager: @preconcurrency CBCentralManagerDelegate {
             // Bluetooth (.unauthorized == raw 3) had nothing explaining why no strap was ever found. This is
             // the #280 case: an unsigned universal rebuild (8.4.0) gets a new code identity, so the earlier
             // macOS Bluetooth TCC grant no longer applied and CoreBluetooth reported .unauthorized before
-            // any scan/connect. Surface the actionable states via lastSyncError (shown in Live + Today);
+            // any scan/connect. Surface the actionable states via lastSyncIssue (shown in Live + Today);
             // leave .unknown/.resetting alone — they're transient and the next state update resolves them.
             // Android already surfaces all three (WhoopBleClient: no-LE / off / permission), so this brings
             // iOS+macOS up to that parity rather than adding a new behaviour.
@@ -5756,11 +5721,11 @@ extension BLEManager: @preconcurrency CBCentralManagerDelegate {
                     armUnauthorizedSettleDeadline()
                 }
             case .poweredOff:
-                state.lastSyncError = "Bluetooth is off. Turn it on to connect to your strap."
+                state.lastSyncIssue = .bluetooth("Bluetooth is off. Turn it on to connect to your strap.")
                 log("Bluetooth is off — cannot scan or connect")
                 radioStateErrorShown = true
             case .unsupported:
-                state.lastSyncError = "This device can't use Bluetooth Low Energy."
+                state.lastSyncIssue = .bluetooth("This device can't use Bluetooth Low Energy.")
                 log("Bluetooth LE unsupported on this device")
                 radioStateErrorShown = true
             default:
@@ -5771,7 +5736,7 @@ extension BLEManager: @preconcurrency CBCentralManagerDelegate {
         // #280: radio is back — clear a stale radio-state banner (only one WE set), so a "Bluetooth is off"
         // message doesn't outlive the radio coming on. A genuine sync error is left untouched.
         if radioStateErrorShown {
-            state.lastSyncError = nil
+            state.lastSyncIssue = nil
             radioStateErrorShown = false
         }
         // Bootstrap the async store once on first poweredOn (idempotent if already set).
@@ -6423,6 +6388,8 @@ extension BLEManager: @preconcurrency CBCentralManagerDelegate {
         self.peripheral = p
         self.restoredPeripheral = p
         p.delegate = self
+        // Smart-alarm night diagnostics: iOS woke the app for Bluetooth. Log only; no command is sent.
+        Task { @MainActor in SmartAlarmNightLog.shared.recordEvent(.bleRestore) }
         resetCharacteristics()
         // Re-derive the inbound-decode family from the persisted model. connect()/startScan() set the
         // reassembler + router family, but NEITHER runs on the restore path — so without this a restored

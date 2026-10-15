@@ -742,13 +742,7 @@ struct DataSourcesView: View {
         }
     }
 
-    private var liftingDayFormatter: DateFormatter {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")   // sessions are stored at UTC; label the same span
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }
+    private var liftingDayFormatter: DateFormatter = DayKeyFormat.utc
 
     private enum ImportTarget {
         case whoop
@@ -893,7 +887,7 @@ struct DataSourcesView: View {
     private func generationRow(title: String, detail: String) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 12, weight: .semibold))
+                .font(ZoopType.icon(12, weight: .semibold))
                 .foregroundStyle(DomainTheme.effort.color)
                 .padding(.top, 1)
                 .accessibilityHidden(true)
@@ -965,7 +959,7 @@ struct DataSourcesView: View {
             VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                 HStack(spacing: ZoopMetrics.space2 + 2) {
                     Image(systemName: icon)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(ZoopType.icon(16, weight: .semibold))
                         .foregroundStyle(tint)
                         .frame(width: 30, height: 30)
                         .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))

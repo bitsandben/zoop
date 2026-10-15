@@ -1,21 +1,8 @@
 import Foundation
 
-/// The user's custom journal questions plus the starter behaviour catalog. Question strings are
-/// opaque exact-match labels to BehaviorInsights, so imported question strings (merged in at load
-/// time, ahead of these) always take precedence, adopting the export's exact wording is what
-/// joins a logged day and an imported day into one behaviour. UserDefaults-backed (single user).
-///
-/// v2 (#322 / task #53): a journal item can now be renamed (display-only, the stored key stays put
-/// so imported WHOOP history still lines up), typed as numeric (a value + unit, not just yes/no),
-/// grouped (Nutrition / Supplements / Lifestyle / Health / Behaviour / Other), and reordered. The
-/// `canonical` string is the verbatim DB/engine key and is NEVER localised or rewritten; only
-/// `displayName` changes on a rename. The legacy custom/hidden UserDefaults arrays are folded into
-/// the v2 items once, then read-only.
-/// The UserDefaults keys `JournalCatalogStore` persists under, exposed so the backup bridge
-/// (`DataBackup`, which runs OFF the main actor) can read/write them directly without driving the
-/// `@MainActor` store. Kept beside the store so the key strings can never drift (#1361). A restore
-/// writes the restored custom names to `legacyCustom` and clears `items`; the store's init then
-/// re-migrates them into v2 on the relaunch a restore forces.
+/// UserDefaults keys `JournalCatalogStore` persists under, exposed so the backup bridge
+/// (`DataBackup`, off the main actor) can read/write them without the `@MainActor` store.
+/// A restore writes custom names to `legacyCustom` and clears `items`; init re-migrates on relaunch.
 enum JournalCatalogBackupKeys {
     static let items = "journal.catalog.v2"
     static let legacyCustom = "journal.customQuestions"
@@ -25,9 +12,8 @@ enum JournalCatalogBackupKeys {
 @MainActor
 final class JournalCatalogStore: ObservableObject {
 
-    /// Mirrors Android STARTER_JOURNAL_QUESTIONS value-for-value (JournalLog.kt). These are DATA,
-    /// not UI literals, stored verbatim in the journal table and rendered verbatim, so they must
-    /// never be localised (a translated key would start a new, disconnected behaviour).
+    /// Starter questions are DATA, stored and rendered verbatim, so they must never be localised
+    /// (a translated key would start a new, disconnected behaviour).
     nonisolated static let starterQuestions: [String] = [
         "Did you drink any alcohol?",
         "Did you have caffeine late in the day?",
@@ -41,8 +27,7 @@ final class JournalCatalogStore: ObservableObject {
         "Did you read before bed?",
     ]
 
-    /// The default group for each starter question (canonical → group). Mirrors Android
-    /// STARTER_JOURNAL_GROUPS value-for-value. Anything not listed falls to `.other`.
+    /// Default group for each starter question (canonical to group); unlisted falls to `.other`.
     nonisolated static let starterGroups: [String: JournalGroup] = [
         "Did you drink any alcohol?": .nutrition,
         "Did you have caffeine late in the day?": .nutrition,
@@ -56,16 +41,14 @@ final class JournalCatalogStore: ObservableObject {
         "Did you feel stressed?": .behaviour,
     ]
 
-    /// The v2 catalog: one item per journal question the user has customised (renamed, retyped,
-    /// regrouped, reordered, or hidden). Starter questions with default settings are NOT stored here:
-    /// they are synthesised at merge time, so this only holds the user's deltas plus their customs.
-    /// Persisted as a single JSON blob under `journal.catalog.v2`.
+    /// The user's deltas (renamed, retyped, regrouped, reordered, hidden) plus customs; default
+    /// starters are synthesised at merge time. Persisted as one JSON blob under `journal.catalog.v2`.
     @Published var items: [JournalCatalogItem] { didSet { persistItems() } }
 
     private let d = UserDefaults.standard
     private enum K {
         static let items = JournalCatalogBackupKeys.items
-        // Legacy (v1) keys, read once for the one-time migration, never written again.
+        // Legacy (v1) keys, read once for migration, never written.
         static let custom = JournalCatalogBackupKeys.legacyCustom
         static let hidden = JournalCatalogBackupKeys.legacyHidden
     }
@@ -75,9 +58,7 @@ final class JournalCatalogStore: ObservableObject {
            let decoded = try? JSONDecoder().decode([JournalCatalogItem].self, from: blob) {
             items = decoded
         } else {
-            // One-time fold of the legacy two-array store into v2 items. Custom questions become
-            // `.bool` items in `.other`; hidden ones keep their hidden flag. Idempotent: after this
-            // runs it persists the v2 blob, and the legacy keys are never read again.
+            // One-time fold of the legacy arrays into v2 items (customs become `.bool`/`.other`); idempotent.
             items = Self.migrateLegacy(
                 custom: d.stringArray(forKey: K.custom) ?? [],
                 hidden: d.stringArray(forKey: K.hidden) ?? [])
@@ -89,8 +70,7 @@ final class JournalCatalogStore: ObservableObject {
         if let blob = try? JSONEncoder().encode(items) { d.set(blob, forKey: K.items) }
     }
 
-    /// Build the v2 item list from the legacy custom/hidden arrays. Custom questions → `.bool`
-    /// items in `.other`, ordered as they were; hidden starter/imported ones → hidden marker items.
+    /// Builds the v2 item list from the legacy custom/hidden arrays.
     nonisolated static func migrateLegacy(custom: [String], hidden: [String]) -> [JournalCatalogItem] {
         var out: [JournalCatalogItem] = []
         var seen = Set<String>()
@@ -119,13 +99,13 @@ final class JournalCatalogStore: ObservableObject {
         return out
     }
 
-    // MARK: - Legacy-shape accessors (kept so existing call sites keep working)
+    // MARK: - Legacy-shape accessors
 
-    /// The user's custom question canonicals (v1 API shape). Derived from the v2 items.
+    /// The user's custom question canonicals, derived from the v2 items.
     var customQuestions: [String] {
         get { items.filter { $0.custom }.sorted { $0.sortIndex < $1.sortIndex }.map(\.canonical) }
         set {
-            // Append any new customs as `.bool`/`.other` items; drop customs no longer present.
+            // Append new customs as `.bool`/`.other` items; drop customs no longer present.
             let keys = Set(newValue.map { Self.norm($0) })
             items.removeAll { $0.custom && !keys.contains(Self.norm($0.canonical)) }
             let existing = Set(items.map { Self.norm($0.canonical) })
@@ -142,21 +122,16 @@ final class JournalCatalogStore: ObservableObject {
         }
     }
 
-    /// The user's hidden question canonicals (v1 API shape). Derived from the v2 items.
+    /// The user's hidden question canonicals, derived from the v2 items.
     var hiddenQuestions: [String] {
         items.filter { $0.hidden }.map(\.canonical)
     }
 
     private func nextSortIndex() -> Int { (items.map(\.sortIndex).max() ?? -1) + 1 }
 
-    /// Dedup/identity key for a question. Normalises ALL whitespace, leading/trailing AND internal
-    /// runs collapse to a single space (not just ASCII space/tab), then lowercases. A WHOOP export
-    /// commonly leaves a trailing newline or non-breaking space on a journal cell, which a bare
-    /// `.whitespaces` trim leaves in place: that's what let "Did you take magnesium?\n" (imported)
-    /// sit beside the starter "Did you take magnesium?" as two rows (#224). Collapsing here folds
-    /// them onto one key. The DISPLAYED string is still the original verbatim text, only the match
-    /// key is normalised, so the stored behaviour key (which the effects engine joins on) is intact.
-    /// Kept value-for-value in step with Android `normJournalKey` (JournalLog.kt).
+    /// Dedup key for a question: collapses all whitespace runs (including NBSP and trailing newlines
+    /// from WHOOP exports) to one space and lowercases, so "magnesium?\n" folds onto the starter.
+    /// Display text stays verbatim; the stored behaviour key the effects engine joins on is intact.
     nonisolated static func norm(_ s: String) -> String {
         s.components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }
@@ -164,17 +139,15 @@ final class JournalCatalogStore: ObservableObject {
             .lowercased()
     }
 
-    /// imported > starter > custom; case-insensitive dedupe, first casing wins, with `hidden`
-    /// questions filtered out. Imported questions lead so the export's exact strings (which the
-    /// effects engine keys on) survive verbatim and pull the matching starter/custom out of the list.
+    /// imported > starter > custom; case-insensitive dedupe, first casing wins, hidden filtered out.
+    /// Imported strings lead so the export's exact wording survives verbatim.
     nonisolated static func mergeCatalog(imported: [String], custom: [String],
                                          hidden: [String] = []) -> [String] {
         let hiddenSet = Set(hidden.map(norm))
         var seen = Set<String>()
         var out: [String] = []
         for q in imported + starterQuestions + custom {
-            // Display text trims surrounding whitespace/newlines; the dedup key normalises ALL
-            // whitespace (see `norm`) so an imported "…magnesium?\n" folds onto the starter (#224).
+            // Display text trims; the dedup key normalises all whitespace (see `norm`).
             let t = q.trimmingCharacters(in: .whitespacesAndNewlines)
             let key = norm(q)
             if !t.isEmpty, !hiddenSet.contains(key), seen.insert(key).inserted { out.append(t) }
@@ -182,15 +155,9 @@ final class JournalCatalogStore: ObservableObject {
         return out
     }
 
-    /// The merged catalog resolved into full v2 items, grouped and ordered for display. Imported +
-    /// starter + custom questions are folded onto one canonical key (norm dedupe, #224); each carries
-    /// the user's saved displayName / kind / group / sortIndex (a starter with no saved item gets its
-    /// default group and `.bool`). Hidden items are dropped unless `includeHidden`. The `custom` flag
-    /// is preserved so the edit UI can offer "Delete" vs "Hide".
-    ///
-    /// This is the display-side twin of `mergeCatalog(imported:custom:hidden:)`: same fold + dedupe,
-    /// but returning the typed items instead of bare strings. `canonical` is always the verbatim key
-    /// the engine joins on; `displayName ?? canonical` is what the UI renders (rename is display-only).
+    /// The merged catalog resolved into typed v2 items, grouped and ordered for display. Hidden items
+    /// are dropped unless `includeHidden`. `canonical` is the verbatim engine key; the UI renders
+    /// `displayName ?? canonical`. The `custom` flag lets the edit UI offer "Delete" vs "Hide".
     func resolvedItems(imported: [String], includeHidden: Bool = false) -> [JournalCatalogItem] {
         var byKey: [String: JournalCatalogItem] = [:]
         for it in items { byKey[Self.norm(it.canonical)] = it }
@@ -211,7 +178,7 @@ final class JournalCatalogStore: ObservableObject {
                 fallbackIndex += 1
             }
         }
-        // Custom items (present only in `items`, never in imported/starter) come after the merge.
+        // Custom items (only in `items`) come after the merge.
         for it in items where it.custom && !seen.contains(Self.norm(it.canonical)) {
             seen.insert(Self.norm(it.canonical))
             out.append(it)
@@ -228,9 +195,8 @@ final class JournalCatalogStore: ObservableObject {
         return items.first { Self.norm($0.canonical) == key }
     }
 
-    /// Upsert the saved item for `canonical`, applying `mutate` to a fresh-or-existing item. Used by
-    /// rename / retype / regroup / reorder so a starter question the user touches gets materialised
-    /// into `items` with its defaults, then edited. NEVER changes `canonical`.
+    /// Upserts the saved item for `canonical`, materialising a touched starter with defaults.
+    /// Never changes `canonical`.
     private func edit(_ canonical: String, mutate: (inout JournalCatalogItem) -> Void) {
         let key = Self.norm(canonical)
         if let idx = items.firstIndex(where: { Self.norm($0.canonical) == key }) {
@@ -245,20 +211,19 @@ final class JournalCatalogStore: ObservableObject {
         }
     }
 
-    /// Rename an item: sets a display-only label. The stored `canonical` (the DB/engine key) is
-    /// untouched, so all history, logged AND imported, stays joined under the original question.
-    /// A blank / whitespace-only name clears the rename (falls back to the canonical).
+    /// Sets a display-only label; the stored `canonical` is untouched so history stays joined.
+    /// A blank name clears the rename.
     func rename(_ canonical: String, to displayName: String) {
         let trimmed = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
         edit(canonical) { $0.displayName = trimmed.isEmpty ? nil : trimmed }
     }
 
-    /// Move an item to a different group (display + organisation only, no scoring change).
+    /// Moves an item to a different group (display only).
     func setGroup(_ canonical: String, to group: JournalGroup) {
         edit(canonical) { $0.group = group }
     }
 
-    /// Change an item's type. `.numeric` carries an optional unit label (e.g. "mg", "units").
+    /// Changes an item's type; `.numeric` carries an optional unit label (e.g. "mg").
     func setKind(_ canonical: String, to kind: JournalKind) {
         edit(canonical) { $0.kind = kind }
     }
@@ -287,8 +252,7 @@ final class JournalCatalogStore: ObservableObject {
                                         hidden: false, custom: true))
     }
 
-    /// Remove `q` from the journal: a custom question is deleted outright; a starter/imported one is
-    /// hidden (restorable). Either way it leaves the merged catalog.
+    /// Deletes a custom question outright; hides a starter/imported one (restorable).
     func remove(_ q: String) {
         let key = Self.norm(q)
         if isCustom(q) {
@@ -316,9 +280,8 @@ enum JournalKind: Equatable, Codable {
     var unitLabel: String? { if case let .numeric(u) = self { return u } else { return nil } }
 }
 
-/// A user-visible grouping for related journal items (display + organisation only, never a scoring
-/// change). Mirrors Android `JournalGroup` value-for-value. `rawValue` is the stable persisted key;
-/// `title` is the localised display label.
+/// A user-visible grouping for journal items (display only, never scoring). `rawValue` is the
+/// stable persisted key; `title` is the localised label.
 enum JournalGroup: String, CaseIterable, Codable {
     case supplements
     case nutrition
@@ -327,7 +290,7 @@ enum JournalGroup: String, CaseIterable, Codable {
     case behaviour
     case other
 
-    /// Fixed display order (matches Android). Groups render in this order; empty ones hide outside edit.
+    /// Fixed display order; empty groups hide outside edit.
     static let displayOrder: [JournalGroup] = [.nutrition, .supplements, .lifestyle, .health, .behaviour, .other]
 
     var title: String {
@@ -342,10 +305,8 @@ enum JournalGroup: String, CaseIterable, Codable {
     }
 }
 
-/// One journal catalog item. `canonical` is the verbatim DB/engine key (the exact question string
-/// the effects engine and the `journal` table join on), it is NEVER localised or rewritten, so a
-/// rename or a re-import always folds onto one behaviour. `displayName` (a rename) and `kind` /
-/// `group` / `sortIndex` are display + organisation only. Mirrors Android `JournalCatalogItem`.
+/// One journal catalog item. `canonical` is the verbatim DB/engine key, never localised or
+/// rewritten; `displayName`, `kind`, `group` and `sortIndex` are display and organisation only.
 struct JournalCatalogItem: Equatable, Codable, Identifiable {
     /// The stable key. Rename NEVER touches this, so history (logged + imported) is preserved.
     var canonical: String

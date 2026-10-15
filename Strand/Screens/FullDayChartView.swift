@@ -213,12 +213,11 @@ struct FullDayChartView: View {
     // MARK: Chart
 
     @ViewBuilder private var chartCard: some View {
-        ChartCard(
+        ContentCard(
             title: LocalizedStringKey(metric.title),
             subtitle: resolutionSubtitle,
             trailing: latestReadout,
-            height: 280,
-            tint: StrandPalette.metricRose
+            height: 280
         ) {
             if loading && series.points.isEmpty {
                 loadingState
@@ -293,7 +292,7 @@ struct FullDayChartView: View {
     private var emptyState: some View {
         VStack(spacing: ZoopMetrics.space2) {
             Image(systemName: "waveform.slash")
-                .font(.system(size: 26, weight: .light))
+                .font(ZoopType.icon(26, weight: .light))
                 .foregroundStyle(StrandPalette.textTertiary)
             Text("No \(metric.title.lowercased()) here")
                 .font(StrandFont.body)
@@ -454,8 +453,8 @@ struct FullDayChartView: View {
         case .hr, .respiration, .hrv, .ouraMovement: return String(Int(v.rounded()))
         // `v` already arrives in the displayed unit — callers read from `displayPoints`, which converts
         // skin temp to °F upfront so the chart's own axis (plotted from the same points) agrees. (#101)
-        case .skinTemp: return String(format: "%.1f", v)
-        case .spo2, .motion: return String(format: "%.2f", v)
+        case .skinTemp: return ZoopNumber.decimal(v, digits: 1)
+        case .spo2, .motion: return ZoopNumber.decimal(v, digits: 2)
         // #175: name the band's own state at the nearest code so the readout reads "asleep", not "2.0".
         case .bandSleepState: return Self.bandStateLabel(v)
         }

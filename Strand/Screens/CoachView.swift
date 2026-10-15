@@ -198,7 +198,7 @@ struct CoachView: View {
     // MARK: - Setup (no key yet)
 
     private var setupCard: some View {
-        StrandCard(padding: 20) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 10) {
                     Image(systemName: "sparkles")
@@ -412,7 +412,7 @@ struct CoachView: View {
                 showSettings = true
             } label: {
                 Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(ZoopType.icon(14, weight: .semibold))
                     .foregroundStyle(StrandPalette.textSecondary)
             }
             .buttonStyle(.plain)
@@ -483,7 +483,7 @@ struct CoachView: View {
     #endif
 
     private var transcript: some View {
-        StrandCard(padding: 16) {
+        ContentCard {
             if coach.messages.isEmpty {
                 emptyTranscript
             } else {
@@ -565,7 +565,7 @@ struct CoachView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 11)
-                    .frostedCardSurface(tint: StrandPalette.chargeColor, cornerRadius: 16)
+                    .zoopInsetSurface(radius: 16, tint: StrandPalette.chargeColor)
                     .frame(maxWidth: 560, alignment: .leading)
                     // K8: Copy / Share / Save context menu on assistant replies.
                     .contextMenu {
@@ -605,13 +605,13 @@ struct CoachView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 11)
-        .frostedCardSurface(tint: StrandPalette.chargeColor, cornerRadius: 16)
+        .zoopInsetSurface(radius: 16, tint: StrandPalette.chargeColor)
         .frame(maxWidth: 320, alignment: .leading)
         .accessibilityLabel("Coach is thinking")
     }
 
     private func errorBanner(_ message: String) -> some View {
-        StrandCard(padding: 14) {
+        ContentCard {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(StrandPalette.statusCritical)
@@ -634,7 +634,7 @@ struct CoachView: View {
     /// custom provider: far more than correcting a typo asks for, and named for an outcome the wearer
     /// is trying to avoid. Twin of the Kotlin editor in `CoachChat`.
     private var keyRepairPanel: some View {
-        StrandCard(padding: 14) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 8) {
                 if coach.keyRejected {
                     Text("Paste the corrected key. Your conversation is kept.")
@@ -746,7 +746,7 @@ struct CoachView: View {
     private func tokenEstimateBar(_ tokens: Int) -> some View {
         HStack(spacing: 4) {
             Image(systemName: "speedometer")
-                .font(.system(size: 10))
+                .font(ZoopType.icon(10))
                 .foregroundStyle(StrandPalette.textTertiary)
             Text("~\(tokens) tokens")
                 .font(StrandFont.captionNumber)
@@ -794,7 +794,7 @@ struct CoachView: View {
                         ProgressView().controlSize(.small).tint(StrandPalette.goldDeepText)
                     } else {
                         Image(systemName: "arrow.up")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(ZoopType.icon(15, weight: .semibold))
                     }
                 }
                 .frame(width: 44, height: 38)
@@ -807,7 +807,7 @@ struct CoachView: View {
             .accessibilityLabel("Send")
         }
         .padding(8)
-        .background(ZoopPanelSurface(cornerRadius: 16))
+        .zoopInsetSurface(radius: 16)
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
             .strokeBorder(StrandPalette.hairline, lineWidth: 1))
     }
@@ -825,11 +825,11 @@ struct CoachView: View {
             Group {
                 if voiceInput.isRecording {
                     Image(systemName: "stop.circle.fill")
-                        .font(.system(size: 18, weight: .medium))
+                        .font(ZoopType.icon(18, weight: .medium))
                         .foregroundStyle(StrandPalette.statusCritical)
                 } else {
                     Image(systemName: "mic.fill")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(ZoopType.icon(15, weight: .semibold))
                         .foregroundStyle(canUseVoice ? StrandPalette.textSecondary : StrandPalette.textTertiary)
                 }
             }

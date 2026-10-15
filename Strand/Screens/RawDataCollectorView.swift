@@ -83,7 +83,7 @@ struct RawDataCollectorView: View {
     }
 
     private var coverageCard: some View {
-        StrandCard {
+        ContentCard {
             VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
                 Text("Capture coverage").font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
                 Text(live.connected ? "Band: connected\(live.bonded ? " + paired" : "; pairing")"
@@ -114,7 +114,7 @@ struct RawDataCollectorView: View {
     }
 
     private var historicalRangeCard: some View {
-        StrandCard {
+        ContentCard {
             VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 Text("Historical export window").font(StrandFont.headline)
                 Text("Create a session from synchronized history without starting a live capture. 100 Hz coverage is included wherever it still exists in the rolling buffer.")
@@ -148,7 +148,7 @@ struct RawDataCollectorView: View {
 
     private func sessionCard(_ session: RawDataSessionStore.Session) -> some View {
         let coverageText = imuCoverage[session.id, default: "no complete seconds"]
-        return StrandCard {
+        return ContentCard {
             VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
                 Text(Self.range(session)).font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
                 if !session.active, let endMs = session.endedAtMs {

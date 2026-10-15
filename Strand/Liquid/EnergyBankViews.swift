@@ -52,7 +52,7 @@ struct HomeEnergyBankCard: View {
                     .foregroundStyle(StrandPalette.textPrimary)
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(ZoopType.icon(13, weight: .semibold))
                     .foregroundStyle(StrandPalette.textTertiary)
                     .accessibilityHidden(true)
             }
@@ -78,7 +78,7 @@ struct HomeEnergyBankCard: View {
             EnergyBankSparkline(points: result?.timeline ?? [],
                                 tint: result.map { energyTint($0.current) } ?? StrandPalette.textTertiary)
         }
-        .background(ZoopPanelSurface(cornerRadius: 20))
+        .zoopInsetSurface(radius: 20)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .contentShape(Rectangle())
         .modifier(EnergyBankLoader(result: $result))
@@ -149,39 +149,38 @@ struct EnergyBankScreen: View {
 
     private var hero: some View {
         let shown = scrubbed ?? result?.timeline.last
-        return VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
-            Text(scrubbed.map { date($0.ts).formatted(date: .omitted, time: .shortened) } ?? String(localized: "Now"))
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(StrandPalette.textSecondary)
-            HStack(alignment: .firstTextBaseline, spacing: ZoopMetrics.space2) {
-                Text(shown.map { "\(Int($0.level.rounded()))" } ?? "–")
-                    .font(StrandFont.display(52))
-                    .foregroundStyle(shown.map { energyTint($0.level) } ?? StrandPalette.textSecondary)
-                Text(verbatim: "/ 100")
-                    .font(StrandFont.subhead)
-                    .foregroundStyle(StrandPalette.textTertiary)
-            }
-            if let r = result, r.timeline.count >= 2 {
-                chart(r).frame(height: 200)
-            } else {
-                Text("No readings yet")
-                    .font(StrandFont.footnote)
-                    .foregroundStyle(StrandPalette.textTertiary)
+        return ContentCard {
+            VStack(alignment: .leading, spacing: ZoopMetrics.space3) {
+                Text(scrubbed.map { date($0.ts).formatted(date: .omitted, time: .shortened) } ?? String(localized: "Now"))
+                    .font(ZoopType.caption.weight(.semibold))
+                    .foregroundStyle(StrandPalette.textSecondary)
+                HStack(alignment: .firstTextBaseline, spacing: ZoopMetrics.space2) {
+                    Text(shown.map { "\(Int($0.level.rounded()))" } ?? "–")
+                        .font(StrandFont.display(52))
+                        .foregroundStyle(shown.map { energyTint($0.level) } ?? StrandPalette.textSecondary)
+                    Text(verbatim: "/ 100")
+                        .font(StrandFont.subhead)
+                        .foregroundStyle(StrandPalette.textTertiary)
+                }
+                if let r = result, r.timeline.count >= 2 {
+                    chart(r).frame(height: 200)
+                } else {
+                    Text("No readings yet")
+                        .font(StrandFont.footnote)
+                        .foregroundStyle(StrandPalette.textTertiary)
+                }
             }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(ZoopPanelSurface(cornerRadius: 20))
     }
 
     private func totals(_ r: EnergyBank.Result) -> some View {
-        HStack(spacing: 0) {
-            stat("This morning", "\(Int(r.morning.rounded()))")
-            stat("Charged", "+\(Int(r.charged.rounded()))")
-            stat("Drained", "−\(Int(r.drained.rounded()))")
+        ContentCard {
+            HStack(spacing: 0) {
+                stat("This morning", "\(Int(r.morning.rounded()))")
+                stat("Charged", "+\(Int(r.charged.rounded()))")
+                stat("Drained", "−\(Int(r.drained.rounded()))")
+            }
         }
-        .padding(16)
-        .background(ZoopPanelSurface(cornerRadius: 20))
     }
 
     private func stat(_ label: LocalizedStringKey, _ value: String) -> some View {

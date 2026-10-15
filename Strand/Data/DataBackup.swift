@@ -9,29 +9,16 @@ import UniformTypeIdentifiers
 import WhoopStore
 import ZIPFoundation
 
-/// Full-database EXPORT / IMPORT for device migration.
-///
-/// Zoop keeps everything in one SQLite file (`<AppSupport>/OpenWhoop/whoop.sqlite`, plus the
-/// `-wal`/`-shm` WAL sidecars while the store is open). Export checkpoints the WAL (so the
-/// single file is whole), then wraps the SQLite in a ZIP written as `.zoopbak`, alongside a
-/// small `settings.json` entry (#1000) carrying the whitelisted profile/display settings (see
-/// `BackupSettings`) so a restore also brings back weight/height/units, not just the rows.
-/// ZIP deflate typically cuts a 100 MB+ SQLite backup to 10–20 MB. The format is a standard
-/// ZIP — users can rename `.zoopbak` → `.zip` and extract the SQLite manually on any OS.
-///
-/// Import detects the format by magic bytes: ZIP (`PK\x03\x04`) or legacy plain SQLite. ZIP
-/// backups are extracted to a temp dir, validated, then swapped in exactly like a plain import.
-/// Old `.sqlite` / `.noopdb` backups keep working.
-///
-/// Sandbox-safe: relies on the `com.apple.security.files.user-selected.read-write` entitlement and
-/// security-scoped access on the panel-returned URLs. Every path is best-effort — failures surface
-/// as a `.failure` result and never crash.
+/// Full-database export/import for device migration.
+/// Export checkpoints the WAL, then wraps the single SQLite file in a ZIP written as `.zoopbak`, plus a
+/// `settings.json` entry (#1000) of whitelisted profile/display settings (see `BackupSettings`). The format
+/// is a standard ZIP; renaming to `.zip` works on any OS.
+/// Import detects ZIP (`PK\x03\x04`) or legacy plain SQLite by magic bytes; ZIPs are extracted to a temp
+/// dir and validated before the swap. Old `.sqlite` / `.noopdb` backups still work.
+/// Every path is best-effort: failures return `.failure`, never crash.
 enum DataBackup {
-    /// Uncompressed ceiling for the SQLite entry, enforced while EXTRACTING (see `extractBackupZip`).
-    /// Deliberately measured on the decompressed stream: this is a zip-bomb guard, and a zip bomb is by
-    /// definition small compressed and enormous expanded, so a cap on the archive's own size would be
-    /// trivially defeated. Compressing harder cannot help a user past it — the backup is already
-    /// `.deflate`d and the count is of bytes landing on disk. (#1807)
+    /// Uncompressed ceiling for the SQLite entry, enforced while extracting. Measured on the decompressed
+    /// stream because it is a zip-bomb guard (#1807).
     static let maxBackupSQLiteBytes: Int64 = 2_147_483_648
     private static let maxBackupSettingsBytes: Int64 = 1_048_576
 
@@ -40,20 +27,16 @@ enum DataBackup {
     enum BackupResult {
         /// Export wrote the backup to `url`.
         case exported(URL)
-        /// Export wrote the backup, but the database is larger than [maxBackupSQLiteBytes], the ceiling
-        /// the restore path enforces. The file is valid and worth keeping — restoring it just needs the
-        /// user to confirm once. Reported at EXPORT time because the alternative is finding out during a
-        /// restore, which is exactly when the original is gone. (#1807)
+        /// Export wrote a valid backup, but the database exceeds [maxBackupSQLiteBytes], so restore needs
+        /// one confirmation. Reported at export time, since restore is when the original is gone (#1807).
         case exportedOversize(URL, bytes: Int64, limit: Int64)
-        /// Import succeeded; a relaunch is required for it to take effect. `sidecar` is where the
-        /// previous database was preserved, in case the user wants to roll back.
+        /// Import succeeded; relaunch required. `sidecar` preserves the previous database for rollback.
         case imported(sidecar: URL)
-        /// The user dismissed the save/open panel — nothing happened, show nothing loud.
+        /// The user dismissed the panel; nothing happened.
         case cancelled
-        /// The restore stopped ONLY because an entry exceeds the size ceiling. Distinct from `failure`
-        /// so the caller can offer to go ahead anyway: the cap is a decompression guard against a hostile
-        /// archive, and a backup the user just picked out of their own files is a different threat model
-        /// than the one it defends against. (#1807)
+        /// Restore stopped only because an entry exceeds the size ceiling. Distinct from `failure` so the
+        /// caller can offer to proceed: a backup the user picked is a different threat model than a hostile
+        /// archive (#1807).
         case restoreTooLarge(name: String, limit: Int64)
         /// Something went wrong; `message` is user-facing.
         case failure(String)
@@ -61,13 +44,9 @@ enum DataBackup {
 
     // MARK: - Export
 
-    /// Checkpoint the store and write the live database as a compressed `.zoopbak` (single-entry
-    /// ZIP) to a user-chosen file.
-    ///
-    /// - Parameter checkpoint: invoked first to flush the WAL into the main file. Pass
-    ///   `repo.checkpointForBackup`. Must succeed — a failed checkpoint means committed pages still
-    ///   live in the WAL and would be silently absent from the ZIP; we fail loudly rather than ship
-    ///   a partial backup.
+    /// Checkpoints the store and writes the live database as a `.zoopbak` to a user-chosen file.
+    /// - Parameter checkpoint: flushes the WAL (pass `repo.checkpointForBackup`). Must succeed: committed
+    ///   pages left in the WAL would be silently absent from the ZIP.
     @MainActor
     static func runExport(checkpoint: @escaping () async -> Bool) async -> BackupResult {
         let dbPath: String
@@ -79,8 +58,7 @@ enum DataBackup {
             return .failure(String(localized: "There's no Zoop data to export yet. Import or record some first."))
         }
 
-        // Flush the WAL so the single .sqlite carries everything. Required for ZIP (no sidecar
-        // fallback in a single-file archive).
+        // Flush the WAL so the single .sqlite is whole (no sidecar fallback in a ZIP).
         guard await checkpoint() else {
             return .failure(String(localized: "Couldn't safely export right now. Recent changes are still in the database's write-ahead log. Close any in-flight sync, then try again."))
         }
@@ -101,11 +79,9 @@ enum DataBackup {
 
         let fm = FileManager.default
         do {
-            // NSSavePanel already handled the "replace existing?" confirmation; clear the target.
+            // NSSavePanel already confirmed replacement; clear the target.
             if fm.fileExists(atPath: dest.path) { try fm.removeItem(at: dest) }
-            // Reading the whole SQLite and DEFLATE-compressing it is multi-second on a big library
-            // (and #1014 added a quick_check read of the whole file first); run it off the main
-            // actor so the UI never beach-balls. Only file paths cross the hop.
+            // Read + DEFLATE (plus the #1014 quick_check) is multi-second on big libraries; run off the main actor.
             try await Task.detached(priority: .utility) {
                 try writeVerifiedBackupZip(dbURL: dbURL, to: dest, settingsJSON: currentSettingsJSON())
             }.value
@@ -116,11 +92,11 @@ enum DataBackup {
         #else
         let fm = FileManager.default
 
-        // Stage the compressed backup in temp, then hand it to the share sheet.
+        // Stage in temp, then hand to the share sheet.
         let staged = fm.temporaryDirectory.appendingPathComponent(defaultBackupName())
         do {
             if fm.fileExists(atPath: staged.path) { try fm.removeItem(at: staged) }
-            // Off the main actor: same reason as the macOS branch (heavy read + DEFLATE). Only paths hop.
+            // Off the main actor, same reason as macOS.
             try await Task.detached(priority: .utility) {
                 try writeVerifiedBackupZip(dbURL: dbURL, to: staged, settingsJSON: currentSettingsJSON())
             }.value
@@ -132,9 +108,7 @@ enum DataBackup {
         #endif
     }
 
-    /// #1014 defence-in-depth (export side): the export's failure when the LIVE database itself is
-    /// damaged. Thrown by `writeVerifiedBackupZip`; `LocalizedError` so the existing
-    /// "Export failed: \(error.localizedDescription)" surfaces the specific, honest message.
+    /// #1014: export failure when the live database itself is damaged; thrown by `writeVerifiedBackupZip`.
     private struct ExportIntegrityFailure: LocalizedError {
         let complaint: String
         var errorDescription: String? {
@@ -142,35 +116,26 @@ enum DataBackup {
         }
     }
 
-    /// The freshly-written `.zoopbak` failed a post-write structural check — its DB entry is missing or
-    /// truncated, i.e. a torn write from a full disk / dying filesystem / flaky cloud sync mid-write.
-    /// Thrown by `writeVerifiedBackupZip` so a bad backup fails at WRITE time, not silently — the old
-    /// behaviour let a truncated file sit as a "successful" snapshot and only surface at restore (#1014).
+    /// The just-written `.zoopbak` failed a post-write structural check (DB entry missing or truncated:
+    /// torn write from full disk or flaky sync). Fails at write time rather than at restore (#1014).
     private struct BackupWriteIncomplete: LocalizedError {
         var errorDescription: String? {
             String(localized: "the backup file was written incompletely (its database entry is missing or truncated). Free up space or check the backup folder, then try again.")
         }
     }
 
-    /// Thrown when the written backup could not be READ BACK to check it, which is not the same thing as
-    /// finding it damaged and must not be reported as though it were. The file is left where it is.
+    /// The written backup could not be read back to check it. Not evidence of damage; the file is left in place.
     private struct BackupWriteUnverified: LocalizedError {
         var errorDescription: String? {
             String(localized: "the backup file was written, but couldn't be read back to check it, so it has been left in place rather than deleted. Open it before you rely on it, or export again somewhere else.")
         }
     }
 
-    /// The production export path: verify, then archive. GRDB checkpoints the WAL first (the
-    /// callers' `checkpoint()` guard), so at this point the single file IS the whole store — run a
-    /// read-only `PRAGMA quick_check` over it BEFORE zipping (#1014). Archiving an already-corrupt
-    /// database writes a `.zoopbak` that only fails the import-side integrity gate months later,
-    /// when the original data may be long gone; failing loudly NOW is the honest move. The read-only
-    /// probe sits safely beside the app's open GRDB pool (WAL allows concurrent readers).
-    /// `writeBackupForTesting` deliberately bypasses this so tests can build damaged containers.
-    /// `.exported`, or `.exportedOversize` when the database is past the ceiling the restore path
-    /// enforces. Measured on the DATABASE, not the finished archive: the archive is `.deflate`d and the
-    /// cap the restore checks counts the DECOMPRESSED stream, so the zip's own size says nothing about
-    /// whether it can be read back. (#1807)
+    /// Production export path: run a read-only `PRAGMA quick_check` on the checkpointed file before zipping
+    /// (#1014), so a corrupt database fails now rather than at a restore months later.
+    /// `writeBackupForTesting` bypasses it.
+    /// Returns `.exported`, or `.exportedOversize` past the restore ceiling. Measured on the database, not
+    /// the archive, since the cap counts the decompressed stream (#1807).
     private static func exportOutcome(_ dest: URL, dbURL: URL) -> BackupResult {
         let attrs = try? FileManager.default.attributesOfItem(atPath: dbURL.path)
         guard let bytes = (attrs?[.size] as? NSNumber)?.int64Value,
@@ -178,37 +143,16 @@ enum DataBackup {
         return .exportedOversize(dest, bytes: bytes, limit: maxBackupSQLiteBytes)
     }
 
-    /// The smallest a real database entry can be: SQLite's own file header is exactly this long, so
-    /// anything shorter cannot be a database whatever else it looks like.
+    /// Minimum size of a real database entry: SQLite's file header is exactly 100 bytes.
     static let minimumBackupEntryBytes: UInt32 = 100
 
-    /// Whether the `.zoopbak` at `url` is a COMPLETE archive carrying a plausible database entry.
-    ///
-    /// #1014 (write-side): the SOURCE is verified before archiving, but the PRODUCED file can still be
-    /// torn by a full disk, a dying filesystem, or a cloud client that drops the tail mid-write, and such
-    /// a truncated `.zoopbak` otherwise "restores" into an empty store, caught only by the import-side
-    /// quick_check much later, when the original may be long gone.
-    ///
-    /// Opening an `Archive` for reading parses the CENTRAL DIRECTORY, which lives at the end of a ZIP, so
-    /// a file cut short does not open at all. That is cheap (an index read, no extraction) and is what
-    /// makes this catch truncation rather than merely mis-content.
-    ///
-    /// Extracted from `writeVerifiedBackupZip` so it can be driven against hand-built archives: this
-    /// guard has protected every export since #1014 and, until now, had no test of its own. The Android
-    /// twin is `DataBackup.hasEndOfCentralDirectory` plus `backupStreamIsIntact`, which has to find the
-    /// end record itself because `ZipInputStream` never looks for one.
-    /// What a post-write check concluded about the file just produced.
-    ///
-    /// `unverifiable` exists so that failing to READ a backup is never mistaken for evidence against it.
-    /// The caller DELETES a `torn` file, and deleting on "we could not look" would let a transient read
-    /// failure destroy a backup that was perfectly good. Twin of the Android `BackupWriteVerdict`.
+    /// What a post-write check concluded about the produced file. `unverifiable` exists because the caller
+    /// deletes a `torn` file, and a transient read failure must never destroy a good backup. Verification
+    /// opens the ZIP's central directory (at the end of the file), so truncation fails to open (#1014).
     enum BackupWriteVerdict: Equatable { case intact, torn, unverifiable }
 
-    /// Re-read the `.zoopbak` just written to `url` and say what it looks like.
-    ///
-    /// Unreadable is its own answer rather than a bad one: it says nothing about the CONTENT, and the
-    /// caller's response to `torn` is destructive. Past that gate a file that will not open as an
-    /// archive really is torn, because opening one only reads the central directory a complete ZIP has.
+    /// Re-reads the `.zoopbak` just written and classifies it. Unreadable is its own answer, since the
+    /// response to `torn` is destructive.
     static func verifyWrittenBackup(at url: URL) -> BackupWriteVerdict {
         guard FileManager.default.isReadableFile(atPath: url.path) else { return .unverifiable }
         guard let written = try? Archive(url: url, accessMode: .read),
@@ -217,7 +161,7 @@ enum DataBackup {
         return .intact
     }
 
-    /// Convenience over `verifyWrittenBackup(at:)` for callers that only care whether it passed.
+    /// Convenience over `verifyWrittenBackup(at:)`: whether it passed.
     static func writtenBackupIsIntact(at url: URL) -> Bool {
         verifyWrittenBackup(at: url) == .intact
     }
@@ -231,24 +175,20 @@ enum DataBackup {
         case .intact:
             break
         case .torn:
-            // Never leave a corrupt file behind masquerading as a good snapshot.
+            // Never leave a corrupt file masquerading as a good snapshot.
             try? FileManager.default.removeItem(at: dest)
             throw BackupWriteIncomplete()
         case .unverifiable:
-            // Failing to READ it back is not evidence against it, so it is LEFT IN PLACE. Deleting here
-            // would let a transient read failure destroy a backup that was perfectly good.
+            // Failing to read it back is not evidence against it; leave it in place.
             throw BackupWriteUnverified()
         }
     }
 
-    /// Write the live SQLite at `dbURL` into a fresh deflate ZIP at `dest`: the DB under the canonical
-    /// entry name `zoop-backup.sqlite`, plus (#1000) an optional second entry `settings.json` carrying
-    /// the whitelisted profile/display settings, so a restore brings back weight/height/units and not
-    /// just the rows. Entry names, entry ORDER (DB first — older importers stop at the first `.sqlite`
-    /// entry) and deflate compression match the Android exporter byte-for-byte at the container level,
-    /// so a `.zoopbak` produced on either platform imports on the other. `settingsJSON == nil` writes
-    /// the legacy single-entry ZIP. Mirrors the `Archive` idiom in `WhoopCsvExporter`.
-    /// #1410: this build's provenance manifest (Bundle version/build + GRDB schema + export time) as JSON.
+    /// #1410: provenance manifest (Bundle version/build, GRDB schema, export time) as JSON.
+    /// Container contract of `writeBackupZip`: DB entry `zoop-backup.sqlite` FIRST (older importers stop at
+    /// the first `.sqlite`), then optional `settings.json`, with deflate; entry names and order match
+    /// Android so a `.zoopbak` imports on either platform. `settingsJSON == nil` writes the legacy
+    /// single-entry ZIP.
     private static func currentManifestJSON() -> Data {
         let info = Bundle.main.infoDictionary
         let version = info?["CFBundleShortVersionString"] as? String ?? "?"
@@ -263,33 +203,29 @@ enum DataBackup {
         let archive = try Archive(url: dest, accessMode: .create)
         try archive.addEntry(with: backupEntryName, fileURL: dbURL, compressionMethod: .deflate)
         let fm = FileManager.default
-        // Stage each JSON through a temp file so it uses the exact same file-URL addEntry idiom as the DB
-        // entry (one container code path, no provider-API variant to drift).
+        // Stage each JSON through a temp file, the same file-URL addEntry idiom as the DB entry.
         if let settingsJSON {
             let tmpJSON = ZoopScratch.file("settings-\(UUID().uuidString).json")
             try settingsJSON.write(to: tmpJSON)
             defer { try? fm.removeItem(at: tmpJSON) }
             try archive.addEntry(with: BackupSettings.entryName, fileURL: tmpJSON, compressionMethod: .deflate)
         }
-        // #1410: manifest LAST (after the DB + optional settings) and ALWAYS written — even a legacy
-        // nil-settings backup states which build produced it.
+        // #1410: manifest last and always written, even for a legacy nil-settings backup.
         let tmpManifest = ZoopScratch.file("manifest-\(UUID().uuidString).json")
         try manifestJSON.write(to: tmpManifest)
         defer { try? fm.removeItem(at: tmpManifest) }
         try archive.addEntry(with: BackupManifest.entryName, fileURL: tmpManifest, compressionMethod: .deflate)
     }
 
-    /// This device's whitelisted profile/display settings (see `BackupSettings.whitelist`) as the
-    /// `settings.json` payload, or nil when nothing whitelisted was ever set (a fresh install then
-    /// exports a legacy DB-only ZIP, which is the right degrade). UserDefaults is thread-safe, so
-    /// the detached export tasks may call this off the main actor.
+    /// This device's whitelisted settings (see `BackupSettings.whitelist`) as the `settings.json` payload,
+    /// or nil if none was ever set (fresh install exports a DB-only ZIP). UserDefaults is thread-safe, so
+    /// this may run off main.
     private static func currentSettingsJSON() -> Data? {
         var values = BackupSettings.snapshot(from: .standard)
-        // #1361: bridge the user's custom journal BEHAVIOURS into the whitelisted `journal.customBehaviors`
-        // as a newline-joined name list (byte-identical to Android's `noop.journalCustomQuestions`). The
-        // journal EFFECTS ride the DB backup, but the DEFINITIONS live only here. `JournalCatalogStore`
-        // is @MainActor and this may run off it, so decode the items blob directly and take the custom
-        // canonicals. Skipped when there are none.
+        // #1361: bridge custom journal behaviours into whitelisted `journal.customBehaviors` as a
+        // newline-joined name list, byte-identical to Android's `noop.journalCustomQuestions`. Definitions
+        // live only in defaults (effects ride the DB); `JournalCatalogStore` is @MainActor, so decode the
+        // items blob directly. Skipped when none.
         if let blob = UserDefaults.standard.data(forKey: JournalCatalogBackupKeys.items),
            let items = try? JSONDecoder().decode([JournalCatalogItem].self, from: blob) {
             let customs = items.filter(\.custom).map(\.canonical)
@@ -298,11 +234,9 @@ enum DataBackup {
         return BackupSettings.encode(values)
     }
 
-    /// (Backup & Sync) Write a `.zoopbak` to a SPECIFIC `dest` URL with NO save panel: the folder /
-    /// auto-backup path. Checkpoints the WAL (so the single `.sqlite` is whole) then writes the same
-    /// deflate ZIP via the same `writeBackupZip` the interactive export uses, so folder / auto backups
-    /// are byte-identical to a manual export. The CALLER owns any security-scoped access to `dest`
-    /// (start/stop around this call). Never presents UI, so it is safe off the main actor.
+    /// Backup & Sync: writes a `.zoopbak` to a specific `dest` with no save panel, via the same
+    /// `writeBackupZip` as the interactive export (byte-identical). The caller owns security-scoped access
+    /// to `dest`. No UI, so safe off the main actor.
     static func writeBackup(checkpoint: @escaping () async -> Bool, to dest: URL) async -> BackupResult {
         let dbPath: String
         do { dbPath = try StorePaths.defaultDatabasePath() }
@@ -312,8 +246,7 @@ enum DataBackup {
         guard FileManager.default.fileExists(atPath: dbPath) else {
             return .failure(String(localized: "There's no Zoop data to export yet."))
         }
-        // Flush the WAL into the single file (same requirement as the interactive export: a single-file
-        // ZIP has no sidecar fallback, so committed pages still in the WAL would otherwise be absent).
+        // Flush the WAL; a single-file ZIP has no sidecar fallback.
         guard await checkpoint() else {
             return .failure(String(localized: "Couldn't safely back up right now. Recent changes are still in the write-ahead log."))
         }
@@ -327,11 +260,9 @@ enum DataBackup {
         }
     }
 
-    /// Test seam: write a `.zoopbak` for an EXPLICIT source database (no checkpoint, no `StorePaths`),
-    /// so a unit test can round-trip a throwaway SQLite through the exact ZIP container the app writes.
-    /// `settings` (canonical `BackupSettings` keys) adds the `settings.json` entry; nil writes the
-    /// legacy single-entry ZIP — tests cover both shapes. Not used by app code; production goes
-    /// through `writeBackup(checkpoint:to:)`.
+    /// Test seam: writes a `.zoopbak` from an explicit source database (no checkpoint, no `StorePaths`).
+    /// `settings` adds the `settings.json` entry; nil writes the legacy ZIP. Production uses
+    /// `writeBackup(checkpoint:to:)`.
     static func writeBackupForTesting(databaseAt dbURL: URL, to dest: URL,
                                       settings: [String: Any]? = nil) throws {
         let fm = FileManager.default
@@ -343,10 +274,8 @@ enum DataBackup {
 
     // MARK: - Import
 
-    /// Pick a `.zoopbak` (ZIP) or legacy `.sqlite` backup, validate it, snapshot the current DB
-    /// to a side file, then copy the backup over the live database path (removing the `-wal`/`-shm`
-    /// siblings). The store stays open, so the swapped-in file only takes effect after a relaunch —
-    /// the caller informs the user.
+    /// Picks a `.zoopbak` or legacy `.sqlite`, validates it, snapshots the current DB to a side file, then
+    /// copies it over the live path (removing `-wal`/`-shm`). Takes effect after a relaunch.
     @MainActor
     static func runImport(allowOversize: Bool = false) async -> BackupResult {
         let dbPath: String
@@ -367,31 +296,21 @@ enum DataBackup {
         let scoped = pickedSource.startAccessingSecurityScopedResource()
         defer { if scoped { pickedSource.stopAccessingSecurityScopedResource() } }
         #else
-        // iOS: pick the backup through the system document picker (asCopy gives us a readable local
-        // copy in our temp dir, so no security-scoped bookkeeping is needed).
+        // iOS: the document picker's asCopy gives a readable temp copy, so no security-scoped bookkeeping.
         guard let pickedSource = await DocumentPicker.importFile(backupContentTypes()) else { return .cancelled }
         #endif
 
-        // Hand the chosen file to the same hardened restore core the folder (Backup & Sync) path uses,
-        // so the unzip / magic-byte / GRDB-origin / sidecar-snapshot / rollback logic lives in one place.
-        // The restore does heavy synchronous file work (unzip, copy the whole DB, scan sqlite_master,
-        // snapshot + rollback), which can run tens of seconds on a big library. Push it off the main
-        // actor so the picker's UI thread stays live; the security-scoped access opened above (macOS)
-        // stays valid because the surrounding function is still awaiting here. Only Sendable value
-        // types (URL, String) cross the hop; the result hops back to main for handleBackup.
+        // Same hardened restore core as the folder path. Heavy synchronous file work (tens of seconds on
+        // big libraries) runs off the main actor; macOS security-scoped access stays valid because this
+        // function is still awaiting. Only Sendable values cross.
         return await Task.detached(priority: .utility) {
             restore(from: pickedSource, toDatabaseAt: dbPath, allowOversize: allowOversize)
         }.value
     }
 
-    /// Restore a chosen backup file directly, with NO picker. The Backup & Sync folder flow calls this
-    /// with a snapshot it already resolved from the user's backup folder (the caller owns any
-    /// security-scoped access around the call). Runs against the live database path.
-    ///
-    /// Reuses the exact same hardened path as the picker import: ZIP extraction, SQLite magic-byte
-    /// validation, GRDB-origin rejection (a foreign-but-valid SQLite is refused), a timestamped
-    /// sidecar snapshot of the current store, and rollback-on-failure so a failed restore leaves the
-    /// live database untouched.
+    /// Restores a chosen backup directly, no picker (Backup & Sync folder flow; caller owns security-scoped
+    /// access). Same hardened path as the picker: ZIP extraction, magic-byte check, GRDB-origin rejection,
+    /// timestamped sidecar snapshot, rollback on failure.
     static func restore(from pickedSource: URL) -> BackupResult {
         let dbPath: String
         do { dbPath = try StorePaths.defaultDatabasePath() }
@@ -399,16 +318,13 @@ enum DataBackup {
         return restore(from: pickedSource, toDatabaseAt: dbPath)
     }
 
-    /// The hardened restore core, with the destination database path injected so it is unit-testable
-    /// against a throwaway DB (real file I/O, never the user's live store). Behaviour is identical to
-    /// the previous `runImport` body; only the picker and path-resolution moved out to the callers.
-    /// `settingsDefaults` is where a `settings.json` entry (#1000) is re-applied — injected for the
-    /// same reason as `dbPath` (tests use a suite-scoped UserDefaults, never the runner's real domain).
+    /// Hardened restore core with the database path injected for tests against a throwaway DB.
+    /// `settingsDefaults` is where `settings.json` (#1000) is re-applied, injected so tests use a
+    /// suite-scoped UserDefaults.
     static func restore(from pickedSource: URL, toDatabaseAt dbPath: String,
                         settingsDefaults: UserDefaults = .standard,
                         allowOversize: Bool = false) -> BackupResult {
-        // If the picked file is a .zoopbak ZIP, extract the SQLite entry to a temp dir first.
-        // Legacy plain-SQLite files fall straight through. The extracted dir is cleaned up below.
+        // A .zoopbak ZIP has its SQLite entry extracted to a temp dir first; legacy plain SQLite falls through.
         let fm = FileManager.default
         let source: URL
         let extractedDir: URL?
@@ -421,8 +337,7 @@ enum DataBackup {
                 try extractBackupZip(at: pickedSource, into: tmpExtract, allowOversize: allowOversize)
             } catch let err as BackupArchiveError {
                 try? fm.removeItem(at: tmpExtract)
-                // Reported as its own case, not a generic failure: this one is RECOVERABLE, and the caller
-                // is the only layer that can ask the user whether to go ahead. (#1807)
+                // Its own case: recoverable, and only the caller can ask the user whether to proceed (#1807).
                 switch err {
                 case .entryTooLarge(let name):
                     return .restoreTooLarge(name: name, limit: maxBackupSQLiteBytes)
@@ -445,16 +360,14 @@ enum DataBackup {
         }
         defer { if let d = extractedDir { try? fm.removeItem(at: d) } }
 
-        // Validate: must be a real SQLite database (magic header "SQLite format 3\0").
+        // Must be a real SQLite database (magic header).
         guard isSQLiteFile(at: source) else {
             return .failure(String(localized: "That file isn't a Zoop backup. It doesn't look like a SQLite database."))
         }
 
-        // Reject any backup that isn't a clean GRDB (this-app) backup. The magic check passes for ANY
-        // SQLite file, so an Android (Room) backup — or any other SQLite file that happens to carry our
-        // table names without our `grdb_migrations` bookkeeping — would otherwise replace the live DB
-        // and leave the migrator re-running v1 forever (`table "device" already exists`, #222). A valid
-        // Zoop-Mac/iOS backup always carries `grdb_migrations`; reject everything else that holds data.
+        // Reject backups that are not a clean GRDB backup. The magic check passes any SQLite file, so an
+        // Android (Room) backup would replace the live DB and leave the migrator re-running v1 (#222); a
+        // valid Mac/iOS backup always carries `grdb_migrations`.
         let backupTables = sqliteTableNames(at: source)
         let origin = backupOrigin(of: backupTables)
         let holdsData = backupTables.contains("device") || backupTables.contains("hrSample")
@@ -462,17 +375,11 @@ enum DataBackup {
             return .failure(String(localized: "This isn't a Zoop backup from this app. It's missing the migration bookkeeping a Zoop backup carries (it looks like an Android backup or another app's database), and restoring it would strand your store. To move your history across platforms, export the WHOOP-format CSV on the other device (Settings → Export data) and import that here, or import your original WHOOP / Apple Health export."))
         }
 
-        // #1014 defence-in-depth: both gates above read only the FIRST pages of the file — the
-        // 16-byte magic and sqlite_master both survive a backup that was truncated mid-upload or
-        // torn by a flaky drive/cloud sync, and such a file then "restores" into a store that
-        // silently shows no data (the #1014 report; the #1000 settings code was exonerated, the
-        // family needed armour). Run SQLite's own `PRAGMA quick_check` over the STAGED file,
-        // read-only, BEFORE anything touches the live database, and refuse the swap honestly.
-        // One carve-out: a legacy plain-SQLite file still travelling with its -wal/-shm siblings
-        // (an uncheckpointed manual copy) skips THIS gate — a read-only probe can't recover someone
-        // else's WAL (shm rebuild needs write access) and would refuse spuriously. Those rare files
-        // are still verified by the post-swap check below, which runs on the landed main file
-        // BEFORE the sidecars are laid down and rolls back automatically on failure.
+        // #1014: the gates above read only the first pages, which survive a truncated or torn backup that
+        // then restores as an empty store. Run `PRAGMA quick_check` read-only on the staged file before
+        // touching the live DB.
+        // A legacy plain SQLite still travelling with -wal/-shm siblings skips this gate (a read-only probe
+        // cannot recover another WAL); the post-swap check covers it.
         let legacySidecarsPresent = extractedDir == nil
             && (fm.fileExists(atPath: source.path + "-wal") || fm.fileExists(atPath: source.path + "-shm"))
         if !legacySidecarsPresent,
@@ -483,18 +390,18 @@ enum DataBackup {
         let dbURL = URL(fileURLWithPath: dbPath)
 
         do {
-            // Snapshot the current DB (+ sidecars) to a timestamped side file so the user can roll back.
+            // Snapshot the current DB (+ sidecars) to a timestamped side file for rollback.
             var sidecar = dbURL.deletingLastPathComponent()
                 .appendingPathComponent("whoop-replaced-\(timestamp()).sqlite")
             if fm.fileExists(atPath: dbURL.path) {
                 if fm.fileExists(atPath: sidecar.path) { try fm.removeItem(at: sidecar) }
                 try fm.copyItem(at: dbURL, to: sidecar)
             } else {
-                // Nothing to preserve (fresh install); report a placeholder so the message reads sensibly.
+                // Nothing to preserve (fresh install); use a placeholder so the message reads sensibly.
                 sidecar = dbURL
             }
 
-            // Remove the live DB and its WAL/SHM siblings, then drop the backup in.
+            // Remove the live DB and WAL/SHM siblings, then drop the backup in.
             removeIfPresent(dbURL)
             removeIfPresent(URL(fileURLWithPath: dbPath + "-wal"))
             removeIfPresent(URL(fileURLWithPath: dbPath + "-shm"))
@@ -502,11 +409,8 @@ enum DataBackup {
             do {
                 try fm.copyItem(at: source, to: dbURL)
             } catch {
-                // The live DB was just removed and the replacement didn't land. Roll back to the
-                // snapshot so a failed import leaves the user's data exactly as it was, instead of a
-                // fresh-empty DB on relaunch (mirrors the Android rollback). Clear any partial-copy
-                // leftover first — copyItem fails if the destination exists, which would otherwise
-                // block the restore.
+                // The replacement did not land: roll back to the snapshot so a failed import leaves data as
+                // it was. Clear any partial copy first, since copyItem fails if the destination exists.
                 if sidecar != dbURL, fm.fileExists(atPath: sidecar.path) {
                     removeIfPresent(dbURL)
                     try? fm.copyItem(at: sidecar, to: dbURL)
@@ -514,51 +418,38 @@ enum DataBackup {
                 return .failure(String(localized: "Import failed. Your existing data was kept. \(error.localizedDescription)"))
             }
 
-            // #1014 defence-in-depth, post-swap: re-verify the file that actually LANDED at the
-            // live path with a second read-only quick_check. The staged file was verified above,
-            // but the copy itself can tear — disk-full mid-copy, a dying filesystem, the device
-            // sleeping — and the next launch would meet a corrupt store. Runs BEFORE any legacy
-            // sidecars are laid down: a bare main file is always read-only verifiable, and WAL
-            // frames carry their own checksums (SQLite validates them on the first real open), so
-            // the sidecars don't need this gate. On failure, roll back to the snapshot
-            // AUTOMATICALLY and say so; the snapshot file is kept either way (same policy as a
-            // successful import: the user can always reach the pre-import bytes).
+            // #1014 post-swap: re-verify the landed file with a second read-only quick_check, since the
+            // copy itself can tear (disk full, device sleep). Runs before legacy sidecars are laid down
+            // (WAL frames are self-checksummed). On failure roll back automatically; the snapshot is kept
+            // either way.
             if let complaint = DatabaseIntegrity.quickCheckFailure(atPath: dbURL.path) {
                 removeIfPresent(dbURL)
                 if sidecar != dbURL, fm.fileExists(atPath: sidecar.path) {
                     try? fm.copyItem(at: sidecar, to: dbURL)
                     return .failure(String(localized: "Import failed its post-restore integrity check (SQLite reports: \(DatabaseIntegrity.readableComplaint(complaint))). Your previous data was rolled back automatically and is unchanged."))
                 }
-                // Fresh install: there was no previous store to preserve, so removing the damaged
-                // file (done above) restores the exact pre-import state — an empty slate.
+                // Fresh install: removing the damaged file restores the pre-import empty state.
                 return .failure(String(localized: "Import failed its post-restore integrity check (SQLite reports: \(DatabaseIntegrity.readableComplaint(complaint))). The damaged file was removed; there was no previous data to roll back."))
             }
 
-            // Restore sidecars only for legacy plain-SQLite backups whose WAL wasn't
-            // checkpointed at export. ZIP imports are always checkpointed; no sidecars expected.
-            // Deliberately AFTER the post-swap integrity check (see above) — this is best-effort
-            // (`try?` inside) and can't throw, so the rollback semantics are unchanged.
+            // Restore sidecars only for legacy plain-SQLite backups whose WAL was not checkpointed. After
+            // the integrity check; best-effort (`try?`), so rollback semantics are unchanged.
             if extractedDir == nil {
                 restoreSidecar(from: source, toMainPath: dbPath, suffix: "-wal")
                 restoreSidecar(from: source, toMainPath: dbPath, suffix: "-shm")
             }
 
-            // #1000: re-apply the backup's whitelisted profile/display settings (weight, height, age,
-            // sex, HR-max override, unit prefs) — but only NOW, after the DB swap landed. A failed or
-            // rolled-back restore returns above and never touches settings. Legacy single-entry ZIPs
-            // and plain-SQLite backups have no `settings.json` (extractedDir nil / entry absent) and
-            // restore exactly as before — no settings, no error. A malformed settings entry degrades
-            // to "fewer keys applied" inside BackupSettings.decode; it can never fail the restore.
+            // #1000: re-apply whitelisted settings only after the DB swap landed; a failed or rolled-back
+            // restore never touches them. Legacy backups have no `settings.json`. A malformed entry
+            // degrades to fewer keys inside BackupSettings.decode and never fails the restore.
             if let extractedDir {
                 let settingsURL = extractedDir.appendingPathComponent(BackupSettings.entryName)
                 if let data = try? Data(contentsOf: settingsURL) {
                     let decoded = BackupSettings.decode(data)
                     BackupSettings.apply(decoded, to: settingsDefaults)
-                    // #1361: restore custom journal behaviours. `JournalCatalogStore` is @MainActor and
-                    // this runs off it, so write the restored names to the legacy `journal.customQuestions`
-                    // array, clear any stale hidden list, and drop the v2 items blob — on the relaunch a
-                    // restore forces, the store's init migrates those names into fresh v2 items (the same
-                    // path a pre-v2 install takes). Only when the backup carried them.
+                    // #1361: restore custom journal behaviours. `JournalCatalogStore` is @MainActor, so
+                    // write the names to the legacy `journal.customQuestions` array, clear the hidden list
+                    // and drop the v2 items blob; the forced relaunch migrates them into fresh v2 items.
                     if let joined = decoded["journal.customBehaviors"] as? String {
                         let names = joined.split(separator: "\n").map(String.init).filter { !$0.isEmpty }
                         settingsDefaults.set(names, forKey: JournalCatalogBackupKeys.legacyCustom)
@@ -567,8 +458,7 @@ enum DataBackup {
                     }
                 }
             }
-            // #57 debug: record when a restore swapped the DB, so the export can correlate a restore with a
-            // later write stall (a restore not followed by a relaunch is the #57 failure).
+            // #57 debug: record when a restore swapped the DB, to correlate with a later write stall.
             UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "backup.lastRestoreAt")
             return .imported(sidecar: sidecar)
         } catch {
@@ -578,8 +468,8 @@ enum DataBackup {
 
     // MARK: - Helpers
 
-    /// Canonical entry name for the SQLite inside a `.zoopbak` ZIP. Matches the Android exporter so
-    /// a backup produced on either platform restores on the other.
+    /// Canonical entry name for the SQLite inside a `.zoopbak`; matches Android so backups restore across
+    /// platforms.
     private static let backupEntryName = "zoop-backup.sqlite"
 
     private enum BackupArchiveError: LocalizedError {
@@ -593,7 +483,7 @@ enum DataBackup {
         }
     }
 
-    /// "Zoop-backup-2026-06-07.zoopbak"
+    /// Example: "Zoop-backup-2026-06-07.zoopbak"
     private static func defaultBackupName() -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
@@ -608,8 +498,7 @@ enum DataBackup {
         return f.string(from: Date())
     }
 
-    /// Content types accepted by the export/import panels. Includes the new `.zoopbak` (ZIP),
-    /// generic ZIP, and legacy `.sqlite` / `.database` types so older backups keep working.
+    /// Content types for the export/import panels: `.zoopbak`, ZIP, and legacy SQLite types.
     private static func backupContentTypes() -> [UTType] {
         var types: [UTType] = []
         if let zoopbak = UTType(filenameExtension: "zoopbak") { types.append(zoopbak) }
@@ -620,29 +509,25 @@ enum DataBackup {
         return types
     }
 
-    /// Which platform produced a Zoop backup, judged by its migrator's bookkeeping table.
+    /// Which platform produced a backup, judged by its migrator's bookkeeping table.
     enum BackupOrigin: Equatable { case mac, android, unknown }
 
-    /// Pure classification over a backup's `sqlite_master` table names: GRDB (this app) writes
-    /// `grdb_migrations`, Room (the Android app) writes `room_master_table`. `.unknown` (neither —
-    /// an empty or pre-migration file) falls through to the normal import path, where the
-    /// open-time migrator decides. Mirrors the Android `DataBackup.backupOriginOf`.
+    /// Classifies a backup by `sqlite_master` table names: GRDB writes `grdb_migrations`, Room writes
+    /// `room_master_table`. `.unknown` falls through to normal import, where the migrator decides.
     static func backupOrigin(of tableNames: Set<String>) -> BackupOrigin {
-        // This platform's marker wins on the (degenerate) both-present case: restoring here is the
-        // less destructive read.
+        // This platform's marker wins when both are present (the less destructive read).
         if tableNames.contains("grdb_migrations") { return .mac }
         if tableNames.contains("room_master_table") { return .android }
-        // Older Room layouts didn't carry `room_master_table`; treat the Room/AndroidX duo of
-        // `android_metadata` + an internal `sqlite_sequence` as an Android backup too.
+        // Older Room layouts lack `room_master_table`; `android_metadata` plus `sqlite_sequence` also marks
+        // Android.
         if tableNames.contains("android_metadata") && tableNames.contains("sqlite_sequence") {
             return .android
         }
         return .unknown
     }
 
-    /// Every table name in a SQLite file, opened READ-ONLY through the system SQLite so the probed
-    /// file is never mutated. Returns an empty set on any failure — the caller treats that as
-    /// `.unknown` and falls through to the existing behaviour.
+    /// Every table name in a SQLite file, opened read-only so it is never mutated. Empty set on failure
+    /// (treated as `.unknown`).
     private static func sqliteTableNames(at url: URL) -> Set<String> {
         var db: OpaquePointer?
         guard sqlite3_open_v2(url.path, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
@@ -663,7 +548,7 @@ enum DataBackup {
         return names
     }
 
-    /// Read the first 4 bytes and check for the ZIP PK magic (`PK\x03\x04`).
+    /// Checks the first 4 bytes for the ZIP PK magic.
     private static func isZipFile(at url: URL) -> Bool {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
         defer { try? handle.close() }
@@ -671,9 +556,8 @@ enum DataBackup {
         return head[0] == 0x50 && head[1] == 0x4B && head[2] == 0x03 && head[3] == 0x04
     }
 
-    /// Extract only the canonical entries from a `.zoopbak` ZIP at `zipURL` into `destDir`.
-    /// Unknown files are ignored, and each accepted entry is streamed through an uncompressed-size cap
-    /// before it lands on disk.
+    /// Extracts only the canonical entries into `destDir`; unknown files are ignored and each entry is
+    /// streamed through an uncompressed-size cap.
     private static func extractBackupZip(at zipURL: URL, into destDir: URL,
                                          allowOversize: Bool = false) throws {
         let archive = try Archive(url: zipURL, accessMode: .read)
@@ -707,12 +591,12 @@ enum DataBackup {
         }
     }
 
-    /// Read the first 16 bytes and check for the SQLite magic header.
+    /// Checks the first 16 bytes for the SQLite magic header.
     private static func isSQLiteFile(at url: URL) -> Bool {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
         defer { try? handle.close() }
         guard let head = try? handle.read(upToCount: 16), head.count >= 16 else { return false }
-        // "SQLite format 3" + NUL terminator.
+        // "SQLite format 3" plus NUL.
         let magic: [UInt8] = Array("SQLite format 3".utf8) + [0x00]
         return Array(head) == magic
     }
@@ -722,9 +606,8 @@ enum DataBackup {
         if fm.fileExists(atPath: url.path) { try? fm.removeItem(at: url) }
     }
 
-    /// Copy a legacy backup's `<source><suffix>` sidecar next to the live DB if it exists, so an
-    /// old plain-SQLite backup whose WAL wasn't checkpointed at export restores its committed pages
-    /// (SQLite folds them in on open). Not called for ZIP imports (those are always checkpointed).
+    /// Copies a legacy backup's `<source><suffix>` sidecar next to the live DB so an uncheckpointed
+    /// plain-SQLite backup keeps its committed pages. Not used for ZIP imports.
     private static func restoreSidecar(from source: URL, toMainPath dbPath: String, suffix: String) {
         let fm = FileManager.default
         let src = URL(fileURLWithPath: source.path + suffix)

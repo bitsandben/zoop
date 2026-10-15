@@ -3,12 +3,10 @@ import StrandAnalytics
 import WhoopProtocol
 import WhoopStore
 
-/// Today's Energy Bank estimate, assembled from what the Repository already holds: today's heart rate,
-/// the sleeps, last night's recovery and sleep, the resting-HR baseline and today's intraday stress.
-///
-/// The window opens when last night's main sleep ended (or at midnight while no night has ended today)
-/// and runs to now. Today's heart rate is read only when `Repository`'s cheap heart-rate fingerprint says
-/// it moved, so the Home card can re-ask every few minutes without re-reading the day each time.
+/// Today's Energy Bank estimate from what the Repository already holds (today's HR, sleeps, last night's
+/// recovery and sleep, resting-HR baseline, intraday stress).
+/// The window opens when last night's main sleep ended (midnight if none yet) and runs to now. HR is
+/// re-read only when the cheap HR fingerprint moved.
 enum EnergyBankDay {
 
     private struct Memo {
@@ -27,7 +25,7 @@ enum EnergyBankDay {
         let nowTs = Int(now.timeIntervalSince1970)
         let todayKey = Repository.localDayKey(now)
 
-        // The main night that ended today anchors the morning value; naps after it recharge.
+        // The main night that ended today anchors the morning value; later naps recharge.
         let endedToday = repo.sleeps.filter {
             Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval($0.endTs))) == todayKey && $0.endTs <= nowTs
         }
@@ -47,8 +45,7 @@ enum EnergyBankDay {
             samples = m.samples
         } else if let m = memo, m.day == "\(todayKey)-\(start)", fingerprint.maxTs > m.maxTs,
                   fingerprint.count > m.count {
-            // Zoop: the strap streams a sample a second, so read only what arrived since the last read
-            // instead of the whole day again (that full re-read on every tick was a source of lag).
+            // The strap streams a sample a second, so read only what arrived since the last read.
             let newer = await repo.hrSamples(from: m.maxTs + 1, to: nowTs, limit: 200_000)
             samples = m.samples + newer
             memo = Memo(day: m.day, count: fingerprint.count, maxTs: fingerprint.maxTs, samples: samples)
@@ -64,7 +61,7 @@ enum EnergyBankDay {
         let stressPoints = stress.compactMap { p in p.level.map { EnergyBank.StressPoint(ts: p.startTs, level: $0) } }
 
         let today = repo.today
-        // Nothing to estimate from: no recovery to open the day and no heart rate to walk it.
+        // No recovery to open the day and no HR to walk it.
         if today?.recovery == nil && samples.isEmpty { return nil }
         let need = SleepModel.debtNeedMin(days: repo.days)
         let sufficiency = today?.totalSleepMin.flatMap { need > 0 ? $0 / need : nil }

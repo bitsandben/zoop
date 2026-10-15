@@ -43,7 +43,7 @@ struct WorkoutStartControl: View {
         }
         // #459: the in-exercise view, presented when Start Workout is tapped here (same screen LiveView
         // shows). activeWorkout is global on AppModel, so ending it from either surface stays in sync.
-        .sheet(isPresented: $showLiveWorkout) {
+        .liveWorkoutCover(isPresented: $showLiveWorkout) {
             LiveWorkoutView(onClose: { showLiveWorkout = false })
                 // Inject the shared live snapshot so the in-exercise sensor readout (speed/cadence/power)
                 // resolves here too, matching how LiveView presents the same screen.

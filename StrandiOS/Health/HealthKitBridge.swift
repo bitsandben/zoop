@@ -101,6 +101,9 @@ final class HealthKitBridge: ObservableObject {
         // empty and the imported workout shows distance but no map — same as today, so the addition
         // is strictly additive.
         s.insert(HKSeriesType.workoutRoute())
+        // Mindful sessions — READ-ONLY, for the Training page's mindfulness section
+        // (`MindfulHealthReader`), so meditation logged in another app counts. Never written back.
+        if let mindful = HKObjectType.categoryType(forIdentifier: .mindfulSession) { s.insert(mindful) }
         return s
     }
 
@@ -255,12 +258,23 @@ final class HealthKitBridge: ObservableObject {
     /// never reveals *read* status, but *write*/share status is observable — if the user already
     /// authorized all of our write types, treat the bridge as `.authorized`. This only reads
     /// status, so no system permission sheet is shown.
-    func refreshAuthIfPreviouslyGranted() {
+    ///
+    /// Async because `authorizationStatus(for:)` is a synchronous XPC round trip to healthd per type. On the
+    /// scenePhase `.active` path it ran on the main actor, and on a fresh iOS 27 simulator healthd did not
+    /// answer for many seconds, so first launch froze on a blank onboarding screen. The reads now run detached.
+    func refreshAuthIfPreviouslyGranted() async {
         guard auth == .unknown, HKHealthStore.isHealthDataAvailable() else { return }
+        let store = self.store
+        let types = Array(writeTypes)
+        let statuses = await Task.detached(priority: .utility) {
+            types.map { store.authorizationStatus(for: $0) }
+        }.value
+        // Another caller may have resolved `auth` while the reads were in flight.
+        guard auth == .unknown else { return }
         // Share authorization is per type. Resume when at least one write type is granted so a person
         // who intentionally declined (for example) workouts still gets sleep/vitals exported after a
         // relaunch. Requiring every legacy type made partial grants look wholly disconnected.
-        let granted = writeTypes.contains { store.authorizationStatus(for: $0) == .sharingAuthorized }
+        let granted = statuses.contains(.sharingAuthorized)
         if granted {
             auth = .authorized
             // A returning user who already granted access should get the live stream re-armed for this
@@ -278,7 +292,7 @@ final class HealthKitBridge: ObservableObject {
             // also called from the offload write-back (#1021), which runs in processes that were never
             // foregrounded. Asking there would spend the one request we get where no sheet can be
             // presented. The status read above is unaffected, so a legacy grant still resumes.
-            let newTypesPending = writeTypes.contains { store.authorizationStatus(for: $0) == .notDetermined }
+            let newTypesPending = statuses.contains(.notDetermined)
             if newTypesPending, UIApplication.shared.applicationState == .active {
                 Task { try? await store.requestAuthorization(toShare: writeTypes, read: readTypes) }
             }
@@ -785,7 +799,7 @@ final class HealthKitBridge: ObservableObject {
         // only resume runs on scenePhase == .active, so without this the guard below would silently drop
         // exactly the writes this is meant to deliver. Idempotent, and never prompts: it reads share
         // status, and its re-request for new types is foreground-gated.
-        refreshAuthIfPreviouslyGranted()
+        await refreshAuthIfPreviouslyGranted()
         // No authorization is a successful no-op for a background task. The scheduler is cancelled by
         // its app-owned operation after observing this state, so it does not keep waking unnecessarily.
         guard auth == .authorized else { return true }
@@ -1832,7 +1846,8 @@ final class HealthKitBridge: ObservableObject {
                         points.append(WorkoutRoutePoint(lat: loc.coordinate.latitude,
                                                         lon: loc.coordinate.longitude,
                                                         accuracyM: loc.horizontalAccuracy,
-                                                        tMs: Int64(loc.timestamp.timeIntervalSince1970 * 1000)))
+                                                        tMs: Int64(loc.timestamp.timeIntervalSince1970 * 1000),
+                                                        altM: loc.verticalAccuracy >= 0 ? loc.altitude : nil))
                     }
                     if done { cont.resume(returning: ()) }
                 }
@@ -1942,10 +1957,7 @@ final class HealthKitBridge: ObservableObject {
     // `nonisolated` so the HealthKit query completion handlers — which HealthKit invokes on a private
     // background queue (a nonisolated context) — can label day buckets without a main-actor-isolation
     // warning. They only read a thread-safe DateFormatter, so this is safe off the main actor.
-    nonisolated private static let dayFormatter: DateFormatter = {
-        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"; f.timeZone = TimeZone.current; return f
-    }()
+    nonisolated private static let dayFormatter: DateFormatter = DayKeyFormat.local
     nonisolated private static func dayString(_ date: Date) -> String { dayFormatter.string(from: date) }
     nonisolated private static func date(from day: String) -> Date? { dayFormatter.date(from: day) }
 }

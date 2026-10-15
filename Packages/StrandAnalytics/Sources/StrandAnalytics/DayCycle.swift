@@ -5,7 +5,6 @@ public enum DayCycleMode: String, CaseIterable, Sendable {
     case midnight = "midnight"
 
     public static let storageKey = "zoop.dayCycleMode"
-    /// Kotlin twin: `DayCycleMode.fromPersisted`.
     public static func persisted(_ value: String?) -> DayCycleMode {
         value.flatMap(Self.init(rawValue:)) ?? .sleepOnset
     }
@@ -29,7 +28,6 @@ public enum DayCycleResolver {
     public static let minSyntheticMidnightAgeSeconds = 18 * 3_600
     public static let absoluteMaxOpenSeconds = 40 * 3_600
 
-    /// Kotlin twin: `DayCycleResolver.calendarWindow`.
     public static func calendarWindow(now: Int, offsetSec: Int) -> DayCycleWindow {
         let local = now + offsetSec
         let dayNumber = Int(floor(Double(local) / Double(SleepStageTotals.secondsPerDay)))
@@ -39,7 +37,6 @@ public enum DayCycleResolver {
                               displayDay: day, source: .calendar)
     }
 
-    /// Kotlin twin: `DayCycleResolver.fallbackMidnightAfter`.
     public static func fallbackMidnight(after start: Int, offsetSec: Int) -> Int {
         let minimum = start + minSyntheticMidnightAgeSeconds
         let local = minimum + offsetSec
@@ -48,17 +45,13 @@ public enum DayCycleResolver {
         return midnight >= minimum ? midnight : (dayNumber + 1) * SleepStageTotals.secondsPerDay - offsetSec
     }
 
-    /// Kotlin twin: `DayCycleResolver.activeWindow`.
     public static func activeWindow(mode: DayCycleMode, latestSleep: DayCycleWindow?, now: Int,
                                     offsetSec: Int) -> DayCycleWindow {
         guard mode == .sleepOnset, let latestSleep else { return calendarWindow(now: now, offsetSec: offsetSec) }
         let age = now - latestSleep.startInclusive
         let fallback = fallbackMidnight(after: latestSleep.startInclusive, offsetSec: offsetSec)
         // Sleep-onset mode stays anchored across midnight unconditionally: only the absolute safety cap
-        // may synthesize a fallback boundary. An earlier design gated this on whether awake coverage was
-        // reliable and carried a `reliableAwakeCoverage` parameter for it; the gate was dropped but the
-        // parameter survived, unread on both platforms and passed `false` by every one of its five call
-        // sites. Removed rather than left looking like a switch someone could flip.
+        // may synthesize a fallback boundary.
         guard age < absoluteMaxOpenSeconds else {
             let day = AnalyticsEngine.dayString(fallback, offsetSec: offsetSec)
             return DayCycleWindow(id: "synthetic:\(day)", startInclusive: fallback, endExclusive: now,

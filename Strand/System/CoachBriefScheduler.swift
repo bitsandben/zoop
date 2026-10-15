@@ -5,29 +5,21 @@ import BackgroundTasks
 import WidgetKit
 #endif
 
-/// PRD-K5: a user-scheduled, LOCAL notification that delivers a one-line morning coaching brief,
-/// generated on-device via the user's already-configured Coach provider, at a chosen time each day.
-/// Tap → opens Coach with the full brief. No push server, no cloud — the network call is the SAME
-/// bring-your-own-key request Coach already makes on every send, just user-armed on a daily timer
-/// instead of triggered by a tap. Default OFF, like every Zoop automation.
+/// A user-scheduled local notification delivering a one-line morning coaching brief, generated
+/// on-device through the user's configured Coach provider. Tap opens Coach with the full brief.
+/// Default OFF; no push server.
 ///
-/// Cross-platform (macOS + iOS), same architecture as `ScheduledDebugExport`:
-/// - **macOS** — the app is usually running; a foreground `DispatchSourceTimer` fires at the chosen
-///   minute, and `catchUpIfDue` covers the time having passed while the app wasn't open.
-/// - **iOS** — a sideloaded, backgrounded app can't guarantee a wake at the exact minute. A
-///   `BGAppRefreshTaskRequest` is submitted for *no earlier than* the chosen time; iOS decides when it
-///   actually runs. If the slot is missed entirely (app never woken), the next foreground open's
-///   `activateIfEnabled` catches up and generates then instead — same honest "best-effort" posture
-///   `ScheduledDebugExport`'s Settings copy already uses.
+/// - macOS: a foreground `DispatchSourceTimer` fires at the chosen minute; `catchUpIfDue` covers a
+///   time that passed while the app was closed.
+/// - iOS: a `BGAppRefreshTaskRequest` for *no earlier than* the chosen time (best-effort); a missed
+///   slot is caught up by the next `activateIfEnabled`.
 ///
-/// Triple-gated network call: `enabled` (this feature, default OFF) + a saved Coach key + the existing
-/// `dataConsent`. `generateBrief` is `AICoachEngine.generateBrief()`, itself gated on both of those; this
-/// scheduler additionally never marks a day "done" on a failed generation, so a missing key/consent (or
-/// a transient network failure) simply retries next wake rather than going permanently silent.
+/// Network call is gated on `enabled`, a saved Coach key and `dataConsent`. A failed generation never
+/// marks the day done, so it retries on the next wake.
 @MainActor
 enum CoachBriefScheduler {
 
-    // MARK: - Persisted settings (own keys; mirrors ScheduledDebugExport's shape)
+    // MARK: - Persisted settings
 
     private enum K {
         static let enabled = "coachBrief.enabled"          // master enable; default OFF
@@ -35,51 +27,36 @@ enum CoachBriefScheduler {
         static let lastRun = "coachBrief.lastRunDayKey"    // yyyy-MM-dd of the last GENERATED brief (dedup)
         static let storedBrief = "coachBrief.storedText"   // the full brief, for the notification tap-through
         static let hasUnconsumed = "coachBrief.hasUnconsumedBrief"
-        // K10: the brief text mirrored into the App Group so the widget extension (separate process)
-        // can read it. The app's own UserDefaults.standard isn't visible to the widget.
+        // Brief text mirrored into the App Group; the widget process can't see `UserDefaults.standard`.
         static let widgetBriefKey = "coachBrief.widgetText"
         static let widgetBriefDateKey = "coachBrief.widgetDate"
     }
 
-    /// 07:00 — a brief waiting when you check your phone (matches `ScheduledDebugExport`'s default).
+    /// 07:00.
     static let defaultTimeMinutes = 7 * 60
     private static let minutesPerDay = 24 * 60
 
-    /// Category id the posted notification carries, so `NotificationPresenter` can recognise a brief tap
-    /// (as opposed to any other local notification) and route it to Coach.
+    /// Category id on the posted notification so `NotificationPresenter` routes a brief tap to Coach.
     static let notificationCategoryId = "coach-brief"
     private static let requestIdPrefix = "coach-brief-"
 
-    /// The Coach master switch, under the same `noop.` key Android writes and `RootTabView` binds.
+    /// The Coach master switch (`zoop.coachEnabled`).
     ///
-    /// Read through `object(forKey:)` rather than `bool(forKey:)` because this pref defaults to TRUE and
-    /// `bool(forKey:)` answers FALSE for a key that was never written. Taking the shorter spelling here
-    /// would have disabled the Coach for every install that had never opened the toggle, which is exactly
-    /// the population whose behaviour must not change.
+    /// Uses `object(forKey:)` because the pref defaults to TRUE and `bool(forKey:)` answers FALSE for an
+    /// unwritten key.
     static var coachMasterEnabled: Bool {
         guard UserDefaults.standard.object(forKey: "zoop.coachEnabled") != nil else { return true }
         return UserDefaults.standard.bool(forKey: "zoop.coachEnabled")
     }
 
-    /// Tear down whatever the brief has left lying around when the Coach master switch goes off.
+    /// Tears down the brief's leftovers when the Coach master switch goes off: cancels the schedule,
+    /// clears the widget and removes delivered/pending brief notifications.
     ///
-    /// Gating `isEnabled` alone stops the NEXT brief being generated, which is the network half, but it
-    /// leaves the LAST one on the wearer's home screen: the widget renders whatever was last published,
-    /// so AI output would go on being displayed after the AI was switched off. Mirrors what
-    /// `setEnabled(false)` already does for the brief's own flag, and what Android's `reschedule` does
-    /// when it sees the master switch is off.
-    ///
-    /// Deliberately one-directional. Re-arming is not done here because this type is armed by
-    /// `activateIfEnabled`, which `CoachView` calls when it appears -- a route that is reachable again the
-    /// moment the switch goes back on, since the tab returns with it. Android re-arms on the flip instead,
-    /// because there the brief is armed from app start rather than from the Coach screen.
+    /// One-directional: re-arming happens in `activateIfEnabled` when `CoachView` appears.
     static func applyMasterSwitch(_ on: Bool) {
         guard !on else { return }
         cancel()
-        // A brief already DELIVERED sits in Notification Centre until the wearer clears it, and tapping it
-        // routes to Coach. Same leak as the widget, one surface over: AI output still on display, and in
-        // this case still interactive, after the AI was switched off. Pending requests go too, so nothing
-        // already queued can arrive afterwards.
+        // Delivered briefs would otherwise stay tappable in Notification Centre after the AI is off.
         let centre = UNUserNotificationCenter.current()
         centre.getDeliveredNotifications { delivered in
             let ids = delivered.map(\.request.identifier).filter { $0.hasPrefix(requestIdPrefix) }
@@ -96,39 +73,32 @@ enum CoachBriefScheduler {
         #endif
     }
 
-    /// Whether the daily brief should run. Both gates, so the brief's own default-off flag keeps its
-    /// meaning while the master switch can veto it outright.
+    /// Whether the daily brief should run: its own flag AND the Coach master switch.
     static var isEnabled: Bool { coachMasterEnabled && UserDefaults.standard.bool(forKey: K.enabled) }
 
-    /// Time-of-day to generate, minutes since local midnight. Clamped to a valid minute. Default 07:00.
+    /// Time of day to generate, minutes since local midnight, clamped to a valid minute.
     static var timeMinutes: Int {
         let v = UserDefaults.standard.object(forKey: K.time) as? Int ?? defaultTimeMinutes
         return min(max(v, 0), minutesPerDay - 1)
     }
 
-    /// The most recently generated full brief text (for the notification tap-through), or nil before the
-    /// first successful generation.
+    /// The latest generated brief (for the notification tap-through), or nil before the first one.
     static var storedBrief: String? { UserDefaults.standard.string(forKey: K.storedBrief) }
 
-    /// True when a generated brief hasn't yet been surfaced in the Coach transcript. Set right after a
-    /// successful generation; cleared by `consumeStoredBrief()`.
+    /// True when a generated brief hasn't yet been surfaced in the Coach transcript.
     static var hasUnconsumedBrief: Bool { UserDefaults.standard.bool(forKey: K.hasUnconsumed) }
 
-    /// Coach reads this once (on appear, with an empty transcript) to surface the stored brief as its
-    /// first message without re-generating or re-sending anything. Returns nil (and leaves state
-    /// untouched) when there's nothing unconsumed, so a normal open is unaffected.
+    /// Coach calls this once on appear to surface the stored brief; returns nil when nothing is unconsumed.
     static func consumeStoredBrief() -> String? {
         guard hasUnconsumedBrief, let text = storedBrief else { return nil }
         UserDefaults.standard.set(false, forKey: K.hasUnconsumed)
         return text
     }
 
-    // MARK: - K10: Widget-facing API (App Group, iOS only)
+    // MARK: - Widget-facing API (App Group, iOS only)
 
     #if os(iOS)
-    /// Publish (or clear) the brief into the App Group so the widget extension can read it. Called
-    /// from `catchUpIfDue` / `generateNow` after a successful generation, and from `setEnabled(false)`
-    /// to clear the widget when the user turns the feature off.
+    /// Publishes (or clears, with nil) the brief into the App Group for the widget extension.
     static func publishToWidget(_ text: String?) {
         guard let defaults = UserDefaults(suiteName: WidgetSnapshot.suiteName) else { return }
         if let text {
@@ -138,27 +108,22 @@ enum CoachBriefScheduler {
             defaults.removeObject(forKey: K.widgetBriefKey)
             defaults.removeObject(forKey: K.widgetBriefDateKey)
         }
-        // Nudge WidgetKit to reload the coach-brief widget's timeline so it picks up the new text
-        // without waiting for the next scheduled refresh. The kind string must match the widget's
-        // `kind` property (see CoachBriefWidget.swift in StrandiOSWidgets).
+        // Reload the widget timeline; `kind` must match `CoachBriefWidget`.
         WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
     }
     #endif
 
-    /// The WidgetKit kind string for the coach-brief widget. Must match the `kind` property on
-    /// `CoachBriefWidget` in `StrandiOSWidgets/`. Declared here so `publishToWidget` can reload
-    /// timelines without importing the widget extension's type (the app target can't see it).
+    /// WidgetKit kind for the coach-brief widget; must match `CoachBriefWidget` in `StrandiOSWidgets/`.
     static let widgetKind = "CoachBriefWidget"
 
     // MARK: - Enable / configure (Settings calls these)
 
-    /// The result of enabling the schedule — mirrors `WindDownNudge.EnableOutcome` so the UI can revert
-    /// the toggle and point at Settings on denial instead of persisting a dead "on" state.
+    /// Outcome of enabling the schedule, so the UI can revert the toggle and point at Settings on denial.
     enum EnableOutcome { case scheduled, denied, off }
 
-    /// Enable/disable and (re)schedule. Enabling gates on notification authorization first (asks once if
-    /// undetermined; reports `.denied` rather than silently scheduling something the OS will never
-    /// deliver). `completion` always runs on the main actor.
+    /// Enables/disables and (re)schedules. Enabling first checks notification authorization (asking once
+    /// if undetermined) and reports `.denied` rather than scheduling something the OS won't deliver.
+    /// `completion` runs on the main actor.
     static func setEnabled(_ on: Bool,
                             generateBrief: @escaping () async -> String?,
                             completion: (@MainActor (EnableOutcome) -> Void)? = nil) {
@@ -199,25 +164,21 @@ enum CoachBriefScheduler {
         }
     }
 
-    /// Update the time-of-day and reschedule so the new time takes effect immediately.
+    /// Updates the time of day and reschedules.
     static func setTimeMinutes(_ minutes: Int, generateBrief: @escaping () async -> String?) {
         UserDefaults.standard.set(min(max(minutes, 0), minutesPerDay - 1), forKey: K.time)
         if isEnabled { scheduleNext(generateBrief: generateBrief) }
     }
 
-    /// Call whenever Coach (or its settings) appears so the schedule self-heals (re-arms the macOS timer
-    /// after a relaunch, re-submits the iOS request) and a slot missed while the app wasn't open still
-    /// generates once. No-op when the feature is off.
+    /// Call when Coach appears: re-arms the schedule and generates once if a slot was missed. No-op when off.
     static func activateIfEnabled(generateBrief: @escaping () async -> String?) {
         guard isEnabled else { return }
         scheduleNext(generateBrief: generateBrief)
         Task { await catchUpIfDue(generateBrief: generateBrief) }
     }
 
-    /// The explicit "Generate now" button: always generates and stores, ignoring the once-per-day dedup,
-    /// so a tap produces a fresh brief there and then. Does NOT post a notification (the user is already
-    /// looking at Coach) and does NOT touch `lastRun`, so today's scheduled slot still fires normally.
-    /// Returns the brief text, or nil on failure (no key/consent/network) — the caller surfaces that.
+    /// The "Generate now" button: always generates and stores, ignoring the once-per-day dedup. Posts no
+    /// notification and leaves `lastRun` alone. Returns nil on failure.
     @discardableResult
     static func generateNow(generateBrief: () async -> String?) async -> String? {
         await generateBrief()
@@ -225,39 +186,27 @@ enum CoachBriefScheduler {
 
     // MARK: - Due check + generation
 
-    /// Whether a generation attempt is already running, so only one can be in flight at a time.
+    /// Whether a generation attempt is in flight.
     ///
-    /// `lastRun` is written only AFTER a successful generation, deliberately, so a failure retries at the
-    /// next wake rather than marking the day done. That leaves the day guard open across a suspension:
-    /// a caller reads `lastRun`, `await generateBrief()` suspends, and a second caller reaching the same
-    /// guard still sees yesterday's value. Two call sites now arm the schedule (Coach's own `.task` and
-    /// the scene-phase entry), so a cold launch straight onto the Coach tab could run two generations at
-    /// once, paying for two provider calls and posting two brief notifications for the same day.
-    ///
-    /// Claiming is what makes the day guard hold across that await. MainActor-isolated because the two
-    /// callers arrive on different executors: `activateIfEnabled` starts an unstructured `Task` with no
-    /// isolation, while the BGTask handler runs its worker on the MainActor.
+    /// `lastRun` is written only after success, so the day guard stays open across the `await`; without
+    /// this claim a cold launch onto Coach could run two generations (two provider calls, two
+    /// notifications). MainActor-isolated because callers arrive on different executors.
     @MainActor private static var generationInFlight = false
 
-    /// Take the single generation slot, or report that another attempt already holds it.
+    /// Takes the single generation slot, or reports that another attempt holds it.
     @MainActor private static func claimGeneration() -> Bool {
         guard !generationInFlight else { return false }
         generationInFlight = true
         return true
     }
 
-    /// Give the generation slot back. Always called immediately after the attempt, before either outcome
-    /// is branched on, so a failed generation releases it exactly like a successful one.
+    /// Releases the generation slot; called right after the attempt on both outcomes.
     @MainActor private static func releaseGeneration() { generationInFlight = false }
 
-    /// If today's brief is due (we're at/after the chosen time and haven't generated today), generate it
-    /// once: store the text, mark today done, and post the notification. Covers macOS launches where the
-    /// time passed while the app wasn't open, and the iOS foreground/BGTask paths.
+    /// If today's brief is due, generates it once: stores the text, marks today done, posts the notification.
     ///
-    /// Returns whether this call can be considered successful: `true` when there was nothing to do
-    /// (feature off, not yet time, or already ran today) or generation succeeded; `false` only when
-    /// generation was attempted and failed (so the iOS BGTask handler can report the real outcome and
-    /// retry on the next wake instead of marking the day done on a failure).
+    /// Returns `true` when there was nothing to do or generation succeeded; `false` only when generation
+    /// failed, so the BGTask handler can report the real outcome.
     @discardableResult
     static func catchUpIfDue(generateBrief: () async -> String?) async -> Bool {
         guard isEnabled else { return true }
@@ -268,15 +217,13 @@ enum CoachBriefScheduler {
         guard nowMinutes >= timeMinutes else { return true }                                  // not yet time today
         guard UserDefaults.standard.string(forKey: K.lastRun) != dayKey(now) else { return true } // already ran today
 
-        // One attempt at a time; see `generationInFlight` for why the day guard alone is not enough.
+        // One attempt at a time; see `generationInFlight`.
         guard await claimGeneration() else { return true }
         let generated = await generateBrief()
         await releaseGeneration()
 
         guard let text = generated else {
-            // No key/consent/network, or the provider returned nothing. Never mark the day done, so the
-            // next wake (BGTask retry, or the next foreground open) tries again. Post a low-key retry
-            // notification rather than silently doing nothing — the PRD's "unavailable, tap to retry".
+            // Never mark the day done on failure; post a low-key retry notification.
             postNotification(title: String(localized: "Coach brief unavailable"),
                               body: String(localized: "Couldn't generate today's brief. Tap to try again in Coach."),
                               isRetry: true)
@@ -289,13 +236,25 @@ enum CoachBriefScheduler {
         #if os(iOS)
         publishToWidget(text)  // K10: mirror into the App Group for the widget
         #endif
-        postNotification(title: String(localized: "Today's coaching brief"),
-                          body: oneLineSummary(from: text))
+        // The proactive morning brief may already have announced today; one coach push per morning.
+        if claimMorningPush(day: dayKey(now)) {
+            postNotification(title: String(localized: "Today's coaching brief"),
+                              body: oneLineSummary(from: text))
+        }
         return true
     }
 
-    /// Pure: the notification body is the brief's first non-empty line, trimmed and length-capped so it
-    /// fits a notification banner. Unit-testable without any I/O.
+    /// The local day a coach push (this scheduled brief or the proactive morning brief) last went out.
+    private static let morningPushDayKey = "zoop.coach.morningPushDay"
+
+    /// Claims today's single coach push. False when one already went out for `day`.
+    static func claimMorningPush(day: String) -> Bool {
+        guard UserDefaults.standard.string(forKey: morningPushDayKey) != day else { return false }
+        UserDefaults.standard.set(day, forKey: morningPushDayKey)
+        return true
+    }
+
+    /// Pure: the brief's first non-empty line, trimmed and length-capped for a notification banner.
     static func oneLineSummary(from brief: String, maxLength: Int = 120) -> String {
         let firstLine = brief
             .split(separator: "\n", omittingEmptySubsequences: true)
@@ -313,15 +272,13 @@ enum CoachBriefScheduler {
         content.body = body
         content.sound = .default
         content.categoryIdentifier = notificationCategoryId
-        // Immediate delivery (trigger nil) — this fires the moment generation completes, it is not a
-        // pre-scheduled fixed-content trigger like `WindDownNudge`'s. One id per day, so a retry
-        // replaces rather than stacks the earlier attempt's notification.
+        // Immediate delivery; one id per day so a retry replaces the earlier notification.
         let request = UNNotificationRequest(identifier: requestIdPrefix + dayKey(Date()),
                                             content: content, trigger: nil)
-        UNUserNotificationCenter.current().add(request)
+        NotificationWork.run { $0.add(request) }
     }
 
-    /// yyyy-MM-dd local-day key for the once-per-day dedup. POSIX locale so the key is stable everywhere.
+    /// yyyy-MM-dd local-day key for the once-per-day dedup (POSIX locale for stability).
     private static func dayKey(_ date: Date) -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
@@ -329,8 +286,7 @@ enum CoachBriefScheduler {
         return f.string(from: date)
     }
 
-    /// Seconds from now until the next wall-clock occurrence of `minuteOfDay` (today if still ahead, else
-    /// tomorrow). Mirrors `ScheduledDebugExport.secondsToNextOccurrence`.
+    /// Seconds until the next wall-clock occurrence of `minuteOfDay` (today if ahead, else tomorrow).
     private static func secondsToNextOccurrence(_ minuteOfDay: Int, now: Date = Date()) -> TimeInterval {
         let cal = Calendar.current
         var comps = cal.dateComponents([.year, .month, .day], from: now)
@@ -346,8 +302,7 @@ enum CoachBriefScheduler {
 
     private static var macTimer: DispatchSourceTimer?
 
-    /// (Re)arm the next occurrence. macOS uses a foreground `DispatchSourceTimer`; iOS submits a
-    /// background-refresh request. Both target the next wall-clock occurrence of `timeMinutes`.
+    /// (Re)arms the next occurrence: a foreground timer on macOS, a background-refresh request on iOS.
     private static func scheduleNext(generateBrief: @escaping () async -> String?) {
         #if os(macOS)
         macTimer?.cancel()
@@ -368,7 +323,7 @@ enum CoachBriefScheduler {
         #endif
     }
 
-    /// Cancel any armed schedule.
+    /// Cancels any armed schedule.
     private static func cancel() {
         #if os(macOS)
         macTimer?.cancel()
@@ -381,13 +336,11 @@ enum CoachBriefScheduler {
     // MARK: - iOS background task plumbing
 
     #if os(iOS)
-    /// iOS BGTask identifier, derived from the running bundle id so it tracks `BUNDLE_ID_PREFIX` and
-    /// matches the iOS target's `BGTaskSchedulerPermittedIdentifiers` (Info.plist / project.yml).
+    /// BGTask identifier, derived from the bundle id; must match `BGTaskSchedulerPermittedIdentifiers`.
     static let bgTaskIdentifier = (Bundle.main.bundleIdentifier ?? "com.zoopapp.zoop") + ".coachbrief"
     private static var logBackgroundFailure: ((String) -> Void)?
 
-    /// Register the BGTask handler. MUST be called from the app's launch (before launch finishes) — call
-    /// this from `StrandiOSApp.init()` with the app-owned Coach and strap log.
+    /// Registers the BGTask handler. Must be called before app launch finishes (`StrandiOSApp.init()`).
     static func register(generateBrief: @escaping () async -> String?, log: @escaping (String) -> Void) {
         logBackgroundFailure = log
         BGTaskScheduler.shared.register(forTaskWithIdentifier: bgTaskIdentifier, using: nil) { task in
@@ -399,8 +352,7 @@ enum CoachBriefScheduler {
                     return
                 }
                 let succeeded = await catchUpIfDue(generateBrief: generateBrief)
-                // Single-shot; request the next occurrence regardless of this run's outcome so a failed
-                // generation still retries at the next wake rather than going silent for good.
+                // Single-shot: always request the next occurrence so a failure retries at the next wake.
                 submitBackgroundRequest()
                 completion.finish(success: succeeded)
             }
@@ -426,8 +378,7 @@ enum CoachBriefScheduler {
         }
     }
 
-    /// Submit a background-refresh request for *no earlier than* the next chosen time. iOS decides when
-    /// (and whether) to actually run it — best-effort, same honesty as `ScheduledDebugExport`.
+    /// Submits a background-refresh request for no earlier than the next chosen time (best-effort).
     private static func submitBackgroundRequest() {
         let request = BGAppRefreshTaskRequest(identifier: bgTaskIdentifier)
         request.earliestBeginDate = Date(timeIntervalSinceNow: secondsToNextOccurrence(timeMinutes))

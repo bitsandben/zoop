@@ -12,8 +12,7 @@ public typealias PlatformImage = UIImage
 // MARK: - Image bridging
 
 extension Image {
-    /// Build a SwiftUI `Image` from the platform-native bitmap type (`NSImage` on macOS,
-    /// `UIImage` on iOS) so call sites stay platform-agnostic.
+    /// Builds a SwiftUI `Image` from the platform-native bitmap type.
     init(platformImage: PlatformImage) {
         #if canImport(AppKit)
         self.init(nsImage: platformImage)
@@ -25,7 +24,7 @@ extension Image {
 
 // MARK: - Pasteboard
 
-/// Cross-platform clipboard write. `NSPasteboard` on macOS, `UIPasteboard` on iOS.
+/// Cross-platform clipboard write.
 enum PlatformPasteboard {
     static func copy(_ string: String) {
         #if canImport(AppKit)
@@ -37,12 +36,10 @@ enum PlatformPasteboard {
     }
 }
 
-// MARK: - Device noun (#225)
+// MARK: - Device noun
 
-/// The platform's device noun, so user-facing copy reads correctly per platform instead of
-/// hard-coding "Mac" everywhere (which is wrong on iPhone). Use these in any string that talks
-/// about *this* device generically — NOT in strings about a Mac that are genuinely Mac-only
-/// (e.g. "a Mac can't write to a 5/MG", or the Lock-the-Mac automation).
+/// The platform's device noun, so copy doesn't hard-code "Mac" on iPhone. Not for strings that are
+/// genuinely Mac-only (e.g. "a Mac can't write to a 5/MG").
 enum Platform {
     /// "iPhone" on iOS, "Mac" on macOS. e.g. "Everything stays on your \(Platform.deviceNoun)."
     static var deviceNoun: String {
@@ -53,15 +50,13 @@ enum Platform {
         #endif
     }
 
-    /// "this iPhone" / "this Mac", the common demonstrative form. Localized so the demonstrative
-    /// reads natively when interpolated into translated copy (key "this %@"); the noun itself is a
-    /// product name and stays as-is.
+    /// "this iPhone" / "this Mac"; localized (key "this %@") so the demonstrative reads natively.
     static var deviceNounPhrase: String { String(localized: "this \(deviceNoun)") }
 }
 
 // MARK: - Opening URLs
 
-/// Cross-platform "open this URL with the system" helper. Used for `mailto:` and `shortcuts://`.
+/// Cross-platform "open this URL with the system" helper (`mailto:`, `shortcuts://`).
 enum PlatformOpen {
     @MainActor static func url(_ url: URL) {
         #if canImport(AppKit)
@@ -72,33 +67,28 @@ enum PlatformOpen {
     }
 }
 
-// MARK: - Screen idle (keep-awake for hands-free sessions)
+// MARK: - Screen idle (keep-awake)
 
-/// Prevent the display from auto-locking during a live, watched session (the breathing
-/// orb, the HIIT interval timer). iOS-only; a no-op on macOS, which has no idle-lock
-/// concern for these screens. Apple guidance: set `true` only while genuinely needed and
-/// reset to `false` the moment the session ends so the system idle timer resumes normally.
-///
-/// `isIdleTimerDisabled` is one process-wide flag, so independent holders are tracked by reason: a strap
-/// sync finishing must not let the screen lock under a breathing session that is still running.
+/// Prevents display auto-lock during a watched session (breathing orb, HIIT timer); iOS-only, no-op
+/// on macOS. `isIdleTimerDisabled` is one process-wide flag, so holders are tracked by reason: a
+/// strap sync finishing must not unlock the screen under a running breathing session.
 enum ScreenIdle {
     enum Reason: Hashable {
-        /// A watched on-screen session (breathing, intervals, workout, HRV snapshot) via `keepAwake`.
+        /// A watched on-screen session via `keepAwake`.
         case session
-        /// A strap history sync, while Settings → "Keep screen on while syncing" is on (iOS).
+        /// A strap history sync, with Settings "Keep screen on while syncing" on (iOS).
         case strapSync
     }
 
-    /// UserDefaults key for the "Keep screen on while syncing" toggle (default OFF). iOS-only behaviour;
-    /// declared here so the shared SettingsView and the iOS observer read one spelling.
+    /// UserDefaults key for "Keep screen on while syncing" (default OFF), shared by SettingsView and the iOS observer.
     static let strapSyncKeepAwakeKey = "syncKeepScreenOn"
 
     @MainActor private static var holds: Set<Reason> = []
 
-    /// True while any reason holds the screen awake. Read by tests; the platform flag mirrors it.
+    /// True while any reason holds the screen awake.
     @MainActor static var isHeld: Bool { !holds.isEmpty }
 
-    /// Existing single-session API: last writer wins among sessions, exactly as before reasons existed.
+    /// Single-session API: last writer wins among sessions.
     @MainActor static func keepAwake(_ on: Bool) {
         hold(.session, on)
     }

@@ -1,32 +1,25 @@
 import Foundation
 import UserNotifications
 
-/// The wind-down nudge (#207) — a gentle, NON-critical evening local notification suggesting it's
-/// time to start winding down so the user can reach their usual wake time well-rested.
-///
-/// Cross-platform (macOS + iOS): a sideloaded backgrounded app can't fire a dependable LOUD wake
-/// alarm (no critical-alert entitlement), but it CAN post a calm daily reminder. The nudge fires on a
-/// repeating calendar trigger at a time DERIVED from the user's earliest wake time minus their usual
-/// sleep need minus a short lead. State is its own UserDefaults-backed store so it doesn't couple to
-/// the shared BehaviorStore. On-device only; nothing is sent anywhere.
+/// The wind-down nudge: a gentle, non-critical evening local notification suggesting the user start
+/// winding down. A backgrounded sideloaded app can't fire a dependable loud alarm (no critical-alert
+/// entitlement) but can post a calm daily reminder. Fires on a repeating calendar trigger at the
+/// earliest wake time minus sleep need minus a short lead. Own UserDefaults-backed state; on-device only.
 @MainActor
 enum WindDownNudge {
 
     private static let requestId = "wind-down-nudge"
 
-    // MARK: - Persisted settings (own keys; default OFF, opt-in like every automation)
+    // MARK: - Persisted settings (own keys; default OFF)
 
     private enum K {
         static let enabled = "windDown.enabled"
         static let sleepNeed = "windDown.sleepNeedMinutes"   // default 8h
         static let lead = "windDown.leadMinutes"             // default 30m
         static let wake = "windDown.wakeMinutes"             // earliest wake, minutes since midnight
-        // PR#554 (MumiZed) — per-day wake overrides. A JSON map of {weekday(1=Sun…7=Sat): wakeMinutes}.
-        // Empty / no entry for a day = that day uses the default `wakeMinutes`, so the feature is purely
-        // additive (no override → exactly the old single-time behaviour).
+        // Per-day wake overrides: JSON {weekday(1=Sun...7=Sat): wakeMinutes}. No entry for a day means the default `wakeMinutes`.
         static let perDayWake = "windDown.perDayWakeMinutes"
-        // Zoop: follow tonight's computed sleep need (`PatternInsights.sleepNeedTonight`) instead of the
-        // fixed setting. Default on; the need is refreshed whenever Home or Patterns recomputes it.
+        // Follow tonight's computed sleep need (`SleepDebt.needTonight`) instead of the fixed setting; default on.
         static let followsNeed = "zoop.windDown.followsSleepNeed"
         static let tonightNeed = "zoop.windDown.tonightNeedMinutes"
     }
@@ -75,11 +68,10 @@ enum WindDownNudge {
         return min(max(v, 0), 24 * 60 - 1)
     }
 
-    // MARK: - Per-day wake overrides (PR#554)
+    // MARK: - Per-day wake overrides
 
-    /// The stored per-weekday wake overrides — {weekday(1=Sun…7=Sat): wakeMinutes}. Empty when the user
-    /// hasn't set any (the common case), so every day falls back to the single `wakeMinutes`. Values are
-    /// clamped to a valid minute-of-day on read so a corrupt blob can't schedule at a nonsense time.
+    /// Stored per-weekday wake overrides ({weekday(1=Sun...7=Sat): wakeMinutes}), empty by default.
+    /// Values are clamped to a valid minute-of-day on read so a corrupt blob can't schedule nonsense.
     static var perDayWakeOverrides: [Int: Int] {
         guard let data = UserDefaults.standard.data(forKey: K.perDayWake),
               let raw = try? JSONDecoder().decode([String: Int].self, from: data) else { return [:] }
@@ -91,16 +83,15 @@ enum WindDownNudge {
         return out
     }
 
-    /// The wake time used for a given Calendar weekday (1=Sun…7=Sat) — the per-day override if set, else the
-    /// default `wakeMinutes`. The single source of truth both the schedule and the UI read, so they agree.
+    /// The wake time for a Calendar weekday (1=Sun...7=Sat): the override if set, else `wakeMinutes`.
+    /// The single source for both the schedule and the UI.
     static func wakeMinutes(forWeekday weekday: Int) -> Int {
         if let alarm = alarmWakeMinutes(forWeekday: weekday) { return alarm }
         return perDayWakeOverrides[weekday] ?? wakeMinutes
     }
 
-    /// When the reminder follows the sleep need and the strap alarm rings on `weekday`, the alarm is the
-    /// wake time: the override for that day, else the alarm's own time. Read from the alarm's stored
-    /// settings (`BehaviorStore`) so this enum stays free of the app model.
+    /// When following the sleep need and the strap alarm rings on `weekday`, the alarm is the wake time
+    /// (the day's override, else the alarm's own time), read from `BehaviorStore` settings.
     static func alarmWakeMinutes(forWeekday weekday: Int) -> Int? {
         let d = UserDefaults.standard
         guard followsSleepNeed, d.bool(forKey: "behavior.smartAlarmEnabled") else { return nil }
@@ -110,17 +101,15 @@ enum WindDownNudge {
         return perDayWakeOverrides[weekday] ?? base
     }
 
-    /// Reschedule with the current settings, if the reminder is on.
+    /// Reschedules with the current settings, if the reminder is on.
     static func refresh() {
         if isEnabled { schedule() }
     }
 
-    /// Whether ANY per-day override is set — drives whether scheduling fans out to 7 per-weekday triggers
-    /// (overrides present) or keeps the single daily trigger (none).
+    /// Whether any per-day override is set: fans scheduling out to 7 weekday triggers instead of one daily trigger.
     static var hasPerDayOverrides: Bool { !perDayWakeOverrides.isEmpty }
 
-    /// Set or clear a single weekday's wake override (pass nil to clear → that day reverts to the default),
-    /// rescheduling if enabled. Clamps the minute-of-day so a bad value can't be stored.
+    /// Sets or clears (nil) a weekday's wake override, rescheduling if enabled; clamps the minute-of-day.
     static func setWakeOverride(weekday: Int, minutes: Int?) {
         guard (1...7).contains(weekday) else { return }
         var map = perDayWakeOverrides
@@ -136,30 +125,26 @@ enum WindDownNudge {
         if isEnabled { schedule() }
     }
 
-    /// The nudge minute-of-day for a given weekday — that day's wake (override or default) minus sleep need
-    /// minus lead, wrapped into [0, 1440). Pure; mirrors `nudgeMinuteOfDay()` per-day. (PR#554)
+    /// The nudge minute-of-day for a weekday: wake (override or default) minus sleep need minus lead,
+    /// wrapped into [0, 1440). Pure.
     static func nudgeMinuteOfDay(forWeekday weekday: Int) -> Int {
         let raw = wakeMinutes(forWeekday: weekday) - sleepNeedMinutes - leadMinutes
         let day = 24 * 60
         return ((raw % day) + day) % day
     }
 
-    /// The day shift for a given weekday's nudge — 0 if the nudge lands on the same day as the wake,
-    /// -1 if it wraps to the previous evening. The minute-of-day wrap in `nudgeMinuteOfDay` silently
-    /// loses which day the nudge belongs to; this companion carries that information so the scheduler
-    /// can pin the trigger to the nudge's day, not the wake's. (#1863)
-    ///
-    /// `raw` is always in [-780, 1139] given the clamped inputs (wake ≤ 1439, sleepNeed ≥ 300, lead ≤ 120),
-    /// so the shift is always 0 or -1 — but the formula is general floor-division for safety.
+    /// The day shift for a weekday's nudge: 0 if it lands on the wake's day, -1 if it wraps to the
+    /// previous evening. The minute-of-day wrap loses which day the nudge belongs to, so the scheduler
+    /// uses this to pin the trigger to the nudge's day (#1863). With clamped inputs `raw` is in
+    /// [-780, 1139], so the shift is 0 or -1; the formula is general floor division.
     static func nudgeDayShift(forWeekday weekday: Int) -> Int {
         let raw = wakeMinutes(forWeekday: weekday) - sleepNeedMinutes - leadMinutes
         let day = 24 * 60
-        // Floor division (Swift's `/` truncates toward zero, so adjust for negatives).
+        // Floor division (Swift's `/` truncates toward zero).
         return raw < 0 ? -(((-raw - 1) / day) + 1) : raw / day
     }
 
-    /// Shift a Calendar weekday (1=Sun…7=Sat) by a day count, wrapping through the week end. (#1863)
-    /// `shiftedWeekday(weekday: 1, by: -1)` → 7 (Sunday's evening-before nudge fires on Saturday).
+    /// Shifts a Calendar weekday (1=Sun...7=Sat) by a day count, wrapping the week: `(1, by: -1)` is 7.
     static func shiftedWeekday(weekday: Int, by shift: Int) -> Int {
         let zeroBased = weekday - 1 + shift
         return ((zeroBased % 7) + 7) % 7 + 1
@@ -167,33 +152,24 @@ enum WindDownNudge {
 
     // MARK: - Public API
 
-    /// The result of enabling the nudge — lets the UI react instead of silently persisting an "on" toggle
-    /// that can never fire. `.denied` means the OS won't deliver (permission off), so the caller should
-    /// revert the switch and point the user at Settings.
+    /// Result of enabling the nudge. `.denied` means the OS won't deliver, so the caller should revert
+    /// the switch and point the user at Settings.
     enum EnableOutcome { case scheduled, denied, off }
 
-    /// Enable/disable and (re)schedule. Enabling gates on notification authorization FIRST — mirroring the
-    /// smart-alarm backup path in `AppModel.scheduleSmartAlarmBackupNotification`: if undetermined it asks
-    /// once and schedules on grant; if already denied it reports back rather than persisting a dead toggle.
-    ///
-    /// Why this matters: the old version called `requestAuthorization` with an empty completion and then
-    /// scheduled unconditionally. `requestAuthorization` only shows the system dialog when the status is
-    /// `.notDetermined`; once a user (or a prior sideload install with the same bundle id) has denied, the
-    /// dialog never returns and the app silently scheduled reminders the OS would never deliver — with
-    /// nothing in the UI to explain it. Now denial surfaces.
-    ///
-    /// `completion` always runs on the main actor (the settings/authorization callbacks fire off-main).
+    /// Enables/disables and (re)schedules. Enabling checks notification authorization first (asking once
+    /// if undetermined, scheduling on grant); if denied it reports back rather than persisting a toggle
+    /// the OS would never deliver. `completion` always runs on the main actor.
     static func setEnabled(_ on: Bool, completion: (@MainActor (EnableOutcome) -> Void)? = nil) {
         guard on else {
             UserDefaults.standard.set(false, forKey: K.enabled)
-            // Clear the single trigger AND any per-day triggers (PR#554) so disabling leaves nothing behind.
-            UNUserNotificationCenter.current()
-                .removePendingNotificationRequests(withIdentifiers: [requestId] + perDayRequestIds)
+            // Clear the single trigger and any per-day triggers so disabling leaves nothing behind.
+            let ids = [requestId] + perDayRequestIds
+            NotificationWork.run { $0.removePendingNotificationRequests(withIdentifiers: ids) }
             completion?(.off)
             return
         }
 
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
+        NotificationWork.withSettings { _, settings in
             Task { @MainActor in
                 switch settings.authorizationStatus {
                 case .authorized, .provisional, .ephemeral:
@@ -201,8 +177,7 @@ enum WindDownNudge {
                     schedule()
                     completion?(.scheduled)
                 case .notDetermined:
-                    // First ask — the system dialog appears now (a predictable moment), then we schedule on
-                    // grant so the FIRST night is covered rather than only after some later re-arm.
+                    // First ask: schedule on grant so the first night is covered.
                     UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, _ in
                         Task { @MainActor in
                             if granted {
@@ -216,8 +191,7 @@ enum WindDownNudge {
                         }
                     }
                 default:
-                    // .denied (or any future non-authorized case) — don't fake an enabled toggle. The caller
-                    // surfaces a "notifications are off" prompt with a jump to Settings.
+                    // .denied (or any future non-authorized case): don't fake an enabled toggle.
                     UserDefaults.standard.set(false, forKey: K.enabled)
                     completion?(.denied)
                 }
@@ -225,13 +199,13 @@ enum WindDownNudge {
         }
     }
 
-    /// Update the earliest wake time the nudge is derived from, rescheduling if enabled.
+    /// Updates the earliest wake time the nudge derives from, rescheduling if enabled.
     static func setWakeMinutes(_ minutes: Int) {
         UserDefaults.standard.set(min(max(minutes, 0), 24 * 60 - 1), forKey: K.wake)
         if isEnabled { schedule() }
     }
 
-    /// The minute-of-day the nudge fires: wake − sleepNeed − lead, wrapped into [0, 1440).
+    /// The minute-of-day the nudge fires: wake - sleepNeed - lead, wrapped into [0, 1440).
     static func nudgeMinuteOfDay() -> Int {
         let raw = wakeMinutes - sleepNeedMinutes - leadMinutes
         let day = 24 * 60
@@ -240,16 +214,25 @@ enum WindDownNudge {
 
     // MARK: - Scheduling
 
-    /// Per-weekday request ids — cleared alongside the single id so toggling overrides on/off never leaves
-    /// a stale trigger behind.
+    /// Per-weekday request ids, cleared alongside the single id so toggling overrides never leaves a stale trigger.
     private static var perDayRequestIds: [String] { (1...7).map { "\(requestId)-wd\($0)" } }
 
+    /// Builds the requests on the main actor (they read its settings), then hands them to NotificationWork, which
+    /// replaces the pending set off the main thread once the authorization status is known.
     private static func schedule() {
-        let center = UNUserNotificationCenter.current()
-        // Clear BOTH the single trigger and any per-day triggers so switching between the two modes (or
-        // editing an override) never double-fires or leaves an orphaned reminder.
-        center.removePendingNotificationRequests(withIdentifiers: [requestId] + perDayRequestIds)
+        let requests = buildRequests()
+        let ids = [requestId] + perDayRequestIds
+        NotificationWork.withSettings { center, settings in
+            // Clear both the single and per-day triggers so switching modes never double-fires or orphans a reminder.
+            center.removePendingNotificationRequests(withIdentifiers: ids)
+            // Enabling requires a decided permission; an undetermined one has nothing to schedule against.
+            guard settings.authorizationStatus != .notDetermined else { return }
+            for request in requests { center.add(request) }
+        }
+    }
 
+    /// The nudge's request(s): one daily trigger, or seven weekday-pinned ones when any wake time varies by day.
+    private static func buildRequests() -> [UNNotificationRequest] {
         let content = UNMutableNotificationContent()
         content.title = String(localized: "Time to wind down")
         if followsSleepNeed, let need = tonightNeedMinutes {
@@ -259,36 +242,32 @@ enum WindDownNudge {
         }
         content.sound = .default
 
-        // PR#554 — with per-day overrides set, fan out to seven weekday-pinned triggers each at that day's
-        // own nudge time; with none, keep the single daily trigger (identical to the pre-#554 behaviour).
+        // With per-day overrides, fan out to seven weekday-pinned triggers at each day's nudge time; with none, one daily trigger.
         if hasPerDayOverrides || (1...7).contains(where: { alarmWakeMinutes(forWeekday: $0) != nil }) {
+            var requests: [UNNotificationRequest] = []
             for weekday in 1...7 {
                 let minute = nudgeMinuteOfDay(forWeekday: weekday)
-                // #1863 — an early wake (e.g. 03:30) wraps the nudge minute to the previous evening
-                // (19:00). The minute wrap alone loses which DAY that evening belongs to, so the trigger
-                // was pinned to the wake's own weekday — firing 8+ hours AFTER the wake it precedes.
-                // Derive the day shift and pin the trigger to the nudge's day, not the wake's.
+                // An early wake (e.g. 03:30) wraps the nudge to the previous evening; pin the trigger to the
+                // nudge's day, not the wake's (#1863).
                 let shift = nudgeDayShift(forWeekday: weekday)
                 var comps = DateComponents()
                 comps.weekday = shiftedWeekday(weekday: weekday, by: shift)   // the nudge's day
                 comps.hour = minute / 60
                 comps.minute = minute % 60
                 let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
-                // The request id stays keyed to the wake's weekday so toggling/clearing overrides
-                // always matches the ids `perDayRequestIds` enumerates.
-                center.add(UNNotificationRequest(identifier: "\(requestId)-wd\(weekday)",
-                                                 content: content, trigger: trigger))
+                // The request id stays keyed to the wake's weekday to match `perDayRequestIds`.
+                requests.append(UNNotificationRequest(identifier: "\(requestId)-wd\(weekday)",
+                                                      content: content, trigger: trigger))
             }
-            return
+            return requests
         }
 
         let minute = nudgeMinuteOfDay()
         var comps = DateComponents()
         comps.hour = minute / 60
         comps.minute = minute % 60
-        // repeats: true → a daily calendar trigger; survives relaunch (it lives in the notification
-        // center, not the process), so the nudge keeps firing each evening without the app running.
+        // repeats: true is a daily calendar trigger that lives in the notification center and survives relaunch.
         let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
-        center.add(UNNotificationRequest(identifier: requestId, content: content, trigger: trigger))
+        return [UNNotificationRequest(identifier: requestId, content: content, trigger: trigger)]
     }
 }

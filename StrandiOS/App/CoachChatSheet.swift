@@ -32,7 +32,7 @@ struct CoachChatSheet: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(ZoopType.icon(14, weight: .bold))
                             .foregroundStyle(StrandPalette.textPrimary)
                     }
                     .accessibilityLabel("Close")
@@ -142,7 +142,7 @@ private struct CoachChat: View {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 1) {
                     Text("Coach")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(ZoopType.headline.weight(.semibold))
                         .foregroundStyle(StrandPalette.textPrimary)
                     modelMenu
                 }
@@ -203,12 +203,12 @@ private struct CoachChat: View {
     private var emptyState: some View {
         VStack(spacing: 14) {
             Image(systemName: "sparkles")
-                .font(.system(size: 28, weight: .semibold))
+                .font(ZoopType.icon(28, weight: .semibold))
                 .foregroundStyle(StrandPalette.accent)
                 .frame(width: 72, height: 72)
                 .background(SquircleShape().fill(StrandPalette.surfaceRaised))
             Text("Ask about your numbers")
-                .font(.system(size: 22, weight: .bold))
+                .font(ZoopType.subtitle.weight(.bold))
                 .foregroundStyle(StrandPalette.textPrimary)
             Text(coach.dataConsent
                  ? "Coach reads your recovery, sleep, strain and workouts to answer."
@@ -246,9 +246,9 @@ private struct CoachChat: View {
         } label: {
             HStack(spacing: 3) {
                 Text(shortModel)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(StrandFont.caption.weight(.medium))
                     .lineLimit(1)
-                Image(systemName: "chevron.down").font(.system(size: 9, weight: .bold))
+                Image(systemName: "chevron.down").font(ZoopType.icon(9, weight: .bold))
             }
             .foregroundStyle(StrandPalette.textSecondary)
         }
@@ -267,6 +267,9 @@ private struct CoachChat: View {
             NavigationLink {
                 CoachSettingsPage()
             } label: { Label("Coach settings", systemImage: "slider.horizontal.3") }
+            NavigationLink {
+                CoachSuggestionHistoryPage()
+            } label: { Label { Text(CoachStrings.historyTitle) } icon: { Image(systemName: "list.bullet.clipboard") } }
             Button(role: .destructive) { showClearConfirm = true } label: {
                 Label("Clear conversation", systemImage: "trash")
             }
@@ -276,7 +279,7 @@ private struct CoachChat: View {
             }
         } label: {
             Image(systemName: "ellipsis")
-                .font(.system(size: 15, weight: .bold))
+                .font(ZoopType.icon(15, weight: .bold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .frame(width: 32, height: 32)
         }
@@ -296,7 +299,7 @@ private struct CoachChat: View {
                         Task { await coach.send(lastQuestion) }
                     } label: {
                         Label("Try again", systemImage: "arrow.clockwise")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(ZoopType.label.weight(.semibold))
                             .foregroundStyle(StrandPalette.accent)
                     }
                     .buttonStyle(.plain)
@@ -359,7 +362,7 @@ private struct CoachChips: View, Equatable {
                 ForEach(prompts, id: \.self) { prompt in
                     Button { onSend(prompt) } label: {
                         Text(LocalizedStringKey(prompt))
-                            .font(.system(size: 14, weight: .medium))
+                            .font(ZoopType.caption.weight(.medium))
                             .foregroundStyle(StrandPalette.textPrimary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
@@ -402,7 +405,7 @@ private struct CoachComposer: View {
                 if CoachVoiceInput.isSupported {
                     Button(action: toggleVoice) {
                         Image(systemName: voice.isRecording ? "stop.circle.fill" : "mic")
-                            .font(.system(size: 17, weight: .medium))
+                            .font(ZoopType.icon(17, weight: .medium))
                             .foregroundStyle(voice.isRecording ? StrandPalette.statusCritical : StrandPalette.textSecondary)
                             .symbolEffect(.pulse, isActive: voice.isRecording)
                             .frame(width: 36, height: 42)
@@ -416,7 +419,7 @@ private struct CoachComposer: View {
 
             Button(action: send) {
                 Image(systemName: "arrow.up")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(ZoopType.icon(16, weight: .bold))
                     .foregroundStyle(empty || sending ? StrandPalette.textTertiary : StrandPalette.goldDeepText)
                     .frame(width: 42, height: 42)
                     .background(Circle().fill(empty || sending ? StrandPalette.surfaceRaised : StrandPalette.accent))
@@ -524,7 +527,7 @@ private struct CoachBubble: View, Equatable {
 private struct CoachAvatar: View {
     var body: some View {
         Image(systemName: "sparkles")
-            .font(.system(size: 12, weight: .bold))
+            .font(ZoopType.icon(12, weight: .bold))
             .foregroundStyle(StrandPalette.goldDeepText)
             .frame(width: 26, height: 26)
             .background(SquircleShape().fill(StrandPalette.accent))
@@ -578,6 +581,7 @@ private struct TypingBubble: View {
 private struct CoachSetup: View {
     @EnvironmentObject private var coach: AICoachEngine
     @State private var keyDraft = ""
+    @State private var keyRevealed = false
     @State private var picked: AIProvider?
     @FocusState private var keyFocused: Bool
 
@@ -589,15 +593,15 @@ private struct CoachSetup: View {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 10) {
                     Image(systemName: "sparkles")
-                        .font(.system(size: 24, weight: .semibold))
+                        .font(ZoopType.icon(24, weight: .semibold))
                         .foregroundStyle(StrandPalette.accent)
                         .frame(width: 60, height: 60)
                         .background(SquircleShape().fill(StrandPalette.surfaceRaised))
                     Text(picked == nil ? "Set up Coach" : "Paste your key")
-                        .font(.system(size: 30, weight: .bold))
+                        .font(StrandFont.title1)
                         .foregroundStyle(StrandPalette.textPrimary)
                     Text(picked == nil
-                         ? "Coach runs on an AI provider with your own key. The key stays in this phone's Keychain."
+                         ? String(localized: "Coach runs on an AI provider with your own key. The key stays in this phone's Keychain.")
                          : keyHint)
                         .font(StrandFont.body)
                         .foregroundStyle(StrandPalette.textSecondary)
@@ -650,13 +654,13 @@ private struct CoachSetup: View {
                 } label: {
                     HStack(spacing: 14) {
                         Image(systemName: icon(p))
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(ZoopType.icon(17, weight: .semibold))
                             .foregroundStyle(StrandPalette.textPrimary)
                             .frame(width: 44, height: 44)
                             .background(Circle().fill(StrandPalette.surfaceBase))
                         VStack(alignment: .leading, spacing: 2) {
                             Text(p.displayName)
-                                .font(.system(size: 17, weight: .semibold))
+                                .font(ZoopType.headline.weight(.semibold))
                                 .foregroundStyle(StrandPalette.textPrimary)
                             Text(blurb(p))
                                 .font(StrandFont.footnote)
@@ -665,14 +669,11 @@ private struct CoachSetup: View {
                         Spacer()
                         if p == .openRouter {
                             Text("Free")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(StrandPalette.goldDeepText)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Capsule().fill(StrandPalette.accent))
+                                .font(ZoopType.caption.weight(.semibold))
+                                .foregroundStyle(StrandPalette.accent)
                         }
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(ZoopType.icon(13, weight: .semibold))
                             .foregroundStyle(StrandPalette.textTertiary)
                     }
                     .padding(14)
@@ -684,7 +685,7 @@ private struct CoachSetup: View {
                 CoachView()
             } label: {
                 Text("Use your own server instead")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(ZoopType.caption.weight(.medium))
                     .foregroundStyle(StrandPalette.textSecondary)
                     .frame(maxWidth: .infinity)
                     .padding(.top, 8)
@@ -695,23 +696,53 @@ private struct CoachSetup: View {
     private func keyStep(_ p: AIProvider) -> some View {
         let empty = keyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         return VStack(alignment: .leading, spacing: 18) {
-            SecureField("API key", text: $keyDraft)
-                .font(.system(size: 17, design: .monospaced))
-                .foregroundStyle(StrandPalette.textPrimary)
-                .focused($keyFocused)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .submitLabel(.done)
-                .onSubmit(connect)
-                .padding(16)
-                .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(StrandPalette.surfaceRaised))
-                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+            VStack(alignment: .leading, spacing: ZoopSpacing.s) {
+                Text("zoop.coach.key.label")
+                    .font(ZoopType.caption)
+                    .foregroundStyle(StrandPalette.textSecondary)
+                HStack(spacing: ZoopSpacing.s) {
+                    keyField
+                        .focused($keyFocused)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .onSubmit(connect)
+                        .accessibilityLabel(Text("zoop.coach.key.label"))
+                    if keyDraft.isEmpty {
+                        Button { pasteKey() } label: {
+                            Text("zoop.coach.key.paste")
+                                .font(ZoopType.body.weight(.semibold))
+                                .foregroundStyle(StrandPalette.accent)
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        Button { keyRevealed.toggle() } label: {
+                            Image(systemName: keyRevealed ? "eye.slash" : "eye")
+                                .font(ZoopType.body)
+                                .foregroundStyle(StrandPalette.textSecondary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(Text(keyRevealed ? "zoop.coach.key.hide" : "zoop.coach.key.show"))
+                        Button { keyDraft = "" } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(ZoopType.body)
+                                .foregroundStyle(StrandPalette.textTertiary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(Text("zoop.coach.key.clear"))
+                    }
+                }
+                .padding(ZoopSpacing.m)
+                .background(RoundedRectangle(cornerRadius: ZoopRadius.button, style: .continuous)
+                    .fill(StrandPalette.surfaceRaised))
+                .overlay(RoundedRectangle(cornerRadius: ZoopRadius.button, style: .continuous)
                     .strokeBorder(keyFocused ? StrandPalette.accent : .clear, lineWidth: 1.5))
+            }
 
             Toggle(isOn: $coach.dataConsent) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Let Coach read my numbers")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(ZoopType.headline.weight(.semibold))
                         .foregroundStyle(StrandPalette.textPrimary)
                     Text("A summary of recovery, sleep, strain and workouts goes with each question.")
                         .font(StrandFont.footnote)
@@ -731,7 +762,7 @@ private struct CoachSetup: View {
 
             Button(action: connect) {
                 Text("Connect")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(ZoopType.headline.weight(.semibold))
                     .foregroundStyle(empty ? StrandPalette.textTertiary : StrandPalette.surfaceBase)
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
@@ -739,6 +770,26 @@ private struct CoachSetup: View {
             }
             .buttonStyle(.plain)
             .disabled(empty)
+        }
+    }
+
+    /// Placeholder and label use the body token; only the key text itself is monospaced (so a pasted
+    /// key reads character by character once revealed). Masked dots stay in the body face.
+    @ViewBuilder private var keyField: some View {
+        if keyRevealed {
+            TextField("zoop.coach.key.placeholder", text: $keyDraft)
+                .font(StrandFont.mono(15))
+                .foregroundStyle(StrandPalette.textPrimary)
+        } else {
+            SecureField("zoop.coach.key.placeholder", text: $keyDraft)
+                .font(ZoopType.body)
+                .foregroundStyle(StrandPalette.textPrimary)
+        }
+    }
+
+    private func pasteKey() {
+        if let text = UIPasteboard.general.string {
+            keyDraft = text.trimmingCharacters(in: .whitespacesAndNewlines)
         }
     }
 

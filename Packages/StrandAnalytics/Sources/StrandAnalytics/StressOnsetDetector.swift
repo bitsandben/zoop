@@ -1,80 +1,58 @@
 import Foundation
 
-// StressOnsetDetector.swift — the L3 closed-loop JITAI ("just-in-time adaptive intervention") detector.
-// Generalises the math currently inline in `AppModel.evaluateStress()` into an EDGE-triggered,
-// motion-gated, REPLAY-SAFE detector that decides — at the moment it matters — whether to offer a 60-s
-// guided breathing cue. PURE + DB-free, carrying its OWN de-dup state exactly like
-// `SedentaryDetector.evaluate`: the caller persists `nextState` and feeds it back, so a replayed window
-// can't re-fire. No I/O / BLE here.
+// StressOnsetDetector: the closed-loop JITAI detector that decides whether to offer a 60-s guided breathing
+// cue. Pure and DB-free; like `SedentaryDetector.evaluate` it carries its own de-dup state, so the caller
+// persists `nextState` and a replayed window cannot re-fire. `ts`/`nowSec` are wall-clock unix SECONDS.
 //
-// See docs/superpowers/specs/2026-06-19-v5-haptic-biofeedback-design.md (L3).
+// Pieces: a FAST short-window RMSSD vs a SLOW EMA baseline; an EDGE trigger (fire once on the fresh
+// above-to-below crossing, only after it has SUSTAINED for `sustainSeconds`); an EXERCISE GATE (HR out of
+// the resting band or recent motion means metabolic, not stress); rate limit, quiet hours, master toggle,
+// and never while a manual Breathe session runs.
 //
-// WHAT IT GENERALISES (from AppModel.evaluateStress): a rolling clean-R-R buffer → a SLOW RMSSD baseline
-// (the shipped 0.98/0.02 EMA) + a resting-HR band gate (55–100 bpm) + a `rmssd < baseline × 0.6` drop +
-// a once-per-15-min limiter + a single confirming buzz. What this engine ADDS, per spec:
-//   1. A FAST short-window RMSSD (the latest beats) vs the slow baseline — "fast dropped below baseline".
-//   2. EDGE trigger: fire ONCE on the fresh crossing (was-above → now-below), not every tick — and
-//      only after that crossing has SUSTAINED for `sustainSeconds`, so a momentary RMSSD wobble
-//      cannot nudge (a real stress response holds for minutes; see the constant's note).
-//   3. The EXERCISE GATE (the credibility line): suppress when HR is out of the resting band AND/OR recent
-//      motion says "metabolic, not stress" (gravity activity above a threshold, the same `recentGravity`
-//      source `SedentaryDetector` reads). A brisk walk's HRV dip must NOT fire a "you're stressed" cue.
-//   4. Rate-limit + quiet hours + master toggle, and never while a manual Breathe/L1/L2 session runs.
-//
-// HONEST / NON-CLINICAL: "stress" is an autonomic PROXY (HRV-down vs the user's OWN baseline), never a
-// diagnosis. The card the caller shows says "HRV dipped while you were still" — never "you are stressed".
-// On fire: a single confirming buzz + a passive in-app card; NEVER a push notification unless the user
-// opted into notifications (matches DaytimeStress's "passive suggestion, never a notification" stance).
-//
-// All `ts`/`nowSec` are wall-clock unix SECONDS. Outputs are APPROXIMATE, not medical advice.
+// NON-CLINICAL: "stress" is an autonomic proxy (HRV down vs the user's OWN baseline); card copy says
+// "HRV dipped while you were still", never "you are stressed". On fire: a confirming buzz plus a passive
+// in-app card, never a push notification unless the user opted in.
 
 public enum StressOnsetDetector {
 
-    // MARK: - Tunables (evaluateStress parity + the new fast/gate pieces)
+    // MARK: - Tunables
 
-    /// Slow-baseline EMA weight on the prior value (the shipped 0.98). New RMSSD gets `1 − this`.
+    /// Slow-baseline EMA weight on the prior value; new RMSSD gets `1 - this`.
     public static let baselineEmaAlpha: Double = 0.98
-    /// Fast RMSSD must drop below `baseline × this` to count as a dip (the shipped 0.6 threshold).
+    /// Fast RMSSD must drop below `baseline * this` to count as a dip.
     public static let dropRatio: Double = 0.6
-    /// Resting HR band — outside it the dip is treated as metabolic (workout), not stress (the shipped
-    /// 55–100 bpm gate).
+    /// Resting HR band; outside it the dip is treated as metabolic (workout), not stress.
     public static let restingHRLow: Double = 55.0
     public static let restingHRHigh: Double = 100.0
-    /// Beats in the FAST short window (the latest clean beats) used for the momentary RMSSD.
+    /// Beats in the FAST short window (latest clean beats) used for the momentary RMSSD.
     public static let fastWindowBeats: Int = 60
     /// Minimum clean beats before either RMSSD is trusted (mirrors `HRVAnalyzer.minBeats`).
     public static let minBeats: Int = HRVAnalyzer.minBeats
-    /// Rate limit — at most one fire per this many seconds (the shipped 900 s = 15 min).
+    /// Rate limit: at most one fire per this many seconds (15 min).
     public static let minSecondsBetweenFires: Int = 900
-    /// SUSTAIN: after a fresh crossing the dip must STILL be below the threshold this many seconds
-    /// later before it earns a nudge. A genuine autonomic stress response holds for minutes; a
-    /// momentary dip in a `fastWindowBeats`-wide RMSSD window is far more often a beat-detection
-    /// wobble or a posture change than an arousal. Firing on the bare crossing therefore nudges on
-    /// noise: replayed over 40 days of real worn WHOOP data the edge alone fired ~8.4×/day, of which
-    /// only ~13 % were still below threshold 60 s later — the rest had already recovered. Requiring
-    /// the dip to hold cuts that to ~1×/day WITHOUT relaxing what counts as a dip, which lowering
-    /// `dropRatio` alone cannot do (it only makes an equally momentary trigger rarer). 0 disables the
-    /// requirement and restores the pre-sustain edge-only behaviour.
+    /// SUSTAIN: after a fresh crossing the dip must STILL be below threshold this many seconds later. A
+    /// momentary dip in a short RMSSD window is usually beat-detection wobble or posture; on 40 days of real
+    /// WHOOP data the bare edge fired ~8.4x/day, of which ~13% were still below after 60 s. Holding cuts
+    /// that to ~1x/day without relaxing what counts as a dip. 0 disables it (edge-only).
     public static let sustainSeconds: Int = 60
-    /// Recent smoothed wrist-motion (g) at/above this means "moving" → exercise gate suppresses the fire
-    /// (reuses the `SedentaryDetector` move threshold so the two gates agree on what "moving" is).
+    /// Recent smoothed wrist-motion (g) at/above this means "moving" and the exercise gate suppresses the
+    /// fire (same threshold as `SedentaryDetector`).
     public static let motionGateG: Double = SedentaryDetector.defaultMoveThresholdG
 
     // MARK: - Config
 
-    /// The L3 master/sub toggles + quiet-hours window, passed in as plain values so the engine stays pure.
-    /// All default OFF / safe — manual-first ethos (the feature is opt-in per layer).
+    /// The toggles and quiet-hours window, passed as plain values so the engine stays pure. All default OFF.
     public struct Config: Equatable, Sendable {
         /// Master "stress check-ins (haptic)" toggle (default OFF). Inert when off.
         public var enabled: Bool
-        /// Auto-nudge sub-toggle (default OFF) — when off the detector still reports state but never fires.
+        /// Auto-nudge sub-toggle (default OFF); when off the detector reports state but never fires.
         public var autoNudge: Bool
         /// Suppress fires during quiet hours.
         public var quietHoursEnabled: Bool
-        /// Quiet-hours window, local minute-of-day [0,1440) (defaults 22:00 → 07:00).
+        /// Quiet-hours window, local minute-of-day [0,1440) (defaults 22:00 to 07:00).
         public var quietStartMinutes: Int
         public var quietEndMinutes: Int
-        /// Buzz strength (loops) for the confirming buzz — one light pulse, like evaluateStress.
+        /// Strength (loops) of the confirming buzz.
         public var buzzLoops: Int
 
         public init(enabled: Bool = false,
@@ -92,24 +70,19 @@ public enum StressOnsetDetector {
         }
     }
 
-    // MARK: - State (de-dup / EMA carry — persisted verbatim, replay-safe)
+    // MARK: - State
 
-    /// The persisted state the detector carries between evaluations (restart-safe). The caller stores this
-    /// verbatim and feeds the prior value back in, exactly like `SedentaryState`. A fresh user starts from
-    /// `.initial`. Carries the slow EMA baseline (so it survives relaunch), the edge state (was the fast
-    /// RMSSD below the threshold on the previous tick?), and the rate-limit clock.
+    /// The state carried between evaluations (restart-safe). The caller stores it verbatim and feeds it
+    /// back, like `SedentaryState`; a fresh user starts from `.initial`.
     public struct State: Equatable, Sendable {
         /// Slow RMSSD baseline (EMA), ms. 0 = uninitialised (seeds from the first trusted fast RMSSD).
         public var baselineRMSSD: Double
-        /// Whether the fast RMSSD was BELOW the drop threshold on the previous evaluation — drives the
-        /// EDGE (we fire only on a fresh above→below crossing, not every tick it stays below).
+        /// Whether the fast RMSSD was BELOW the drop threshold on the previous evaluation (drives the edge).
         public var wasBelow: Bool
-        /// Unix-seconds of the last fire (0 = never) — the rate limiter.
+        /// Unix-seconds of the last fire (0 = never); the rate limiter.
         public var lastFireAt: Int
-        /// Unix-seconds of the ARMED crossing awaiting confirmation (0 = nothing armed) — the
-        /// `sustainSeconds` clock. Set when a fresh edge crosses below, cleared when the dip
-        /// recovers before it holds, and consumed once the sustain is satisfied. Persisted with the
-        /// rest of the state so a relaunch mid-dip cannot double-arm.
+        /// Unix-seconds of the ARMED crossing awaiting confirmation (0 = nothing armed); the
+        /// `sustainSeconds` clock. Persisted so a relaunch mid-dip cannot double-arm.
         public var pendingEdgeAt: Int
 
         public init(baselineRMSSD: Double = 0, wasBelow: Bool = false, lastFireAt: Int = 0,
@@ -126,9 +99,9 @@ public enum StressOnsetDetector {
 
     // MARK: - Decision
 
-    /// Why the detector did / didn't nudge — drives logs and the honest card copy.
+    /// Why the detector did or didn't nudge; drives logs and card copy.
     public enum Reason: String, Equatable, Sendable {
-        /// A fresh non-metabolic HRV dip — offer a minute to breathe.
+        /// A fresh non-metabolic HRV dip; offer a minute to breathe.
         case onset
         /// Disabled / auto-nudge off.
         case disabled
@@ -138,30 +111,28 @@ public enum StressOnsetDetector {
         case noDip
         /// The dip isn't a fresh edge (already below last tick, with nothing armed).
         case notAnEdge
-        /// A fresh crossing is ARMED but hasn't held for `sustainSeconds` yet — the dip is real so
-        /// far, just not yet proven to be more than a momentary wobble.
+        /// A fresh crossing is ARMED but has not held for `sustainSeconds` yet.
         case awaitingSustain
-        /// Suppressed by the exercise gate (HR out of band and/or recent motion = metabolic, not stress).
+        /// Suppressed by the exercise gate (HR out of band and/or recent motion).
         case exerciseGated
         /// Inside the rate-limit window or quiet hours, or a manual session is running.
         case suppressed
     }
 
-    /// The decision returned each evaluation: whether to nudge, why, and the next state to persist. Mirrors
-    /// `SedentaryDecision`: the caller acts on `shouldNudge` and stores `nextState` (always advanced) so a
-    /// replayed window can't re-fire.
+    /// The decision returned each evaluation. As `SedentaryDecision`: the caller acts on `shouldNudge` and
+    /// stores `nextState` (always advanced).
     public struct Decision: Equatable, Sendable {
-        /// True if the app should offer the breathing cue now (single confirming buzz + passive card).
+        /// True if the app should offer the breathing cue now.
         public let shouldNudge: Bool
         /// Why (whether or not it nudged).
         public let reason: Reason
         /// Buzz loops to play when `shouldNudge` (the confirming buzz).
         public let buzzLoops: Int
-        /// The fast short-window RMSSD this tick (ms), or nil when insufficient — for logs / the card.
+        /// The fast short-window RMSSD this tick (ms), or nil when insufficient.
         public let fastRMSSD: Double?
         /// The slow baseline RMSSD this tick (ms), or nil when uninitialised.
         public let baselineRMSSD: Double?
-        /// The state to persist for the next evaluation (always carries the advanced EMA / edge / clock).
+        /// The state to persist for the next evaluation.
         public let nextState: State
 
         public init(shouldNudge: Bool, reason: Reason, buzzLoops: Int,
@@ -173,21 +144,15 @@ public enum StressOnsetDetector {
 
     // MARK: - The detector
 
-    /// Evaluate the live window and decide whether to fire a JITAI nudge.
+    /// Evaluates the live window and decides whether to fire a nudge.
     ///
-    /// - `rrBuffer`: the rolling clean-able R-R buffer (rrMs, newest LAST). The fast RMSSD is taken over
-    ///   the latest `fastWindowBeats` clean beats; the slow baseline EMA absorbs each trusted fast value.
-    /// - `currentHR`: latest smoothed live HR (bpm), or nil if unknown (then the HR half of the gate can't
-    ///   pass and we treat HR as out-of-band — conservative).
-    /// - `recentMotionG`: recent smoothed wrist-motion (g) from `collector.recentGravity`, or nil if no
-    ///   recent gravity (then the motion half of the gate is inconclusive — see below).
-    /// - `sessionActive`: true if a manual Breathe/L1/L2 session is already running (never nudge over it).
-    /// - `state`: the prior persisted state; `nowSec` / `tzOffsetSec` passed IN (never read a clock).
-    ///
-    /// The EXERCISE GATE suppresses when EITHER signal says metabolic: HR outside [55,100], OR recent
-    /// motion at/above `motionGateG`. A missing HR is treated as out-of-band (can't confirm resting);
-    /// missing motion alone does NOT gate (HR-band can carry it — gravity is offloaded and lags, spec Q3),
-    /// so the resting-HR band is the real-time gate and motion is a secondary confirm when present.
+    /// - `rrBuffer`: rolling R-R buffer (rrMs, newest LAST); fast RMSSD is over the latest `fastWindowBeats`
+    ///   clean beats and the baseline EMA absorbs each trusted fast value.
+    /// - `currentHR`: latest smoothed live HR; nil is treated as out-of-band (can't confirm resting).
+    /// - `recentMotionG`: recent smoothed wrist-motion (g), or nil. Missing motion alone does NOT gate:
+    ///   gravity is offloaded and lags, so the resting-HR band is the real-time gate.
+    /// - `sessionActive`: a manual Breathe session is running (never nudge over it).
+    /// - `state`: prior persisted state; `nowSec` / `tzOffsetSec` are passed in (never read a clock).
     public static func evaluate(rrBuffer: [Int],
                                 currentHR: Double?,
                                 recentMotionG: Double?,
@@ -197,26 +162,26 @@ public enum StressOnsetDetector {
                                 nowSec: Int,
                                 tzOffsetSec: Int) -> Decision {
 
-        // 1) Master gates: off / auto-nudge off → never nudge, state untouched.
+        // 1) Master gates: off means never nudge, state untouched.
         if !config.enabled || !config.autoNudge {
             return Decision(shouldNudge: false, reason: .disabled, buzzLoops: config.buzzLoops,
                             fastRMSSD: nil, baselineRMSSD: state.baselineRMSSD > 0 ? state.baselineRMSSD : nil,
                             nextState: state)
         }
 
-        // 2) Fast RMSSD over the latest clean beats. Clean first (range + Malik), then take the tail.
+        // 2) Fast RMSSD over the latest clean beats (range + Malik clean first, then the tail).
         let cleanAll = HRVAnalyzer.cleanRR(rrBuffer.map { Double($0) })
         let fastWindow = cleanAll.count > fastWindowBeats
             ? Array(cleanAll.suffix(fastWindowBeats))
             : cleanAll
         guard fastWindow.count >= minBeats, let fast = HRVAnalyzer.rmssdRaw(fastWindow), fast > 0 else {
-            // Not enough signal — report, don't guess. Edge state is preserved (no crossing observed).
+            // Not enough signal: report, don't guess; edge state preserved.
             return Decision(shouldNudge: false, reason: .insufficientData, buzzLoops: config.buzzLoops,
                             fastRMSSD: nil, baselineRMSSD: state.baselineRMSSD > 0 ? state.baselineRMSSD : nil,
                             nextState: state)
         }
 
-        // 3) Advance the slow baseline EMA (seed on first trusted value), exactly like evaluateStress.
+        // 3) Advance the slow baseline EMA (seeded on the first trusted value).
         var next = state
         next.baselineRMSSD = state.baselineRMSSD == 0
             ? fast
@@ -226,15 +191,12 @@ public enum StressOnsetDetector {
         // 4) Is the fast RMSSD below the drop threshold? (the dip test)
         let threshold = baseline * dropRatio
         let isBelow = fast < threshold
-        // The edge: a FRESH crossing (above on the previous tick → below now). Always record the new
-        // below-state so the NEXT tick can edge-detect, regardless of whether we fire.
+        // A FRESH crossing (above last tick, below now); always record the new below-state for the next tick.
         let isEdge = isBelow && !state.wasBelow
         next.wasBelow = isBelow
 
-        // SUSTAIN: the crossing only ARMS the check. A dip that recovers before it has held for
-        // `sustainSeconds` is discarded — it was a wobble, not an arousal — and one that holds is
-        // CONSUMED at confirmation time, so a single dip can arm at most one nudge even if the gates
-        // below then suppress it.
+        // SUSTAIN: the crossing only ARMS the check. A dip that recovers before holding is discarded; one
+        // that holds is CONSUMED at confirmation, so a single dip arms at most one nudge.
         if isEdge { next.pendingEdgeAt = nowSec }
         if !isBelow { next.pendingEdgeAt = 0 }
 
@@ -244,14 +206,12 @@ public enum StressOnsetDetector {
         }
 
         if !isBelow { return decide(false, .noDip) }
-        // Nothing armed while below: the dip predates this run (e.g. state restored mid-dip) or its
-        // arm was already consumed — either way there is no fresh crossing to act on.
+        // Nothing armed while below: the dip predates this run (state restored mid-dip) or was consumed.
         guard next.pendingEdgeAt != 0 else { return decide(false, .notAnEdge) }
         if nowSec - next.pendingEdgeAt < sustainSeconds { return decide(false, .awaitingSustain) }
         next.pendingEdgeAt = 0   // consumed: proven sustained, now subject to the gates below
 
-        // 5) Exercise gate (the credibility line). HR out of the resting band (or unknown) → metabolic.
-        //    Recent motion at/above the gate → metabolic. Either suppresses.
+        // 5) Exercise gate: HR out of the resting band (or unknown), or recent motion at/above the gate, suppresses.
         let hrInBand: Bool = {
             guard let hr = currentHR else { return false }   // unknown HR can't confirm resting → gate
             return hr >= restingHRLow && hr <= restingHRHigh
@@ -275,7 +235,7 @@ public enum StressOnsetDetector {
             }
         }
 
-        // 7) Fire — a fresh, non-metabolic HRV dip while still. Stamp the rate-limit clock.
+        // 7) Fire; stamp the rate-limit clock.
         next.lastFireAt = nowSec
         return decide(true, .onset)
     }

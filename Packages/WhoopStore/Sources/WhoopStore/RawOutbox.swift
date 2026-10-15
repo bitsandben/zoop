@@ -23,7 +23,7 @@ public struct RawBatchMeta: Equatable {
 
 extension WhoopStore {
     // MARK: - frame (de)serialization
-    // Layout: [count u32 LE]{ [len u32 LE][bytes] } x count. zlib-compressed as a whole.
+    // Layout: [count u32 LE]{ [len u32 LE][bytes] } x count, zlib-compressed as a whole.
 
     static func packFrames(_ frames: [[UInt8]]) -> Data {
         var buf = Data()
@@ -63,10 +63,8 @@ extension WhoopStore {
 
     // MARK: - zlib helpers using Apple Compression framework
 
-    /// Decompress a blob that was produced by `zlibCompressWithLength`.
-    /// The first 4 bytes are the uncompressed length (UInt32 LE); the rest is the zlib payload.
+    /// Decompresses a blob from `zlibCompressWithLength`: a UInt32 LE uncompressed length, then the zlib payload.
     static func zlibDecompressWithLength(_ input: Data) throws -> Data {
-        // Read the 4-byte uncompressed-length prefix (UInt32 LE).
         guard input.count >= 4 else { throw CocoaError(.fileReadUnknown) }
         let n = Int(input[input.startIndex])
             | (Int(input[input.startIndex + 1]) << 8)
@@ -85,7 +83,7 @@ extension WhoopStore {
         return Data(dst)
     }
 
-    /// Compress `input` and prepend its uncompressed length as a UInt32 LE prefix.
+    /// Compresses `input` and prepends its uncompressed length as a UInt32 LE.
     static func zlibCompressWithLength(_ input: Data) throws -> Data {
         let sourceSize = input.count
         let dstCapacity = max(64, sourceSize * 2 + 64)
@@ -95,7 +93,6 @@ extension WhoopStore {
             return compression_encode_buffer(&dst, dstCapacity, srcPtr, sourceSize, nil, COMPRESSION_ZLIB)
         }
         guard written > 0 else { throw CocoaError(.fileWriteUnknown) }
-        // Prepend uncompressed length as UInt32 LE.
         let u = UInt32(sourceSize)
         var blob = Data(capacity: 4 + written)
         blob.append(UInt8(u & 0xFF)); blob.append(UInt8((u >> 8) & 0xFF))
@@ -159,10 +156,8 @@ extension WhoopStore {
         }
     }
 
-    /// Mark a batch synced (timestamp in unix seconds).
-    ///
-    /// #981 — NO production caller, and by design: see the dormancy note on `pruneRaw`'s Policy 1. Kept
-    /// because it is the natural hook for a future on-device export lane, not because anything calls it.
+    /// Marks a batch synced (unix seconds). Has no production caller by design: Zoop has no sync target,
+    /// so this is only the hook for a possible future on-device export lane.
     public func markRawBatchSynced(batchId: String, at: Int) async throws {
         try syncWrite { db in
             try db.execute(sql: "UPDATE rawBatch SET syncedAt = ? WHERE batchId = ?",
@@ -172,30 +167,16 @@ extension WhoopStore {
 }
 
 extension WhoopStore {
-    /// Prune raw outbox rows. Returns the number of rawBatch rows deleted.
+    /// Prunes raw outbox rows and returns the number of rawBatch rows deleted.
     ///
-    /// **Policy 1 — DORMANT in a shipping build (#981):** Delete SYNCED batches whose `syncedAt`
-    /// timestamp is older than `now - keepWindowSeconds`. Synced raw is safe to drop because the decoded
-    /// streams are persisted separately.
+    /// Policy 1 (dormant in a shipping build): delete synced batches whose `syncedAt` is older than
+    /// `now - keepWindowSeconds`. `syncedAt` is only set by `markRawBatchSynced`, which has no caller,
+    /// so this cannot fire; it is kept for a future server-free export lane.
     ///
-    /// It cannot fire today. `syncedAt` is only ever set by `markRawBatchSynced`, which has no production
-    /// caller — and cannot get one, because marking a batch "synced" needs somewhere to sync it to and
-    /// Zoop has no server, no account and no cloud sync by design (`CLAUDE.md`). The API and this policy
-    /// are inherited from the upstream `my-whoop` store (see `ATTRIBUTION.md`), which did have a sync
-    /// lane. Kept rather than deleted: both halves are correct and tested, and an on-device EXPORT lane
-    /// would be a legitimate server-free way to drain the outbox — at which point marking exported
-    /// batches synced and letting this reap them is exactly the right shape.
-    ///
-    /// Nothing is unbounded in the meantime: **Policy 2 is the real growth bound**, and is what the 19 GB
-    /// note below refers to.
-    ///
-    /// **Policy 2 (size eviction, #27):** Cap the total on-disk raw footprint at
-    /// `maxUnsyncedBytes`. Walk the surviving batches newest-first (`capturedAt DESC`),
-    /// summing `byteSize`, and DELETE every row once the running total exceeds the cap —
-    /// i.e. drop the OLDEST raw. Raw is transient working data, not an archive: the decoded
-    /// streams are persisted BEFORE the raw batch is enqueued (Collector E2 invariant), so
-    /// dropping the oldest raw never loses a decoded metric. Without this an experimental
-    /// capture toggle could grow local storage without bound (a 5/MG user saw 19 GB).
+    /// Policy 2 (the real growth bound): cap total raw footprint at `maxUnsyncedBytes`. Walk batches
+    /// newest-first summing `byteSize` and delete every row once the total exceeds the cap, dropping the
+    /// oldest raw. Raw is transient: decoded streams are persisted before the raw batch is enqueued, so
+    /// eviction never loses a decoded metric. Without it an experimental capture toggle grew to 19 GB.
     ///
     /// - Parameters:
     ///   - now: Current unix-second timestamp used to compute the synced-aging cutoff.
@@ -205,17 +186,14 @@ extension WhoopStore {
     public func pruneRaw(now: Int, keepWindowSeconds: Int, maxUnsyncedBytes: Int) async throws -> Int {
         try syncWrite { db in
             var pruned = 0
-            // Policy 1: aged synced batches.
             let cutoff = now - keepWindowSeconds
             try db.execute(sql: """
                 DELETE FROM rawBatch WHERE syncedAt IS NOT NULL AND syncedAt < ?
                 """, arguments: [cutoff])
             pruned += db.changesCount
 
-            // Policy 2 (#27): size-based eviction of the OLDEST raw beyond the cap. Sum byteSize
-            // newest-first; once the cumulative total exceeds maxUnsyncedBytes, the remaining (older)
-            // rows are over budget and get dropped. rowid keeps the cutoff stable regardless of ties
-            // on capturedAt. Decoded streams persist before raw (E2), so this loses no metric.
+            // Policy 2: newest-first running sum of byteSize; older rows past the cap are dropped. rowid keeps
+            // the cutoff stable across ties on capturedAt.
             let rows = try Row.fetchAll(db, sql: """
                 SELECT rowid, byteSize FROM rawBatch ORDER BY capturedAt DESC, rowid DESC
                 """)

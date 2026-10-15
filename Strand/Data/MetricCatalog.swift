@@ -12,8 +12,7 @@ struct MetricDescriptor: Identifiable, Hashable {
     let icon: String
     let decimals: Int
     let higherIsBetter: Bool?
-    /// A short, plain-English one-liner for the metric (tile subtitle / catalog blurb). Optional —
-    /// only the three headline scores (Charge / Effort / Rest) carry one today; everything else is nil.
+    /// A short plain-English one-liner (tile subtitle); only Charge / Effort / Rest carry one today.
     var description: String? = nil
     var id: String { source + ":" + key }
 
@@ -28,18 +27,14 @@ struct MetricDescriptor: Identifiable, Hashable {
         }
     }
 
-    /// True for the Effort metric (#268). Its stored value is 0–100; the effort-scale toggle converts
-    /// the DISPLAYED number + unit onto WHOOP's 0–21 axis. Mirrors the Android `MetricSpec.whoopEffort`
-    /// gate (`key == "strain"`) — the only value-converting metric in the catalog.
+    /// True for the Effort metric: stored 0-100, the effort-scale toggle converts the DISPLAYED value
+    /// and unit onto WHOOP's 0-21 axis. The only value-converting metric in the catalog.
     private var isEffort: Bool { key == "strain" }
 
-    /// #111: the skin_temp metric's stored value is EITHER an absolute skin temperature (WHOOP export gives
-    /// absolute °C) OR a signed DEVIATION from the personal baseline (±°C, the live/computed pipeline) —
-    /// `VitalBands.isAbsoluteSkinTemp(v)` (v >= 20 °C) tells them apart per value. A DEVIATION must convert
-    /// to °F by ×9/5 with NO +32 offset; adding +32 to a deviation produced nonsense ONLY in Fahrenheit
-    /// (a −4.2 °C deviation rendered as "24.4 °F" — the bug), while Celsius appended the raw deviation and
-    /// looked fine. An ABSOLUTE reading still uses the full C→F (×9/5 + 32). Key-based, mirroring `isEffort`
-    /// and the Android HealthScreen per-value branch.
+    /// skin_temp is stored either as an absolute temperature (WHOOP export) or a signed DEVIATION from
+    /// baseline (live pipeline); `VitalBands.isAbsoluteSkinTemp(v)` (v >= 20 C) tells them apart per
+    /// value. A deviation converts to F by x9/5 with NO +32 offset; an absolute reading uses the full
+    /// conversion. Key-based, like `isEffort`.
     private var isSkinTemp: Bool { key == "skin_temp" }
 
     func format(_ v: Double) -> String {
@@ -47,27 +42,22 @@ struct MetricDescriptor: Identifiable, Hashable {
         return unit.isEmpty ? n : "\(n) \(unit)"
     }
 
-    /// Effort-aware plain format (#268): the Effort metric's stored 0–100 value is shown on the selected
-    /// scale (its number + "/100"→"/21" unit); every other metric is scale-agnostic and falls through to
-    /// the unit-less `format` above. Callers that don't carry an effort scale get `.hundred` (no change).
+    /// Effort-aware plain format: Effort's stored 0-100 shows on the selected scale; every other
+    /// metric falls through to `format`. Callers without an effort scale get `.hundred`.
     func format(_ v: Double, effortScale: EffortScale) -> String {
         guard isEffort else { return format(v) }
         let n = UnitFormatter.effortDisplay(v, scale: effortScale)
         return "\(n) \(displayUnit(effortScale: effortScale))"
     }
 
-    /// Unit-aware format: for the three SI-stored metrics that have a non-metric counterpart
-    /// (weight/lean_mass in kg, skin_temp in °C) convert + relabel via `UnitFormatter`. The Effort
-    /// metric follows its own 0–100↔0–21 scale (#268). Every other metric (%, bpm, ms, min, …) is
-    /// scale-agnostic and falls through to the plain `format` above, so each toggle only ever touches
-    /// the values that actually have a converted form.
+    /// Unit-aware format: weight/lean_mass (kg) and skin_temp (C) convert and relabel via
+    /// `UnitFormatter`, Effort follows its own 0-100 / 0-21 scale; everything else uses plain `format`.
     func format(_ v: Double, system: UnitSystem, temperature: TemperatureUnit,
                 effortScale: EffortScale = .hundred) -> String {
         switch unit {
         case "kg":  return UnitFormatter.massFromKilograms(v, system: system)
         case "°C":
-            // #111 / #622: skin_temp is bimodal — absolute (import) vs ±deviation (live). Use
-            // SkinTempDisplay so deviation units read "Δ°C" / "Δ°F" and stay signed.
+            // skin_temp is bimodal (absolute vs deviation); `SkinTempDisplay` keeps deviations as signed "Δ°C" / "Δ°F".
             if isSkinTemp {
                 return SkinTempDisplay.format(v, fahrenheit: temperature == .fahrenheit, decimals: decimals)
             }
@@ -76,10 +66,9 @@ struct MetricDescriptor: Identifiable, Hashable {
         }
     }
 
-    /// Like `format`, but for a DIFFERENCE between two values (e.g. the Δ StatTile). A temperature
-    /// delta scales by 9/5 with NO +32 offset; mass/distance deltas scale by their plain factor; an
-    /// Effort delta rescales 0–100→0–21 on the WHOOP scale (#268, no offset — it's a magnitude). The
-    /// caller supplies the magnitude (sign is rendered separately).
+    /// Like `format`, but for a DIFFERENCE between two values. Temperature deltas scale by 9/5 with no
+    /// +32 offset; mass/distance by their plain factor; Effort rescales 0-100 to 0-21. The caller
+    /// supplies the magnitude (sign is rendered separately).
     func formatDelta(_ v: Double, system: UnitSystem, temperature: TemperatureUnit,
                      effortScale: EffortScale = .hundred) -> String {
         switch unit {
@@ -93,8 +82,7 @@ struct MetricDescriptor: Identifiable, Hashable {
         }
     }
 
-    /// The unit LABEL as displayed (e.g. the trailing chip in the Metric Explorer list), mapped to the
-    /// active system. Only the convertible units change; everything else returns its stored label.
+    /// The unit label as displayed for the active system; only convertible units change.
     func displayUnit(system: UnitSystem, temperature: TemperatureUnit,
                      effortScale: EffortScale = .hundred) -> String {
         switch unit {
@@ -104,16 +92,15 @@ struct MetricDescriptor: Identifiable, Hashable {
         }
     }
 
-    /// The Effort metric's unit LABEL on the selected scale — "/100" or "/21" (#268). Non-Effort metrics
-    /// return their stored label unchanged. Mirrors the Android `MetricSpec.displayUnit` swap.
+    /// The Effort unit label on the selected scale ("/100" or "/21"); other metrics keep their stored label.
     func displayUnit(effortScale: EffortScale) -> String {
         guard isEffort else { return unit }
         return "/" + UnitFormatter.effortScaleMax(effortScale)
     }
 }
 
-/// Canonical catalog — mirrors the WHOOP "Trend View" plus Apple Health body metrics.
-/// Keys match exactly what the importers write into metricSeries.
+/// Canonical catalog: the WHOOP "Trend View" metrics plus Apple Health body metrics. Keys match
+/// what the importers write into metricSeries.
 enum MetricCatalog {
     static let categories = ["Heart", "Charge", "Rest", "Effort", "Health", "Nutrition", "Mind"]
 
@@ -166,16 +153,13 @@ enum MetricCatalog {
         d("strain", Self.scoreName("Effort", ios: "Strain"), "Effort", "/100", "my-whoop", "flame", 1, nil,
           String(localized: "Cardiovascular load for the day, on a 0-100 scale (was 0-21).")),
         d("steps", String(localized: "Steps"), "Effort", "", "apple-health", "figure.walk", 0, true),
-        // WHOOP 5.0 / MG exposes a measured daily step count. Declared AFTER apple-health on purpose:
-        // the bare-key `first { key == "steps" }` resolvers (LabBookView, CompareView, the TabRoute
-        // `.metric` fallback) keep their prior apple-health default, so this entry's position never
-        // changes where any of them tap through. The Today card/tile route to it EXPLICITLY by source
-        // (`.metricSourced` / `todayStepsMetric`), which is what actually needs it.
+        // Declared AFTER apple-health on purpose: bare-key `first { key == "steps" }` resolvers keep their
+        // apple-health default. The Today card/tile route here explicitly by source (`.metricSourced` /
+        // `todayStepsMetric`).
         d("steps", String(localized: "Steps"), "Effort", "steps", "my-whoop", "figure.walk", 0, true),
-        // On-device steps ESTIMATE for a WHOOP 4.0 (no real step count over BLE): the strap's daily
-        // motion volume scaled by a personal calibration. Stored under the computed "-zoop" source, so
-        // it reads through the same exploreSeries fallback fitness_age/vitality use. Distinct from the
-        // real "steps" above — labelled "(estimated)" so it's never mistaken for a measured count.
+        // On-device steps ESTIMATE for a WHOOP 4.0 (no BLE step count): daily motion volume scaled by a
+        // personal calibration, under the computed "-zoop" source. Labelled "(estimated)" to stay distinct
+        // from the measured "steps" above.
         d("steps_est", String(localized: "Steps (estimated)"), "Effort", "steps", "my-whoop", "figure.walk.motion", 0, true,
           String(localized: "Estimated from your WHOOP's motion, calibrated to your phone. Not a measured step count.")),
         d("hr_zones13_min", String(localized: "HR Zones 1-3"), "Effort", "min", "my-whoop", "heart", 0, nil),
@@ -200,9 +184,8 @@ enum MetricCatalog {
         // ── Mind (daily mood check-in, 1–5; non-clinical self-tracking)
         d("mood", String(localized: "Mood"), "Mind", "/5", "noop-mood", "face.smiling", 0, true),
 
-        // ── Mi Band (imported from Mi Fitness). Same metricSeries mechanism as Apple Health /
-        //    Nutrition, so these light up Explore, Compare and the correlation scan. Distinct
-        //    `source` keeps them comparable against the WHOOP/Apple versions rather than colliding.
+        // ── Mi Band (imported from Mi Fitness). A distinct `source` keeps these comparable against the
+        //    WHOOP/Apple versions rather than colliding.
         d("avg_hr", String(localized: "Average Heart Rate"), "Heart", "bpm", "xiaomi-band", "heart", 0, nil),
         d("max_hr", String(localized: "Max Heart Rate"), "Heart", "bpm", "xiaomi-band", "bolt.heart", 0, nil),
         d("energy_kcal", String(localized: "Calories"), "Heart", "kcal", "xiaomi-band", "flame", 0, nil),
@@ -221,7 +204,7 @@ enum MetricCatalog {
 
     static func inCategory(_ c: String) -> [MetricDescriptor] { all.filter { $0.category == c } }
 
-    /// Explicit fused view for the rolling-average tile, not a replacement for source-specific entries.
+    /// Explicit fused view for the rolling-average tile; not a replacement for source-specific entries.
     static let combinedStepsSource = "noop-combined-steps"
 
     static func metric(key: String, source: String) -> MetricDescriptor? {
@@ -231,32 +214,26 @@ enum MetricCatalog {
         return all.first { $0.key == key && $0.source == source }
     }
 
-    /// The source the Today steps tile taps through to, matching the value it displays. Precedence
-    /// mirrors Android's `TodayScreen` (#377): the measured WHOOP 5.0 / MG count, else the imported
-    /// Apple Health count, else the WHOOP 4.0 motion estimate. `hasImportedSteps` defaults false so
-    /// existing callers keep the measured-or-estimate behaviour unchanged.
+    /// The source the Today steps tile taps through to, matching its displayed value: measured WHOOP
+    /// 5.0 / MG count, else imported Apple Health, else the WHOOP 4.0 motion estimate.
     static func todayStepsMetric(hasMeasuredSteps: Bool, hasImportedSteps: Bool = false) -> MetricDescriptor? {
         if hasMeasuredSteps { return metric(key: "steps", source: "my-whoop") }
         if hasImportedSteps { return metric(key: "steps", source: "apple-health") }
         return metric(key: "steps_est", source: "my-whoop")
     }
 
-    /// #616: the calorie twin of `todayStepsMetric` — route the tapped detail to the source that MATCHES
-    /// the value the tile shows (imported-first, like Android). The imported Apple-Health detail
-    /// (`active_kcal` / apple-health) when the day has an imported value, else Zoop's on-device HR-estimate
-    /// detail (`energy_kcal` / my-whoop, which `exploreSeries` fuses from `activeKcalEst`). Without this the
-    /// Calories card always opened the imported-only detail, so an on-device (WHOOP 5.0) user with no import
-    /// saw an empty/disagreeing chart. Defaults to the on-device detail when no import is present.
+    /// Calorie twin of `todayStepsMetric`: routes to the source matching the tile's value, the imported
+    /// Apple Health detail (`active_kcal`) when the day has one, else the on-device estimate
+    /// (`energy_kcal` / my-whoop). Defaults to on-device when no import is present.
     static func todayCaloriesMetric(hasImportedKcal: Bool, hasOnDeviceKcal: Bool = false) -> MetricDescriptor? {
         if hasImportedKcal { return metric(key: "active_kcal", source: "apple-health") }
         if hasOnDeviceKcal { return metric(key: "energy_kcal", source: "my-whoop") }
         return metric(key: "energy_kcal", source: "my-whoop")
     }
 
-    /// Localized display name for a catalog category, mapped AT THE RENDER SITE only. The
-    /// catalog's `category` VALUES stay English identifiers on purpose (`inCategory` and the
-    /// colour-world / gradient switches compare them raw), so screens must never feed this
-    /// function's output back into matching logic. Unknown values pass through untranslated.
+    /// Localized display name for a catalog category, applied at the render site only. Category VALUES
+    /// stay English identifiers (matching logic compares them raw), so never feed this output back into
+    /// matching. Unknown values pass through.
     static func categoryDisplayName(_ category: String) -> String {
         switch category {
         case "Heart":     return String(localized: "Heart")

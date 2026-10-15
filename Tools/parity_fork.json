@@ -1,0 +1,4 @@
+{
+  "android_parity": false,
+  "reason": "Zoop is an iOS-only private fork (see CLAUDE.md). It does not maintain Android twins, and Swift sources no longer carry 'Kotlin twin:' markers, so the Swift/Kotlin parity ledger and ratchet have nothing meaningful to govern. Set android_parity to true (and re-derive the twin map and baseline) to re-enable them."
+}

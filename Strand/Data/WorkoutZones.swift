@@ -3,14 +3,12 @@ import WhoopStore
 
 // MARK: - Imported per-workout HR zones
 //
-// `zonesJSON` is the verbatim HR-zone-percentage object from the WHOOP CSV import
-// (WhoopImporter writes "z1"…"z5"; the Android importer writes "zone1"…"zone5" for the
-// same data — tolerate both so a cache moved between platforms still renders). Values
-// are 0–100 percent of the workout's duration and may sum to less than 100 (time below
-// zone 1 is not exported).
+// `zonesJSON` is the HR-zone-percentage object from the WHOOP CSV import (WhoopImporter writes
+// "z1"..."z5"; "zone1"..."zone5" is also tolerated). Values are 0-100 percent of the workout duration
+// and may sum to less than 100 (time below zone 1 is not exported).
 enum WorkoutZones {
 
-    /// Z1…Z5 percentages (0–100) for one workout, or nil when the row carries no usable zone data.
+    /// Z1-Z5 percentages (0-100) for one workout, or nil when the row carries no usable zone data.
     static func percents(_ zonesJSON: String?) -> [Double]? {
         guard let zonesJSON,
               let data = zonesJSON.data(using: .utf8),
@@ -23,9 +21,8 @@ enum WorkoutZones {
         return p.contains(where: { $0 > 0 }) ? p : nil
     }
 
-    /// Duration-weighted zone minutes across rows. Mirrors the daily-metric derivation in
-    /// WhoopImporter (duration-minutes × pct ÷ 100). APPROXIMATE: an on-device aggregate of
-    /// the imported per-workout percentages, not a WHOOP-computed figure.
+    /// Duration-weighted zone minutes across rows (duration minutes x pct / 100, as in WhoopImporter).
+    /// APPROXIMATE: an aggregate of imported percentages, not a WHOOP-computed figure.
     struct Summary {
         let minutes: [Double]          // index 0 = Z1 … 4 = Z5
         let sessionsWithZones: Int

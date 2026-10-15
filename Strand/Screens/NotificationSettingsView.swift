@@ -76,7 +76,7 @@ struct NotificationSettingsView: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "info.circle.fill")
                 .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
-                .font(.system(size: 13))
+                .font(ZoopType.icon(13))
                 .accessibilityHidden(true)
             Text("Wrist delivery isn't live yet. It needs a small on-device watcher (coming in an update) to read macOS notifications. Everything stays on this Mac. Your choices are saved now and will apply automatically once delivery ships.")
                 .font(StrandFont.footnote)
@@ -85,7 +85,7 @@ struct NotificationSettingsView: View {
         }
         .padding(ZoopMetrics.space3)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(ZoopPanelSurface(tint: StrandPalette.accent, cornerRadius: 10))
+        .zoopInsetSurface(radius: 10, tint: StrandPalette.accent)
         .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
             .stroke(StrandPalette.accent.opacity(0.22), lineWidth: 1))
     }
@@ -195,7 +195,7 @@ struct NotificationSettingsView: View {
             }
         } label: {
             HStack(spacing: 5) {
-                Image(systemName: "waveform.path").font(.system(size: 11))
+                Image(systemName: "waveform.path").font(ZoopType.icon(11))
                 Text(store.pattern(app.id).label).font(StrandFont.caption)
             }
             .padding(.horizontal, 10)
@@ -214,7 +214,7 @@ struct NotificationSettingsView: View {
             model.buzz(loops: store.pattern(app.id).loops)
         } label: {
             Image(systemName: "play.fill")
-                .font(.system(size: 11))
+                .font(ZoopType.icon(11))
                 .frame(width: 24, height: 24)
         }
         .buttonStyle(.bordered)
@@ -303,7 +303,7 @@ private struct AlertSection<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        StrandCard(padding: 20, tint: StrandPalette.accent) {
+        ContentCard {
             VStack(alignment: .leading, spacing: ZoopMetrics.space4) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(overline)").strandOverline()

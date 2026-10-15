@@ -299,7 +299,7 @@ enum BodyVitalSigns {
                 label: String(localized: "Breathing rate"),
                 unit: "rpm",
                 value: respRow?.value,
-                format: { String(format: "%.1f", $0) },
+                format: { ZoopNumber.decimal($0, digits: 1) },
                 banding: VitalBands.band(
                     value: respRow?.value,
                     history: history(before: respRow?.day, respPoints),
@@ -317,7 +317,7 @@ enum BodyVitalSigns {
                 label: String(localized: "Blood oxygen"),
                 unit: "%",
                 value: spo2Row?.value,
-                format: { String(format: "%.0f", $0) },
+                format: { ZoopNumber.decimal($0, digits: 0) },
                 // Population-only on purpose: an absolute <95% floor is meaningful regardless of
                 // personal baseline (no "spo2" MetricCfg exists).
                 banding: VitalBands.band(
@@ -355,7 +355,7 @@ enum BodyVitalSigns {
                 label: String(localized: "Raw SpO₂"),
                 unit: "ADC",
                 value: spo2rawRow?.value,
-                format: { String(format: "%.0f", $0) },
+                format: { ZoopNumber.decimal($0, digits: 0) },
                 // Unbanded on purpose: this is the WHOOP 4.0 raw PPG ADC mean, device/placement-dependent
                 // with no clinical range — NOT a calibrated blood-oxygen %. Banding over the full u16 span
                 // just keeps the tile cyan (never "off range") while `stateText` labels it uncalibrated, so
@@ -473,20 +473,9 @@ enum BodyVitalSigns {
         localDayFormatter.string(from: now.addingTimeInterval(-Double(rolloverHour) * 3_600))
     }
 
-    private static let localDayFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let localDayFormatter: DateFormatter = DayKeyFormat.local
 
-    static let dayParser: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    static let dayParser: DateFormatter = DayKeyFormat.utc
 
     static let dayFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -502,7 +491,7 @@ private struct VitalPoint: Equatable {
     let source: DailyMetricSource
 }
 
-private extension DailyMetricSource {
+extension DailyMetricSource {
     /// Source precedence for a vital, highest first. Skin temp deliberately omits Apple Health — it
     /// has no 1:1 Apple equivalent for the strap's ±deviation reading, so an Apple absolute value must
     /// not stand in for it. localCache is always last (previews/tests).

@@ -124,10 +124,7 @@ enum TrendsReportData {
         let startDate = Calendar.current.date(byAdding: .day, value: -(n - 1), to: Date()) ?? Date()
         // Local-zone "yyyy-MM-dd" matching Repository.localDayKey, but self-contained so this stays a
         // nonisolated static (localDayKey is @MainActor-isolated and this runs off the main actor).
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        let start = f.string(from: startDate)
+        let start = DayKeyFormat.local.string(from: startDate)
         return (start, end)
     }
 
@@ -221,27 +218,23 @@ struct TrendsReportPage: View {
 
     private var header: some View {
         // Report chrome uses the same shared panel surface as the in-app cards.
-        ZStack(alignment: .leading) {
-            ZoopPanelSurface(tint: StrandPalette.accent,
-                             cornerRadius: ZoopMetrics.cardRadius,
-                             elevated: true)
-            VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
-                HStack(alignment: .firstTextBaseline) {
-                    BrandMark(size: 22)
-                    Text("Zoop").font(StrandFont.overline).tracking(StrandFont.overlineTracking)
-                        .foregroundStyle(StrandPalette.accent)
-                    Spacer()
-                    Text(range.longName).strandOverline()
-                }
-                Text("Trends report")
-                    .font(StrandFont.title1)
-                    .foregroundStyle(StrandPalette.textPrimary)
-                Text(rangeLabel)
-                    .font(StrandFont.subhead)
-                    .foregroundStyle(StrandPalette.textSecondary)
+        VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
+            HStack(alignment: .firstTextBaseline) {
+                BrandMark(size: 22)
+                Text("Zoop").font(StrandFont.overline).tracking(StrandFont.overlineTracking)
+                    .foregroundStyle(StrandPalette.accent)
+                Spacer()
+                Text(range.longName).strandOverline()
             }
-            .padding(ZoopMetrics.cardPadding)
+            Text("Trends report")
+                .font(StrandFont.title1)
+                .foregroundStyle(StrandPalette.textPrimary)
+            Text(rangeLabel)
+                .font(StrandFont.subhead)
+                .foregroundStyle(StrandPalette.textSecondary)
         }
+        .padding(ZoopMetrics.cardPadding)
+        .zoopControlSurface(radius: ZoopMetrics.cardRadius, tint: StrandPalette.accent)
     }
 
     private var rangeLabel: String {
@@ -418,7 +411,7 @@ struct TrendsReportPage: View {
     }
 
     func round1Text(_ x: Double) -> String {
-        String(format: "%.1f", (x * 10).rounded() / 10)
+        String(format: "%.1f", locale: AppLanguage.activeLocale, (x * 10).rounded() / 10)
     }
 
     /// "Jun 15" from "2026-06-15", via a pure ISO parse (no Calendar/locale). Reuses the
@@ -587,10 +580,7 @@ struct TrendsReportSheet: View {
 #if DEBUG
 @MainActor
 private func previewDays() -> [DailyMetric] {
-    let fmt = DateFormatter()
-    fmt.locale = Locale(identifier: "en_US_POSIX")
-    fmt.timeZone = TimeZone(identifier: "UTC")
-    fmt.dateFormat = "yyyy-MM-dd"
+    let fmt = DayKeyFormat.utc
     let cal = Calendar(identifier: .gregorian)
     var out: [DailyMetric] = []
     for i in stride(from: 119, through: 0, by: -1) {

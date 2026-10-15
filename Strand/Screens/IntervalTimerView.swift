@@ -161,7 +161,7 @@ struct IntervalTimerView: View {
     /// surfaceRaised card. Design Reset: no scenic backdrop, no tinted frost, no gauge gradient —
     /// the active phase's reset token tints only the arc + chip, the card stays WHOOP-grey.
     private var stageCard: some View {
-        StrandCard(padding: 24) {
+        ContentCard {
             VStack(spacing: 18) {
                 // Phase chip + round chip line.
                 HStack {
@@ -276,7 +276,7 @@ struct IntervalTimerView: View {
     // MARK: Overview card — elapsed / planned
 
     private var overviewCard: some View {
-        StrandCard {
+        ContentCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline) {
                     Text("Session").strandOverline()
@@ -335,7 +335,7 @@ struct IntervalTimerView: View {
     // MARK: Config card
 
     private var configCard: some View {
-        StrandCard {
+        ContentCard {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Configure").strandOverline()
                 configStepper(title: String(localized: "Work"), unit: String(localized: "sec"), value: $workSeconds,

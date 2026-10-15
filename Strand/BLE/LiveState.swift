@@ -463,17 +463,7 @@ public final class LiveState: ObservableObject {
         sensorSpeedKmh != nil || sensorCadence != nil || sensorPowerWatts != nil
     }
 
-    /// Pure, honest display strings for the additive in-workout sensor readout. Each returns nil when the
-    /// sensor hasn't sent that field (the UI then hides the tile rather than showing a fabricated value).
-    /// Units are the sensor's native ones, no unit-conversion guessing: speed km/h (the decode/derivation
-    /// unit), cadence per-minute (steps/min for a footpod, crank rpm for a bike sensor — both "/min", and
-    /// LiveState doesn't carry the kind, so the neutral honest label is used), power watts. Mirrors the
-    /// JVM-tested Kotlin `StandardHrSource.formatSensor*` so the two platforms read identically. `static`
-    /// so they're trivially unit-testable away from the @MainActor instance.
-    static func formatSpeedKmh(_ kmh: Double?) -> String? {
-        guard let kmh, kmh.isFinite, kmh >= 0 else { return nil }
-        return String(format: "%.1f", kmh)
-    }
+    /// Pure display strings for the in-workout sensor readout: nil when the sensor sent no value.
     static func formatCadence(_ perMin: Double?) -> String? {
         guard let perMin, perMin.isFinite, perMin >= 0 else { return nil }
         return String(Int(perMin.rounded()))
@@ -517,12 +507,12 @@ public final class LiveState: ObservableObject {
     /// gates buzz, alarms, double-tap and history sync. LiveView has drawn this line since #69; this
     /// shared label (sidebar + Settings) had not, so the two screens disagreed about the same link.
     public var connectionStatusLabel: String {
-        if connected && encryptedBond { return "Bonded · streaming" }
-        if connected && bonded { return "Live HR (not fully paired)" }
-        if connected { return "Connected" }
-        if encryptedBond { return "Bonded · idle" }
+        if connected && encryptedBond { return String(localized: "Bonded · streaming") }
+        if connected && bonded { return String(localized: "Live HR (not fully paired)") }
+        if connected { return String(localized: "Connected") }
+        if encryptedBond { return String(localized: "Bonded · idle") }
         // No `bonded`-only idle arm: without an encrypted bond there was never a pairing to be idle from.
-        return "Disconnected"
+        return String(localized: "Disconnected")
     }
     /// True when the link is up with a REAL encrypted bond → status reads green. A live-HR-only link is
     /// amber via [connectionStatusIsIdle]: it works, but every pairing-gated feature is unavailable.
@@ -548,11 +538,21 @@ public final class LiveState: ObservableObject {
     /// came — i.e. caught up). Drives the sync tile + the staleness nudge.
     @Published public var lastSyncedAt: TimeInterval?
 
-    /// Set when an offload ended abnormally (the idle watchdog fired — the strap went quiet mid-sync),
-    /// so a stalled history download isn't silent. Cleared by the next successful HISTORY_COMPLETE.
-    /// Process-local on purpose (mirrors Android, ed6a31d): the next connect / 15-min tick re-offloads
-    /// anyway, so persisting a stale error across launches would outlive its relevance.
-    @Published public var lastSyncError: String? = nil
+    /// What the last offload or the Bluetooth radio left for the user: a stalled history download, a
+    /// completed one with a caveat, or a radio that cannot be used. Cleared by the next clean
+    /// HISTORY_COMPLETE. Process-local on purpose (mirrors Android, ed6a31d): the next connect / 15-min
+    /// tick re-offloads anyway, so persisting a stale issue across launches would outlive its relevance.
+    /// Screens read it through `syncStatus`, which keeps the kinds apart.
+    @Published public var lastSyncIssue: SyncIssue? = nil
+    /// The issue's text alone, for readers that only print it.
+    public var lastSyncError: String? { lastSyncIssue?.message }
+
+    /// The single sync status every screen renders from.
+    var syncStatus: SyncStatus {
+        SyncStatus.resolve(SyncStatusInput(connected: connected, historyReady: historyReady,
+                                           backfilling: backfilling, chunks: syncChunksThisSession,
+                                           lastSyncedAt: lastSyncedAt, issue: lastSyncIssue))
+    }
 
     /// True while a historical offload session is running, so screens can say "Syncing strap
     /// history…" instead of presenting half-loaded data as final (#77).
@@ -569,7 +569,7 @@ public final class LiveState: ObservableObject {
     @Published public var syncChunksThisSession: Int = 0
 
     /// Undecodable HISTORICAL_DATA record frames seen this offload session whose raw bytes WERE
-    /// preserved to the on-device archive (#77 / #91). Drives the honest "saved on this Mac" sync
+    /// preserved to the on-device archive (#77 / #91). Drives the honest "saved on this device" sync
     /// status. Reset at session start.
     @Published public var rejectedFramesThisSession: Int = 0
     /// Undecodable record frames the archive could NOT preserve this session (the ~5 MB cap was
@@ -717,10 +717,15 @@ public final class LiveState: ObservableObject {
     private var heartRateSilenceTimer: DispatchSourceTimer?
     private var heartRateSilenceArmedAt: DispatchTime?
 
+    /// Called with every readable sample's bpm (not published, so it re-renders nothing). The smart alarm's live
+    /// stream (`SmartWakeLiveStream`) reads samples here; `heartRate` publishes only on a change of value.
+    public var onReadableHeartRate: ((Int) -> Void)?
+
     /// A readable heart-rate sample arrived (`BLEManager`'s standard profile, `FrameRouter`'s realtime frames): move the
     /// silence deadline on. One timer, rescheduled at most every tenth of the wait (once a second in use), so it costs
     /// nothing while samples flow and fires once when they stop.
-    public func noteReadableHeartRate() {
+    public func noteReadableHeartRate(_ bpm: Int? = nil) {
+        if let bpm { onReadableHeartRate?(bpm) }
         let now = DispatchTime.now()
         let rearmNanos = UInt64(heartRateSilence / 10 * 1_000_000_000)
         if let armed = heartRateSilenceArmedAt, now.uptimeNanoseconds &- armed.uptimeNanoseconds < rearmNanos { return }

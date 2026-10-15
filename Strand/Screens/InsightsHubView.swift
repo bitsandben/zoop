@@ -4,7 +4,9 @@ import StrandDesign
 import StrandAnalytics
 import WhoopStore
 
-// MARK: - Insights Hub (v5)
+// MARK: - Insights Hub (v5, macOS)
+//
+// iOS shows `BodyPatternsPage` instead (see below); this full screen remains the macOS sidebar item.
 //
 // The headline n-of-1 "what actually moves YOUR recovery" surface. Two halves, both
 // pure association on the user's own logged days — never advice, diagnosis, or cause:
@@ -32,6 +34,13 @@ import WhoopStore
 // All maths lives in StrandAnalytics (EffectRanker / DoseResponseEngine / DoseResponsePriors);
 // this view loads the series, shapes the engine inputs, and presents honestly.
 
+#if os(iOS)
+/// iOS: "What Moves You" is the Insights tab's patterns section on a page of its own, so the habit
+/// effects are computed and worded in one place (`BodyPatterns`).
+struct InsightsHubView: View {
+    var body: some View { BodyPatternsPage() }
+}
+#else
 struct InsightsHubView: View {
     @EnvironmentObject private var repo: Repository
     @StateObject private var model = InsightsHubViewModel()
@@ -209,7 +218,7 @@ struct InsightsHubView: View {
         }
         .padding(ZoopMetrics.space3)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(ZoopPanelSurface(cornerRadius: ZoopVisualStyle.compactRadius))
+        .zoopInsetSurface(radius: ZoopVisualStyle.compactRadius)
     }
 
     // MARK: - Mover copy (built here from the engine's numbers, fully localized)
@@ -305,15 +314,6 @@ struct InsightsHubView: View {
     }
 
     // MARK: - Helpers
-
-    /// Map the engine's ScoreConfidence tier to the design-system ScoreState pill.
-    static func scoreState(_ c: ScoreConfidence) -> ScoreState {
-        switch c {
-        case .solid:       return .solid
-        case .building:    return .building
-        case .calibrating: return .calibrating
-        }
-    }
 
     /// Cohen's d → conventional magnitude, phrased as a whole noun phrase ("moderate effect").
     static func effectPhrase(_ d: Double) -> String {
@@ -422,7 +422,7 @@ private struct DoseResponseCardView: View {
         HStack(alignment: .firstTextBaseline) {
             HStack(spacing: 8) {
                 Image(systemName: card.symbol)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(ZoopType.icon(14, weight: .semibold))
                     .foregroundStyle(domain.color)
                     .frame(width: 20)
                     .accessibilityHidden(true)
@@ -478,7 +478,7 @@ private struct DoseResponseCardView: View {
     private func honestyBanner(_ text: String) -> some View {
         HStack(alignment: .top, spacing: ZoopMetrics.space2) {
             Image(systemName: "info.circle.fill")
-                .font(.system(size: 12, weight: .semibold))
+                .font(ZoopType.icon(12, weight: .semibold))
                 .foregroundStyle(StrandPalette.textTertiary)
             Text(text)
                 .font(StrandFont.footnote)
@@ -487,7 +487,7 @@ private struct DoseResponseCardView: View {
         }
         .padding(ZoopMetrics.space3)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(ZoopPanelSurface(cornerRadius: 8))
+        .zoopInsetSurface(radius: 8)
     }
 }
 
@@ -987,3 +987,15 @@ private func hubPreviewRepo() -> Repository {
         .preferredColorScheme(.dark)
 }
 #endif
+#endif
+
+extension InsightsHubView {
+    /// Map the engine's ScoreConfidence tier to the design-system ScoreState pill.
+    static func scoreState(_ c: ScoreConfidence) -> ScoreState {
+        switch c {
+        case .solid:       return .solid
+        case .building:    return .building
+        case .calibrating: return .calibrating
+        }
+    }
+}

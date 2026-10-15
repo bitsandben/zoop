@@ -182,7 +182,7 @@ struct LiftProgramEditorSheet: View {
                     }
                     .accessibilityLabel("Remove exercise")
                 }
-                .font(.system(size: 12, weight: .semibold))
+                .font(ZoopType.icon(12, weight: .semibold))
                 .buttonStyle(.plain)
                 .foregroundStyle(StrandPalette.textSecondary)
             }

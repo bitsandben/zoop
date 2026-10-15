@@ -1,73 +1,64 @@
 import Foundation
 
-// LiveSessionEngine.swift — the "silent guardian" coach for a Live Session. Pure, deterministic, DB-free.
+// The "silent guardian" coach for a Live Session. Pure, deterministic, DB-free.
 //
-// It watches a live heart-rate stream against a recovery-gated target BAND and emits at most two kinds of
-// haptic cue: a gentle PUSH nudge when you drift too easy for today, and a firmer EASE-OFF when you push
-// harder than today's recovery can pay for. Silence means you are on track — the design's whole point.
+// Watches live HR against a recovery-gated target band and emits at most two haptic cues: a gentle PUSH when
+// you drift too easy for today and a firmer EASE-OFF when you push harder than today's recovery can pay for.
+// Silence means on track. Time is passed into every `update(now:bpm:)`, so a session replays deterministically
+// from a synthetic HR trace; the transport (live HR, buzz) lives in the app.
 //
-// Everything here is a value type and time is passed in on every `update(now:bpm:)`, so a full session
-// replays deterministically from a synthetic HR trace with no clock, no BLE, and no UI. The transport
-// (subscribe to live HR, fire the buzz) lives in the app; this file only decides WHAT should happen.
-//
-// Design contract: docs/superpowers/specs/2026-07-04-live-sessions-design.md. These behaviours are the
-// GOLDEN VECTORS the Kotlin `LiveSessionEngine` twin mirrors — the cross-platform parity contract.
-//
-// Two rules dominate every threshold below:
-//   1. A WRONG buzz is unforgivable; a MISSED buzz is fine. So we bias hard toward silence: dwell, cool-down
-//      and hysteresis are core, not polish.
-//   2. Never fabricate. Impossible samples are rejected before they can trigger a cue, and a stale stream
-//      pauses coaching rather than guessing.
+// Two rules dominate every threshold: a wrong buzz is unforgivable while a missed one is fine (dwell,
+// cool-down and hysteresis are core), and never fabricate (impossible samples are rejected, a stale stream
+// pauses coaching).
 public struct LiveSessionEngine {
 
-    // MARK: - Tuning constants (pinned by test; mirror the Kotlin twin exactly)
+    // MARK: - Tuning constants (pinned by test)
 
-    /// Target-band ceiling as a fraction of heart-rate reserve (%HRR/100) on a fully-depleted Charge day.
+    /// Target-band ceiling (fraction of HRR) on a fully-depleted Charge day.
     public static let ceilingPctAtLowCharge: Double = 0.60
     /// Target-band ceiling (fraction HRR) on a fully-recovered Charge day.
     public static let ceilingPctAtHighCharge: Double = 0.82
-    /// Band width (ceiling − floor) as a fraction of HRR.
+    /// Band width (ceiling - floor) as a fraction of HRR.
     public static let bandWidthPctHRR: Double = 0.15
-    /// The floor never drops below this fraction of HRR (keeps the "too easy" edge sane on low-Charge days).
+    /// The floor never drops below this fraction of HRR.
     public static let minFloorPctHRR: Double = 0.40
-    /// Charge used when today's Charge is unknown — a deliberately conservative mid-point.
+    /// Charge fraction used when today's Charge is unknown (conservative mid-point).
     public static let defaultChargeFraction: Double = 0.5
 
-    /// Trailing window (seconds) the smoothed HR median is taken over. We coach on the trend, never a spike.
+    /// Trailing window (s) for the smoothed HR median: coach on the trend, never a spike.
     public static let smoothingWindowSec: Int = 12
-    /// A reading is stale — coaching pauses, ring greys — after this long with no accepted sample.
+    /// A reading is stale (coaching pauses) after this long with no accepted sample.
     public static let staleAfterSec: Int = 8
-    /// Warm-up grace from session start: classify + accrue in-band time, but emit NO cues (early optical lag).
+    /// Warm-up from session start: classify and accrue in-band time but emit no cues (optical lag).
     public static let warmupSec: Int = 60
-    /// After a detected sharp climb, suppress the "too easy" cue for this long (a below reading is likely lag).
+    /// After a sharp climb, suppress the "too easy" cue this long (a low reading is likely lag).
     public static let climbGraceSec: Int = 45
 
-    /// Continuous time out of band (seconds) required before any cue fires.
+    /// Continuous seconds out of band required before any cue fires.
     public static let dwellSec: Int = 25
-    /// Minimum gap (seconds) before the same cue direction may fire again — no buzz thrash near an edge.
+    /// Minimum seconds before the same cue direction may fire again.
     public static let cooldownSec: Int = 50
-    /// Hysteresis margin (bpm) around each band edge, so a reading hovering on the line does not flicker.
+    /// Hysteresis margin (bpm) around each band edge.
     public static let hysteresisMarginBpm: Double = 2.0
-    /// The largest inter-update gap (seconds) credited to in-band time, so one long stall can't inflate it.
+    /// Largest inter-update gap (s) credited to in-band time.
     public static let maxAccrualDtSec: Int = 5
 
-    /// A smoothed rise of at least this many bpm within `stepChangeWindowSec` is a "sharp climb" (new effort).
+    /// A smoothed rise of this many bpm within `stepChangeWindowSec` is a sharp climb (new effort).
     public static let stepChangeBpm: Double = 8.0
     public static let stepChangeWindowSec: Int = 15
-    /// An above-ceiling breach counts as a step-change breach (→ ease-off eligible) if a climb was detected
-    /// within this long of the breach starting; otherwise it is honest slow drift (→ no ease-off).
+    /// An above-ceiling breach is a step-change breach (ease-off eligible) if a climb was detected this recently; otherwise it is slow drift (no ease-off).
     public static let climbAttributionSec: Int = 20
 
-    /// Slow, plausible time above the ceiling before it is allowed to drift up (adapt to a genuinely strong day).
+    /// Slow, plausible time above the ceiling before it may drift up (adapting to a strong day).
     public static let ceilingDriftAfterSec: Int = 90
-    /// Each drift step nudges the ceiling up this many bpm...
+    /// Each drift step raises the ceiling this many bpm...
     public static let ceilingDriftStepBpm: Double = 2.0
-    /// ...up to this bounded total. The floor logic that made today conservative is never crossed.
+    /// ...up to this bounded total.
     public static let ceilingDriftMaxBpm: Double = 8.0
 
-    /// Physiological sanity floor (bpm): below this a live reading is a dropout artifact, not a heart rate.
+    /// Below this (bpm) a live reading is a dropout artifact.
     public static let minPlausibleBpm: Double = 25.0
-    /// A live reading above HRmax by more than this (bpm) is rejected as noise (real max effort reaches HRmax).
+    /// A reading above HRmax by more than this (bpm) is rejected as noise.
     public static let aboveHRmaxRejectBpm: Double = 5.0
     /// A jump larger than this (bpm) from the last accepted reading within a few seconds is rejected as artifact.
     public static let maxJumpBpm: Double = 45.0
@@ -77,7 +68,7 @@ public struct LiveSessionEngine {
     public struct Config: Equatable, Sendable {
         public let restingHR: Double
         public let hrMax: Double
-        /// Today's Charge (0...100); nil = unknown → the conservative default curve.
+        /// Today's Charge (0...100); nil = unknown, use the conservative default curve.
         public let charge: Double?
         public init(restingHR: Double, hrMax: Double, charge: Double?) {
             self.restingHR = restingHR; self.hrMax = hrMax; self.charge = charge
@@ -122,11 +113,11 @@ public struct LiveSessionEngine {
         /// Trailing-median HR the engine coaches on; nil before the first accepted sample or while stale.
         public let smoothedBpm: Double?
         public let band: Band
-        /// Accumulated seconds held in band this session (drives the "time held" ring fill).
+        /// Seconds held in band this session (time-held ring fill).
         public let inBandSeconds: Double
-        /// A fresh valid sample was accepted on this update (drives the "breathing" liveness pulse).
+        /// A fresh valid sample was accepted on this update (liveness pulse).
         public let sampleArrived: Bool
-        /// The cue to fire on this update, if any. Nil the vast majority of updates — that is the point.
+        /// The cue to fire on this update; nil on the vast majority.
         public let cue: Cue?
         public init(status: Status, position: Position, smoothedBpm: Double?, band: Band,
                     inBandSeconds: Double, sampleArrived: Bool, cue: Cue?) {
@@ -138,8 +129,7 @@ public struct LiveSessionEngine {
 
     // MARK: - Band from Charge (pure, testable in isolation)
 
-    /// The recovery-gated target band. Charge scales the ceiling between the low/high anchors; the floor sits
-    /// a fixed HRR width below, never under `minFloorPctHRR`. Expressed in both %HRR and bpm.
+    /// The recovery-gated target band: Charge scales the ceiling between the anchors; the floor sits a fixed HRR width below, never under `minFloorPctHRR`.
     public static func band(config: Config) -> Band {
         let cn: Double = {
             guard let c = config.charge else { return defaultChargeFraction }
@@ -189,12 +179,11 @@ public struct LiveSessionEngine {
 
     // MARK: - Update
 
-    /// Advance the session to `now`. Pass the live bpm if one arrived this tick, or nil for a plain time tick
-    /// (used to detect staleness when the stream goes quiet). Returns the current coaching state + any cue.
+    /// Advances the session to `now`; pass the live bpm if one arrived, or nil for a plain time tick (detects staleness). Returns the coaching state and any cue.
     public mutating func update(now: Int, bpm: Int?) -> Output {
         let dt = max(now - lastUpdateTs, 0)
 
-        // 1. Validate + accept the sample (never-fabricate guard).
+        // Validate and accept the sample.
         var sampleArrived = false
         if let raw = bpm, isPlausible(bpm: Double(raw), now: now) {
             buffer.append(Reading(ts: now, bpm: raw))
@@ -203,12 +192,12 @@ public struct LiveSessionEngine {
             sampleArrived = true
         }
 
-        // 2. Prune the smoothing window and compute the trend.
+        // Prune the smoothing window; compute the trend.
         let windowStart = now - Self.smoothingWindowSec
         buffer.removeAll { $0.ts < windowStart }
         let smoothed = buffer.isEmpty ? nil : median(buffer.map { Double($0.bpm) })
 
-        // 3. Staleness — coaching pauses, nothing accrues, dwell freezes.
+        // Staleness: coaching pauses, nothing accrues, dwell freezes.
         let sinceValid = lastValidTs.map { now - $0 } ?? (now - startTs)
         let isStale = sinceValid > Self.staleAfterSec
         let band = currentBand()
@@ -220,7 +209,7 @@ public struct LiveSessionEngine {
         }
         let s = smoothed!
 
-        // 4. Step-change (sharp-climb) detection off the smoothed trend.
+        // Sharp-climb detection off the smoothed trend.
         smoothedHistory.append((ts: now, bpm: s))
         smoothedHistory.removeAll { $0.ts < now - Self.stepChangeWindowSec - 2 }
         if let past = smoothedHistory.first(where: { now - $0.ts >= Self.stepChangeWindowSec }),
@@ -228,10 +217,10 @@ public struct LiveSessionEngine {
             lastClimbTs = now
         }
 
-        // 5. Classify against the band with hysteresis.
+        // Classify with hysteresis.
         let newPosition = classify(smoothed: s, band: band, previous: currentPosition)
 
-        // 6. Dwell trackers (start the clock the moment a side is entered).
+        // Dwell trackers.
         switch newPosition {
         case .below:
             if currentPosition != .below { belowSinceTs = now }
@@ -247,15 +236,14 @@ public struct LiveSessionEngine {
             belowSinceTs = nil; aboveSinceTs = nil; aboveSlowSinceTs = nil
         }
 
-        // 7. Accrue in-band time (dt clamped so a stall can't inflate the ring).
+        // Accrue in-band time (dt clamped).
         if newPosition == .inBand {
             inBandSeconds += Double(min(dt, Self.maxAccrualDtSec))
         }
 
-        // 8. Status.
         let status: Status = (now - startTs < Self.warmupSec) ? .warmup : .active
 
-        // 9. Cue decision — only when active, one cue at most, silence by default.
+        // Cue decision: only when active, at most one, silent by default.
         var cue: Cue? = nil
         if status == .active {
             if newPosition == .below,
@@ -275,7 +263,7 @@ public struct LiveSessionEngine {
             }
         }
 
-        // 10. Ceiling drift — adapt (bounded) to a genuinely strong, slow-drift day rather than nagging.
+        // Bounded ceiling drift for a genuinely strong, slow day.
         if newPosition == .above, let slowSince = aboveSlowSinceTs,
            now - slowSince >= Self.ceilingDriftAfterSec,
            ceilingDriftBpm < Self.ceilingDriftMaxBpm {

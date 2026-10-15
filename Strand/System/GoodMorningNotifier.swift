@@ -1,13 +1,11 @@
 import Foundation
 import UserNotifications
 
-// MARK: - Good-morning notification (Zoop)
+// MARK: - Good-morning notification
 //
 // Once a day, the first time the morning's Recovery is scored after the night ended, post a short
-// "Good morning" with the night's Recovery and sleep time. It replaces the smart alarm's backup wake
-// notification as the morning message (that backup is now opt-in, see `AlarmBackupPrefs`). Default on,
-// switchable in Automations. Like the strain-target nudge it is driven by the days republish, so it posts
-// after the morning sync rather than at a fixed clock time.
+// "Good morning" with Recovery and sleep time. Default on (Automations). Driven by the days
+// republish, so it posts after the morning sync rather than at a fixed time.
 
 enum GoodMorningNotifier {
     /// On/off. Absent = on.
@@ -28,6 +26,16 @@ enum GoodMorningNotifier {
         enabled && recovery != nil && nightEndedToday && hour < latestHour && lastPostedDay != today
     }
 
+    /// Whether the morning message for `today` already went out (plain or through the coach).
+    static func hasPosted(today: String) -> Bool {
+        UserDefaults.standard.string(forKey: lastDayKey) == today
+    }
+
+    /// Marks the day as announced, so a coach brief and the plain text can never both post.
+    static func markPosted(today: String) {
+        UserDefaults.standard.set(today, forKey: lastDayKey)
+    }
+
     static func copy(recovery: Double, sleepMinutes: Double?) -> (title: String, body: String) {
         let pct = Int(recovery.rounded())
         let body: String
@@ -40,34 +48,39 @@ enum GoodMorningNotifier {
         return (String(localized: "Good morning"), body)
     }
 
-    /// Evaluate and post. Safe to call on every days republish. The day marker advances only after an
-    /// authorized post.
+    /// Evaluate and post. Safe to call on every refresh. The day is marked before the asynchronous
+    /// permission check, so two evaluations in one turn cannot both post; the mark is rolled back when
+    /// notifications are not allowed, so the morning is still announced once they are.
     static func onDayUpdate(today: String, recovery: Double?, sleepMinutes: Double?, nightEndTs: Int?,
                             now: Date = Date()) {
         let d = UserDefaults.standard
         let cal = Calendar.current
         let ended = nightEndTs.map { cal.isDate(Date(timeIntervalSince1970: TimeInterval($0)), inSameDayAs: now)
                                      && TimeInterval($0) <= now.timeIntervalSince1970 } ?? false
+        let previousDay = d.string(forKey: lastDayKey)
         guard shouldPost(enabled: isEnabled, recovery: recovery, nightEndedToday: ended,
                          hour: cal.component(.hour, from: now),
-                         lastPostedDay: d.string(forKey: lastDayKey), today: today),
+                         lastPostedDay: previousDay, today: today),
               let recovery else { return }
+        d.set(today, forKey: lastDayKey)
         let copy = copy(recovery: recovery, sleepMinutes: sleepMinutes)
-        let center = UNUserNotificationCenter.current()
-        center.getNotificationSettings { settings in
-            guard settings.authorizationStatus == .authorized else { return }
+        NotificationWork.withSettings { center, settings in
+            guard settings.authorizationStatus == .authorized else {
+                if UserDefaults.standard.string(forKey: lastDayKey) == today {
+                    UserDefaults.standard.set(previousDay, forKey: lastDayKey)
+                }
+                return
+            }
             let content = UNMutableNotificationContent()
             content.title = copy.title
             content.body = copy.body
             content.sound = .default
             center.add(UNNotificationRequest(identifier: "good-morning", content: content, trigger: nil))
-            UserDefaults.standard.set(today, forKey: lastDayKey)
         }
     }
 }
 
-/// The smart alarm's backup wake notification at the alarm time. Opt-in (default off): the strap buzz is
-/// the alarm, and a second phone notification every morning was noise for most people.
+/// The smart alarm's backup wake notification at the alarm time. Opt-in (default off).
 enum AlarmBackupPrefs {
     static let enabledKey = "zoop.notif.alarmBackup"
     static var isEnabled: Bool { UserDefaults.standard.bool(forKey: enabledKey) }

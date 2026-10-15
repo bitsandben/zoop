@@ -325,6 +325,24 @@ struct TestCentreView: View {
                     .font(StrandFont.overline).tracking(StrandFont.overlineTracking)
                     .foregroundStyle(StrandPalette.textSecondary)
 
+                // Every design token, component and page template in all states (docs/zoop2/DESIGN-SYSTEM.md).
+                NavigationLink {
+                    DesignGalleryScreen()
+                } label: {
+                    Label { Text.gallery(DesignGalleryScreen.title) } icon: { Image(systemName: "paintpalette") }
+                }
+                .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
+
+                // Whether the app could act during each smart-alarm night (SmartAlarmNightLog).
+                NavigationLink {
+                    SmartAlarmNightsView()
+                } label: {
+                    Label("Smart alarm nights", systemImage: "alarm")
+                }
+                .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
+
+                Divider().overlay(StrandPalette.hairline)
+
                 // Strap log, the same exportableLogText the Settings + Live strap-log cards share.
                 HStack(spacing: 12) {
                     Text("STRAP LOG").font(StrandFont.overline).tracking(StrandFont.overlineTracking)

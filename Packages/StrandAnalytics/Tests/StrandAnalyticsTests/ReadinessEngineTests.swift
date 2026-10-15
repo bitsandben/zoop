@@ -33,10 +33,8 @@ final class ReadinessEngineTests: XCTestCase {
         XCTAssertEqual(r.level, .primed)
         XCTAssertEqual(r.signals.first { $0.key == "hrv" }?.flag, .good)
         XCTAssertEqual(r.signals.first { $0.key == "rhr" }?.flag, .good)
-        XCTAssertEqual(r.signals.first { $0.key == "acwr" }?.flag, .good)
         XCTAssertEqual(r.signals.first { $0.key == "hrv" }?.evidence, "72 vs 60 ms")
         XCTAssertEqual(r.signals.first { $0.key == "rhr" }?.evidence, "46 vs 52 bpm")
-        XCTAssertEqual(r.signals.first { $0.key == "acwr" }?.evidence, "7d 10.0 / 28d 10.0")
     }
 
     func testRundownWhenTwoRecoverySignalsDown() {
@@ -45,17 +43,17 @@ final class ReadinessEngineTests: XCTestCase {
         XCTAssertEqual(r.level, .rundown)
     }
 
-    func testAcwrSpikeStrains() {
-        // Recovery signals neutral, but acute load spikes above chronic.
+    /// ACWR is no longer a readiness signal: a load spike with steady recovery signals stays balanced,
+    /// and training load is reported by TrainingLoadEngine alone.
+    func testLoadSpikeIsNotAReadinessSignal() {
         var days: [DailyMetric] = []
         for i in 1...21 { days.append(d(i, hrv: 60, rhr: 52, strain: 5)) }
         for i in 22...28 { days.append(d(i, hrv: 60, rhr: 52, strain: 15)) }
         days.append(d(29, hrv: 60, rhr: 52, strain: 15))
         let r = ReadinessEngine.evaluate(days: days)
-        XCTAssertEqual(r.signals.first { $0.key == "acwr" }?.flag, .bad)
-        XCTAssertEqual(r.level, .strained)
-        XCTAssertNotNil(r.acwr)
-        XCTAssertGreaterThan(r.acwr!, 1.5)
+        XCTAssertFalse(r.signals.contains { $0.key == "acwr" })
+        XCTAssertNotEqual(r.level, .strained)
+        XCTAssertNotEqual(r.level, .rundown)
     }
 
     func testRespRateRiseFlags() {

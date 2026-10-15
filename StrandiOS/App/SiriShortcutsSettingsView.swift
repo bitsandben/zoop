@@ -19,7 +19,7 @@ struct SiriShortcutsSettingsView: View {
     }
 
     private var tips: some View {
-        StrandCard(padding: 20) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image(systemName: "mic.fill")
@@ -44,7 +44,7 @@ struct SiriShortcutsSettingsView: View {
     }
 
     private var shortcutsCard: some View {
-        StrandCard(padding: 20) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 10) {
                     Image(systemName: "square.stack.3d.up.fill")

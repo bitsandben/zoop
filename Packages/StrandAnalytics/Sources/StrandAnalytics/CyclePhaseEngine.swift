@@ -1,56 +1,46 @@
 import Foundation
 
-// CyclePhaseEngine.swift — on-device menstrual-cycle PHASE AWARENESS from the nightly skin-temperature
-// series, corroborated by the luteal resting-HR rise and the luteal HRV drop. Pure, deterministic, DB-free.
+// CyclePhaseEngine.swift - on-device menstrual-cycle phase awareness from the nightly skin-temperature
+// series, corroborated by the luteal resting-HR rise and luteal HRV drop. Pure, DB-free.
 //
-// INDEPENDENT implementation of a publicly documented method (wrist skin-temperature cycle tracking,
-// e.g. PMC11294004, and the broader biphasic-ovulatory-shift literature): skin temperature runs roughly
-// 0.3–0.5 °C HIGHER in the luteal phase than the follicular phase, with a nadir around ovulation,
-// mirrored by a luteal RESTING-HR RISE and a luteal HRV (RMSSD) DROP. Zoop re-derives this from the
-// user's OWN banked nightly signals against their OWN baseline — it reproduces no competitor's model.
+// Method: wrist skin temperature runs roughly 0.3-0.5 C higher in the luteal phase (biphasic
+// ovulatory shift, e.g. PMC11294004), mirrored by a resting-HR rise and an RMSSD drop. Derived from
+// the user's own banked nights against their own baseline.
 //
-// WELLNESS / AWARENESS ONLY — APPROXIMATE. This is NOT contraception, NOT a fertility/ovulation predictor,
-// NOT a medical device, and NOT a diagnosis. It never frames a "fertile window" or "safe days," never
-// emits a single confident period DATE (only a probabilistic WINDOW), and never diagnoses PCOS,
-// pregnancy, perimenopause or any condition — when the signal is flat/irregular it says "no clear
-// pattern," never a verdict. All of this is the load-bearing legal/ethical framing.
+// Awareness only, approximate. NOT contraception, a fertility predictor, a medical device or a
+// diagnosis: never a "fertile window" or "safe days", never a single confident period date (only a
+// probabilistic window), and a flat or irregular signal says "no clear pattern", never a verdict.
 public enum CyclePhaseEngine {
 
-    // MARK: - Tuning constants (pinned by test; mirror the Kotlin twin exactly)
+    // MARK: - Tuning constants (pinned by test)
 
-    /// Weights for the fused luteal index z = wTemp·zTemp + wRHR·zRHR + wHRV·(−zHRV). Temperature is
-    /// dominant (it is the pillar's signal); RHR and HRV corroborate. The HRV term is NEGATED so a drop
-    /// pushes the index UP (luteal-ward), matching temp ↑ and RHR ↑.
+    /// Weights for the fused luteal index z = wTemp*zTemp + wRHR*zRHR + wHRV*(-zHRV). Temperature
+    /// dominates; the HRV term is negated so a drop pushes the index up like temp and RHR.
     public static let wTemp: Double = 0.6
     public static let wRHR: Double = 0.2
     public static let wHRV: Double = 0.2
 
-    /// A night counts as "elevated" (luteal-ward) when its fused index sits at least this many spreads
-    /// above the personal series mean. Robust spread = the series' median absolute deviation (MAD), so a
-    /// few extreme nights don't widen the gate.
+    /// A night is "elevated" when its fused index sits at least this many spreads above the personal
+    /// series mean. Spread is the median absolute deviation, so a few extreme nights don't widen the gate.
     public static let elevationK: Double = 0.5
 
-    /// Plausibility clamp on the estimated cycle length (days). Anything outside is treated as "no clear
-    /// pattern" rather than a fabricated cadence.
+    /// Plausibility clamp on the estimated cycle length (days); outside it reads "no clear pattern".
     public static let minCycleDays: Int = 21
     public static let maxCycleDays: Int = 40
-    /// Typical cycle length used as the prior for the next-period WINDOW when the personal median isn't
-    /// yet reliable. Deliberately a textbook average, not a claim about this user.
+    /// Textbook cycle length used as the next-period prior when the personal median isn't reliable yet.
     public static let defaultCycleDays: Int = 28
 
-    /// Minimum number of nights of usable data before the engine will classify at all (~1.5 cycles).
+    /// Minimum nights of usable data before classifying at all (~1.5 cycles).
     public static let minNightsToClassify: Int = 42
 
-    /// Half-width (days) of the peri-ovulatory band around the estimated elevation onset — the days
-    /// straddling the follicular→luteal temperature shift.
+    /// Half-width (days) of the peri-ovulatory band around the estimated elevation onset.
     public static let periOvulatoryHalfWidth: Int = 2
 
     // MARK: - Inputs
 
-    /// One night's already-standardized inputs. `tempZ` / `rhrZ` / `hrvZ` are z-scores from
-    /// `Baselines.deviation` against each metric's personal baseline (the caller computes them so the
-    /// engine stays I/O-free). `day` is a "yyyy-MM-dd" key, oldest→newest in the array. A missing signal
-    /// is nil and simply doesn't contribute to that night's fused index.
+    /// One night's standardized inputs. `tempZ` / `rhrZ` / `hrvZ` are z-scores from `Baselines.deviation`
+    /// (computed by the caller to keep the engine I/O-free); `day` is "yyyy-MM-dd", oldest to newest.
+    /// A nil signal simply doesn't contribute to that night's fused index.
     public struct Night: Equatable, Sendable {
         public let day: String
         public let tempZ: Double?
@@ -77,13 +67,13 @@ public enum CyclePhaseEngine {
         case solid          // a stable repeating shift detected
     }
 
-    /// A detected follicular→luteal temperature shift onset (for the curve markers).
+    /// A detected follicular-to-luteal temperature shift onset (for the curve markers).
     public struct ShiftMarker: Equatable, Sendable {
         public let day: String
         public init(day: String) { self.day = day }
     }
 
-    /// A probabilistic next-period WINDOW. Always a range of days, never a single confident date.
+    /// A probabilistic next-period window: always a range of days, never a single date.
     public struct NextPeriodWindow: Equatable, Sendable {
         public let earliestDay: String
         public let latestDay: String
@@ -95,16 +85,14 @@ public enum CyclePhaseEngine {
     public struct Result: Equatable, Sendable {
         public let phase: Phase
         public let confidence: Confidence
-        /// Inclusive cycle-day estimate as a RANGE, not a point (nil when unknown/learning).
+        /// Inclusive cycle-day estimate as a range (nil when unknown or learning).
         public let cycleDayLow: Int?
         public let cycleDayHigh: Int?
         /// Estimated personal cycle length in days (nil until a repeat is seen).
         public let cycleLengthDays: Int?
-        /// Probabilistic next-period window (nil unless a usable cadence + recent elevation exist).
+        /// Probabilistic next-period window (nil unless a usable cadence and recent elevation exist).
         public let nextPeriodWindow: NextPeriodWindow?
-        /// Temperature-shift onsets across the window (oldest→newest) for the detail curve.
         public let shiftMarkers: [ShiftMarker]
-        /// A short, non-clinical status line.
         public let note: String
 
         public init(phase: Phase, confidence: Confidence, cycleDayLow: Int?, cycleDayHigh: Int?,
@@ -117,32 +105,29 @@ public enum CyclePhaseEngine {
         }
     }
 
-    /// Standing awareness-only line shown on every cycle surface (legal/ethical framing).
     public static let awarenessLine =
         "For awareness only. Not a medical device, not contraception, not a substitute for professional care."
 
     // MARK: - Classify
 
-    /// Classify the most recent night from the trailing series.
+    /// Classifies the most recent night from the trailing series.
     ///
     /// - Parameters:
-    ///   - nights: oldest→newest nightly inputs.
-    ///   - baselineUsable: whether the personal skin-temp baseline is at least `usable` (the caller
-    ///     passes `BaselineState.usable`). Below this we stay in `.learning` and never invent a phase.
-    ///   - loggedPeriodStarts: optional "yyyy-MM-dd" period-start days the user logged. When present, the
-    ///     most recent one anchors cycle-day 1 and we CROSS-VALIDATE it against the detected shift, flagging
-    ///     a mistimed log rather than trusting it blindly. Optional — the engine works temperature-only.
+    ///   - nights: oldest to newest nightly inputs.
+    ///   - baselineUsable: whether the skin-temp baseline is `usable`; below that we stay `.learning`.
+    ///   - loggedPeriodStarts: optional "yyyy-MM-dd" logged starts. The latest anchors cycle-day 1 and is
+    ///     cross-validated against the detected shift (a mistimed log is flagged, not trusted).
     public static func classify(_ nights: [Night],
                                 baselineUsable: Bool,
                                 loggedPeriodStarts: [String] = []) -> Result {
-        // Gate: need a usable baseline and ~1.5 cycles of data.
+        // Gate: a usable baseline and ~1.5 cycles of data.
         guard baselineUsable, nights.count >= minNightsToClassify else {
             return Result(phase: .learning, confidence: .learning, cycleDayLow: nil, cycleDayHigh: nil,
                           cycleLengthDays: nil, nextPeriodWindow: nil, shiftMarkers: [],
                           note: "Learning your pattern from your nightly temperature - keep wearing it overnight.")
         }
 
-        // Fuse each night into a single luteal index; nil where no signal at all.
+        // Fuse each night into one luteal index; nil where there is no signal.
         let fused: [(day: String, value: Double?)] = nights.map { n in
             (n.day, fusedIndex(tempZ: n.tempZ, rhrZ: n.rhrZ, hrvZ: n.hrvZ))
         }
@@ -162,14 +147,14 @@ public enum CyclePhaseEngine {
             return (v - center) >= elevationK * spread
         }
 
-        // Detect rising EDGES (follicular→luteal onsets) — the temperature-shift markers.
+        // Rising edges (follicular to luteal onsets) are the temperature-shift markers.
         var onsets: [Int] = []
         for i in fused.indices {
             if elevated[i] && (i == 0 || !elevated[i - 1]) { onsets.append(i) }
         }
         let shiftMarkers = onsets.map { ShiftMarker(day: fused[$0].day) }
 
-        // No detectable shift at all → honest "no clear pattern," never a fabricated phase.
+        // No detectable shift: honest "no clear pattern", never a fabricated phase.
         guard let lastOnsetIdx = onsets.last else {
             return Result(phase: .unknown, confidence: .building, cycleDayLow: nil, cycleDayHigh: nil,
                           cycleLengthDays: nil, nextPeriodWindow: nil, shiftMarkers: shiftMarkers,
@@ -177,7 +162,7 @@ public enum CyclePhaseEngine {
                               + "hormonal birth control, or shift work.")
         }
 
-        // Personal cycle length from the median gap between successive onsets (in calendar days).
+        // Personal cycle length = median gap between successive onsets (calendar days).
         var onsetGaps: [Int] = []
         if onsets.count >= 2 {
             for k in 1..<onsets.count {
@@ -191,8 +176,7 @@ public enum CyclePhaseEngine {
         }()
         let confidence: Confidence = cycleLength != nil ? .solid : .building
 
-        // Optional logged-period cross-validation (better mode). The most recent logged start that falls
-        // on/before the latest night anchors cycle-day 1; we compare it to the detected onset.
+        // The latest logged start on or before the last night anchors cycle-day 1; compare it to the onset.
         let lastNightDay = fused.last!.day
         var note = ""
         var anchorDay = fused[lastOnsetIdx].day      // default anchor = the temperature shift onset
@@ -201,9 +185,8 @@ public enum CyclePhaseEngine {
             anchorDay = loggedStart
             anchoredByLog = true
             let delta = daysBetween(loggedStart, fused[lastOnsetIdx].day)
-            // The temperature SHIFT (luteal onset) sits well after period-start in a normal cycle; an
-            // implausible offset OR a logged start older than a full cycle before the latest night (a
-            // newer period is overdue) means the log is likely mistimed — FLAG it, don't silently trust.
+            // The shift sits well after period start in a normal cycle, so an implausible offset, or a logged
+            // start older than a full cycle (a newer period is overdue), flags the log as likely mistimed.
             let sinceLog = daysBetween(loggedStart, lastNightDay) ?? 0
             if (delta.map { $0 < 0 || $0 > maxCycleDays } ?? false) || sinceLog > maxCycleDays {
                 note = "Your temperature shift came at a different time than your logged date - "
@@ -211,39 +194,37 @@ public enum CyclePhaseEngine {
             }
         }
 
-        // Cycle-day estimate as a RANGE. If anchored by a log we count from day 1 at the log; in
-        // temperature-only mode we count from the shift onset, which in a typical cycle is the start of
-        // the luteal phase (~day 14–16), so we offset by a coarse follicular-length prior.
+        // Cycle-day range: from the log if anchored, else from the shift onset (start of luteal, ~day
+        // 14-16) offset by a follicular-length prior.
         let daysSinceAnchor = daysBetween(anchorDay, lastNightDay) ?? 0
         let (cycleDayLow, cycleDayHigh): (Int?, Int?) = {
             if anchoredByLog {
                 let d = max(1, daysSinceAnchor + 1)
                 return (max(1, d - 1), d + 1)             // ±1 day band
             } else {
-                // Shift onset ≈ luteal start; place it near a typical follicular length, widen the band.
+                // Onset ~ luteal start; place near a typical follicular length and widen the band.
                 let lutealStartDay = (cycleLength ?? defaultCycleDays) / 2
                 let d = lutealStartDay + daysSinceAnchor
                 return (max(1, d - 2), d + 2)             // ±2 day band (coarser without a log)
             }
         }()
 
-        // Phase of the MOST RECENT night relative to the latest onset.
+        // Phase of the most recent night relative to the latest onset.
         let daysSinceOnset = daysBetween(fused[lastOnsetIdx].day, lastNightDay) ?? 0
         let phase: Phase
         if elevated[fused.count - 1] {
-            // Currently in an elevated run → luteal, unless we're right at the onset edge (peri-ovulatory).
+            // In an elevated run: luteal, unless right at the onset edge (peri-ovulatory).
             phase = daysSinceOnset <= periOvulatoryHalfWidth ? .periOvulatory : .luteal
         } else {
-            // Below the elevation gate. Near a known onset it's the peri-ovulatory dip; otherwise follicular.
+            // Below the gate: peri-ovulatory dip near a known onset, otherwise follicular.
             phase = daysSinceOnset <= periOvulatoryHalfWidth ? .periOvulatory : .follicular
         }
 
-        // Probabilistic next-period WINDOW: the luteal→follicular temperature drop precedes menses, so a
-        // period is likely roughly one cycle length on from the anchor. Always a RANGE, never a date.
+        // Next-period window: the luteal-to-follicular drop precedes menses, so roughly one cycle length
+        // after the anchor. Always a range.
         var window: NextPeriodWindow? = nil
         if let len = cycleLength {
-            // Next expected onset of menses ≈ anchor + cycle length. Window = ±2 days around it, but only
-            // surfaced once we're within range and on/after the anchor.
+            // Window = anchor + cycle length +/- 2 days, surfaced only once in range and on/after the anchor.
             if let earliest = shiftDay(anchorDay, by: len - 2),
                let latest = shiftDay(anchorDay, by: len + 2),
                latest >= lastNightDay {
@@ -263,8 +244,8 @@ public enum CyclePhaseEngine {
 
     // MARK: - Fusion
 
-    /// Weighted fused luteal index for one night. The HRV z is negated (a drop is luteal-ward). Weights
-    /// are renormalised over only the signals that are present, so a temp-only night still scores.
+    /// Weighted fused luteal index for one night. HRV z is negated; weights renormalise over the
+    /// signals present, so a temp-only night still scores.
     public static func fusedIndex(tempZ: Double?, rhrZ: Double?, hrvZ: Double?) -> Double? {
         var weighted = 0.0
         var wSum = 0.0
@@ -292,7 +273,7 @@ public enum CyclePhaseEngine {
         }
     }
 
-    // MARK: - Small stats / day helpers (self-contained so the engine stays I/O-free and parity-clean)
+    // MARK: - Small stats / day helpers (self-contained to keep the engine I/O-free)
 
     static func median(_ xs: [Double]) -> Double {
         guard !xs.isEmpty else { return 0 }
@@ -301,20 +282,20 @@ public enum CyclePhaseEngine {
         return n % 2 == 1 ? s[n / 2] : (s[n / 2 - 1] + s[n / 2]) / 2.0
     }
 
-    /// Median absolute deviation about `center` — a robust spread estimate.
+    /// Median absolute deviation about `center` (robust spread).
     static func medianAbsoluteDeviation(_ xs: [Double], center: Double) -> Double {
         guard !xs.isEmpty else { return 0 }
         return median(xs.map { abs($0 - center) })
     }
 
-    /// Calendar days from `a` to `b` ("yyyy-MM-dd"), b − a. nil if either is unparseable. UTC, pure.
+    /// Calendar days from `a` to `b` ("yyyy-MM-dd"), b - a; nil if unparseable. UTC.
     static func daysBetween(_ a: String, _ b: String) -> Int? {
         guard let da = parseDay(a), let db = parseDay(b) else { return nil }
         let secs = db.timeIntervalSince(da)
         return Int((secs / 86_400).rounded())
     }
 
-    /// Most recent entry in `days` that is on or before `day` (string compare is valid for ISO dates).
+    /// Most recent entry in `days` on or before `day` (ISO strings compare correctly).
     static func mostRecentOnOrBefore(_ days: [String], day: String) -> String? {
         days.filter { $0 <= day }.max()
     }
@@ -331,7 +312,7 @@ public enum CyclePhaseEngine {
         return cal.date(from: comps)
     }
 
-    /// Shift a "yyyy-MM-dd" by `delta` days. UTC, deterministic. nil if unparseable.
+    /// Shifts a "yyyy-MM-dd" by `delta` days (UTC); nil if unparseable.
     static func shiftDay(_ day: String, by delta: Int) -> String? {
         guard let base = parseDay(day) else { return nil }
         var cal = Calendar(identifier: .gregorian)

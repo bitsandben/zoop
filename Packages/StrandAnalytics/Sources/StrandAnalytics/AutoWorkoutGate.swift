@@ -1,21 +1,13 @@
 import Foundation
 
-// AutoWorkoutGate.swift — Zoop's stricter "is this really a workout?" gate for auto-detect suggestions.
-//
-// `AutoWorkoutDetector.detect` finds sustained raised heart rate (resting + 30 bpm for 12 minutes). That
-// alone kept offering ordinary mornings as workouts: getting up, showering and walking around the house
-// lift heart rate 30-40 bpm above a sleeping resting rate for half an hour. This gate runs on the
-// detector's candidates and keeps only sessions that are clearly exercise:
-//
-//  1. Motion confirmation is mandatory. With no wrist-movement series there is no suggestion at all
-//     (the detector's own motion mean check then decides whether the window moved enough).
-//  2. At least `minDurationMin` minutes long.
-//  3. Intensity relative to heart-rate reserve (Karvonen): the average must reach
-//     resting + `minReserveFraction` x (HRmax - resting).
-//  4. A window that overlaps a sleep, or starts within `postSleepWindowSec` after a sleep ends (the
-//     night or a nap), must reach resting + `postSleepReserveFraction` x reserve instead.
-//
-// Pure / headless: no I/O, no clock. All timestamps are unix SECONDS. NOT medical advice.
+// Zoop's stricter "is this really a workout?" gate for auto-detect suggestions. Sustained raised HR
+// alone offered ordinary mornings (getting up, showering) as workouts. Keeps only candidates that:
+// 1. have motion confirmation (no wrist-movement series means no suggestion at all);
+// 2. last at least `minDurationMin` minutes;
+// 3. average at least resting + `minReserveFraction` x (HRmax - resting) (Karvonen);
+// 4. if overlapping a sleep or starting within `postSleepWindowSec` after one, reach resting +
+//    `postSleepReserveFraction` x reserve instead.
+// Pure: no I/O or clock; timestamps are unix seconds. Not medical advice.
 
 public enum AutoWorkoutGate {
 
@@ -23,9 +15,9 @@ public enum AutoWorkoutGate {
     public static let minDurationMin = 15
     /// Average heart rate must reach this share of heart-rate reserve above resting.
     public static let minReserveFraction = 0.40
-    /// The stricter share used right after (or during) a sleep, where getting up looks like effort.
+    /// Stricter share used during or right after a sleep, where getting up looks like effort.
     public static let postSleepReserveFraction = 0.50
-    /// How long after a sleep ends the stricter share applies (60 minutes).
+    /// How long after a sleep ends the stricter share applies.
     public static let postSleepWindowSec = 60 * 60
     /// HRmax when neither a profile value nor an age is known.
     public static let fallbackHRMax = 190.0
@@ -63,9 +55,9 @@ public enum AutoWorkoutGate {
         }
     }
 
-    /// Whether one detector candidate is a workout worth suggesting.
-    /// - Parameter motionConfirmed: the caller ran the detector WITH a motion series (so the window's
-    ///   movement was checked). false means there was no movement data, and nothing is suggested.
+    /// Whether one detector candidate is worth suggesting.
+    /// - Parameter motionConfirmed: the caller ran the detector with a motion series; false means no
+    ///   movement data, and nothing is suggested.
     public static func passes(_ w: DetectedWorkout,
                               restingBpm: Int?,
                               hrMax: Double,
@@ -78,8 +70,7 @@ public enum AutoWorkoutGate {
         return Double(w.avgBpm) >= requiredAvgBpm(restingBpm: restingBpm, hrMax: hrMax, reserveFraction: share)
     }
 
-    /// Run the published detector with the mandatory motion series, then this gate. nil or empty motion
-    /// returns no candidates.
+    /// Run the published detector with the mandatory motion series, then this gate; nil or empty motion returns no candidates.
     public static func detect(hr: [(ts: Int, bpm: Int)],
                               restingBpm: Int?,
                               hrMax: Double,

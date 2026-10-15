@@ -3,22 +3,13 @@ import WhoopStore
 
 // Display names for the stored `LiftMuscle` vocabulary.
 //
-// `WhoopStore` deliberately holds no UI strings: `LiftMuscle`'s raw values are a stored-data
-// contract (an Android twin must one day write byte-identical tokens), so the human-readable name
-// has to live at the app layer, where it can be localized without touching what is written to the
-// database. Renaming a label here is free; renaming a token is not — see the header of
-// `LiftMuscle.swift`.
-//
-// Names are the ones lifters use, not the anatomical Latin: "Lats", not "latissimus dorsi". The
-// vocabulary is meant to be picked from in a gym in a few seconds, and the granularity is already
-// justified in the enum — the label's only job is to be recognised instantly.
+// `WhoopStore` holds no UI strings and the raw values are a stored-data contract, so names live
+// here where they can be localized. Renaming a label is free; renaming a token is not. Names are
+// the ones lifters use ("Lats"), recognisable in a gym in a few seconds.
 
 extension LiftMuscle {
-    /// Localized display name, e.g. "Front delts".
-    ///
-    /// A computed `String` rather than a `LocalizedStringKey` because callers interpolate it — into
-    /// a picker row, a summary line, an accessibility label — and an interpolated
-    /// `LocalizedStringKey` would look up the *interpolated* result as a key and miss.
+    /// Localized display name, e.g. "Front delts". A `String` (not `LocalizedStringKey`) because
+    /// callers interpolate it, and an interpolated key would miss its lookup.
     var displayName: String {
         switch self {
         // Push
@@ -50,13 +41,8 @@ extension LiftMuscle {
 }
 
 extension LiftMuscle.Region {
-    /// Localized section title for the muscle picker. Presentation-only, like the region itself.
-    ///
-    /// "Push muscles", not "Push" — and for the same reason the rest timer says "Rest period" rather
-    /// than "Rest". The catalog's bare `"Push"` key is the TODAY screen's readiness nudge ("push
-    /// yourself"), translated accordingly: 推送 in Chinese is a push NOTIFICATION, and "Вперёд" in
-    /// Russian is "forward". Reusing it would have rendered this picker's section headers as words
-    /// from an unrelated feature. A generic English word is never safe as a key here.
+    /// Localized section title for the muscle picker. "Push muscles", not "Push": the bare `"Push"`
+    /// catalog key is Today's readiness nudge and translates to unrelated words in some locales.
     var displayName: String {
         switch self {
         case .push:  return String(localized: "Push muscles")
@@ -71,12 +57,9 @@ extension LiftMuscle.Region {
 
 enum LiftMuscleSummary {
 
-    /// One line describing how an exercise is classified, for a program row or a picker subtitle:
-    /// "Chest · Front delts, Triceps", or "Not classified" when it has no primary.
-    ///
-    /// The primary is listed first and separated from the secondaries, because the direct/indirect
-    /// split is what makes the per-muscle counts computable at all — collapsing them into one list
-    /// would hide the distinction the whole rollup rests on.
+    /// One line describing an exercise's classification, e.g. "Chest · Front delts, Triceps", or
+    /// "Not classified" when it has no primary. The primary is listed first because the direct/indirect
+    /// split is what the per-muscle rollup rests on.
     static func line(primary: LiftMuscle?, secondaries: [LiftMuscle]) -> String {
         guard let primary else { return String(localized: "Not classified") }
         let secondary = secondaries.filter { $0 != primary }

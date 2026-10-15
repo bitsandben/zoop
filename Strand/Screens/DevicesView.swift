@@ -131,7 +131,7 @@ private struct DevicesContent: View {
             Spacer(minLength: 0)
         }
         .padding(ZoopMetrics.space3)
-        .background(ZoopPanelSurface(cornerRadius: 18))
+        .zoopInsetSurface(radius: 18)
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
             .strokeBorder(StrandPalette.statusWarning.opacity(0.5), lineWidth: 1))
         .accessibilityElement(children: .combine)
@@ -280,6 +280,9 @@ private struct DevicesContent: View {
             if !removedDevices.isEmpty { removedSection }
 
             whoopFirstFooter
+
+            OnboardingReplayButton()
+                .frame(maxWidth: .infinity)
         }
         // Add a device — guided, branching wizard (asks the device TYPE first, then runs the right
         // scan/register path: WHOOP present-scan for WHOOP families, StandardHRSource for HR straps).
@@ -525,7 +528,7 @@ private struct DevicesContent: View {
         }
     }
 
-    private func compareValue(_ v: Double?) -> String { v.map { String(format: "%.0f", $0) } ?? "—" }
+    private func compareValue(_ v: Double?) -> String { v.map { ZoopNumber.decimal($0, digits: 0) } ?? "—" }
 
     // Copy held in LocalizedStringKey vars (like `metricLabel`) — still localizable, but not scanned as an
     // inline Text literal by the i18n gate.
@@ -544,7 +547,7 @@ private struct DevicesContent: View {
     }
 
     @ViewBuilder private func compareCard(_ c: StrapCompareData) -> some View {
-        StrandCard(padding: 18, tint: StrandPalette.accent) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 12) {
                 Text(compareTitle).strandOverline()
                 HStack {
@@ -641,22 +644,16 @@ private struct DeviceSyncStatusCard: View {
     @EnvironmentObject private var live: LiveState
 
     var body: some View {
+        let status = live.syncStatus
         switch SyncChipState.resolve(live: live) {
-        case .syncing(let chunks, _):
+        case .syncing, .synced:
+            let line = [status.syncLine(lastSyncedAt: live.lastSyncedAt), status.detail]
+                .compactMap { $0 }.joined(separator: "\n")
             statusCard(
-                systemImage: "arrow.triangle.2.circlepath",
-                detail: chunks > 0
-                    ? String(localized: "Syncing… \(chunks) chunks")
-                    : String(localized: "Syncing…"),
-                tint: StrandPalette.accent,
-                accessibility: String(localized: "Syncing strap history, \(chunks) chunks")
-            )
-        case .synced(let agoText):
-            statusCard(
-                systemImage: "checkmark.circle.fill",
-                detail: String(localized: "Synced \(agoText) ago"),
-                tint: StrandPalette.statusPositive,
-                accessibility: String(localized: "Strap history synced \(agoText) ago")
+                systemImage: symbol(status),
+                detail: line,
+                tint: status.tone.color,
+                accessibility: line
             )
         case .experimentalLive:
             statusCard(
@@ -670,6 +667,14 @@ private struct DeviceSyncStatusCard: View {
         }
     }
 
+    private func symbol(_ status: SyncStatus) -> String {
+        switch status.tone {
+        case .warning, .critical: return "exclamationmark.circle"
+        case .accent: return "arrow.triangle.2.circlepath"
+        default: return "checkmark.circle.fill"
+        }
+    }
+
     private func statusCard(
         systemImage: String,
         detail: String,
@@ -679,7 +684,7 @@ private struct DeviceSyncStatusCard: View {
         ZoopCard(tint: tint) {
             HStack(alignment: .center, spacing: ZoopMetrics.space3) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(ZoopType.icon(18, weight: .semibold))
                     .foregroundStyle(tint)
                     .frame(width: 24)
                     .accessibilityHidden(true)
@@ -793,7 +798,7 @@ private struct DeviceCard: View {
     /// The card's visible content. The required `body` wraps this in the whole-card liquid press button +
     /// the ⋮ menu overlay.
     private var cardContent: some View {
-        StrandCard(padding: 18, tint: isActive ? StrandPalette.accent : nil) {
+        ContentCard {
             VStack(alignment: .leading, spacing: ZoopMetrics.cardInnerSpacing) {
                 HStack(alignment: .top, spacing: ZoopMetrics.space3) {
                     Image(systemName: icon)
@@ -909,7 +914,7 @@ private struct DeviceCard: View {
                         Text(hint)
                             .font(StrandFont.overlineScaled(10)).tracking(1.0)
                             .foregroundStyle(StrandPalette.accent)
-                        Image(systemName: "chevron.right").font(.system(size: 10, weight: .semibold))
+                        Image(systemName: "chevron.right").font(ZoopType.icon(10, weight: .semibold))
                             .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                     }

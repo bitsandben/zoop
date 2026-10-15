@@ -1,27 +1,18 @@
 import SwiftUI
 
-// MARK: - BevelGauge (NEW) — the layered ring gauge primitive
+// MARK: - BevelGauge: the layered ring gauge primitive
 //
-// The shared instrument behind RecoveryRing and StrainGauge: a 240° open gauge with
-//   • a soft frosted inner disc (subtle radial fill, hairline rim)
-//   • a faint full-span track ring carved from `surfaceInset` (the Titanium "well")
-//   • a gradient-stroked progress arc (AngularGradient over the domain ramp:
-//     Charge=green, Effort=blue, Rest=slate-blue — caller-supplied score tokens; WHOOP, no gold)
-//   • a clean end-cap dot at the arc tip (small white core, very faint shadow) — NO outer bloom
-//   • a centred SF Pro **Rounded** bold number with an "of N" caption + state word
-//
-// It owns no domain logic — callers pass the fraction, the stroke gradient, the tip
-// colour, and the centre read-out strings. RecoveryRing / StrainGauge keep their own
-// public init signatures and delegate their visuals here, so every screen re-skins
-// without any call-site change.
+// Shared by RecoveryRing and StrainGauge: a 240° open gauge with a frosted inner disc, a faint track
+// ring, a gradient progress arc, an end-cap dot and a centred rounded number with caption + state word.
+// It owns no domain logic; callers pass the fraction, gradient, tip colour and read-out strings.
 
 public struct BevelGauge: View {
 
     /// Fill fraction 0...1 of the 240° span.
     public var fraction: Double
-    /// Angular gradient stops for the progress arc (the domain ramp).
+    /// Angular gradient stops for the progress arc.
     public var stops: [Gradient.Stop]
-    /// Colour of the glowing end-cap + state word (usually the ramp sampled at `fraction`).
+    /// Colour of the end-cap + state word (usually the ramp sampled at `fraction`).
     public var tipColor: Color
     /// Big centred number, already formatted (e.g. "87" or "12.4").
     public var numberText: String
@@ -34,9 +25,9 @@ public struct BevelGauge: View {
     public var diameter: CGFloat
     public var lineWidth: CGFloat
     public var showsLabel: Bool
-    /// Animated draw-in fraction supplied by the caller (so it owns the @State + animation).
+    /// Animated draw-in fraction supplied by the caller (it owns the @State + animation).
     public var animatedFraction: Double
-    /// Whether the bloom is at full (vs resting) intensity — caller drives the breathe pulse.
+    /// Whether the bloom is at full intensity; caller drives the pulse.
     public var bloomActive: Bool
 
     public init(
@@ -75,15 +66,12 @@ public struct BevelGauge: View {
 
     public var body: some View {
         ZStack {
-            // STATIC BACKDROP: the frosted inner disc + the faint full-span track. Neither depends on
-            // `animatedFraction`, so SwiftUI/CoreAnimation already caches it as an unchanged layer and
-            // does NOT re-render it when only the arc animates. No .drawingGroup() — a per-instance
-            // offscreen flatten cost more than it saved (it was part of the v7.0.2 lag regression).
+            // STATIC BACKDROP: independent of `animatedFraction`, so it is not re-rendered while the arc animates.
+            // No .drawingGroup(): a per-instance offscreen flatten cost more than it saved.
             staticBackdrop
                 .frame(width: diameter, height: diameter)
 
-            // LIVE LAYER: the gradient progress arc + end-cap, kept OUTSIDE the drawingGroup so the
-            // shape's `animatableData` still animates smoothly (a drawingGroup would freeze it).
+            // LIVE LAYER: kept OUTSIDE any drawingGroup so the shape's `animatableData` still animates.
             animatedArc
 
             if showsLabel { centerLabel }
@@ -91,21 +79,20 @@ public struct BevelGauge: View {
         .frame(width: diameter, height: diameter)
     }
 
-    /// The non-animating backdrop: frosted disc behind the arc + the faint full-span track "well".
+    /// The non-animating backdrop: frosted disc plus the faint full-span track.
     private var staticBackdrop: some View {
         ZStack {
             innerDisc
-            // Faint full-span track — the inset "well" the score arc sits in.
+            // Faint full-span track.
             arcShape(to: 1.0)
                 .stroke(StrandPalette.surfaceInset,
                         style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
         }
     }
 
-    /// The live layer: the filled gradient arc + its clean end-cap dot (both driven by animatedFraction).
+    /// The live layer: filled gradient arc plus end-cap dot.
     private var animatedArc: some View {
         ZStack {
-            // Filled gradient arc.
             arcShape(to: animatedFraction)
                 .stroke(
                     AngularGradient(gradient: gradient, center: .center,
@@ -113,12 +100,10 @@ public struct BevelGauge: View {
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                 )
 
-            // Clean end-cap dot at the arc tip.
             if animatedFraction > 0.001 { endCap }
         }
     }
 
-    // Frosted inner disc behind the arc — gives the gauge a glassy "well".
     private var innerDisc: some View {
         Circle()
             .fill(
@@ -131,10 +116,7 @@ public struct BevelGauge: View {
             .padding(lineWidth * 1.4)
     }
 
-    // Design Reset (WHOOP): NO outer bloom. Fill-contrast carries the arc edge, so the ring reads as a
-    // clean, crisp Material instrument rather than a skeuomorphic glow. `bloomActive` stays in the
-    // signature (callers still pass it) but no longer renders. The track + disc now live in
-    // `staticBackdrop` and the filled arc + tip in `animatedArc` (see `body`).
+    // No outer bloom: fill contrast carries the arc edge. `bloomActive` stays in the signature but no longer renders.
 
     private var endCap: some View {
         GeometryReader { geo in
@@ -143,8 +125,7 @@ public struct BevelGauge: View {
             let tipAngle = startAngle.radians + (arcSpanDegrees * .pi / 180) * animatedFraction
             let pt = CGPoint(x: center.x + radius * cos(tipAngle),
                              y: center.y + radius * sin(tipAngle))
-            // Clean Material tip: a single small solid dot at the arc end. The large
-            // blurred halo is gone; only a very faint shadow keeps it from looking pasted on.
+            // Single small solid dot at the arc end.
             Circle().fill(StrandPalette.tipCore)
                 .frame(width: lineWidth * 0.7, height: lineWidth * 0.7)
                 .overlay(Circle().fill(tipColor).opacity(0.35))
@@ -165,11 +146,8 @@ public struct BevelGauge: View {
                     .foregroundStyle(StrandPalette.textTertiary)
             }
             if let stateText {
-                // Scale the state word WITH the gauge, like the number (0.30·d) and caption (0.085·d).
-                // `min(11, …)` pins it to the original 11pt overline on the large solo-hero rings (≥130pt)
-                // — byte-identical there — and shrinks it on the small three-up rings, where a fixed 11pt
-                // word overflowed the arc and collided with the number/caption. Uses a *scaled overline*
-                // (not rounded()) so Dynamic-Type text-scaling is preserved. Thanks @claypilat (#403).
+                // Scale the state word with the gauge. `min(11, …)` keeps the 11pt overline on large rings and shrinks
+                // it on small three-up rings where it collided with the number. Scaled overline (not rounded()) preserves Dynamic Type.
                 let stateSize = min(11, diameter * 0.085)
                 Text(stateText)
                     .font(StrandFont.overlineScaled(stateSize))

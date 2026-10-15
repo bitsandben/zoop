@@ -2,41 +2,27 @@ import Foundation
 import UserNotifications
 import StrandAnalytics
 
-/// Surfaces the strap battery state as a user notification — a LOW warning when the cell falls to
-/// the threshold so the user can top up before tonight's sleep, and a CHARGED note when it reaches
-/// 100%. Mirrors `IllnessNotifier`: requestAuthorization() up front when the toggle is enabled,
-/// status-only check at fire time, and the persisted gate advances even when delivery is deferred.
-/// On-device only; gated behind the user's "Battery alerts" setting (default ON) by the caller (#368).
+/// Surfaces strap battery state as a notification: LOW when the cell reaches the threshold, CHARGED at
+/// 100%. Like `IllnessNotifier`: authorization is requested up front when the toggle is enabled, fire time
+/// checks status only, and the persisted gate advances even when delivery is deferred. Gated by the user's
+/// "Battery alerts" setting (#368).
 enum BatteryNotifier {
     private static let lowAlertedKey = "behavior.batteryLowAlerted"
     private static let fullAlertedKey = "behavior.batteryFullAlerted"
     private static let runtimeAlertedKey = "behavior.batteryRuntimeAlerted"
-    /// Gates for the two ESCALATION alerts. Separate keys on purpose — see `onCriticalBattery` /
-    /// `onBedtimeRunway`: a latched `lowAlertedKey`/`runtimeAlertedKey` must never silence them.
+    /// Gates for the two escalation alerts, separate keys on purpose so a latched `lowAlertedKey` or
+    /// `runtimeAlertedKey` cannot silence them.
     private static let criticalAlertedKey = "behavior.batteryCriticalAlerted"
     private static let bedtimeAlertedKey = "behavior.batteryBedtimeAlerted"
 
-    /// The banked reading `onStrapNotSeen` last warned about, as its epoch SECONDS (#2556). Keyed on the
-    /// reading rather than a flag so one stale value cannot re-notify on every wake, while a NEWER low
-    /// reading still counts as a new fact. Absent means never.
+    /// Epoch seconds of the banked reading `onStrapNotSeen` last warned about. Keyed on the reading so one
+    /// stale value cannot re-notify on every wake while a newer low reading still counts (#2556).
     private static let staleAlertedTsKey = "behavior.batteryStaleAlertedTs"
 
-    /// Whether a strap NOBODY has heard from is worth warning about (#2556).
-    ///
-    /// `BatteryAlertPolicy` can only judge a percentage the app actually received, and both its crossings
-    /// run off the live connection, so a strap that drains while disconnected crosses 15 and 12 unseen and
-    /// the wearer gets nothing. That is not hypothetical on an unbonded 5/MG, where a link can average under
-    /// two minutes.
-    ///
-    /// This reads the LAST BANKED reading instead, which is already durable in the `battery` table. It
-    /// therefore states something weaker and must say so: "last seen at 11 percent, six hours ago", never
-    /// "your strap is at 11 percent". The app has not seen the strap since; it does not know what it is at
-    /// now.
-    ///
-    /// Deliberately silent while connected: the live crossings own that case, and two readouts of one fact
-    /// must not be able to disagree.
-    ///
-    /// Twin of Kotlin `StaleBatteryAlertPolicy`.
+    /// Whether a strap nobody has heard from is worth warning about (#2556). `BatteryAlertPolicy` only judges
+    /// percentages the app received over a live connection, so a strap that drains while disconnected crosses
+    /// the thresholds unseen. This reads the last banked reading instead, so it can only say "last seen at 11
+    /// percent, six hours ago", never a current level. Silent while connected: the live crossings own that case.
     enum StaleBatteryAlertPolicy {
         /// How long out of contact before a low last reading is worth raising.
         static let staleAfterSeconds = 2 * 60 * 60
@@ -46,12 +32,8 @@ enum BatteryNotifier {
             let ageSeconds: Int
         }
 
-        /// How long ago, as a compact label: "6h", "3d".
-        ///
-        /// Deliberately plural-free. "6 hours ago" needs a plural rule in every locale to avoid printing
-        /// "1 hours", and the age here is never below the two-hour window anyway, so the compact form
-        /// carries the same meaning for none of the cost. Shared with the Kotlin twin so the two
-        /// notifications cannot word the same fact differently.
+        /// How long ago, as a compact label ("6h", "3d"). Plural-free to avoid per-locale plural rules; the age
+        /// is never below the two-hour window.
         static func ageLabel(_ seconds: Int) -> String {
             let hours = seconds / 3600
             return hours >= 48 ? "\(hours / 24)d" : "\(hours)h"
@@ -59,9 +41,7 @@ enum BatteryNotifier {
 
         private static let no = Decision(fire: false, ageSeconds: 0)
 
-        /// `alertedForTs` is the reading this already fired for, persisted, so one stale value cannot
-        /// re-notify on every app open. Keyed on the READING's timestamp rather than a boolean: a newer low
-        /// reading is a new fact and deserves its own alert.
+        /// `alertedForTs` is the reading already alerted for (persisted); a newer low reading is a new fact.
         static func evaluate(lastSocPct: Int?,
                              lastTsSec: Int?,
                              lastCharging: Bool?,
@@ -72,33 +52,27 @@ enum BatteryNotifier {
                              staleAfterSeconds: Int = staleAfterSeconds) -> Decision {
             if connected { return no }
             guard let lastSocPct, let lastTsSec else { return no }
-            // Only a CONFIRMED charging reading suppresses, matching the live policy: unknown still warns.
+            // Only a confirmed charging reading suppresses, matching the live policy.
             if lastCharging == true { return no }
             if lastSocPct > lowThreshold { return no }
             let age = nowSec - lastTsSec
-            // A reading from the future is a clock problem, not a stale strap. Never warn on it.
+            // A reading from the future is a clock problem, not a stale strap.
             if age < staleAfterSeconds { return no }
             if alertedForTs == lastTsSec { return no }
             return Decision(fire: true, ageSeconds: age)
         }
     }
 
-    /// Pure crossing-with-hysteresis policy, identical on macOS/iOS and Android (#368). The two
-    /// `*Alerted` flags are PERSISTED, so they survive process death — and the 25% re-arm band means
-    /// a 14↔15% jitter fires the low alert exactly once per discharge cycle (no in-memory prevPct
-    /// crossing that re-fires on every bounce and resets on restart). Full re-arms only below 100.
+    /// Pure crossing-with-hysteresis policy. The `*Alerted` flags are persisted so they survive process death,
+    /// and the 25% re-arm band fires the low alert once per discharge cycle despite 14/15% jitter. Full re-arms only below 100.
     enum BatteryAlertPolicy {
         static let lowThreshold = 15
         static let lowRearmAbove = 25
         static let fullThreshold = 100
 
-        /// `charging == nil` means unknown — the low alert still fires (only a confirmed `true`
-        /// suppresses it). Returns the fire decisions plus the next persisted flag state.
-        ///
-        /// `clearFull` (#514): the strap was showing a "fully charged" notification and has now
-        /// dropped below 100% — the standing note is stale, so cancel it. It's exactly the full
-        /// re-arm transition (previouslyFullAlerted && pct < fullThreshold), surfaced so the
-        /// notifier can pull the delivered + pending full-charge notification by its id.
+        /// `charging == nil` means unknown (the low alert still fires; only a confirmed `true` suppresses).
+        /// Returns the fire decisions and the next persisted flag state. `clearFull` marks the full re-arm
+        /// transition so the notifier can pull the stale "fully charged" notification (#514).
         static func evaluate(pct: Int,
                              charging: Bool?,
                              lowAlerted: Bool,
@@ -106,13 +80,11 @@ enum BatteryNotifier {
             -> (fireLow: Bool, fireFull: Bool, clearFull: Bool, newLowAlerted: Bool, newFullAlerted: Bool) {
             var low = lowAlerted
             var full = fullAlerted
-            // The stale 100%-full note must be cleared the moment we re-arm below the full line.
+            // The stale 100%-full note must be cleared when re-arming below the full line.
             let clearFull = fullAlerted && pct < fullThreshold
-            // Re-arm (hysteresis) so jitter near a threshold can't re-fire. #80: re-arm ONLY on genuine
-            // recovery (pct >= lowRearmAbove), NOT on charging. The strap reports its charge bit only every
-            // ~8 min, so it flickers true→nil; re-arming on `true` then firing on the `nil` gap re-fired the
-            // low alert repeatedly WHILE charging. `fireLow`'s `charging != true` still suppresses an explicit
-            // charging reading, and a null-charging strap (generic/FTMS) still alerts.
+            // Re-arm only on genuine recovery (pct >= lowRearmAbove), not on charging (#80): the strap reports its
+            // charge bit only every ~8 min, so it flickers true/nil, and re-arming on `true` re-fired the low alert
+            // while charging.
             if pct >= lowRearmAbove { low = false }
             if pct < fullThreshold { full = false }
             // Fire at most once per genuine crossing.
@@ -124,17 +96,14 @@ enum BatteryNotifier {
         }
     }
 
-    /// Ask up front (called when the user enables the alerts) so the system dialog appears at a
-    /// predictable moment, not on the first low-battery crossing.
+    /// Ask up front (when the user enables alerts) so the dialog appears at a predictable moment.
     static func requestAuthorization() {
         UNUserNotificationCenter.current()
             .requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
-    /// Run the policy against a fresh battery reading and post at most one notification per genuine
-    /// crossing. No-op when the setting is off. The persisted flags are written back ALWAYS (so the
-    /// gate advances even if the user declined notifications or delivery is deferred — mirroring how
-    /// `IllnessNotifier` marks the day up front).
+    /// Run the policy on a fresh reading and post at most one notification per crossing. No-op when the
+    /// setting is off. The persisted flags are always written back so the gate advances even if delivery is declined.
     static func onBatteryUpdate(pct: Int, charging: Bool?, enabled: Bool) {
         guard enabled else { return }
         let d = UserDefaults.standard
@@ -143,8 +112,7 @@ enum BatteryNotifier {
             charging: charging,
             lowAlerted: d.bool(forKey: lowAlertedKey),
             fullAlerted: d.bool(forKey: fullAlertedKey))
-        // Advance the persisted gate up front so the once-per-crossing limit holds regardless of
-        // authorization or delivery — the in-app battery surfaces stay the live view either way.
+        // Advance the gate up front so once-per-crossing holds regardless of authorization or delivery.
         d.set(result.newLowAlerted, forKey: lowAlertedKey)
         d.set(result.newFullAlerted, forKey: fullAlertedKey)
         if result.fireLow {
@@ -157,21 +125,18 @@ enum BatteryNotifier {
                  title: String(localized: "Strap fully charged"),
                  body: String(localized: "Your WHOOP is at 100%."))
         }
-        // #514: the strap has dropped below 100% — pull the stale "fully charged" note (delivered
-        // banner + any still-pending request) so it can't linger after the cell discharges.
+        // The strap dropped below 100%: pull the stale "fully charged" note (delivered and pending).
         if result.clearFull {
-            let center = UNUserNotificationCenter.current()
-            center.removeDeliveredNotifications(withIdentifiers: ["battery-full"])
-            center.removePendingNotificationRequests(withIdentifiers: ["battery-full"])
+            NotificationWork.run { center in
+                center.removeDeliveredNotifications(withIdentifiers: ["battery-full"])
+                center.removePendingNotificationRequests(withIdentifiers: ["battery-full"])
+            }
         }
     }
 
-    /// Predictive twin of `onBatteryUpdate`: run the runtime estimate against
-    /// `BatteryEstimator.runtimeAlert` (fire ≤24 h, re-arm ≥36 h — see the policy for why a runtime
-    /// threshold beats a fixed SoC one) and post at most one notification per discharge cycle. The
-    /// 15% SoC alert stays as the safety net for straps with no usable estimate (`estimate == nil`
-    /// is a no-op here). Same gating discipline as #368: the persisted flag advances even when
-    /// delivery is deferred, and the whole thing no-ops when the "Battery alerts" setting is off.
+    /// Predictive twin of `onBatteryUpdate`: fires on `BatteryEstimator.runtimeAlert` (at or under 24 h,
+    /// re-arm at 36 h), once per discharge cycle. The 15% alert remains the net for straps with no usable
+    /// estimate (a no-op here). Same gating as #368.
     static func onRuntimeEstimate(remainingHours: Double?, charging: Bool?, enabled: Bool) {
         guard enabled, let remainingHours else { return }
         let d = UserDefaults.standard
@@ -186,23 +151,9 @@ enum BatteryNotifier {
         }
     }
 
-    /// CRITICAL low-battery escalation — the second alert below the 15% one (#368 fires at
-    /// `BatteryAlertPolicy.lowThreshold`, this at `BatteryEstimator.criticalSocPct`).
-    ///
-    /// Why a whole second alert rather than a lower first threshold: on the reference incident the
-    /// user's device flags show BOTH the 15% alert and the 24 h predictive alert had already fired —
-    /// and both then LATCHED (`lowAlerted` until 25%, `runtimeAlerted` until a 36 h estimate). So the
-    /// last ~3 h of the discharge, from 15% down to the ~10% cutoff, passed in total silence and cost
-    /// a night of biometrics. This gate is independent of both: `criticalAlertedKey` is its own key, so
-    /// a latched low/runtime alert cannot suppress it. Same discipline as #368 otherwise — self-gates
-    /// on the setting, advances the persisted flag even when delivery is deferred, once per cycle.
-    /// Warn that a strap last seen LOW has not been heard from since (#2556). Twin of Kotlin
-    /// `BatteryAlertNotifier.onStrapNotSeen`.
-    ///
-    /// The live crossings need a connection, so a strap that drains out of range is never judged at all.
-    /// This reads the last BANKED reading instead, which is why the copy says "when Zoop last heard from
-    /// it" rather than naming a current percentage: the app has not seen the strap since and does not know
-    /// what it is at now.
+    /// Warn that a strap last seen low has not been heard from since (#2556). The live crossings need a
+    /// connection; this reads the last banked reading, so the copy says "when Zoop last heard from it" and
+    /// never names a current percentage.
     static func onStrapNotSeen(lastSocPct: Int?,
                                lastTsSec: Int?,
                                lastCharging: Bool?,
@@ -224,10 +175,13 @@ enum BatteryNotifier {
              title: String(localized: "WHOOP last seen low"),
              body: String(localized: "\(lastSocPct)% when Zoop last heard from it, \(age) ago. Charge it before tonight."),
              interruptionLevel: .timeSensitive)
-        // Persisted AFTER posting, keyed on the reading, so a failed post retries on the next wake.
+        // Persisted after posting, keyed on the reading, so a failed post retries on the next wake.
         d.set(lastTsSec, forKey: staleAlertedTsKey)
     }
 
+    /// Critical low-battery escalation below the 15% alert (at `BatteryEstimator.criticalSocPct`). Its
+    /// own `criticalAlertedKey` keeps a latched low/runtime alert from silencing the last hours of
+    /// discharge. Self-gates on the setting and fires once per cycle.
     static func onCriticalBattery(pct: Int, charging: Bool?, enabled: Bool) {
         guard enabled else { return }
         let d = UserDefaults.standard
@@ -243,14 +197,9 @@ enum BatteryNotifier {
         }
     }
 
-    /// BEDTIME night-guard — "this won't last the night", delivered while there is still time to act.
-    ///
-    /// Independent of `runtimeAlertedKey` by design: the generic "recharge tonight" alert may well have
-    /// fired (and latched) many hours earlier — on the reference incident it fired ~18 h before the
-    /// strap died. This asks a narrower, time-anchored question at the pre-bed moment, and re-arms
-    /// every night rather than every charge, so it speaks even when everything else has gone quiet.
-    /// `runway` is nil at cold-start (no learned bedtime) — the policy stays silent rather than
-    /// inventing one.
+    /// Bedtime night-guard: "this won't last the night", delivered while there is time to act. Independent of
+    /// `runtimeAlertedKey` (the generic alert may have latched hours earlier) and re-armed every night. `runway`
+    /// is nil at cold start (no learned bedtime); the policy stays silent rather than inventing one.
     static func onBedtimeRunway(nowSecOfDay: Int,
                                 habitualMidsleepSec: Int?,
                                 typicalSleepHours: Double?,
@@ -276,18 +225,15 @@ enum BatteryNotifier {
 
     private static func post(identifier: String, title: String, body: String,
                              interruptionLevel: UNNotificationInterruptionLevel = .active) {
-        let center = UNUserNotificationCenter.current()
-        // Authorization is requested once via requestAuthorization() when alerts are enabled; here
-        // we only check status (no second system prompt).
-        center.getNotificationSettings { settings in
+        // Authorization is requested once via requestAuthorization(); here only status is checked.
+        NotificationWork.withSettings { center, settings in
             guard settings.authorizationStatus == .authorized else { return }
             let content = UNMutableNotificationContent()
             content.title = title
             content.body = body
             content.sound = .default
-            // The two escalation alerts ask for .timeSensitive so they can break through a sleep Focus —
-            // the whole point is reaching the user in the hour before bed. Without the time-sensitive
-            // entitlement the OS silently treats this as .active, so it is safe to request either way.
+            // The escalation alerts request .timeSensitive to break through a sleep Focus; without the entitlement
+            // the OS treats it as .active, so requesting is safe.
             content.interruptionLevel = interruptionLevel
             center.add(UNNotificationRequest(identifier: identifier,
                                              content: content, trigger: nil))

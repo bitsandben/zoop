@@ -1,12 +1,7 @@
 import Foundation
 
-// BreathProtocolCatalog.swift — bundled ANS + Presence breath protocols for Breathe.
-// Created: 2026-08-16
-// Last updated: 2026-08-16
-//
-// Technique list/timings inspired by publicly documented ANS breath protocols
-// (e.g. https://www.ultrahuman.com/blog/harness-the-power-of-breath-protocols-for-your-autonomic-nervous-system/)
-// and measured Presence Process guide tempos. Copy is original Zoop wording (non-clinical).
+// Bundled ANS and Presence breath protocols for Breathe. Technique list and timings follow publicly
+// documented ANS breath protocols and measured Presence Process guide tempos; copy is original Zoop wording (non-clinical).
 
 public enum BreathProtocolCatalog {
 
@@ -15,7 +10,7 @@ public enum BreathProtocolCatalog {
 Consciously Connected Breathing (CCB): inhale and exhale in one continuous loop with no hold at the top or bottom. Find a comfortable rhythm — connectedness matters more than intensity. Typical practice is about 15 minutes, twice daily. Regular is the sustainable starter tempo; Mid is a quicker start for later rounds; Punching Through is only when you need to push through drowsiness or stuckness (not a beginner default).
 """
 
-    /// All catalog entries in picker order (legacy Zoop paces first, then ANS, then Presence).
+    /// All catalog entries in picker order (legacy Zoop paces, then ANS, then Presence).
     public static let all: [BreathProtocol] = {
         var list: [BreathProtocol] = []
         list.append(contentsOf: legacyNoop)

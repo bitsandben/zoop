@@ -226,7 +226,7 @@ struct AutomationsView: View {
                           isOn: $behavior.zoneCoaching)
                 rowDivider
                 // v5 L3 closed-loop check-in (master + sub toggles). Default OFF, manual-first. The keys
-                // mirror BiofeedbackPrefs, which the central detector (AppModel.evaluateStress) reads.
+                // mirror BiofeedbackPrefs, which the central detector (AppModel.feedStressOnsetDetector) reads.
                 ToggleRow(label: String(localized: "Stress check-ins (haptic)"),
                           help: String(localized: "When a fresh, non-exercise HRV dip is detected while you're still, Zoop offers a one-minute guided breath: a single confirming buzz and a dismissible card. Never an alarm, never a diagnosis."),
                           isOn: $behavior.stressCheckIn)
@@ -560,7 +560,7 @@ private struct Section2<Content: View>: View {
     var active: Bool = false
     @ViewBuilder var content: () -> Content
     var body: some View {
-        StrandCard(padding: 20, tint: StrandPalette.accent) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 8) {

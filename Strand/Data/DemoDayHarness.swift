@@ -3,21 +3,12 @@ import Foundation
 
 // MARK: - DEBUG-only day-cycle screenshot harness
 //
-// A promo-animation aid (NOT shipped). When the process is launched with `--demo-hour <Int>` (the two
-// args arrive separately via `simctl launch`), this pins the Today screen to a single believable
-// "moment in the day": it swaps the day-cycle SCENE to that hour's illustration and overrides a small
-// set of Today read-outs (Effort, greeting, readiness badge, Synthesis copy, and the Stress / HRV /
-// Resting-HR cards) with a hand-tuned per-hour value so a sweep of `--demo-hour 2 … 22` captures every
-// background with a plausible stat progression across the day.
-//
-// Gating: the WHOLE file is `#if DEBUG`, so it is stripped from every Release build. At runtime nothing
-// changes unless `--demo-hour` is present: `applyLaunchArgsIfNeeded()` leaves `active == nil` otherwise,
-// and every override in TodayView is `(DemoDayHarness.active != nil)`-gated — so with no arg the screen
-// is byte-identical to the seeded demo. Pairs with `--demo-seed` (AppleDemoSeeder), which supplies the
-// underlying synthetic dataset; this harness only re-presents a few values on top of it. Everything here
-// is SYNTHETIC — nothing is real biometric data.
+// Not shipped. Launched with `--demo-hour <Int>`, pins Today to one believable moment of the day: swaps the
+// day-cycle scene and overrides a few read-outs with hand-tuned per-hour values for promo captures.
+// The whole file is `#if DEBUG`; with no arg `active` stays nil and every TodayView override is gated on
+// it. Pairs with `--demo-seed`. All values are synthetic.
 
-/// One pinned "moment in the day" the harness renders. All values are presentation-only overrides.
+/// One pinned moment of the day; presentation-only overrides.
 struct DemoDayFrame {
     let hour: Int
     let greeting: String
@@ -32,15 +23,14 @@ struct DemoDayFrame {
 
 enum DemoDayHarness {
 
-    /// The pinned frame, or nil when `--demo-hour` was not passed (→ zero behaviour change).
+    /// The pinned frame, or nil without `--demo-hour`.
     static private(set) var active: DemoDayFrame?
 
-    /// The override hour for the day-cycle scene, when a frame is active.
+    /// Override hour for the day-cycle scene, when a frame is active.
     static var hour: Int? { active?.hour }
 
-    /// The ten frames, one per captured hour, ordered through the day. Hand-tuned so the stat
-    /// progression reads believably as the day advances (Effort climbs and settles, HRV/RHR ebb and
-    /// flow, stress peaks midday). The scene each hour resolves to is owned by `DayCycleScene`.
+    /// One hand-tuned frame per captured hour, ordered through the day. The scene each hour resolves to is
+    /// owned by `DayCycleScene`.
     static let frames: [DemoDayFrame] = [
         DemoDayFrame(hour: 2,  greeting: "Good night",     readiness: "Solid",    effort: 3,  hrvMs: 84, rhrBpm: 50, stress0to3: 0, synthHeadline: "Resting",      synthBody: "Deep in the night. Your body is recovering."),
         DemoDayFrame(hour: 5,  greeting: "Early start",    readiness: "Solid",    effort: 5,  hrvMs: 81, rhrBpm: 51, stress0to3: 0, synthHeadline: "Waking",       synthBody: "First light. Recovery is looking strong."),
@@ -54,12 +44,11 @@ enum DemoDayHarness {
         DemoDayFrame(hour: 22, greeting: "Good night",     readiness: "Solid",    effort: 84, hrvMs: 71, rhrBpm: 55, stress0to3: 0, synthHeadline: "Time for bed", synthBody: "A big day done. Prioritise sleep tonight."),
     ]
 
-    /// Scan the launch args for `--demo-hour <Int>` and pin the matching frame (exact hour, else the
-    /// nearest by absolute hour distance). Call ONCE at launch before the first Today render. Safe to
-    /// call always: with no `--demo-hour` present `active` stays nil and nothing changes. Idempotent.
+    /// Scans launch args for `--demo-hour <Int>` and pins the matching frame (exact hour, else nearest).
+    /// Call once at launch before the first Today render; idempotent.
     static func applyLaunchArgsIfNeeded() {
         let args = CommandLine.arguments
-        // `--demo-hour` and its value arrive as two separate args (simctl). Find the flag, read the next.
+        // `--demo-hour` and its value arrive as separate args (simctl).
         guard let flagIdx = args.firstIndex(of: "--demo-hour"),
               args.index(after: flagIdx) < args.endIndex,
               let wanted = Int(args[args.index(after: flagIdx)]) else { return }

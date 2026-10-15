@@ -17,13 +17,7 @@ struct AsleepDurationData {
     let typicalTotalMin: Double?
 
     /// yyyy-MM-dd → Date (en_US_POSIX, UTC) — matches `SleepView.dayParser`.
-    private static let dayParser: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let dayParser: DateFormatter = DayKeyFormat.utc
 
     /// Trailing 30 days of total sleep in HOURS, falling back to all nights with data when the trailing
     /// window is too sparse (verbatim of `SleepView.durationTrendPoints`). `typicalTotalMin` is the mean
@@ -53,12 +47,11 @@ struct AsleepDurationCard: View {
         let avg = data.typicalTotalMin.map { $0 / 60.0 }
         VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Asleep duration", overline: "Trend")
-            ChartCard(
+            ContentCard(
                 title: "Hours asleep",
                 subtitle: String(localized: "Per night, trailing 30 days"),
-                trailing: avg.map { String(localized: "\(String(format: "%.1f", $0)) h avg") },
+                trailing: avg.map { String(localized: "\(ZoopNumber.decimal($0, digits: 1)) h avg") },
                 height: ZoopMetrics.chartHeight,
-                tint: StrandPalette.restColor,
                 chart: {
                     if pts.count >= 2 {
                         TrendChart(points: pts,
@@ -66,7 +59,7 @@ struct AsleepDurationCard: View {
                                    valueRange: Self.trendRange(pts),
                                    showsBars: true,
                                    height: ZoopMetrics.chartHeight,
-                                   valueFormat: { String(format: "%.1f h", $0) },
+                                   valueFormat: { String(format: "%.1f h", locale: AppLanguage.activeLocale, $0) },
                                    accessibilityLabel: String(localized: "Hours asleep trend"))
                     } else {
                         Self.sparsePlaceholder
@@ -75,9 +68,9 @@ struct AsleepDurationCard: View {
                 footer: {
                     HStack {
                         ChartFooter([
-                            ("Avg",    avg.map { String(format: "%.1f h", $0) } ?? "—"),
-                            ("Min",    pts.map(\.value).min().map { String(format: "%.1f h", $0) } ?? "—"),
-                            ("Max",    pts.map(\.value).max().map { String(format: "%.1f h", $0) } ?? "—"),
+                            ("Avg",    avg.map { String(format: "%.1f h", locale: AppLanguage.activeLocale, $0) } ?? "—"),
+                            ("Min",    pts.map(\.value).min().map { String(format: "%.1f h", locale: AppLanguage.activeLocale, $0) } ?? "—"),
+                            ("Max",    pts.map(\.value).max().map { String(format: "%.1f h", locale: AppLanguage.activeLocale, $0) } ?? "—"),
                             ("Nights", "\(pts.count)"),
                         ])
                         durationTrendStat(pts)
@@ -100,7 +93,7 @@ struct AsleepDurationCard: View {
             .font(StrandFont.subhead)
             .foregroundStyle(StrandPalette.textTertiary)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .background(ZoopPanelSurface(tint: StrandPalette.restColor, cornerRadius: 12))
+            .zoopInsetSurface(radius: 12, tint: StrandPalette.restColor)
     }
 
     /// Recent-half mean minus earlier-half mean (verbatim of `SleepView.durationTrendChange`). Direction
@@ -120,7 +113,7 @@ struct AsleepDurationCard: View {
         let delta = Self.durationTrendChange(points)
         let deltaText = delta.map {
             let sign = $0 >= 0 ? "+" : "−"
-            return "\(sign)\(String(format: "%.1f h", abs($0)))"
+            return "\(sign)\(String(format: "%.1f h", locale: AppLanguage.activeLocale, abs($0)))"
         }
         VStack(alignment: .leading, spacing: ZoopMetrics.spaceHalf) {
             Text("Trend")

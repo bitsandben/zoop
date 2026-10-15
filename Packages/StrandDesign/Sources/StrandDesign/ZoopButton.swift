@@ -1,19 +1,9 @@
 import SwiftUI
 
-// MARK: - ZoopButton — the unified button system (Design Reset, 2026-06-22)
-//
-// One button, four kinds, no glow. Beauty comes from a crisp filled accent, honest
-// surface fills, restrained spacing and a subtle press — never neon, bloom or a halo.
-// Every colour is a token from `StrandPalette`; every dimension reads off `ZoopMetrics`.
-//
-// Two front doors:
-//   • `ZoopButton("Save", kind: .primary) { … }`     — the convenience view.
-//   • `Button("Save") { … }.buttonStyle(ZoopButtonStyle(.primary))`  — adopt on an
-//     existing Button (e.g. a Menu/role button) without rewriting it.
-//
-// Labels are sentence-case (never ALL CAPS), single line, optical-centred with the
-// optional leading icon as one unit, and degrade gracefully under Reduce Motion (the
-// press scale drops; only the dim remains).
+// MARK: - ZoopButton — the unified button system
+// One button, four kinds, no glow: crisp filled accent, honest surface fills, subtle press. Colours are `StrandPalette` tokens, dimensions `ZoopMetrics`.
+// Entry points: `ZoopButton("Save", kind: .primary) { … }`, or `.buttonStyle(ZoopButtonStyle(.primary))` to adopt on an existing Button (e.g. a Menu/role button).
+// Labels are sentence-case, single line, icon and word as one unit; under Reduce Motion the press scale drops and only the dim remains.
 
 /// The four button roles. Colour + emphasis differ; geometry is identical across all four.
 public enum ZoopButtonKind: Sendable {
@@ -29,8 +19,7 @@ public enum ZoopButtonKind: Sendable {
 
 // MARK: - Shared geometry / resolved styling
 
-/// Fixed geometry shared by the convenience view and the ButtonStyle so the two paths
-/// are pixel-identical. The single source of truth for button shape.
+/// Fixed geometry shared by the view and the ButtonStyle so both paths are pixel-identical.
 public enum ZoopButtonMetrics {
     /// Standard control height (48) — also the source for the min hit target floor.
     public static let height: CGFloat = ZoopMetrics.controlHeight
@@ -52,8 +41,7 @@ public enum ZoopButtonMetrics {
     public static let disabledOpacity: Double = 0.4
 }
 
-/// Resolves a `ZoopButtonKind` to its concrete fill / label / border tokens. Internal
-/// so the fill model stays in one place; both the style and the view read from here.
+/// Resolves a `ZoopButtonKind` to its fill / label / border tokens, shared by style and view.
 struct ZoopButtonAppearance {
     let fill: Color?          // nil = no fill (tertiary)
     let label: Color
@@ -74,10 +62,19 @@ struct ZoopButtonAppearance {
             border = nil
             usesPanelSurface = false
         case .secondary:
+            #if os(iOS)
+            // The panel surface is the card colour, so on a card the button vanished; its own fill and
+            // hairline keep it visible on cards and canvas alike.
+            fill = StrandPalette.secondaryButtonFill
+            label = StrandPalette.secondaryButtonText
+            border = StrandPalette.secondaryButtonBorder
+            usesPanelSurface = false
+            #else
             fill = nil
             label = StrandPalette.textPrimary
             border = nil
             usesPanelSurface = true
+            #endif
         case .tertiary:
             fill = nil
             #if os(iOS)
@@ -121,9 +118,7 @@ private struct ZoopButtonBackground: View {
 
 // MARK: - ButtonStyle (adopt on any existing Button)
 
-/// Apply the Zoop button look to ANY `Button` — e.g. a role/`Menu` button you can't
-/// replace with `ZoopButton`. Honours Reduce Motion: the press scale drops to a dim-only
-/// state. Pixel-identical to `ZoopButton` since both share `ZoopButtonMetrics`/appearance.
+/// Apply the Zoop button look to ANY `Button` (e.g. a role/`Menu` button). Under Reduce Motion the press scale drops to dim-only. Pixel-identical to `ZoopButton`.
 public struct ZoopButtonStyle: ButtonStyle {
     private let kind: ZoopButtonKind
     private let fullWidth: Bool
@@ -164,9 +159,7 @@ public struct ZoopButtonStyle: ButtonStyle {
 
 // MARK: - ZoopButton (the convenience view)
 
-/// The unified button. A title (sentence-case `LocalizedStringKey`), an optional leading
-/// SF Symbol, a `ZoopButtonKind`, an optional `fullWidth`, and an action. Crisp, flat,
-/// glow-free; subtle press; 44pt hit floor; Reduce-Motion aware.
+/// The unified button: a sentence-case title, optional leading SF Symbol, a `ZoopButtonKind`, optional `fullWidth`, and an action. Flat, 44pt hit floor, Reduce-Motion aware.
 ///
 /// ```swift
 /// ZoopButton("Save changes", systemImage: "checkmark", kind: .primary, fullWidth: true) {
@@ -196,9 +189,7 @@ public struct ZoopButton: View {
 
     public var body: some View {
         Button(action: action) {
-            // The ButtonStyle owns the chrome (fill / colour / press / padding). The label here is
-            // just the icon + word as one centred unit at the exact 8pt token spacing. When there's
-            // no icon the HStack holds a single Text, so the word sits dead-centre with no phantom gap.
+            // The ButtonStyle owns the chrome; the label is just icon + word as one centred unit at the 8pt token spacing (no phantom gap without an icon).
             HStack(spacing: ZoopButtonMetrics.iconSpacing) {
                 if let systemImage {
                     Image(systemName: systemImage)
@@ -225,7 +216,6 @@ public struct ZoopButton: View {
             ZoopButton("Full-width primary", systemImage: "bolt.fill", kind: .primary, fullWidth: true) {}
             ZoopButton("Full-width secondary", kind: .secondary, fullWidth: true) {}
 
-            // Adopting the style on a vanilla Button.
             Button("Adopted via ZoopButtonStyle") {}
                 .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
 

@@ -28,14 +28,6 @@ final class PatternInsightsTests: XCTestCase {
         XCTAssertNil(PatternInsights.weekdayPattern(values.filter { $0.weekday <= 4 }))
     }
 
-    func testSleepNeedAddsStrainAndPartOfTheDebt() {
-        let n = PatternInsights.sleepNeedTonight(baseNeedMin: 480, strain: 15, debtMin: 120)
-        XCTAssertEqual(n.strainMin, 20)
-        XCTAssertEqual(n.debtMin, 30)
-        XCTAssertEqual(n.totalMin, 530)
-        XCTAssertEqual(PatternInsights.sleepNeedTonight(baseNeedMin: 480, strain: 8, debtMin: 600).totalMin, 540)
-    }
-
     func testSplitEffectComparesTheOuterThirds() {
         let pairs = (0..<12).map { (driver: Double($0), outcome: $0 < 4 ? 90.0 : ($0 >= 8 ? 70.0 : 80.0)) }
         let e = PatternInsights.splitEffect(pairs)!

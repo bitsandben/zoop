@@ -1,13 +1,10 @@
 import Foundation
 import WhoopProtocol
 
-// SmartWake.swift — experimental: is the wearer in light sleep or stirring, right now?
+// SmartWake: experimental check for whether the wearer is in light sleep or stirring.
 //
-// The smart-wake window keeps the strap alarm armed at the latest wake time and, inside the window,
-// asks this after each fresh sync. A yes moves the alarm to now, so the wearer is woken when it is easy
-// rather than from deep sleep; a no (or not enough fresh data) changes nothing and the alarm rings at its
-// time. The signals are the two the strap reliably banks overnight: wrist movement and a heart rate that
-// has risen off its night low. Unvalidated on hardware; the caller keeps it opt-in.
+// Inside the smart-wake window the caller asks this after each fresh sync; a yes moves the strap alarm to
+// now. Signals: wrist movement and a heart rate risen off its night low. Unvalidated on hardware; opt-in.
 
 public enum SmartWake {
 

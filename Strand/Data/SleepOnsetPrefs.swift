@@ -1,10 +1,9 @@
 import Foundation
 import StrandAnalytics
 
-/// The wearer's sleep-onset detection settings (Sleep → "Why this sleep?" → Detection): the strictness
-/// of the HR-confirmed onset rule, and whether a personal offset is learned from their own corrections of
-/// a night's start. Read once per scoring pass by `IntelligenceEngine` and threaded into detection as a
-/// `SleepOnsetTuning`; the math lives in `StrandAnalytics/SleepOnsetTuning.swift`.
+/// The wearer's sleep-onset detection settings: strictness of the HR-confirmed onset rule, and whether a
+/// personal offset is learned from their corrections. Read once per scoring pass and threaded into
+/// detection as a `SleepOnsetTuning` (math in `StrandAnalytics/SleepOnsetTuning.swift`).
 enum SleepOnsetPrefs {
     static let strictnessKey = "zoop.sleepOnsetStrictness"
     static let learnKey = "zoop.sleepOnsetLearn"
@@ -33,9 +32,8 @@ enum SleepOnsetPrefs {
         SleepOnsetTuning(strictness: strictness, personalOffsetMin: learnedOffsetMin ?? 0)
     }
 
-    /// Record a start-time correction of a MAIN night (never a nap). No-op while learning is off or when
-    /// the start did not move. Measured against the bare rule: the offset detection currently applies is
-    /// added back (the night was re-detected under it by the last pass).
+    /// Records a start-time correction of a MAIN night (never a nap). No-op while learning is off or when the
+    /// start did not move. Measured against the bare rule, so the offset currently applied is added back.
     static func recordCorrection(nightKey: Int, detectedStartTs: Int, correctedStartTs: Int) {
         guard learnEnabled, correctedStartTs != detectedStartTs else { return }
         let c = OnsetCorrectionLearning.correction(nightKey: nightKey, detectedStartTs: detectedStartTs,

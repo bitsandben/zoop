@@ -157,13 +157,19 @@ private struct BreathingContent: View {
 
     @AppStorage("breathe.lastOutcome") private var lastStoredOutcome = ""
 
-    /// Opt-in audio pacer — a soft tone at each phase change (rising on the inhale, falling on the
-    /// exhale). Default OFF (manual-first). The tones go through an ambient session category, so the
-    /// iOS silent switch mutes them like any other ambient sound. Persists across launches.
-    @AppStorage("breathe.audioCues") private var audioCues = false
-    /// The on-device tone player. View-owned, lazily wired the first time the pacer is enabled, torn
-    /// down on disappear so we never hold the audio session when off-screen.
-    @StateObject private var tonePlayer = BreathTonePlayer()
+    /// Opt-in audio pacer: a synthesised singing bowl, soft gong or beep at each phase change, plus an
+    /// optional drone (`MindfulSoundPlayer`). Default off (manual-first); the legacy beep switch is
+    /// honoured until a sound is picked. Ambient session, so the silent switch mutes it.
+    @AppStorage(BreathSound.legacyAudioCuesKey) private var audioCues = false
+    @AppStorage(BreathSound.storageKey) private var soundRaw = ""
+    @AppStorage(BreathSound.volumeKey) private var soundVolume = 0.7
+    @AppStorage(BreathSound.droneKey) private var drone = false
+    /// View-owned, torn down on disappear so the audio session is never held off-screen.
+    @StateObject private var tonePlayer = MindfulSoundPlayer()
+    /// When the running fixed-pace session started, for the mindfulness log.
+    @State private var sessionStartedAt: Date?
+
+    private var breathSound: BreathSound { BreathSound.resolve(soundRaw, legacyAudioCues: audioCues) }
 
     private let phaseTimer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
     private let secondTimer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
@@ -245,15 +251,18 @@ private struct BreathingContent: View {
             if running { stop() }
             controller.stop()
         }
-        .onChangeCompat(of: audioCues) { on in
-            // Spin the audio engine up the moment the user opts in (so the first phase tone isn't
-            // swallowed by start-up latency); tear it back down when they switch it off.
-            on ? tonePlayer.activate() : tonePlayer.deactivate()
+        .onChangeCompat(of: soundRaw) { _ in
+            // Spin the engine up the moment a sound is picked (so the first cue isn't swallowed by
+            // start-up latency); tear it down when sound goes off. "Haptics only" turns pulses on.
+            applySound()
+            if breathSound == .hapticsOnly { vibration = true }
         }
+        .onChangeCompat(of: soundVolume) { _ in applySound() }
+        .onChangeCompat(of: drone) { on in if running { applySound(); tonePlayer.setDrone(on) } }
         .onAppear {
             model.startRealtimeHR()
             controllerBox.prepare(model: model, live: live)
-            if audioCues { tonePlayer.activate() }
+            applySound()
         }
         .onDisappear { model.stopRealtimeHR(); stop(); controller.stop(); tonePlayer.deactivate() }
         #if os(iOS)
@@ -399,7 +408,7 @@ private struct BreathingContent: View {
                 .foregroundStyle(selected ? StrandPalette.surfaceBase : StrandPalette.textPrimary)
             if let systemImage {
                 Image(systemName: systemImage)
-                    .font(.system(size: 13, weight: .bold))
+                    .font(ZoopType.icon(13, weight: .bold))
                     .foregroundStyle(StrandPalette.textSecondary)
                     .accessibilityHidden(true)
             } else if let detail {
@@ -441,7 +450,7 @@ private struct BreathingContent: View {
     }
 
     private static func secondsText(_ ms: Int) -> String {
-        ms % 1000 == 0 ? "\(ms / 1000)" : String(format: "%.1f", Double(ms) / 1000.0)
+        ms % 1000 == 0 ? "\(ms / 1000)" : String(format: "%.1f", locale: AppLanguage.activeLocale, Double(ms) / 1000.0)
     }
 
     // MARK: - Duration
@@ -491,53 +500,51 @@ private struct BreathingContent: View {
     // MARK: - Settings (vibration, sound, info, test buzz)
 
     private var settingsCard: some View {
-        VStack(spacing: 0) {
-            toggleRow(icon: "iphone.radiowaves.left.and.right",
-                      title: "Vibration",
-                      detail: "A pulse on each breath, on your phone and strap",
-                      isOn: $vibration)
-            rowDivider
-            toggleRow(icon: audioCues ? "speaker.wave.2.fill" : "speaker.slash.fill",
-                      title: "Audio cues",
-                      detail: "Soft tone on each phase · respects silent mode",
-                      isOn: $audioCues)
-            rowDivider
-            Button { showEdu = true } label: {
-                HStack(spacing: 12) {
-                    rowIcon("info.circle")
-                    Text("About this pace")
-                        .font(StrandFont.body)
-                        .foregroundStyle(StrandPalette.textPrimary)
-                    Spacer(minLength: 8)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(StrandPalette.textTertiary)
-                        .accessibilityHidden(true)
-                }
-                .padding(.vertical, 12)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            if live.bonded {
+        ListCard {
+            VStack(spacing: 0) {
+                toggleRow(icon: "iphone.radiowaves.left.and.right",
+                          title: "Vibration",
+                          detail: "A pulse on each breath, on your phone and strap",
+                          isOn: $vibration)
                 rowDivider
-                Button { model.buzz(loops: 1) } label: {
+                BreathSoundRows(sound: Binding(get: { breathSound }, set: { soundRaw = $0.rawValue }),
+                                volume: $soundVolume, drone: $drone)
+                rowDivider
+                Button { showEdu = true } label: {
                     HStack(spacing: 12) {
-                        rowIcon("waveform.path")
-                        Text("Test buzz")
+                        rowIcon("info.circle")
+                        Text("About this pace")
                             .font(StrandFont.body)
                             .foregroundStyle(StrandPalette.textPrimary)
                         Spacer(minLength: 8)
+                        Image(systemName: "chevron.right")
+                            .font(ZoopType.icon(13, weight: .semibold))
+                            .foregroundStyle(StrandPalette.textTertiary)
+                            .accessibilityHidden(true)
                     }
                     .padding(.vertical, 12)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help("Fire a single haptic pulse on the strap (requires a bonded connection)")
+                if live.bonded {
+                    rowDivider
+                    Button { model.buzz(loops: 1) } label: {
+                        HStack(spacing: 12) {
+                            rowIcon("waveform.path")
+                            Text("Test buzz")
+                                .font(StrandFont.body)
+                                .foregroundStyle(StrandPalette.textPrimary)
+                            Spacer(minLength: 8)
+                        }
+                        .padding(.vertical, 12)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Fire a single haptic pulse on the strap (requires a bonded connection)")
+                }
             }
+            .padding(.vertical, 4)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 4)
-        .background(ZoopPanelSurface())
     }
 
     private var rowDivider: some View {
@@ -549,7 +556,7 @@ private struct BreathingContent: View {
 
     private func rowIcon(_ name: String) -> some View {
         Image(systemName: name)
-            .font(.system(size: 15, weight: .semibold))
+            .font(ZoopType.icon(15, weight: .semibold))
             .foregroundStyle(StrandPalette.textSecondary)
             .frame(width: 28)
             .accessibilityHidden(true)
@@ -649,10 +656,10 @@ private struct BreathingContent: View {
     }
 
     private func outcomeCard(_ line: String) -> some View {
-        StrandCard(padding: 14, tint: StrandPalette.restColor) {
+        ContentCard {
             HStack(spacing: 10) {
                 Image(systemName: "wind")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(ZoopType.icon(14, weight: .semibold))
                     .foregroundStyle(StrandPalette.icon(StrandPalette.restBright))
                     .accessibilityHidden(true)
                 Text(line)
@@ -696,13 +703,13 @@ private struct BreathingContent: View {
                         caption: live.worn ? String(localized: "Live") : String(localized: "Strap not worn"))
 
             readoutTile(label: String(localized: "HRV (RMSSD)"),
-                        value: rmssd.map { String(format: "%.0f", $0) } ?? "—",
+                        value: rmssd.map { ZoopNumber.decimal($0, digits: 0) } ?? "—",
                         unit: "ms",
                         accent: StrandPalette.metricPurple,
                         caption: rrBuffer.isEmpty ? String(localized: "Waiting for R-R") : String(localized: "Last \(rrBuffer.count) beats"))
 
             readoutTile(label: String(localized: "Pace"),
-                        value: selectedBpm > 0 ? String(format: "%.1f", selectedBpm) : "—",
+                        value: selectedBpm > 0 ? ZoopNumber.decimal(selectedBpm, digits: 1) : "—",
                         unit: "br/min",
                         accent: StrandPalette.restBright,
                         caption: paceCaption)
@@ -714,18 +721,18 @@ private struct BreathingContent: View {
             let cycle = 60.0 / (lockedBpm ?? ResonanceEngine.fallbackBpm)
             let inn = cycle * BreathPacer.defaultInhaleFraction
             let out = cycle * (1 - BreathPacer.defaultInhaleFraction)
-            return String(format: "%.0f / %.0fs", inn, out)
+            return String(format: "%.0f / %.0fs", locale: AppLanguage.activeLocale, inn, out)
         }
         guard let proto = selectedProtocol, !proto.stages.isEmpty else {
             return isGuided ? String(localized: "Guided timer") : "—"
         }
-        let parts = proto.stages.map { String(format: "%.1f", Double($0.durationMs) / 1000.0) }
+        let parts = proto.stages.map { String(format: "%.1f", locale: AppLanguage.activeLocale, Double($0.durationMs) / 1000.0) }
         return parts.joined(separator: " · ") + "s"
     }
 
     private func readoutTile(label: String, value: String, unit: String,
                              accent: Color, caption: String) -> some View {
-        StrandCard(padding: 14, tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 0) {
                 Text(label.uppercased()).strandOverline()
                 Spacer(minLength: 6)
@@ -753,7 +760,7 @@ private struct BreathingContent: View {
     // MARK: - Coherence estimate
 
     private var coherenceCard: some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text("Coherence estimate").strandOverline()
@@ -825,6 +832,8 @@ private struct BreathingContent: View {
 
     private func start() {
         running = true
+        sessionStartedAt = Date()
+        if drone { applySound(); tonePlayer.setDrone(true) }
         ScreenIdle.keepAwake(true)
         sessionSeconds = 0
         breathCount = 0
@@ -864,6 +873,17 @@ private struct BreathingContent: View {
         // actually buzzing, so a stop on an idle trainer stays silent.
         if wasRunning { model.stopHaptics() }
         if wasRunning { captureOutcome() }
+        tonePlayer.setDrone(false)
+        if wasRunning, let started = sessionStartedAt {
+            MindfulSessionLog.record(kind: .breathing, start: started)
+        }
+        sessionStartedAt = nil
+    }
+
+    /// Matches the audio engine to the chosen sound: up when a sound or the drone is wanted, else down.
+    private func applySound() {
+        tonePlayer.configure(sound: breathSound, volume: soundVolume)
+        if breathSound.playsAudio || drone { tonePlayer.activate() } else { tonePlayer.deactivate() }
     }
 
     /// The shape's size between sessions and for guided patterns, which have no fixed rhythm.
@@ -871,6 +891,8 @@ private struct BreathingContent: View {
 
     private func captureOutcome() {
         guard sessionSeconds >= 120 else { return }
+        // The Stress screen asks "Were you stressed?" once, so the answer can tune the nudge threshold.
+        StressLabelLog().markSessionFinished()
         guard let base = baselineRmssd, base > 0, sessionRmssdCount > 0 else {
             endedOutcome = "—"
             return
@@ -878,7 +900,7 @@ private struct BreathingContent: View {
         let mean = sessionRmssdSum / Double(sessionRmssdCount)
         let pct = Int(((mean - base) / base * 100).rounded())
         let pctStr = String(format: "%+d%%", pct)
-        let peakStr = String(format: "%.0f", sessionRmssdPeak)
+        let peakStr = ZoopNumber.decimal(sessionRmssdPeak, digits: 0)
         let core = String(localized: "\(pctStr) vs start · peak \(peakStr) ms")
         endedOutcome = core
         lastStoredOutcome = core
@@ -938,7 +960,7 @@ private struct BreathingContent: View {
             case .textOnly: break
             }
         }
-        if audioCues {
+        if breathSound.playsAudio {
             switch mapped {
             case .inhale: tonePlayer.play(.inhale)
             case .exhale: tonePlayer.play(.exhale)
@@ -1180,112 +1202,6 @@ private final class ControllerBox: ObservableObject {
     }
 }
 
-// MARK: - Audio pacer (opt-in soft phase tones)
-
-/// A tiny on-device tone player for the opt-in audio pacer. It synthesises a short, soft sine "ding"
-/// for each phase (a higher note on the inhale, a lower one on the exhale) and plays it through an
-/// **ambient** audio session, so the iOS silent switch mutes it like any other ambient sound and it
-/// never interrupts other audio. No bundled assets — the buffers are generated once and reused.
-///
-/// Self-contained and view-owned: `activate()` spins the engine up when the user opts in, `deactivate()`
-/// tears it down when they switch off or leave the screen, so we hold the audio session only while it's
-/// actually wanted.
-@MainActor
-final class BreathTonePlayer: ObservableObject {
-
-    enum Tone { case inhale, exhale }
-
-    private let engine = AVAudioEngine()
-    private let player = AVAudioPlayerNode()
-    private var inhaleBuffer: AVAudioPCMBuffer?
-    private var exhaleBuffer: AVAudioPCMBuffer?
-    private var active = false
-
-    /// Phase tone frequencies (Hz). A gentle rising/falling pair — a soft cue, not a chime.
-    private let inhaleHz: Double = 440   // A4, brighter for "in"
-    private let exhaleHz: Double = 330   // E4, lower for "out"
-    private let toneSeconds: Double = 0.45
-    private let sampleRate: Double = 44_100
-
-    /// Bring the engine and audio session up. Idempotent — safe to call on every appear.
-    func activate() {
-        guard !active else { return }
-#if os(iOS)
-        // Ambient: obeys the silent switch and mixes politely with anything else playing.
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
-        try? session.setActive(true, options: [])
-#endif
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)
-        guard let format else { return }
-
-        if inhaleBuffer == nil { inhaleBuffer = makeTone(frequency: inhaleHz, format: format) }
-        if exhaleBuffer == nil { exhaleBuffer = makeTone(frequency: exhaleHz, format: format) }
-
-        engine.attach(player)
-        engine.connect(player, to: engine.mainMixerNode, format: format)
-        do {
-            try engine.start()
-            player.play()
-            active = true
-        } catch {
-            // Audio is a nicety, never load-bearing — if it can't start we just stay silent.
-            active = false
-        }
-    }
-
-    /// Stop and release the engine + session so nothing lingers when the pacer is off.
-    func deactivate() {
-        guard active else { return }
-        player.stop()
-        engine.stop()
-        engine.disconnectNodeOutput(player)
-        engine.detach(player)
-#if os(iOS)
-        try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
-#endif
-        active = false
-    }
-
-    /// Play the phase tone. No-op if the engine isn't up (e.g. start-up race) — the haptic + visual cues
-    /// still carry the pace, so a missed tone is harmless.
-    func play(_ tone: Tone) {
-        guard active else { return }
-        let buffer = (tone == .inhale) ? inhaleBuffer : exhaleBuffer
-        guard let buffer else { return }
-        player.scheduleBuffer(buffer, at: nil, options: .interrupts, completionHandler: nil)
-    }
-
-    /// Generate a single soft sine tone with a short attack/decay envelope so it fades in and out rather
-    /// than clicking. Built once per frequency and reused.
-    private func makeTone(frequency: Double, format: AVAudioFormat) -> AVAudioPCMBuffer? {
-        let frameCount = AVAudioFrameCount(toneSeconds * sampleRate)
-        guard frameCount > 0,
-              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount),
-              let channel = buffer.floatChannelData?[0] else { return nil }
-        buffer.frameLength = frameCount
-
-        let total = Int(frameCount)
-        let attack = Int(0.02 * sampleRate)
-        let release = Int(0.18 * sampleRate)
-        let peak: Float = 0.28   // kept quiet — a gentle cue, not a beep
-
-        for i in 0..<total {
-            let t = Double(i) / sampleRate
-            let sample = Float(sin(2.0 * Double.pi * frequency * t))
-            // Linear attack, sustain, then a longer linear release so the tail is soft.
-            var env: Float = 1.0
-            if i < attack {
-                env = Float(i) / Float(max(attack, 1))
-            } else if i > total - release {
-                env = Float(total - i) / Float(max(release, 1))
-            }
-            channel[i] = sample * env * peak
-        }
-        return buffer
-    }
-}
-
 // MARK: - L3 nudge-center environment key (optional injection point for Wave 3)
 
 private struct StressNudgeCenterKey: EnvironmentKey {
@@ -1326,7 +1242,7 @@ private struct ResonanceModeView: View {
     }
 
     private var explainerCard: some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Find your resonance pace").strandOverline()
@@ -1347,7 +1263,7 @@ private struct ResonanceModeView: View {
     }
 
     private var startCard: some View {
-        StrandCard {
+        ContentCard {
             VStack(spacing: ZoopMetrics.space3) {
                 ZoopButton("Full sweep · ~13 min", systemImage: "waveform.path.ecg",
                            kind: .primary, fullWidth: true) {
@@ -1368,7 +1284,7 @@ private struct ResonanceModeView: View {
     }
 
     private var sweepProgressCard: some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text(controller.sweepLabel ?? String(localized: "Sweeping…"))
@@ -1392,7 +1308,7 @@ private struct ResonanceModeView: View {
     }
 
     private func resultCard(_ result: ResonanceEngine.SweepResult) -> some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text(result.didLock ? "Your resonance pace" : "Couldn't lock today").strandOverline()
@@ -1403,7 +1319,7 @@ private struct ResonanceModeView: View {
 
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     CountUpText(value: result.lockedBpm,
-                                format: { String(format: "%.1f", $0) },
+                                format: { ZoopNumber.decimal($0, digits: 1) },
                                 font: StrandFont.number(40),
                                 color: StrandPalette.restBright)
                     Text("br/min")
@@ -1430,7 +1346,7 @@ private struct ResonanceModeView: View {
     }
 
     private func lockedCard(_ bpm: Double) -> some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Your locked pace").strandOverline()
@@ -1439,7 +1355,7 @@ private struct ResonanceModeView: View {
                 }
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     CountUpText(value: bpm,
-                                format: { String(format: "%.1f", $0) },
+                                format: { ZoopNumber.decimal($0, digits: 1) },
                                 font: StrandFont.number(34),
                                 color: StrandPalette.restBright)
                     Text("br/min")
@@ -1464,7 +1380,7 @@ private struct ResonanceModeView: View {
             Text("RSA RESPONSE BY PACE").strandOverline()
             ForEach(scores, id: \.bpm) { s in
                 HStack(spacing: 8) {
-                    Text(String(format: "%.1f", s.bpm))
+                    Text(ZoopNumber.decimal(s.bpm, digits: 1))
                         .font(StrandFont.captionNumber)
                         .foregroundStyle(StrandPalette.textSecondary)
                         .frame(width: 34, alignment: .leading)
@@ -1473,7 +1389,7 @@ private struct ResonanceModeView: View {
                     LiquidTube(frac: (s.rsaAmplitude ?? 0) / max(maxRsa, 0.0001),
                                tint: StrandPalette.restBright.opacity(s.scored ? 1 : 0.35),
                                height: 8, animated: false)
-                    Text(s.rsaAmplitude.map { String(format: "%.1f", $0) } ?? "—")
+                    Text(s.rsaAmplitude.map { ZoopNumber.decimal($0, digits: 1) } ?? "—")
                         .font(StrandFont.captionNumber)
                         .foregroundStyle(s.scored ? StrandPalette.textSecondary : StrandPalette.textTertiary)
                         .frame(width: 34, alignment: .trailing)
@@ -1487,8 +1403,8 @@ private struct ResonanceModeView: View {
 
     private func rsaTextSummary(_ scores: [ResonanceEngine.PaceScore]) -> String {
         scores.map { s in
-            let v = s.rsaAmplitude.map { String(format: "%.1f", $0) } ?? String(localized: "unscored")
-            return String(localized: "\(String(format: "%.1f", s.bpm)) breaths per minute: \(v)")
+            let v = s.rsaAmplitude.map { ZoopNumber.decimal($0, digits: 1) } ?? String(localized: "unscored")
+            return String(localized: "\(ZoopNumber.decimal(s.bpm, digits: 1)) breaths per minute: \(v)")
         }.joined(separator: ", ")
     }
 
@@ -1532,7 +1448,7 @@ private struct CalmModeView: View {
     }
 
     private var explainerCard: some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Calm me").strandOverline()
@@ -1556,7 +1472,7 @@ private struct CalmModeView: View {
     private var canRun: Bool { controller.canBuzz && (model.bpm.map { $0 >= 55 && $0 <= 120 } ?? false) }
 
     private var startCard: some View {
-        StrandCard {
+        ContentCard {
             VStack(spacing: ZoopMetrics.rowSpacing) {
                 ZoopButton("Calm me · 3 min", systemImage: "heart.fill",
                            kind: .primary, fullWidth: true) {
@@ -1580,7 +1496,7 @@ private struct CalmModeView: View {
     }
 
     private var liveCard: some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(spacing: 14) {
                 HStack {
                     Text("Settling").strandOverline()
@@ -1606,7 +1522,7 @@ private struct CalmModeView: View {
                         Text("target")
                             .font(StrandFont.footnote)
                             .foregroundStyle(StrandPalette.textTertiary)
-                        Text(controller.calmTargetBpm.map { String(format: "%.0f", $0) } ?? "—")
+                        Text(controller.calmTargetBpm.map { ZoopNumber.decimal($0, digits: 0) } ?? "—")
                             .font(StrandFont.number(22))
                             .foregroundStyle(StrandPalette.restBright)
                     }
@@ -1629,11 +1545,11 @@ private struct CalmModeView: View {
     }
 
     private func outcomeCard(_ line: String) -> some View {
-        StrandCard(padding: 14, tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 10) {
                     Image(systemName: controller.calmDidNotFall ? "minus.circle" : "checkmark.circle")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(ZoopType.icon(14, weight: .semibold))
                         .foregroundStyle(controller.calmDidNotFall ? StrandPalette.textTertiary : StrandPalette.statusPositive)
                         .accessibilityHidden(true)
                     Text(line)

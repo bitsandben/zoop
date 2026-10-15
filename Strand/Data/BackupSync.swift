@@ -6,19 +6,15 @@ import UIKit
 import UniformTypeIdentifiers
 #endif
 
-/// Backup & Sync (folder destination) - the Apple twin of the Android `BackupSync`. Writes the full
-/// `.zoopbak` snapshot (the existing `DataBackup` format) into a user-chosen folder, on demand and as
-/// an on-launch daily catch-up. Point that folder at a Google Drive / iCloud / Dropbox client and you
-/// get automatic off-device backup with no in-app cloud account - Zoop only writes a local file; the
-/// sync client does the upload.
-///
-/// `BackupSync` holds only the PURE, unit-tested filename / selection logic (no I/O, no state) so it is
-/// byte-for-byte equivalent to the Android twin: same `zoop-backup-YYYYMMDD-HHMMSS.zoopbak` scheme,
-/// same newest-first selection, same keep-N prune. The stateful folder I/O lives in `FolderBackup`.
+/// Backup & Sync (folder destination): writes the full `.zoopbak` snapshot (the `DataBackup` format) into a
+/// user-chosen folder, on demand and as a daily on-launch catch-up. Point the folder at a
+/// Drive/iCloud/Dropbox client for off-device backup; Zoop only writes a local file.
+/// `BackupSync` holds only the pure filename/selection logic (no I/O, no state); the scheme
+/// `zoop-backup-YYYYMMDD-HHMMSS.zoopbak`, newest-first selection and keep-N prune must match Android byte
+/// for byte. Folder I/O lives in `FolderBackup`.
 enum BackupSync {
 
-    /// The destinations this is built to support. Phase 1 ships `.folder`; a future Drive backend slots
-    /// in behind the same UI/logic without changing the snapshot scheme.
+    /// Supported destinations; a future Drive backend slots in behind the same logic.
     enum Destination { case folder /* , googleDrive */ }
 
     static let prefix = "zoop-backup-"
@@ -26,22 +22,17 @@ enum BackupSync {
 
     // MARK: - Pure helpers (unit-tested; mirror Android BackupSync)
 
-    /// Default staleness threshold (3 days). Auto-backup runs a DAILY on-launch catch-up, so a
-    /// *successful* backup older than this means the catch-up isn't landing — a stale/permission-lost
-    /// folder bookmark, or the app simply hasn't been launched in a while. Surfaced as a warning so a
-    /// silently-failing auto-backup is visible instead of only discovered when a restore is needed.
+    /// Default staleness threshold (3 days). A successful backup older than this means the daily catch-up
+    /// is not landing (lost folder bookmark, or app not launched), so it is surfaced as a warning.
     static let staleThresholdMs = 3 * 24 * 60 * 60 * 1000
 
-    /// True when auto-backup should be flagged STALE: the last SUCCESSFUL backup is older than
-    /// `thresholdMs`. `lastBackupMs == 0` (never backed up while auto is on) also counts as stale. Pure so
-    /// it's unit-tested with literal ms; the caller supplies `nowMs` and gates on `autoEnabled`/folder.
-    /// Twin of Android `BackupSync.isBackupStale`.
+    /// True when the last successful backup is older than `thresholdMs`; `lastBackupMs == 0` counts as
+    /// stale. Caller supplies `nowMs` and gates on auto/folder.
     static func isBackupStale(lastBackupMs: Int, nowMs: Int, thresholdMs: Int = staleThresholdMs) -> Bool {
         nowMs - lastBackupMs >= thresholdMs
     }
 
-    /// A fresh UTC second-resolution formatter. Created per call so the type stays trivially `Sendable`
-    /// and there is no shared mutable `DateFormatter` to data-race; the cost is irrelevant at this rate.
+    /// A fresh UTC formatter per call keeps the type trivially Sendable with no shared mutable DateFormatter.
     private static func stampFormatter() -> DateFormatter {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
@@ -51,12 +42,12 @@ enum BackupSync {
         return f
     }
 
-    /// Canonical snapshot filename for an instant (ms since epoch): `zoop-backup-YYYYMMDD-HHMMSS.zoopbak` (UTC).
+    /// Canonical snapshot filename for an instant (ms since epoch), in UTC.
     static func snapshotName(_ epochMs: Int) -> String {
         prefix + stampFormatter().string(from: Date(timeIntervalSince1970: Double(epochMs) / 1000.0)) + suffix
     }
 
-    /// The UTC instant (ms) encoded in a snapshot filename, or nil if `name` is not one of ours.
+    /// The UTC instant (ms) in a snapshot filename, or nil if not ours.
     static func snapshotTimeMs(_ name: String) -> Int? {
         guard name.hasPrefix(prefix), name.hasSuffix(suffix) else { return nil }
         let stamp = String(name.dropFirst(prefix.count).dropLast(suffix.count))
@@ -66,21 +57,16 @@ enum BackupSync {
 
     static func isSnapshot(_ name: String) -> Bool { snapshotTimeMs(name) != nil }
 
-    /// Any `.zoopbak` file, whatever it's named. The RESTORE list uses this (not `isSnapshot`) so a
-    /// hand-named backup like `zoop-backup-2026-06-30.zoopbak` still shows (#852). Case-insensitive on
-    /// the extension so `.NOOPBAK` copied off another device still counts. Prune/latest stay strict on
-    /// `isSnapshot`, so a non-canonical name is listed for restore but never auto-deleted.
+    /// Any `.zoopbak` file, whatever its name (case-insensitive extension). The restore list uses this so
+    /// hand-named backups show (#852); prune/latest stay strict on `isSnapshot`, so non-canonical names are
+    /// never auto-deleted.
     static func isBackupFile(_ name: String) -> Bool {
         name.lowercased().hasSuffix(suffix)
     }
 
-    /// A `.zoopbak` sitting in an iCloud Drive folder that hasn't been downloaded to THIS Mac/iPhone
-    /// yet is listed by the filesystem under a placeholder name - a leading dot plus an `.icloud`
-    /// suffix, e.g. `zoop-backup-....zoopbak` becomes `.zoop-backup-....zoopbak.icloud` - instead of
-    /// its real name. Unresolved, that placeholder silently fails `isBackupFile` and the restore list
-    /// shows nothing even though Finder shows the file (#278: cross-device restore via iCloud Drive,
-    /// the workflow the folder-picker screen itself recommends). Returns the real name, or nil if
-    /// `name` isn't a placeholder.
+    /// An iCloud Drive file not yet downloaded appears under a placeholder name (leading dot plus `.icloud`
+    /// suffix), which would fail `isBackupFile` and hide it from the restore list (#278). Returns the real
+    /// name, or nil if `name` is not a placeholder.
     static func iCloudPlaceholderRealName(_ name: String) -> String? {
         let iCloudSuffix = ".icloud"
         guard name.hasPrefix("."), name.hasSuffix(iCloudSuffix),
@@ -88,54 +74,47 @@ enum BackupSync {
         return String(name.dropFirst().dropLast(iCloudSuffix.count))
     }
 
-    /// Newest snapshot by encoded time (non-snapshots ignored), or nil.
+    /// Newest snapshot by encoded time, or nil.
     static func latestSnapshot(_ names: [String]) -> String? {
         names.filter(isSnapshot).max { (snapshotTimeMs($0) ?? 0) < (snapshotTimeMs($1) ?? 0) }
     }
 
-    /// Snapshot names sorted newest-first (non-snapshots dropped). The folder restore list order.
+    /// Snapshot names newest-first; the restore list order.
     static func snapshotsNewestFirst(_ names: [String]) -> [String] {
         names.filter(isSnapshot).sorted { (snapshotTimeMs($0) ?? 0) > (snapshotTimeMs($1) ?? 0) }
     }
 
-    /// Snapshots to DELETE to keep only the `keep` newest (oldest-first). Empty when within budget.
-    /// Strict on purpose: only canonical snapshots are prune candidates, so a hand-named `.zoopbak`
-    /// in the folder is never auto-deleted.
+    /// Snapshots to delete to keep only the `keep` newest (oldest-first). Strict: only canonical snapshots
+    /// are candidates.
     static func snapshotsToPrune(_ names: [String], keep: Int) -> [String] {
         let snaps = snapshotsNewestFirst(names)
         return snaps.count <= keep ? [] : Array(snaps.dropFirst(keep))
     }
 
-    /// One restorable `.zoopbak` for the folder picker: its filename and the ms used to order/label it.
+    /// One restorable `.zoopbak` for the folder picker.
     struct Restorable: Equatable {
         let name: String
-        /// The instant we sort and display by: the canonical filename stamp when present, else the
-        /// file's own modification date (passed in by the I/O layer). Never nil so the list is stable.
+        /// Sort/display instant: the filename stamp if canonical, else the file's modification date. Never nil.
         let timeMs: Int
     }
 
-    /// ALL `.zoopbak` files (any name) ordered newest-first for the restore picker (#852). Canonical
-    /// names use their embedded UTC stamp; the rest fall back to the file date `fileDateMs` gives for
-    /// that name (0 when unknown). Non-`.zoopbak` files are dropped. Pure, so it's unit-tested; the I/O
-    /// layer supplies `fileDateMs` from the filesystem.
+    /// All `.zoopbak` files (any name) newest-first for the restore picker (#852). Non-canonical names use
+    /// `fileDateMs` (0 when unknown).
     static func restorablesNewestFirst(_ names: [String],
                                        fileDateMs: (String) -> Int) -> [Restorable] {
         names.filter(isBackupFile)
             .map { Restorable(name: $0, timeMs: snapshotTimeMs($0) ?? fileDateMs($0)) }
-            // Newest-first, with a name tie-break so equal-time entries (two files sharing a date-only
-            // name, or a provider that reports the same modified date) order deterministically and
-            // identically to Kotlin's `compareByDescending { timeMs }.thenBy { name }`.
+            // Name tie-break keeps equal-time entries deterministic and identical to Kotlin's
+            // `compareByDescending { timeMs }.thenBy { name }`.
             .sorted { $0.timeMs != $1.timeMs ? $0.timeMs > $1.timeMs : $0.name < $1.name }
     }
 }
 
-/// The folder destination: a security-scoped bookmark of a user-chosen folder, plus write / list /
-/// restore / prune and an on-launch daily catch-up.
-///
-/// Apple gives no reliable unattended background DB write (a whole-DB ZIP can be 100 MB+ and the OS
-/// kills long background tasks), so the "schedule" is a deferred on-launch catch-up: if auto is ON and
-/// a day has passed, the next foreground launch writes one snapshot - fully off the main thread, and
-/// off the launch-critical path, so it never blocks startup (must-fix #4).
+/// The folder destination: a security-scoped bookmark of a user-chosen folder, plus
+/// write/list/restore/prune and a daily on-launch catch-up.
+/// Apple gives no reliable unattended background write (a whole-DB ZIP can be 100 MB+), so the schedule is
+/// a deferred catch-up: with auto on and a day passed, the next foreground launch writes one snapshot off
+/// the main thread and off the launch-critical path.
 enum FolderBackup {
     private static let bookmarkKey = "backupSync.folderBookmark"
     private static let autoKey = "backupSync.auto"
@@ -143,15 +122,13 @@ enum FolderBackup {
     private static let keepKey = "backupSync.keepCount"
     private static let internalKey = "backupSync.useInternalFolder"   // #52 picker-free fallback
 
-    /// Default snapshots kept by prune: 7, i.e. a week of daily rollback points. (Mirrors the Android
-    /// DEFAULT_KEEP; the Android keep-count is likewise user-adjustable.)
+    /// Default snapshots kept by prune: 7, a week of daily rollback points.
     static let defaultKeep = 7
 
-    /// Retention choices offered by the Backup & Sync keep-count picker (mirrors Android KEEP_OPTIONS).
+    /// Retention choices for the keep-count picker.
     static let keepOptions = [1, 3, 5, 7, 10, 14]
 
-    /// How many latest snapshots to keep; older ones are pruned (oldest-first). User-adjustable via the
-    /// picker; unset reads back as [defaultKeep]. Clamped to a sane 1...100.
+    /// Snapshots to keep; older are pruned. Unset reads back as `defaultKeep`; clamped to 1...100.
     static var keepCount: Int {
         get {
             let v = UserDefaults.standard.integer(forKey: keepKey)   // 0 when never set
@@ -163,7 +140,7 @@ enum FolderBackup {
 
     // MARK: - Persisted state
 
-    /// Auto-backup defaults OFF (manual-first; must-fix #4 + #6). The user turns it on in the screen.
+    /// Auto-backup defaults off (manual-first).
     static var autoEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: autoKey) }
         set { UserDefaults.standard.set(newValue, forKey: autoKey) }
@@ -172,29 +149,22 @@ enum FolderBackup {
     static var lastBackupMs: Int { UserDefaults.standard.integer(forKey: lastKey) }
     static var hasFolder: Bool { useInternalFolder || UserDefaults.standard.data(forKey: bookmarkKey) != nil }
 
-    /// #52: on some iOS 26 builds the system folder picker's "Open" button never enables/fires, so users
-    /// can't choose an external folder at all (three reports, works for one). This opt-in falls back to
-    /// Zoop's OWN Documents/Backups folder — already exposed in Files (UIFileSharingEnabled +
-    /// LSSupportsOpeningDocumentsInPlace) under "On My iPhone → Zoop" — so Backup & Sync works with zero
-    /// dependence on the picker. No security-scoped bookmark is involved (the folder is inside our own
-    /// sandbox), so `resolveFolder`/`saveFolder`'s scoped-access brackets simply no-op for it. The user
-    /// can drag that folder into iCloud Drive to read backups on the Mac; a first-class iCloud container
-    /// is a separate, larger change. An explicit external pick (`saveFolder`) turns this back off.
+    /// Opt-in fallback to Zoop's own Documents/Backups folder, visible in Files, for iOS 26 builds where
+    /// the system folder picker's "Open" never enables (#52). No security-scoped bookmark is involved. An
+    /// explicit external pick (`saveFolder`) turns this off.
     static var useInternalFolder: Bool {
         get { UserDefaults.standard.bool(forKey: internalKey) }
         set { UserDefaults.standard.set(newValue, forKey: internalKey) }
     }
 
-    /// Opt into backing up inside Zoop's own Files-visible folder (see `useInternalFolder`). Returns the
-    /// folder URL so the caller can refresh its label. iOS-only in practice; harmless elsewhere.
+    /// Opts into Zoop's own Files-visible backup folder and returns its URL.
     @discardableResult
     static func useNoopFolder() -> URL? {
         useInternalFolder = true
         return internalFolderURL()
     }
 
-    /// Zoop's own Files-visible backup folder: `<sandbox>/Documents/Backups`, created on first use.
-    /// Returns nil only if Documents can't be located (never in practice).
+    /// `<sandbox>/Documents/Backups`, created on first use; nil only if Documents cannot be located.
     private static func internalFolderURL() -> URL? {
         guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return nil }
         let dir = docs.appendingPathComponent("Backups", isDirectory: true)
@@ -202,49 +172,31 @@ enum FolderBackup {
         return dir
     }
 
-    /// Whether a folder path sits in iCloud. The SINGLE definition of that rule — `restoreListHealth`
-    /// reports the same signal to diagnostics, and a screen that disagreed with the diagnostics dump
-    /// about where the backups are would make #278-style triage worse, not better.
-    ///
-    /// Ubiquity containers live under `Mobile Documents`, which covers both iCloud Drive proper
-    /// (`com~apple~CloudDocs`) and per-app containers. Pure and path-only, so it is testable without a
-    /// picker, a bookmark or a device.
+    /// Whether a path sits in iCloud (under `Mobile Documents`). The single definition of the rule, shared
+    /// with `restoreListHealth` so the screen and diagnostics cannot disagree about where backups are.
     static func isICloudPath(_ path: String) -> Bool { path.contains("Mobile Documents") }
 
-    /// The tail of a folder path, for display: `"Zoop › 2026"`.
-    ///
-    /// The bare last component is not enough to identify a folder — a "Backups" folder in iCloud Drive
-    /// and the #52 internal fallback's `Documents/Backups` render identically, which is exactly the
-    /// confusion this line is meant to settle. The FULL path is not shown either: on iOS it is a long
-    /// sandbox UUID and on macOS it carries the user's home directory, neither of which helps.
-    ///
-    /// For an iCloud path everything up to and including the sync root (`com~apple~CloudDocs`, or a
-    /// per-app `iCloud~…` container) is dropped, since [folderLabel] already names iCloud Drive and the
-    /// raw tilde form means nothing to a reader.
+    /// Display tail of a folder path, e.g. "Zoop > 2026". The bare last component is ambiguous (iCloud
+    /// "Backups" vs the internal `Documents/Backups`) and the full path is a sandbox UUID or home
+    /// directory. For iCloud paths everything through the sync root is dropped.
     static func folderTrail(path: String, maxComponents: Int = 2) -> String {
         var parts = path.split(separator: "/").map(String.init).filter { !$0.isEmpty }
-        // Slice AFTER the sync root rather than filtering it out: on macOS an iCloud path is
-        // `~/Library/Mobile Documents/com~apple~CloudDocs/Zoop`, so merely dropping the tilde component
-        // leaves "Mobile Documents › Zoop" — plumbing the reader should never see.
+        // Slice after the sync root rather than filtering it: on macOS the tilde component would leave
+        // "Mobile Documents" in the trail.
         if let i = parts.lastIndex(where: {
             $0 == "com~apple~CloudDocs" || $0.hasPrefix("iCloud~") || $0 == "Mobile Documents"
         }) { parts = Array(parts[(i + 1)...]) }
         return parts.suffix(max(1, maxComponents)).joined(separator: " › ")
     }
 
-    /// A short, human label for the chosen folder, or nil if none chosen. The internal fallback gets a
-    /// friendly name instead of the raw "Backups" path component.
-    ///
-    /// Names iCloud explicitly (#52): the picker can already point anywhere, iCloud Drive included, so
-    /// the gap was never the choosing — it was that the result was unidentifiable afterwards. A user on
-    /// the internal fallback saw a bare "Backups" and could not tell their backups were on-device only.
+    /// Short label for the chosen folder, or nil. The internal fallback gets a friendly name and iCloud is
+    /// named explicitly (#52), so users can tell on-device-only backups apart.
     static func folderLabel() -> String? {
         if useInternalFolder { return String(localized: "Zoop (in Files)") }
         guard let path = resolveFolder()?.path else { return nil }
         let trail = folderTrail(path: path)
         if isICloudPath(path) {
-            // Picking the iCloud Drive root itself leaves no trail; naming the place alone beats an
-            // empty separator dangling off the end.
+            // The iCloud Drive root has no trail; name the place rather than leave a dangling separator.
             return trail.isEmpty ? String(localized: "iCloud Drive")
                                  : String(localized: "iCloud Drive › \(trail)")
         }
@@ -271,13 +223,13 @@ enum FolderBackup {
         let opts: URL.BookmarkResolutionOptions = []
         #endif
         let url = try? URL(resolvingBookmarkData: data, options: opts, relativeTo: nil, bookmarkDataIsStale: &stale)
-        // A stale bookmark still resolves; refresh it opportunistically so it keeps working next launch.
+        // A stale bookmark still resolves; refresh it so it works next launch.
         if stale, let url { saveFolder(url) }
         return url
     }
 
-    /// Persist a security-scoped bookmark for `url`. Brackets the bookmark creation in a scoped-access
-    /// pair on macOS (required to mint a `.withSecurityScope` bookmark for a sandbox-granted folder).
+    /// Persists a security-scoped bookmark for `url`; on macOS minting a `.withSecurityScope` bookmark
+    /// needs a scoped-access bracket.
     static func saveFolder(_ url: URL) {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
@@ -287,9 +239,8 @@ enum FolderBackup {
             UserDefaults.standard.set(data, forKey: bookmarkKey)
             useInternalFolder = false   // #52: an explicit external pick overrides the internal fallback
         }
-        // #52 instrumentation: record whether scoped access opened and whether the bookmark actually
-        // minted, so a debug export can tell a folder that failed to persist HERE apart from a picker
-        // that never returned a URL at all. Cheap UserDefaults writes; see DebugDataDiagnostics.
+        // #52 instrumentation: record whether scoped access opened and the bookmark minted, to tell a
+        // persistence failure from a picker that never returned.
         let d = UserDefaults.standard
         d.set(scoped, forKey: "backupPicker.lastScopedOpen")
         d.set(data != nil, forKey: "backupPicker.lastBookmarkOk")
@@ -297,8 +248,8 @@ enum FolderBackup {
 
     // MARK: - Backup / prune
 
-    /// Write one snapshot into the bookmarked folder, stamp the last-backup time, then prune to keepN.
-    /// Returns true on success. Runs the whole-DB ZIP off the caller's thread; never touches UI.
+    /// Writes one snapshot into the bookmarked folder, stamps the last-backup time, prunes to keepN.
+    /// Returns true on success; the ZIP runs off the caller's thread.
     @discardableResult
     static func backupNow(checkpoint: @escaping () async -> Bool) async -> Bool {
         guard let folder = resolveFolder() else { return false }
@@ -307,20 +258,14 @@ enum FolderBackup {
 
         let nowMs = Int(Date().timeIntervalSince1970 * 1000.0)
         let dest = folder.appendingPathComponent(BackupSync.snapshotName(nowMs))
-        // #1807: an oversize write still WROTE the file, so it is a success here. The folder sync has
-        // nowhere to surface a warning and must not report failure for a backup that exists — the
-        // interactive export is where the user is told, because that is where they can act on it.
+        // #1807: an oversize write still wrote the file, so it counts as success here; the interactive
+        // export is where the user is told.
         switch await DataBackup.writeBackup(checkpoint: checkpoint, to: dest) {
         case .exported, .exportedOversize: break
         default:
-            // Remove whatever this run left behind, and note that this is the OPPOSITE of what the
-            // interactive export does with an unverifiable file. The two contexts want opposite answers:
-            // a file whose location the user chose is theirs to keep and inspect, and they are told so,
-            // while a file in THIS folder silently becomes `latestSnapshot` in a rotation whose older
-            // snapshots are still intact, with nobody watching to notice it was never confirmed. A
-            // snapshot that was never read back is not one to offer the restore picker first; the next
-            // run writes another. (A torn file already deleted itself; this covers the rest.)
-            // Twin of the Android FolderBackup delete.
+            // Remove whatever this run left behind. Opposite of the interactive export: a file in this
+            // folder would silently become `latestSnapshot` and be offered first to restore without ever
+            // being read back, whereas a user-chosen location is theirs to keep.
             try? FileManager.default.removeItem(at: dest)
             return false
         }
@@ -330,8 +275,7 @@ enum FolderBackup {
         return true
     }
 
-    /// Best-effort retention: delete snapshots beyond `keepCount`. Listing failures are ignored, and
-    /// non-snapshot files in the folder are never touched (only files matching the backup scheme).
+    /// Best-effort retention: deletes snapshots beyond `keepCount`, touching only files matching the backup scheme.
     private static func prune(in folder: URL) {
         let names = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
         let toDelete = Set(BackupSync.snapshotsToPrune(names, keep: keepCount))
@@ -340,9 +284,8 @@ enum FolderBackup {
         }
     }
 
-    /// On-launch catch-up: if auto is on, a folder is set, and it's been at least a day since the last
-    /// backup, write one. Gated entirely on the toggle being ON (must-fix #4). The caller MUST invoke
-    /// this off the launch-critical path; it does no UI work and is safe to run after the first refresh.
+    /// On-launch catch-up: with auto on, a folder set, and at least a day since the last backup, write one.
+    /// Call off the launch-critical path.
     static func catchUpIfDue(checkpoint: @escaping () async -> Bool) async {
         guard autoEnabled, hasFolder else { return }
         let nowMs = Int(Date().timeIntervalSince1970 * 1000.0)
@@ -350,48 +293,39 @@ enum FolderBackup {
         await backupNow(checkpoint: checkpoint)
     }
 
-    /// Diagnostic-only snapshot of the restore list's health: the chosen folder's name, its raw entry
-    /// count, and how many of those resolve into recognized `.zoopbak` snapshots. Nil when no folder is
-    /// chosen. Lets a "restore shows no files" report (#278) distinguish a genuinely empty folder from a
-    /// resolution problem (e.g. undownloaded iCloud placeholders, see `iCloudPlaceholderRealName`)
-    /// without needing a live repro. Used by `DebugDataDiagnostics`.
+    /// Diagnostic-only: the chosen folder's name, raw entry count and how many resolve to recognised
+    /// snapshots, to separate an empty folder from a resolution problem such as undownloaded placeholders
+    /// (#278). Used by `DebugDataDiagnostics`.
     static func restoreListHealth() -> (isICloud: Bool, rawEntries: Int, snapshots: Int)? {
         guard let folder = resolveFolder() else { return nil }
         let scoped = folder.startAccessingSecurityScopedResource()
         defer { if scoped { folder.stopAccessingSecurityScopedResource() } }
         let raw = (try? FileManager.default.contentsOfDirectory(atPath: folder.path))?.count ?? 0
-        // Report iCloud-vs-local (the actual #278 triage signal — undownloaded placeholders live in the
-        // iCloud container) WITHOUT the folder's user-chosen name, which redactPii can't scrub and the
-        // iOS twin never exposes. Shares `isICloudPath` with the label the user sees, so the screen and
-        // this dump can never disagree about where the backups are.
+        // Reports iCloud-vs-local without the user-chosen folder name (redactPii cannot scrub it). Shares
+        // `isICloudPath` with the visible label so they cannot disagree.
         let isICloud = isICloudPath(folder.path)
         return (isICloud, raw, listSnapshots().count)
     }
 
     // MARK: - Restore from the configured folder (must-fix #1)
 
-    /// One restorable snapshot in the chosen folder: its display name + a friendly absolute-time line.
+    /// One restorable snapshot: display name plus an absolute-time line.
     struct Snapshot: Identifiable, Hashable {
         let name: String
         let timeMs: Int
         var id: String { name }
     }
 
-    /// List the backups in the user's chosen folder, NEWEST FIRST - the source for the restore picker
-    /// (must-fix #1: restore from the configured folder, never a generic re-prompt). Lists ANY `.zoopbak`
-    /// file, not just canonically-named ones (#852): a hand-named backup like
-    /// `zoop-backup-2026-06-30.zoopbak` still shows. Canonical names sort/label by their embedded stamp;
-    /// the rest by the file's own modification date. Content is validated on restore, so a bad file here
-    /// is caught then. Returns an empty list if no folder is chosen or the folder can't be read.
+    /// Lists backups in the chosen folder newest-first for the restore picker, any `.zoopbak` name (#852).
+    /// Canonical names sort by their stamp, others by modification date. Content is validated on restore.
     static func listSnapshots() -> [Snapshot] {
         guard let folder = resolveFolder() else { return [] }
         let scoped = folder.startAccessingSecurityScopedResource()
         defer { if scoped { folder.stopAccessingSecurityScopedResource() } }
         let rawNames = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
-        // #278: a `.zoopbak` iCloud hasn't downloaded to this Mac/iPhone yet is listed under a
-        // placeholder name; resolve it back to its real name so it still shows in the restore list
-        // (see `BackupSync.iCloudPlaceholderRealName`). `restore(snapshotNamed:)` resolves the same
-        // way and kicks off the download if the user picks one that's still a placeholder on disk.
+        // #278: resolve undownloaded iCloud placeholders back to real names (see
+        // `BackupSync.iCloudPlaceholderRealName`); `restore(snapshotNamed:)` does the same and triggers the
+        // download.
         let names = rawNames.map { BackupSync.iCloudPlaceholderRealName($0) ?? $0 }
         let fileDateMs: (String) -> Int = { name in
             let onDisk = rawNames.contains(name) ? name : ("." + name + ".icloud")
@@ -404,11 +338,8 @@ enum FolderBackup {
             .map { Snapshot(name: $0.name, timeMs: $0.timeMs) }
     }
 
-    /// Restore a snapshot the user picked FROM THE CONFIGURED FOLDER. Resolves the bookmark, brackets
-    /// security-scoped access, and hands the concrete file to `DataBackup.restore(from:)` - so every
-    /// hardened safety (magic-byte + GRDB-origin validation, sidecar snapshot, rollback) still applies.
-    /// The destructive confirmation is the screen's responsibility (must-fix #2); this is the final
-    /// step it calls only AFTER the user confirms.
+    /// Restores a snapshot picked from the configured folder via `DataBackup.restore(from:)`, so all its
+    /// validation and rollback applies. The screen must confirm the destructive action first.
     static func restore(snapshotNamed name: String) -> DataBackup.BackupResult {
         guard let folder = resolveFolder() else {
             return .failure("Couldn't open your backup folder - re-pick it and try again.")
@@ -418,10 +349,8 @@ enum FolderBackup {
         let source = folder.appendingPathComponent(name)
         var wasPlaceholder = false
         if !FileManager.default.fileExists(atPath: source.path) {
-            // #278: `name` came from the (already de-placeholdered) restore list, so if it's not on
-            // disk under its real name it may still be an undownloaded iCloud placeholder. Kick off
-            // the download and give it a short window to land - this runs off the main thread (the
-            // screen calls `restore` from a detached Task), so blocking here doesn't freeze the UI.
+            // #278: if `name` is missing under its real name it may be an undownloaded iCloud placeholder;
+            // trigger the download and wait briefly. Runs off the main thread.
             let placeholder = folder.appendingPathComponent("." + name + ".icloud")
             if FileManager.default.fileExists(atPath: placeholder.path) {
                 wasPlaceholder = true
@@ -443,7 +372,7 @@ enum FolderBackup {
     // MARK: - Folder picker
 
     #if os(macOS)
-    /// Present an `NSOpenPanel` to choose a directory; persists the bookmark. Returns the chosen URL.
+    /// Presents an `NSOpenPanel` to choose a directory and persists the bookmark.
     @MainActor
     static func pickFolder() -> URL? {
         let panel = NSOpenPanel()
@@ -457,10 +386,8 @@ enum FolderBackup {
         return url
     }
     #else
-    /// Present a folder picker (`UIDocumentPicker`) and persist the bookmark. Returns the chosen URL.
-    /// Starts in the previously-chosen folder when one resolves (else the picker falls back to our
-    /// Documents) — part of the #1000a "Select button never enables" mitigation; see
-    /// `DocumentPicker.pickFolder`.
+    /// Presents a folder picker and persists the bookmark. Starts in the previously chosen folder when it
+    /// resolves (#1000a mitigation).
     @MainActor
     static func pickFolder() async -> URL? {
         let url = await DocumentPicker.pickFolder(startingAt: resolveFolder())

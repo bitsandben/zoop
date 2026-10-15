@@ -44,11 +44,6 @@ enum ScoreSection: String, CaseIterable, Identifiable {
         }
     }
 
-    /// The number shown inside the sample gauge (the 0–100 score the fraction maps to).
-    var sampleNumber: String {
-        "\(Int((sampleFraction * 100).rounded()))"
-    }
-
     /// The SF Symbol for the section header (heart/spark · flame · moon).
     var icon: String {
         switch self {
@@ -142,7 +137,7 @@ struct ScoringGuideView: View {
             Spacer()
             Button(action: onClose) {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 22))
+                    .font(ZoopType.icon(22))
                     .foregroundStyle(StrandPalette.textTertiary)
             }
             .buttonStyle(.plain)
@@ -213,7 +208,7 @@ struct ScoringGuideView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack(spacing: 8) {
                             Image(systemName: section.icon)
-                                .font(.system(size: 16))
+                                .font(ZoopType.icon(16))
                                 .foregroundStyle(section.accent)
                                 .accessibilityHidden(true)
                             Text(section.displayName)

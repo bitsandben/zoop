@@ -1,14 +1,10 @@
 import Foundation
 
-/// How to present the bimodal `skinTempDevC` / `skin_temp` field (#622).
+/// How to present the bimodal `skinTempDevC` / `skin_temp` field.
 ///
-/// CSV / Health imports store **absolute** wrist °C (~30–35). The live BLE pipeline stores a
-/// **signed deviation** from the personal baseline (±°C, e.g. −0.1). Both land in the same column;
-/// `VitalBands.isAbsoluteSkinTemp` (v ≥ 20) tells them apart. Deep timeline charts raw absolute
-/// samples, so a Today/Health tile that only shows −0.1 without saying "vs baseline" looks broken.
-///
-/// Twin of `com.noop.analytics.SkinTempDisplay`. Pure — unit-tested. Localization of full titles
-/// stays in the app layer; this package only supplies kind, unit symbol, and number formatting.
+/// CSV / Health imports store absolute wrist °C (~30–35); the live BLE pipeline stores a signed
+/// deviation from the personal baseline (±°C). `VitalBands.isAbsoluteSkinTemp` (v ≥ 20) tells them
+/// apart. Pure; localization of titles stays in the app layer.
 public enum SkinTempDisplay {
 
     public enum Kind: String, Sendable, Equatable {
@@ -22,19 +18,13 @@ public enum SkinTempDisplay {
         VitalBands.isAbsoluteSkinTemp(value) ? .absolute : .deviation
     }
 
-    /// The one kind a MIXED series must be reduced to before any aggregate is taken (#1705).
+    /// The one kind a MIXED series must be reduced to before any aggregate is taken.
     ///
-    /// A CSV import writes absolute °C and the computed pipeline writes a deviation, both into this
-    /// same field, so one window can hold both. Formatting stays honest per value — `kind(of:)` is
-    /// re-derived for each — but a min, max, mean or window-over-window delta drawn across both is
-    /// arithmetic on two different scales, and it looks plausible: a handful of ~34 °C readings lift a
-    /// should-be-near-zero deviation average past a full degree, and the mean is then itself below 20
-    /// so it gets labelled Δ°C.
-    ///
-    /// The newest entry decides, matching what `VitalSignsSummary` already does for its sparkline —
-    /// the reading the user is actually looking at sets the scale, and older entries of the other kind
-    /// drop out rather than being converted, because converting needs a baseline that a fresh
-    /// import-only install does not have.
+    /// Imports write absolute °C and the pipeline writes a deviation into the same field, so a window can
+    /// hold both; a min/max/mean/delta across both is arithmetic on two scales and looks plausible. The
+    /// newest entry decides (as `VitalSignsSummary` does for its sparkline); older entries of the other
+    /// kind drop out rather than being converted, since conversion needs a baseline an import-only
+    /// install lacks.
     ///
     /// - Parameter values: the window's values, ascending by day.
     /// - Returns: the kind to keep, or nil for an empty window.
@@ -49,28 +39,16 @@ public enum SkinTempDisplay {
         public init(value: Double, kind: Kind) { self.value = value; self.kind = kind }
     }
 
-    /// Which of a night's two skin-temp numbers a surface should LEAD with (#1844), the pure form of the
-    /// rule the Health tile has applied since #1665.
+    /// Which of a night's two skin-temp numbers a surface should LEAD with.
     ///
-    /// The absolute wins whenever the night measured one, because a deviation with no anchor cannot be
-    /// read — "+0.9" is a fever or a warm bedroom and nothing on a card says which. The deviation is the
-    /// fallback, not the default, and keeps its Δ unit so it is never mistaken for a wrist temperature
-    /// (#622).
+    /// The absolute wins whenever the night measured one, because a deviation without an anchor is
+    /// unreadable ("+0.9" is a fever or a warm bedroom). The deviation is the fallback and keeps its Δ
+    /// unit. Two real cases: nights scored before `skinTempC` shipped have only a deviation, and a
+    /// CALIBRATING night has an absolute from night one but no deviation until the baseline is usable.
     ///
-    /// Two shapes make this more than a preference, both real rows:
-    ///  - a night scored before `skinTempC` shipped (2026-08-27) has only a deviation, and keeps exactly
-    ///    the display that shipped before until a scoring pass refills it;
-    ///  - a CALIBRATING night is the reverse — the deviation is nil until the baseline is usable
-    ///    (~4 nights) while the absolute is measured from night one, so those wearers otherwise see an
-    ///    empty card with a real temperature sitting behind it.
-    ///
-    /// `prefer` is the user's Settings choice (#1846): `.absolute` — the default, a temperature — or
-    /// `.deviation` for wearers who read the ±baseline move, which is the more sensitive illness signal. It
-    /// picks which number is tried FIRST; the other is still the fallback, so choosing one never blanks a
-    /// card whose night only measured the other, and the unit always names the scale actually shown.
-    ///
-    /// Both values must come from the SAME row; see `DailyMetric.lastSkinTempReadingDay`. Twin of the
-    /// Kotlin `SkinTempDisplay.leadReading`.
+    /// `prefer` is the user's Settings choice (default `.absolute`); it picks which number is tried first,
+    /// the other remains the fallback, and the unit always names the scale shown. Both values must come
+    /// from the SAME row (see `DailyMetric.lastSkinTempReadingDay`).
     public static func leadReading(absC: Double?, devC: Double?, prefer: Kind = .absolute) -> Reading? {
         let first = prefer == .absolute ? absC : devC
         if let f = first { return Reading(value: f, kind: prefer) }
@@ -113,10 +91,8 @@ public enum SkinTempDisplay {
             return String(format: "%.\(decimals)f", display)
         }
         let signed = String(format: "%+.\(decimals)f", display)
-        // #1842: a deviation that ROUNDS to zero must not keep its sign. `%+` prints "-0.0" for anything
-        // in (-0.05, 0), and "-0.0 Δ°C" on a card reads as a fault rather than as "no change from your
-        // baseline" — which is what it means. Drop the sign only when the rounded value is zero; a real
-        // -0.1 keeps it. Twin of the Kotlin numberString.
+        // A deviation that rounds to zero must not keep its sign (`%+` prints "-0.0" for (-0.05, 0)), which
+        // reads as a fault rather than "no change".
         if Double(signed.dropFirst()) == 0 { return String(signed.dropFirst()) }
         return signed
     }

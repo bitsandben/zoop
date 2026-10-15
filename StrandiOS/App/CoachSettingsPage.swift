@@ -17,6 +17,7 @@ struct CoachSettingsPage: View {
     @State private var briefStatus: String?
     @State private var refreshing = false
     @State private var showClearConfirm = false
+    @AppStorage(CoachMorningBrief.proactiveKey) private var proactive = true
 
     var body: some View {
         ScrollView {
@@ -47,6 +48,11 @@ struct CoachSettingsPage: View {
                 }
 
                 group("Morning brief") {
+                    toggleRow(icon: "text.badge.checkmark",
+                              title: "zoop.coach.settings.proactive",
+                              subtitle: "zoop.coach.settings.proactive.note",
+                              isOn: $proactive)
+                    divider
                     toggleRow(icon: "sunrise.fill",
                               title: "Daily brief",
                               subtitle: "A notification with today's readiness and a plan.",
@@ -55,7 +61,7 @@ struct CoachSettingsPage: View {
                         divider
                         row(icon: "clock") {
                             Text("Time")
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(ZoopType.headline.weight(.semibold))
                                 .foregroundStyle(StrandPalette.textPrimary)
                             Spacer()
                             DatePicker("", selection: briefTimeBinding, displayedComponents: .hourAndMinute)
@@ -65,7 +71,7 @@ struct CoachSettingsPage: View {
                         Button(action: generateBriefNow) {
                             row(icon: "sparkles") {
                                 Text(briefGenerating ? "Writing…" : "Write today's brief now")
-                                    .font(.system(size: 16, weight: .semibold))
+                                    .font(ZoopType.headline.weight(.semibold))
                                     .foregroundStyle(StrandPalette.accent)
                                 Spacer()
                                 if briefGenerating { ProgressView().controlSize(.small) }
@@ -90,7 +96,7 @@ struct CoachSettingsPage: View {
                         row(icon: "text.bubble") {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Coach instructions")
-                                    .font(.system(size: 16, weight: .semibold))
+                                    .font(ZoopType.headline.weight(.semibold))
                                     .foregroundStyle(StrandPalette.textPrimary)
                                 Text(coach.hasCustomSystemPrompt ? "Your own" : "Default")
                                     .font(StrandFont.footnote)
@@ -98,7 +104,7 @@ struct CoachSettingsPage: View {
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(ZoopType.icon(13, weight: .semibold))
                                 .foregroundStyle(StrandPalette.textTertiary)
                         }
                     }
@@ -109,7 +115,7 @@ struct CoachSettingsPage: View {
                     Button { showClearConfirm = true } label: {
                         row(icon: "trash", tint: StrandPalette.statusCritical) {
                             Text("Clear conversation")
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(ZoopType.headline.weight(.semibold))
                                 .foregroundStyle(StrandPalette.statusCritical)
                             Spacer()
                         }
@@ -123,7 +129,7 @@ struct CoachSettingsPage: View {
                     } label: {
                         row(icon: "key.slash", tint: StrandPalette.statusCritical) {
                             Text("Disconnect \(coach.provider.displayName)")
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(ZoopType.headline.weight(.semibold))
                                 .foregroundStyle(StrandPalette.statusCritical)
                             Spacer()
                         }
@@ -158,13 +164,13 @@ struct CoachSettingsPage: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 14) {
                 Image(systemName: "sparkles")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(ZoopType.icon(20, weight: .semibold))
                     .foregroundStyle(StrandPalette.goldDeepText)
                     .frame(width: 52, height: 52)
                     .background(SquircleShape().fill(StrandPalette.accent))
                 VStack(alignment: .leading, spacing: 3) {
                     Text(coach.provider.displayName)
-                        .font(.system(size: 20, weight: .bold))
+                        .font(ZoopType.subtitle.weight(.bold))
                         .foregroundStyle(StrandPalette.textPrimary)
                     HStack(spacing: 6) {
                         Circle().fill(StrandPalette.accent).frame(width: 7, height: 7)
@@ -186,14 +192,14 @@ struct CoachSettingsPage: View {
                             .font(StrandFont.caption)
                             .foregroundStyle(StrandPalette.textTertiary)
                         Text(coach.model)
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(StrandFont.subhead.weight(.semibold))
                             .foregroundStyle(StrandPalette.textPrimary)
                             .lineLimit(1)
                             .truncationMode(.middle)
                     }
                     Spacer()
                     Image(systemName: "chevron.up.chevron.down")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(ZoopType.icon(13, weight: .semibold))
                         .foregroundStyle(StrandPalette.textSecondary)
                 }
                 .padding(14)
@@ -214,7 +220,7 @@ struct CoachSettingsPage: View {
                     }
                     Text(coach.provider == .openRouter ? "Load current free models" : "Load current models")
                 }
-                .font(.system(size: 14, weight: .semibold))
+                .font(ZoopType.caption.weight(.semibold))
                 .foregroundStyle(StrandPalette.accent)
             }
             .buttonStyle(.plain)
@@ -235,7 +241,7 @@ struct CoachSettingsPage: View {
     private func group<Content: View>(_ title: LocalizedStringKey, @ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 14, weight: .semibold))
+                .font(ZoopType.caption.weight(.semibold))
                 .foregroundStyle(StrandPalette.textSecondary)
                 .padding(.horizontal, 6)
             VStack(spacing: 0) { content() }
@@ -247,7 +253,7 @@ struct CoachSettingsPage: View {
                                     @ViewBuilder _ content: () -> Content) -> some View {
         HStack(spacing: 14) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
+                .font(ZoopType.icon(15, weight: .semibold))
                 .foregroundStyle(tint)
                 .frame(width: 38, height: 38)
                 .background(Circle().fill(StrandPalette.surfaceBase))
@@ -263,7 +269,7 @@ struct CoachSettingsPage: View {
         row(icon: icon) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(ZoopType.headline.weight(.semibold))
                     .foregroundStyle(StrandPalette.textPrimary)
                 Text(subtitle)
                     .font(StrandFont.footnote)

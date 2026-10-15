@@ -68,7 +68,7 @@ public enum RhythmConsent {
 /// framing is always present, even when the rhythm "looked steady".
 private struct RhythmDisclaimerNote: View {
     var body: some View {
-        StrandCard(padding: 16) {
+        ContentCard {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "info.circle")
                     .font(StrandFont.subhead)
@@ -366,7 +366,7 @@ struct RhythmView: View {
         if let onClose {
             Button(action: onClose) {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 18))
+                    .font(ZoopType.icon(18))
                     .foregroundStyle(StrandPalette.textTertiary)
             }
             .buttonStyle(.plain)
@@ -416,7 +416,7 @@ struct RhythmView: View {
     }
 
     private var summaryCard: some View {
-        StrandCard(padding: 18, tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .firstTextBaseline) {
                     Text("LAST NIGHT").strandOverline()
@@ -471,7 +471,7 @@ struct RhythmView: View {
     // MARK: Plot card — the Poincaré scatter + the "comet vs cloud" reading note
 
     private var plotCard: some View {
-        StrandCard(padding: 18, tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 12) {
                 Text("BEAT-TO-BEAT SCATTER").strandOverline()
                 ZStack {
@@ -554,7 +554,7 @@ struct RhythmView: View {
     // MARK: Methodology
 
     private var methodologyCard: some View {
-        StrandCard {
+        ContentCard {
             VStack(alignment: .leading, spacing: 8) {
                 Text("How this is measured").strandOverline()
                 Text("During quiet, still, resting windows, Zoop looks at the timing between your heartbeats (R-R intervals) and draws their Poincaré scatter. From the cloud it computes its short and long axes (SD1, SD2) and a few plain regularity numbers. Movement and noisy windows are skipped, not shown. These are transparent, published descriptive statistics: a picture of your timing, never a clinical measurement.")
@@ -609,7 +609,7 @@ struct RhythmView: View {
     /// A 0…1 fraction rendered as a whole-number percent (normalised RMSSD / ectopic fraction).
     private func percent(_ value: Double?) -> String {
         guard let value else { return "—" }
-        return String(format: "%.0f%%", value * 100)
+        return String(format: "%.0f%%", locale: AppLanguage.activeLocale, value * 100)
     }
 }
 

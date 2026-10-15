@@ -3,34 +3,25 @@ import GRDB
 
 // MARK: - v45 store: the in-app strength log (programs, sessions, sets)
 //
-// Mirrors the established LabMarkerStore / AppleStepHourStore idiom precisely: plain Codable row
-// structs, raw `Row` fetch + manual decode, idempotent upserts keyed by the natural key, all GRDB
-// work through the actor's `syncWrite` / `syncRead` helpers.
+// Plain Codable row structs, raw `Row` fetch + manual decode, idempotent upserts keyed by the natural key, all GRDB
+// work through the actor's `syncWrite` / `syncRead`. The tables are flat and deviceId-keyed, joined by id (no foreign
+// keys). A logged session also exists as a `workout` row; the two find each other through (deviceId, startTs, sport),
+// which `liftSession` pins with a UNIQUE index.
 //
-// The four tables are flat and deviceId-keyed, joined manually by id — this schema carries no
-// foreign keys. A logged session also exists as an ordinary `workout` row; the two find each other
-// through the workout table's natural key (deviceId, startTs, sport), which `liftSession` pins with
-// a UNIQUE index.
-//
-// Nothing here computes or stores a load score. `workout.strain` remains the HR-measured number the
-// analytics engine produces; volume is derived on read from the sets, where the arithmetic is
-// visible (`LiftSetRow.volumeKg`).
+// Nothing here computes or stores a load score; volume is derived on read from the sets (`LiftSetRow.volumeKg`).
 
 // MARK: - Rows
 
-/// One exercise in the user's own vocabulary. Zoop ships no catalogue: an exercise is whatever the
-/// user typed, remembered here the first time it is used so it can be offered back with the muscle
-/// group they gave it. Keeping the name→group mapping in one place is what makes a per-muscle-group
-/// rollup mean the same thing from one session to the next.
+/// One exercise in the user's own vocabulary (Zoop ships no catalogue), remembered on first use with the muscle
+/// group they gave it so per-muscle rollups mean the same thing from one session to the next.
 public struct LiftExerciseRow: Equatable, Codable, Sendable {
     public var id: String
     public var deviceId: String
-    /// Exactly as the user typed it. The natural key is (deviceId, name), so case and spacing are
-    /// preserved rather than normalised — their vocabulary, shown back verbatim.
+    /// Exactly as typed. The natural key is (deviceId, name); case and spacing are preserved.
     public var name: String
-    /// Canonical classification. Nil until the user has classified this exercise.
+    /// Canonical classification. Nil until the user classifies this exercise.
     public var primaryMuscle: LiftMuscle?
-    /// Also-worked muscles, in the order the user listed them. Never contains `primaryMuscle`.
+    /// Also-worked muscles, in the order listed. Never contains `primaryMuscle`.
     public var secondaryMuscles: [LiftMuscle]
     /// Unix seconds.
     public var createdAt: Int
@@ -69,7 +60,7 @@ public struct LiftExerciseRow: Equatable, Codable, Sendable {
     }
 }
 
-/// A saved program — the reusable plan ("Upper A"), not a session run from it.
+/// A saved program, the reusable plan ("Upper A"), not a session run from it.
 public struct LiftProgramRow: Equatable, Codable, Sendable {
     public var id: String
     public var deviceId: String
@@ -77,7 +68,7 @@ public struct LiftProgramRow: Equatable, Codable, Sendable {
     public var note: String?
     /// Unix seconds.
     public var createdAt: Int
-    /// Unix seconds. Drives most-recently-touched-first ordering in the programs list.
+    /// Unix seconds. Drives most-recently-touched-first ordering.
     public var updatedAt: Int
     /// Hidden from the picker but kept, so old sessions still resolve their program.
     public var archived: Bool
@@ -120,17 +111,15 @@ public struct LiftProgramItemRow: Equatable, Codable, Sendable {
     public var programId: String
     /// Position within the program, 0-based.
     public var ord: Int
-    /// The exercise NAME. Its muscle classification lives in `liftExercise`, resolved by name —
-    /// one owner, so a program line and the vocabulary can never disagree.
+    /// The exercise NAME. Its muscle classification lives in `liftExercise`, resolved by name (one owner).
     public var exercise: String
     public var targetSets: Int?
     /// Rep range low end — the 8 of "8-10". Nil when the line has no rep target.
     public var targetRepsLow: Int?
     public var targetRepsHigh: Int?
-    /// Max RPE on the user's own 1-10 scale: the ceiling the session shows grey, and what a set left
-    /// unrated records as its rating.
+    /// Max RPE on the user's 1-10 scale: the ceiling the session shows grey, and what an unrated set records.
     public var targetRpe: Double?
-    /// Planned working weight in kilograms (v41). A program line plans a weight, not only reps.
+    /// Planned working weight in kilograms.
     public var targetWeightKg: Double?
     /// Intended rest after each set, seconds.
     public var restSec: Int?
@@ -197,8 +186,7 @@ public struct LiftSessionRow: Equatable, Codable, Sendable {
     public var programId: String?
     /// The program's name AS IT WAS when the session ran, so a later rename never rewrites history.
     public var programName: String?
-    /// Session RPE, 0-10 Borg CR10 (v41). A NUMBER, not a note: Foster's session load is sRPE x
-    /// duration, so the rating has to be computable. Nil when the user skipped rating the session.
+    /// Session RPE, 0-10 Borg CR10. A number (Foster's session load is sRPE x duration). Nil when unrated.
     public var sessionRpe: Double?
     public var note: String?
 
@@ -239,22 +227,21 @@ public struct LiftSessionRow: Equatable, Codable, Sendable {
     }
 }
 
-/// One set. Stored as its own row rather than folded into the session, because per-exercise history
-/// ("what did I lift for this last time") has to be answerable from an index.
+/// One set, stored as its own row so per-exercise history can be answered from an index.
 public struct LiftSetRow: Equatable, Codable, Sendable {
     public var id: String
     public var deviceId: String
     public var sessionId: String
-    /// Order within the whole session, 0-based — reconstructs the order the sets were performed in.
+    /// Order within the whole session, 0-based.
     public var ord: Int
-    /// Denormalised deliberately: a session stays readable after its program is edited or deleted.
+    /// Denormalised so a session stays readable after its program is edited or deleted.
     public var exercise: String
     /// The classification this set was counted under, snapshotted at log time.
     public var primaryMuscle: LiftMuscle?
     public var secondaryMuscles: [LiftMuscle]
-    /// 1-based within this exercise, so "set 3 of 4" survives.
+    /// 1-based within this exercise.
     public var setIndex: Int
-    /// Kilograms. Display units convert at the edge; storage is always kg.
+    /// Kilograms; display units convert at the edge.
     public var weightKg: Double?
     public var reps: Int?
     /// RPE on the user's own 1-10 scale.
@@ -263,7 +250,7 @@ public struct LiftSetRow: Equatable, Codable, Sendable {
     public var isWarmup: Bool
     public var startTs: Int?
     public var endTs: Int?
-    /// Rest ACTUALLY taken after this set, seconds — not the target from the program.
+    /// Rest ACTUALLY taken after this set, seconds (not the program target).
     public var restSec: Int?
     public var note: String?
 
@@ -304,8 +291,7 @@ public struct LiftSetRow: Equatable, Codable, Sendable {
         self.note = note
     }
 
-    /// Volume for this set: weight x reps, in kilograms. Nil unless BOTH are present, and zero for a
-    /// warmup — a transparent arithmetic figure, never a physiological claim.
+    /// Volume for this set: weight x reps in kilograms. Nil unless both are present, zero for a warmup.
     public var volumeKg: Double? {
         guard !isWarmup, let weightKg, let reps else { return nil }
         return weightKg * Double(reps)
@@ -339,36 +325,16 @@ extension WhoopStore {
 
     // MARK: Exercises (the user's own vocabulary)
 
-    /// Remember exercises. Keyed on the natural key (deviceId, name), so recording the same name
-    /// twice updates its classification and recency instead of duplicating it. A muscle field is
-    /// only overwritten when the caller supplies one, so merely using an exercise never erases the
-    /// classification the user set for it.
-    /// How many exercises one device remembers.
-    ///
-    /// A cap exists because the vocabulary is typo-accumulating by design: every misspelling becomes
-    /// a permanent picker entry ("Chest supported row3"). It is set high enough that no real
-    /// training history reaches it — a broad lifter's whole vocabulary is well under a hundred — so
-    /// hitting it means something has gone wrong, and the honest response is to say so rather than
-    /// to silently drop what the user typed or to evict something they still use.
-    ///
-    /// An EXISTING name always updates, cap or no cap: only genuinely NEW names are refused.
+    /// How many exercises one device remembers. A cap exists because every misspelling becomes a permanent picker
+    /// entry; it is set well above any real vocabulary, so hitting it means something went wrong and the honest response
+    /// is to refuse rather than silently drop or evict. An EXISTING name always updates; only NEW names are refused.
     public static let maxRememberedExercises = 500
 
-    /// How long a PROGRAM note may be.
-    ///
-    /// 120 because that is what can actually be SEEN: the hub renders it under the program name at
-    /// `lineLimit(3)` in caption type, in a column narrowed by the Start button — roughly three
-    /// lines on a phone. A longer note is not
-    /// stored-and-shown, it is stored-and-silently-truncated, and typing into a field that quietly
-    /// discards the end is worse than a field that stops.
+    /// Maximum length of a PROGRAM note: about what the hub shows (three caption lines under the name). Longer text
+    /// would be stored but silently truncated.
     public static let maxProgramNoteLength = 120
 
-    /// How long an EXERCISE (technique) note may be.
-    ///
-    /// 200, about four lines. Longer than a program note because it is a cue you read BETWEEN sets
-    /// — "slow eccentric, pause at the bottom, don't let the elbows flare" — and shorter than
-    /// unlimited because it renders directly above the set rows and every line pushes them down the
-    /// screen. Both are a MAXIMUM, not a target — a one-line note is usually the better note.
+    /// Maximum length of an EXERCISE (technique) note: about four lines, since it renders directly above the set rows.
     public static let maxExerciseNoteLength = 200
 
     /// Thrown when the vocabulary is full and the name is a new one.
@@ -383,9 +349,7 @@ extension WhoopStore {
         return try syncWrite { db in
             var n = 0
             for r in rows {
-                // Only a NEW name can push the vocabulary over: re-saving one that already exists is
-                // an update and must always be allowed, or a user at the cap could no longer correct
-                // the classification of an exercise they use every week.
+                // Only a NEW name can push the vocabulary over; re-saving an existing one must always be allowed.
                 let known = try Int.fetchOne(db, sql: """
                     SELECT COUNT(*) FROM liftExercise WHERE deviceId = ? AND name = ?
                     """, arguments: [r.deviceId, r.name]) ?? 0
@@ -417,8 +381,7 @@ extension WhoopStore {
         }
     }
 
-    /// The user's exercises, most recently used first and never-used ones after, alphabetical within
-    /// each. This is the picker's list — built entirely from what they have typed.
+    /// The user's exercises, most recently used first, never-used ones after, alphabetical within each.
     public func liftExercises(deviceId: String) async throws -> [LiftExerciseRow] {
         try syncRead { db in
             try Row.fetchAll(db, sql: """
@@ -429,8 +392,7 @@ extension WhoopStore {
         }
     }
 
-    /// Forget one exercise from the vocabulary. Sets already logged under that name are untouched —
-    /// they carry their own copy of the name and muscle group, so history never loses meaning.
+    /// Forgets one exercise. Logged sets keep their own copy of the name and muscle group.
     @discardableResult
     public func deleteLiftExercise(id: String) async throws -> Bool {
         try syncWrite { db in
@@ -441,7 +403,7 @@ extension WhoopStore {
 
     // MARK: Programs
 
-    /// Upsert programs by `id`. Returns rows written.
+    /// Upserts programs by `id`. Returns rows written.
     @discardableResult
     public func upsertLiftPrograms(_ rows: [LiftProgramRow]) async throws -> Int {
         guard !rows.isEmpty else { return 0 }
@@ -466,8 +428,7 @@ extension WhoopStore {
         }
     }
 
-    /// Programs for a device, most recently touched first. `includeArchived` defaults false so the
-    /// picker shows only live programs.
+    /// Programs for a device, most recently touched first; archived ones only when `includeArchived`.
     public func liftPrograms(deviceId: String, includeArchived: Bool = false) async throws -> [LiftProgramRow] {
         try syncRead { db in
             let sql = includeArchived
@@ -485,9 +446,7 @@ extension WhoopStore {
         }
     }
 
-    /// Delete a program and its item lines. Sessions already run from it are NOT touched — they
-    /// carry their own `programName` snapshot, so history survives the program's deletion.
-    /// Returns true if a program row was removed.
+    /// Deletes a program and its item lines; sessions keep their own `programName` snapshot. Returns true if removed.
     @discardableResult
     public func deleteLiftProgram(id: String) async throws -> Bool {
         try syncWrite { db in
@@ -499,8 +458,7 @@ extension WhoopStore {
 
     // MARK: Program items
 
-    /// Replace a program's item lines wholesale. The editor hands back the whole list, and deleting
-    /// then reinserting inside one transaction avoids reconciling removals and reorders row by row.
+    /// Replaces a program's item lines wholesale (delete then reinsert in one transaction).
     @discardableResult
     public func replaceLiftProgramItems(programId: String, items: [LiftProgramItemRow]) async throws -> Int {
         try syncWrite { db in
@@ -536,9 +494,8 @@ extension WhoopStore {
 
     // MARK: Sessions
 
-    /// Upsert sessions. Keyed on the NATURAL key (deviceId, startTs, sport) rather than the `id` PK,
-    /// so re-saving the same session updates it in place even if the caller minted a fresh id — the
-    /// labMarker rule, and what keeps this row paired 1:1 with its `workout` row.
+    /// Upserts sessions, keyed on the NATURAL key (deviceId, startTs, sport) rather than the `id` PK, which keeps the
+    /// row paired 1:1 with its `workout` row even if the caller minted a fresh id.
     @discardableResult
     public func upsertLiftSessions(_ rows: [LiftSessionRow]) async throws -> Int {
         guard !rows.isEmpty else { return 0 }
@@ -566,7 +523,7 @@ extension WhoopStore {
         }
     }
 
-    /// Sessions for a device that started within `[fromTs, toTs]` inclusive, most recent first.
+    /// Sessions that started within `[fromTs, toTs]` inclusive, most recent first.
     public func liftSessions(deviceId: String, fromTs: Int, toTs: Int) async throws -> [LiftSessionRow] {
         try syncRead { db in
             try Row.fetchAll(db, sql: """
@@ -577,7 +534,7 @@ extension WhoopStore {
         }
     }
 
-    /// Delete a session and every set in it. Returns true if a session row was removed.
+    /// Deletes a session and every set in it. Returns true if a session row was removed.
     @discardableResult
     public func deleteLiftSession(id: String) async throws -> Bool {
         try syncWrite { db in
@@ -587,10 +544,7 @@ extension WhoopStore {
         }
     }
 
-    /// Delete individual sets, as editing a finished session does when a set is removed. The session
-    /// itself stays. Returns how many rows went.
-    ///
-    /// The Kotlin twin is `DeviceRegistryDao.deleteLiftSets`.
+    /// Deletes individual sets (editing a finished session); the session stays. Returns how many rows went.
     @discardableResult
     public func deleteLiftSets(ids: [String]) async throws -> Int {
         guard !ids.isEmpty else { return 0 }
@@ -606,8 +560,7 @@ extension WhoopStore {
 
     // MARK: Sets
 
-    /// Upsert sets by `id`. Called as each set is logged, so a session in progress is durable set by
-    /// set rather than only on finish.
+    /// Upserts sets by `id`, called as each set is logged so a session in progress is durable set by set.
     @discardableResult
     public func upsertLiftSets(_ rows: [LiftSetRow]) async throws -> Int {
         guard !rows.isEmpty else { return 0 }
@@ -657,18 +610,12 @@ extension WhoopStore {
         }
     }
 
-    /// The sets from the most recent session that contained `exercise`, in performed order.
-    ///
-    /// This is the read the whole feature exists for: it pre-fills the next session with what you
-    /// actually did last time, which the user then confirms or overrides. Empty when the exercise
-    /// has never been logged. `before` excludes the session currently in progress (pass its
-    /// `startTs`) so a running session never pre-fills from itself. Sets with zero reps were not
-    /// performed (`LiftMetrics.isPerformed`) and are skipped, so a discarded set never becomes the next
-    /// session's grey numbers, and a session holding only such sets is not "last time" for the exercise.
+    /// The sets from the most recent session that contained `exercise`, in performed order. It pre-fills the next
+    /// session. `before` excludes the session in progress (pass its `startTs`). Zero-rep sets were not performed
+    /// (`LiftMetrics.isPerformed`) and are skipped, so a session holding only such sets is not "last time".
     public func lastLiftSets(deviceId: String, exercise: String, before: Int? = nil) async throws -> [LiftSetRow] {
         try syncRead { db in
-            // Two steps rather than a correlated subquery: find the latest qualifying session, then
-            // read its sets in order. Served by idx_liftSet_device_exercise + idx_liftSession_natural.
+            // Two steps rather than a correlated subquery: latest qualifying session, then its sets in order.
             let cutoff = before ?? Int.max
             guard let sessionId = try String.fetchOne(db, sql: """
                 SELECT s.sessionId FROM liftSet s
@@ -686,24 +633,15 @@ extension WhoopStore {
         }
     }
 
-    /// Per-muscle working-set counts over `[fromTs, toTs]`, from the classification each set was
-    /// logged under.
+    /// Per-muscle working-set counts over `[fromTs, toTs]`, from the classification each set was logged under.
     ///
-    /// `fractional` is the headline figure: direct sets count 1, indirect sets count 0.5. That is
-    /// not a house convention — the 2025 dose-response meta-regression tested exactly this choice
-    /// against counting indirect sets as 1 and as 0, and the evidence was strongest for 0.5, which
-    /// its primary models then used. The reference doses Zoop displays come from those models, so
-    /// the count and the reference must stay on the same method.
+    /// `fractional` is the headline: direct sets count 1, indirect 0.5, the method with the strongest support in the 2025
+    /// dose-response meta-regression whose reference doses Zoop displays, so count and reference must share it. `direct`
+    /// and `indirect` are returned so the arithmetic is inspectable.
     ///
-    /// `direct` and `indirect` are returned alongside so the arithmetic is inspectable rather than
-    /// asserted.
-    ///
-    /// **Warm-ups and sets with zero reps (never performed, `LiftMetrics.isPerformed`) are excluded;
-    /// nothing else is.** In particular this does NOT filter by RPE, even
-    /// though a hard set is the thing that drives adaptation — because the reference doses were
-    /// derived from unfiltered working-set counts, and filtering here would quietly compare a
-    /// smaller number against a scale built from a larger one. Proximity to failure is reported
-    /// separately by `LiftMetrics.rpeProfile` instead, where it can inform without corrupting the count.
+    /// Warm-ups and zero-rep sets (`LiftMetrics.isPerformed`) are excluded; nothing else is. In particular there is no RPE
+    /// filter, because the reference doses came from unfiltered working-set counts. Proximity to failure is reported
+    /// separately by `LiftMetrics.rpeProfile`.
     public func liftSetCounts(
         deviceId: String,
         fromTs: Int,
@@ -726,14 +664,9 @@ extension WhoopStore {
                 if let token: String = row["primaryMuscle"], let m = LiftMuscle(rawValue: token) {
                     direct[m, default: 0] += 1
                 }
-                // A muscle listed BOTH as primary and as secondary is credited once, as direct.
-                // `LiftMuscle.encodeList(_:excluding:)` already strips the primary on the way in, so
-                // today no stored row needs this — but "today no row needs it" is not a guarantee,
-                // and without the guard this aggregation and `LiftMetrics.muscleCounts` (which has
-                // always had it) would report DIFFERENT numbers for the same set: the hub's weekly
-                // card and the session detail, disagreeing, with nothing to catch it. The two are
-                // pinned against each other by
-                // `LiftMetricsStoreAgreementTests.testBothImplementationsAgree…`.
+                // A muscle listed as both primary and secondary is credited once, as direct. `encodeList` already strips it on the way
+                // in, but without this guard the aggregation and `LiftMetrics.muscleCounts` could report different numbers for the
+                // same set (pinned by `LiftMetricsStoreAgreementTests`).
                 let primary: LiftMuscle? = (row["primaryMuscle"] as String?).flatMap(LiftMuscle.init(rawValue:))
                 for m in LiftMuscle.decodeList(row["secondaryMuscles"]) where m != primary {
                     indirect[m, default: 0] += 1

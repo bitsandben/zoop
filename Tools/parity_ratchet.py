@@ -706,6 +706,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.repair_stale_base and args.migrate_authority:
         parser.error("--repair-stale-base and --migrate-authority are different remedies; use one")
     root = args.root.resolve()
+    if parity_ledger.fork_skips_parity(root):
+        print("SKIP parity ratchet: Tools/parity_fork.json sets android_parity=false (iOS-only fork)")
+        return 0
     try:
         base = resolve_base(root, args.base)
         warnings: list[str] = []

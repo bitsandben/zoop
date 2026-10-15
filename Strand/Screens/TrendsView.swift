@@ -8,7 +8,7 @@ import Foundation
 //
 // The longitudinal view, rebuilt on the locked Zoop component system so every
 // surface, height and gap is identical: one SegmentedPillControl for the range,
-// a hero recovery ChartCard, a uniform grid of HRV / Resting HR / Day Strain
+// a hero recovery chart ContentCard, a uniform grid of HRV / Resting HR / Day Strain
 // ChartCards (all ZoopMetrics.chartHeight tall), and the whole history as a
 // recovery YearHeatStrip in a ZoopCard. No hand-sized cards anywhere.
 
@@ -52,8 +52,7 @@ struct TrendsView: View {
 
     @State private var range: Range = .quarter
 
-    /// iOS: true when this screen is the Insights tab root, which folds the health monitor (vitals,
-    /// skin temperature, Lab Book, sync) around the trend charts. Always false on macOS.
+    /// Kept for the iOS tab shell's call site; iOS renders `BodyScreen` either way (see `body`).
     let asInsightsTab: Bool
 
     init(asInsightsTab: Bool = false) {
@@ -299,12 +298,14 @@ struct TrendsView: View {
         // them instead (once per stack — a double registration double-pushes, #38).
         NavigationStack { scaffold.tabRouteDestinations() }
         #else
-        scaffold
+        // iOS has one history page: the Insights tab (`BodyScreen`). Every route that still names
+        // Trends lands there, so the same facts are never drawn by two screens.
+        BodyScreen()
         #endif
     }
 
     private var scaffold: some View {
-        ScreenScaffold(title: asInsightsTab ? "Insights" : "Trends", subtitle: "The thread of you over time.",
+        ScreenScaffold(title: "Trends", subtitle: "The thread of you over time.",
                        quietSubtitle: true,
                        // PERF (scroll): lazy column — byte-identical layout (LazyVStack == eager VStack
                        // alignment/spacing/header). The content is one inner eager VStack, so the staggered
@@ -316,9 +317,6 @@ struct TrendsView: View {
                 ComingSoon(what: repo.loaded
                     ? "Trends need history to draw. Import your WHOOP export in Data Sources to see weeks, months and years instantly."
                     : "Loading your history…")
-                #if os(iOS)
-                if asInsightsTab { InsightsFooterBlock() }
-                #endif
             } else {
                 // Reuse the resolved windows until the data, range, or loaded Rest series changes.
                 // An unrelated Repository publication must not re-filter five years of history.
@@ -326,18 +324,6 @@ struct TrendsView: View {
                 VStack(alignment: .leading, spacing: ZoopMetrics.sectionSpacing) {
                     // The main card list ripples in once on appear (Reduce-Motion safe).
                     Group {
-                        #if os(iOS)
-                        // The interpretations lead (they draw nothing until one exists), then on the Insights tab
-                        // the body's latest vitals before the history.
-                        BodyInsightsSection()
-                        if asInsightsTab { InsightsVitalsBlock() }
-                        // The metric trend viewer leads: pick a metric and a window, read the average
-                        // and its change, then the longer charts follow. iOS shows no week-in-review
-                        // digest or score trio: the viewer and the charts below already carry those values.
-                        TrendViewerCard(days: repo.days, effortScale: effortScale)
-                        // What the logbook answers add up to; draws nothing until there is an effect to show.
-                        HabitEffectsCard()
-                        #else
                         // Week-in-review digest (#208) with prev/next week browsing (#710) — self-hides
                         // only when NO week in history has data. Past weeks render in the same format.
                         weeklyDigestNav
@@ -345,7 +331,6 @@ struct TrendsView: View {
                         // The Charge / Effort / Rest trio, presented in Zoop's pip language.
                         weekInReview(charge: metrics.recovery, effort: metrics.strain, rest: metrics.rest)
                             .staggeredAppear(index: 1)
-                        #endif
                         rangeBar(recovery: metrics.recovery)
                             .staggeredAppear(index: 2)
                         heroRecovery(recovery: metrics.recovery)
@@ -364,12 +349,6 @@ struct TrendsView: View {
                             .staggeredAppear(index: 6)
                         exportReportRow
                             .staggeredAppear(index: 7)
-                        #if os(iOS)
-                        if asInsightsTab {
-                            allMetricsLink
-                            InsightsFooterBlock()
-                        }
-                        #endif
                     }
                 }
             }
@@ -550,7 +529,7 @@ struct TrendsView: View {
                         // Charge/Rest vessels regardless of the displayed Effort unit.
                         pipScoreRow(label: Self.scoreLabel("Effort", ios: "Strain"), value: display, range: 0...maxV,
                                     tint: StrandPalette.effortColor, frac: v / 100,
-                                    format: { oneDecimal ? String(format: "%.1f", $0) : "\(Int($0.rounded()))" })
+                                    format: { oneDecimal ? ZoopNumber.decimal($0, digits: 1) : "\(Int($0.rounded()))" })
                     }
                     if let v = restAvg {
                         pipScoreRow(label: Self.scoreLabel("Rest", ios: "Sleep"), value: v, range: 0...100,
@@ -898,17 +877,6 @@ struct TrendsView: View {
 
     private var sparsePlaceholder: some View { TrendsSparsePlaceholder() }
 
-    #if os(iOS)
-    /// The Insights tab's way into every catalog metric (the explorer, with search).
-    private var allMetricsLink: some View {
-        NavigationLink(value: TabRoute.metricExplorer) {
-            ZoopIconRow("Show all metrics", subtitle: "Every metric, every range", icon: "square.grid.2x2.fill")
-                .background(ZoopPanelSurface())
-                .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
-        }
-        .buttonStyle(.plain)
-    }
-    #endif
 
     /// The idle header subtitle of a small multiple on iOS: it names the trailing figure (the window
     /// mean) so the card's header reads the same way before and during a scrub, when it names the day.
@@ -929,7 +897,7 @@ private struct TrendsSparsePlaceholder: View {
             .font(StrandFont.subhead)
             .foregroundStyle(StrandPalette.textTertiary)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .background(ZoopPanelSurface(cornerRadius: 12))
+            .zoopInsetSurface(radius: 12)
     }
 }
 
@@ -969,12 +937,11 @@ private struct TrendsScrubCard<Footer: View>: View {
     @State private var selected: TrendPoint?
 
     var body: some View {
-        ChartCard(
+        ContentCard(
             title: title,
             subtitle: selected.map { $0.date.formatted(trendsScrubDayStyle) } ?? subtitle,
             trailing: selected.map { headerFormat($0.value) } ?? average,
             height: ZoopMetrics.chartHeight,
-            tint: tint,
             showsChevron: TrendsView.cardsShowChevron,
             chart: {
                 if points.count >= 2 {

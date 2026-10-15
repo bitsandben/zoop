@@ -72,7 +72,10 @@ extension DashboardCard {
         case .stress, .respiratory: return StrandPalette.accent
         case .fitnessAge: return StrandPalette.chargeColor
         case .vo2max: return StrandPalette.chargeColor
-        case .vitality, .hrv: return StrandPalette.metricPurple
+#if os(macOS)
+        case .vitality: return StrandPalette.metricPurple
+#endif
+        case .hrv: return StrandPalette.metricPurple
         case .restingHr: return StrandPalette.metricRose
         case .steps, .stepsAverage30, .bloodOxygen, .hydration: return StrandPalette.metricCyan
         case .skinTemp, .calories: return StrandPalette.metricAmber
@@ -117,7 +120,10 @@ extension DashboardCard {
         case .hrv, .restingHr, .respiratory, .bloodOxygen, .skinTemp: return String(localized: "Vitals")
         case .steps, .stepsAverage30, .calories, .hydration: return String(localized: "Activity")
         case .stress, .sleep: return String(localized: "Recovery & sleep")
-        case .fitnessAge, .vo2max, .vitality: return String(localized: "Longevity")
+        case .fitnessAge, .vo2max: return String(localized: "Longevity")
+#if os(macOS)
+        case .vitality: return String(localized: "Longevity")
+#endif
         case .coupled, .coach: return String(localized: "Insights")
         }
     }

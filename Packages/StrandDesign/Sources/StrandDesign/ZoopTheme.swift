@@ -6,15 +6,9 @@ import AppKit
 #endif
 
 // MARK: - Zoop theme (Classic / Pastel & Nature)
-//
-// The whole-app LOOK, independent of the light/dark appearance. `.classic` is the flat near-black /
-// lime design; `.pastel` is "Pastell & Natur": a sage canvas, white cards, lavender / mint / apricot
-// data worlds and SF Rounded numerals, in both light and dark.
-//
-// Tokens declare both looks via `Color(classic:pastel:)`; their dynamic provider reads `current` at
-// RESOLUTION time, so a static `let` token follows a theme switch. `current` is a plain static read
-// (no UserDefaults lookup in the provider): it is loaded once at first use and updated by
-// `.zoopTheme(_:)` at the app root, which also re-keys the content so every view re-resolves.
+// The whole-app LOOK, independent of light/dark. `.classic` is flat near-black/lime; `.pastel` is "Pastell & Natur" (sage canvas, white cards, lavender/mint/apricot data worlds, SF Rounded numerals).
+// Tokens declare both looks via `Color(classic:pastel:)`; the dynamic provider reads the `ZoopThemeTrait` of the trait collection it resolves against (iOS 17+), else `current`
+// (a plain static read, loaded once and updated by `.zoopTheme(_:)` / `.zoopThemeInPlace(_:)` at the app root).
 
 public enum ZoopTheme: String, CaseIterable, Identifiable, Sendable {
     case classic
@@ -55,17 +49,82 @@ public enum ZoopTheme: String, CaseIterable, Identifiable, Sendable {
 }
 
 public extension View {
-    /// Applies the theme: sets `ZoopTheme.current` (read by the token providers and fonts) and keys the
-    /// content on it so a switch rebuilds and re-resolves every view. Apply at each app root.
+    /// Applies the theme: sets `ZoopTheme.current` and keys the content on it so a switch re-resolves every view. Apply at each app root.
     func zoopTheme(_ raw: String) -> some View {
         ZoopTheme.current = ZoopTheme.resolve(raw)
-        return self.id("zoop.theme.\(ZoopTheme.current.rawValue)")
+        return self.zoopThemeTrait(ZoopTheme.current).id("zoop.theme.\(ZoopTheme.current.rawValue)")
+    }
+
+    /// Applies the theme WITHOUT re-keying the content, so navigation, tabs and sheets survive a switch.
+    /// On iOS 17+ the theme travels as a trait (`ZoopThemeTrait`) that every token's provider reads and
+    /// that is declared to affect colour, so colours re-resolve in place. Values read in a view's body
+    /// (fonts, radii) follow when that view is next rebuilt; the iOS shell rebuilds hidden tabs for that.
+    func zoopThemeInPlace(_ raw: String) -> some View {
+        ZoopTheme.current = ZoopTheme.resolve(raw)
+        return self.zoopThemeTrait(ZoopTheme.current)
+    }
+
+    @ViewBuilder
+    internal func zoopThemeTrait(_ theme: ZoopTheme) -> some View {
+        #if canImport(UIKit) && !os(watchOS)
+        if #available(iOS 17.0, tvOS 17.0, *) {
+            self.environment(\.zoopThemeTraitValue, theme.traitValue)
+        } else {
+            self
+        }
+        #else
+        self
+        #endif
     }
 }
 
+#if canImport(UIKit) && !os(watchOS)
+extension ZoopTheme {
+    /// The trait encoding: -1 unset (fall back to `current`), 0 classic, 1 pastel.
+    public var traitValue: Int { self == .pastel ? 1 : 0 }
+
+    /// The theme a trait collection carries, or `current` when none was set.
+    static func resolved(in traits: UITraitCollection) -> ZoopTheme {
+        if #available(iOS 17.0, tvOS 17.0, *) {
+            switch traits[ZoopThemeTrait.self] {
+            case 0: return .classic
+            case 1: return .pastel
+            default: break
+            }
+        }
+        return current
+    }
+}
+
+/// The theme as a UIKit trait. `affectsColorAppearance` makes UIKit and SwiftUI re-resolve dynamic
+/// colours when it changes, which is what lets a theme switch apply without rebuilding the view tree.
+@available(iOS 17.0, tvOS 17.0, *)
+public struct ZoopThemeTrait: UITraitDefinition {
+    public static let defaultValue = -1
+    public static let identifier = "com.zoopapp.zoop.theme"
+    public static let name = "ZoopTheme"
+    public static let affectsColorAppearance = true
+}
+
+@available(iOS 17.0, tvOS 17.0, *)
+private struct ZoopThemeTraitKey: EnvironmentKey, UITraitBridgedEnvironmentKey {
+    static let defaultValue = -1
+    static func read(from traitCollection: UITraitCollection) -> Int { traitCollection[ZoopThemeTrait.self] }
+    static func write(to mutableTraits: inout UIMutableTraits, value: Int) { mutableTraits[ZoopThemeTrait.self] = value }
+}
+
+@available(iOS 17.0, tvOS 17.0, *)
+extension EnvironmentValues {
+    /// The bridged theme trait (see `ZoopThemeTrait`).
+    public var zoopThemeTraitValue: Int {
+        get { self[ZoopThemeTraitKey.self] }
+        set { self[ZoopThemeTraitKey.self] = newValue }
+    }
+}
+#endif
+
 public extension Color {
-    /// A token that carries both looks: `classic` and `pastel` (light, dark) hex pairs. All four hexes
-    /// are parsed ONCE here (#2393); the provider only picks a ready tuple per theme + appearance.
+    /// A token carrying both looks: `classic` and `pastel` (light, dark) hex pairs, all parsed ONCE here (#2393); the provider picks a ready tuple.
     init(classic: (light: String, dark: String), pastel: (light: String, dark: String)) {
         let c = (light: Color.sRGBComponents(hex: classic.light), dark: Color.sRGBComponents(hex: classic.dark))
         let p = (light: Color.sRGBComponents(hex: pastel.light), dark: Color.sRGBComponents(hex: pastel.dark))
@@ -73,7 +132,7 @@ public extension Color {
         self.init(.sRGB, red: c.dark.r, green: c.dark.g, blue: c.dark.b, opacity: c.dark.a)
         #elseif canImport(UIKit)
         self.init(UIColor { trait in
-            let pair = ZoopTheme.current == .pastel ? p : c
+            let pair = ZoopTheme.resolved(in: trait) == .pastel ? p : c
             let v = trait.userInterfaceStyle == .dark ? pair.dark : pair.light
             return UIColor(red: CGFloat(v.r), green: CGFloat(v.g), blue: CGFloat(v.b), alpha: CGFloat(v.a))
         })

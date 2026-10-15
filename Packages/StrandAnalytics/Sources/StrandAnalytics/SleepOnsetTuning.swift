@@ -3,14 +3,14 @@ import WhoopProtocol
 
 // MARK: - Sleep onset tuning, evidence and learning (Zoop)
 //
-// The HR-confirmed onset rule (`SleepStager.onsetDecision`) cuts a quiet lead whose heart rate never came
-// down to the night's sleeping level. Three things hang off it here, all pure:
-//   1. `OnsetTrimThresholds` / `SleepOnsetStrictness`: the rule's numbers, scaled by a user setting.
-//      `.standard` is byte-identical to the shipped constants.
-//   2. `SleepOnsetEvidence` / `SleepStager.explainOnset`: what the rule saw and decided for one night,
-//      for the "Why this sleep?" sheet. Computed by the rule itself, never re-derived in the UI.
+// The HR-confirmed onset rule (`SleepStager.onsetDecision`) cuts a quiet lead whose heart rate never
+// came down to the night's sleeping level. Pure pieces built on it:
+//   1. `OnsetTrimThresholds` / `SleepOnsetStrictness`: the rule's numbers scaled by a user setting
+//      (`.standard` equals the shipped constants).
+//   2. `SleepOnsetEvidence` / `SleepStager.explainOnset`: what the rule saw and decided for a night,
+//      for the "Why this sleep?" sheet; computed by the rule itself, never re-derived in the UI.
 //   3. `OnsetCorrectionLearning`: a personal offset learned from the wearer's own start-time edits.
-// APPROXIMATE, like the rule itself: none of this is validated against PSG.
+// Approximate, like the rule itself: not validated against PSG.
 
 /// The onset rule's thresholds. `.standard` equals the `SleepStager.onsetTrim*` constants.
 public struct OnsetTrimThresholds: Equatable, Hashable, Sendable {
@@ -35,12 +35,10 @@ public struct OnsetTrimThresholds: Equatable, Hashable, Sendable {
         stillFrac: SleepStager.onsetTrimStillFrac,
         minHRMinutes: SleepStager.onsetTrimMinHRMinutes)
 
-    /// The thresholds for a strictness. One factor `k` scales every margin the rule judges with: how far
-    /// above the sleeping level a lead must sit to count as awake, how close to it the onset stretch must
-    /// come, and how long a lead must be before it is cut. Strict (k < 1) cuts smaller and shorter leads
-    /// and waits for a calmer heart rate, so sleep starts later; Relaxed (k > 1) needs a clearer waking
-    /// lead before it cuts anything, so sleep starts sooner. The window length, the level percentile and
-    /// the coverage floor are not margins and stay fixed.
+    /// The thresholds for a strictness. One factor `k` scales every margin (how far above the sleeping
+    /// level a lead must sit to count as awake, how close the onset stretch must come, how long a lead
+    /// must be to be cut). Strict (k < 1) starts sleep later; Relaxed (k > 1) sooner. Window length, level
+    /// percentile and coverage floor are not margins and stay fixed.
     public static func forStrictness(_ s: SleepOnsetStrictness) -> OnsetTrimThresholds {
         let k = s.scale
         guard k != 1 else { return .standard }
@@ -93,28 +91,19 @@ public struct SleepOnsetTuning: Equatable, Hashable, Sendable {
 /// What the onset rule saw and decided for one night, for display. Times are unix seconds.
 public struct SleepOnsetEvidence: Equatable, Sendable {
     public enum Outcome: String, Equatable, Sendable {
-        /// The quiet lead sat at a waking heart rate and was cut.
         case trimmed
-        /// Heart rate reached the sleeping level within the shortest lead worth cutting.
         case settledPromptly
-        /// The lead's heart rate was not clearly above the sleeping level.
         case leadAtSleepingLevel
-        /// Heart rate never settled into a still, sleeping-level stretch.
         case neverSettled
-        /// Too little heart rate to judge.
         case sparseHR
-        /// Cutting would have left too short a night.
         case tooShortToTrim
     }
 
     public let outcome: Outcome
-    /// When the wrist went still: the start of the gravity-still run the night was built from.
     public let stillSinceTs: Int
-    /// The rule's onset before the learned offset.
     public let ruleOnsetTs: Int
     /// The onset after the learned offset: the night's detected start.
     public let onsetTs: Int
-    /// The offset that moved `ruleOnsetTs` to `onsetTs` (minutes; 0 when none applied).
     public let appliedOffsetMin: Int
     /// The end of the still run (the wearer started moving).
     public let stillUntilTs: Int
@@ -124,10 +113,8 @@ public struct SleepOnsetEvidence: Equatable, Sendable {
     public let leadMedianBpm: Double?
     /// First minute in the sleeping band inside a still, sleeping-HR stretch.
     public let settledTs: Int?
-    /// Per-minute series for the chart, starting at `seriesStartTs`.
     public let seriesStartTs: Int
     public let minuteHR: [Double?]
-    /// Per-minute share of moving gravity samples (0…1), nil where there was no gravity.
     public let minuteMoving: [Double?]
 
     /// The lead's distance above the sleeping level, whole bpm, when the rule measured one.
@@ -139,11 +126,10 @@ public struct SleepOnsetEvidence: Equatable, Sendable {
 
 extension SleepStager {
     /// Explain the onset of the night `[sessionStart, sessionEnd]` from its raw streams: rebuild the
-    /// gravity-still runs the way `detectSleep` does, take the sleep run that overlaps the night most,
-    /// and run the onset rule on it with `tuning`. nil when no run overlaps (an imported night, or raw
-    /// that has not synced). Pass the streams for at least a few hours either side of the night so the
-    /// run is rebuilt whole. The confirmation gates `detectSleep` applies after building runs are not
-    /// re-run: they accept or drop a night, they never move its start.
+    /// gravity-still runs as `detectSleep` does, take the run overlapping the night most, and run the onset
+    /// rule on it with `tuning`. nil when no run overlaps. Pass streams for a few hours either side so the
+    /// run is rebuilt whole. `detectSleep`'s later confirmation gates are not re-run: they accept or drop a
+    /// night, never move its start.
     public static func explainOnset(hr: [HRSample], gravity: [GravitySample],
                                     sessionStart: Int, sessionEnd: Int,
                                     tzOffsetSeconds: Int = 0,

@@ -37,11 +37,6 @@ struct HydrationView: View {
     @AppStorage(HydrationStore.customSizeKey) private var customSizeML = HydrationGoal.cupML
     @State private var showCustomSizeSheet = false
 
-    /// "Card transparency" (0–100, default 100): fades the hydration cards in lockstep with the frosted
-    /// cards; content stays readable. Mirrors Kotlin `ZoopPrefs.cardOpacityPercent`.
-    @AppStorage(CardAppearancePrefs.opacityKey) private var cardOpacityPercent = CardAppearancePrefs.defaultPercent
-    private var cardOpacity: Double { max(0, min(1, Double(cardOpacityPercent) / 100)) }
-
     private var goalML: Int { repo.hydrationGoalML(profileSex: profile.sex) }
     private var fraction: Double { HydrationGoal.fraction(totalML: totalML, goalML: goalML) }
     private var percent: Int { min(100, Int((fraction * 100).rounded(.towardZero))) }
@@ -105,11 +100,11 @@ struct HydrationView: View {
                         .frame(width: 184, height: 184)
                     VStack(spacing: 2) {
                         CountUpText(value: HydrationGoal.litres(fromML: totalML),
-                                    format: { String(format: "%.1f", $0) },
+                                    format: { ZoopNumber.decimal($0, digits: 1) },
                                     font: StrandFont.rounded(40, weight: .bold),
                                     color: StrandPalette.textPrimary)
                             .shadow(color: StrandPalette.shadow(0.5), radius: 6, y: 1)
-                        Text(String(localized: "of \(String(format: "%.1f", HydrationGoal.litres(fromML: Double(goalML)))) L"))
+                        Text(String(localized: "of \(String(format: "%.1f", locale: AppLanguage.activeLocale, HydrationGoal.litres(fromML: Double(goalML)))) L"))
                             .font(StrandFont.subhead)
                             .foregroundStyle(StrandPalette.textSecondary)
                     }
@@ -117,7 +112,7 @@ struct HydrationView: View {
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Hydration today")
-                .accessibilityValue("\(String(format: "%.1f", HydrationGoal.litres(fromML: totalML))) of \(String(format: "%.1f", HydrationGoal.litres(fromML: Double(goalML)))) litres")
+                .accessibilityValue("\(String(format: "%.1f", locale: AppLanguage.activeLocale, HydrationGoal.litres(fromML: totalML))) of \(String(format: "%.1f", locale: AppLanguage.activeLocale, HydrationGoal.litres(fromML: Double(goalML)))) litres")
 
                 Text("\(percent)% of today's goal")
                     .font(StrandFont.footnote)
@@ -129,11 +124,8 @@ struct HydrationView: View {
 
     // MARK: - Frosted card helper (matches LiquidTodayView.card: rounded 22 + resting hairline)
 
-    private func card<V: View>(padding: CGFloat = 16, @ViewBuilder _ content: () -> V) -> some View {
-        content()
-            .padding(padding)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(ZoopPanelSurface(cornerRadius: 22, surfaceOpacity: cardOpacity))
+    private func card<V: View>(@ViewBuilder _ content: () -> V) -> some View {
+        ContentCard { content() }
     }
 
     // MARK: - Quick log (Sip / Cup / Bottle, secondary style)
@@ -154,7 +146,7 @@ struct HydrationView: View {
                 .accessibilityLabel("Log custom \(customSizeML) millilitres")
                 Button { showCustomSizeSheet = true } label: {
                     Image(systemName: "pencil")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(ZoopType.icon(15, weight: .semibold))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .frame(width: 44, height: 44)
                         .background(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous)
@@ -184,7 +176,7 @@ struct HydrationView: View {
         // Also shown when the only water today came from Apple Health (#949) — otherwise the ring would
         // count drinks the screen never accounts for, and the day would look like it appeared from nowhere.
         if !entries.isEmpty || importedML > 0 {
-            card(padding: 18) {
+            card {
                 VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                     Text("Today's drinks").strandOverline()
                     if importedML > 0 { importedRow }
@@ -219,7 +211,7 @@ struct HydrationView: View {
     @ViewBuilder private var importedRow: some View {
         HStack(spacing: 10) {
             Image(systemName: "heart.text.square")
-                .font(.system(size: 13, weight: .semibold))
+                .font(ZoopType.icon(13, weight: .semibold))
                 .foregroundStyle(StrandPalette.textSecondary)
                 .accessibilityHidden(true)
             Text("From Apple Health")
@@ -243,7 +235,7 @@ struct HydrationView: View {
             Button { editingEntry = entry } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "drop.fill")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(ZoopType.icon(13, weight: .semibold))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text(Self.entryTimeFmt.string(from: entry.loggedAt))
@@ -265,7 +257,7 @@ struct HydrationView: View {
                 Task { await deleteEntry(entry) }
             } label: {
                 Image(systemName: "trash")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(ZoopType.icon(13, weight: .semibold))
                     .foregroundStyle(StrandPalette.textTertiary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
@@ -282,7 +274,7 @@ struct HydrationView: View {
     // MARK: - 7-day mini history (flat bars, today on the right)
 
     private var historySection: some View {
-        card(padding: 18) {
+        card {
             VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
                 Text("Last 7 days").strandOverline()
                 historyBars
@@ -320,7 +312,7 @@ struct HydrationView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(weekdayInitial(bar.day)): \(String(format: "%.1f", HydrationGoal.litres(fromML: bar.value))) litres")
+                    .accessibilityLabel("\(weekdayInitial(bar.day)): \(String(format: "%.1f", locale: AppLanguage.activeLocale, HydrationGoal.litres(fromML: bar.value))) litres")
                 }
             }
         }
@@ -329,7 +321,7 @@ struct HydrationView: View {
     // MARK: - Today's total (the honest day figure; per-tap rows aren't persisted)
 
     private var todayTotalSection: some View {
-        card(padding: 18) {
+        card {
             VStack(alignment: .leading, spacing: ZoopMetrics.space2) {
                 Text("Today").strandOverline()
                 if totalML <= 0 {
@@ -340,7 +332,7 @@ struct HydrationView: View {
                 } else {
                     HStack(spacing: 10) {
                         Image(systemName: "drop.fill")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(ZoopType.icon(15, weight: .semibold))
                             .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                             .accessibilityHidden(true)
                         Text("Logged today")
@@ -369,12 +361,7 @@ struct HydrationView: View {
     // #perf: fixed-locale formatters, hoisted to static so the history-bar ForEach doesn't allocate two
     // DateFormatters per bar per render (label + a11y both call this). Locale is pinned (en_US_POSIX /
     // en_US), so caching is behaviour-identical — no dependence on the device locale.
-    private static let dayKeyParser: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let dayKeyParser: DateFormatter = DayKeyFormat.local
     private static let weekdayAbbrev: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US")

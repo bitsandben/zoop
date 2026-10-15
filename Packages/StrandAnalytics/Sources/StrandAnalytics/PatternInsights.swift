@@ -1,23 +1,17 @@
 import Foundation
 import WhoopProtocol
 
-// PatternInsights.swift — small, pure readings of the user's own history for the iOS Patterns screen.
-//
-// Each function answers one question from data the app already stores and returns nil when there is not
-// enough of it to say anything honest. They describe the user's past; none of them feeds a score.
-//
-// - bedtimeWindow: which half-hour of falling asleep is followed by the best recovery.
-// - weekdayPattern: how a value differs by day of the week.
-// - sleepNeedTonight: tonight's sleep need from the base need, today's strain and the sleep debt.
-// - splitEffect: the mean outcome on the highest third of days for some driver against the lowest third.
-// - windDown: how long after falling asleep the heart rate settles, and by how much it drops.
+// Small pure readings of the user's own history for the iOS Patterns screen. Each returns nil when there is
+// too little data to be honest, describes the past, and feeds no score: bedtimeWindow (half-hour of falling
+// asleep followed by best recovery), weekdayPattern, splitEffect (top vs bottom third of a driver) and
+// windDown (how long HR takes to settle after sleep onset).
 
 public enum PatternInsights {
 
     // MARK: Bedtime
 
     public struct BedtimeWindow: Equatable, Sendable {
-        /// Start of the best half-hour, in minutes after midnight (may exceed 1440 for after-midnight).
+        /// Start of the best half-hour, minutes after midnight (may exceed 1440 for after-midnight).
         public let startMinute: Int
         public let endMinute: Int
         /// Mean next-day recovery for nights that began in the window, and for all nights.
@@ -31,9 +25,8 @@ public enum PatternInsights {
     static let minNightsForBedtime = 14
     static let minNightsPerBin = 3
 
-    /// `nights` pairs the minute of sleep onset (minutes after local midnight; onsets after midnight are
-    /// passed as 1440 + minutes so the evening and the small hours sort together) with the recovery that
-    /// followed. Nil with fewer than 14 nights or no half-hour holding at least 3.
+    /// `nights` pairs sleep-onset minute (after-midnight onsets passed as 1440 + minutes, so evening and small
+    /// hours sort together) with the following recovery. Nil with fewer than 14 nights or no half-hour holding >= 3.
     public static func bedtimeWindow(nights: [(onsetMinute: Int, recovery: Double)]) -> BedtimeWindow? {
         guard nights.count >= minNightsForBedtime else { return nil }
         var bins: [Int: [Double]] = [:]
@@ -50,7 +43,7 @@ public enum PatternInsights {
     // MARK: Weekday
 
     public struct WeekdayPattern: Equatable, Sendable {
-        /// Mean per weekday, 1 = Monday … 7 = Sunday, only for weekdays with enough days.
+        /// Mean per weekday (1 = Monday ... 7 = Sunday), only for weekdays with enough days.
         public let means: [Int: Double]
         public let overall: Double
         public let best: Int
@@ -59,8 +52,7 @@ public enum PatternInsights {
 
     static let minDaysPerWeekday = 3
 
-    /// `values` pairs an ISO weekday (1 = Monday … 7 = Sunday) with a value. Nil unless at least five
-    /// weekdays have three or more days each.
+    /// `values` pairs an ISO weekday with a value. Nil unless at least five weekdays have three or more days each.
     public static func weekdayPattern(_ values: [(weekday: Int, value: Double)]) -> WeekdayPattern? {
         var groups: [Int: [Double]] = [:]
         for v in values where (1...7).contains(v.weekday) { groups[v.weekday, default: []].append(v.value) }
@@ -72,37 +64,10 @@ public enum PatternInsights {
         return WeekdayPattern(means: means, overall: mean(all), best: best, worst: worst)
     }
 
-    // MARK: Sleep need
-
-    public struct SleepNeed: Equatable, Sendable {
-        public let totalMin: Double
-        public let baseMin: Double
-        public let strainMin: Double
-        public let debtMin: Double
-    }
-
-    /// Strain above this (0–21 scale) adds sleep need.
-    static let strainFreeUpTo = 10.0
-    /// Extra minutes per strain point above `strainFreeUpTo`.
-    static let minutesPerStrainPoint = 4.0
-    /// Share of the outstanding debt asked back in one night, and the most asked back.
-    static let debtRepayShare = 0.25
-    static let debtRepayCapMin = 60.0
-
-    /// `baseNeedMin` is the personal nightly need, `strain` today's strain on the 0–21 scale (nil when
-    /// unknown), `debtMin` the outstanding sleep debt in minutes (0 or more).
-    public static func sleepNeedTonight(baseNeedMin: Double, strain: Double?, debtMin: Double) -> SleepNeed {
-        let strainMin = max(0, ((strain ?? 0) - strainFreeUpTo) * minutesPerStrainPoint)
-        let debtPart = min(debtRepayCapMin, max(0, debtMin) * debtRepayShare)
-        return SleepNeed(totalMin: baseNeedMin + strainMin + debtPart, baseMin: baseNeedMin,
-                         strainMin: strainMin, debtMin: debtPart)
-    }
-
     // MARK: Time in bed
 
-    /// Minutes in bed to sleep `goal` (0.5–1.0) of `needMin`, given the share of time in bed actually
-    /// spent asleep. `efficiency` may be a fraction or a percentage; nil or implausible values fall back
-    /// to 0.9, and it is held to 0.75–0.98 so one odd night cannot swing the plan.
+    /// Minutes in bed to sleep `goal` (0.5-1.0) of `needMin` given sleep efficiency (fraction or percentage; nil or
+    /// implausible falls back to 0.9, held to 0.75-0.98 so one odd night can't swing the plan).
     public static func inBedMinutes(needMin: Double, goal: Double, efficiency: Double?) -> Double {
         var e = efficiency ?? 0.9
         if e > 1 { e /= 100 }
@@ -122,7 +87,7 @@ public enum PatternInsights {
 
     static let minDaysForSplit = 12
 
-    /// Mean of `outcome` on the days in the top third of `driver` against the bottom third.
+    /// Mean outcome on the top third of `driver` days against the bottom third.
     public static func splitEffect(_ pairs: [(driver: Double, outcome: Double)]) -> SplitEffect? {
         guard pairs.count >= minDaysForSplit else { return nil }
         let sorted = pairs.sorted { $0.driver < $1.driver }
@@ -135,9 +100,9 @@ public enum PatternInsights {
     // MARK: Wind-down
 
     public struct WindDown: Equatable, Sendable {
-        /// Minutes after sleep onset until the heart rate first came within `settleMarginBpm` of its low.
+        /// Minutes after sleep onset until HR first came within `settleMarginBpm` of its low.
         public let minutesToSettle: Int
-        /// Mean heart rate in the quarter hour before onset minus the settled low.
+        /// Mean HR in the quarter hour before onset minus the settled low.
         public let dropBpm: Double
     }
 
@@ -146,12 +111,11 @@ public enum PatternInsights {
     static let rollingWindow = 5 * 60
     static let settleMarginBpm = 2.0
 
-    /// How long the heart rate takes to settle after `onset`, from samples covering the quarter hour
-    /// before it and the three hours after. Nil when either side is too thin.
+    /// How long HR takes to settle after `onset`, from samples covering the quarter hour before and three hours after; nil when either side is too thin.
     public static func windDown(hr: [HRSample], onset: Int) -> WindDown? {
         let before = hr.filter { $0.ts >= onset - preOnsetWindow && $0.ts < onset }.map { Double($0.bpm) }
         guard before.count >= 10 else { return nil }
-        // Per-minute means after onset, then a 5-minute rolling mean.
+        // Per-minute means, then a 5-minute rolling mean.
         var minutes: [Int: (Double, Int)] = [:]
         for s in hr where s.ts >= onset && s.ts < onset + settleSearchWindow {
             let m = (s.ts - onset) / 60

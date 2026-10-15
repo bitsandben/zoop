@@ -41,11 +41,11 @@ ANDROID_HOME_FILES = {
 }
 ANDROID_SHELL_FILE = "android/app/src/main/java/com/noop/ui/AppRoot.kt"
 
-# Both selectable Today implementations, their Today-only editor/metadata, the shared
+# The macOS classic Today (the iOS Today in Strand/Features/Today ships English and German only,
+# like every zoop.* key, so it is not held to the four-locale bar), its editor/metadata, the shared
 # day picker that they render, and the iPhone shell/icon actions that enter Home.
 APPLE_HOME_FILES = {
     "Strand/Screens/TodayView.swift",
-    "Strand/Liquid/LiquidTodayView.swift",
     "Strand/Screens/TodayCustomizationSheet.swift",
     "Strand/Screens/TodayCustomizationMetadata.swift",
     "Packages/StrandDesign/Sources/StrandDesign/DayNavBar.swift",
@@ -483,14 +483,7 @@ class HomeLocalizationTest(unittest.TestCase):
         tint_end = source.index("// MARK: Apple Watch provenance", tint_start)
         self.assertNotIn("provenanceLabel(", source[tint_start:tint_end])
 
-    def test_apple_liquid_runtime_copy_and_pt_terms_are_localized(self) -> None:
-        source = (ROOT / "Strand/Liquid/LiquidTodayView.swift").read_text(encoding="utf-8")
-        self.assertIn(
-            'private var stressText: String { stress.map { String(Int($0.rounded())) } ?? String(localized: "Calibrating") }',
-            source,
-        )
-        self.assertIn('return "\\(base) · \\(String(localized: \"Charging\"))"', source)
-
+    def test_apple_home_pt_terms_are_localized(self) -> None:
         strings = audit.load_catalog(ROOT / "Strand/Resources/Localizable.xcstrings")["strings"]
         expected = {
             "Push": "Avançar",

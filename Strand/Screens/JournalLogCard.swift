@@ -140,7 +140,7 @@ struct JournalLogCard: View {
             } else {
                 Button { editing = true } label: {
                     Image(systemName: "pencil")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(ZoopType.icon(15, weight: .semibold))
                         .foregroundStyle(StrandPalette.textPrimary)
                         .frame(width: Self.decisionSize, height: Self.decisionSize)
                         .background(Circle().fill(StrandPalette.surfaceRaised))
@@ -192,7 +192,7 @@ struct JournalLogCard: View {
                                 action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 14, weight: .bold))
+                .font(ZoopType.icon(14, weight: .bold))
                 .foregroundStyle(enabled ? StrandPalette.textPrimary : StrandPalette.textTertiary)
                 .frame(width: Self.decisionSize, height: Self.decisionSize)
                 .background(RoundedRectangle(cornerRadius: Self.decisionRadius, style: .continuous)
@@ -238,7 +238,7 @@ struct JournalLogCard: View {
                             .fill(StrandPalette.hairline)
                             .frame(height: ZoopMetrics.hairlineWidth)
                         Image(systemName: collapsed ? "chevron.right" : "chevron.down")
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(ZoopType.icon(10, weight: .semibold))
                             .foregroundStyle(StrandPalette.textTertiary)
                     }
                     .contentShape(Rectangle())
@@ -372,7 +372,7 @@ struct JournalLogCard: View {
         let shape = RoundedRectangle(cornerRadius: Self.decisionRadius, style: .continuous)
         return Button(action: action) {
             Image(systemName: yes ? "checkmark" : "xmark")
-                .font(.system(size: 15, weight: .bold))
+                .font(ZoopType.icon(15, weight: .bold))
                 .foregroundStyle(selected ? StrandPalette.surfaceBase : StrandPalette.textSecondary)
                 .frame(width: Self.decisionSize, height: Self.decisionSize)
                 .background(shape.fill(selected ? fill : StrandPalette.surfaceInset))
@@ -421,7 +421,7 @@ struct JournalLogCard: View {
             commitNumeric(q, value: next)
         } label: {
             Image(systemName: symbol)
-                .font(.system(size: 13, weight: .bold))
+                .font(ZoopType.icon(13, weight: .bold))
                 .foregroundStyle(StrandPalette.textPrimary)
                 .frame(width: 30, height: 30)
                 .background(RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -644,6 +644,6 @@ private struct NumericLogField: View {
     }
 
     private static func format(_ v: Double) -> String {
-        v == v.rounded() ? String(Int(v)) : String(format: "%.1f", v)
+        v == v.rounded() ? String(Int(v)) : ZoopNumber.decimal(v, digits: 1)
     }
 }

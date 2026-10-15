@@ -1,25 +1,14 @@
 #if !os(watchOS)
-// TrendChart is a Swift Charts view with .onContinuousHover (unavailable on watchOS); the watch
-// never shows it, so the whole file is excluded there. iOS/macOS unchanged.
+// TrendChart uses `.onContinuousHover` (unavailable on watchOS), so the file is excluded there.
 import SwiftUI
 import Charts
 
-// MARK: - Trend Chart (§9.4 Trends)
-//
-// A line/area chart whose line is gradient-stroked by value — reusable for
-// recovery / HRV / RHR / strain trends. The gradient defaults to the recovery
-// scale (so a recovery-over-time line travels deep-gold → pale-gold by daily
-// score), but any gradient + value-range can be supplied — pass the blue sleep
-// ramp for sleep, the teal HRV scale for HRV, the amber strain ramp for strain.
+// MARK: - Trend Chart
+// Line/area chart whose line is gradient-stroked by value. The gradient defaults to the recovery scale; any gradient + value range works (sleep blue, HRV teal, strain amber).
 
 /// The index runs that `hrGapSegments` implies: one range per unbroken stretch, in order.
-///
-/// Charts can hand a segment id to the plotting library and let it split the line. A hand-drawn sparkline
-/// cannot, so it needs the runs themselves to know where to lift the pen. Same rule, same source of truth,
-/// rather than a second walk that could disagree with the first (#2082).
-///
-/// An empty input yields no runs. A run of one is still a run: a lone bucket between two gaps is real data
-/// and a caller that drops it would be hiding a reading rather than a gap.
+/// A hand-drawn sparkline needs the runs to know where to lift the pen, derived from the same source of truth (#2082).
+/// Empty input yields no runs; a run of one is still a run (a lone bucket between gaps is real data).
 public func hrGapRuns(segments: [String]) -> [ClosedRange<Int>] {
     guard !segments.isEmpty else { return [] }
     var runs: [ClosedRange<Int>] = []
@@ -33,17 +22,8 @@ public func hrGapRuns(segments: [String]) -> [ClosedRange<Int>] {
 }
 
 /// Segment ids for a bucketed time series, changing wherever the series SKIPS a bucket.
-///
-/// A bucket aggregate only emits rows for buckets that had samples, so an hour the strap was off simply
-/// is not in the list. Without this the line joins the two neighbours across that hour and draws a
-/// steady climb the wearer never had, which is a reading invented out of an absence. Handing these to
-/// `TrendPoint.segment` renders the two sides as separate lines, so a gap looks like a gap.
-///
-/// A step of exactly one bucket is contiguous. Anything longer means at least one bucket held nothing,
-/// and that is the break. No tolerance for "just one missing": a five-minute hole is still five minutes
-/// of invention, and the stress trace made the same call when it stopped drawing through unscored hours.
-///
-/// Byte-identical twin of the Kotlin `hrGapSegmentIds`.
+/// Aggregates only emit rows for buckets with samples, so without this the line joins neighbours across an hour the strap was off and draws a climb the wearer never had.
+/// Pass to `TrendPoint.segment` so a gap looks like a gap. A step of exactly one bucket is contiguous; anything longer breaks, with no tolerance for one missing bucket.
 public func hrGapSegments(bucketTs: [Int], bucketSeconds: Int) -> [String] {
     var segment = 0
     return bucketTs.enumerated().map { i, ts in
@@ -56,13 +36,10 @@ public func hrGapSegments(bucketTs: [Int], bucketSeconds: Int) -> [String] {
 public struct TrendPoint: Identifiable, Sendable {
     public var date: Date
     public var value: Double
-    /// Sequential line-segment identity. Points with different ids are rendered as separate lines, so a
-    /// metric can retain history without drawing a false transition across incompatible methods.
+    /// Sequential line-segment id; points with different ids render as separate lines, so no false transition is drawn across incompatible methods.
     public var segment: String
 
-    /// Stable, content-derived identity (one point per date in a series). A random
-    /// `UUID()` defeats Swift Charts' diffing — every render re-identifies all marks
-    /// and replays the draw animation; keying on the date lets Charts diff by data.
+    /// Stable, content-derived identity (one point per date). A random `UUID()` defeats Swift Charts' diffing and replays the draw animation.
     public var id: Date { date }
 
     public init(date: Date, value: Double, segment: String = "default") {
@@ -106,9 +83,8 @@ private struct WorkoutTimeAxisModifier: ViewModifier {
     }
 }
 
-/// Find a reading in the date-sorted, full-resolution series retained by both chart initializers.
-/// Binary search avoids scanning every reading on each drag or hover event. Drawing may omit points,
-/// but selection must still return the original reading; an equal-distance tie chooses the earlier one.
+/// Find a reading in the date-sorted, full-resolution series by binary search (runs per drag/hover event).
+/// Drawing may omit points but selection returns the original reading; an equal-distance tie picks the earlier one.
 func nearestTrendPoint(to date: Date, in points: [TrendPoint]) -> TrendPoint? {
     guard !points.isEmpty else { return nil }
     var lower = 0, upper = points.count
@@ -131,9 +107,7 @@ public struct TrendChart: View {
     public var valueRange: ClosedRange<Double>
     /// Whether to draw the soft area fill below the line.
     public var showsArea: Bool
-    /// Draw vertical bars from the axis baseline instead of the line + area + points. One value-ramp-
-    /// filled `BarMark` per (down-sampled) sample. Display-only — the plotted series is identical; only
-    /// the mark geometry changes. Default false (the classic line). `showsArea` is ignored in bar mode.
+    /// Draw vertical bars from the axis baseline instead of line + area + points (one value-ramp-filled `BarMark` per down-sampled sample). Display-only; `showsArea` is ignored in bar mode.
     public var showsBars: Bool
     public var yAxisStep: Double?
     public var showsBarValues: Bool
@@ -141,11 +115,7 @@ public struct TrendChart: View {
     @State private var selectedPoint: TrendPoint?
     @State private var holdingBar = false
 
-    /// Optional personal-baseline reference, drawn as a dashed rule UNDER the series.
-    ///
-    /// A reference the readings are judged against, not a second series, so it is dashed and faint. Nil
-    /// (the default) draws nothing, and the rule rides the chart's own y domain, so a value outside the
-    /// plotted range simply falls off it rather than being clamped to an edge it does not sit on.
+    /// Optional personal-baseline reference, drawn as a dashed rule UNDER the series. Nil draws nothing; the rule rides the chart's y domain, so an out-of-range value falls off instead of being clamped.
     public var baselineValue: Double?
     public var height: CGFloat
     /// Whether hovering reveals a crosshair + tooltip for the nearest point.
@@ -157,27 +127,19 @@ public struct TrendChart: View {
     /// Optional human-readable series name for VoiceOver (e.g. "HRV trend"). When nil the
     /// element falls back to a generic "Trend" label so it's never unlabeled.
     public var accessibilityLabel: String?
-    /// When set, draws a glowing "now" end-cap on the most-recent point — IN the chart's own
-    /// coordinate space (via the overlay proxy), so it sits exactly on the line. nil = no cap.
-    /// (#458: an earlier sibling-overlay cap guessed the plot insets and floated off the line.)
+    /// When set, draws a glowing "now" end-cap on the latest point in the chart's own coordinate space (via the overlay proxy) so it sits on the line (#458). nil = no cap.
     public var nowCapColor: Color?
-    /// Y-axis domain when it should differ from `valueRange` — e.g. an axis fitted to the data
-    /// window (with a little headroom) while the gradient stays anchored to the metric's full
-    /// scale. nil = `valueRange`. Widening the TOP of this domain is how a caller keeps a peak
-    /// curve and the top axis label clear of the plot clip (see #974); done purely in data space
-    /// so it needs no macOS14/iOS17 plot-dimension padding API — works on our macOS13/iOS16 floor.
+    /// Y-axis domain when it should differ from `valueRange` (e.g. fitted to the data window while the gradient stays on the full scale). nil = `valueRange`.
+    /// Widening the TOP keeps a peak and the top axis label clear of the plot clip (#974); pure data space, no macOS14/iOS17 padding API.
     public var yDomain: ClosedRange<Double>?
     /// Optional elapsed time window for a workout trace, with workout-relative tick labels.
     public var workoutTimeAxis: ClosedRange<Date>?
-    /// Draws the small value/date tooltip beside the scrub rule. A host that prints the scrubbed reading
-    /// itself (e.g. in its card header via `onSelectionChange`) turns it off so the reading is not shown
-    /// twice; the rule and the dot stay.
+    /// Draws the value/date tooltip beside the scrub rule. A host that prints the scrubbed reading itself turns it off; the rule and dot stay.
     public var showsTooltip: Bool
     /// Called with the point under the finger while a touch scrub runs, and with nil when it ends (iOS).
     public var onSelectionChange: ((TrendPoint?) -> Void)?
 
-    /// Mean of all point values, computed once in `init` so the area fill's gradient
-    /// stop doesn't run an O(n) reduce for every mark on every render.
+    /// Mean of all point values, computed once in `init` rather than per mark per render.
     private let averageValue: Double
 
     /// One-line VoiceOver summary (count + mean + range), built once in `init`.
@@ -229,13 +191,11 @@ public struct TrendChart: View {
             : sorted.map(\.value).reduce(0, +) / Double(sorted.count)
         self.averageValue = avg
 
-        // The point set handed to the marks: full resolution up to the threshold, else min/max-bucketed
-        // to ~the plot pixel width (pixel-identical line, far fewer GPU vertices). Computed once here.
+        // Point set handed to the marks: full resolution up to the threshold, else min/max-bucketed to ~the plot pixel width. Computed once.
         self.displayPoints = ChartDownsample.minMaxBucketed(sorted, threshold: ChartDownsample.markThreshold,
                                                             targetCount: ChartDownsample.targetVertices)
 
-        // VoiceOver one-liner: count + mean + range — formatted with the SAME valueFormat the
-        // tooltip uses, so units match. Computed once here, not per render.
+        // VoiceOver one-liner (count + mean + range) uses the tooltip's valueFormat so units match. Computed once.
         if sorted.isEmpty {
             self.a11ySummary = String(localized: "No data", bundle: .module)
         } else {
@@ -248,21 +208,15 @@ public struct TrendChart: View {
     /// The x-position the cursor is hovering, in chart-local coordinates.
     @State private var hoverX: CGFloat? = nil
 
-    /// PERF: a 365-day (or longer) series feeds Swift Charts hundreds of LineMark/AreaMark vertices, each
-    /// catmullRom-interpolated — far more than the ~360pt plot has pixels, so most are sub-pixel and pure
-    /// draw cost. `displayPoints` is the point set actually handed to the marks: full resolution up to a
-    /// threshold, else min/max-per-bucket down to roughly the plot pixel width. Min/max bucketing keeps
-    /// every visible peak and trough, so the rendered line is pixel-identical on a normal-width chart.
-    /// Computed ONCE in `init` (not per body/hover eval), so it's memoized on `points`; hover / now-cap /
-    /// accessibility stay on the full-resolution `points` so those readouts are unchanged.
+    /// PERF: a 365-day series feeds Charts hundreds of catmullRom vertices, mostly sub-pixel. `displayPoints` is full resolution up to a threshold, else min/max-per-bucket to ~the plot pixel width,
+    /// keeping every visible peak and trough. Computed once in `init`; hover, now-cap and accessibility stay on the full-resolution `points`.
     private let displayPoints: [TrendPoint]
 
     private static let sharedDateFormatter: DateFormatter = {
         let f = DateFormatter(); f.dateFormat = "EEE d MMM"; return f
     }()
 
-    /// Default tooltip date format ("EEE d MMM"), exposed so it can seed the
-    /// `dateFormat` default argument.
+    /// Default tooltip date format ("EEE d MMM"), exposed to seed the `dateFormat` default argument.
     public static func defaultDateString(_ date: Date) -> String {
         sharedDateFormatter.string(from: date)
     }
@@ -274,17 +228,13 @@ public struct TrendChart: View {
     /// The point nearest a given chart-local x, using the proxy to map back.
     private func nearestPoint(toX x: CGFloat, proxy: ChartProxy, plot: CGRect) -> TrendPoint? {
         guard !points.isEmpty else { return nil }
-        // Map the cursor x (relative to the plot area) back to a Date.
         let relX = x - plot.minX
         guard let date: Date = proxy.value(atX: relX) else { return nil }
         return nearestTrendPoint(to: date, in: points)
     }
 
-    /// The days the x-axis marks, so the marks and their label format agree about which days are shown.
-    ///
-    /// Spans `displayPoints`, the set the marks are actually built from, rather than `points`. Bucketing
-    /// keeps the extremes, so the two agree today; deriving the axis from a collection the chart is not
-    /// drawing is the kind of thing that stops being true quietly.
+    /// The days the x-axis marks, so marks and label format agree. Spans `displayPoints` (what the marks are built from), not `points`:
+    /// bucketing keeps extremes so they agree today, but deriving the axis from an undrawn collection stops being true quietly.
     private var axisDays: [Date] { ChartAxisDays.spanning(displayPoints.map(\.date)) }
 
     // Map data values onto the unit interval for gradient stops.
@@ -299,15 +249,10 @@ public struct TrendChart: View {
         LinearGradient(gradient: gradient, startPoint: .bottom, endPoint: .top)
     }
 
-    /// The Y domain actually applied to the axis + plot clip: the explicit `yDomain` when a caller
-    /// supplied one (e.g. a data-fitted axis with top headroom), else the gradient's `valueRange`.
-    /// Exposed internally so a unit test can pin the resolution without rendering the chart.
+    /// The Y domain applied to axis and plot clip: the explicit `yDomain` if given, else the gradient's `valueRange`. Internal so a test can pin it without rendering.
     var resolvedYDomain: ClosedRange<Double> { yDomain ?? valueRange }
 
-    /// `resolvedYDomain`, floored at (or below) 0 in bar mode so a `BarMark`'s length stays
-    /// proportional to its value — see the `.chartYScale` comment in `body` for why. Line mode is
-    /// unaffected. Exposed internally alongside `resolvedYDomain` for the same test-without-rendering
-    /// reason.
+    /// `resolvedYDomain` floored at (or below) 0 in bar mode so bar length stays proportional to value (see `.chartYScale` in `body`). Line mode is unaffected.
     var plotYDomain: ClosedRange<Double> {
         if let step = yAxisStep, step > 0 {
             return 0...max(step, ceil((points.map(\.value).max() ?? 0) / step) * step)
@@ -318,8 +263,7 @@ public struct TrendChart: View {
     public var body: some View {
         // Resolve against current data so the marker and readout never refer to a removed date.
         let currentSelection = selectedPoint.flatMap { selected in points.first { $0.date == selected.date } }
-        // All marks share these styles. Resolve them once per chart update instead of rebuilding
-        // the same gradient for every vertex; segment identities and full-resolution data stay intact.
+        // All marks share these styles, resolved once per update rather than per vertex.
         let stops = gradient.toStops()
         let areaFill = LinearGradient(
             colors: [StrandPalette.sample(stops: stops, at: unit(averageValue)).opacity(0.28), .clear],
@@ -341,10 +285,8 @@ public struct TrendChart: View {
                     .foregroundStyle(.secondary.opacity(0.45))
             }
             if showsBars {
-                // Bar mode: one value-ramp-filled BarMark per (down-sampled) sample, from the baseline.
-                // The line, area and point marks are all replaced. The same `displayPoints` feed it, so a
-                // dense window is min/max-bucketed to the vertex budget exactly as the line is; hover, the
-                // axes, the domain and accessibility are unchanged (they read the full `points`).
+                // Bar mode: one value-ramp-filled BarMark per down-sampled sample from the baseline, replacing line, area and points. The same `displayPoints` feed it;
+                // hover, axes, domain and accessibility read the full `points`.
                 ForEach(displayPoints) { p in
                     BarMark(
                         x: .value("Date", p.date),
@@ -388,9 +330,7 @@ public struct TrendChart: View {
                     .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
                     .foregroundStyle(lineStroke)
                 }
-                // 18pt dots are invisible on dense series (e.g. a 365-day year) but still cost the
-                // GPU a mark each — hide them past a threshold; the line carries the data there. The gate
-                // stays on the full `points.count` (≤60 is never downsampled, so displayPoints == points).
+                // 18pt dots are invisible on dense series but still cost a mark each, so hide them past a threshold. The gate stays on the full `points.count` (≤60 is never downsampled).
                 if points.count <= 60 {
                     ForEach(displayPoints) { p in
                         PointMark(
@@ -403,34 +343,16 @@ public struct TrendChart: View {
                 }
             }
         }
-        // Domain drives BOTH the axis extent and the plot clip. A caller that wants a top-of-range
-        // peak (and the top axis label) to clear the clip passes a `yDomain` whose upper bound sits a
-        // little above the data — pure data-space headroom, so no macOS14/iOS17 plot-dimension endPadding
-        // API is needed (#974). The value→color gradient still keys off `valueRange`, unchanged.
-        // Bars must read from a zero baseline to be truthful: a BarMark's length is only proportional to
-        // its value when 0 is in the domain. The LINE uses a data-FITTED domain (often non-zero — e.g. an
-        // RHR window of ~48…61) to show variation; reusing that for bars would float every bar near full
-        // height with the real differences squashed into the top. So in bar mode we drop the floor to 0
-        // (or below, should a caller ever plot negatives), matching Android's zero-based BarChart. The
-        // upper bound (with the caller's headroom) is unchanged, so the line's domain is untouched.
+        // Domain drives BOTH axis extent and plot clip. A `yDomain` with headroom above the data keeps a peak and the top label clear of the clip (#974); the gradient still keys off `valueRange`.
+        // Bars need a zero baseline to be truthful, but the LINE uses a data-fitted domain (e.g. RHR ~48…61) that would float every bar near full height,
+        // so bar mode drops the floor to 0 (or below for negatives). The upper bound is unchanged.
         .chartYScale(domain: plotYDomain)
-        // Clip the plot to its own bounds. catmullRom interpolation overshoots past the data extremes
-        // on sharp turns, and the AreaMark gradient is drawn UNCLIPPED — so on a spiky HR curve the
-        // rose fill bled down the page behind the cards below the chart. Clipping the plot area bounds
-        // every mark (line, area, points, overshoot) to the chart rectangle.
+        // Clip the plot to its bounds: catmullRom overshoots on sharp turns and the AreaMark gradient is drawn unclipped, so a spiky HR fill bled down the page behind the cards.
         .chartPlotStyle { plotArea in
             if showsBarValues { plotArea.padding(.top, 18) } else { plotArea.clipped() }
         }
-        // Marks are pinned to WHOLE DAYS, not asked for by count (#2431-style label smear on Trends).
-        //
-        // `.automatic(desiredCount: 5)` is free to choose the stride that best fits the count, and over a
-        // short window the best fit is sub-day: several marks then land inside one calendar day, the label
-        // formats each to a date, and the axis prints "Sep 21" twice over itself. What the screenshot
-        // shows is not crowding but DUPLICATION, which is why more room would not have helped.
-        //
-        // Naming the days outright makes a duplicate structurally impossible: the marks are distinct
-        // start-of-day instants, so no two can format to the same date, whatever the window. The explicit
-        // day-only format keeps a mark from ever printing a time as well.
+        // Marks are pinned to WHOLE DAYS, not requested by count: `.automatic(desiredCount:)` may pick a sub-day stride, putting several marks in one calendar day so the axis prints "Sep 21" twice.
+        // Explicit distinct start-of-day instants make duplicates impossible, and the day-only format keeps a time from printing.
         .chartXAxis {
             AxisMarks(values: axisDays) { _ in
                 AxisGridLine().foregroundStyle(StrandPalette.hairline.opacity(0.4))
@@ -496,9 +418,7 @@ public struct TrendChart: View {
                         }
                     }
 
-                    // "Now" end-cap on the latest point (#458). Positioned with the SAME proxy mapping the
-                    // line uses (position(forX:/forY:) + plot origin), so it lands exactly on the curve —
-                    // not via a sibling overlay guessing the axis insets, which floated it left/below.
+                    // "Now" end-cap on the latest point (#458), positioned with the same proxy mapping as the line so it lands on the curve (a sibling overlay guessing axis insets floated off it).
                     if !showsBars, let capColor = nowCapColor, let last = points.last,
                        let px = proxy.position(forX: last.date),
                        let py = proxy.position(forY: last.value) {
@@ -539,11 +459,7 @@ public struct TrendChart: View {
                 #endif
                 .onContinuousHover(coordinateSpace: .local) { phase in
                     guard showsHover else { return }
-                    // Update the hover position in a NON-animating transaction. Otherwise entering or
-                    // leaving the chart flips hoverX inside an animated context, the body re-evaluates,
-                    // and SwiftUI Charts re-runs the line's draw-on animation — flickering the curve to a
-                    // flat baseline and back as the cursor crosses the plot edge (#104). The crosshair's
-                    // own fade is the overlay's .animation(value: hoverX) above and is unaffected by this.
+                    // Update hover in a NON-animating transaction: entering or leaving flips hoverX inside an animated context and Charts re-runs the line's draw-on animation, flickering the curve (#104).
                     var tx = Transaction()
                     tx.disablesAnimations = true
                     withTransaction(tx) {
@@ -556,16 +472,8 @@ public struct TrendChart: View {
             }
         }
         .frame(height: height)
-        // NOTE: no outer `.clipped()` here. The PLOT is already clipped to its own bounds by
-        // `.chartPlotStyle { plotArea.clipped() }` above (that's what contains the catmullRom overshoot +
-        // the unclipped AreaMark bleed). An additional clip on the WHOLE chart also cropped the axis-label
-        // gutter — cutting the top y-axis value (e.g. "90") in half and clipping the first/last x-axis
-        // labels ("Apr 19"…"May") at the frame edges (#1019). Dropping it lets Swift Charts render the
-        // reserved label regions in full; the marks stay contained by the plot clip, so nothing bleeds.
-        // Collapse the Charts marks (line/area/points) into ONE meaningful VoiceOver element instead
-        // of letting VoiceOver walk raw per-mark axis values with no series context. The decorative
-        // stacked under-glow copy (showsHover:false, no label) is hidden so the same series isn't
-        // double-announced; the crisp interactive copy passes showsHover:true (default) and speaks.
+        // No outer `.clipped()`: the plot is already clipped by `.chartPlotStyle`, and clipping the whole chart cropped the axis-label gutter (top y value, first/last x labels) (#1019).
+        // Collapse the marks into ONE VoiceOver element with series context. The decorative under-glow copy (showsHover:false, no label) is hidden so the series isn't announced twice.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel.map(Text.init) ?? Text("Trend", bundle: .module))
         .accessibilityValue(Text(a11ySummary))
@@ -581,16 +489,10 @@ public struct TrendChart: View {
 }
 
 // MARK: - Chart downsampling (pure)
-//
-// Reduces a dense point series to roughly the plot's pixel width BEFORE it reaches Swift Charts, so the
-// GPU draws ~one vertex per pixel instead of hundreds it can't resolve. Uses MIN/MAX-per-bucket: each
-// bucket contributes its lowest and highest sample (in time order), so every visible peak and trough
-// survives and the rendered envelope is identical at normal chart widths. First and last points are
-// always kept so the line spans the full domain. Pure + deterministic — same input → same output.
+// Reduces a dense series to ~the plot's pixel width BEFORE it reaches Charts. Min/max per bucket keeps every visible peak and trough; first and last points are always kept.
 
 public enum ChartDownsample {
-    /// Above this many points we downsample; at or below it the series is passed through untouched (so
-    /// the common 7/30/90-day trends and the ≤60-point dotted series are byte-for-byte unchanged).
+    /// Above this many points we downsample; at or below, the series passes through untouched (7/30/90-day trends and ≤60-point dotted series).
     public static let markThreshold = 120
     /// Target drawn-vertex budget — a touch above a typical ~360pt plot so the line stays crisp.
     public static let targetVertices = 400
@@ -602,14 +504,8 @@ public enum ChartDownsample {
                        date: { $0.date }, value: { $0.value })
     }
 
-    /// Generic form of the same algorithm, keyed by caller-supplied `date`/`value` accessors instead of
-    /// `TrendPoint`'s own properties. `ChartDownsample` used to be internal-by-default and `TrendPoint`-only,
-    /// so a chart type living outside this package (an app-target screen) couldn't call it and instead
-    /// hand-duplicated the algorithm for its own point type (see `CompareView.Model.minMaxBucketed`, which
-    /// predates this generic form and documents the mirroring). This overload is `public` and generic so
-    /// new app-target chart types can share the ONE implementation instead of adding a third copy.
-    /// Pure + deterministic; identical behaviour to the `TrendPoint` overload when `date`/`value` project
-    /// the same fields it does.
+    /// Generic form keyed by caller-supplied `date`/`value` accessors, so chart types outside this package share the one implementation.
+    /// Pure and deterministic; identical to the `TrendPoint` overload when the accessors project the same fields.
     public static func minMaxBucketed<Point>(
         _ points: [Point],
         threshold: Int,
@@ -620,8 +516,7 @@ public enum ChartDownsample {
         let n = points.count
         guard n > threshold, n > 2, targetCount >= 4 else { return points }
 
-        // Reserve the first and last; bucket the interior. Each bucket yields up to 2 vertices (min+max),
-        // so aim for ~targetCount/2 buckets to land near the vertex budget.
+        // Reserve first and last; bucket the interior. Each bucket yields up to 2 vertices (min+max), so use ~targetCount/2 buckets.
         let first = points[0]
         let last = points[n - 1]
         let interior = n - 2
@@ -639,7 +534,6 @@ public enum ChartDownsample {
             let hi = 1 + ((b + 1) * interior) / bucketCount // exclusive
             guard lo < hi else { continue }
 
-            // Find the min-value and max-value samples in this bucket.
             var minIdx = lo, maxIdx = lo
             var i = lo + 1
             while i < hi {
@@ -671,10 +565,8 @@ public enum ChartDownsample {
 // MARK: - Gradient → stops bridge
 
 extension Gradient {
-    /// Reconstruct ordered stops from a Gradient. SwiftUI does not expose `.stops`
-    /// directly on all paths, so we use the public `stops` mirror when present.
+    /// Ordered stops from a Gradient via the public `stops` mirror.
     func toStops() -> [Gradient.Stop] {
-        // `Gradient.stops` is public on macOS 13+; expose for our sampler.
         self.stops
     }
 }

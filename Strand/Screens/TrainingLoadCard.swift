@@ -22,13 +22,7 @@ struct TrainingLoadCard: View {
     let days: [DailyMetric]
 
     // yyyy-MM-dd → Date (en_US_POSIX, UTC) — same keying TrendsView uses so the x-axis matches.
-    private static let dayParser: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let dayParser: DateFormatter = DayKeyFormat.utc
 
     /// `internal` (not `private`): `TrainingLoadChart` (its own file) plots these.
     struct Row: Identifiable {
@@ -96,8 +90,8 @@ struct TrainingLoadCard: View {
     private static let established = TrainingLoadEngine.Configuration.standard.establishedDays
     private static let minimum = TrainingLoadEngine.Configuration.standard.minimumDays
 
-    private func fmt(_ v: Double) -> String { String(format: "%.1f", v) }
-    private func signed(_ v: Double) -> String { String(format: "%+.1f", v) }
+    private func fmt(_ v: Double) -> String { ZoopNumber.decimal(v, digits: 1) }
+    private func signed(_ v: Double) -> String { String(format: "%+.1f", locale: AppLanguage.activeLocale, v) }
 
     var body: some View {
         let tl = result
@@ -107,7 +101,7 @@ struct TrainingLoadCard: View {
             } else {
                 let latest = tl.points.last
                 let rows = rows(from: tl)
-                ChartCard(
+                ContentCard(
                     title: "Training Load",
                     subtitle: subtitle(for: tl),
                     trailing: latest.map { signed($0.balance) },
@@ -164,7 +158,7 @@ struct TrainingLoadCard: View {
 
     // Honest empty state: name exactly how many consecutive Effort days are still needed.
     private func unavailableCard(contiguousDays: Int) -> some View {
-        ChartCard(
+        ContentCard(
             title: "Training Load",
             subtitle: String(localized: "Chronic vs acute load"),
             chart: {

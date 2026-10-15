@@ -14,7 +14,7 @@ import SwiftUI
 /// the same colour. A uniform per-ramp lightness scale is used instead. Twin: `BrandSleepRampTest` (Android).
 final class BrandSleepRampTests: XCTestCase {
 
-    /// `ZoopVisualStyle.surface` — the card the stepped hypnogram is drawn on (ChartCard → ZoopCard).
+    /// `ZoopVisualStyle.surface` — the card the stepped hypnogram is drawn on (chart ContentCard).
     private let lightSurface = "#FFFFFF"
     private let darkSurface  = "#2A2C34"
 

@@ -1,69 +1,31 @@
 import Foundation
 
-// ActivityCostEngine.swift — "what each activity costs your recovery".
-//
-// Pure, deterministic, DB-free. Given which days you tagged each SPORT on and your
-// daily Charge (recovery, 0–100) history, this answers, per sport: how far does your
-// next-morning Charge sit BELOW your rest-day baseline after a session, and how many
-// days does it take to bounce back?
-//
-// This is a descriptive AVERAGE, not a measurement of any single session — it leans
-// on the levers that are actually in the data (the day a session was tagged, and the
-// Charge values on the days after) and stays explainable line by line. Nothing here
-// is learned; it is plain means over aligned day keys.
-//
-// Per sport S:
-//
-//   restDays      = days with a Charge value that are neither tagged with ANY sport NOR inside a
-//                   session's forward recovery window (D+1…D+maxLookahead) — your UNTOUCHED days.
-//   baselineMean  = mean Charge over restDays. This is your "untouched" recovery — the
-//                   bar each sport is measured against. (Shared across all sports.)
-//
-//   For each tagged day D of sport S that HAS a Charge value on D+1:
-//     nextMorning(D) = Charge[D+1]
-//   meanNextMorning = mean of those nextMorning(D).
-//   n               = how many tagged days contributed a D+1 value.
-//
-//   delta ("cost")  = baselineMean − meanNextMorning.
-//                     POSITIVE → the morning after this sport your Charge sits BELOW
-//                     your rest baseline (it cost you); negative → you wake higher.
-//
-//   daysToBaseline  = how long recovery takes to climb back. Build an AVERAGED forward
-//                     trajectory traj[k] = mean over tagged days D (that have a Charge
-//                     on D+k) of Charge[D+k], for k = 1…maxLookahead. daysToBaseline is
-//                     the smallest k whose traj[k] ≥ baselineMean − tol (tol = 3 pts).
-//                     nil if it never gets within tol inside the window, or n is too thin.
-//
-// Confidence (reuses ScoreConfidence): a sport with fewer than minSessions tagged
-// next-morning pairs is OMITTED entirely (too thin to say anything honest);
-// minSessions…<solidSessions → .building; ≥ solidSessions → .solid.
-//
-// Ranking: biggest |delta| first (the sports that move you most), .solid ahead of
-// .building on a tie, then sport name ascending — a fully deterministic, stable order.
-//
-// All day arithmetic goes through CorrelationEngine.shiftDay (fixed UTC calendar) and
-// all the means are self-contained so the Kotlin mirror is line-for-line.
+// ActivityCostEngine: what each sport costs your next-morning Charge.
+// Pure and deterministic. Per sport: baselineMean (mean Charge over untouched rest days,
+// shared by all sports) minus the mean D+1 Charge after tagged days = delta; positive
+// means the morning after sits below baseline. daysToBaseline is the smallest k whose
+// averaged forward trajectory is within `tolerance` of baseline (nil if never).
+// Sports with fewer than minSessions pairs are omitted; confidence is .building/.solid.
+// Ranking: |delta| desc, .solid before .building, then sport name.
 
 // MARK: - Result
 
-/// One sport's recovery cost: how far below your rest baseline your next-morning Charge
-/// sits after a session of this sport, and how long it takes to bounce back.
+/// One sport's recovery cost: how far below your rest baseline next-morning Charge sits after
+/// a session, and how long it takes to bounce back.
 public struct ActivityCost: Equatable, Sendable {
-    /// The sport key (raw WHOOP sport / activity name, as tagged on the day).
+    /// The sport key as tagged on the day.
     public let sport: String
-    /// Signed cost in Charge points: baselineMean − meanNextMorning. Positive = the
-    /// morning after sits BELOW your rest baseline (it cost you recovery).
+    /// Baseline minus mean next-morning Charge, in points. Positive = the morning after sits below baseline.
     public let delta: Double
-    /// Mean next-morning (D+1) Charge over tagged days that had a D+1 value, 0–100.
+    /// Mean D+1 Charge over tagged days that had one, 0-100.
     public let meanNextMorning: Double
-    /// Mean rest-day Charge this sport is measured against (shared across sports), 0–100.
+    /// Mean rest-day Charge this sport is measured against (shared across sports), 0-100.
     public let baselineMean: Double
-    /// Days for the averaged forward trajectory to climb back within `tolerance` of the
-    /// baseline; nil when it never recovers inside the lookahead window (or too thin).
+    /// Days for the averaged trajectory to return within `tolerance` of baseline; nil if it never does in the window.
     public let daysToBaseline: Int?
-    /// Number of tagged days that contributed a D+1 Charge value.
+    /// Tagged days that contributed a D+1 value.
     public let n: Int
-    /// Per-result certainty tier (reuses the Charge/Effort/Rest confidence ladder).
+    /// Per-result certainty tier.
     public let confidence: ScoreConfidence
 
     public init(sport: String, delta: Double, meanNextMorning: Double, baselineMean: Double,
@@ -77,9 +39,8 @@ public struct ActivityCost: Equatable, Sendable {
         self.confidence = confidence
     }
 
-    /// Plain-English summary of this sport's recovery cost. Degrades gracefully: drops
-    /// the bounce-back clause when `daysToBaseline` is nil, and says "barely move" when
-    /// the cost is under a point in either direction.
+    /// Plain-English summary; drops the bounce-back clause when `daysToBaseline` is nil and says
+    /// "barely move" under a point either way.
     public func sentence() -> String {
         let mag = abs(delta)
         let points = ActivityCostEngine.roundToInt(mag)
@@ -102,37 +63,27 @@ public enum ActivityCostEngine {
 
     // MARK: Tunables (documented, deterministic — NOT learned)
 
-    /// Tagged next-morning pairs below which a sport is OMITTED (too thin to report).
+    /// Pairs below which a sport is omitted.
     public static let minSessions: Int = 4
-    /// Pairs at/above which a sport's confidence is `.solid` (else `.building`).
+    /// Pairs at/above which confidence is `.solid` (else `.building`).
     public static let solidSessions: Int = 8
-    /// How many days forward the bounce-back trajectory is probed (D+1 … D+maxLookahead).
+    /// Days forward the bounce-back trajectory is probed.
     public static let maxLookahead: Int = 7
-    /// Charge points within the baseline that count as "recovered" for daysToBaseline.
+    /// Charge points within baseline that count as recovered.
     public static let tolerance: Double = 3.0
-    /// |delta| under this (points) reads as "barely moves" in `sentence()`.
+    /// |delta| under this reads as "barely moves".
     public static let barelyMovesPoints: Double = 1.0
 
     // MARK: - Evaluate
 
-    /// Compute each sport's recovery cost from tagged activity days and daily Charge.
-    ///
-    /// - Parameters:
-    ///   - activityDaysBySport: per sport, the SET of "yyyy-MM-dd" day keys that sport
-    ///     was tagged on. Using a Set means same-day duplicates are already collapsed.
-    ///   - recoveryByDay: daily Charge (recovery, 0–100) keyed by "yyyy-MM-dd".
-    /// - Returns: one `ActivityCost` per sport that cleared `minSessions`, ranked by
-    ///   |delta| desc, `.solid` before `.building`, sport name ascending on a tie.
-    ///   Empty input (or no sport thick enough) → an empty array.
+    /// Compute each sport's recovery cost from tagged activity days (per sport, a set of
+    /// "yyyy-MM-dd" keys) and daily Charge. Returns sports that cleared `minSessions`, ranked.
     public static func evaluate(activityDaysBySport: [String: Set<String>],
                                 recoveryByDay: [String: Double]) -> [ActivityCost] {
         guard !activityDaysBySport.isEmpty, !recoveryByDay.isEmpty else { return [] }
 
-        // Rest days = days WITH a Charge value that are neither tagged with ANY sport NOR sit inside
-        // the forward recovery window (D+1 … D+maxLookahead) of any tagged day. Excluding the
-        // after-effect window matters: the mornings *after* a session are exactly the days the cost
-        // suppresses, so counting them as "rest" would contaminate the baseline with the very thing
-        // we're measuring (understating every cost). The baseline must be your genuinely UNTOUCHED days.
+        // Rest days exclude tagged days and each tagged day's forward window: the mornings after
+        // a session are the days the cost suppresses, so counting them would understate every cost.
         var activeUnion: Set<String> = []
         for (_, days) in activityDaysBySport { activeUnion.formUnion(days) }
         var affected = activeUnion
@@ -145,17 +96,15 @@ public enum ActivityCostEngine {
         for (day, value) in recoveryByDay where !affected.contains(day) {
             restValues.append(value)
         }
-        // No untouched days → no baseline to measure against → nothing honest to say.
+        // No untouched days means no baseline.
         guard !restValues.isEmpty else { return [] }
         let baselineMean = mean(restValues)
 
         var results: [ActivityCost] = []
-        // Sort sports up front so the build order (and any downstream tie behaviour) is
-        // deterministic regardless of dictionary iteration order.
+        // Sorted for deterministic order regardless of dictionary iteration.
         for sport in activityDaysBySport.keys.sorted() {
             let taggedDays = activityDaysBySport[sport]!
 
-            // Collect next-morning (D+1) Charge for each tagged day that has one.
             var nextMornings: [Double] = []
             for day in taggedDays {
                 guard let d1 = CorrelationEngine.shiftDay(day, by: 1),
@@ -163,7 +112,7 @@ public enum ActivityCostEngine {
                 nextMornings.append(v)
             }
             let n = nextMornings.count
-            // Thin sports are omitted entirely — better silent than fabricated.
+            // Thin sports are omitted rather than fabricated.
             if n < minSessions { continue }
 
             let meanNextMorning = mean(nextMornings)
@@ -185,10 +134,8 @@ public enum ActivityCostEngine {
 
     // MARK: - Bounce-back trajectory
 
-    /// Smallest k in 1…maxLookahead where the AVERAGED forward Charge trajectory
-    /// traj[k] = mean over tagged days D (with a Charge on D+k) of Charge[D+k] climbs to
-    /// within `tolerance` of `baselineMean`. nil if it never does inside the window or no
-    /// day contributed a value at that horizon.
+    /// Smallest k in 1...maxLookahead where the averaged forward trajectory is within `tolerance`
+    /// of `baselineMean`; nil if never or no data at that horizon.
     static func forwardDaysToBaseline(taggedDays: Set<String>,
                                       recoveryByDay: [String: Double],
                                       baselineMean: Double) -> Int? {
@@ -208,7 +155,7 @@ public enum ActivityCostEngine {
 
     // MARK: - Ranking
 
-    /// Stable rank: |delta| desc, then .solid before .building, then sport name asc.
+    /// Stable rank: |delta| desc, .solid before .building, then sport name.
     static func rank(_ items: [ActivityCost]) -> [ActivityCost] {
         items.sorted { a, b in
             let da = abs(a.delta), db = abs(b.delta)
@@ -219,7 +166,7 @@ public enum ActivityCostEngine {
         }
     }
 
-    /// Ordinal so .solid sorts ahead of .building (and .calibrating last).
+    /// Ordinal so .solid sorts ahead of .building.
     static func confidenceRank(_ c: ScoreConfidence) -> Int {
         switch c {
         case .solid: return 2
@@ -235,8 +182,7 @@ public enum ActivityCostEngine {
         return values.reduce(0, +) / Double(values.count)
     }
 
-    /// Round half away from zero to an Int — matches Kotlin's roundToInt for the
-    /// non-negative magnitudes used in `sentence()`.
+    /// Round half away from zero (non-negative magnitudes in `sentence()`).
     static func roundToInt(_ x: Double) -> Int {
         Int(x.rounded())
     }

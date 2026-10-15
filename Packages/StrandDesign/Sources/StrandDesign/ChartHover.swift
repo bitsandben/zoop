@@ -1,30 +1,22 @@
 #if !os(watchOS)
-// The chart-hover toolkit (tooltips, crosshair, nearest-point) is for pointer/cursor charts the
-// watch never shows; excluded on watchOS, iOS/macOS unchanged.
+// Hover toolkit (tooltips, crosshair, nearest-point) is for pointer charts; excluded on watchOS.
 import SwiftUI
 
-// MARK: - Chart Hover Toolkit (reusable across every visualization)
+// MARK: - Chart Hover Toolkit
 //
-// A shared, instrument-grade hover affordance: a small dark tooltip card that
-// names the exact datum under the cursor, plus geometry helpers for crosshairs
-// and nearest-point lookup. Every StrandDesign visualization inherits the same
-// look so nothing is ever a static, unexplained colour.
-//
-// Design tokens only: surfaceOverlay background, hairline border, StrandFont +
-// StrandPalette text, StrandMotion fade-in. Never hardcode hex.
+// A shared hover affordance: a small dark tooltip card naming the datum under the cursor, plus geometry
+// helpers for crosshairs and nearest-point lookup. Design tokens only.
 
 // MARK: - ChartTooltip
 
-/// A small dark read-out card shown near the cursor while hovering a chart.
-/// Renders a bold primary value line and a secondary label/date line.
+/// A small dark read-out card shown near the cursor: a bold value line and a secondary label/date line.
 public struct ChartTooltip: View {
 
-    /// The bold value line (e.g. "62 ms", "Recovery 88").
+    /// The bold value line (e.g. "62 ms").
     public var value: String
-    /// The secondary context line (e.g. a formatted date, stage clock, index).
+    /// The secondary context line (e.g. a formatted date).
     public var label: String?
-    /// An optional accent swatch shown as a leading dot (e.g. the sampled
-    /// gradient colour for that datum) so the tooltip explains the colour.
+    /// Optional leading accent dot (e.g. the sampled gradient colour) so the tooltip explains the colour.
     public var accent: Color?
 
     public init(value: String, label: String? = nil, accent: Color? = nil) {
@@ -64,13 +56,10 @@ public struct ChartTooltip: View {
 
 // MARK: - Tooltip positioning
 
-/// Position a tooltip near an anchor point while keeping it inside `container`.
-/// Estimates the tooltip's size, then flips/clamps so it never spills off-edge.
+/// Positions a tooltip near an anchor, estimating its size and flipping/clamping so it stays inside `container`.
 public struct ChartTooltipPlacement {
 
-    /// Compute the tooltip centre for an anchor (typically the highlighted point
-    /// or the cursor), given the tooltip's measured size and the chart bounds.
-    /// Prefers to sit above-and-right of the anchor, flipping when near an edge.
+    /// The tooltip centre for an anchor; prefers above-and-right, flipping near an edge.
     public static func position(
         anchor: CGPoint,
         tooltipSize: CGSize,
@@ -80,15 +69,12 @@ public struct ChartTooltipPlacement {
         let halfW = tooltipSize.width / 2
         let halfH = tooltipSize.height / 2
 
-        // Default: above the anchor.
         var y = anchor.y - gap - halfH
         if y - halfH < 0 {
-            // Not enough room above — drop below.
             y = anchor.y + gap + halfH
         }
         y = min(max(y, halfH), max(halfH, container.height - halfH))
 
-        // Default: centred on the anchor x, clamped to bounds.
         var x = anchor.x
         x = min(max(x, halfW), max(halfW, container.width - halfW))
 
@@ -101,8 +87,7 @@ public struct ChartTooltipPlacement {
 /// Geometry helpers for mapping a hover location to the nearest datum.
 public enum ChartHoverMath {
 
-    /// Index of the sample whose x-position (evenly spaced across `width`) is
-    /// closest to `x`. Returns nil for an empty series.
+    /// Index of the evenly spaced sample closest to `x`; nil for an empty series.
     public static func nearestIndex(toX x: CGFloat, count: Int, width: CGFloat) -> Int? {
         guard count > 0 else { return nil }
         guard count > 1, width > 0 else { return 0 }
@@ -111,7 +96,7 @@ public enum ChartHoverMath {
         return min(max(raw, 0), count - 1)
     }
 
-    /// Index of the point in `xs` (arbitrary x-positions) closest to `x`.
+    /// Index of the point in `xs` closest to `x`.
     public static func nearestIndex(toX x: CGFloat, xs: [CGFloat]) -> Int? {
         guard !xs.isEmpty else { return nil }
         var best = 0
@@ -126,16 +111,13 @@ public enum ChartHoverMath {
 
 // MARK: - Crosshair rule
 
-/// A thin vertical crosshair line drawn at a given x with a hairline-strong
-/// stroke. Shared by TrendChart / Sparkline so the rule reads identically.
-/// `public`: app-target chart types outside this package (WorkoutRecoveryTrendChart, TrainingLoadCard,
-/// LiveTimeChart) reuse this instead of hand-rolling their own crosshair.
+/// A thin vertical crosshair line at a given x. `public` so app-target charts reuse it.
 public struct CrosshairRule: View {
     public var x: CGFloat
     public var height: CGFloat
     public var color: Color
 
-    /// The default reads clearly over a chart on a phone (the scrub rule follows a finger, not a cursor).
+    /// The default reads clearly over a chart on a phone (the scrub rule follows a finger).
     public init(x: CGFloat, height: CGFloat, color: Color = StrandPalette.textSecondary.opacity(0.75)) {
         self.x = x
         self.height = height
@@ -157,8 +139,7 @@ public struct CrosshairRule: View {
 
 // MARK: - Highlighted point dot
 
-/// A small accented dot used to mark the highlighted sample on a line.
-/// `public`: shared with app-target chart hover overlays — see `CrosshairRule`.
+/// A small accented dot marking the highlighted sample on a line. `public` for app-target hover overlays.
 public struct HighlightDot: View {
     public var color: Color
     public var diameter: CGFloat
@@ -169,7 +150,7 @@ public struct HighlightDot: View {
     }
 
     public var body: some View {
-        // Design Reset (WHOOP): a crisp solid dot with a clean surface ring, no blurred bloom halo.
+        // Crisp solid dot with a clean surface ring, no bloom.
         ZStack {
             Circle()
                 .fill(StrandPalette.surfaceBase)
@@ -184,9 +165,7 @@ public struct HighlightDot: View {
 
 // MARK: - "Now" end-cap
 
-/// The crisp "now" marker pinned to a trend line's latest point: a soft tinted outer ring, a brighter
-/// mid-ring, and a white core — flat, no bloom (WHOOP). Positioned by `TrendChart` inside its own plot
-/// coordinate space so it sits exactly on the curve (#458).
+/// The "now" marker pinned to a trend line's latest point: tinted outer ring, brighter mid-ring, white core. Flat, no bloom.
 struct NowCapDot: View {
     var color: Color
 
@@ -202,9 +181,7 @@ struct NowCapDot: View {
 
 // MARK: - Tooltip overlay container
 
-/// Wraps a tooltip so its measured size feeds back into placement. Fades in
-/// with StrandMotion and positions itself within `container` near `anchor`.
-/// `public`: shared with app-target chart hover overlays — see `CrosshairRule`.
+/// Wraps a tooltip so its measured size feeds back into placement, fading in near `anchor`. `public` for app-target hover overlays.
 public struct PositionedTooltip: View {
     public var anchor: CGPoint
     public var container: CGSize

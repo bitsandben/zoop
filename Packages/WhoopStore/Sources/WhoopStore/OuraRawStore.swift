@@ -2,10 +2,8 @@ import Foundation
 import GRDB
 
 // MARK: - v25 store: lossless Oura live-API payload archive
-// Mirrors MetricSeriesStore exactly: a Codable row struct, an idempotent ON CONFLICT upsert keyed by the
-// natural key (deviceId, endpoint, documentId), and range reads — all GRDB work via syncWrite/syncRead.
-// This is the "as much as we can get" backstop: the verbatim payload is kept so a future metric can be
-// derived without re-hitting the Oura API.
+// Idempotent upsert keyed by (deviceId, endpoint, documentId) plus range reads. The verbatim payload is kept
+// so a future metric can be derived without re-hitting the Oura API.
 
 /// One archived Oura API payload. Natural key (deviceId, endpoint, documentId).
 public struct OuraRawRow: Equatable, Codable, Sendable {
@@ -22,8 +20,8 @@ public struct OuraRawRow: Equatable, Codable, Sendable {
 
 extension WhoopStore {
 
-    /// Upsert raw Oura payloads. Idempotent by (deviceId, endpoint, documentId): re-pulling the same
-    /// document overwrites its payload/day/fetchedAt rather than duplicating. Returns rows changed.
+    /// Upserts raw Oura payloads, idempotent on (deviceId, endpoint, documentId): a re-pull overwrites the
+    /// payload/day/fetchedAt. Returns rows changed.
     @discardableResult
     public func upsertOuraRaw(_ rows: [OuraRawRow], deviceId: String) async throws -> Int {
         try syncWrite { db in
@@ -45,17 +43,9 @@ extension WhoopStore {
 
     /// Archived payloads for a device + endpoint, oldest `fetchedAt` first, ties broken by insertion order.
     ///
-    /// Ordered on (fetchedAt, rowid) rather than `day`: the page producers leave `day` nil, so the whole
-    /// column was nil and `ORDER BY day ASC` degenerated to whatever order SQLite happened to return.
-    /// `rowid` breaks the tie because one fetch normally writes all of its pages in the same second, and
-    /// the page sequence within that second is the order they were written.
-    ///
-    /// A TIE is what rowid orders, not a fetch. `upsertOuraRaw` is an `ON CONFLICT DO UPDATE`, so a
-    /// re-pulled page keeps its original rowid but takes the NEW `fetchedAt`. Re-pulling one page of an
-    /// earlier fetch therefore moves that page to the end of this read while its siblings stay put, and
-    /// the pages of that fetch are no longer contiguous. That is the honest ordering, since the row really
-    /// was fetched later, but a reader that needs the pages of one fetch together has to group on
-    /// `fetchedAt` itself rather than assume this read hands them over adjacent.
+    /// Ordered on (fetchedAt, rowid) rather than `day`, which page producers leave nil. A re-pulled page keeps
+    /// its rowid but takes the new `fetchedAt` (the upsert is `ON CONFLICT DO UPDATE`), so it moves to the end
+    /// while its siblings stay put. A reader needing one fetch's pages together must group on `fetchedAt`.
     public func ouraRaw(deviceId: String, endpoint: String) async throws -> [OuraRawRow] {
         try syncRead { db in
             try Row.fetchAll(db, sql: """
@@ -68,7 +58,7 @@ extension WhoopStore {
         }
     }
 
-    /// Count archived payloads for a device + endpoint (diagnostics / import summary).
+    /// Count of archived payloads for a device + endpoint.
     public func ouraRawCount(deviceId: String, endpoint: String) async throws -> Int {
         try syncRead { db in
             try Int.fetchOne(db, sql:
@@ -77,8 +67,7 @@ extension WhoopStore {
         }
     }
 
-    /// Remove every archived Oura payload for a device (used by Disconnect — `deleteAllData` does not
-    /// cover `ouraRaw`). Returns rows deleted.
+    /// Removes every archived Oura payload for a device (Disconnect; `deleteAllData` does not cover `ouraRaw`). Returns rows deleted.
     @discardableResult
     public func deleteOuraRaw(deviceId: String) async throws -> Int {
         try syncWrite { db in

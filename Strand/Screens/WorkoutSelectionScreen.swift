@@ -43,7 +43,15 @@ struct WorkoutSelectionScreen: View {
     @FocusState private var searchFocused: Bool
 
     private var trimmedQuery: String { query.trimmingCharacters(in: .whitespaces) }
-    private var filtered: [WorkoutCatalog.Sport] { WorkoutCatalog.matching(query) }
+    /// Matches the stored and the translated name, so "Laufen" finds Running in German.
+    private var filtered: [WorkoutCatalog.Sport] {
+        guard !trimmedQuery.isEmpty else { return WorkoutCatalog.all }
+        return WorkoutCatalog.all.filter {
+            $0.name.range(of: trimmedQuery, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+                || WorkoutSource.displaySport($0.name)
+                    .range(of: trimmedQuery, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+        }
+    }
     private var recentSports: [WorkoutCatalog.Sport] {
         RecentSportsPrefs.recent().compactMap { WorkoutCatalog.sport(named: $0) }
     }
@@ -91,7 +99,7 @@ struct WorkoutSelectionScreen: View {
                 ToolbarItem(placement: .topBarTrailingCompat) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(ZoopType.icon(15, weight: .semibold))
                             .foregroundStyle(StrandPalette.textPrimary)
                             .frame(width: 34, height: 34)
                             .contentShape(Circle())
@@ -139,7 +147,7 @@ struct WorkoutSelectionScreen: View {
     private var emptyResults: some View {
         VStack(spacing: ZoopMetrics.space3) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 28, weight: .semibold))
+                .font(ZoopType.icon(28, weight: .semibold))
                 .foregroundStyle(StrandPalette.textTertiary)
             Text("No workouts found")
                 .font(StrandFont.headline)
@@ -186,7 +194,7 @@ struct RecentWorkoutChip: View {
         Button(action: onTap) {
             HStack(spacing: ZoopMetrics.space2) {
                 WorkoutTypeIcon(workoutType: sport.name, size: 18, weight: .semibold, color: accent)
-                Text(sport.name)
+                Text(WorkoutSource.displaySport(sport.name))
                     .font(StrandFont.subhead)
                     .foregroundStyle(StrandPalette.textPrimary)
                     .lineLimit(1)
@@ -197,7 +205,7 @@ struct RecentWorkoutChip: View {
             .contentShape(Capsule())
         }
         .nativeLiquidGlassWorkoutSelectionControl(capsule: true)
-        .accessibilityLabel(Text("\(sport.name) workout"))
+        .accessibilityLabel(Text("\(WorkoutSource.displaySport(sport.name)) workout"))
         .accessibilityHint(Text("Double tap to start"))
     }
 }
@@ -222,7 +230,7 @@ struct WorkoutSelectionCard: View {
                     .background(accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
                 VStack(alignment: .leading, spacing: ZoopMetrics.space1) {
-                    Text(sport.name)
+                    Text(WorkoutSource.displaySport(sport.name))
                         .font(StrandFont.title2)
                         .foregroundStyle(StrandPalette.textPrimary)
                         .multilineTextAlignment(.leading)
@@ -234,7 +242,7 @@ struct WorkoutSelectionCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 Image(systemName: "play.fill")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(ZoopType.icon(18, weight: .bold))
                     .foregroundStyle(StrandPalette.goldDeepText)
                     .frame(width: 52, height: 52)
                     .background(Circle().fill(StrandPalette.accent))
@@ -243,9 +251,7 @@ struct WorkoutSelectionCard: View {
             .padding(.horizontal, ZoopMetrics.space5)
             .padding(.vertical, ZoopMetrics.space5)
             .frame(maxWidth: .infinity, minHeight: 96, alignment: .leading)
-            .background {
-                ZoopPanelSurface(tint: accent, cornerRadius: 28, elevated: true)
-            }
+            .zoopControlSurface(radius: 28, tint: accent)
             .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         }
         .buttonStyle(LiquidPressStyle())
@@ -256,9 +262,10 @@ struct WorkoutSelectionCard: View {
     }
 
     private var accessibilityLabelText: String {
+        let name = WorkoutSource.displaySport(sport.name)
         let labels = meta.map(\.text)
-        if labels.isEmpty { return "\(sport.name) workout" }
-        return "\(sport.name) workout, \(labels.joined(separator: ", "))"
+        if labels.isEmpty { return String(localized: "\(name) workout") }
+        return String(localized: "\(name) workout") + ", " + labels.joined(separator: ", ")
     }
 }
 
@@ -279,15 +286,15 @@ enum WorkoutActivityMeta {
         if let type = KnownWorkoutType.exact(matching: sport.name) {
             switch type {
             case .treadmillRun, .treadmillWalk, .indoorCycle, .poolSwim, .rowMachine, .elliptical:
-                items.append(Item(symbol: nil, text: "Indoor"))
+                items.append(Item(symbol: nil, text: String(localized: "zoop.workout.meta.indoor", defaultValue: "Indoor", bundle: .main)))
             case .running, .walking, .hiking, .cycling, .openWaterSwim, .rowing, .skiing, .snowboarding:
-                items.append(Item(symbol: nil, text: "Outdoor"))
+                items.append(Item(symbol: nil, text: String(localized: "zoop.workout.meta.outdoor", defaultValue: "Outdoor", bundle: .main)))
             case .strength, .bodybuilding, .weightlifting:
-                items.append(Item(symbol: nil, text: "Strength"))
+                items.append(Item(symbol: nil, text: String(localized: "zoop.workout.meta.strength", defaultValue: "Strength", bundle: .main)))
             case .yoga, .pilates, .stretching:
-                items.append(Item(symbol: nil, text: "Mindfulness"))
+                items.append(Item(symbol: nil, text: String(localized: "zoop.workout.meta.mindfulness", defaultValue: "Mindfulness", bundle: .main)))
             case .hiit:
-                items.append(Item(symbol: nil, text: "Cardio"))
+                items.append(Item(symbol: nil, text: String(localized: "zoop.workout.meta.cardio", defaultValue: "Cardio", bundle: .main)))
             default:
                 break
             }
@@ -305,7 +312,7 @@ struct WorkoutActivityMetadataView: View {
                 HStack(spacing: 4) {
                     if let symbol = item.symbol {
                         Image(systemName: symbol)
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(ZoopType.icon(11, weight: .semibold))
                     }
                     Text(item.text)
                         .font(StrandFont.footnote)
@@ -363,12 +370,6 @@ private extension View {
         }
     }
 
-    /// Native Liquid Glass search field chrome. iOS 26 uses `glassEffect`; macOS / older OS use a
-    /// raised solid surface (not a simulated glass stack).
-    @ViewBuilder
-    func nativeLiquidGlassSearchField() -> some View {
-        self.nativeLiquidGlassSearchChrome()
-    }
 }
 
 private extension View {

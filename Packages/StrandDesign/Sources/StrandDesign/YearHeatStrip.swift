@@ -1,14 +1,10 @@
 #if !os(watchOS)
-// YearHeatStrip uses .onContinuousHover + .help() tooltips (unavailable on watchOS); the watch
-// never shows the year heat strip, so the whole view is excluded there. iOS/macOS unchanged.
+// Uses .onContinuousHover + .help() (unavailable on watchOS), so the view is excluded there.
 import SwiftUI
 
-// MARK: - Year Heat Strip (§9.4 Trends)
-//
-// A GitHub-style year grid: columns = weeks, rows = weekdays. Each cell is tinted
-// by that day's recovery score via the signature recovery gradient. Empty days
-// (no data) render as a faint inset square. Hover shows a tooltip via SwiftUI's
-// built-in help.
+// MARK: - Year Heat Strip
+// GitHub-style year grid (columns = weeks, rows = weekdays), each cell tinted by the day's recovery via the recovery gradient.
+// Empty days are a faint inset square; hover shows SwiftUI's built-in help tooltip.
 
 /// A day's recovery datum for the heat strip.
 public struct RecoveryDay: Identifiable, Sendable {
@@ -35,11 +31,7 @@ public struct YearHeatStrip: View {
     /// Formats a day's score for the tooltip's bold line.
     public var valueFormat: (Double) -> String
 
-    /// The week-column layout, built ONCE here in `init` from the sorted days rather than on every
-    /// `body` eval. `buildWeeks()` reads `.component` for up to 365 days, and `body` re-ran on every
-    /// hover (which mutates `@State hoverCell`) — so the layout was being recomputed on each pointer
-    /// move. Since the struct is only re-created when `days` actually changes, computing it here
-    /// memoizes the layout on `days` identity for free, with no behaviour change.
+    /// The week-column layout, built once in `init` from the sorted days (`buildWeeks()` reads `.component` for up to 365 days) rather than per `body` eval, which re-ran on every hover.
     private let weeks: [Week]
 
     public init(
@@ -67,10 +59,7 @@ public struct YearHeatStrip: View {
     /// Hovered cell as (weekIndex, row), or nil.
     @State private var hoverCell: (week: Int, row: Int)? = nil
 
-    // A fixed Monday-first Gregorian calendar, stored once as a constant rather than a computed
-    // property. `buildWeeks()` runs on every render (including each hover, which mutates @State)
-    // and reads `.component` for up to 365 days, so the old computed form allocated a fresh
-    // Calendar on every one of those ~730 accesses per render.
+    // Fixed Monday-first Gregorian calendar stored as a constant: a computed property allocated a Calendar ~730 times per render (`buildWeeks()` runs on every render, including each hover).
     private static let calendar: Calendar = {
         var c = Calendar(identifier: .gregorian)
         c.firstWeekday = 2 // Monday-first columns read nicely
@@ -84,14 +73,12 @@ public struct YearHeatStrip: View {
         var monthLabel: String?
     }
 
-    /// Pure: group the (already-sorted) days into Monday-first week columns. Static so it can run once
-    /// from `init` (no instance state is read — only the static calendar + formatter cache).
+    /// Pure: group the sorted days into Monday-first week columns. Static so `init` can call it.
     private static func buildWeeks(from days: [RecoveryDay]) -> [Week] {
         guard let first = days.first?.date else { return [] }
         var weeks: [Week] = []
         var current = Week(cells: Array(repeating: nil, count: 7), monthLabel: nil)
         var lastMonth = -1
-        // Pad the first week so the first day lands on its weekday row.
         let firstRow = weekdayRow(first)
         var filledThisWeek = 0
         for _ in 0..<firstRow { filledThisWeek += 1 }
@@ -130,20 +117,14 @@ public struct YearHeatStrip: View {
     private let rowLabels = ["Mon", "", "Wed", "", "Fri", "", "Sun"]
 
     public var body: some View {
-        // `weeks` is the layout built ONCE in init (see the stored property), not rebuilt per body eval.
-        // Total drawn size, so the hover overlay can be laid over the grid and
-        // a tooltip can be clamped within bounds.
+        // `weeks` is built once in init. Total drawn size lets the hover overlay sit over the grid and clamp the tooltip.
         let gridWidth = gridOriginX + CGFloat(weeks.count) * (cellSize + spacing) - spacing
         let gridHeight = gridOriginY + 7 * (cellSize + spacing) - spacing
 
         VStack(alignment: .leading, spacing: spacing) {
             if showsMonthLabels {
-                // #1021: month labels were each boxed to ONE cell width (~12pt), so a 3-letter month
-                // ("Jul"/"May") truncated to "J…"/"M…". A month marker also needs to sit at the exact x of
-                // the week column where the month starts. Positioning each label absolutely (topLeading +
-                // .offset) at its column x, and letting it render at its natural width (.fixedSize), gives
-                // the full month name room to overflow to the right — the ~4 empty columns before the next
-                // month absorb it, and the grid cells below stay column-aligned (they're in their own HStack).
+                // #1021: month labels boxed to one cell width (~12pt) truncated ("Jul" → "J…"). Position each absolutely at its column x with `.fixedSize` so it overflows right
+                // into the empty columns before the next month; grid cells stay column-aligned in their own HStack.
                 ZStack(alignment: .topLeading) {
                     // Reserve the row's height + full grid width so the ZStack lays out over the columns.
                     Color.clear.frame(width: gridWidth, height: monthLabelHeight)
@@ -159,7 +140,6 @@ public struct YearHeatStrip: View {
                 }
             }
             HStack(alignment: .top, spacing: spacing) {
-                // weekday gutter
                 VStack(alignment: .trailing, spacing: spacing) {
                     ForEach(0..<7, id: \.self) { r in
                         Text(rowLabels[r])
@@ -168,7 +148,6 @@ public struct YearHeatStrip: View {
                             .frame(width: gutterWidth, height: cellSize, alignment: .trailing)
                     }
                 }
-                // week columns
                 ForEach(Array(weeks.enumerated()), id: \.element.id) { weekIndex, week in
                     VStack(spacing: spacing) {
                         ForEach(0..<7, id: \.self) { row in
@@ -195,10 +174,7 @@ public struct YearHeatStrip: View {
         .zoopChartScrub(isEnabled: showsHover, start: .holdOnly,
                         onChange: { hoverCell = cellIndex(at: $0, weekCount: weeks.count) },
                         onEnd: { hoverCell = nil })
-        // ONE collapsed VoiceOver element for the whole calendar. The 365 coloured cells are pure shapes
-        // (hover is dead on touch), and emitting one a11y node PER scored day (the old `cell` did) built
-        // an O(days) semantics subtree the accessibility walk re-copied on every scroll — a #707 OOM
-        // contributor. `children: .ignore` collapses the grid to this single summary at O(1) node cost.
+        // ONE collapsed VoiceOver element for the calendar: a per-day a11y node built an O(days) semantics subtree re-copied on every scroll (a #707 OOM contributor). `children: .ignore` makes it O(1).
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(axSummary))
     }
@@ -259,7 +235,6 @@ public struct YearHeatStrip: View {
            let day = weeks[h.week].cells[h.row], let score = day.score {
             let center = cellCenter(week: h.week, row: h.row)
             ZStack(alignment: .topLeading) {
-                // subtle highlight ring on the hovered cell
                 RoundedRectangle(cornerRadius: 3, style: .continuous)
                     .stroke(StrandPalette.hairlineStrong, lineWidth: 1.5)
                     .frame(width: cellSize + 3, height: cellSize + 3)
@@ -289,9 +264,7 @@ public struct YearHeatStrip: View {
                 .frame(width: cellSize, height: cellSize)
                 .opacity(isHovered ? 1.0 : (hoverCell == nil ? 1.0 : 0.78))
                 .help("\(DateFormatterCache.day.string(from: day.date)) · recovery \(Int(score.rounded()))")
-                // No per-cell a11y element: the whole strip is one collapsed VoiceOver element (see the
-                // `children: .ignore` summary on the body), so per-day detail no longer builds an O(days)
-                // semantics subtree. The `.help` above stays — it's a macOS pointer tooltip, not an a11y node.
+                // No per-cell a11y element (the strip is one collapsed element); `.help` stays as a macOS pointer tooltip.
         } else if day != nil {
             shape
                 .fill(StrandPalette.surfaceInset)

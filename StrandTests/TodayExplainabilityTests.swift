@@ -425,9 +425,9 @@ final class TodayExplainabilityTests: XCTestCase {
         XCTAssertEqual(TodayView.todayScoreProviderLabel(sourceId: "not-a-whoop", brand: nil), "not-a-whoop")
     }
 
-    func testLiquidHeroSourceLabel_deduplicatesOneProvider() {
+    func testScoreSourceLabel_deduplicatesOneProvider() {
         XCTAssertEqual(
-            LiquidTodayView.heroSourceLabel(
+            TodayLogic.scoreSourceLabel(
                 providers: [
                     .init(sourceId: "polar-1", brand: "Polar"),
                     .init(sourceId: "polar-1", brand: "Polar"),
@@ -436,9 +436,9 @@ final class TodayExplainabilityTests: XCTestCase {
             "Polar")
     }
 
-    func testLiquidHeroSourceLabel_capsMixedProvidersAtTwoInScoreOrder() {
+    func testScoreSourceLabel_capsMixedProvidersAtTwoInScoreOrder() {
         XCTAssertEqual(
-            LiquidTodayView.heroSourceLabel(
+            TodayLogic.scoreSourceLabel(
                 providers: [
                     .init(sourceId: "my-whoop", brand: "WHOOP"),
                     .init(sourceId: "oura-import", brand: nil),
@@ -447,7 +447,7 @@ final class TodayExplainabilityTests: XCTestCase {
             "WHOOP + Oura")
     }
 
-    func testLiquidHeroSourceLabel_hidesWhenNoScoreHasAResolvedSource() {
-        XCTAssertNil(LiquidTodayView.heroSourceLabel(providers: []))
+    func testScoreSourceLabel_hidesWhenNoScoreHasAResolvedSource() {
+        XCTAssertNil(TodayLogic.scoreSourceLabel(providers: []))
     }
 }

@@ -149,7 +149,7 @@ struct LiftSessionView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(ZoopType.icon(17, weight: .semibold))
                 Text("Add exercise").font(StrandFont.body)
             }
             .foregroundStyle(canAdd ? StrandPalette.effortColor : StrandPalette.textTertiary)
@@ -239,7 +239,7 @@ struct LiftSessionView: View {
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "plus.circle")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(ZoopType.icon(17, weight: .semibold))
                     Text("Add set").font(StrandFont.caption)
                 }
                 .foregroundStyle(canAdd ? StrandPalette.effortColor : StrandPalette.textTertiary)
@@ -254,7 +254,7 @@ struct LiftSessionView: View {
                 session.removeSet(fromExercise: index)
             } label: {
                 Image(systemName: "minus.circle")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(ZoopType.icon(17, weight: .semibold))
                     // Dimmed rather than gone: the pair reads as one control, and a minus that
                     // disappears once the last set is done looks like a feature that broke.
                     .foregroundStyle(canRemove ? StrandPalette.textSecondary
@@ -343,7 +343,7 @@ struct LiftSessionView: View {
                 if recorded == nil { session.start(slot) } else { session.start(slot) }
             } label: {
                 Image(systemName: recorded == nil ? "circle" : "checkmark.circle.fill")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(ZoopType.icon(20, weight: .semibold))
                     .foregroundStyle(recorded == nil
                                      ? StrandPalette.textTertiary
                                      : StrandPalette.statusPositive)
@@ -541,7 +541,7 @@ struct LiftSessionView: View {
                 Spacer(minLength: 0)
                 Button { session.undo() } label: {
                     Image(systemName: "arrow.uturn.backward")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(ZoopType.icon(15, weight: .semibold))
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(engine.canUndo ? StrandPalette.textSecondary : StrandPalette.textTertiary)

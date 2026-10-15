@@ -1,28 +1,17 @@
 #if !os(watchOS)
-// StrainGauge uses .onContinuousHover + ChartHover tooltips (unavailable on watchOS); the watch
-// uses GlowRing instead, so the whole view is excluded there. iOS/macOS unchanged.
+// Uses .onContinuousHover + ChartHover tooltips (unavailable on watchOS; the watch uses GlowRing), so the view is excluded there.
 import SwiftUI
 
-// MARK: - Strain Gauge (§9.1 strain ramp)
-//
-// Blue Effort gauge for the strain/effort scale (WHOOP: the always-blue effort ramp,
-// no gold). Same open-gauge instrument language as the Recovery Ring, but cardiovascular
-// output instead of the value-based recovery scale. Filled to strain/outOf of a 240° arc,
-// flat and crisp (no bloom) with a clean leading bead at the tip.
-//
-// `outOf` is the maximum of the scale the passed `strain` is ON (default 21 for the
-// WHOOP Day-Strain axis). The Effort hero gauge passes the value already converted to
-// the user's selected display scale (#268) plus its matching max (100 or 21), so the
-// arc fraction, the centre numeral and the "of N" caption all read on the same scale
-// instead of being hardcoded to 0–21. The gauge stays scale-agnostic — the caller owns
-// the conversion (EffortScale lives in the app layer, not this design package).
+// MARK: - Strain Gauge
+// Blue Effort gauge in the same open-gauge language as the Recovery Ring, filled to strain/outOf of a 240° arc; flat, with a clean leading bead.
+// `outOf` is the max of the scale `strain` is ON (default 21, WHOOP Day Strain). The Effort hero passes the value already converted to the user's display scale
+// plus its max (100 or 21) so arc, numeral and "of N" caption agree (#268); the caller owns the conversion (EffortScale lives in the app layer).
 
 public struct StrainGauge: View {
 
     /// Strain value on the displayed scale (its maximum is `outOf`).
     public var strain: Double
-    /// The maximum of the scale `strain` is on — the arc fills `strain/outOf` and the caption
-    /// reads "of \(outOf)". Defaults to 21 (WHOOP Day Strain) so existing call sites are unchanged.
+    /// The maximum of the scale `strain` is on: the arc fills `strain/outOf` and the caption reads "of N". Defaults to 21.
     public var outOf: Double
     /// Optional supporting line, e.g. "moderate cardiovascular load".
     public var supporting: String?
@@ -71,7 +60,6 @@ public struct StrainGauge: View {
     }
     private var strainWord: String { Self.stateLabel(forFraction: fraction) }
 
-    // The 240° open-gauge geometry + bloom now live in the shared `BevelGauge`.
     @State private var animatedFraction: Double = 0
     @State private var bloomPulse = false
 
@@ -110,7 +98,7 @@ public struct StrainGauge: View {
             }
         }
         .frame(width: diameter, height: diameter)
-        // Collapse the loose center Text fragments into one coherent VoiceOver element.
+        // Collapse the centre Text fragments into one VoiceOver element.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(valueFormat(strain)))
         .accessibilityValue(Text(strainWord))

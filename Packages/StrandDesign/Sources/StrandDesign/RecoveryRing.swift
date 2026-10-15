@@ -1,25 +1,11 @@
 import SwiftUI
 
-// MARK: - Recovery Ring (§9.3) — THE signature component
-//
-// watchOS NOTE: the `RecoveryRing` view (below) uses .onContinuousHover + BevelGauge + ChartHover
-// tooltips, none of which exist on watchOS, so the VIEW is excluded there (the watch uses the
-// lightweight GlowRing instead). The pure `RecoveryArc` Shape at the bottom of this file stays
-// available on ALL platforms because the watch-safe BevelGauge / BrandMark depend on it.
-//
-// A 240° open gauge arc (gap at the bottom), thick rounded-cap stroke filled
-// with an AngularGradient sampling the recovery gradient (WHOOP: value-based
-// green→yellow→red via `recoveryStops`), filled to score/100 of the 240° span
-// over a faint `surfaceInset` track. NO outer bloom (WHOOP-flat); a crisp leading
-// bead at the fill tip; a draw-in animation when the value changes. Center shows the
-// big rounded-700 number (no %), a state word tinted to the sampled color, and an
-// optional supporting line.
-//
-// This is also the app's BRAND GLYPH: an open ~80% ring + a SOLID ACCENT CORE DOT
-// ("on-device core"). The recovery ring uniquely carries a micro "Zoop" wordmark
-// above the number (letter-spacing ≈ .34em, tertiary) so the lock-up reads as the
-// "O" in Zoop. The arc geometry, gradient stroke, track and centre number live in
-// the shared `BevelGauge`; this view layers the wordmark + core dot on top.
+// MARK: - Recovery Ring — THE signature component
+// Excluded on watchOS (the view uses .onContinuousHover, BevelGauge and ChartHover tooltips; the watch uses GlowRing). The pure `RecoveryArc` Shape at the bottom
+// stays on ALL platforms because the watch-safe BevelGauge / BrandMark depend on it.
+// 240° open gauge arc filled to score/100 with an AngularGradient from `recoveryStops` over a faint `surfaceInset` track; flat (no bloom), crisp bead at the tip, draw-in on change.
+// Centre: big number, state word tinted to the sampled colour, optional supporting line.
+// Also the brand glyph: open ring + solid accent core dot; the recovery ring adds a micro "Zoop" wordmark above the number. Arc, track and number live in the shared `BevelGauge`.
 
 #if !os(watchOS)
 public struct RecoveryRing: View {
@@ -30,13 +16,11 @@ public struct RecoveryRing: View {
     public var supporting: String?
     /// Diameter of the ring.
     public var diameter: CGFloat
-    /// Stroke thickness — hero 13–14pt per the Titanium & Gold spec (§4).
+    /// Stroke thickness; hero is 13–14pt.
     public var lineWidth: CGFloat
     /// Whether to show the center read-out (number + state + supporting).
     public var showsLabel: Bool
-    /// Whether to draw the micro "Zoop" wordmark above the number. Turn it OFF for compact rings
-    /// (e.g. a three-up hero row) where the number is large relative to the ring and the wordmark
-    /// would crowd it.
+    /// Whether to draw the micro "Zoop" wordmark above the number. Turn off for compact rings where it would crowd the number.
     public var showsWordmark: Bool
     /// Whether hovering the ring shows a subtle tooltip (score + state word).
     public var showsHover: Bool
@@ -67,8 +51,7 @@ public struct RecoveryRing: View {
     @State private var hoverPoint: CGPoint? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    // Animated fill fraction so changing `score` draws the arc in. The 240° open-gauge
-    // geometry + bloom now live in the shared `BevelGauge` this delegates to.
+    // Animated fill fraction so changing `score` draws the arc in.
     @State private var animatedFraction: Double = 0
     @State private var bloomPulse: Bool = false
 
@@ -92,9 +75,7 @@ public struct RecoveryRing: View {
                 animatedFraction: animatedFraction,
                 bloomActive: bloomPulse
             )
-            // Brand layers over the shared gauge: the solid gold CORE DOT (so the
-            // open-ring + core-dot lock-up reads), then the micro "Zoop" wordmark
-            // sitting just ABOVE the centre number.
+            // Brand layers over the shared gauge: the core dot, then the micro "Zoop" wordmark just above the centre number.
             coreDot
             if showsLabel && showsWordmark { wordmark }
             if showsHover, let pt = hoverPoint {
@@ -111,8 +92,7 @@ public struct RecoveryRing: View {
             }
         }
         .frame(width: diameter, height: diameter)
-        // Collapse the loose center Text fragments (and the otherwise-unlabeled
-        // standalone ring) into one coherent VoiceOver element.
+        // Collapse the centre Text fragments into one VoiceOver element.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(valueFormat(score)))
         .accessibilityValue(Text(stateWord))
@@ -140,10 +120,7 @@ public struct RecoveryRing: View {
 
     // MARK: Brand layers
 
-    /// Micro "Zoop" wordmark above the number — the recovery ring carries the
-    /// lock-up so its centre reads as the "O" in Zoop. ALL-CAPS, tertiary,
-    /// letter-spacing ≈ .34em (× the cap height per the spec). Nudged up so it
-    /// sits clear above BevelGauge's centred number.
+    /// Micro "Zoop" wordmark above the number: ALL-CAPS, tertiary, letter-spacing ≈ .34em, nudged clear of BevelGauge's centred number.
     private var wordmark: some View {
         let size = diameter * 0.052
         return Text("Zoop")
@@ -155,11 +132,8 @@ public struct RecoveryRing: View {
             .accessibilityHidden(true)
     }
 
-    /// The brand "on-device core" — a small solid ACCENT dot at the exact centre (WHOOP: blue, no
-    /// gold). It belongs to the glyph-only brand lock-up (logo / nav / onboarding), where it reads as
-    /// the core of the open ring. On a METRIC gauge the centre is occupied by the read-out number, and
-    /// a dot sitting behind the digits just muddies them (community feedback at the v3 launch), so it
-    /// is hidden whenever a number is shown — leaving a clean ring + number + micro-Zoop wordmark.
+    /// The brand "on-device core": a small solid accent dot at the centre, for the glyph-only lock-up (logo / nav / onboarding).
+    /// Hidden whenever a number is shown, since a dot behind the digits muddies them.
     private var coreDot: some View {
         Circle()
             .fill(StrandPalette.accent)

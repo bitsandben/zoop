@@ -1,33 +1,23 @@
 import Foundation
 import WhoopProtocol
 
-// SedentaryDetector.swift — the pure core of the "inactivity reminder" (wrist buzz after sitting
-// too long). Faithful port of the Android PR #419 logic (ActivityDetector.detectSedentaryBouts +
-// InactivityPrefs.mayBuzzInactivity + WhoopBleClient.maybeBuzzInactivity de-dup), folded into one
-// pure, deterministic, DB-free engine so Swift and Kotlin are a byte-identical pair.
+// SedentaryDetector.swift — pure core of the inactivity reminder (wrist buzz after sitting too long).
 //
-// WHY GRAVITY, NOT STEPS: the WHOOP 4.0 exposes no step count over BLE — only the wrist
-// accelerometer, and only via the ~15-min historical offload. Sedentary time is therefore inferred
-// from gravity. The wrist moves constantly at a desk (typing, reaching), so "wrist stillness" is the
-// wrong signal; what a "time to move" reminder needs is the ABSENCE OF AMBULATION (walking around).
-// `detectSedentaryBouts` smooths the per-record gravity delta (reusing WorkoutDetector.activitySeries)
-// over `smoothWindowS` and calls any stretch where that smoothed signal stays at/under `moveThresholdG`
-// — i.e. no sustained walking — a sedentary bout. Typing and isolated reaches average out and keep the
-// bout alive; sustained walking pushes the smoothed signal over the threshold and ends it. The defaults
-// were calibrated from on-wrist data (desk ≈ 0.05–0.10 g smoothed, walking ≈ 0.2–0.4 g).
+// Sedentary time is inferred from gravity, not steps: the WHOOP 4.0 exposes no step count over BLE,
+// only wrist accelerometer data via the ~15-min historical offload. The wrist moves constantly at a
+// desk, so stillness is the wrong signal; the reminder needs the ABSENCE OF AMBULATION. The per-record
+// gravity delta (WorkoutDetector.activitySeries) is smoothed over `smoothWindowS`; any stretch at/under
+// `moveThresholdG` is a sedentary bout. Defaults come from on-wrist data (desk ≈ 0.05–0.10 g smoothed,
+// walking ≈ 0.2–0.4 g).
 //
-// PURITY: no I/O, no wall-clock reads. `nowSec` and `tzOffsetSec` (seconds east of UTC) are passed IN.
-// Active-hours / quiet-hours are evaluated against the candidate bout's LOCAL END TIME, not `now`:
-// gravity only reaches the app on the strap's offload flush, so an overnight bout is processed in the
-// morning; a `now`-based check would wrongly admit it. Checking the bout's own end time is what makes
-// "active hours excludes nighttime sleep" actually hold.
-//
-// All `ts`/`start`/`end`/`nowSec` are wall-clock unix SECONDS. Outputs are APPROXIMATE, not medical advice.
+// Pure: no I/O, no clock. `nowSec` and `tzOffsetSec` (seconds east of UTC) are passed in. Active/quiet
+// hours are checked against the bout's LOCAL END TIME, not `now`: gravity only arrives on the offload
+// flush, so an overnight bout is processed in the morning and a `now` check would wrongly admit it.
+// All timestamps are wall-clock unix seconds. Outputs are approximate, not medical advice.
 
 // MARK: - Output shapes
 
-/// A sedentary ("haven't moved from my seat") period. Times are wall-clock unix seconds;
-/// `durationS` mirrors `ExerciseSession.durationS`. APPROXIMATE.
+/// A sedentary period. Times are wall-clock unix seconds. Approximate.
 public struct InactivityPeriod: Equatable, Sendable {
     public let start: Int
     public let end: Int
@@ -37,9 +27,8 @@ public struct InactivityPeriod: Equatable, Sendable {
     }
 }
 
-/// The persisted de-dup / freshness state the reminder carries between offloads (restart-safe). The
-/// caller stores this verbatim (it is the byte-identical analogue of the InactivityPrefs LAST_* keys)
-/// and feeds the prior value back into the next `evaluate`. A fresh user starts from `.initial`.
+/// The persisted de-dup / freshness state carried between offloads. The caller stores it verbatim
+/// and feeds it back into the next `evaluate`; a fresh user starts from `.initial`.
 public struct SedentaryState: Equatable, Sendable {
     /// Newest gravity ts already processed — a replayed / no-new-rows offload can't re-buzz.
     public var lastProcessedGravityTs: Int
@@ -62,8 +51,8 @@ public struct SedentaryState: Equatable, Sendable {
     public static let initial = SedentaryState()
 }
 
-/// The decision the engine returns each offload: whether to buzz now, the next persisted state to
-/// store, and (when buzzing) the buzz strength + the bout that triggered it (for logging / UI).
+/// The engine's per-offload decision: whether to buzz, the strength, the triggering bout, and the
+/// next state to persist.
 public struct SedentaryDecision: Equatable, Sendable {
     /// True if the wrist should buzz on this offload.
     public let shouldBuzz: Bool
@@ -80,48 +69,41 @@ public struct SedentaryDecision: Equatable, Sendable {
     }
 }
 
-/// User-tunable config for the inactivity reminder. Mirrors InactivityPrefs (defaults included) plus
-/// the global gates the Android guard reuses from NotifPrefs (master / quiet-hours / only-when-worn),
-/// passed in here as plain values so the engine stays pure.
+/// User-tunable config for the inactivity reminder, including the global gates (master / quiet
+/// hours / only-when-worn) passed in as plain values so the engine stays pure.
 public struct SedentaryConfig: Equatable, Sendable {
-    // ── Feature toggle + master gate ─────────────────────────────────────────
-    /// Inactivity reminder feature toggle (InactivityPrefs.enabled, default OFF).
+    /// Inactivity reminder feature toggle (default off).
     public var enabled: Bool
-    /// Global notification master switch (NotifPrefs.MASTER, default OFF). Buzz is inert if off.
+    /// Global notification master switch (default off). Buzz is inert if off.
     public var notificationsMasterOn: Bool
 
-    // ── Detector tunables (ActivityDetector) ─────────────────────────────────
-    /// Smoothed wrist-motion above this (g) counts as "walking around", ending a sedentary bout.
+    /// Smoothed wrist-motion above this (g) counts as walking, ending a sedentary bout.
     public var moveThresholdG: Double
-    /// Minimum sedentary-bout length (minutes) before the first nudge (InactivityPrefs threshold).
+    /// Minimum sedentary-bout length (minutes) before the first nudge.
     public var thresholdMinutes: Int
     /// Rolling-mean window (seconds) for the movement signal.
     public var smoothWindowSeconds: Double
 
-    // ── Cadence + strength ───────────────────────────────────────────────────
-    /// If still seated, re-buzz this often (minutes). InactivityPrefs re-nudge, default 30.
+    /// If still seated, re-buzz this often (minutes).
     public var reNudgeMinutes: Int
-    /// Buzz strength (loops). InactivityPrefs buzz loops, default 2.
+    /// Buzz strength (loops).
     public var buzzLoops: Int
 
-    // ── Active-hours window (InactivityPrefs) ────────────────────────────────
-    /// Only nudge during the active-hours window (default ON).
+    /// Only nudge during the active-hours window (default on).
     public var activeHoursEnabled: Bool
     /// Active-hours window start, local minute-of-day [0,1440) (default 9:00 = 540).
     public var activeStartMinutes: Int
     /// Active-hours window end, local minute-of-day [0,1440) (default 17:00 = 1020).
     public var activeEndMinutes: Int
 
-    // ── Quiet-hours window (reused from NotifPrefs) ──────────────────────────
-    /// Suppress during quiet hours (NotifPrefs.QUIET, default OFF).
+    /// Suppress during quiet hours (default off).
     public var quietHoursEnabled: Bool
     /// Quiet-hours start, local minute-of-day (default 22:00 = 1320).
     public var quietStartMinutes: Int
     /// Quiet-hours end, local minute-of-day (default 7:00 = 420).
     public var quietEndMinutes: Int
 
-    // ── Only-when-worn gate (reused from NotifPrefs) ─────────────────────────
-    /// Require the strap to be worn (NotifPrefs.WORN, default ON).
+    /// Require the strap to be worn (default on).
     public var onlyWhenWorn: Bool
 
     public init(enabled: Bool = false,
@@ -159,23 +141,22 @@ public struct SedentaryConfig: Equatable, Sendable {
 
 public enum SedentaryDetector {
 
-    // MARK: Detector defaults (ActivityDetector parity)
+    // MARK: Detector defaults
 
-    /// Smoothed wrist-motion above this (g) counts as "walking around", ending a sedentary bout.
+    /// Smoothed wrist-motion above this (g) counts as walking, ending a sedentary bout.
     public static let defaultMoveThresholdG: Double = 0.15
-    /// Rolling-mean window (seconds) for the movement signal — long enough that desk reaches / typing
-    /// flurries average out, short enough that sustained walking still crosses the threshold within a
-    /// minute or two.
+    /// Rolling-mean window (seconds): long enough that typing flurries average out, short enough that
+    /// sustained walking crosses the threshold within a minute or two.
     public static let defaultSmoothWindowS: Double = 240.0
-    /// Break a sedentary bout when the inter-record time gap exceeds this (seconds). Also the freshness
-    /// tolerance the live path uses to decide a bout is still "current".
+    /// Break a bout when the inter-record gap exceeds this (seconds); also the freshness tolerance for
+    /// a bout still being "current".
     public static let maxGapS: Int = 20 * 60
-    /// Default minimum sedentary-bout length (minutes) — InactivityPrefs threshold default.
+    /// Default minimum sedentary-bout length (minutes).
     public static let defaultThresholdMinutes: Int = 45
-    /// The detector's own floor when a caller doesn't pass a user threshold (ActivityDetector default).
+    /// The detector's floor when a caller passes no user threshold.
     public static let defaultMinMinutes: Int = 15
 
-    // MARK: Config defaults (InactivityPrefs / NotifPrefs parity)
+    // MARK: Config defaults
 
     public static let defaultReNudgeMinutes: Int = 30
     public static let defaultBuzzLoops: Int = 2
@@ -184,11 +165,10 @@ public enum SedentaryDetector {
     public static let defaultQuietStartMin: Int = 22 * 60   // 22:00
     public static let defaultQuietEndMin: Int = 7 * 60      // 07:00
 
-    // MARK: - Detection (ActivityDetector.detectSedentaryBouts parity)
+    // MARK: - Detection
 
-    /// Detect SEDENTARY bouts: stretches where the smoothed wrist-motion stays at/under `moveThresholdG`
-    /// — the user hasn't walked around — for ≥ `minMinutes`. Typing and the occasional reach stay below
-    /// the threshold and keep the bout alive; sustained walking ends it, as does a data gap > `maxGapS`.
+    /// Detect sedentary bouts: stretches where smoothed wrist-motion stays at/under `moveThresholdG`
+    /// for ≥ `minMinutes`. Sustained walking or a data gap > `maxGapS` ends a bout.
     public static func detectSedentaryBouts(_ gravity: [GravitySample],
                                             moveThresholdG: Double = defaultMoveThresholdG,
                                             minMinutes: Int = defaultMinMinutes,
@@ -223,7 +203,7 @@ public enum SedentaryDetector {
         return out
     }
 
-    // MARK: - Pure time helpers (InactivityPrefs parity)
+    // MARK: - Pure time helpers
 
     /// Local minute-of-day [0,1440) for a unix-seconds instant given a tz offset (seconds east of UTC).
     public static func localMinuteOfDay(_ epochSec: Int, tzOffsetSec: Int) -> Int {
@@ -238,8 +218,7 @@ public enum SedentaryDetector {
     }
 
     /// The global + active/quiet-hours gate, evaluated against the bout's LOCAL END TIME. True only when
-    /// the inactivity reminder may buzz for a bout ending at `boutEndEpochSec`. Mirrors
-    /// InactivityPrefs.mayBuzzInactivity (master / quiet hours / worn / active-hours-by-bout-end-time).
+    /// the reminder may buzz for a bout ending at `boutEndEpochSec`.
     public static func mayBuzz(_ config: SedentaryConfig, worn: Bool, boutEndEpochSec: Int, tzOffsetSec: Int) -> Bool {
         if !config.enabled { return false }
         if !config.notificationsMasterOn { return false }
@@ -255,20 +234,14 @@ public enum SedentaryDetector {
         return true
     }
 
-    // MARK: - The decision (WhoopBleClient.maybeBuzzInactivity parity)
+    // MARK: - The decision
 
-    /// Run the inactivity reminder over the freshly-arrived `gravity` window and decide whether to buzz.
-    /// Pure: pass `nowSec` (the offload-completion instant) and `tzOffsetSec` IN; never read a clock.
+    /// Run the reminder over the freshly-arrived `gravity` window and decide whether to buzz. Pure: pass
+    /// `nowSec` (the offload-completion instant) and `tzOffsetSec` in.
     ///
-    /// Mirrors the Android live path exactly:
-    ///   1. Disabled → never buzz; state unchanged.
-    ///   2. Only act when this offload advanced the newest gravity ts (replayed / no-new-rows → no-op);
-    ///      when it did advance, persist the new `lastProcessedGravityTs`.
-    ///   3. Pick the most-recent qualifying bout (≥ `thresholdMinutes`).
-    ///   4. The bout must be CURRENT — its end within `maxGapS` of the newest sample (still seated).
-    ///   5. Pass the global + active/quiet/worn gate (`mayBuzz`) on the bout's local end time.
-    ///   6. Re-nudge a continuing bout on the user's cadence; alert a distinct new bout (one that starts
-    ///      after the last buzzed bout's end, separated by movement) on its own crossing.
+    /// Order: disabled never buzzes; an offload that didn't advance the newest gravity ts is a no-op; the
+    /// most-recent qualifying bout must still be current (end within `maxGapS` of the newest sample) and
+    /// pass `mayBuzz`; a continuing bout re-nudges on cadence, a distinct new bout alerts on its own.
     public static func evaluate(_ gravity: [GravitySample],
                                 state: SedentaryState,
                                 config: SedentaryConfig,
@@ -284,7 +257,7 @@ public enum SedentaryDetector {
         let newestGravityTs = gravity.map { $0.ts }.max()
         guard let newest = newestGravityTs else { return noBuzz(state) }
 
-        // Only act when this offload brought new gravity (a replayed / no-new-rows sync can't fire).
+        // A replayed / no-new-rows sync can't fire.
         if newest <= state.lastProcessedGravityTs { return noBuzz(state) }
         var next = state
         next.lastProcessedGravityTs = newest
@@ -294,13 +267,12 @@ public enum SedentaryDetector {
                                          smoothWindowSeconds: config.smoothWindowSeconds)
         guard let bout = bouts.max(by: { $0.end < $1.end }) else { return noBuzz(next) }
 
-        // The bout must be current — its end near the newest sample (the user is still seated).
+        // The bout must be current (the user is still seated).
         if newest - bout.end > maxGapS { return noBuzz(next, bout) }
         if !mayBuzz(config, worn: worn, boutEndEpochSec: bout.end, tzOffsetSec: tzOffsetSec) { return noBuzz(next, bout) }
 
         let reNudgeS = config.reNudgeMinutes * 60
-        // Continues the last buzzed bout → re-nudge on cadence; a distinct new bout (which starts after
-        // the last buzzed bout's end, separated by movement) alerts on its own crossing.
+        // Continuing bout → re-nudge on cadence; a new bout (starts after the last buzzed one's end) alerts at once.
         let continues = bout.start <= state.lastBuzzedBoutEnd
         let shouldBuzz = state.lastBuzzAt == 0 || !continues || (nowSec - state.lastBuzzAt >= reNudgeS)
         if !shouldBuzz { return noBuzz(next, bout) }

@@ -1,26 +1,15 @@
 import Foundation
 
-/// Reshape a sleep session's stored stage breakdown to a hand-corrected `[newStart, newEnd]` window, so a
-/// bed-time (onset) and/or wake-time edit updates the hypnogram and the total-asleep / stage footer, not
-/// just the displayed "Woke" / "Bed" label. Pure + deterministic (no store, no raw signals, no I/O), so
-/// it's unit-tested directly and works for a Bluetooth-only night, an imported night, online or off: it
-/// reclips whatever `stagesJSON` the session already carries.
+/// Reshapes a session's stored stage breakdown to a hand-corrected `[newStart, newEnd]` window so a bed-time
+/// or wake-time edit updates the hypnogram and totals. Pure; works on whatever `stagesJSON` the session carries.
 ///
-/// START-AWARE on BOTH ends (#0): a pure onset edit (newStart moves, newEnd unchanged) must drop the
-/// stages BEFORE the corrected bed time, not leave them in place. Otherwise an imported / pre-sync night
-/// keeps sleep that happened before the user got into bed while the displayed window shrank.
+/// A pure onset edit must also drop stages BEFORE the new bed time. Two formats are handled:
+///   - segment array `[{"start","end","stage"}]`: clipped to the window; a window that grew at the tail
+///     gets a trailing `wake` segment.
+///   - minute dict `{"awake","light","deep","rem"}` (imported nights, no timeline): shifted by the
+///     duration delta, trimming tail-most stages (awake, light, rem, deep) or adding to awake.
 ///
-/// Two formats, mirroring the app's two writers (see SleepView.decodeSegments / decodeStages):
-///   • segment array `[{"start":epoch,"end":epoch,"stage":"wake"|"light"|"deep"|"rem"}]` — computed
-///     nights. Clip to `[newStart, newEnd]`: drop segments wholly outside it, clip a straddling
-///     segment's start up to `newStart` and end down to `newEnd`, and if the window grew at the tail
-///     append a trailing `wake` segment (extra time in bed reads as awake).
-///   • minute dict `{"awake","light","deep","rem"}` — imported nights. No timeline, so shift by the
-///     duration delta `(newEnd - newStart) - (oldEnd - sessionStart)`: trim from the tail-most stages
-///     (awake → light → rem → deep) when shortened, add to awake when lengthened.
-///
-/// Returns the re-encoded JSON in the SAME shape it received, or nil when there's nothing usable to
-/// reclip (the caller then keeps the existing JSON).
+/// Returns JSON in the SAME shape it received, or nil when nothing is usable (caller keeps the existing JSON).
 public enum SleepWindowReclip {
 
     public static func reclip(stagesJSON: String?, sessionStart: Int, oldEnd: Int,
@@ -54,9 +43,7 @@ public enum SleepWindowReclip {
         if newEnd > maxEnd, maxEnd >= newStart {            // window grew → trailing time in bed = awake
             out.append(["start": maxEnd, "end": newEnd, "stage": "wake"])
         }
-        // If every segment was trimmed away (the corrected window lands outside every stage), don't
-        // return nil — that would let the store's COALESCE keep the OLD stages, which then extend PAST
-        // the new wake. Emit a single wake segment covering the (valid, ≥60s) corrected window instead.
+        // Never return nil here: the store's COALESCE would keep the OLD stages, extending past the new wake.
         if out.isEmpty, newEnd > newStart {
             out.append(["start": newStart, "end": newEnd, "stage": "wake"])
         }

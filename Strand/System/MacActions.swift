@@ -38,12 +38,10 @@ enum MacActionKind: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-/// Mac-side side effects. Sandbox-friendly: Shortcuts run via the URL scheme (Shortcuts.app does the
-/// privileged work), and screen lock uses login.framework's lock entry point.
+/// Mac-side side effects. Sandbox-friendly: Shortcuts run via the URL scheme; screen lock uses login.framework.
 enum MacActions {
-    /// Lock the screen immediately — the same call the Apple-menu "Lock Screen" uses
-    /// (login.framework `SACLockScreenImmediate`, resolved at runtime). Returns false if unavailable,
-    /// so callers can fall back to a "Lock Screen" Shortcut.
+    /// Locks the screen (login.framework `SACLockScreenImmediate`, resolved at runtime). Returns false
+    /// if unavailable so callers can fall back to a Shortcut.
     @discardableResult
     static func lockScreen() -> Bool {
         #if os(macOS)
@@ -60,9 +58,7 @@ enum MacActions {
         #endif
     }
 
-    /// Run a Shortcut by name via the `shortcuts://` URL scheme. Anything the user can build in
-    /// Shortcuts (lock, mute, set Focus, open an app, automations) is reachable this way. Opens via the
-    /// platform handler (`NSWorkspace` on macOS, `UIApplication` on iOS) through `PlatformOpen`.
+    /// Runs a Shortcut by name via the `shortcuts://` URL scheme, opened through `PlatformOpen`.
     @MainActor
     static func runShortcut(_ name: String) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)

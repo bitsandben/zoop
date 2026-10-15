@@ -183,7 +183,7 @@ enum ChargeBreakdownFormat {
     /// Pure + unit-tested.
     static func skinTempDeviationLabel(_ rel: SkinTempRelative) -> String {
         let sign = rel.deviationC >= 0 ? "+" : ""
-        return String(localized: "\(sign)\(String(format: "%.1f", rel.deviationC)) C vs your normal")
+        return String(localized: "\(sign)\(ZoopNumber.decimal(rel.deviationC, digits: 1)) C vs your normal")
     }
 
     /// The plain-English tier word for the relative skin-temp marker. Pure.
@@ -242,7 +242,7 @@ struct ChargeLegacyRRGapNote: View {
         ZoopCard(padding: 14, tint: StrandPalette.chargeColor) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "waveform.path.ecg")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(ZoopType.icon(16, weight: .semibold))
                     .foregroundStyle(StrandPalette.icon(StrandPalette.chargeColor))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
@@ -447,7 +447,7 @@ struct SkinTempDeviationRow: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Image(systemName: "thermometer.medium")
-                .font(.system(size: 12, weight: .semibold))
+                .font(ZoopType.icon(12, weight: .semibold))
                 .foregroundStyle(StrandPalette.icon(StrandPalette.metricAmber))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {

@@ -64,7 +64,7 @@ struct BackupSyncView: View {
     // MARK: - Cards
 
     private var folderCard: some View {
-        StrandCard(padding: 20) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Backup folder")
                     .font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)
@@ -81,7 +81,7 @@ struct BackupSyncView: View {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(StrandPalette.statusWarning)
-                        .font(.system(size: 12))
+                        .font(ZoopType.icon(12))
                         .accessibilityHidden(true)
                     Text("These backups are unencrypted too. If this folder syncs to Drive, Dropbox or iCloud, the readable file goes there as well — only point it at a service you trust.")
                         .font(StrandFont.caption).foregroundStyle(StrandPalette.statusWarning)
@@ -104,7 +104,7 @@ struct BackupSyncView: View {
     }
 
     private var autoCard: some View {
-        StrandCard(padding: 20, tint: auto && folderLabel != nil ? StrandPalette.accent : nil) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .center, spacing: 16) {
                     VStack(alignment: .leading, spacing: 2) {
@@ -150,7 +150,7 @@ struct BackupSyncView: View {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(StrandPalette.statusWarning)
-                            .font(.system(size: 12))
+                            .font(ZoopType.icon(12))
                             .accessibilityHidden(true)
                         Text("Auto-backup hasn't run in a few days. Check the backup folder is still available — a moved or disconnected cloud folder stops backups silently.")
                             .font(StrandFont.caption).foregroundStyle(StrandPalette.statusWarning)
@@ -165,7 +165,7 @@ struct BackupSyncView: View {
     }
 
     private var restoreCard: some View {
-        StrandCard(padding: 20) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Restore")
                     .font(StrandFont.headline).foregroundStyle(StrandPalette.textPrimary)

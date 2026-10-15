@@ -16,13 +16,7 @@ import WhoopStore
 // compatible Apple Health, PR#196); everything else is derived in-view.
 
 // yyyy-MM-dd → Date, fixed UTC / en_US_POSIX (per task spec).
-private let compareDayParser: DateFormatter = {
-    let f = DateFormatter()
-    f.locale = Locale(identifier: "en_US_POSIX")
-    f.timeZone = TimeZone(identifier: "UTC")
-    f.dateFormat = "yyyy-MM-dd"
-    return f
-}()
+private let compareDayParser: DateFormatter = DayKeyFormat.utc
 
 private func parseCompareDay(_ day: String) -> Date? { compareDayParser.date(from: day) }
 
@@ -441,22 +435,19 @@ struct CompareView: View {
         persistSelection()   // #358
     }
 
-    // MARK: - Overlay chart section (locked ChartCard)
+    // MARK: - Overlay chart section (chart ContentCard)
 
     @ViewBuilder
     private func overlaySection(_ series: [CompareSeries]) -> some View {
         let nonEmpty = series.filter { !$0.rows.isEmpty }
         VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
             SectionHeader("Overlay", overline: "\(range.phrase)")
-            ChartCard(
+            ContentCard(
                 title: "Normalized overlay",
                 subtitle: anyWidened
                     ? String(localized: "Min-max normalized · sparse series widened past \(range.phrase) · \(inspectHint)")
                     : String(localized: "Each line min-max normalized within \(range.phrase) · \(inspectHint)"),
-                trailing: String(localized: "\(nonEmpty.count) series"),
-                // Anchor the overlay card to the brand-green chrome world; each line keeps its own
-                // categorical series colour so the lines stay distinguishable against the wash.
-                tint: StrandPalette.accent
+                trailing: String(localized: "\(nonEmpty.count) series")
             ) {
                 // The overlay is min–max NORMALIZED 0–1, so the Effort scale never touches the line shape;
                 // only the per-series hover read-outs convert (passed through to the tooltip). (#268)
@@ -631,7 +622,7 @@ struct CompareView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(p.a.metric.title) versus \(p.b.metric.title), r equals \(String(format: "%.2f", p.r)), \(p.n) days")
+        .accessibilityLabel("\(p.a.metric.title) versus \(p.b.metric.title), r equals \(ZoopNumber.decimal(p.r, digits: 2)), \(p.n) days")
     }
 
     // MARK: - Insight language
@@ -652,7 +643,7 @@ struct CompareView: View {
     }
 
     private func signedR(_ r: Double) -> String {
-        (r >= 0 ? "+" : "−") + String(format: "%.2f", abs(r))
+        (r >= 0 ? "+" : "−") + String(format: "%.2f", locale: AppLanguage.activeLocale, abs(r))
     }
 
     private func strengthWord(_ r: Double) -> String {
@@ -701,7 +692,7 @@ private struct FlowChips: View {
                         onRemove(metric)
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 9, weight: .bold))
+                            .font(ZoopType.icon(9, weight: .bold))
                             .foregroundStyle(StrandPalette.textTertiary)
                     }
                     .buttonStyle(.plain)
@@ -1111,7 +1102,7 @@ private struct MultiTooltip: View {
             }
         }
         .padding(10)
-        .background(ZoopPanelSurface(cornerRadius: 10, elevated: true))
+        .zoopControlSurface(radius: 10)
         .frame(width: tooltipWidth, alignment: .leading)
         .position(x: clampedX, y: tooltipHeight / 2 + 8)
         .allowsHitTesting(false)

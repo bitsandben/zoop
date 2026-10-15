@@ -2,13 +2,9 @@ import Foundation
 
 // MARK: - Sleep factors (Zoop)
 //
-// A one-word verdict per contributor to a night: duration, deep, REM, efficiency, consistency and
-// wake-ups. Each verdict is read from numbers the Sleep screen already computes, against the
-// wearer's own baseline where one exists and a broad population floor where it does not.
-//
-// These are presentation bands, not clinical thresholds. They exist to answer "which part of the
-// night was the weak one", so they are deliberately coarse (three steps) and every one is pinned by
-// a test in `SleepFactorsTests`.
+// A coarse three-step verdict per contributor to a night (duration, deep, REM, efficiency,
+// consistency, wake-ups), read from numbers the Sleep screen already computes against the wearer's
+// own baseline where one exists, else a population floor. Presentation bands, not clinical thresholds.
 
 public enum SleepFactors {
 
@@ -79,8 +75,8 @@ public enum SleepFactors {
     /// A stage reaching this fraction of its personal mean counts as good / fair.
     public static let stageGoodRatio = 0.9
     public static let stageFairRatio = 0.7
-    /// Population share-of-asleep floors, used alone when there is no personal mean yet and as a
-    /// floor beside it, so a person whose own mean is low is not called "good" for matching it.
+    /// Population share-of-asleep floors: used alone with no personal mean yet, and as a floor beside it so
+    /// a low personal mean isn't called "good" for matching itself.
     public static let deepGoodShare = 0.16
     public static let deepFairShare = 0.10
     public static let remGoodShare = 0.21
@@ -105,9 +101,8 @@ public enum SleepFactors {
                progress: pct / 100)
     }
 
-    /// A stage's verdict. With a personal mean the night must reach 90 % of it AND the share floor
-    /// for "good" to be earned the easy way; either one reaching its band is enough, so a long night
-    /// with a normal share is not penalised for missing a high personal mean, and vice versa.
+    /// A stage's verdict. With a personal mean, reaching either 90 % of it or the share floor earns
+    /// "good", so a long night with a normal share isn't penalised for a high personal mean, and vice versa.
     public static func stage(_ factor: Factor, minutes: Double, asleepMin: Double,
                              typicalMin: Double?) -> Result? {
         guard asleepMin > 0, minutes >= 0 else { return nil }
@@ -122,8 +117,7 @@ public enum SleepFactors {
         return Result(factor: factor, verdict: Swift.max(ratioVerdict, shareVerdict), progress: ratio)
     }
 
-    /// Wake-ups: lower is better. Good at or under the personal mean (or two, whichever is higher),
-    /// fair up to one and a half times it (or four), poor beyond.
+    /// Wake-ups (lower is better): good at or under the personal mean (min 2), fair up to 1.5x it (min 4).
     public static func wakeUps(count: Double, typical: Double?) -> Result {
         let base = typical.map { Swift.max(0, $0) }
         let goodCeiling = Swift.max(2, base ?? 2)

@@ -1,17 +1,15 @@
 import Foundation
 
-/// Build a GitHub-contribution-style heat grid from per-day values (e.g. daily active calories) — the
-/// pure, cross-platform core of the Workouts "last 13 weeks" heatmap. Columns are calendar weeks
-/// (Monday-first), rows are weekdays (0 = Mon … 6 = Sun); the LAST column is the current week and future
-/// days in it are empty. Byte-for-byte twin of the Kotlin `ActivityHeatmap` — the calendar arithmetic is
-/// pure integer `days_from_civil`/`civil_from_days` on the `"yyyy-MM-dd"` day keys the app stores, so the
-/// two platforms bucket identically.
+/// Heat grid from per-day values (e.g. daily active calories) for the Workouts 13-week heatmap.
+/// Columns are Monday-first calendar weeks, rows are weekdays (0 = Mon); the last column is the
+/// current week and its future days are empty. Calendar math is integer days_from_civil on
+/// "yyyy-MM-dd" keys.
 public enum ActivityHeatmap {
 
     public static let defaultWeeks = 13
 
-    /// One grid cell. `day` = "yyyy-MM-dd" (nil for a future pad cell); `value` = the metric (nil = no
-    /// data that day); `level` = 0 for no-data, 1...4 for intensity buckets.
+    /// One grid cell. `day` is nil for a future pad cell, `value` nil for no data; `level` is 0 for
+    /// no data, 1...4 for intensity.
     public struct Cell: Equatable, Sendable {
         public let day: String?
         public let value: Double?
@@ -24,17 +22,15 @@ public enum ActivityHeatmap {
     }
 
     /// `columns` is `weeks` arrays of 7 cells (row 0 = Monday). `scale` is the ramp denominator: the
-    /// wearer's 90th-percentile ACTIVE day, floored at `rampFloorKcal`. Scaling to the percentile (not
-    /// the raw max) stops one exceptional session flattening the whole grid to pale; the floor keeps a
-    /// beginner's low-calorie days appropriately cool instead of maxing them out.
+    /// 90th-percentile active day floored at `rampFloorKcal`, so one huge session does not flatten the
+    /// grid and a beginner's light days do not max out.
     public struct Grid: Equatable, Sendable {
         public let weeks: Int
         public let columns: [[Cell]]
         public let scale: Double
-        /// Total of the window's active days (kcal) — the header's big number.
+        /// Total of the window's active days (kcal).
         public let total: Double
-        /// Current consecutive-day activity streak, ending today or (if nothing is logged yet today)
-        /// yesterday. 0 when neither today nor yesterday has activity.
+        /// Consecutive-day activity streak ending today, or yesterday if nothing is logged yet today; 0 otherwise.
         public let streak: Int
         public init(weeks: Int, columns: [[Cell]], scale: Double, total: Double = 0, streak: Int = 0) {
             self.weeks = weeks
@@ -46,15 +42,14 @@ public enum ActivityHeatmap {
         public var isEmpty: Bool { columns.allSatisfy { col in col.allSatisfy { $0.value == nil } } }
     }
 
-    /// The ramp denominator floor (kcal): days at/above this shade fullest, so a light week reads cool
-    /// rather than maxing a beginner's grid. Mirrors OpenStrap's 250 kcal floor.
+    /// Ramp denominator floor (kcal).
     public static let rampFloorKcal = 250.0
-    /// Percentile of the active days the ramp scales to (90th).
+    /// Percentile of active days the ramp scales to.
     public static let rampPercentile = 90.0
 
     /// - Parameters:
-    ///   - values: day ("yyyy-MM-dd") → metric value. Missing days render as no-data cells.
-    ///   - today: the "yyyy-MM-dd" anchoring the rightmost column.
+    ///   - values: "yyyy-MM-dd" to metric; missing days render as no-data cells.
+    ///   - today: day key anchoring the rightmost column.
     ///   - weeks: number of week columns (default 13).
     public static func build(values: [String: Double], today: String, weeks: Int = defaultWeeks) -> Grid {
         guard let e = epochDay(today) else { return Grid(weeks: weeks, columns: [], scale: 0) }
@@ -83,8 +78,7 @@ public enum ActivityHeatmap {
             raw.append(col)
         }
         let scale = rampScale(active)
-        // Streak = consecutive days with a positive value, via the shared StreakCalculator (same
-        // today-not-yet-scored grace the Settings streak uses) so the two never disagree in logic.
+        // Shared StreakCalculator, so the grace for a not-yet-scored today matches the Settings streak.
         let keys = Array(values.keys)
         let streak = StreakCalculator.streaks(dayKeys: keys,
                                               qualified: keys.map { (values[$0] ?? 0) > 0 },
@@ -95,9 +89,7 @@ public enum ActivityHeatmap {
         return Grid(weeks: cols, columns: leveled, scale: scale, total: active.reduce(0, +), streak: streak)
     }
 
-    /// Ramp denominator: the 90th-percentile ACTIVE day (nearest-rank, mirroring `deriveRestingHR`),
-    /// floored at `rampFloorKcal`. No active days → the floor. Scaling to the percentile rather than the
-    /// max keeps one huge session from washing every other day out to level 1.
+    /// Ramp denominator: nearest-rank 90th percentile of active days, floored at `rampFloorKcal`.
     static func rampScale(_ active: [Double]) -> Double {
         guard !active.isEmpty else { return rampFloorKcal }
         let sorted = active.sorted()
@@ -106,17 +98,17 @@ public enum ActivityHeatmap {
         return max(rampFloorKcal, p90)
     }
 
-    /// 0 = no data; otherwise 1...4 by fraction of `scale` (a present-but-zero day is still level 1).
+    /// 0 = no data; otherwise 1...4 by fraction of `scale` (a present-but-zero day is level 1).
     static func levelFor(_ value: Double?, _ scale: Double) -> Int {
         guard let value else { return 0 }
         if scale <= 0 { return 1 }
         return min(max(Int(ceil(value / scale * 4.0)), 1), 4)
     }
 
-    /// Monday-first weekday (Mon = 0 … Sun = 6) of an epoch-day count. Epoch day 0 (1970-01-01) is a Thu.
+    /// Monday-first weekday (Mon = 0) of an epoch day; day 0 (1970-01-01) is a Thursday.
     static func mondayFirstWeekday(_ epochDay: Int) -> Int { ((epochDay + 3) % 7 + 7) % 7 }
 
-    /// Parse "yyyy-MM-dd" → days since 1970-01-01 (proleptic Gregorian), or nil if malformed.
+    /// Parse "yyyy-MM-dd" to days since 1970-01-01 (proleptic Gregorian); nil if malformed.
     static func epochDay(_ ymd: String) -> Int? {
         let p = ymd.split(separator: "-", omittingEmptySubsequences: false)
         guard p.count == 3, let y = Int(p[0]), let m = Int(p[1]), let d = Int(p[2]),
@@ -124,7 +116,7 @@ public enum ActivityHeatmap {
         return daysFromCivil(y, m, d)
     }
 
-    /// days since 1970-01-01 → "yyyy-MM-dd". Inverse of `epochDay` (Howard Hinnant's civil_from_days).
+    /// Inverse of `epochDay` (Hinnant civil_from_days).
     static func civilDay(_ epochDay: Int) -> String {
         let z = epochDay + 719_468
         let era = (z >= 0 ? z : z - 146_096) / 146_097
@@ -139,7 +131,7 @@ public enum ActivityHeatmap {
         return String(format: "%04d-%02d-%02d", y, m, d)
     }
 
-    /// "yyyy-MM-dd" fields → days since 1970-01-01 (Howard Hinnant's days_from_civil).
+    /// Days since 1970-01-01 from y/m/d fields (Hinnant days_from_civil).
     private static func daysFromCivil(_ year: Int, _ month: Int, _ day: Int) -> Int {
         let y = month <= 2 ? year - 1 : year
         let era = (y >= 0 ? y : y - 399) / 400

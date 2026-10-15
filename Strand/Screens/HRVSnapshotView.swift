@@ -118,7 +118,7 @@ struct HRVSnapshotView: View {
                     close()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 18))
+                        .font(ZoopType.icon(18))
                         .foregroundStyle(StrandPalette.textTertiary)
                 }
                 .buttonStyle(.plain)
@@ -130,7 +130,7 @@ struct HRVSnapshotView: View {
     // MARK: - Capture card
 
     private var captureCard: some View {
-        StrandCard(padding: 24, tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(spacing: 18) {
                 ZStack {
                     ScenicHeroBackground(domain: .rest, starCount: 48)
@@ -209,9 +209,9 @@ struct HRVSnapshotView: View {
         case .idle:
             return "—"
         case .capturing:
-            return runningRMSSD.map { String(format: "%.0f", $0) } ?? "…"
+            return runningRMSSD.map { ZoopNumber.decimal($0, digits: 0) } ?? "…"
         case .done:
-            return result?.rmssd.map { String(format: "%.0f", $0) } ?? "—"
+            return result?.rmssd.map { ZoopNumber.decimal($0, digits: 0) } ?? "—"
         }
     }
 
@@ -294,7 +294,7 @@ struct HRVSnapshotView: View {
     // MARK: - Result
 
     private func resultCard(_ result: HRVAnalyzer.HRVResult) -> some View {
-        StrandCard(padding: 18, tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 14) {
                 Text("YOUR READING").strandOverline()
 
@@ -337,7 +337,7 @@ struct HRVSnapshotView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(ZoopPanelSurface(tint: accent, cornerRadius: 10))
+        .zoopInsetSurface(radius: 10, tint: accent)
     }
 
     // MARK: - Methodology
@@ -347,7 +347,7 @@ struct HRVSnapshotView: View {
     /// `SpotHrvReading.caveatFor` adds the honest limits — including the noisier optical-PPG note on a
     /// WHOOP 5/MG. Single-sourced with Android via the shared helper, no em-dashes.
     private var methodologyCard: some View {
-        StrandCard(tint: StrandPalette.restColor) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 8) {
                 Text("How this is measured").strandOverline()
                 Text("A 60-second snapshot of your beat-to-beat (R-R) intervals from the strap, cleaned (range and ectopic-beat filtering) before computing RMSSD the same way your overnight HRV is computed.")

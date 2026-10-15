@@ -3,10 +3,9 @@ import GRDB
 import WhoopProtocol
 
 extension WhoopStore {
-    /// Outcome of a one-time implausible-timestamp heal (#547). `rawRowsDeleted` = garbage raw stream
-    /// rows purged (HR/RR/SpO2/skinTemp/resp/gravity/step/ppgHr/event/battery). `computedRowsDeleted` =
-    /// future/implausible computed daily-metric + sleep-session rows purged. `didChange` is true when
-    /// anything was deleted, so the caller can trigger a single rescore instead of always re-running it.
+    /// Outcome of a one-time implausible-timestamp heal. `rawRowsDeleted` counts garbage raw stream rows
+    /// purged; `computedRowsDeleted` counts future or implausible computed daily-metric and sleep-session
+    /// rows. `didChange` lets the caller trigger a single rescore instead of always re-running it.
     public struct TimestampHealResult: Equatable, Sendable {
         public let rawRowsDeleted: Int
         public let computedRowsDeleted: Int
@@ -17,24 +16,18 @@ extension WhoopStore {
         }
     }
 
-    /// ONE-TIME repair of a database polluted by a bad-clock strap (#547, pikapik). Before the ingest
-    /// gate landed, Zoop trusted each type-47 record's own unix timestamp verbatim, so a WHOOP with a
-    /// broken clock/flash (repeated trim=0xFFFFFFFF) wrote rows dated to scattered garbage — far-past
-    /// (2024/2029), a bogus 2027=1827642881, and FUTURE dates. The day-windows overlap, so one ~12h
-    /// polluted block was re-attributed to every day (the repeated totalSleepMin=721 across 06-14..06-21)
-    /// and a future-dated record made the Today "last night" carry-over read "12 Jul".
+    /// One-time repair of a database polluted by a bad-clock strap. Before the ingest gate, each type-47
+    /// record's own timestamp was trusted verbatim, so a broken-clock WHOOP wrote rows dated to scattered
+    /// far-past and future garbage; overlapping day-windows then re-attributed one polluted block to every
+    /// day.
     ///
-    /// This purges that garbage so a normal rescore recomputes the real days cleanly:
-    ///   (a) raw stream rows whose `ts` is implausible (< MIN_PLAUSIBLE_UNIX or > now + FUTURE_MARGIN) —
-    ///       across every time-keyed raw table the gate now protects;
-    ///   (b) computed `dailyMetric` rows whose `day` is in the future (> today, local) or implausibly old,
-    ///       and `sleepSession` rows whose `startTs` is future/implausible.
-    /// The caller then triggers a normal `analyzeRecent` so the real days recompute (the 721 block is
-    /// gone once its garbage raw rows are purged). Idempotent: a re-run on a clean DB deletes nothing.
+    /// Purges (a) raw stream rows whose `ts` is implausible (< MIN_PLAUSIBLE_UNIX or > now + FUTURE_MARGIN)
+    /// across every time-keyed raw table, and (b) computed `dailyMetric` rows with a future or implausibly
+    /// old `day` and `sleepSession` rows with a future or implausible `startTs`. The caller then runs
+    /// `analyzeRecent` to recompute the real days. Idempotent.
     ///
-    /// `now` and `todayLocalDayKey` are injected (default to the live wall clock / today's yyyy-MM-dd in
-    /// the local zone) so the heal is deterministically unit-testable. Bounds come straight from
-    /// WhoopProtocol so Swift and the Android Room cleanup reject the identical set.
+    /// `now` and `todayLocalDayKey` are injectable for tests. Bounds come from WhoopProtocol so Swift and
+    /// the Android Room cleanup reject the identical set.
     @discardableResult
     public func healImplausibleTimestamps(
         now: Int = Int(Date().timeIntervalSince1970),
@@ -43,20 +36,10 @@ extension WhoopStore {
         let lo = MIN_PLAUSIBLE_UNIX
         let hi = now + FUTURE_MARGIN
         return try syncWrite { db in
-            // (a) Raw, ts-keyed streams. Every one of these is fed by the historical type-47 / EVENT /
-            // REALTIME paths the #547 gate now guards, so the same out-of-bounds predicate cleans them.
-            // `ppgWaveformSample` / `rawImuSample` / `sleepStateSample` / `v18AuxSample` were landed after
-            // this list and never added to it, so a bad-clock strap's garbage-ts rows in those tables
-            // survived a heal that cleaned every sibling stream — the rows are keyed by the SAME `ts` from
-            // the SAME type-47 ingest path, so there is no reason for them to be exempt. This is a
-            // legacy-rows gap rather than an ongoing one (the #547 ingest gate now rejects an implausible
-            // ts before it is banked), which is exactly why it went unnoticed. Guarded by the same
-            // out-of-bounds predicate as everything else — a plausible row is never touched.
-            // The SAME list the storage footprint reports, rather than a third copy of it. This one was
-            // called canonical while `storageStats` kept its own and the Apple probe a shorter one again,
-            // and that drift is not hypothetical: `storageStats`' comment records its old fixed sum
-            // omitting six of these tables. One list means a stream added later is healed AND counted AND
-            // named in the breakdown, or none of the three - never silently one of them.
+            // (a) Raw ts-keyed streams, all fed by the historical type-47 / EVENT / REALTIME paths the ingest gate
+            // guards, so the same out-of-bounds predicate cleans them. The list is shared with the storage
+            // footprint (`rawTableKeys`) so a stream added later is healed, counted and named together, never
+            // one without the others. A plausible row is never touched.
             var rawDeleted = 0
             for (_, table) in WhoopStore.rawTableKeys {
                 try db.execute(sql: "DELETE FROM \(table) WHERE ts < ? OR ts > ?",
@@ -64,13 +47,10 @@ extension WhoopStore {
                 rawDeleted += db.changesCount
             }
 
-            // (b) Computed rows. dailyMetric is keyed by a yyyy-MM-dd `day` text; sleepSession by an
-            // integer `startTs`. A FUTURE-dated row is always implausible (a future day/ts can only come
-            // from a future-dated record), so drop it regardless of source. The far-PAST floor, though, is
-            // applied ONLY to computed (`-noop`) rows: those can't legitimately predate Zoop, so a pre-2023
-            // one is bad-clock garbage — but a WHOOP CSV import (bare "my-whoop") carries REAL dates going
-            // back years, and reusing the floor across all sources silently purged that imported history on
-            // any heal (v8.2.1). String comparison is correct for the zero-padded yyyy-MM-dd format.
+            // (b) Computed rows. dailyMetric is keyed by a yyyy-MM-dd `day`, sleepSession by integer `startTs`. A
+            // future-dated row is always implausible, so it goes regardless of source. The far-past floor applies
+            // only to computed (`-noop`) rows: a WHOOP CSV import (bare "my-whoop") carries real dates back years,
+            // and applying the floor to it purged imported history. String comparison is correct for zero-padded yyyy-MM-dd.
             let floorDayKey = WhoopStore.utcDayKey(MIN_PLAUSIBLE_UNIX)
             var computedDeleted = 0
             try db.execute(sql: "DELETE FROM dailyMetric WHERE day > ? OR (day < ? AND deviceId LIKE '%-noop')",
@@ -85,7 +65,7 @@ extension WhoopStore {
         }
     }
 
-    /// `yyyy-MM-dd` for `date` in the LOCAL calendar — matches how dailyMetric `day` keys are written.
+    /// `yyyy-MM-dd` for `date` in the local calendar, matching how dailyMetric `day` keys are written.
     public static func localDayKey(_ date: Date) -> String {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)
@@ -94,7 +74,7 @@ extension WhoopStore {
         return f.string(from: date)
     }
 
-    /// `yyyy-MM-dd` for a unix second in UTC — a zone-independent sentinel for the far-past floor day.
+    /// `yyyy-MM-dd` for a unix second in UTC, a zone-independent sentinel for the far-past floor day.
     public static func utcDayKey(_ unix: Int) -> String {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)

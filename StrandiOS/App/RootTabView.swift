@@ -49,6 +49,8 @@ struct RootTabView: View {
 
     @EnvironmentObject private var repo: Repository
     @EnvironmentObject private var intelligence: IntelligenceEngine
+    /// Owns the live workout the "+" sheet's Start workout begins.
+    @EnvironmentObject private var appModel: AppModel
     /// Cross-screen navigation requests (e.g. Live → "Manage devices"). Devices isn't a tab — it lives
     /// behind the More list — so a request presents it as a sheet, matching the quick-action screens.
     @EnvironmentObject private var router: NavRouter
@@ -79,17 +81,17 @@ struct RootTabView: View {
     @State private var tabPaths: [NavigationPath] = Array(repeating: NavigationPath(), count: IOSTab.count)
     /// One scroll-to-top token per tab. Bumped when the user re-taps the active tab while it's ALREADY
     /// at its root — the other half of the iOS convention #197/#198 left unserved (an at-root re-tap was
-    /// a no-op). Threaded into each tab's root via `\.scrollToTopSignal`; ScreenScaffold / LiquidTodayView
+    /// a no-op). Threaded into each tab's root via `\.scrollToTopSignal`; ScreenScaffold / TodayScreen
     /// scroll to their top anchor when their tab's token changes.
     @State private var scrollTop: [Int] = Array(repeating: 0, count: IOSTab.count)
-    /// V8 liquid redesign is the default Today; the Settings toggle lets a user fall back to the classic
-    /// Today if they prefer it (keyed identically to the SettingsView toggle). Default ON.
-    @AppStorage("zoop.liquidTodayEnabled") private var liquidTodayEnabled = true
-
-    /// The Today tab root, honouring the liquid/classic preference.
-    @ViewBuilder private var todayTabRoot: some View {
-        if liquidTodayEnabled { LiquidTodayView() } else { TodayView() }
-    }
+    /// The theme each tab was last built in. A theme switch re-colours everything in place (the root's
+    /// `.zoopThemeInPlace`), but fonts, radii and ring shapes are read when a view is built. So every
+    /// tab that is NOT on screen is re-keyed at once, and the visible one once it is left: the open
+    /// tab, its stack and any sheet stay put (FB-7), and no tab keeps the old shapes for long.
+    @State private var tabThemes: [String] = Array(repeating: "", count: IOSTab.count)
+    @AppStorage(ZoopTheme.storageKey) private var themeRaw = ZoopTheme.classic.rawValue
+    /// The Today tab root.
+    private var todayTabRoot: some View { TodayScreen() }
 
     /// Native tab selection binding. SwiftUI sends taps on the already-selected item through the
     /// setter, which lets the system tab bar retain the app's refresh / pop-to-root / scroll-to-top
@@ -131,39 +133,40 @@ struct RootTabView: View {
     @ViewBuilder private var tabShell: some View {
         if #available(iOS 18.0, *) {
             TabView(selection: nativeTabSelection) {
-                // Icon-only items, as in the concept; the name stays as the spoken label.
+                // Icon + text: an icon-only bar fails HIG legibility. The four German labels (Heute,
+                // Training, Einblicke, Mehr) are short enough for the compact bar on the smallest iPhone.
                 Tab(value: IOSTab.home) {
-                    tabStack(todayTabRoot, path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home])
-                } label: { iconLabel("Home", "house") }
+                    tabStack(todayTabRoot, path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home], themeKey: tabThemes[IOSTab.home])
+                } label: { Label("zoop.tab.today", systemImage: "house") }
                 Tab(value: IOSTab.training) {
                     tabStack(WorkoutsView(asTrainingTab: true), path: $tabPaths[IOSTab.training],
-                             scrollSignal: scrollTop[IOSTab.training])
-                } label: { iconLabel("Training", "figure.run") }
+                             scrollSignal: scrollTop[IOSTab.training], themeKey: tabThemes[IOSTab.training])
+                } label: { Label("zoop.tab.training", systemImage: "figure.run") }
                 Tab(value: IOSTab.insights) {
-                    tabStack(InsightsTabView(), path: $tabPaths[IOSTab.insights], scrollSignal: scrollTop[IOSTab.insights])
-                } label: { iconLabel("Insights", "chart.line.uptrend.xyaxis") }
+                    tabStack(InsightsTabView(), path: $tabPaths[IOSTab.insights], scrollSignal: scrollTop[IOSTab.insights], themeKey: tabThemes[IOSTab.insights])
+                } label: { Label("zoop.tab.insights", systemImage: "chart.line.uptrend.xyaxis") }
                 Tab(value: IOSTab.more) {
-                    moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more])
-                } label: { iconLabel("More", "line.3.horizontal") }
+                    moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more], themeKey: tabThemes[IOSTab.more])
+                } label: { Label("zoop.tab.more", systemImage: "line.3.horizontal") }
                 // A role is what moves Coach into its own round button at the trailing end of the bar,
                 // apart from the four destinations. Hidden rather than left out when Coach is off, so
                 // the tab keeps its tag and path.
                 Tab(value: IOSTab.coach, role: Self.coachTabRole) {
                     // Never shown: selecting this tab opens `CoachChatSheet` instead (see `nativeTabSelection`).
                     Color.clear
-                } label: { iconLabel("Coach", "sparkles") }
+                } label: { Label("Coach", systemImage: "sparkles") }
                 .hidden(!coachEnabled)
             }
         } else {
             TabView(selection: nativeTabSelection) {
-                tab(todayTabRoot, "Home", "house", path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home]).tag(IOSTab.home)
-                tab(WorkoutsView(asTrainingTab: true), "Training", "figure.run", path: $tabPaths[IOSTab.training], scrollSignal: scrollTop[IOSTab.training]).tag(IOSTab.training)
-                tab(InsightsTabView(), "Insights", "chart.line.uptrend.xyaxis", path: $tabPaths[IOSTab.insights], scrollSignal: scrollTop[IOSTab.insights]).tag(IOSTab.insights)
-                moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more])
-                    .tabItem { Label("More", systemImage: "line.3.horizontal") }
+                tab(todayTabRoot, "zoop.tab.today", "house", path: $tabPaths[IOSTab.home], scrollSignal: scrollTop[IOSTab.home], themeKey: tabThemes[IOSTab.home]).tag(IOSTab.home)
+                tab(WorkoutsView(asTrainingTab: true), "zoop.tab.training", "figure.run", path: $tabPaths[IOSTab.training], scrollSignal: scrollTop[IOSTab.training], themeKey: tabThemes[IOSTab.training]).tag(IOSTab.training)
+                tab(InsightsTabView(), "zoop.tab.insights", "chart.line.uptrend.xyaxis", path: $tabPaths[IOSTab.insights], scrollSignal: scrollTop[IOSTab.insights], themeKey: tabThemes[IOSTab.insights]).tag(IOSTab.insights)
+                moreStack(path: $tabPaths[IOSTab.more], scrollSignal: scrollTop[IOSTab.more], themeKey: tabThemes[IOSTab.more])
+                    .tabItem { Label("zoop.tab.more", systemImage: "line.3.horizontal") }
                     .tag(IOSTab.more)
                 if coachEnabled {
-                    tab(CoachView(), "Coach", "sparkles", path: $tabPaths[IOSTab.coach], scrollSignal: scrollTop[IOSTab.coach]).tag(IOSTab.coach)
+                    tab(CoachView(), "Coach", "sparkles", path: $tabPaths[IOSTab.coach], scrollSignal: scrollTop[IOSTab.coach], themeKey: tabThemes[IOSTab.coach]).tag(IOSTab.coach)
                 }
             }
         }
@@ -183,11 +186,6 @@ struct RootTabView: View {
             .padding(.bottom, 19)
             .ignoresSafeArea(.container, edges: .bottom)
             .sensoryFeedback(.impact(weight: .light), trigger: showCoach)
-    }
-
-    /// A tab item that shows only its glyph; the title is still read by VoiceOver.
-    private func iconLabel(_ title: LocalizedStringKey, _ icon: String) -> some View {
-        Image(systemName: icon).accessibilityLabel(Text(title))
     }
 
     /// iOS 27's prominent role draws a separate accented button; earlier releases separate the
@@ -214,6 +212,16 @@ struct RootTabView: View {
         // Switching Coach off while STANDING on it leaves `selectedTab` pointing at a tag no tab claims
         // any more, which renders as an empty tab rather than as an error. Send that wearer to Today, and
         // only in that case, so a flip made from anywhere else does not move them.
+        .onChange(of: themeRaw) { _, theme in
+            for tag in 0..<IOSTab.count where tag != selectedTab { tabThemes[tag] = theme }
+        }
+        .onChange(of: selectedTab) { previous, _ in
+            // After the crossfade, so the tab being left does not flash while it fades out.
+            guard tabThemes[previous] != themeRaw else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                if selectedTab != previous { tabThemes[previous] = themeRaw }
+            }
+        }
         .onChangeCompat(of: coachEnabled) { enabled in
             if !enabled && selectedTab == IOSTab.coach { selectedTab = IOSTab.home }
         }
@@ -242,7 +250,7 @@ struct RootTabView: View {
         // animation scoped to the sheet rather than the whole shell.
         .sheet(item: $quickAction) { action in
             quickActionDestination(action)
-                .presentationDetents([.fraction(0.75), .large])
+                .presentationDetents(Self.detents(for: action))
                 .opaqueSheetBackground()
                 .presentationDragIndicator(.visible)
         }
@@ -259,7 +267,6 @@ struct RootTabView: View {
         }
         .sheet(isPresented: $showMorningCheckIn) {
             MorningCheckInSheet()
-                .presentationDetents([.medium, .large])
                 .opaqueSheetBackground()
                 .presentationDragIndicator(.visible)
         }
@@ -343,6 +350,14 @@ struct RootTabView: View {
             if target == .autoWorkout { router.autoWorkoutSheetRequested = true }
             router.notificationTarget = nil
         }
+        // `zoop://today|recovery|sleep|...`: a warm link arrives through the change callback, a cold-launch
+        // link is already pending when the shell appears (see the `.onAppear` below).
+        .onChange(of: router.pendingDeepLink) { _, _ in
+            presentPendingDeepLinkIfPossible()
+        }
+        .onChange(of: homeScreenQuickActionsEnabled) { _, _ in
+            presentPendingDeepLinkIfPossible()
+        }
         // A screen's top-bar "+" routes here: open the quick-action sheet, then clear the flag.
         .onChange(of: router.quickActionsRequested) { _, req in
             if req {
@@ -354,6 +369,7 @@ struct RootTabView: View {
         // through the change callback. Both route through the same screens as the centre FAB.
         .onAppear {
             presentPendingHomeScreenQuickActionIfPossible()
+            presentPendingDeepLinkIfPossible()
         }
         .onChange(of: homeScreenQuickActions.pendingAction) { _, _ in
             presentPendingHomeScreenQuickActionIfPossible()
@@ -372,6 +388,10 @@ struct RootTabView: View {
                     // session bar sits on top of the tab labels.
                     .padding(.bottom, ZoopMetrics.tabBarClearance)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+            } else {
+                // The minimized live workout. Its own leaf observes AppModel's 1 Hz heart rate, so the
+                // shell does not re-render every second; it draws nothing without a running workout.
+                ActiveWorkoutBarInset()
             }
         }
         .animation(.easeInOut(duration: 0.25), value: liftSession.isActive)
@@ -403,7 +423,7 @@ struct RootTabView: View {
 
         let destination: QuickAction = switch action {
         case .liveHeartRate: .live
-        case .startWorkout: .workout
+        case .startWorkout: .startWorkout
         case .logJournal: .journal
         case .breathe: .breathe
         }
@@ -413,6 +433,36 @@ struct RootTabView: View {
             routedPillar = nil
             quickAction = destination
         }
+    }
+
+    /// Open the screen a `zoop://` link names, once the first-run gates are done (same rule as the Home
+    /// Screen quick actions: an external entry must not cover a mandatory gate). Screens that live on a
+    /// tab are pushed onto a FRESH stack of that tab, so the back button returns to its root and a link
+    /// never stacks on whatever the wearer had open. Sheets are dismissed first for the same reason.
+    private func presentPendingDeepLinkIfPossible() {
+        guard homeScreenQuickActionsEnabled, let link = router.pendingDeepLink else { return }
+        router.pendingDeepLink = nil
+        showCoach = false
+        quickAction = nil
+        routedPillar = nil
+        showDevices = false
+
+        let tab: Int
+        var path = NavigationPath()
+        switch link {
+        case .today: tab = IOSTab.home
+        // Recovery has no route of its own: its catalog entry resolves to `RecoveryScreen`.
+        case .recovery: tab = IOSTab.home; path.append(TabRoute.metric(HeroRingMetric.charge))
+        case .sleep: tab = IOSTab.home; path.append(TabRoute.sleep)
+        case .stress: tab = IOSTab.home; path.append(TabRoute.stress)
+        case .fasting: tab = IOSTab.home; path.append(TabRoute.fasting)
+        case .training: tab = IOSTab.training
+        case .insights: tab = IOSTab.insights
+        // Sync status lives with the strap, in the Devices manager.
+        case .sync: tab = selectedTab; showDevices = true
+        }
+        withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = tab }
+        if link != .sync { tabPaths[tab] = path }
     }
 
     /// A routed v5 pillar screen wrapped in its own nav stack + Done button (mirrors `quickScreen`).
@@ -435,7 +485,7 @@ struct RootTabView: View {
                 case .activeWorkout: LiveView()
                 // .liveSession routes to the Today tab (handled above — its Start entry owns the cover);
                 // this keeps the switch exhaustive and falls back to Today if it ever reaches the host.
-                case .liveSession: LiquidTodayView()
+                case .liveSession: TodayScreen()
                 // .journal opens through the quick-action Logbook sheet (handled above); this keeps the
                 // switch exhaustive and falls back to the Logbook if it ever reaches here.
                 case .journal: LogbookView(onClose: { routedPillar = nil })
@@ -482,17 +532,31 @@ struct RootTabView: View {
                     withAnimation(Self.sheetEase) { quickAction = picked }
                 }
             }
-            .presentationDetents([.height(404)])
             .opaqueSheetBackground()
-            .presentationDragIndicator(.hidden)
         case .live:
             quickScreen(LiveView())
-        case .workout:
-            quickScreen(WorkoutsView())
+        case .startWorkout:
+            // Name the sport, start the session, then open it through the same path as the Today indicator.
+            StartWorkoutSheet { sport in
+                appModel.startWorkout(sport: sport)
+                quickAction = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { router.openActiveWorkout() }
+            }
+        case .logWorkout:
+            ManualWorkoutSheet(editing: nil) { row, _ in
+                Task {
+                    await repo.saveManualWorkout(row)
+                    // Rescore so its heart rate, effort and calories appear now, as the Training tab does.
+                    await intelligence.analyzeRecent()
+                    await repo.refresh()
+                }
+            }
         case .journal:
             quickScreen(LogbookView(onClose: { quickAction = nil }))
         case .breathe:
             quickScreen(BreathingView())
+        case .fasting:
+            quickScreen(FastingScreen())
         case .nap:
             // The Sleep tab's own "Add a nap" editor, seeded with a half hour that ended a few minutes ago.
             let end = Int(Date().timeIntervalSince1970) - 10 * 60
@@ -505,6 +569,15 @@ struct RootTabView: View {
                 await intelligence.analyzeRecent()
                 await repo.refresh()
             }
+        }
+    }
+
+    /// The menu is a compact grid sized to its tiles; the sport picker and the log form need the full height.
+    private static func detents(for action: QuickAction) -> Set<PresentationDetent> {
+        switch action {
+        case .menu: return [.height(QuickActionSheet.height)]
+        case .startWorkout, .logWorkout: return [.large]
+        default: return [.fraction(0.75), .large]
         }
     }
 
@@ -550,12 +623,13 @@ struct RootTabView: View {
     }
 
     private func tab<V: View>(_ view: V, _ title: LocalizedStringKey, _ icon: String,
-                              path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
-        tabStack(view, path: path, scrollSignal: scrollSignal)
+                              path: Binding<NavigationPath>, scrollSignal: Int, themeKey: String) -> some View {
+        tabStack(view, path: path, scrollSignal: scrollSignal, themeKey: themeKey)
             .tabItem { Label(title, systemImage: icon) }
     }
 
-    private func tabStack<V: View>(_ view: V, path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
+    private func tabStack<V: View>(_ view: V, path: Binding<NavigationPath>, scrollSignal: Int,
+                                   themeKey: String) -> some View {
         // Each primary tab gets its OWN NavigationStack so the in-content NavigationLinks (e.g. the Today
         // dashboard card rows) both navigate AND render opaque. An ORPHANED NavigationLink (no
         // NavigationStack ancestor) renders its whole label in a disabled/translucent state — that was
@@ -566,13 +640,18 @@ struct RootTabView: View {
         // TabRoute values, registered here ONCE per stack (a double registration double-pushes, #38).
         NavigationStack(path: path) {
             view
+                // The bar's white selection tint stops here: controls inside the tab use the theme accent.
+                .tint(StrandPalette.accent)
+                .environment(\.zoopIsTabRoot, true)
                 .background(StrandPalette.surfaceBase.ignoresSafeArea())
                 .toolbar(.hidden, for: .navigationBar)
                 .tabRouteDestinations()
         }
         // Drive this tab's root scroll-to-top on an at-root re-tap (#198 follow-up); read by ScreenScaffold
-        // / LiquidTodayView inside. Only THIS tab's token changes on its reselect, so the others don't scroll.
+        // / TodayScreen inside. Only THIS tab's token changes on its reselect, so the others don't scroll.
         .environment(\.scrollToTopSignal, scrollSignal)
+        // Rebuilt (path kept) once it is off screen after a theme switch; see `tabThemes`.
+        .id(themeKey)
     }
 
     // The "More" tab is the app's catch-all index. It was a plain SwiftUI `List` with system large-title
@@ -580,9 +659,9 @@ struct RootTabView: View {
     // + SectionHeader's UPPERCASE overline + the 28pt section rhythm). Rebuilt on the shared page chrome:
     // ScreenScaffold for the title1 "More" + subtitle, a `SectionHeader` overline per group, and the group's
     // rows in a single grouped ZoopCard with hairline dividers — the same row idiom Settings/Health use.
-    private func moreStack(path: Binding<NavigationPath>, scrollSignal: Int) -> some View {
+    private func moreStack(path: Binding<NavigationPath>, scrollSignal: Int, themeKey: String) -> some View {
         NavigationStack(path: path) {
-            ScreenScaffold(title: "More", subtitle: "Everything else, one tap away",
+            ScreenScaffold(title: "zoop.tab.more", subtitle: "Everything else, one tap away",
                            quietSubtitle: true,
                            onRefresh: { await repo.refresh() },
                            topBackground: liquidScaffoldSky()) {
@@ -594,23 +673,15 @@ struct RootTabView: View {
                     MoreRow("Compare", "rectangle.split.2x1.fill", .compare, subtitle: "Metrics side by side")
                     MoreRow("Rhythm", "waveform.path", .rhythm, subtitle: "Beat-to-beat timing", separator: false)
                 }
-                moreSection("Data") {
-                    MoreRow("Data Sources", "externaldrive.fill", .dataSources, subtitle: "Where each number comes from")
-                    MoreRow("Apple Health", "heart.fill", .appleHealth, subtitle: "Import and write-back")
-                    MoreRow("Mi Band", "figure.walk.motion", .miBand, subtitle: "Steps and heart rate")
-                    MoreRow("Backup & Sync", "externaldrive.fill.badge.icloud", .backupSync, subtitle: "Back up and restore")
-                    MoreRow("Shortcuts Export", "square.and.arrow.up.fill", .shortcutsExport, subtitle: "Send data to Shortcuts", separator: false)
-                }
+                // Data, alarms, automations, power saving, Siri, Test Centre and Limitations each have one
+                // home now, inside Settings (Zoop 2.0 §3.9), so the More list no longer repeats them.
                 moreSection("Settings") {
-                    MoreRow("Settings", "gearshape.fill", .settings, subtitle: "Profile, units and appearance")
-                    MoreRow("Alarms", "alarm.fill", .alarms, subtitle: "Strap alarm and wind-down")
-                    MoreRow("Automations", "wand.and.stars", .automations, subtitle: "Alerts and reminders")
-                    MoreRow("Power saving", "battery.25", .powerSaving, subtitle: "Ease the strap's battery")
-                    MoreRow("Siri & Shortcuts", "mic.fill", .siriShortcuts, subtitle: "Voice and automation")
-                    MoreRow("Test Centre", "stethoscope", .testCentre, subtitle: "Diagnostics and logs")
-                    MoreRow("Zoop Limitations", "list.bullet.rectangle", .noopLimitations, subtitle: "What is not measured yet", separator: false)
+                    MoreRow("Settings", "gearshape.fill", .settings, subtitle: "zoop.settings.more.subtitle",
+                            separator: false)
                 }
             }
+            .tint(StrandPalette.accent)
+            .environment(\.zoopIsTabRoot, true)
             // The rows push MoreDestination VALUES so a re-tap of the More tab can pop them off the
             // bound path (#135/#198). Each destination keeps the per-screen wrapper the rows used to
             // apply inline (surfaceBase background, inline title bar, hidden bar background):
@@ -627,6 +698,7 @@ struct RootTabView: View {
         }
         // Scroll the More index to the top on an at-root re-tap (#198 follow-up); read by its ScreenScaffold.
         .environment(\.scrollToTopSignal, scrollSignal)
+        .id(themeKey)
     }
 
     /// One group in the More index: a small grey label over the group's rows in a single card. Every
@@ -636,55 +708,26 @@ struct RootTabView: View {
                                          @ViewBuilder rows: @escaping () -> Rows) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
-                .font(.system(size: 15, weight: .semibold))
+                .font(StrandFont.subhead.weight(.semibold))
                 .foregroundStyle(StrandPalette.textSecondary)
                 .padding(.horizontal, 4)
             VStack(spacing: 0) { rows() }
-                .background(ZoopPanelSurface())
+                .zoopInsetSurface(radius: ZoopMetrics.cardRadius)
                 .clipShape(RoundedRectangle(cornerRadius: ZoopMetrics.cardRadius, style: .continuous))
         }
     }
 }
 
+/// The screens the More list opens. Everything else the list once linked to is reached from a tab
+/// root, a card, the "+" menu or Settings, so only these three need a route here.
 private enum MoreDestination: Hashable {
-    case patterns, insightsHub, intelligence, coach, insights, explore, compare
-    case sleep, trends, live, workouts, liftLog, health, labBook, stress, breathe, intervals, rhythm
-    case fusedRecord, appleHealth, miBand, dataSources, backupSync, shortcutsExport, noopLimitations
-    case alarms, automations, testCentre, siriShortcuts, powerSaving, settings
+    case compare, rhythm, settings
 
     @ViewBuilder var destination: some View {
         switch self {
-        case .patterns:        PatternsScreen()
-        case .insightsHub:     InsightsHubView()
-        case .intelligence:    IntelligenceView()
-        case .coach:           CoachView()
-        case .insights:        InsightsView()
-        case .explore:         MetricExplorerView()
-        case .compare:         CompareView()
-        case .sleep:           SleepView()
-        case .trends:          TrendsView()
-        case .live:            LiveView()
-        case .workouts:        WorkoutsView()
-        case .liftLog:         LiftLogView()
-        case .health:          HealthView()
-        case .labBook:         LabBookView()
-        case .stress:          StressView()
-        case .breathe:         BreathingView()
-        case .intervals:       IntervalTimerView()
-        case .rhythm:          RhythmHost()
-        case .fusedRecord:     FusedRecordHost()
-        case .appleHealth:     AppleHealthView()
-        case .miBand:          XiaomiBandView()
-        case .dataSources:     DataSourcesView()
-        case .noopLimitations: ZoopLimitationsView()
-        case .backupSync:      BackupSyncView()
-        case .shortcutsExport: ShortcutExportSettingsView()
-        case .alarms:          SleepPlannerHost()
-        case .automations:     AutomationsView()
-        case .testCentre:      TestCentreView()
-        case .siriShortcuts:   SiriShortcutsSettingsView()
-        case .powerSaving:     PowerSavingView()
-        case .settings:        SettingsView()
+        case .compare:  CompareView()
+        case .rhythm:   RhythmHost()
+        case .settings: SettingsView()
         }
     }
 }
@@ -735,44 +778,44 @@ private struct MoreDeviceHeader: View {
 
     private var status: String {
         guard live.connected else { return String(localized: "Not connected") }
+        // Same readiness the sync status uses, so this header and the Health sync row agree.
+        guard live.historyReady else { return String(localized: "Pairing…") }
         if let pct = live.batteryPct {
             return String(localized: "Connected · \(Int(pct.rounded()))%")
         }
         return String(localized: "Connected")
     }
 
+    /// The connection state is the line above, so this one says only where the sync is.
     private var syncLine: String {
-        guard let t = live.lastSyncedAt else { return String(localized: "Not synced yet") }
-        let when = Date(timeIntervalSince1970: t).formatted(.relative(presentation: .named))
-        return String(localized: "Last sync \(when)")
+        live.syncStatus.syncLine(lastSyncedAt: live.lastSyncedAt)
     }
 
     var body: some View {
         Button { router.openDevices() } label: {
-            HStack(spacing: 14) {
-                ProfileAvatarView(imageData: profile.avatarImageData, size: 52)
-                    .frame(width: 52, height: 52)
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(live.connected ? StrandPalette.accent : StrandPalette.textTertiary)
-                            .frame(width: 8, height: 8)
-                        Text(status)
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(StrandPalette.textPrimary)
+            ContentCard {
+                HStack(spacing: 14) {
+                    ProfileAvatarView(imageData: profile.avatarImageData, size: 52)
+                        .frame(width: 52, height: 52)
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(live.connected && live.historyReady ? StrandPalette.accent : StrandPalette.textTertiary)
+                                .frame(width: 8, height: 8)
+                            Text(status)
+                                .font(ZoopType.headline.weight(.semibold))
+                                .foregroundStyle(StrandPalette.textPrimary)
+                        }
+                        Text(syncLine)
+                            .font(StrandFont.subhead)
+                            .foregroundStyle(StrandPalette.textSecondary)
                     }
-                    Text(syncLine)
-                        .font(StrandFont.subhead)
-                        .foregroundStyle(StrandPalette.textSecondary)
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.right")
+                        .font(ZoopType.icon(14, weight: .semibold))
+                        .foregroundStyle(StrandPalette.textPrimary)
                 }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textPrimary)
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(ZoopPanelSurface())
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -783,82 +826,78 @@ private struct MoreDeviceHeader: View {
 // MARK: - Quick actions (centre FAB)
 
 /// The destinations the centre FAB can present. `.menu` is the action sheet itself; the rest
-/// route to existing screens. `Identifiable` so it drives `.sheet(item:)`.
+/// route to existing screens. `.live` is not on the menu: the active-workout indicator and the Home
+/// Screen icon menu still open it. `Identifiable` so it drives `.sheet(item:)`.
 private enum QuickAction: Int, Identifiable {
-    case menu, live, workout, journal, breathe, nap
+    case menu, live, startWorkout, logWorkout, journal, breathe, nap, fasting
     var id: Int { rawValue }
 }
 
-/// The bottom sheet of quick actions presented by the centre FAB. Spec bottom sheet: surfaceOverlay
-/// fill, gold hairline top edge, grab handle, three flat action rows that route to existing screens.
+/// The "+" sheet: six everyday actions as a compact 3 × 2 grid. Live heart rate lives in the Training
+/// tab now, so the sheet holds only things you log or start.
 private struct QuickActionSheet: View {
     /// Called with the picked destination (the host swaps the menu for that screen).
     let onPick: (QuickAction) -> Void
 
-    var body: some View {
-        VStack(spacing: 0) {
-            // Grab handle (36×4) in the slate hairline tone.
-            Capsule()
-                .fill(StrandPalette.hairlineStrong)
-                .frame(width: 36, height: 4)
-                .padding(.top, 10)
-                .padding(.bottom, 14)
+    /// Title row plus two rows of tiles, at the default text size.
+    static let height: CGFloat = 300
 
-            Text("QUICK ACTIONS")
-                .font(StrandFont.overline)
-                .tracking(1.6)
-                .foregroundStyle(StrandPalette.textTertiary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 10)
-
-            VStack(spacing: 8) {
-                row("Live HR", icon: "waveform.path.ecg", tint: StrandPalette.metricRose) { onPick(.live) }
-                row("Start workout", icon: "figure.run", tint: StrandPalette.effortColor) { onPick(.workout) }
-                row("Fill in logbook", icon: "square.and.pencil", tint: StrandPalette.accent) { onPick(.journal) }
-                row("Breathe", icon: "wind", tint: StrandPalette.restColor) { onPick(.breathe) }
-                row("Add nap", icon: "bed.double.fill", tint: StrandPalette.restColor) { onPick(.nap) }
-            }
-            .padding(.horizontal, 16)
-
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(
-            ZoopChromeSurface()
-                .overlay(alignment: .top) {
-                    // Gold hairline top edge per the bottom-sheet spec.
-                    Rectangle()
-                        .fill(StrandPalette.gold.opacity(0.35))
-                        .frame(height: 1)
-                }
-                .ignoresSafeArea()
-        )
+    private struct Item: Identifiable {
+        let action: QuickAction
+        let title: LocalizedStringResource
+        let icon: String
+        var id: Int { action.rawValue }
     }
 
-    /// One flat action row: hued line-icon tile + title, inset surface, hairline border.
-    private func row(_ title: LocalizedStringKey, icon: String, tint: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 13) {
-                Image(systemName: icon)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(tint)
-                    .frame(width: 38, height: 38)
-                    .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(StrandPalette.surfaceInset))
-                Text(title)
-                    .font(StrandFont.headline)
-                    .foregroundStyle(StrandPalette.textPrimary)
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textTertiary)
+    private let items: [Item] = [
+        Item(action: .startWorkout, title: TodayCopy.quickStartWorkout, icon: "figure.run"),
+        Item(action: .logWorkout, title: TodayCopy.quickLogWorkout, icon: "square.and.pencil"),
+        Item(action: .fasting, title: TodayCopy.quickFasting, icon: "timer"),
+        Item(action: .journal, title: TodayCopy.quickJournal, icon: "book"),
+        Item(action: .breathe, title: TodayCopy.quickBreathe, icon: "wind"),
+        Item(action: .nap, title: TodayCopy.quickNap, icon: "bed.double"),
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: ZoopSpacing.m) {
+            Text(TodayCopy.quickActions)
+                .font(ZoopType.headline)
+                .foregroundStyle(StrandPalette.textPrimary)
+                .accessibilityAddTraits(.isHeader)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ZoopSpacing.cardGap), count: 3),
+                      spacing: ZoopSpacing.cardGap) {
+                ForEach(items) { item in tile(item) }
             }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 12)
-            .background(ZoopPanelSurface(cornerRadius: 14))
-            .contentShape(Rectangle())
+            Spacer(minLength: 0)
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, ZoopSpacing.gutter)
+        .padding(.top, ZoopSpacing.xl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(StrandPalette.surfaceBase.ignoresSafeArea())
+    }
+
+    private func tile(_ item: Item) -> some View {
+        Button { onPick(item.action) } label: {
+            VStack(spacing: ZoopSpacing.s) {
+                Image(systemName: item.icon)
+                    .font(ZoopType.headline)
+                    .foregroundStyle(StrandPalette.textPrimary)
+                    .frame(height: 28)
+                    .accessibilityHidden(true)
+                Text(item.title)
+                    .font(ZoopType.caption)
+                    .foregroundStyle(StrandPalette.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+            }
+            .frame(maxWidth: .infinity, minHeight: 76)
+            .padding(.vertical, ZoopSpacing.s)
+            .background(RoundedRectangle(cornerRadius: ZoopRadius.tile, style: .continuous)
+                .fill(StrandPalette.surfaceRaised))
+            .contentShape(RoundedRectangle(cornerRadius: ZoopRadius.tile, style: .continuous))
+        }
+        .buttonStyle(LiquidPressStyle())
     }
 }
 

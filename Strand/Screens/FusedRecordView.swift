@@ -301,7 +301,7 @@ private struct FusedMetricRowView: View {
                         .font(StrandFont.footnote)
                         .foregroundStyle(StrandPalette.textSecondary)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(ZoopType.icon(9, weight: .semibold))
                         .foregroundStyle(StrandPalette.textTertiary)
                     Spacer(minLength: 0)
                 }
@@ -447,7 +447,7 @@ enum FusionFormat {
             return "\(integerGrouped(v)) kcal"
         case .other:
             // Unknown unit: a trimmed number, no fake unit.
-            return v == v.rounded() ? "\(Int(v))" : String(format: "%.1f", v)
+            return v == v.rounded() ? "\(Int(v))" : ZoopNumber.decimal(v, digits: 1)
         }
     }
 

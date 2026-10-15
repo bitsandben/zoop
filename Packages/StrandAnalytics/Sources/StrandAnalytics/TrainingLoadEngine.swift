@@ -1,24 +1,16 @@
 import Foundation
 
-/// Long-horizon training-load model using exponentially weighted daily load.
+/// Long-horizon training-load model using exponentially weighted daily load. It sits beside Foster
+/// monotony WITHOUT feeding the Readiness level. Keeps chronic load (CTL), acute load (ATL) and their
+/// difference (TSB / "form") in the SAME units as the supplied daily load; Zoop supplies daily
+/// Effort/strain, so these values are not TRIMP and must not be relabelled as such.
 ///
-/// Complements `ReadinessEngine`'s existing rolling-mean ACWR and Foster monotony without replacing
-/// either and WITHOUT feeding the Readiness level. It keeps chronic load (CTL), acute load (ATL), and
-/// their difference (TSB / "form") in the SAME units as the supplied daily load. Zoop currently supplies
-/// daily Effort/strain, so these values are not TRIMP and must not be relabelled as such.
+/// alpha = 1 - exp(-1 / tauDays); state[t] = state[t-1] + alpha * (load[t] - state[t-1]); TSB = CTL - ATL.
+/// Time constants are 42 days (chronic) and 7 days (acute). The first `primeDays` contiguous observations
+/// are averaged to seed both states, avoiding zero-seeding bias.
 ///
-/// Model:
-///   alpha = 1 - exp(-1 / tauDays)
-///   state[t] = state[t-1] + alpha * (load[t] - state[t-1])
-///   TSB[t] = CTL[t] - ATL[t]
-///
-/// Standard time constants are 42 days (chronic/fitness) and 7 days (acute/fatigue) — the classic
-/// Banister-style fitness-fatigue horizons. The first `primeDays` contiguous observations are averaged
-/// to seed both states, avoiding the artificial low bias of zero-seeding a new wearer.
-///
-/// Missing calendar days are NEVER silently filled with zero. A real rest day must be a row whose load
-/// is 0; a missing row or a nil load breaks the contiguous suffix the model runs over. This is the same
-/// "don't invent zero, don't compress calendar time" discipline the rest of StrandAnalytics uses.
+/// Missing days are NEVER filled with zero: a real rest day must be a row whose load is 0; a missing row
+/// or nil load breaks the contiguous suffix the model runs over.
 public enum TrainingLoadEngine {
     public struct Configuration: Sendable, Equatable {
         public let chronicTimeConstantDays: Double
@@ -50,8 +42,7 @@ public enum TrainingLoadEngine {
         }
     }
 
-    /// Calendar-day input. `load == nil` means the day has no usable load observation; that differs from
-    /// `load == 0`, a measured rest day that stays in the model.
+    /// Calendar-day input. `load == nil` means no usable observation; `load == 0` is a measured rest day.
     public struct DailyLoad: Sendable, Equatable {
         public let day: String       // strict Gregorian YYYY-MM-DD
         public let load: Double?
@@ -63,11 +54,11 @@ public enum TrainingLoadEngine {
     }
 
     public enum State: String, Sendable, Equatable, Codable {
-        /// No trustworthy model is emitted yet. See `unavailableReason` and `contiguousDays`.
+        /// No trustworthy model yet; see `unavailableReason` and `contiguousDays`.
         case unavailable
-        /// Minimum history is present, but the chronic 42-day state is still calibrating.
+        /// Minimum history present, but the chronic state is still calibrating.
         case building
-        /// At least the configured established-history window is contiguous and observed.
+        /// At least the established-history window is contiguous and observed.
         case established
     }
 
@@ -81,8 +72,7 @@ public enum TrainingLoadEngine {
         case invalidLoad
     }
 
-    /// One chart-ready modeled day. The first point is the final priming day; CTL/ATL have no defined
-    /// pre-seed state before then.
+    /// One chart-ready modeled day. The first point is the final priming day (no CTL/ATL before it).
     public struct Point: Sendable, Equatable, Codable {
         public let day: String
         public let load: Double
@@ -103,11 +93,11 @@ public enum TrainingLoadEngine {
         public let endDay: String?
         public let points: [Point]
 
-        /// Latest modeled chronic load (CTL), in the same units as input load.
+        /// Latest modeled chronic load (CTL).
         public var chronicLoad: Double? { points.last?.chronicLoad }
-        /// Latest modeled acute load (ATL), in the same units as input load.
+        /// Latest modeled acute load (ATL).
         public var acuteLoad: Double? { points.last?.acuteLoad }
-        /// Latest CTL - ATL balance (TSB / form), in the same units as input load.
+        /// Latest CTL - ATL balance (TSB / form).
         public var balance: Double? { points.last?.balance }
 
         public var ctl: Double? { chronicLoad }
@@ -116,10 +106,9 @@ public enum TrainingLoadEngine {
         public var isAvailable: Bool { state != .unavailable }
     }
 
-    /// Evaluate the latest day in the input, or an explicit target day. Inputs may be in any order.
-    ///
-    /// Only the longest fully observed CONTIGUOUS suffix ending on the target is modeled. Older history
-    /// before a gap is intentionally ignored rather than compressing calendar time or inventing zero load.
+    /// Evaluates the latest day in the input, or an explicit target day; inputs may be in any order. Only
+    /// the longest fully observed CONTIGUOUS suffix ending on the target is modeled; older history before
+    /// a gap is ignored rather than compressing calendar time or inventing zero load.
     public static func evaluate(days: [DailyLoad],
                                 through targetDay: String? = nil,
                                 configuration: Configuration = .standard) -> Result {
@@ -159,8 +148,7 @@ public enum TrainingLoadEngine {
             return unavailable(.missingTargetDay, contiguousDays: 0)
         }
 
-        // Walk backwards from the target until the first calendar gap OR unobserved load. A stored zero
-        // stays valid. Future rows and older history before the break do not affect this target's model.
+        // Walk back from the target to the first calendar gap or unobserved load; a stored zero stays valid.
         var suffixReversed: [(day: String, ordinal: Int, load: Double)] = []
         var expectedOrdinal = targetOrdinal
         var index = targetIndex
@@ -212,8 +200,7 @@ public enum TrainingLoadEngine {
         )
     }
 
-    /// Convenience for already-dense load arrays used by analytics tests and non-calendar callers. Day
-    /// labels are synthetic but deterministic; the model math is identical to `evaluate(days:)`.
+    /// Convenience for already-dense load arrays; day labels are synthetic but deterministic.
     public static func evaluateDense(_ loads: [Double],
                                      configuration: Configuration = .standard) -> Result {
         let baseOrdinal = dayOrdinal("2000-01-01")!
@@ -233,8 +220,7 @@ public enum TrainingLoadEngine {
 
     // MARK: - Strict, timezone-free Gregorian calendar helpers
 
-    /// Gregorian date -> day ordinal using Howard Hinnant's civil-date transform. Integer-only and
-    /// timezone-free so the Swift/Kotlin twins cannot drift around DST or locale boundaries.
+    /// Gregorian date to day ordinal (Howard Hinnant's civil-date transform); integer-only and timezone-free.
     private static func dayOrdinal(_ value: String) -> Int? {
         let parts = value.split(separator: "-", omittingEmptySubsequences: false)
         guard parts.count == 3,

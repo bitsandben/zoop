@@ -1,32 +1,14 @@
 import Foundation
 
-// WeeklyDigest.swift — a deterministic, offline "week in review".
+// WeeklyDigest: a deterministic, offline "week in review". Pure and DB-free: from per-metric
+// "yyyy-MM-dd" -> value maps it builds a Monday-anchored summary: per-metric SeriesStat, week-over-week
+// PeriodComparison (via ComparisonEngine.compare), a "vs baseline" delta against the prior
+// `baselineWeeks` complete weeks, a sleep-consistency read, an Effort-vs-Charge balance read, the 1-3
+// biggest movers by normalised change, and 1-2 plain-English focal points. Consuming plain maps keeps
+// StrandAnalytics decoupled from WhoopStore.
 //
-// Pure, deterministic, DB-free. Given the daily series for each tracked metric
-// (keyed by "yyyy-MM-dd"), this builds a Monday-anchored "this week" summary:
-//
-//   • per-metric this-week SeriesStat (mean / median / min / max / SD / slope),
-//   • week-over-week PeriodComparison (this week vs the immediately preceding
-//     Mon–Sun week), reusing ComparisonEngine.compare,
-//   • a "vs baseline" delta: this-week mean against a trailing baseline mean
-//     (the prior `baselineWeeks` complete weeks before this one),
-//   • a sleep-consistency read (SD of the night's values across the week — lower
-//     is steadier),
-//   • a strain-vs-recovery balance read (is Effort outrunning Charge this week?),
-//   • the 1–3 biggest movers ranked by normalised week-over-week change, and
-//   • 1–2 plain-English focal points, rendered the way BehaviorInsights.sentence
-//     renders an effect.
-//
-// It deliberately consumes plain [String: Double] day→value maps (not a DB row
-// type) so StrandAnalytics stays decoupled from WhoopStore: the UI layer pulls
-// recovery/strain/sleep/RHR/HRV out of its own DailyMetric shape and hands them
-// in. No AI is required — narration is an optional later layer that can take this
-// struct as input.
-//
-// Week math is timezone/locale-free: weekday is computed from the "yyyy-MM-dd"
-// string with a pure Sakamoto/Zeller day-of-week, and week windows are produced
-// as inclusive "yyyy-MM-dd" string ranges, so the split matches the day strings
-// AnalyticsEngine emits exactly (string comparison is chronological for ISO days).
+// Week math is timezone/locale-free: weekday comes from the day string via Sakamoto's algorithm and week
+// windows are inclusive ISO string ranges (string order is chronological), matching AnalyticsEngine's day strings.
 
 // MARK: - Tracked metric
 
@@ -38,7 +20,7 @@ public enum WeeklyMetric: String, CaseIterable, Sendable {
     case rhr      // resting heart rate, bpm
     case hrv      // heart-rate variability, ms
 
-    /// Human label for the metric (matches the rest of the app's naming).
+    /// Human label for the metric.
     public var label: String {
         switch self {
         case .charge: return "Charge"
@@ -49,7 +31,7 @@ public enum WeeklyMetric: String, CaseIterable, Sendable {
         }
     }
 
-    /// Display unit suffix (empty for the unitless 0–100 scores).
+    /// Display unit suffix (empty for the unitless 0-100 scores).
     public var unit: String {
         switch self {
         case .charge, .effort, .rest: return ""
@@ -58,8 +40,7 @@ public enum WeeklyMetric: String, CaseIterable, Sendable {
         }
     }
 
-    /// True when a HIGHER value is the better outcome. Resting HR is the lone
-    /// metric where lower is better, so "up" is framed negatively for it.
+    /// True when a HIGHER value is better (resting HR is the lone exception).
     public var higherIsBetter: Bool {
         switch self {
         case .rhr: return false
@@ -67,10 +48,8 @@ public enum WeeklyMetric: String, CaseIterable, Sendable {
         }
     }
 
-    /// A coarse "typical day-to-day range" used to normalise week-over-week deltas
-    /// so movers on different scales (a 6 ms HRV swing vs a 4 bpm RHR swing) can be
-    /// ranked against each other. Deliberately conservative, deterministic constants
-    /// (not personal baselines) so ranking is stable and explainable.
+    /// A coarse "typical day-to-day range" that normalises week-over-week deltas so movers on different
+    /// scales (6 ms HRV vs 4 bpm RHR) can be ranked. Fixed constants, not personal baselines, so ranking is stable.
     public var typicalSpread: Double {
         switch self {
         case .charge: return 12.0   // recovery points
@@ -87,14 +66,13 @@ public enum WeeklyMetric: String, CaseIterable, Sendable {
 /// One metric's line in the weekly digest.
 public struct WeeklyMetricSummary: Equatable, Sendable {
     public let metric: WeeklyMetric
-    /// This-week stats (Mon–Sun). `.empty` when the week has no readings.
+    /// This-week stats (Mon-Sun); `.empty` when the week has no readings.
     public let thisWeek: SeriesStat
     /// This week vs the immediately preceding Mon–Sun week.
     public let weekOverWeek: PeriodComparison
-    /// Mean over the trailing baseline window (the `baselineWeeks` complete weeks
-    /// before this one), or nil when there were no baseline readings.
+    /// Mean over the trailing baseline window (the `baselineWeeks` complete weeks before this one), or nil.
     public let baselineMean: Double?
-    /// thisWeek.mean − baselineMean, or nil when baselineMean is nil.
+    /// thisWeek.mean - baselineMean, or nil when baselineMean is nil.
     public let vsBaseline: Double?
 
     public init(metric: WeeklyMetric, thisWeek: SeriesStat,
@@ -110,9 +88,7 @@ public struct WeeklyMetricSummary: Equatable, Sendable {
     /// Signed week-over-week change in the metric's own units (this − last).
     public var wowDelta: Double { weekOverWeek.delta }
 
-    /// Direction of the week-over-week change expressed as GOOD / BAD / FLAT,
-    /// folding in `higherIsBetter` (so a RHR rise reads as "worse"). 0 when flat
-    /// or a period is empty.
+    /// Week-over-week direction as good/bad/flat folding in `higherIsBetter` (a RHR rise reads as worse); 0 when flat or a period is empty.
     public var wowGoodness: Int {
         guard weekOverWeek.direction != 0 else { return 0 }
         let up = weekOverWeek.direction > 0
@@ -120,19 +96,16 @@ public struct WeeklyMetricSummary: Equatable, Sendable {
         return good ? 1 : -1
     }
 
-    /// The week-over-week change scaled by the metric's typical spread, so movers
-    /// on different units are comparable. 0 when a period is empty.
+    /// The week-over-week change scaled by the metric's typical spread, so movers on different units are comparable.
     public var normalisedMove: Double {
         guard weekOverWeek.current.n > 0, weekOverWeek.previous.n > 0 else { return 0 }
         let s = metric.typicalSpread
         return s > 0 ? wowDelta / s : 0
     }
 
-    /// True when the week-over-week comparison rests on a sparse side: both weeks
-    /// carry at least one reading, but either has fewer than
-    /// `WeeklyDigestEngine.minDaysForFocus` days. A rough comparison still shows its
-    /// raw arrow + %, but the UI shouldn't dress it in a confident good/bad verdict —
-    /// a 43% "drop" off 2 days isn't a trend (the #463 chips-vs-summary contradiction).
+    /// True when the week-over-week comparison rests on a sparse side: both weeks have a reading but either
+    /// has fewer than `WeeklyDigestEngine.minDaysForFocus` days. The UI shows the raw arrow + % but no
+    /// confident good/bad verdict (#463: a 43% "drop" off 2 days is not a trend).
     public var isRoughComparison: Bool {
         let cur = weekOverWeek.current.n
         let prev = weekOverWeek.previous.n
@@ -146,20 +119,19 @@ public struct WeeklyMetricSummary: Equatable, Sendable {
 
 /// The complete week-in-review.
 public struct WeeklyDigest: Equatable, Sendable {
-    /// The Monday that anchors "this week" ("yyyy-MM-dd").
+    /// The Monday ("yyyy-MM-dd") that anchors this week.
     public let weekStart: String
-    /// The Sunday that ends "this week" ("yyyy-MM-dd").
+    /// The Sunday that ends this week.
     public let weekEnd: String
     /// Per-metric summaries, in WeeklyMetric.allCases order.
     public let metrics: [WeeklyMetricSummary]
-    /// Number of distinct days this week that carried at least one reading.
+    /// Distinct days this week that carried at least one reading.
     public let daysWithData: Int
-    /// Sleep-consistency: SD of this week's Rest values (lower = steadier). nil when
-    /// fewer than 2 Rest nights this week. In Rest points.
+    /// Sleep consistency: SD of this week's Rest values in Rest points (lower = steadier); nil under 2 nights.
     public let sleepConsistencySD: Double?
-    /// Strain-vs-recovery balance read for the week (see `BalanceRead`).
+    /// Effort-vs-Charge balance read for the week.
     public let balance: BalanceRead
-    /// 1–2 plain-English focal points, most salient first.
+    /// 1-2 plain-English focal points, most salient first.
     public let focalPoints: [String]
 
     public init(weekStart: String, weekEnd: String, metrics: [WeeklyMetricSummary],
@@ -174,13 +146,12 @@ public struct WeeklyDigest: Equatable, Sendable {
         self.focalPoints = focalPoints
     }
 
-    /// Look up one metric's summary.
+    /// Looks up one metric's summary.
     public func summary(_ metric: WeeklyMetric) -> WeeklyMetricSummary? {
         metrics.first { $0.metric == metric }
     }
 
-    /// True when no metric carried a single reading this week (caller can show an
-    /// empty state instead of a digest).
+    /// True when no metric carried a reading this week (show an empty state instead).
     public var isEmpty: Bool { daysWithData == 0 }
 }
 
@@ -210,26 +181,18 @@ public enum WeeklyDigestEngine {
 
     /// How many complete weeks before "this week" form the vs-baseline comparison.
     public static let baselineWeeks: Int = 4
-    /// Minimum days each side needs before a week-over-week move is "real" enough
-    /// to surface as a focal point (guards against a 1-day week swinging wildly).
+    /// Minimum days each side needs before a week-over-week move is surfaced as a focal point.
     public static let minDaysForFocus: Int = 3
 
     // MARK: - Entry point
 
-    /// Build the weekly digest anchored on the Monday of the week containing
-    /// `anchorDay` ("yyyy-MM-dd", typically today).
+    /// Builds the weekly digest anchored on the Monday of the week containing `anchorDay` ("yyyy-MM-dd").
     ///
     /// - Parameters:
-    ///   - byMetric: per-metric day→value maps. Missing metrics / days are simply
-    ///     absent; this is robust to sparse data.
-    ///   - anchorDay: any "yyyy-MM-dd" in the target week (we snap to its Monday).
-    ///     A non-parseable string yields an all-empty digest.
-    ///   - effortDisplayFactor: multiplier applied to EFFORT averages (and the pts
-    ///     fallback magnitude) in the rendered focal-point sentences ONLY, so a user
-    ///     on the 0–21 Effort scale (#268) never reads a stored 0–100 mean in prose.
-    ///     Percent changes are scale-invariant and stay untouched. Defaults to 1.0
-    ///     (stored scale) so existing callers are byte-identical. Display-only: no
-    ///     stat, delta or threshold changes.
+    ///   - byMetric: per-metric day-to-value maps; missing metrics/days are simply absent.
+    ///   - anchorDay: any day in the target week (snapped to its Monday); unparseable yields an empty digest.
+    ///   - effortDisplayFactor: multiplier on EFFORT averages in the focal-point sentences ONLY, for users on
+    ///     the 0-21 scale (#268). Percent changes are scale-invariant. Display-only.
     public static func build(byMetric: [WeeklyMetric: [String: Double]],
                              anchorDay: String,
                              effortDisplayFactor: Double = 1.0) -> WeeklyDigest {
@@ -240,8 +203,7 @@ public enum WeeklyDigestEngine {
         let lastMonday = addDays(monday, -7)
         let lastSunday = addDays(monday, -1)
 
-        // Baseline window: the `baselineWeeks` complete weeks ending the day before
-        // last week starts (so it never overlaps this week or last week).
+        // Baseline: the `baselineWeeks` complete weeks ending the day before last week starts (never overlaps this or last week).
         let baselineEnd = addDays(lastMonday, -1)               // Sunday before last week
         let baselineStart = addDays(lastMonday, -7 * baselineWeeks)
 
@@ -267,7 +229,7 @@ public enum WeeklyDigestEngine {
                 baselineMean: baseMean, vsBaseline: vsBase))
         }
 
-        // Sleep consistency: SD of this week's Rest series (lower = steadier).
+        // Sleep consistency: SD of this week's Rest series.
         let restStat = summaries.first { $0.metric == .rest }?.thisWeek
         let restConsistency: Double? = (restStat?.n ?? 0) >= 2 ? restStat?.stdev : nil
 
@@ -284,10 +246,8 @@ public enum WeeklyDigestEngine {
 
     // MARK: - Balance read
 
-    /// Read this week's Effort against this week's Charge. Both are 0–100; a clearly
-    /// higher Effort mean than Charge mean is "overreaching", clearly lower is
-    /// "underloaded", within `balanceBand` is "balanced". Needs ≥ minDaysForFocus
-    /// of each, else `.insufficient`.
+    /// Gap (Effort mean minus Charge mean, both 0-100) beyond which the week reads "overreaching" (above) or
+    /// "underloaded" (below); within it, "balanced". Needs `minDaysForFocus` days of each, else `.insufficient`.
     static let balanceBand: Double = 10.0
 
     static func balanceRead(_ summaries: [WeeklyMetricSummary]) -> BalanceRead {
@@ -305,23 +265,14 @@ public enum WeeklyDigestEngine {
 
     // MARK: - Focal points
 
-    /// Pick 1–2 plain-English focal points, most salient first.
-    ///
-    /// Priority order:
-    ///   1. The single biggest *meaningful* week-over-week mover (both weeks have
-    ///      ≥ minDaysForFocus days, and the normalised move clears `focusThreshold`),
-    ///      rendered with its good/bad framing.
-    ///   2. Either the balance read (when not balanced/insufficient) OR the second
-    ///      biggest mover — whichever is more salient — as a supporting line.
-    ///
-    /// If nothing clears the bar, a single steady-week line is returned.
+    /// Half a "typical spread" of normalised movement; the bar for a week-over-week mover to surface.
     static let focusThreshold: Double = 0.5   // half a "typical spread" of movement
 
     static func focalPoints(summaries: [WeeklyMetricSummary],
                             balance: BalanceRead,
                             consistencySD: Double?,
                             effortDisplayFactor: Double = 1.0) -> [String] {
-        // Rank movers by |normalised move|, significant (enough days) first.
+        // Rank movers by |normalised move|; both weeks need enough days.
         let movers = summaries
             .filter { $0.weekOverWeek.current.n >= minDaysForFocus
                    && $0.weekOverWeek.previous.n >= minDaysForFocus
@@ -334,23 +285,16 @@ public enum WeeklyDigestEngine {
             lines.append(moverSentence(top, effortDisplayFactor: effortDisplayFactor))
         }
 
-        // Supporting line: prefer a non-trivial balance read, else the 2nd mover.
+        // Supporting line: a non-trivial balance read, else the 2nd mover.
         if balance == .overreaching || balance == .underloaded {
             lines.append(balance.sentence)
         } else if movers.count >= 2 {
             lines.append(moverSentence(movers[1], effortDisplayFactor: effortDisplayFactor))
         }
 
-        // Nothing cleared the mover bar. Distinguish three very different reasons:
-        //   • the CURRENT week is SPARSE (fewer than minDaysForFocus days in) — we simply
-        //     can't call a week-over-week trend yet, even though the per-metric chips may
-        //     show a big raw swing off 1–2 days. Saying "a steady week — nothing moved"
-        //     there flatly contradicts those chips (the #463 report). Be honest instead.
-        //   • the PREVIOUS week is SPARSE (typical new user in week 2): movers are gated
-        //     on previous.n ≥ minDaysForFocus, so nothing can surface even when the chips
-        //     show big raw %s off last week's 1–2 days — the same #463 contradiction,
-        //     mirrored. Same honesty, aimed at last week.
-        //   • the week has enough days and genuinely held even — the calm "steady" read.
+        // Nothing cleared the mover bar. Distinguish: the CURRENT or PREVIOUS week is too sparse to call a
+        // trend (saying "a steady week" there contradicts the per-metric chips, #463), or the week has enough
+        // days and genuinely held even.
         if lines.isEmpty {
             let currentDays = summaries.map { $0.weekOverWeek.current.n }.max() ?? 0
             let prevDays = summaries.map { $0.weekOverWeek.previous.n }.max() ?? 0
@@ -372,10 +316,8 @@ public enum WeeklyDigestEngine {
         return Array(lines.prefix(2))
     }
 
-    /// Render one mover as a plain-English sentence, the way BehaviorInsights.sentence
-    /// renders an effect. Folds in good/bad framing (a Charge rise is "up — good", a
-    /// Resting HR rise is "up — worth a look"). `effortDisplayFactor` rescales the
-    /// EFFORT averages (and its pts fallback) for display only — % is scale-invariant.
+    /// Renders one mover as a plain-English sentence with good/bad framing. `effortDisplayFactor` rescales
+    /// EFFORT averages for display only.
     static func moverSentence(_ s: WeeklyMetricSummary,
                               effortDisplayFactor: Double = 1.0) -> String {
         let f = s.metric == .effort ? effortDisplayFactor : 1.0
@@ -400,33 +342,29 @@ public enum WeeklyDigestEngine {
 
     // MARK: - Range extraction
 
-    /// Collect the values of `series` whose day is within [start, end] inclusive
-    /// (ISO string comparison is chronological), ordered chronologically so the
-    /// resulting SeriesStat slope is meaningful. When `daysSeen` is non-nil, the days
-    /// that carried a value are recorded into it (pass `&someNilOptional` to skip).
+    /// Collects the values of `series` within [start, end] inclusive, in chronological order so the SeriesStat
+    /// slope is meaningful. A non-nil `daysSeen` records the days that carried a value.
     static func valuesInRange(_ series: [String: Double], start: String, end: String,
                               daysSeen: inout Set<String>?) -> [Double] {
         let inRange = series.filter { $0.key >= start && $0.key <= end }
         if daysSeen != nil {
             for k in inRange.keys { daysSeen?.insert(k) }
         }
-        // Sort by day string so the slope is chronological regardless of dict order.
+        // Sorted by day string so the slope is chronological regardless of dict order.
         return inRange.sorted { $0.key < $1.key }.map { $0.value }
     }
 
     // MARK: - Pure week math (timezone/locale-free)
 
-    /// The Monday (ISO "yyyy-MM-dd") of the week containing `day`. nil if `day`
-    /// can't be parsed as a valid yyyy-MM-dd.
+    /// The Monday of the week containing `day`; nil if unparseable.
     public static func mondayOfWeek(containing day: String) -> String? {
         guard let (y, m, d) = parseYMD(day), let w = weekday(y, m, d) else { return nil }
-        // weekday: 0=Sunday … 6=Saturday. Days since Monday: Mon=0 … Sun=6.
+        // weekday 0=Sunday...6=Saturday; days since Monday: Mon=0...Sun=6.
         let sinceMonday = (w + 6) % 7
         return addDays(day, -sinceMonday)
     }
 
-    /// Add `n` days (may be negative) to a "yyyy-MM-dd" day, returning "yyyy-MM-dd".
-    /// Falls back to the input string if it can't be parsed.
+    /// Adds `n` days (may be negative) to a "yyyy-MM-dd" day; returns the input if unparseable.
     public static func addDays(_ day: String, _ n: Int) -> String {
         guard let (y, m, d) = parseYMD(day) else { return day }
         let jdn = julianDayNumber(y, m, d) + n
@@ -434,8 +372,7 @@ public enum WeeklyDigestEngine {
         return formatYMD(ny, nm, nd)
     }
 
-    /// Sakamoto's day-of-week: 0=Sunday, 1=Monday … 6=Saturday. nil for an invalid
-    /// calendar date.
+    /// Sakamoto's day-of-week: 0=Sunday...6=Saturday; nil for an invalid date.
     static func weekday(_ y: Int, _ m: Int, _ d: Int) -> Int? {
         guard (1...12).contains(m), d >= 1, d <= daysInMonth(y, m) else { return nil }
         let t = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4]
@@ -456,9 +393,7 @@ public enum WeeklyDigestEngine {
 
     static func isLeap(_ y: Int) -> Bool { (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0) }
 
-    /// Parse "yyyy-MM-dd" into integer components, validating the date is real.
-    /// Public so UI layers can format week-range labels without re-implementing the
-    /// (timezone-free) date parse.
+    /// Parses "yyyy-MM-dd" into validated integer components. Public so UI layers can format week-range labels.
     public static func parseYMD(_ s: String) -> (Int, Int, Int)? {
         let parts = s.split(separator: "-", omittingEmptySubsequences: false)
         guard parts.count == 3,
@@ -475,8 +410,7 @@ public enum WeeklyDigestEngine {
         return "\(yy)-\(mm)-\(dd)"
     }
 
-    /// Convert a proleptic-Gregorian date to a Julian Day Number (integer-only,
-    /// timezone-free). Used purely for date arithmetic.
+    /// Proleptic-Gregorian date to Julian Day Number (integer-only, timezone-free), for date arithmetic.
     static func julianDayNumber(_ y: Int, _ m: Int, _ d: Int) -> Int {
         let a = (14 - m) / 12
         let yy = y + 4800 - a
@@ -511,7 +445,7 @@ public enum WeeklyDigestEngine {
                             balance: .insufficient, focalPoints: [])
     }
 
-    // MARK: - Formatting helpers (mirror BehaviorInsights)
+    // MARK: - Formatting helpers
 
     static func roundedInt(_ x: Double) -> Int { Int(x.rounded()) }
     static func round1(_ x: Double) -> Double { (x * 10).rounded() / 10 }

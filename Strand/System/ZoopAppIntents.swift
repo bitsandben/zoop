@@ -1,14 +1,11 @@
 import AppIntents
 
-/// INBOUND automation — exposes strap actions as standalone Shortcuts / Spotlight actions. The
-/// OUTBOUND counterpart (strap double-tap → run a macOS Shortcut) lives next door in MacActions.swift.
+/// Inbound automation: exposes strap actions as Shortcuts / Spotlight actions (the outbound
+/// counterpart, strap double-tap to a macOS Shortcut, is in MacActions.swift).
 ///
-/// These reach the LIVE, bonded `AppModel` via `AppModel.shared`. Constructing a fresh `AppModel()`
-/// from an intent would be wrong: it would start a second BLEManager + a duplicate 15-min analysis
-/// loop and could never buzz (the haptic command is gated on the live bonded peripheral). The
-/// `weak` shared accessor lets an intent fired while Zoop is closed fail with a clear "open Zoop"
-/// message instead of silently no-op'ing on a dead instance. (#42 idea-mining; macOS 13+ supports
-/// AppIntents — no new entitlement or Info.plist key required.)
+/// Intents reach the live, bonded `AppModel` via `AppModel.shared`; a fresh `AppModel()` would start
+/// a second BLEManager and analysis loop and could never buzz. The `weak` accessor lets an intent
+/// fired while Zoop is closed fail with a clear "open Zoop" message.
 
 @available(macOS 13.0, *)
 enum NOOPIntentError: Error, CustomLocalizedStringResourceConvertible {
@@ -32,8 +29,7 @@ struct BuzzStrapIntent: AppIntent {
     func perform() async throws -> some IntentResult {
         guard let model = AppModel.shared else { throw NOOPIntentError.notRunning }
         guard model.live.bonded else { throw NOOPIntentError.notConnected }
-        // #921: a bare RUN_HAPTICS_PATTERN write from a shortcut could be silently ignored by a
-        // WHOOP 4.0; the one-shot routine sends the confirmed pattern + RUN_ALARM sequence, acked.
+        // A bare RUN_HAPTICS_PATTERN write could be silently ignored by a WHOOP 4.0; the one-shot routine sends the acked confirmed sequence.
         model.buzzStrapOnce()
         return .result()
     }
@@ -54,7 +50,7 @@ struct MarkMomentIntent: AppIntent {
     }
 }
 
-/// Auto-surfaces the actions in Shortcuts.app with suggested phrases.
+/// Surfaces the actions in Shortcuts.app with suggested phrases.
 @available(macOS 13.0, *)
 struct NOOPShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {

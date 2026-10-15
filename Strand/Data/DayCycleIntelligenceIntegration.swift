@@ -152,8 +152,8 @@ import WhoopStore
                 claimedDays: Set(wakeDayById.values), windowStart: windowStart, now: now,
                 offsetSec: offsetSec, habitualMidsleepSec: habitualMidsleepSec)
         } catch {
-            // Fail closed: an unread namespace is unknown, not empty. Returning no replacement source IDs
-            // prevents the persistence transaction from deleting valid markers after a transient read error.
+            // Fail closed: an unread namespace is unknown, not empty, so a transient read error must not
+            // delete valid markers.
             trace?("stepsCycle status=error error=boundaryRecoveryRead")
             return Result(stepsByWakeDay: [:], strainByWakeDay: [:], caloriesByWakeDay: [:],
                           workoutCountByWakeDay: [:], onsetByWakeDay: [:], firstWakeDay: nil,
@@ -192,8 +192,8 @@ import WhoopStore
             guard let day = wakeDayById[window.sleepId], let fallback = ownerById[window.sleepId] else { continue }
             do {
             onsets[day] = window.onset
-            // Store ranges are inclusive. Read the active-first WHOOP + canonical union without borrowing
-            // step coverage: an HR-only device may legitimately have no step rows.
+            // Store ranges are inclusive. Reads the active-first WHOOP + canonical union without borrowing
+            // step coverage (an HR-only device may have no step rows).
             let hrEndInclusive = window.endExclusive - 1
             let owners = ([fallback] + physiologyOwners).reduce(into: [String]()) {
                 if !$0.contains($1) { $0.append($1) }
@@ -201,11 +201,8 @@ import WhoopStore
             let restingHR = nights.first(where: { $0.daily.day == day })?.daily.restingHr.map(Double.init)
                 ?? StrainScorer.defaultRestingHR
             let effectiveMaxHR = maxHROverride ?? (profile.age > 0 ? StrainScorer.tanakaHRmax(age: profile.age) : nil)
-            // Every pass re-read each cycle's full day of 1 Hz heart rate from every owner and re-scored it,
-            // for all 21 cycles, although only the open one gains samples between syncs. On a replayed
-            // phone database this was the costliest step of a pass in which every night was otherwise
-            // reused (6–12 s of a 16 s pass). The index-only count and newest timestamp per owner witness
-            // the heart rate the same way the day cache does, so a closed cycle is scored once.
+            // Witness (index-only count + newest timestamp per owner) lets a closed cycle's 1 Hz HR be
+            // scored once; re-reading all 21 cycles every pass was the costliest step (6-12 s of 16 s).
             var hrWitness: [String] = []
             if hrEndInclusive >= window.onset {
                 for owner in owners {

@@ -2,29 +2,17 @@ import Foundation
 
 /// One stream's backward sliding read buffer for `analyzeRecent`'s pass-1 loop (#1538).
 ///
-/// `WindowedStreamPlan` decides WHETHER a day's window can reuse what the previous day read; this holds
-/// the rows and does the splice. Kept out of the engine because the splice is the part that can silently
-/// be wrong — a row dropped here is a scoring input that vanishes — so it gets its own tests rather than
-/// living inline in a very long loop. Twin of Kotlin `SlidingStreamWindow`.
-///
-/// The buffer always ends up covering EXACTLY the window just served, never more: the walk runs backwards
-/// so the tail above `to` is never asked for again, and holding it would grow the footprint across the
-/// pass instead of keeping it at one window. Rows are stored in the store's own `ts ASC` order and an
-/// extension is always strictly BELOW the buffer, so prepending preserves that order without a sort.
+/// `WindowedStreamPlan` decides whether a day's window can reuse the previous read; this holds the rows and
+/// does the splice. Rows stay in the store's `ts ASC` order and an extension is always strictly below the
+/// buffer, so prepending needs no sort. The buffer covers exactly the window just served, never more.
 public final class SlidingStreamWindow<T> {
 
     private let tsOf: (T) -> Int
     private let limit: Int
-    /// The store call for `(owner, from, to)`. Bound at CONSTRUCTION to match the Kotlin twin, where the
-    /// two call sites sit inside a method already at its JVM bytecode budget and a per-call lambda put it
-    /// over. It must return `ts ASC` and honour the same `limit`.
+    /// The store call for `(owner, from, to)`; must return `ts ASC` and honour `limit`.
     ///
-    /// `nil` means the read FAILED, which is not the same as returning no rows and must never be cached as
-    /// if it were. An empty successful read is a true statement about a range — the buffer can serve it,
-    /// and the next day may splice against it. An empty FAILED read is no statement at all, and caching it
-    /// would let the following day splice against rows nobody ever fetched, silently dropping the part of
-    /// its window the buffer claimed to hold. This side is the one that needs it: the engine wraps its
-    /// store reads in `try?`, so a failure arrives here as an empty array unless the caller says otherwise.
+    /// `nil` means the read FAILED, which must never be cached as if it were an empty result: the next day
+    /// would splice against rows nobody fetched.
     private let read: (String, Int, Int) async -> [T]?
 
     private var owner: String?
@@ -34,42 +22,20 @@ public final class SlidingStreamWindow<T> {
     private var rows: [T] = []
 
     /// Rows this window served from the buffer rather than reading. Diagnostic only.
-    ///
-    /// `Int` here, `Long` on the Kotlin twin, and that is deliberate rather than drift: each side follows
-    /// its own platform's convention for a count, and the value cannot reach either limit — a pass is
-    /// bounded by `maxDays` windows of at most `limit` rows, so about 4 M on a 21-day pass, which fits
-    /// even the 32-bit `Int` of `arm64_32` that this package also builds for. Stated because a width left
-    /// to be inferred is how the 32-bit `pct` over-count got in (#1685).
     public private(set) var rowsServed = 0
-    /// How many reads were forced by the OWNER changing since the last one (#2073). Diagnostic only.
-    ///
-    /// `served` near zero already tells a reader the windows are declining, and `WindowedStreamPlan`'s own
-    /// doc names the three ways that happens: truncation, an owner flip, or a gap. `truncated` is already
-    /// on the line, so counting the flips separates the remaining two instead of leaving them as one
-    /// unanswerable number. A field log showed a stream reading 4,084 rows and serving none with
-    /// `truncated=0`, and there was no way to tell which of the other two it was.
+    /// Reads forced by the OWNER changing since the last one (#2073). Diagnostic only; separates an owner
+    /// flip from truncation or a gap when `served` is near zero.
     public private(set) var ownerFlips = 0
 
-    /// Reads that bypassed reuse entirely because the caller passed `allowReuse: false` (#2073).
-    ///
-    /// This is the answer `ownerFlips` alone would get WRONG. A WHOOP 5 R-R read passes false, because
-    /// transport selection is range-dependent and a slice could mix transports, so that window can never
-    /// serve from its buffer: `served=0` there is BY DESIGN, not a decline. Without this count the line
-    /// said `served=0 truncated=0 ownerFlips=0` and invited a reader to conclude "a gap", which is the
-    /// opposite of true. The bypass also clears the buffer, so a genuine owner change on such a stream is
-    /// never even seen as a flip.
+    /// Reads that bypassed reuse because the caller passed `allowReuse: false` (#2073). `served=0` there is by
+    /// design, not a decline. The bypass clears the buffer, so owner changes on such a stream never count as flips.
     public private(set) var reuseOffReads = 0
 
-    /// Rows this window read from the store. Diagnostic only. Same width note as `rowsServed`.
+    /// Rows this window read from the store. Diagnostic only.
     public private(set) var rowsRead = 0
-    /// Reads whose RESULT came back at the store's cap, so the newest rows were dropped and the day was
-    /// scored on an incomplete window. Diagnostic only, but unlike its siblings this one is a correctness
-    /// signal rather than a savings one: a non-zero count means a number may be wrong, not merely slow.
-    ///
-    /// Counted per WINDOW that lost rows, not per pass: once a read is truncated the planner refuses to
-    /// splice at all, so each later window is a fresh full read and is judged on its own. The truncated-
-    /// EXTENSION branch below cannot add a second count for one window either, since it only ever re-reads
-    /// a SUPERSET of what already overran the cap. Pinned by `eachTruncatedWindowCountsSeparately`.
+    /// Reads whose result hit the store's cap, so the newest rows were dropped and the day was scored on an
+    /// incomplete window. Unlike its siblings this is a correctness signal. Counted per truncated window
+    /// (pinned by `eachTruncatedWindowCountsSeparately`).
     public private(set) var truncatedReads = 0
 
     public init(tsOf: @escaping (T) -> Int, limit: Int, read: @escaping (String, Int, Int) async -> [T]?) {
@@ -78,13 +44,10 @@ public final class SlidingStreamWindow<T> {
         self.read = read
     }
 
-    /// The rows for `[from, to]` under `owner`, reading as little as the plan allows.
-    ///
-    /// The result is byte-for-byte what a direct `read(owner, from, to)` would have returned — that is the
-    /// whole contract, and the reason every case the planner cannot prove falls back to exactly that call.
+    /// The rows for `[from, to]` under `owner`, reading as little as the plan allows. Byte-for-byte what a direct
+    /// `read(owner, from, to)` would return; every case the planner cannot prove falls back to that call.
     public func rows(owner: String, from: Int, to: Int, allowReuse: Bool = true) async -> [T] {
-        // A range-dependent source choice is not composable: a slice or extension may select another
-        // transport. Read the whole interval and retain no buffer, while keeping cost/truncation truthful.
+        // A range-dependent source choice is not composable (a slice may select another transport): read whole, keep no buffer.
         if !allowReuse {
             reuseOffReads += 1
             _ = failedRead()
@@ -108,16 +71,13 @@ public final class SlidingStreamWindow<T> {
             guard let head = await read(owner, readFrom, readTo) else { return failedRead() }
             rowsRead += head.count
             if head.count >= limit {
-                // A truncated EXTENSION is worse than a truncated buffer: it would leave a hole in the
-                // middle rather than at the end. Discard and read the window whole.
+                // A truncated extension would leave a hole mid-window: discard and read the window whole.
                 guard let full = await read(owner, from, to) else { return failedRead() }
                 rowsRead += full.count
                 result = full
                 nowTruncated = full.count >= limit
             } else {
-                // Filtered into ONE array rather than `(head + rows).filter { }`: that form allocates
-                // the concatenation AND the filtered copy, so the splice transiently held roughly three
-                // windows' worth of references. Same result, one allocation.
+                // One array rather than `(head + rows).filter {}`, which transiently held ~3 windows of references.
                 var out: [T] = []
                 out.reserveCapacity(head.count + rows.count)
                 for r in head where tsOf(r) >= from && tsOf(r) <= to { out.append(r) }
@@ -141,15 +101,11 @@ public final class SlidingStreamWindow<T> {
         return result
     }
 
-    /// A failed read leaves NO buffer: the next day must go back to the store rather than splice against a
-    /// window nobody successfully filled. Returns empty, which is what the caller saw for a failed read
-    /// before this class existed.
+    /// A failed read leaves NO buffer, so the next day goes back to the store instead of splicing against a
+    /// window nobody filled. Returns empty.
     private func failedRead() -> [T] {
         owner = nil
-        // The range is cleared too, not just the owner. Leaving it stale would work only because
-        // `WindowedStreamPlan.plan` happens to test the owner BEFORE the bounds — a cross-file assumption
-        // that holds today and would break silently if those checks were ever reordered. Cheaper to be
-        // self-consistent than to depend on the order of someone else's guards.
+        // Clear the range too, so correctness does not depend on `WindowedStreamPlan.plan` testing owner before bounds.
         from = 0
         to = 0
         rows = []

@@ -2,13 +2,8 @@ import Foundation
 import GRDB
 
 // MARK: - v9 cache: generic long-format metric store
-// The substrate for a metric explorer. Where MetricsCache / JournalWorkoutAppleCache use a
-// WIDE column-per-metric layout (one table per source, typed nullable columns), this is the
-// TALL/EAV counterpart: one row per (deviceId, day, key) with a single REAL `value`. Any scalar
-// metric — whatever its origin — can be projected into this one table and read back uniformly by
-// key, so the explorer can list/compare metrics without knowing each source's schema.
-// Mirrors the established pattern exactly: Codable struct, idempotent ON CONFLICT upsert keyed by
-// natural key, range-read accessors, all GRDB work via the actor's syncWrite/syncRead helpers.
+// The TALL/EAV counterpart to the wide per-source caches: one row per (deviceId, day, key) with a single REAL
+// `value`, so the explorer can list and compare any scalar metric without knowing each source's schema.
 
 /// One point in the long-format metric store. Natural key (deviceId, day, key).
 public struct MetricPoint: Equatable, Codable, Sendable {
@@ -24,9 +19,7 @@ extension WhoopStore {
 
     // MARK: - Upsert (idempotent by natural key; latest value wins on conflict)
 
-    /// Upsert metric points. Natural key (deviceId, day, key). Returns rows changed.
-    /// Idempotent: re-upserting the same (deviceId, day, key) updates `value` in place rather than
-    /// creating a duplicate.
+    /// Upserts metric points, idempotent on (deviceId, day, key). Returns rows changed.
     @discardableResult
     public func upsertMetricSeries(_ rows: [MetricPoint], deviceId: String) async throws -> Int {
         try syncWrite { db in
@@ -52,8 +45,7 @@ extension WhoopStore {
 
     // MARK: - Reads
 
-    /// Points for a single `key` on days in [from, to] (lexicographic YYYY-MM-DD compare),
-    /// oldest day first. Served index-only by idx_metricSeries_device_key_day.
+    /// Points for a single `key` on days in [from, to] (lexicographic YYYY-MM-DD compare), oldest day first.
     public func metricSeries(deviceId: String, key: String, from: String, to: String) async throws -> [MetricPoint] {
         try syncRead { db in
             try Row.fetchAll(db, sql: """
@@ -90,9 +82,7 @@ extension WhoopStore {
         }
     }
 
-    /// Delete one point identified by the metric-series natural key. User-entered local series use this
-    /// to provide a real delete (rather than leaving a sentinel value behind). Returns the number of rows
-    /// removed; deleting an absent point is an idempotent zero-row change.
+    /// Deletes one point by natural key (a real delete, not a sentinel value). Returns rows removed; an absent point is a no-op.
     @discardableResult
     public func deleteMetricSeriesPoint(deviceId: String, day: String, key: String) async throws -> Int {
         try syncWrite { db in
@@ -104,8 +94,7 @@ extension WhoopStore {
         }
     }
 
-    /// Delete every point for one source/key pair in a single statement. Returns the number of rows
-    /// removed; deleting an absent series is an idempotent zero-row change.
+    /// Deletes every point for one source/key pair. Returns rows removed; an absent series is a no-op.
     @discardableResult
     public func deleteMetricSeries(deviceId: String, key: String) async throws -> Int {
         try syncWrite { db in

@@ -56,7 +56,7 @@ struct WatchWorkoutView: View {
     private var grantAccess: some View {
         VStack(spacing: 8) {
             Image(systemName: "heart.text.square")
-                .font(.system(size: 24))
+                .font(ZoopType.icon(24))
                 .foregroundStyle(StrandPalette.textTertiary)
             Text("Grant Health access")
                 .font(StrandFont.subhead)
@@ -79,7 +79,7 @@ struct WatchWorkoutView: View {
     private var idle: some View {
         VStack(spacing: 14) {
             Image(systemName: "figure.strengthtraining.functional")
-                .font(.system(size: 30))
+                .font(ZoopType.icon(30))
                 .foregroundStyle(StrandPalette.effortColor)
             Text("Workout")
                 .font(StrandFont.rounded(22, weight: .semibold))
@@ -173,7 +173,7 @@ struct WatchWorkoutView: View {
                 .foregroundStyle(StrandPalette.textSecondary)
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Image(systemName: "heart.fill")
-                    .font(.system(size: 13))
+                    .font(ZoopType.icon(13))
                     .foregroundStyle(StrandPalette.statusCritical)
                 Text(workout.bpm.map(String.init) ?? "–")
                     .font(StrandFont.rounded(40, weight: .semibold))
@@ -272,7 +272,7 @@ struct WatchWorkoutView: View {
     private var saved: some View {
         VStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 34))
+                .font(ZoopType.icon(34))
                 .foregroundStyle(StrandPalette.chargeColor)
             Text("Workout saved")
                 .font(StrandFont.rounded(20, weight: .semibold))

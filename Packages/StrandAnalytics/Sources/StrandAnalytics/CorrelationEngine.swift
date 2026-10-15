@@ -1,40 +1,20 @@
 import Foundation
 
-// CorrelationEngine.swift — relationships between two daily series.
+// CorrelationEngine.swift - relationships between two daily series.
 //
-// Pure, deterministic, DB-free. Computes the Pearson product-moment correlation r,
-// a simple ordinary-least-squares regression line (slope/intercept of y on x), and
-// an approximate two-sided p-value for r.
-//
-//   r = Σ(x−x̄)(y−ȳ) / sqrt( Σ(x−x̄)² · Σ(y−ȳ)² )         (Pearson)
-//   slope     = Σ(x−x̄)(y−ȳ) / Σ(x−x̄)²                     (OLS, y on x)
-//   intercept = ȳ − slope·x̄
-//
-// The p-value uses the standard t-statistic for a correlation,
-//   t = r · sqrt( (n−2) / (1−r²) ),
-// converted to a two-sided tail probability via a NORMAL approximation
-// (2·(1−Φ(|t|))). This is an approximation — for small n the true Student-t tails
-// are heavier, so pApprox slightly understates p — but it is fully deterministic
-// and needs no special-function tables. Φ is evaluated with the Abramowitz &
-// Stegun 7.1.26 erf rational approximation.
-//
-// `alignByDay` inner-joins two "yyyy-MM-dd"-keyed series on the day key, returning
-// (x, y) pairs sorted by day. `lagged` shifts y forward by `lagDays` relative to x
-// (x on day D paired with y on day D+lag) and correlates the result, which lets a
-// caller probe directional / delayed effects (e.g. today's strain vs tomorrow's
-// recovery).
+// Pure, DB-free. Pearson r, an OLS line (y on x) and an approximate two-sided p-value for r.
+// The p-value uses t = r*sqrt((n-2)/(1-r^2)) with a NORMAL approximation of the tail
+// (2*(1-Phi(|t|)), Phi via Abramowitz & Stegun 7.1.26). For small n the true Student-t tails are
+// heavier, so pApprox slightly understates p; it is deterministic and needs no tables.
+// `alignByDay` inner-joins two "yyyy-MM-dd" series; `lagged` pairs x on day D with y on day D+lag.
 
 /// The result of correlating two aligned series.
 public struct Correlation: Equatable, Sendable {
-    /// Pearson correlation coefficient in [-1, 1].
     public let r: Double
-    /// Number of paired observations used.
     public let n: Int
-    /// Approximate two-sided p-value for H0: r = 0 (normal approx of the t-test).
+    /// Approximate two-sided p-value for H0: r = 0 (normal approximation).
     public let pApprox: Double
-    /// OLS slope of y on x.
     public let slope: Double
-    /// OLS intercept of y on x.
     public let intercept: Double
 
     public init(r: Double, n: Int, pApprox: Double, slope: Double, intercept: Double) {
@@ -50,9 +30,8 @@ public enum CorrelationEngine {
 
     // MARK: - Pearson + regression
 
-    /// Pearson r plus an OLS regression line and approximate p-value for the pairs.
-    /// Returns nil when fewer than 3 pairs, or when either variable has zero
-    /// variance (r undefined).
+    /// Pearson r plus an OLS line and approximate p-value. Nil with fewer than 3 pairs or zero
+    /// variance in either variable.
     public static func pearson(_ xy: [(Double, Double)]) -> Correlation? {
         let n = xy.count
         guard n >= 3 else { return nil }
@@ -72,11 +51,10 @@ public enum CorrelationEngine {
             sxy += dx * dy
         }
 
-        // Zero variance in either variable → correlation undefined.
         guard sxx > 0 && syy > 0 else { return nil }
 
         var r = sxy / (sxx.squareRoot() * syy.squareRoot())
-        // Clamp tiny floating-point overshoot so |r| ≤ 1 exactly.
+        // Clamp floating-point overshoot so |r| <= 1.
         if r > 1.0 { r = 1.0 }
         if r < -1.0 { r = -1.0 }
 
@@ -89,9 +67,8 @@ public enum CorrelationEngine {
 
     // MARK: - Day alignment
 
-    /// Inner-join two "yyyy-MM-dd"-keyed series on the day key, returning the (x, y)
-    /// value pairs for days present in BOTH, sorted ascending by day. Later entries
-    /// for a duplicated day in either series win (last-write).
+    /// Inner-joins two "yyyy-MM-dd" series on the day key; (x, y) pairs for days in both, sorted by
+    /// day. The last entry wins for a duplicated day.
     public static func alignByDay(_ a: [(day: String, value: Double)],
                                   _ b: [(day: String, value: Double)]) -> [(Double, Double)] {
         var mapA: [String: Double] = [:]
@@ -105,12 +82,8 @@ public enum CorrelationEngine {
 
     // MARK: - Lagged correlation
 
-    /// Correlate x[day] against y[day + lagDays]. A positive lag asks "does x today
-    /// predict y `lagDays` later?"; a negative lag looks backward. Days are matched
-    /// on the calendar by offsetting x's day key by `lagDays` and joining to y.
-    ///
-    /// Returns nil when fewer than 3 lag-matched pairs survive or when `pearson`
-    /// rejects them (zero variance).
+    /// Correlates x[day] against y[day + lagDays] (positive lag: does x today predict y later).
+    /// Nil when fewer than 3 pairs survive or `pearson` rejects them.
     public static func lagged(x: [(day: String, value: Double)],
                               y: [(day: String, value: Double)],
                               lagDays: Int) -> Correlation? {
@@ -118,7 +91,7 @@ public enum CorrelationEngine {
         for row in y { mapY[row.day] = row.value }
 
         var pairs: [(Double, Double)] = []
-        // Sort x by day for deterministic ordering of the pair list.
+        // Sort for deterministic pair order.
         let sortedX = x.sorted { $0.day < $1.day }
         for row in sortedX {
             guard let shifted = shiftDay(row.day, by: lagDays) else { continue }
@@ -131,18 +104,15 @@ public enum CorrelationEngine {
 
     // MARK: - p-value
 
-    /// Two-sided p-value for H0: r = 0 via t = r·sqrt((n−2)/(1−r²)) and a normal
-    /// approximation of the t tail. n ≤ 2 → 1.0 (no evidence); |r| = 1 → 0.0.
+    /// Two-sided p-value for H0: r = 0. n <= 2 gives 1.0; |r| = 1 gives 0.0.
     static func pValue(r: Double, n: Int) -> Double {
         guard n > 2 else { return 1.0 }
         let oneMinusR2 = 1.0 - r * r
         if oneMinusR2 <= 0 { return 0.0 }  // |r| == 1
         let t = r * (Double(n - 2) / oneMinusR2).squareRoot()
-        // Two-sided tail of the standard normal at |t|.
         return 2.0 * (1.0 - normalCDF(abs(t)))
     }
 
-    /// Standard-normal CDF Φ(z) using the A&S 7.1.26 erf approximation.
     static func normalCDF(_ z: Double) -> Double {
         0.5 * (1.0 + erfApprox(z / 2.0.squareRoot()))
     }
@@ -159,9 +129,7 @@ public enum CorrelationEngine {
 
     // MARK: - Day arithmetic
 
-    /// Shift a "yyyy-MM-dd" day string by `delta` days (can be negative), returning
-    /// a normalised "yyyy-MM-dd" string. Uses a fixed UTC calendar so it is
-    /// deterministic and timezone-free. Returns nil if the input can't be parsed.
+    /// Shifts a "yyyy-MM-dd" string by `delta` days (UTC calendar, timezone-free); nil if unparseable.
     static func shiftDay(_ day: String, by delta: Int) -> String? {
         if delta == 0 { return day }
         let parts = day.split(separator: "-", omittingEmptySubsequences: false)

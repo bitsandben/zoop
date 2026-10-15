@@ -93,7 +93,7 @@ struct SmartAlarmView: View {
                              time: windDownOn ? timeLabel(WindDownNudge.nudgeMinuteOfDay()) : "—",
                              tint: StrandPalette.restColor)
                     Image(systemName: "arrow.right")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(ZoopType.icon(13, weight: .semibold))
                         .foregroundStyle(StrandPalette.textTertiary)
                         .accessibilityHidden(true)
                     // "Wake" was the wind-down INPUT wearing the name of the thing that wakes you, in the
@@ -169,7 +169,7 @@ struct SmartAlarmView: View {
     // reset via the official app clears it; the phone Clock alarm covers the gap meanwhile.
     @ViewBuilder private var strapRejectedCard: some View {
         if behavior.smartAlarmEnabled && alarmRejectStreak >= 2 {
-            StrandCard(padding: 20) {
+            ContentCard {
                 HStack(alignment: .top, spacing: 12) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(StrandPalette.statusWarning)
@@ -192,7 +192,7 @@ struct SmartAlarmView: View {
     // phone wake. The strap alarm is real, but it's a gentle wrist buzz, not a sound, so we say plainly
     // to keep a backup, and that the louder smart wake lives on Android.
     private var honestyCard: some View {
-        StrandCard(padding: 20) {
+        ContentCard {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "bell.slash")
                     .foregroundStyle(StrandPalette.statusWarning)
@@ -216,7 +216,7 @@ struct SmartAlarmView: View {
     // even if the phone is asleep or Zoop is closed. Lifted verbatim (behaviour intact) out of
     // AutomationsView.alarmCard so users stop conflating it with the wind-down reminder below.
     private var strapAlarmCard: some View {
-        StrandCard(padding: 20, tint: behavior.smartAlarmEnabled ? StrandPalette.accent : nil) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Morning").strandOverline()
@@ -332,7 +332,7 @@ struct SmartAlarmView: View {
 
     private var windDownCard: some View {
         // Rest-tinted when armed so the active state reads in the sleep world; neutral when off.
-        StrandCard(padding: 20, tint: windDownOn ? StrandPalette.restColor : nil) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Evening").strandOverline()
@@ -634,7 +634,7 @@ struct SmartAlarmView: View {
                     model.applySmartAlarm()
                 } label: {
                     Image(systemName: "arrow.uturn.backward")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(ZoopType.icon(12, weight: .semibold))
                         .foregroundStyle(StrandPalette.textTertiary)
                         .padding(6)
                         .contentShape(Rectangle())

@@ -1,0 +1,22 @@
+{
+ "Strand/Features/Settings/SettingsAppearancePage.swift": {
+  "font": 0,
+  "hex": 1
+ },
+ "Strand/Screens/FusedRecordView.swift": {
+  "font": 0,
+  "hex": 1
+ },
+ "StrandiOSWidgets/HeartRateWidget.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "StrandiOSWidgets/StressWidget.swift": {
+  "font": 2,
+  "hex": 0
+ },
+ "ZoopWatchComplications/ZoopWatchComplication.swift": {
+  "font": 4,
+  "hex": 0
+ }
+}

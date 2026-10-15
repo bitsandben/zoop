@@ -1,28 +1,15 @@
 import SwiftUI
 
 // MARK: - Scene Hero Background — the day-cycle illustration behind the hero rings
-//
-// A premium atmospheric wash that fades from the top down behind the top hero cards, picked from
-// ten hand-painted day-cycle illustrations by the CURRENT local hour. It REPLACES the procedural
-// `TimeOfDayBackground` on the HERO only — the scene IS the atmosphere there now — while the rest of
-// the screen stays on the flat canvas.
-//
-// HARD RULES honoured here (standing):
-//  - NO GLOW / no bloom / no blur halos. The scene is a flat image masked by a linear gradient.
-//  - SUBTLE: the image caps at ~0.42 opacity so it reads as an atmospheric wash, never a literal photo.
-//    A faint bottom-up dark scrim under the ring content keeps the white ring numbers + labels crisp
-//    even over a bright midday scene.
-//  - TOKENS first: the dark scrim is built from `StrandPalette.surfaceBase`, the canvas token.
-//  - Each scene asset is PORTRAIT (~0.71 ratio), sky at the top — so we scale to FILL the width and
-//    TOP-align, showing the sky and cropping the overflow, then clip to the hero's rounded-rect bounds.
-//  - The scene is chosen on appear (cheap); it recomputes when the hour changes.
+// Atmospheric wash fading from the top behind the hero cards, picked from ten day-cycle illustrations by the current local hour. Replaces the procedural `TimeOfDayBackground` on the hero only.
+// Flat image masked by a linear gradient (no glow/blur), capped ~0.42 opacity so it never reads as a photo, over a faint bottom-up scrim from `StrandPalette.surfaceBase` that keeps ring numbers crisp on bright scenes.
+// Assets are portrait (~0.71) with sky on top: scale to fill the width, top-align, crop the overflow, clip to the hero's rounded rect. Picked on appear and recomputed when the hour changes.
 
 // MARK: - Hour → scene
 
-/// Maps a local hour (0...23) to one of the ten day-cycle illustration asset names ("scene1"..."scene10").
-/// Hand-tuned so the sky's light matches the time of day:
-///   0–4 deep night · 5 first light · 6 dawn · 7 early morning · 8–9 sunrise · 10–11 day ·
-///   12–16 bright midday · 17–18 sunset · 19–20 dusk · 21–23 night + moon.
+/// Maps a local hour (0...23) to a day-cycle asset name ("scene1"..."scene10"), tuned so the sky matches the time of day:
+/// 0–4 deep night · 5 first light · 6 dawn · 7 early morning · 8–9 sunrise · 10–11 day ·
+/// 12–16 bright midday · 17–18 sunset · 19–20 dusk · 21–23 night + moon.
 public enum DayCycleScene {
     /// The asset name for a given hour. Defensive modulo so any hour value is safe.
     public static func assetName(hour: Int) -> String {
@@ -46,8 +33,7 @@ public enum DayCycleScene {
         assetName(hour: Calendar.current.component(.hour, from: Date()))
     }
 
-    /// Whether the hour's scene is a bright one (midday/day) — the hero then warrants a slightly firmer
-    /// bottom scrim so the white ring numbers stay legible over the brighter sky.
+    /// Whether the hour's scene is bright (midday/day), warranting a firmer bottom scrim for legible ring numbers.
     public static func isBright(hour: Int) -> Bool {
         let h = ((hour % 24) + 24) % 24
         return (8...16).contains(h)
@@ -56,10 +42,7 @@ public enum DayCycleScene {
 
 // MARK: - Scene hero background view
 
-/// A full-width day-cycle scene placed at the TOP of the hero region, aspect-filled and top-aligned so
-/// the sky shows, masked by a top-down fade to fully transparent by ~70% down, capped at ~0.42 opacity,
-/// over a faint bottom-up dark scrim that protects the ring content's contrast. Clipped to the hero's
-/// rounded-rect bounds. Drop it behind the hero via `.sceneHeroBackground()`.
+/// A day-cycle scene at the TOP of the hero region, aspect-filled and top-aligned, faded out by ~70% down and capped at ~0.42 opacity, over a faint bottom-up scrim for ring contrast. Use via `.sceneHeroBackground()`.
 public struct SceneHeroBackground: View {
 
     /// The local hour driving which scene shows (0...23). Defaults to the current clock hour.
@@ -79,16 +62,14 @@ public struct SceneHeroBackground: View {
             let w = geo.size.width
             let h = geo.size.height
             ZStack {
-                // The day-cycle scene: aspect-FILL the width, TOP-aligned so the sky shows; overflow is
-                // cropped by the clip below. A flat image — no blur, no glow.
+                // Aspect-FILL the width, top-aligned so the sky shows; overflow is cropped by the clip below.
                 Image(DayCycleScene.assetName(hour: hour))
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: w, alignment: .top)
                     .frame(width: w, height: h, alignment: .top)
                     .clipped()
-                    // TOP-DOWN FADE: fully visible at the very top, fading to fully transparent by ~70%
-                    // down the hero, so it never crowds the rings/numbers lower in the card.
+                    // Top-down fade to fully transparent by ~70% so it never crowds the rings lower in the card.
                     .mask(
                         LinearGradient(
                             stops: [
@@ -102,8 +83,7 @@ public struct SceneHeroBackground: View {
                     )
                     .opacity(imageOpacityCap)
 
-                // A faint bottom-up dark scrim built from the canvas token, so white ring numbers + labels
-                // stay crisp even over a bright midday sky. Firmer for bright scenes, lighter otherwise.
+                // Faint bottom-up scrim from the canvas token keeps white ring text crisp; firmer for bright scenes.
                 LinearGradient(
                     colors: [.clear, StrandPalette.surfaceBase.opacity(DayCycleScene.isBright(hour: hour) ? 0.55 : 0.32)],
                     startPoint: .center, endPoint: .bottom
@@ -120,11 +100,8 @@ public struct SceneHeroBackground: View {
 
 // MARK: - Scene SCREEN background — the scene as the PAGE backdrop (cards float OVER it)
 
-/// The day-cycle scene anchored to the TOP of the SCREEN, behind the header + hero card — so it "forms
-/// part of the background" and the cards sit OVER it (the design direction). Aspect-filled to the full width,
-/// top-aligned (sky shows), fading into the canvas over its lower portion so it dissolves before the
-/// dashboard cards. A faint dark scrim under the very top keeps white header text legible on a bright sky.
-/// Place it edge-to-edge as a top-anchored screen background (the caller ignores safe area). No glow.
+/// The scene anchored to the TOP of the SCREEN behind the header + hero card, so cards float OVER it. Aspect-filled, top-aligned, fading into the canvas before the dashboard cards;
+/// a faint scrim at the very top keeps header text legible. Place edge-to-edge (the caller ignores safe area).
 public struct SceneScreenBackground: View {
     private let hour: Int
     /// How far down the screen the scene reaches before it has fully faded into the canvas.
@@ -135,8 +112,7 @@ public struct SceneScreenBackground: View {
         self.height = height
     }
 
-    /// Backdrop opacity, near-full so the scene reads VIVIDLY (by design). The dark hero CARD floating over it
-    /// is what keeps the rings/data legible, so the scene itself doesn't need to be muted.
+    /// Backdrop opacity, near-full by design: the dark hero card floating over it keeps the data legible.
     private let imageOpacityCap: Double = 0.95
 
     public var body: some View {
@@ -159,8 +135,7 @@ public struct SceneScreenBackground: View {
                 )
             )
             .opacity(imageOpacityCap)
-            // A whisper of dark under the very top for header legibility — kept light so the scene reads at
-            // near-full vividness (the design calls for ~95%, not muted).
+            // A whisper of dark under the very top for header legibility, kept light so the scene stays vivid.
             .overlay(
                 LinearGradient(
                     colors: [StrandPalette.surfaceBase.opacity(0.12), .clear],
@@ -176,8 +151,7 @@ public struct SceneScreenBackground: View {
 // MARK: - Modifier + convenience
 
 public extension View {
-    /// Place the day-cycle `SceneHeroBackground` behind this content (the hero region). Defaults to the
-    /// current clock hour; the scene recomputes when the hour changes (cheap, on appear is fine).
+    /// Places the day-cycle `SceneHeroBackground` behind this content, defaulting to the current hour (recomputed when it changes).
     ///
     ///     heroSection.sceneHeroBackground()            // current hour
     ///     heroSection.sceneHeroBackground(hour: 20)    // pinned hour (previews)

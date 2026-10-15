@@ -22,4 +22,11 @@ final class WorkoutDetectedNotifierTests: XCTestCase {
         XCTAssertFalse(WorkoutDetectedNotifier.shouldNotify(enabled: true, candidateStart: 1_000 + 7 * 60,
                                                             lastNotifiedStart: 1_000))
     }
+
+    /// A candidate whose heart rate ends at the edge of the synced data may still be running.
+    func testRecentlyEndedCandidateWaitsForALaterSync() {
+        let end = 100_000
+        XCTAssertFalse(WorkoutDetectedNotifier.isSettled(endSec: end, now: end + 60))
+        XCTAssertTrue(WorkoutDetectedNotifier.isSettled(endSec: end, now: end + WorkoutDetectedNotifier.settleSec))
+    }
 }

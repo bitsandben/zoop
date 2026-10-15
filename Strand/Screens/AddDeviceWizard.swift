@@ -269,7 +269,7 @@ struct AddDeviceWizard: View {
             Spacer()
             Button(action: { stopAllScans(); onClose() }) {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 20))
+                    .font(ZoopType.icon(20))
                     .foregroundStyle(StrandPalette.textTertiary)
             }
             .buttonStyle(.plain)
@@ -397,7 +397,7 @@ struct AddDeviceWizard: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frostedCardSurface(cornerRadius: 14)
+            .zoopInsetSurface(radius: 14)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(title). \(subtitle)")
@@ -410,7 +410,7 @@ struct AddDeviceWizard: View {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 14) {
                     Image(systemName: typeIcon(type))
-                        .font(.system(size: 30))
+                        .font(ZoopType.icon(30))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text(typeTitle(type)).font(StrandFont.title2)
@@ -429,7 +429,7 @@ struct AddDeviceWizard: View {
                 // pre-empted, not discovered after a failed scan. WHOOP-only: the single-link constraint
                 // is specific to the WHOOP band's bonding, not the generic HR / FTMS paths.
                 if type.isWhoop {
-                    singleConnectionWarning
+                    WhoopSingleConnectionNote()
                 }
 
                 VStack(alignment: .leading, spacing: 12) {
@@ -448,7 +448,7 @@ struct AddDeviceWizard: View {
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .frostedCardSurface(cornerRadius: 14)
+                .zoopInsetSurface(radius: 14)
 
                 Button {
                     startScan(for: type)
@@ -470,17 +470,9 @@ struct AddDeviceWizard: View {
     private func prepInstructions(_ t: DeviceType) -> [String] {
         switch t {
         case .whoop4:
-            return [
-                String(localized: "Put your WHOOP 4.0 on your wrist and make sure it's awake."),
-                String(localized: "Make sure it's NOT connected to the official WHOOP app right now."),
-                String(localized: "Zoop will look for it nearby."),
-            ]
+            return WhoopPairingGuide.prepSteps(for: .whoop4)
         case .whoop5mg:
-            return [
-                String(localized: "WHOOP 5.0 / MG bonds to one device at a time. Unpair it from the official WHOOP app first."),
-                String(localized: "Put the band into pairing mode, on your wrist and awake."),
-                String(localized: "Zoop will look for it nearby."),
-            ]
+            return WhoopPairingGuide.prepSteps(for: .whoop5mg)
         case .hrStrap:
             return [
                 String(localized: "Wake your strap. Put it on, or dampen the contacts."),
@@ -537,7 +529,7 @@ struct AddDeviceWizard: View {
             if ouraStep == .gate || ouraStep == .prep {
                 HStack(spacing: 14) {
                     Image(systemName: "circle.circle")
-                        .font(.system(size: 30))
+                        .font(ZoopType.icon(30))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text("Oura ring").font(StrandFont.title2)
@@ -564,7 +556,7 @@ struct AddDeviceWizard: View {
     @ViewBuilder private var ouraConsentGateFace: some View {
         ouraBetaBanner
 
-        StrandCard(padding: 16) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("What you get").strandOverline()
@@ -687,7 +679,7 @@ struct AddDeviceWizard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frostedCardSurface(cornerRadius: 14)
+        .zoopInsetSurface(radius: 14)
 
         Button {
             startScan(for: .oura)
@@ -805,7 +797,7 @@ struct AddDeviceWizard: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image(systemName: "circle.circle")
-                        .font(.system(size: 22))
+                        .font(ZoopType.icon(22))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.accent))
                         .accessibilityHidden(true)
                     Text(gen.displayName).font(StrandFont.headline)
@@ -832,7 +824,7 @@ struct AddDeviceWizard: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frostedCardSurface(cornerRadius: 14)
+            .zoopInsetSurface(radius: 14)
 
             Text("Name").strandOverline()
             TextField("Oura ring", text: $nameDraft)
@@ -901,7 +893,7 @@ struct AddDeviceWizard: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frostedCardSurface(cornerRadius: 14)
+        .zoopInsetSurface(radius: 14)
     }
 
     // MARK: Step 5 (Oura, failure) - honest dead-end, never a fabricated success
@@ -951,7 +943,7 @@ struct AddDeviceWizard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frostedCardSurface(cornerRadius: 14)
+        .zoopInsetSurface(radius: 14)
     }
 
     /// The per-generation capability checklist (section 3 of the onboarding UX spec). Each row is a (mark,
@@ -1001,7 +993,7 @@ struct AddDeviceWizard: View {
     private func ouraBullet(_ text: String) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "circle.fill")
-                .font(.system(size: 5))
+                .font(ZoopType.icon(5))
                 .foregroundStyle(StrandPalette.textTertiary)
                 .padding(.top, 6)
                 .accessibilityHidden(true)
@@ -1125,7 +1117,7 @@ struct AddDeviceWizard: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frostedCardSurface(cornerRadius: 12)
+            .zoopInsetSurface(radius: 12)
 
             Text("Name").strandOverline()
             TextField("Device name", text: $nameDraft)
@@ -1441,35 +1433,6 @@ struct AddDeviceWizard: View {
                     in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
-    /// A6 , the amber "one phone at a time" warning shown before a WHOOP scan. A failed pairing is most
-    /// often the official WHOOP app still holding the band's single BLE link; saying so up front (with the
-    /// concrete fix) is the honest, frustration-saving move. Amber `statusWarning` matches the existing
-    /// experimental-note treatment so it reads as "heads-up", not "error".
-    private var singleConnectionWarning: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(StrandPalette.statusWarning)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Your WHOOP only talks to one phone at a time.")
-                    .font(StrandFont.subhead)
-                    .foregroundStyle(StrandPalette.statusWarning)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("Force-quit the official WHOOP app first, or pairing may fail.")
-                    .font(StrandFont.footnote)
-                    .foregroundStyle(StrandPalette.statusWarning)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(StrandPalette.statusWarning.opacity(0.10),
-                    in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Heads-up. Your WHOOP only talks to one phone at a time. Force-quit the official WHOOP app first, or pairing may fail.")
-    }
-
     private var whoopFirstNote: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "info.circle")
@@ -1632,7 +1595,7 @@ private struct OuraPickList: View {
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .frostedCardSurface(cornerRadius: 14)
+                .zoopInsetSurface(radius: 14)
             } else if scanner.discovered.isEmpty {
                 VStack(alignment: .leading, spacing: 10) {
                     SearchingCard()
@@ -1697,7 +1660,7 @@ private struct SearchingCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .frostedCardSurface(cornerRadius: 14)
+        .zoopInsetSurface(radius: 14)
     }
 }
 
@@ -1725,7 +1688,7 @@ private struct DiscoveredRow: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frostedCardSurface(cornerRadius: 12)
+            .zoopInsetSurface(radius: 12)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(name), signal \(SignalBars.level(for: rssi)) of 4")

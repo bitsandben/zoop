@@ -144,6 +144,11 @@ final class BiofeedbackController: ObservableObject {
     /// stop and the disconnect-driven stop; on a graceful drop it can still reach the strap before the radio
     /// closes.
     func stop() {
+        // Paced breathing counts toward mindfulness practice (`MindfulSessionLog` ignores < 1 minute).
+        if running, session != .none {
+            MindfulSessionLog.record(kind: .breathing,
+                                     start: Date().addingTimeInterval(-TimeInterval(elapsedSeconds)))
+        }
         clearSchedule()
         model.stopHaptics()
         ScreenIdle.keepAwake(false)
@@ -220,7 +225,7 @@ final class BiofeedbackController: ObservableObject {
             }
             let bpm = paces[index]
             session = .resonanceSweep(bpm: bpm, paceIndex: index, paceCount: paces.count)
-            sweepLabel = String(localized: "Testing \(String(format: "%.1f", bpm)) br/min…")
+            sweepLabel = String(localized: "Testing \(ZoopNumber.decimal(bpm, digits: 1)) br/min…")
 
             // Collect this pace's R-R from the live feed for the pace's duration.
             let startTs = Int(Date().timeIntervalSince1970)

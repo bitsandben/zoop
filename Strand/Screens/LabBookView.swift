@@ -113,7 +113,7 @@ struct LabBookView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image(systemName: "books.vertical.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(ZoopType.icon(16, weight: .semibold))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.metricCyan.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
@@ -128,7 +128,7 @@ struct LabBookView: View {
                         showingDisclaimer = true
                     } label: {
                         Image(systemName: "info.circle")
-                            .font(.system(size: 16, weight: .regular))
+                            .font(ZoopType.icon(16))
                             .foregroundStyle(StrandPalette.textTertiary)
                     }
                     .buttonStyle(.plain)
@@ -172,7 +172,7 @@ struct LabBookView: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 10) {
                     Image(systemName: "tray.and.arrow.down.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(ZoopType.icon(16, weight: .semibold))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.metricAmber))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.metricAmber.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
@@ -394,7 +394,7 @@ struct LabBookView: View {
                         .foregroundStyle(StrandPalette.textPrimary)
                         .lineLimit(1)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(ZoopType.icon(12, weight: .semibold))
                         .foregroundStyle(StrandPalette.textTertiary)
                         .accessibilityHidden(true)
                 }
@@ -525,7 +525,7 @@ enum LabBookFormat {
     /// both are pinned by the same expected strings in `LabBookFormatTests` / `LabValueFormatTest`.
     static func plain(_ v: Double) -> String {
         guard v.isFinite else { return "—" }
-        var s = String(format: "%.3f", v)
+        var s = ZoopNumber.decimal(v, digits: 3)
         while s.hasSuffix("0") { s.removeLast() }
         if s.hasSuffix(".") { s.removeLast() }
         return s == "-0" ? "0" : s
@@ -562,25 +562,14 @@ enum LabBookFormat {
     }()
 
     /// The `yyyy-MM-dd` day key the projection uses (LOCAL day of the reading).
-    private static let keyFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let keyFormatter: DateFormatter = DayKeyFormat.local
     static func dayKey(_ date: Date) -> String { keyFormatter.string(from: date) }
 
     /// A `yyyy-MM-dd` parser PINNED to UTC, so a day string always maps to the same instant regardless
     /// of the device zone. The local-zone `keyFormatter` above returns nil for a day whose LOCAL midnight
     /// is skipped by a DST transition (e.g. Chile/Cuba, 06 Sep) - which used to collapse `noonEpoch` to
     /// epoch 0 and collide different days on the natural key. UTC never skips midnight.
-    private static let utcKeyFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
+    private static let utcKeyFormatter: DateFormatter = DayKeyFormat.utc
 
     /// Epoch seconds of UTC noon on a `yyyy-MM-dd` day — the deterministic, LOCATION-INDEPENDENT `takenAt`
     /// for CSV-imported readings, so re-importing the same file (even after travel to another zone) upserts
@@ -875,7 +864,7 @@ private struct MarkerDetailView: View {
                 Task { await onDelete(row.id) }
             } label: {
                 Image(systemName: "trash")
-                    .font(.system(size: 13))
+                    .font(ZoopType.icon(13))
                     .foregroundStyle(StrandPalette.statusCritical)
             }
             .buttonStyle(.plain)
@@ -967,7 +956,7 @@ enum LabBookSignals {
     }
 
     static func signedR(_ r: Double) -> String {
-        (r >= 0 ? "+" : "−") + String(format: "%.2f", abs(r))
+        (r >= 0 ? "+" : "−") + String(format: "%.2f", locale: AppLanguage.activeLocale, abs(r))
     }
 
     static func strengthWord(_ r: Double) -> String {

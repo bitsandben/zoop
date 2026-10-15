@@ -1,14 +1,10 @@
 import SwiftUI
 
 // MARK: - Zoop visual foundation
-//
-// These tokens describe the visual treatment used by Zoop's existing views. They deliberately
-// contain no navigation, state, or domain semantics: screens keep their current hierarchy and data
-// bindings, while cards, gauges, typography, and chrome share one maintainable source of truth.
+// Visual tokens with no navigation, state or domain semantics, so cards, gauges, typography and chrome share one source of truth.
 
 public enum ZoopVisualStyle {
-    // Dark mode follows the supplied redesign concept: a flat near-black canvas with no gradient,
-    // charcoal cards, black wells for icons, and the app icon's lime accent. Values are sampled from the concept.
+    // Dark: flat near-black canvas, charcoal cards, black icon wells and the app icon's lime accent, sampled from the redesign concept.
     public static let canvas = Color(light: "#F3F4F6", dark: "#0A0A0A", pastel: ("#EEF1EC", "#161C19"))
     public static let surface = Color(light: "#FFFFFF", dark: "#181818", pastel: ("#FFFFFF", "#202824"))
     public static let surfaceTop = Color(light: "#FFFFFF", dark: "#202020", pastel: ("#FFFFFF", "#29322D"))
@@ -42,16 +38,17 @@ public enum ZoopVisualStyle {
 
 /// Shared card/panel treatment: a solid surface on iOS, gradient and soft elevation elsewhere.
 /// `tint` is intentionally faint so metric identity never turns the whole card into a coloured tile.
-public struct ZoopPanelSurface: View {
-    public var tint: Color?
-    public var cornerRadius: CGFloat
-    public var elevated: Bool
-    public var surfaceOpacity: Double
+/// Internal: app code uses the card types or `zoopInsetSurface` / `zoopControlSurface`.
+struct ZoopPanelSurface: View {
+    var tint: Color?
+    var cornerRadius: CGFloat
+    var elevated: Bool
+    var surfaceOpacity: Double
     #if !os(iOS)
     @Environment(\.colorScheme) private var scheme
     #endif
 
-    public init(
+    init(
         tint: Color? = nil,
         cornerRadius: CGFloat = ZoopVisualStyle.cardRadius,
         elevated: Bool = false,
@@ -63,13 +60,10 @@ public struct ZoopPanelSurface: View {
         self.surfaceOpacity = surfaceOpacity
     }
 
-    public var body: some View {
+    var body: some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         #if os(iOS)
-        // Scrolling stacks contain many panels. Layered translucent gradients and blurred shadows
-        // multiply their compositing work, so iOS uses one theme-aware fill and a thin tinted rim.
-        // This changes decorative depth only; card geometry and the design-system colors stay the same.
-        // WHOOP-style cards carry no rim: a flat charcoal fill on the slate canvas.
+        // Scrolling stacks hold many panels; layered translucent gradients and blurred shadows multiply compositing cost, so iOS uses one flat theme-aware fill with no rim. Decorative depth only.
         shape
             .fill(ZoopVisualStyle.surface)
             .opacity(surfaceOpacity)
@@ -129,24 +123,6 @@ public struct ZoopChromeSurface: View {
             Rectangle()
                 .fill(ZoopVisualStyle.divider)
                 .frame(height: 0.5)
-        }
-    }
-}
-
-public extension View {
-    func noopPanel(
-        tint: Color? = nil,
-        cornerRadius: CGFloat = ZoopVisualStyle.cardRadius,
-        elevated: Bool = false,
-        surfaceOpacity: Double = 1
-    ) -> some View {
-        background {
-            ZoopPanelSurface(
-                tint: tint,
-                cornerRadius: cornerRadius,
-                elevated: elevated,
-                surfaceOpacity: surfaceOpacity
-            )
         }
     }
 }

@@ -7,7 +7,7 @@ import Foundation
 //
 // Vitaltrends-style, instrument-grade, uniform. ONE range control at the top
 // (SegmentedPillControl), a LazyVGrid of fixed-height StatTiles (every metric the
-// same 104pt tall), then ChartCard sections — Heart & Vitals, Activity & Energy,
+// same 104pt tall), then chart ContentCard sections — Heart & Vitals, Activity & Energy,
 // Body Composition, Sleep — each chart the same height with an avg/min/max footer.
 //
 // Everything reads from the "apple-health" source. ALL history is loaded once; the
@@ -78,7 +78,7 @@ struct AppleHealthView: View {
     /// Memoized per-metric resolved window. Resolving a key (effective range +
     /// trimmed rows) re-slices the full multi-year series and, on auto-widen, slices
     /// it once per candidate range. The view body asks for the same key many times
-    /// per render (every StatTile, every ChartCard, plus rangeNote/rangeSummary), and
+    /// per render (every StatTile, every chart ContentCard, plus rangeNote/rangeSummary), and
     /// SwiftUI re-evaluates the body on hover / animation / 1Hz HR ticks. The inputs
     /// (`series`, `range`) only change on load or pill tap, so we compute once and
     /// cache, recomputing via .onChangeCompat(of:) when an input actually changes.
@@ -370,11 +370,11 @@ struct AppleHealthView: View {
     #if os(iOS)
     @ViewBuilder
     private var liveSyncCard: some View {
-        StrandCard(padding: 20, tint: StrandPalette.metricCyan) {
+        ContentCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image(systemName: "heart.text.square.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(ZoopType.icon(16, weight: .semibold))
                         .foregroundStyle(StrandPalette.icon(StrandPalette.metricCyan))
                         .frame(width: 30, height: 30)
                         .background(StrandPalette.metricCyan.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
@@ -498,13 +498,13 @@ struct AppleHealthView: View {
                      fmt: { "\(Int($0.rounded()))" })
             statTile(key: "vo2max", label: "VO₂ Max",
                      accent: StrandPalette.accent, unit: "ml/kg",
-                     fmt: { String(format: "%.1f", $0) })
+                     fmt: { ZoopNumber.decimal($0, digits: 1) })
             statTile(key: "weight", label: "Weight",
                      accent: StrandPalette.accent,
                      fmt: { massLabel($0) })
             statTile(key: "body_fat", label: "Body Fat",
                      accent: StrandPalette.metricAmber, unit: "%",
-                     fmt: { String(format: "%.1f", $0) })
+                     fmt: { ZoopNumber.decimal($0, digits: 1) })
             statTile(key: "lean_mass", label: "Lean Mass",
                      accent: StrandPalette.accent,
                      fmt: { massLabel($0) })
@@ -564,7 +564,7 @@ struct AppleHealthView: View {
         )
     }
 
-    // MARK: - Chart sections (uniform ChartCard, same height per page)
+    // MARK: - Chart sections (uniform chart ContentCard, same height per page)
 
     private var heartSection: some View {
         VStack(alignment: .leading, spacing: ZoopMetrics.gap) {
@@ -578,10 +578,10 @@ struct AppleHealthView: View {
                       fmt: { "\(Int($0.rounded())) ms" })
             chartCard(title: "Blood oxygen", key: "spo2",
                       gradient: cyanGradient, fallback: 90...100,
-                      fmt: { String(format: "%.1f%%", $0) })
+                      fmt: { String(format: "%.1f%%", locale: AppLanguage.activeLocale, $0) })
             chartCard(title: "Respiratory rate", key: "resp_rate",
                       gradient: accentGradient, fallback: 10...22,
-                      fmt: { String(format: "%.1f rpm", $0) })
+                      fmt: { String(format: "%.1f rpm", locale: AppLanguage.activeLocale, $0) })
         }
     }
 
@@ -607,13 +607,13 @@ struct AppleHealthView: View {
                       fmt: { massLabel($0) })
             chartCard(title: "Body fat", key: "body_fat",
                       gradient: amberGradient, fallback: 8...35,
-                      fmt: { String(format: "%.1f%%", $0) })
+                      fmt: { String(format: "%.1f%%", locale: AppLanguage.activeLocale, $0) })
             chartCard(title: "Lean body mass", key: "lean_mass",
                       gradient: accentGradient, fallback: 40...80,
                       fmt: { massLabel($0) })
             chartCard(title: "BMI", key: "bmi",
                       gradient: purpleGradient, fallback: 16...35,
-                      fmt: { String(format: "%.1f", $0) })
+                      fmt: { ZoopNumber.decimal($0, digits: 1) })
         }
     }
 
@@ -627,7 +627,7 @@ struct AppleHealthView: View {
         }
     }
 
-    /// One uniform ChartCard for a metric series: header + TrendChart body (same
+    /// One uniform chart ContentCard for a metric series: header + TrendChart body (same
     /// height) + avg/min/max ChartFooter. Sparse-safe via resolvedWindow.
     @ViewBuilder
     private func chartCard(title: LocalizedStringKey, key: String, gradient: Gradient,
@@ -645,7 +645,7 @@ struct AppleHealthView: View {
             }
             return [("Avg", fmt(avg)), ("Min", fmt(lo)), ("Max", fmt(hi)), ("Points", "\(vals.count)")]
         }()
-        ChartCard(
+        ContentCard(
             title: title,
             subtitle: rangeNote(forKey: key),
             trailing: trailing,

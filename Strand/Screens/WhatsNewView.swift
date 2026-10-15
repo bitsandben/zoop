@@ -68,7 +68,7 @@ struct WhatsNewView: View {
             Spacer()
             Button(action: onClose) {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 22))
+                    .font(ZoopType.icon(22))
                     .foregroundStyle(StrandPalette.textTertiary)
             }
             .buttonStyle(.plain)

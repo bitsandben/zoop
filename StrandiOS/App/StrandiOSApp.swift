@@ -61,6 +61,8 @@ struct StrandiOSApp: App {
         // #1008: pin the pre-change Overnight-only default for existing installs before
         // anything reads it. Idempotent; a no-op on fresh installs and after the first launch.
         PuffinExperiment.migrateContinuousHrvOvernightDefault()
+        // Zoop 2.0: clear preferences whose Settings controls were removed, so none is stuck on.
+        SettingsMigration.run()
         #if DEBUG
         // DEBUG-only promo-screenshot harness: when launched with `--demo-hour <Int>`, pin Today to that
         // hour's day-cycle scene + a per-hour stat frame. No-op (active stays nil) when the arg is absent.
@@ -166,6 +168,11 @@ struct StrandiOSApp: App {
             _ = await bridge?.writeBackAfterNewData()
         }
         LocalSettingsArchive.snapshot()
+        // A launch while the app is not in front is iOS starting it in the background (Bluetooth restore,
+        // a background task); filed under tonight's smart-alarm night when there is one.
+        if UIApplication.shared.applicationState == .background {
+            SmartAlarmNightLog.shared.recordEvent(.backgroundLaunch)
+        }
     }
 
     /// The Shortcut-import alert's presentation binding, hoisted OUT of the `.alert` chain.
@@ -226,15 +233,18 @@ struct StrandiOSApp: App {
                 .environmentObject(UpdateStore.shared)
                 .environmentObject(liftSession)
                 // v5 L3: the shared stress check-in nudge surface, so the Breathe screen's passive
-                // card observes the SAME instance the central detector (AppModel.evaluateStress) posts to.
+                // card observes the SAME instance the central detector (AppModel.feedStressOnsetDetector) posts to.
                 .environment(\.stressNudgeCenter, model.stressNudgeCenter)
                 .preferredColorScheme(AppearanceMode.resolve(appearanceRaw).colorScheme)
                 // Match SwiftUI format styles to the localization selected by the app's bundles. Language
                 // changes are process-wide on Apple and are applied after the documented reopen.
                 .environment(\.locale, AppLanguage.activeLocale)
-                .zoopTheme(themeRaw)
+                // In place, not re-keyed: a switch in Settings keeps the open tab, stack and sheet.
+                .zoopThemeInPlace(themeRaw)
                 .chartStyle(chartStyleRaw)
                 .noopAccent(accentRaw, customHex: accentCustomHex)
+                // The theme accent, not the system blue, for every control and UIKit-presented sheet.
+                .zoopWindowTint(key: themeRaw + accentRaw + accentCustomHex + appearanceRaw)
                 // Dynamic Type now scales the prose/label roles (StrandFont). Cap the upper end so the
                 // fixed-geometry tiles/gauges stay legible at the largest accessibility sizes rather than
                 // clipping; the common Larger-Text range still scales fully.
@@ -302,6 +312,8 @@ struct StrandiOSApp: App {
                 .onOpenURL { url in
                     if url.host == "import-health" {
                         model.handleHealthImportURL(url)
+                    } else if let link = DeepLink(url: url) {
+                        router.pendingDeepLink = link
                     }
                 }
                 .onReceive(model.$pendingShortcutHealthImport) { pendingHealthImport = $0 }
@@ -318,6 +330,16 @@ struct StrandiOSApp: App {
                     watch.activate()
                     await watch.pushLatest(from: model)
                 }
+                #if DEBUG
+                // Screenshot harness: `-zoopCoachBriefNow YES` writes today's coach brief on launch,
+                // without waiting for a morning sync.
+                .task {
+                    guard UserDefaults.standard.bool(forKey: "zoopCoachBriefNow") else { return }
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
+                    await CoachMorningBrief.generate(repo: model.repo, coach: model.coach,
+                                                    illness: CoachMorningInputs.isUnwell(model.illnessSignal))
+                }
+                #endif
         }
         // HealthKit authorization is intentionally NOT requested on launch. The system permission
         // dialog without prior in-app rationale violates Apple HIG / App Review guidance — the user
@@ -328,6 +350,9 @@ struct StrandiOSApp: App {
         // HealthKitBridge.sync guards on `auth == .authorized`, so the scenePhase trigger stays a
         // safe no-op until the user opts in.
         .onChange(of: scenePhase, initial: true) { _, phase in
+            // Smart-alarm night diagnostics: when the app was in front or sent to the background.
+            if phase == .active { SmartAlarmNightLog.shared.recordEvent(.foreground) }
+            if phase == .background { SmartAlarmNightLog.shared.recordEvent(.background) }
             if phase == .active {
                 CoachBriefScheduler.activateIfEnabled { await model.coach.generateBrief() }
                 model.drainPendingIntents(router: router)
@@ -350,7 +375,7 @@ struct StrandiOSApp: App {
                 // serialises itself, so overlapping with the sync this foreground also kicks off is safe.
                 Task { await model.runDeferredRescoreIfOwed() }
                 Task {
-                    health.refreshAuthIfPreviouslyGranted()
+                    await health.refreshAuthIfPreviouslyGranted()
                     HealthWritebackBackgroundScheduler.updateSchedule(
                         isAuthorized: health.auth == .authorized)
                     await HealthSyncRefreshCoordinator.run(
@@ -392,11 +417,11 @@ struct StrandiOSApp: App {
 }
 
 /// iOS root — the `RootTabView` shell with the first-run onboarding/pairing wizard overlaid until
-/// complete, the Terms acknowledgment gate over everything until the current version is accepted, and
-/// a "What's New" changelog sheet shown automatically after an update.
+/// complete (it carries the Terms step for a fresh install), the standalone Terms gate when an onboarded
+/// install meets new terms, and a "What's New" changelog sheet shown automatically after an update.
 ///
-/// This mirrors the macOS `ContentView` (same `@AppStorage` keys, same gate ordering) but swaps the
-/// excluded `RootView()` sidebar for `RootTabView()`. The shared `OnboardingWizard`, `TermsGateView`,
+/// This mirrors the macOS `ContentView` (same `@AppStorage` keys) but swaps the excluded `RootView()`
+/// sidebar for `RootTabView()`, and lets onboarding open with a welcome screen before the terms. The shared `OnboardingWizard`, `TermsGateView`,
 /// `WhatsNewView`, `AppChangelog`, and `Terms` symbols all compile into the iOS target unchanged.
 private struct iOSRootView: View {
     @AppStorage("zoop.onboarded") private var onboarded = false
@@ -442,9 +467,10 @@ private struct iOSRootView: View {
                 .transition(.opacity)
                 .zIndex(1)
             }
-            // Terms acknowledgment gate — over EVERYTHING (before onboarding/pairing/Bluetooth) until
-            // the current terms version is accepted; re-appears if the terms materially change.
-            if acceptedTerms != Terms.currentVersion && !demoBypass {
+            // Terms acknowledgment gate for an onboarded install whose accepted version is behind (the
+            // terms materially changed). A fresh install accepts the same text as onboarding step 2,
+            // which comes before device choice and pairing, so it is never paired unaccepted either.
+            if onboarded && acceptedTerms != Terms.currentVersion && !demoBypass {
                 TermsGateView(onAccept: {
                     // Keep any external action behind the gate while the accepted-terms change decides
                     // whether What's New must present next. This write must precede acceptedTerms.
@@ -520,12 +546,7 @@ enum DemoScreens {
         let args = CommandLine.arguments
         guard let i = args.firstIndex(of: "--demo-screen"), i + 1 < args.count else { return nil }
         switch args[i + 1].lowercased() {
-        case "today":    return AnyView(TodayView())
-        // The DEFAULT iOS Today (`noop.liquidTodayEnabled` ships true), so it needs its own entry — plain
-        // "today" renders the CLASSIC screen, which is exactly the screen whose behaviour Liquid was found
-        // to have diverged from. Without this, the default Today was the one screen the harness could not
-        // capture.
-        case "liquidtoday": return AnyView(LiquidTodayView())
+        case "today":    return AnyView(TodayScreen())
         case "trends":   return AnyView(TrendsView())
         case "sleep":    return AnyView(SleepView())
         case "live":     return AnyView(LiveView())
@@ -537,11 +558,16 @@ enum DemoScreens {
         case "compare":  return AnyView(CompareView())
         case "settings": return AnyView(SettingsView())
         case "chargebreakdown": return AnyView(ChargeBreakdownDemoHost())
+        // Coloured route card over a synthetic 5 km loop (no recorded run needed).
+        case "routemap": return AnyView(RouteMapDemoHost())
         case "devices":  return AnyView(DevicesView())
         case "devicescatalog": return AnyView(DeviceCardCatalog())
         case "onboarding": return AnyView(OnboardingWizard(onFinished: {}))
+        case "recovery": return AnyView(RecoveryDemoHost(nights: 40, scale: 0.62))
+        case "recoverycalibrating": return AnyView(RecoveryDemoHost(nights: 2, scale: 0.8))
+        case "sleeprestless": return AnyView(SleepRestlessDemoHost())
         case "fitnessage": return AnyView(NavigationStack { FitnessAgeScreen() })
-        case "vitality": return AnyView(VitalityDemoScreen())
+        case "fasting": return AnyView(FastingScreen())
         case "addwizard": return AnyView(AddWizardDemoHost())
         // Oura onboarding: the Add-device wizard deep-linked straight to the Oura factory-reset-and-adopt
         // prep step (the Beta banner + get/lose card + the red irreversible-consent gate), screenshot-able
@@ -554,6 +580,12 @@ enum DemoScreens {
         // + self-service pairing guidance, screenshot-able WITHOUT reproducing the bond refusal on real
         // hardware.
         case "bondrefused": return AnyView(BondRefusedDemoScreen())
+        // The sleep planner (smart-alarm mode card) and the Test Centre's smart-alarm nights page.
+        case "sleepplanner": return AnyView(NavigationStack { SleepPlannerHost() })
+        case "smartalarmnights": return AnyView(NavigationStack { SmartAlarmNightsView() })
+        // `settings.<page>` (profile, strap, appearance, …) opens one Settings page directly.
+        case let name where name.hasPrefix("settings."):
+            return SettingsPage(rawValue: String(name.dropFirst("settings.".count))).map { AnyView($0.destination) }
         default:         return nil
         }
     }
