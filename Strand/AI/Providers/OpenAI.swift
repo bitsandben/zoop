@@ -26,12 +26,15 @@ struct OpenAIClient: AIProviderClient {
 
     /// `send`, plus the reasoning text a reasoning model returns beside its answer (OpenRouter's
     /// `message.reasoning`), which the plan builder keeps behind its "thought for N seconds" line.
+    /// `jsonMode` asks for a JSON object (`response_format`); a model that rejects it is asked again
+    /// without, and the caller's own parser stays the judge of the reply.
     func sendDetailed(
         key: String,
         model: String,
         systemPrompt: String,
         messages: [(role: ChatMessage.Role, content: String)],
-        session: URLSession
+        session: URLSession,
+        jsonMode: Bool = false
     ) async throws -> (text: String, reasoning: String?) {
         var wire: [[String: Any]] = [["role": "system", "content": systemPrompt]]
         for m in messages { wire.append(["role": m.role.rawValue, "content": m.content]) }
@@ -39,12 +42,18 @@ struct OpenAIClient: AIProviderClient {
         // Standard params first (gpt-4 family). Newer/reasoning models reject `temperature` and want
         // `max_completion_tokens`; if the provider 400s about either, retry with the modern shape.
         do {
-            return try await chat(key: key, model: model, wire: wire, modernParams: false, session: session)
+            return try await chat(key: key, model: model, wire: wire, modernParams: false, jsonMode: jsonMode,
+                                  session: session)
         } catch let AICoachError.server(code, detail) where code == 400 {
             let d = detail.lowercased()
+            if jsonMode, d.contains("response_format") || d.contains("json") {
+                return try await sendDetailed(key: key, model: model, systemPrompt: systemPrompt,
+                                              messages: messages, session: session, jsonMode: false)
+            }
             if d.contains("max_completion_tokens") || d.contains("max_tokens")
                 || d.contains("temperature") || d.contains("unsupported") {
-                return try await chat(key: key, model: model, wire: wire, modernParams: true, session: session)
+                return try await chat(key: key, model: model, wire: wire, modernParams: true, jsonMode: false,
+                                      session: session)
             }
             throw AICoachError.server(code, detail)
         }
@@ -111,9 +120,11 @@ struct OpenAIClient: AIProviderClient {
         model: String,
         wire: [[String: Any]],
         modernParams: Bool,
+        jsonMode: Bool,
         session: URLSession
     ) async throws -> (text: String, reasoning: String?) {
         var body: [String: Any] = ["model": model, "messages": wire]
+        if jsonMode { body["response_format"] = ["type": "json_object"] }
         // #1074: 900 truncated detailed coaching replies mid-sentence; 4096 lets a full multi-section
         // reply complete (a cap, not a target — the system prompt keeps it short). Matches Gemini + Android.
         if modernParams {

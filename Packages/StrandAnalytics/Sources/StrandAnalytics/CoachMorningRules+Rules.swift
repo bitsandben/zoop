@@ -2,7 +2,7 @@ import Foundation
 
 // CoachMorningRules+Rules.swift - the individual morning rules, one slot each.
 //
-// Slots and their priorities (higher first, `evaluate` keeps the top three):
+// Slots and their priorities (higher first, `evaluate` keeps the top two):
 //   training  illness 100 · low recovery / poor night 80-90 · trend caution 75 · deload 70 ·
 //             routine nudge 60 · go / push 50-55
 //   fasting   a long fast on a low day 85

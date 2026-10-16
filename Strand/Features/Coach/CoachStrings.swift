@@ -68,19 +68,6 @@ enum CoachStrings {
 
     // MARK: Brief sentences
 
-    static func readiness(_ band: CoachMorningRules.Readiness, pct: String) -> String? {
-        switch band {
-        case .high: return s(r("zoop.coach.brief.high", "Recovery \(pct): your body is ready for a hard day."))
-        case .medium: return s(r("zoop.coach.brief.medium", "Recovery \(pct): a solid day, not a peak one."))
-        case .low: return s(r("zoop.coach.brief.low", "Recovery \(pct): today is for recovering."))
-        case .unknown: return nil
-        }
-    }
-
-    static func slept(_ duration: String) -> String { s(r("zoop.coach.brief.slept", "You slept \(duration).")) }
-    static func sleptWithDebt(_ duration: String, debt: String) -> String {
-        s(r("zoop.coach.brief.sleptDebt", "You slept \(duration) and carry \(debt) of sleep debt."))
-    }
     static func focus(_ title: String) -> String { s(r("zoop.coach.brief.focus", "Focus today: \(title).")) }
 
     // MARK: Suggestion copy per reason

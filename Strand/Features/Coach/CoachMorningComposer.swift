@@ -8,30 +8,37 @@ import StrandAnalytics
 enum CoachMorningComposer {
 
     struct Output {
-        let brief: String
+        /// One line: the score against the personal range, or the quiet all-good line.
+        let headline: String
+        /// The "because" lines, one per driver.
+        let reasons: [String]
         let suggestions: [CoachSuggestion]
+        /// Something stood out: only then does the morning push go out.
+        let notable: Bool
+
+        var brief: String { CoachBriefStrings.text(headline: headline, lines: reasons) }
+        var push: String { CoachBriefStrings.push(headline: headline, lines: reasons) }
     }
 
-    /// The rule-based brief: readiness, the night, and the first suggestion as today's focus.
-    static func compose(input: CoachMorningRules.Input, plan: CoachMorningRules.Plan, now: Date,
-                        whoopScale: Bool) -> Output {
+    /// The rule-based brief: a headline that says where recovery sits against the user's normal, the
+    /// drivers that explain it with their numbers, and at most two suggestions.
+    static func compose(input: CoachMorningRules.Input, explain: MorningBriefDrivers.Input,
+                        plan: CoachMorningRules.Plan, now: Date, whoopScale: Bool) -> Output {
         let suggestions = plan.candidates.map { suggestion(for: $0, now: now, whoopScale: whoopScale) }
-        var sentences: [String] = []
-        if let pct = input.recovery.map(score), let line = CoachStrings.readiness(plan.readiness, pct: pct) {
-            sentences.append(line)
+        let drivers = MorningBriefDrivers.evaluate(explain)
+        let reasons = drivers.drivers.map(CoachBriefStrings.line)
+        let headline: String
+        if let recovery = explain.recovery ?? input.recovery {
+            headline = CoachBriefStrings.headline(drivers, recovery: recovery, range: explain.recoveryRange)
+        } else {
+            headline = suggestions.first.map { CoachStrings.focus($0.title) } ?? ""
         }
-        if let slept = input.sleepMin, slept > 0 {
-            let duration = ZoopDuration.text(minutes: slept)
-            sentences.append(input.sleepDebtMin >= SleepDebt.onTargetBandMin
-                ? CoachStrings.sleptWithDebt(duration, debt: ZoopDuration.text(minutes: input.sleepDebtMin))
-                : CoachStrings.slept(duration))
-        }
-        if let first = suggestions.first { sentences.append(CoachStrings.focus(first.title)) }
-        return Output(brief: sentences.joined(separator: " "), suggestions: suggestions)
+        return Output(headline: headline, reasons: reasons, suggestions: suggestions, notable: drivers.notable)
     }
 
-    /// Applies a parsed cloud reply: its brief, and its picks in its order with its wording. Candidates
-    /// the reply left out are dropped, since the provider judged them less relevant today.
+    /// Applies a parsed cloud reply: its headline and reasons, and its picks in its order with its
+    /// wording. Candidates the reply left out are dropped, since the provider judged them less relevant
+    /// today. Reasons are kept from the rules when the reply dropped some, so no driver goes unexplained.
     static func applying(_ reply: CoachBriefReply.Parsed, to output: Output) -> Output {
         let reworded: [CoachSuggestion] = reply.picks.compactMap { pick in
             guard output.suggestions.indices.contains(pick.index) else { return nil }
@@ -40,21 +47,32 @@ enum CoachMorningComposer {
             s.body = pick.body
             return s
         }
-        return Output(brief: reply.brief, suggestions: reworded.isEmpty ? output.suggestions : reworded)
+        let reasons = reply.reasons.count == output.reasons.count ? reply.reasons : output.reasons
+        return Output(headline: reply.headline, reasons: reasons,
+                      suggestions: reworded.isEmpty ? output.suggestions : reworded, notable: output.notable)
     }
 
-    /// The numbered candidate list a cloud provider picks from (with each one's action kind, which the
-    /// reply must echo), plus what the user recently declined. The candidates are already written in
-    /// the app language, which keeps the provider in it too.
-    static func providerPrompt(context: String, output: Output, declined: Set<String>, languageCode: String) -> String {
-        var lines = [context, "", "---", "", "Candidates (pick by id; keep the action kind):"]
+    /// The facts a cloud provider explains (the drivers, numbered, in the app language) and the numbered
+    /// candidate list it picks from (with each one's action kind, which the reply must echo), plus what
+    /// the user recently declined or was already told. Written in the app language, which keeps the
+    /// provider in it too.
+    static func providerPrompt(context: String, output: Output, declined: Set<String>,
+                               recentTitles: [String], languageCode: String) -> String {
+        var lines = [context, "", "---", "", "Headline draft: \(output.headline)"]
+        lines.append(output.reasons.isEmpty
+            ? "Drivers: none stood out today (reasons must be empty)."
+            : "Drivers (explain each, keep every number):")
+        lines += CoachBriefStrings.providerLines(output.reasons)
+        lines.append("Candidates (pick by id; keep the action kind):")
         for (i, s) in output.suggestions.enumerated() {
             lines.append("\(i). action=\(s.action.kindName) [\(s.kind.rawValue)] \(s.title): \(s.body) \(s.rationale)")
         }
         if !declined.isEmpty {
             lines.append("Recently declined by the user: \(declined.sorted().joined(separator: ", ")).")
         }
-        lines.append("Draft brief for reference: \(output.brief)")
+        if !recentTitles.isEmpty {
+            lines.append("Already suggested in the last days (do not repeat the wording): \(recentTitles.joined(separator: "; ")).")
+        }
         lines.append(CoachBriefReply.languageDirective(languageCode: languageCode))
         return lines.joined(separator: "\n")
     }

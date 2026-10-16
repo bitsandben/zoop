@@ -224,7 +224,7 @@ struct LiftRoutineGenerateSheet: View {
             language: Locale.current.language.languageCode?.identifier ?? "en")
         do {
             let reply = try await coach.oneShot(systemPrompt: LiftRoutineGenerator.systemPrompt,
-                                                prompt: LiftRoutineGenerator.userPrompt(for: request))
+                                                prompt: LiftRoutineGenerator.userPrompt(for: request), json: true)
             draft = try LiftRoutineGenerator.parse(reply)
         } catch is LiftRoutineGenerator.ParseError {
             failure = String(localized: "The coach's reply wasn't a routine. Try again.")
