@@ -857,6 +857,9 @@ final class Backfiller {
             do {
                 counts = try await store.insert(decoded, deviceId: deviceId)
                 onBankedOffload(counts)
+                // Read-only bookkeeping for the morning brief: how far stored HISTORY reaches, apart
+                // from live samples. Never consulted by the offload, ack or cursor logic.
+                HistoryFrontier.advance(deviceId: deviceId, to: HistoryFrontier.newest(in: decoded))
             } catch {
                 // Diag (#601): the decoded rows couldn't be written — this is the "history stalls but live HR
                 // works" class. We return WITHOUT acking so the strap keeps this chunk and re-sends it next

@@ -113,6 +113,7 @@ enum SmartAlarmNightText {
         }
         for c in n.checks { out.append(check(c)) }
         out += liveTimeline(n, now: now)
+        for b in n.briefs ?? [] { out.append(brief(b)) }
         if let e = n.earlyWake {
             out.append(Entry(at: e.decidedAt, title: String(localized: "Alarm moved to \(clock(e.wakeAt)) – \(reason(e.reason))"),
                              tone: .positive))
@@ -139,6 +140,18 @@ enum SmartAlarmNightText {
         return Entry(at: c.ranAt, title: title,
                      detail: parts.joined(separator: " · "),
                      tone: c.decision == "wake" ? .positive : .neutral)
+    }
+
+    /// "Morning brief written · slept 7 h 21 min · recovery 64 · night end 06:41 · history synced to 06:58".
+    static func brief(_ b: SmartAlarmNight.Brief) -> Entry {
+        var parts: [String] = []
+        if let m = b.sleepMin { parts.append(String(localized: "slept \(minutes(m))")) }
+        if let r = b.recovery { parts.append(String(localized: "recovery \(Int(r.rounded()))")) }
+        if let e = b.nightEndTs { parts.append(String(localized: "night end \(clock(e))")) }
+        if let f = b.frontierTs { parts.append(String(localized: "history synced to \(clock(f))")) }
+        let title = b.rewrite ? String(localized: "Morning brief rewritten: the night changed")
+                              : String(localized: "Morning brief written")
+        return Entry(at: b.at, title: title, detail: parts.isEmpty ? nil : parts.joined(separator: " · "))
     }
 
     static func decision(_ raw: String) -> String {

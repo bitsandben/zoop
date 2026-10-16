@@ -18,7 +18,6 @@ enum CoachMorningBrief {
 
     /// The coach's own switch (Coach settings). Absent = on, like the good-morning notification.
     static let proactiveKey = "zoop.coach.proactive"
-    private static let lastDayKey = "zoop.coach.morningBriefDay"
     private static let requestId = "coach-morning"
     /// A notification body longer than this is cut; the full brief is on the Today card.
     private static let pushBodyLimit = 220
@@ -33,19 +32,36 @@ enum CoachMorningBrief {
     /// One generation at a time: the days republish fires in bursts during a sync.
     private static var inFlight = false
 
-    /// Called on every days republish once the sync gates passed. Generates at most once per day, after
-    /// the night ended and Recovery is scored; posts only in the morning, only when the good-morning
-    /// notification is on, and only when the brief is notable.
-    static func onDayUpdate(today: String, recovery: Double?, nightEndTs: Int?, illness: Bool,
-                            repo: Repository, coach: AICoachEngine, now: Date = Date()) {
-        guard isActive, recovery != nil, !inFlight,
-              UserDefaults.standard.string(forKey: lastDayKey) != today,
-              nightEnded(nightEndTs, now: now) else { return }
+    /// What today's brief was written from (`MorningBriefReadiness.Basis`, JSON).
+    private static let basisKey = "zoop.coach.morningBriefBasis"
+
+    static var lastBasis: MorningBriefReadiness.Basis? {
+        UserDefaults.standard.data(forKey: basisKey)
+            .flatMap { try? JSONDecoder().decode(MorningBriefReadiness.Basis.self, from: $0) }
+    }
+
+    /// Called on every days republish once `MorningBriefReadiness` says the night is over and offloaded.
+    /// Writes today's brief, and REWRITES it when the night it quoted changed afterwards (a later offload
+    /// brought more of it), so the Today card always carries the final numbers. Posts at most once a day,
+    /// in the morning, only when the good-morning notification is on. `written` reports each write.
+    static func onDayUpdate(today: String, recovery: Double?, sleepMin: Double?, nightEndTs: Int?, illness: Bool,
+                            repo: Repository, coach: AICoachEngine, now: Date = Date(),
+                            written: @escaping (_ basis: MorningBriefReadiness.Basis, _ rewrite: Bool) -> Void = { _, _ in }) {
+        guard isActive, recovery != nil, !inFlight else { return }
+        let previous = lastBasis
+        guard MorningBriefReadiness.needsWrite(previous: previous, day: today, sleepMin: sleepMin,
+                                               nightEndTs: nightEndTs) else { return }
+        let rewrite = previous?.day == today
+        // A rewrite is for a night that was still arriving; past the morning a moved end is a nap, not the night.
+        if rewrite, Calendar.current.component(.hour, from: now) >= GoodMorningNotifier.latestHour { return }
         inFlight = true
         Task { @MainActor in
             defer { inFlight = false }
             let result = await generateOutput(repo: repo, coach: coach, illness: illness, now: now, day: today)
-            UserDefaults.standard.set(today, forKey: lastDayKey)
+            let basis = MorningBriefReadiness.Basis(day: today, sleepMin: sleepMin, nightEndTs: nightEndTs,
+                                                    recovery: recovery, writtenAt: Int(now.timeIntervalSince1970))
+            if let data = try? JSONEncoder().encode(basis) { UserDefaults.standard.set(data, forKey: basisKey) }
+            written(basis, rewrite)
             let hour = Calendar.current.component(.hour, from: now)
             // All in the green: nothing to tell, so no push (and no plain good-morning either).
             guard result.notable else { return }
@@ -103,12 +119,6 @@ enum CoachMorningBrief {
               let parsed = CoachBriefReply.parse(reply, candidateActions: output.suggestions.map(\.action.kindName)),
               CoachLanguageCheck.matches(parsed.allText, languageCode: language) else { return nil }
         return parsed
-    }
-
-    private static func nightEnded(_ endTs: Int?, now: Date) -> Bool {
-        guard let endTs else { return false }
-        let end = Date(timeIntervalSince1970: TimeInterval(endTs))
-        return Calendar.current.isDate(end, inSameDayAs: now) && end <= now
     }
 
     /// Respects the notification permission: nothing is asked here, the good-morning switch owns that.

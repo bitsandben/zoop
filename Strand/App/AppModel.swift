@@ -138,6 +138,11 @@ final class AppModel: ObservableObject {
 
     private var lastDoubleTapAt: Date = .distantPast
     private var lastCoachZone: Int = -1
+    /// One morning-brief evaluation at a time (the days republish fires in bursts during a sync).
+    private var goodMorningEvaluating = false
+    private var goodMorningRerun = false
+    /// Last held-brief verdict written to the strap log (`day|verdict`), so a hold is logged once.
+    private var lastGoodMorningHoldNote: String?
     // Stress-onset detector state: a rolling R-R buffer plus the replay-safe detector state (persisted via
     // BiofeedbackPrefs so a relaunch cannot re-fire).
     private var rrBuf: [Int] = []
@@ -1724,24 +1729,95 @@ final class AppModel: ObservableObject {
             enabled: behavior.strainTargetNudge)
     }
 
-    /// Once-a-day good-morning notification with the night's Recovery (see GoodMorningNotifier). Held while
-    /// history is arriving or being scored: it posts once and is never corrected, so it must not announce a
-    /// Recovery from a partial overnight offload.
+    /// Once-a-day good-morning notification with the night's Recovery (see GoodMorningNotifier), or the coach
+    /// brief in its place. Held while history is arriving or being scored, AND until offloaded history reaches
+    /// clearly past the night's end (`MorningBriefReadiness`): between two offloads every sync flag reads
+    /// false, so a mid-night background sync used to announce the night so far as the whole night.
     func evaluateGoodMorning() {
         guard !live.backfilling, !live.historyPendingSync, !intelligence.computing else { return }
+        guard repo.today != nil else { return }
+        guard !goodMorningEvaluating else { goodMorningRerun = true; return }
+        goodMorningEvaluating = true
+        Task { @MainActor in
+            await evaluateGoodMorningReadiness(now: Date())
+            goodMorningEvaluating = false
+            if goodMorningRerun {
+                goodMorningRerun = false
+                evaluateGoodMorning()
+            }
+        }
+    }
+
+    private func evaluateGoodMorningReadiness(now: Date) async {
+        var storeLatest: Int?
+        if let store = await repo.storeHandle() {
+            storeLatest = (try? await store.latestHRSampleTs(deviceId: repo.deviceId)) ?? nil
+        }
+        // Re-read after the await: a sync may have started, or the night moved, meanwhile.
         guard let row = repo.today else { return }
+        let busy = live.backfilling || live.historyPendingSync || intelligence.computing
         let nightEnd = repo.sleeps.map(\.endTs).max()
+        let frontier = MorningBriefReadiness.dataFrontier(
+            historyFrontierTs: HistoryFrontier.value(deviceId: repo.deviceId), storeLatestTs: storeLatest)
+        let cal = Calendar.current
+        let verdict = MorningBriefReadiness.evaluate(.init(
+            nowTs: Int(now.timeIntervalSince1970), nightEndTs: nightEnd, dataFrontierTs: frontier, syncBusy: busy,
+            localHour: cal.component(.hour, from: now),
+            nightEndIsToday: nightEnd.map { cal.isDate(Date(timeIntervalSince1970: TimeInterval($0)), inSameDayAs: now) }
+                ?? false))
+        let today = Repository.localDayKey(now)
+        noteGoodMorningVerdict(verdict, day: today, sleepMin: row.totalSleepMin, nightEnd: nightEnd, frontier: frontier)
+        guard verdict == .ready else { return }
         #if os(iOS)
         // With the Coach on, the morning goes out as the coach brief instead of the plain text.
         if CoachMorningBrief.isActive {
-            CoachMorningBrief.onDayUpdate(today: Repository.localDayKey(Date()), recovery: row.recovery,
+            CoachMorningBrief.onDayUpdate(today: today, recovery: row.recovery, sleepMin: row.totalSleepMin,
                                           nightEndTs: nightEnd, illness: CoachMorningInputs.isUnwell(illnessSignal),
-                                          repo: repo, coach: coach)
+                                          repo: repo, coach: coach, now: now) { [weak self] basis, rewrite in
+                self?.recordMorningBrief(basis, frontier: frontier, rewrite: rewrite)
+            }
             return
         }
         #endif
-        GoodMorningNotifier.onDayUpdate(today: Repository.localDayKey(Date()), recovery: row.recovery,
-                                        sleepMinutes: row.totalSleepMin, nightEndTs: nightEnd)
+        GoodMorningNotifier.onDayUpdate(today: today, recovery: row.recovery,
+                                        sleepMinutes: row.totalSleepMin, nightEndTs: nightEnd, now: now)
+    }
+
+    /// Strap log line for a held morning brief, once per verdict per day: the evidence for "why no brief yet".
+    private func noteGoodMorningVerdict(_ v: MorningBriefReadiness.Verdict, day: String, sleepMin: Double?,
+                                        nightEnd: Int?, frontier: Int?) {
+        guard v == .nightOpen || v == .tooEarly else { return }
+        let key = "\(day)|\(v.rawValue)"
+        guard key != lastGoodMorningHoldNote else { return }
+        lastGoodMorningHoldNote = key
+        live.append(log: "[\(Self.briefLogClock(Int(Date().timeIntervalSince1970)))] Morning brief held (\(v.rawValue)): "
+            + "stored night \(Self.briefLogMinutes(sleepMin)), ends \(nightEnd.map(Self.briefLogClock) ?? "-"), "
+            + "offloaded history reaches \(frontier.map(Self.briefLogClock) ?? "unknown"); "
+            + "waits until history is \(MorningBriefReadiness.wakeMarginSec / 60) min past the night's end")
+    }
+
+    /// What the written brief quoted, in the strap log (always) and the smart-alarm night log (when a night
+    /// with an alarm belongs to this morning), so the numbers can be checked against the Sleep screen.
+    private func recordMorningBrief(_ b: MorningBriefReadiness.Basis, frontier: Int?, rewrite: Bool) {
+        live.append(log: "[\(Self.briefLogClock(b.writtenAt))] Morning brief \(rewrite ? "rewritten (night changed)" : "written"): "
+            + "slept \(Self.briefLogMinutes(b.sleepMin)), recovery \(b.recovery.map { String(Int($0.rounded())) } ?? "-"), "
+            + "night end \(b.nightEndTs.map(Self.briefLogClock) ?? "-"), "
+            + "offloaded history reaches \(frontier.map(Self.briefLogClock) ?? "unknown")")
+        SmartAlarmNightLog.shared.recordBrief(.init(at: b.writtenAt, sleepMin: b.sleepMin, recovery: b.recovery,
+                                                    nightEndTs: b.nightEndTs, frontierTs: frontier, rewrite: rewrite))
+    }
+
+    private static func briefLogClock(_ ts: Int) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "HH:mm"
+        return f.string(from: Date(timeIntervalSince1970: TimeInterval(ts)))
+    }
+
+    private static func briefLogMinutes(_ m: Double?) -> String {
+        guard let m else { return "-" }
+        let total = Int(m.rounded())
+        return "\(total / 60)h \(total % 60)m"
     }
 
     /// Re-run the illness watch over the cached history when the Automations toggle flips (the

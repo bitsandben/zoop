@@ -28,6 +28,9 @@ public struct SmartAlarmNight: Codable, Equatable, Identifiable, Sendable {
     public var readback: String?
     /// The live heart-rate stream held open around the window (`SmartAlarmNightLive.swift`); nil when not used.
     public var liveStream: LiveStream?
+    /// Morning briefs written after this night: the sleep total and recovery they quoted, and when. nil in
+    /// records written before briefs were logged.
+    public var briefs: [Brief]?
 
     public init(deadline: Int, windowStart: Int, settings: GoalWake.Settings, needMin: Double?,
                 plannedChecks: [Int]) {
@@ -112,6 +115,23 @@ public struct SmartAlarmNight: Codable, Equatable, Identifiable, Sendable {
         public var at: Int
         public var kind: EventKind
         public init(at: Int, kind: EventKind) { self.at = at; self.kind = kind }
+    }
+
+    /// One morning brief as written: what it quoted and how far offloaded history reached at that moment.
+    public struct Brief: Codable, Equatable, Sendable {
+        public var at: Int
+        public var sleepMin: Double?
+        public var recovery: Double?
+        public var nightEndTs: Int?
+        /// Newest offloaded history record (`MorningBriefReadiness.dataFrontier`), nil when unknown.
+        public var frontierTs: Int?
+        /// True when this replaced an earlier brief for the same morning because the night changed.
+        public var rewrite: Bool
+        public init(at: Int, sleepMin: Double?, recovery: Double?, nightEndTs: Int?, frontierTs: Int?,
+                    rewrite: Bool) {
+            self.at = at; self.sleepMin = sleepMin; self.recovery = recovery; self.nightEndTs = nightEndTs
+            self.frontierTs = frontierTs; self.rewrite = rewrite
+        }
     }
 
     public struct EarlyWake: Codable, Equatable, Sendable {

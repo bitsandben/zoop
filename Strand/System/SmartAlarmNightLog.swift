@@ -118,6 +118,19 @@ final class SmartAlarmNightLog: ObservableObject {
         }
     }
 
+    /// Files a written morning brief under this morning's night: the one whose event span holds `at`, else
+    /// the latest night with its deadline earlier the same local day (a brief often lands after the tail).
+    func recordBrief(_ brief: SmartAlarmNight.Brief) {
+        let cal = Calendar.current
+        let day = Date(timeIntervalSince1970: TimeInterval(brief.at))
+        let night = current(now: brief.at) ?? nights
+            .filter { $0.deadline <= brief.at && cal.isDate(Date(timeIntervalSince1970: TimeInterval($0.deadline)),
+                                                             inSameDayAs: day) }
+            .max { $0.deadline < $1.deadline }
+        guard let night else { return }
+        update(deadline: night.deadline) { $0.briefs = ($0.briefs ?? []) + [brief] }
+    }
+
     /// Fills the arm-readback verdict from the alarm path's own stored halves, only when they are attributable.
     func recordReadback(now: Int) {
         guard let n = current(now: now) ?? nights.first, let lastArm = n.arms.last else { return }
