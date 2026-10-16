@@ -27,6 +27,14 @@ final class PlanInterviewTests: XCTestCase {
         XCTAssertTrue(state.answersBlock.contains("no preference"))
     }
 
+    func testFillTakesTheFormAnswersAndIgnoresForeignSlots() {
+        var state = PlanInterview.State(kind: .routine)
+        state.fill([.focus: " Upper ", .equipment: "Bands", .duration: "30 min", .level: "Beginner", .goal: "x"])
+        XCTAssertTrue(state.isComplete)
+        XCTAssertEqual(state.answers[.focus], "Upper")
+        XCTAssertNil(state.answers[.goal])
+    }
+
     func testReopenClearsTheSlotAndLaterOnes() {
         var state = PlanInterview.State(kind: .routine)
         ["a", "b", "c", "d"].forEach { state.record($0) }

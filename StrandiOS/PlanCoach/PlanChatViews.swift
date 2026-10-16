@@ -2,7 +2,7 @@ import SwiftUI
 import StrandDesign
 
 // The pieces of the plan builder conversation: the coach's lines (avatar, quiet thinking line, text),
-// the user's accent bubbles, quick replies, the weekday picker and the composer.
+// the user's accent bubbles and the composer.
 
 /// The small mark beside the coach's lines.
 struct PlanCoachAvatar: View {
@@ -98,79 +98,15 @@ struct PlanChatRow<Card: View>: View {
 
 /// While the provider answers.
 struct PlanThinkingRow: View {
+    var text = PlanFormat.t("zoop.planchat.thinking")
+
     var body: some View {
         HStack(spacing: ZoopSpacing.s) {
             PlanCoachAvatar()
             ProgressView().controlSize(.small)
-            Text(PlanFormat.t("zoop.planchat.thinking"))
+            Text(text)
                 .font(ZoopType.caption)
                 .foregroundStyle(StrandPalette.textTertiary)
-        }
-    }
-}
-
-/// Tap-to-answer chips; one tap sends.
-struct PlanQuickReplies: View {
-    let replies: [String]
-    let onSend: (String) -> Void
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: ZoopSpacing.s) {
-                ForEach(replies, id: \.self) { reply in
-                    Button { onSend(reply) } label: {
-                        Text(reply)
-                            .font(ZoopType.caption.weight(.medium))
-                            .foregroundStyle(StrandPalette.textPrimary)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 9)
-                            .background(Capsule().fill(StrandPalette.surfaceRaised))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, ZoopSpacing.xs)
-        }
-    }
-}
-
-/// The days question: pick the weekdays, then send them as one answer ("3 Tage: Mo., Mi., Fr.").
-struct PlanWeekdayPicker: View {
-    @Binding var selected: Set<Int>
-    let onSend: (String) -> Void
-
-    var body: some View {
-        HStack(spacing: 6) {
-            ForEach(LiftProgramPlanSheet.orderedWeekdays, id: \.self) { day in
-                let on = selected.contains(day)
-                Button {
-                    if on { selected.remove(day) } else { selected.insert(day) }
-                } label: {
-                    Text(PlanFormat.shortWeekday(day).prefix(2))
-                        .font(ZoopType.caption.weight(.semibold))
-                        .foregroundStyle(on ? StrandPalette.goldDeepText : StrandPalette.textPrimary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 38)
-                        .background(Circle().fill(on ? StrandPalette.accent : StrandPalette.surfaceRaised))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(PlanFormat.weekday(day))
-                .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
-            }
-            Button {
-                let days = LiftProgramPlanSheet.orderedWeekdays.filter(selected.contains)
-                onSend(PlanFormat.t("zoop.planchat.days.answer", "\(days.count)",
-                                    days.map(PlanFormat.shortWeekday).joined(separator: ", ")))
-            } label: {
-                Image(systemName: "arrow.up")
-                    .font(ZoopType.caption.weight(.bold))
-                    .foregroundStyle(selected.isEmpty ? StrandPalette.textTertiary : StrandPalette.goldDeepText)
-                    .frame(width: 38, height: 38)
-                    .background(Circle().fill(selected.isEmpty ? StrandPalette.surfaceRaised : StrandPalette.accent))
-            }
-            .buttonStyle(.plain)
-            .disabled(selected.isEmpty)
-            .accessibilityLabel(Text(PlanFormat.t("zoop.planchat.send")))
         }
     }
 }

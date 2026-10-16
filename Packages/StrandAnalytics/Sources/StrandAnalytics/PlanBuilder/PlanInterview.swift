@@ -66,6 +66,14 @@ public enum PlanInterview {
             return slot
         }
 
+        /// Sets every answer at once, from the native form. Slots outside this kind are ignored.
+        public mutating func fill(_ values: [Slot: String]) {
+            let valid = Set(PlanInterview.slots(for: kind))
+            for (slot, value) in values where valid.contains(slot) {
+                answers[slot] = String(value.trimmingCharacters(in: .whitespacesAndNewlines).prefix(300))
+            }
+        }
+
         /// Clears `slot` and every later one, so the interview resumes there.
         public mutating func reopen(_ slot: Slot) {
             let order = PlanInterview.slots(for: kind)

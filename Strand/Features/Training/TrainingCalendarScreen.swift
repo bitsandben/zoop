@@ -10,8 +10,7 @@ struct TrainingCalendarRoute: Hashable {}
 // One month of days, each a circle: a day with sessions is filled in the sport's colour with its symbol
 // (the count in a small dot from two sessions up); a day with a Lift Log routine planned on its weekday
 // is a dashed outline. Tapping a day opens its sheet: the sessions, and for today or a future day the
-// planned routine with a Start button. Below the grid, the routines themselves: tap one to choose its
-// weekdays, or generate a new one.
+// planned routine with a Start button. The routines themselves live on the Training page.
 
 struct TrainingCalendarScreen: View {
     @ObservedObject var model: TrainingViewModel
@@ -23,14 +22,6 @@ struct TrainingCalendarScreen: View {
     @State private var monthOffset = 0
     @State private var selectedDay: TrainingWeek.Day?
     @State private var pendingStart: LiftProgramRow?
-    @State private var planning: PlanTarget?
-    @State private var generating = false
-    @State private var buildingPlan = false
-
-    private struct PlanTarget: Identifiable {
-        let program: LiftProgramRow
-        var id: String { program.id }
-    }
 
     private var calendar: Calendar { .current }
     /// A year back, three months ahead.
@@ -40,7 +31,6 @@ struct TrainingCalendarScreen: View {
     var body: some View {
         ScreenScaffold(title: "\(TrainingStrings.calendarTitle)") {
             monthCard
-            routinesCard
         }
         .sheet(item: $selectedDay, onDismiss: startPendingRoutine) { day in
             TrainingDaySheet(day: day) { program in
@@ -49,17 +39,6 @@ struct TrainingCalendarScreen: View {
             }
             .environmentObject(repo)
         }
-        .sheet(item: $planning) { target in
-            LiftProgramPlanSheet(program: target.program).environmentObject(repo)
-        }
-        .sheet(isPresented: $generating) {
-            LiftRoutineGenerateSheet { await model.refresh() }
-        }
-        #if os(iOS)
-        .fullScreenCover(isPresented: $buildingPlan) {
-            PlanChatSheet(kind: .plan) { await model.refresh() }
-        }
-        #endif
         .onChangeCompat(of: planRaw) { model.updatePlan(raw: $0) }
     }
 
@@ -231,56 +210,4 @@ struct TrainingCalendarScreen: View {
         Task { await LiftProgramStarter.start(program, repo: repo, session: liftSession) }
     }
 
-    // MARK: Routines
-
-    private var routinesCard: some View {
-        let plan = TrainingPlan.decode(planRaw)
-        return ContentCard {
-            Text(TrainingStrings.routinesTitle)
-                .font(ZoopType.headline)
-                .foregroundStyle(StrandPalette.textPrimary)
-            if model.programs.isEmpty {
-                Text(TrainingStrings.noRoutines)
-                    .font(ZoopType.body)
-                    .foregroundStyle(StrandPalette.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            ForEach(Array(model.programs.enumerated()), id: \.element.id) { index, program in
-                Button { planning = PlanTarget(program: program) } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(program.name).font(ZoopType.body).foregroundStyle(StrandPalette.textPrimary)
-                            Text(weekdaySummary(plan.weekdays[program.id] ?? []))
-                                .font(ZoopType.caption)
-                                .foregroundStyle(StrandPalette.textSecondary)
-                        }
-                        Spacer(minLength: 0)
-                        Image(systemName: "chevron.right")
-                            .font(ZoopType.caption)
-                            .foregroundStyle(StrandPalette.textTertiary)
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .listCardRow(isFirst: index == 0)
-            }
-            Button { generating = true } label: {
-                Label(TrainingStrings.generateRoutine, systemImage: "sparkles")
-            }
-            .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
-            #if os(iOS)
-            Button { buildingPlan = true } label: {
-                Label(PlanFormat.t("zoop.planchat.plan.entry"), systemImage: "calendar.badge.plus")
-            }
-            .buttonStyle(ZoopButtonStyle(.secondary, fullWidth: true))
-            #endif
-        }
-    }
-
-    private func weekdaySummary(_ days: [Int]) -> String {
-        guard !days.isEmpty else { return TrainingStrings.noWeekdays }
-        let names = LiftProgramPlanSheet.orderedWeekdays.filter(days.contains)
-            .map { calendar.shortStandaloneWeekdaySymbols[$0 - 1] }
-        return names.joined(separator: ", ")
-    }
 }

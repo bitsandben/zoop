@@ -52,38 +52,14 @@ enum PlanChatDemo {
 
     static let transport: PlanChatModel.Transport = { system, messages in
         try await Task.sleep(nanoseconds: 1_200_000_000)
-        let prompt = messages.last?.content ?? ""
         let german = CoachLanguage.code == "de"
         if system.contains("weekly training plans") { return reply(plan(german: german), seconds: 9) }
         if system.contains("strength-training routines") { return reply(routine(german: german), seconds: 6) }
-        let topic = prompt.components(separatedBy: "Next question topic: ").last ?? ""
-        return reply(question(topic, german: german), seconds: 2)
+        return reply(german ? "Alles klar." : "Alright.", seconds: 2)
     }
 
     private static func reply(_ text: String, seconds: Double) -> CoachTurnReply {
         CoachTurnReply(text: text, reasoning: "Scripted demo reply.", seconds: seconds)
-    }
-
-    private static func question(_ topic: String, german: Bool) -> String {
-        let table: [(String, String, String)] = [
-            ("open-ended", "Starkes Ziel! Soll der Plan offen laufen oder hast du ein Zieldatum?",
-             "Great goal! Should the plan run open-ended, or is there a target date?"),
-            ("days per week", "Offen passt gut. An wie vielen Tagen pro Woche kannst du trainieren, und an welchen?",
-             "Open works well. How many days a week can you train, and which ones?"),
-            ("how long", "Notiert. Wie lange darf eine Einheit dauern, und trainierst du zu Hause oder im Gym?",
-             "Got it. How long can a session take, and do you train at home or in a gym?"),
-            ("time of day", "Super. Wann trainierst du am liebsten?", "Nice. When do you prefer to train?"),
-            ("experience", "Ich sehe vor allem Spaziergänge und etwas Schwimmen, noch kein strukturiertes Krafttraining. Wie erfahren bist du?",
-             "I mostly see walks and some swimming, no structured strength yet. How experienced are you?"),
-            ("injuries", "Danke! Gibt es Verletzungen oder Einschränkungen, auf die ich achten soll?",
-             "Thanks! Any injuries or limitations I should respect?"),
-            ("equipment", "Gute Wahl. Welche Ausrüstung hast du, etwa eine Klimmzugstange oder Bänder?",
-             "Good pick. What equipment do you have, like a pull-up bar or bands?"),
-            ("minutes", "Passt. Wie viele Minuten soll die Routine dauern?", "Works. How many minutes should it take?"),
-        ]
-        let row = table.first { topic.contains($0.0) }
-        return row.map { german ? $0.1 : $0.2 } ?? (german ? "Alles klar. Wie erfahren bist du im Krafttraining?"
-                                                         : "Alright. How experienced are you with strength training?")
     }
 
     private static func plan(german: Bool) -> String {
