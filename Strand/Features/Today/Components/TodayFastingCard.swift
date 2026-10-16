@@ -2,8 +2,9 @@
 import SwiftUI
 import StrandDesign
 
-/// Compact fasting card under "My Day" (today only): ring, elapsed time and the end button while a fast
-/// runs; the planned next start and a start button for people who fasted this week; nothing otherwise.
+/// Compact fasting card under "My Day" (today only), one card for the whole cycle: ring, elapsed time and
+/// goal while a fast runs; the eating window's countdown and "Start fast" while it is open; "Time to
+/// fast" once it closed. Shown once fasting is turned on (a first fast or the schedule setting).
 /// It owns its own model and minute tick, so a running fast never re-renders the rest of Today.
 struct TodayFastingCard: View {
     @EnvironmentObject private var repo: Repository
@@ -15,7 +16,7 @@ struct TodayFastingCard: View {
         }
         .task(id: repo.refreshSeq) { await model.load(repo: repo) }
         .onReceive(NotificationCenter.default.publisher(for: FastingLog.didChange)) { _ in
-            Task { await model.load(repo: repo) }
+            Task { await model.reload() }
         }
     }
 
@@ -24,51 +25,41 @@ struct TodayFastingCard: View {
         switch state {
         case .hidden:
             EmptyView()
-        case .running(let r):
-            row {
-                NavigationLink(value: TabRoute.fasting) {
-                    HStack(spacing: ZoopSpacing.m) {
-                        FastingProgressRing(progress: r.progress, lineWidth: 6).frame(width: 44, height: 44)
-                        VStack(alignment: .leading, spacing: 2) {
-                            // Names what is counting: a bare duration read as an unlabelled timer.
-                            Text("zoop.today.fasting.runningTitle").font(ZoopType.caption)
-                                .foregroundStyle(StrandPalette.textSecondary)
-                            Text(verbatim: r.elapsed).font(ZoopType.headline.monospacedDigit())
-                                .foregroundStyle(StrandPalette.textPrimary)
-                            Text(r.status).font(ZoopType.caption)
-                                .foregroundStyle(r.goalReached ? StrandPalette.metricCyan : StrandPalette.textSecondary)
-                        }
-                        Spacer(minLength: ZoopSpacing.s)
-                    }
-                    .contentShape(Rectangle())
+        case .shown(let c):
+            HStack(spacing: ZoopSpacing.m) {
+                NavigationLink(value: TabRoute.fasting) { summary(c) }.buttonStyle(.plain)
+                if c.phase == .fasting {
+                    ZoopButton("zoop.today.fasting.stop", kind: .secondary) { Task { await model.stop() } }
+                } else {
+                    ZoopButton("zoop.today.fasting.startFast", kind: .secondary) { Task { await model.start() } }
                 }
-                .buttonStyle(.plain)
-                ZoopButton("zoop.today.fasting.stop", kind: .secondary) { Task { await model.stop() } }
             }
-        case .next(let n):
-            row {
-                NavigationLink(value: TabRoute.fasting) {
-                    HStack(spacing: ZoopSpacing.s) {
-                        Text(FastingTodayStrings.nextTitle).font(ZoopType.headline)
-                            .foregroundStyle(StrandPalette.textPrimary)
-                        Text(n.when).font(ZoopType.caption.monospacedDigit())
-                            .foregroundStyle(StrandPalette.textSecondary)
-                        Spacer(minLength: ZoopSpacing.s)
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                ZoopButton("zoop.today.fasting.start", kind: .secondary) { Task { await model.start() } }
-            }
-        }
-    }
-
-    private func row<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        HStack(spacing: ZoopSpacing.m, content: content)
             .padding(.horizontal, ZoopSpacing.cardPadding)
             .padding(.vertical, ZoopSpacing.m)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: ZoopRadius.card, style: .continuous).fill(StrandPalette.surfaceRaised))
+            .background(RoundedRectangle(cornerRadius: ZoopRadius.card, style: .continuous)
+                .fill(StrandPalette.surfaceRaised))
+        }
+    }
+
+    private func summary(_ c: FastingTodayState.Card) -> some View {
+        HStack(spacing: ZoopSpacing.m) {
+            FastingProgressRing(progress: c.progress, lineWidth: 6,
+                                tint: c.phase == .eating ? StrandPalette.metricAmber : StrandPalette.metricCyan)
+                .frame(width: 44, height: 44)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(c.caption).font(ZoopType.caption).foregroundStyle(StrandPalette.textSecondary)
+                Text(verbatim: c.headline).font(ZoopType.headline.monospacedDigit())
+                    .foregroundStyle(StrandPalette.textPrimary)
+                if let detail = c.detail {
+                    Text(detail).font(ZoopType.caption)
+                        .foregroundStyle(c.goalReached ? StrandPalette.metricCyan : StrandPalette.textSecondary)
+                }
+            }
+            Spacer(minLength: ZoopSpacing.s)
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 }
 #endif

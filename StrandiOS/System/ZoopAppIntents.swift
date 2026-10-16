@@ -157,6 +157,10 @@ struct NOOPShortcuts: AppShortcutsProvider {
                     phrases: ["End my fast in \(.applicationName)", "Stop fasting with \(.applicationName)"],
                     shortTitle: "End Fast",
                     systemImageName: "fork.knife")
+        AppShortcut(intent: FastingStatusIntent(),
+                    phrases: ["How is my fast in \(.applicationName)", "Fasting status in \(.applicationName)"],
+                    shortTitle: "Fasting Status",
+                    systemImageName: "timer")
     }
 }
 #endif
