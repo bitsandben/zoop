@@ -4,9 +4,9 @@ import StrandDesign
 import StrandImport
 import WhoopStore
 
-/// The guided plan / routine conversation. The interview order comes from `PlanInterview` (pure); the
-/// provider only phrases the next question and, at the end, writes the plan as JSON, which is
-/// validated before it is shown. Nothing is saved until the user accepts the draft.
+/// The plan / routine builder. A native form collects the answers (`PlanInterview` slots), one provider
+/// call writes the plan or routine as JSON, which is validated before it is shown; "Anpassen" then
+/// continues as a short chat. Nothing is saved until the user accepts the draft.
 @MainActor
 final class PlanChatModel: ObservableObject {
 
@@ -42,10 +42,8 @@ final class PlanChatModel: ObservableObject {
     @Published private(set) var busy = false
     @Published var errorText: String?
     @Published private(set) var interview: PlanInterview.State
-    /// The weekday chips' selection while the days question is open (`Calendar` weekdays).
-    @Published var selectedWeekdays: Set<Int> = []
 
-    private(set) var history: WorkoutHistorySummary
+    @Published private(set) var history: WorkoutHistorySummary
     var transport: Transport
     private var lastRequest: (() async -> Void)?
 
@@ -56,21 +54,7 @@ final class PlanChatModel: ObservableObject {
         self.interview = PlanInterview.State(kind: kind)
     }
 
-    func start(name: String) {
-        guard messages.isEmpty else { return }
-        messages.append(Message(role: .assistant, body: .text(PlanChatPrompts.greeting(kind, name: name))))
-    }
-
     func updateHistory(_ summary: WorkoutHistorySummary) { history = summary }
-
-    var chips: [String] {
-        switch phase {
-        case .interview: return interview.current.map { PlanChatPrompts.chips($0, history: history) } ?? []
-        default: return []
-        }
-    }
-
-    var asksForWeekdays: Bool { phase == .interview && interview.current == .days }
 
     var latestPlan: TrainingPlanDraft? {
         for m in messages.reversed() { if case .plan(let d, _) = m.body { return d } }
@@ -95,21 +79,21 @@ final class PlanChatModel: ObservableObject {
         guard !text.isEmpty, !busy else { return }
         errorText = nil
         switch phase {
-        case .interview:
-            messages.append(Message(role: .user, body: .text(text)))
-            selectedWeekdays = []
-            interview.record(text)
-            if let next = interview.current {
-                await ask(next, after: text)
-            } else {
-                await requestDraft()
-            }
         case .refining, .review:
             messages.append(Message(role: .user, body: .text(text)))
             await requestEdit(text)
-        case .drafting, .saved:
+        case .interview, .drafting, .saved:
             return
         }
+    }
+
+    /// The form was sent: all answers at once, then the one request that writes the plan or routine.
+    func submitForm(_ answers: [PlanInterview.Slot: String], summary: String) async {
+        guard phase == .interview, !busy else { return }
+        errorText = nil
+        interview.fill(answers)
+        messages.append(Message(role: .user, body: .text(summary)))
+        await requestDraft()
     }
 
     /// "Anpassen": the next message edits the draft.
@@ -123,23 +107,6 @@ final class PlanChatModel: ObservableObject {
         guard let lastRequest, !busy else { return }
         errorText = nil
         await lastRequest()
-    }
-
-    /// The next question: phrased by the provider, or the template when it fails or says nothing.
-    private func ask(_ slot: PlanInterview.Slot, after answer: String) async {
-        busy = true
-        defer { busy = false }
-        let prompt = PlanChatPrompts.interviewerTurn(state: interview, lastAnswer: answer, next: slot, history: history)
-        var thought: Thought?
-        var question = PlanChatPrompts.template(slot)
-        if let reply = try? await transport(PlanChatPrompts.interviewerSystem(kind), [(.user, prompt)]) {
-            let short = CoachReplyGuard.shorten(reply.text)
-            if !short.isEmpty {
-                question = short
-                thought = Self.thought(reply)
-            }
-        }
-        messages.append(Message(role: .assistant, body: .text(question), thought: thought))
     }
 
     private func requestDraft() async {

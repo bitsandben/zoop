@@ -98,8 +98,9 @@ struct TrainingScreen: View {
         } else {
             actionRow
             #if os(iOS)
-            PlanCoachSection()
+            PlanCoachSection(workouts: model.rows)
             #endif
+            TrainingRoutinesSection(programs: model.programs) { await model.refresh() }
             if let note = model.postLogNote { PostLogNote(text: note) }
             if let week = model.week {
                 TrainingWeekCard(week: week, effortScale: effortScale, format: format) { daySheet = $0 }
@@ -137,8 +138,9 @@ struct TrainingScreen: View {
             }
             actionRow
             #if os(iOS)
-            PlanCoachSection()
+            PlanCoachSection(workouts: model.rows)
             #endif
+            TrainingRoutinesSection(programs: model.programs) { await model.refresh() }
             MindfulnessSection(workouts: model.rows)
         }
     }

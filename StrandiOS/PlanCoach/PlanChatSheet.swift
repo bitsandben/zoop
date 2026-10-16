@@ -3,8 +3,8 @@ import StrandAnalytics
 import StrandDesign
 import StrandImport
 
-/// "Trainingsplan mit KI erstellen" / "Routine mit KI erstellen": a short guided conversation that ends
-/// in a plan or routine card to accept or adjust. One question per turn, quick replies where useful.
+/// "Trainingsplan mit KI erstellen" / "Routine mit KI erstellen": a native form, one provider call, then
+/// a plan or routine card to accept or adjust ("Anpassen" continues as a short chat).
 struct PlanChatSheet: View {
     let kind: PlanInterview.Kind
     /// Called after a plan or routine has been saved.
@@ -12,7 +12,6 @@ struct PlanChatSheet: View {
 
     @EnvironmentObject private var repo: Repository
     @EnvironmentObject private var coach: AICoachEngine
-    @EnvironmentObject private var profile: ProfileStore
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var model: PlanChatModel
@@ -32,27 +31,14 @@ struct PlanChatSheet: View {
 
     var body: some View {
         NavigationStack {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: ZoopSpacing.l) {
-                        header
-                        ForEach(model.messages) { message in
-                            PlanChatRow(message: message) { card(for: message) }
-                                .transition(.opacity.combined(with: .move(edge: .bottom)))
-                        }
-                        if model.busy { PlanThinkingRow() }
-                        if let error = model.errorText, !model.busy { errorRow(error) }
-                        Color.clear.frame(height: 1).id(Self.bottomID)
+            Group {
+                if model.phase == .interview {
+                    PlanForm(kind: kind, history: model.history, ready: isConfigured) { answers, summary in
+                        Task { await model.submitForm(answers, summary: summary) }
                     }
-                    .padding(.horizontal, ZoopSpacing.gutter)
-                    .padding(.vertical, ZoopSpacing.m)
-                    .animation(.snappy, value: model.messages.count)
+                } else {
+                    chat
                 }
-                .scrollDismissesKeyboard(.interactively)
-                .defaultScrollAnchor(.bottom)
-                .onChange(of: model.messages.count) { _, _ in scrollDown(proxy) }
-                .onChange(of: model.busy) { _, _ in scrollDown(proxy) }
-                .safeAreaInset(edge: .bottom, spacing: 0) { bottomBar }
             }
             .background(StrandPalette.surfaceBase.ignoresSafeArea())
             .navigationTitle(Text(PlanFormat.t(kind == .plan ? "zoop.planchat.plan.title" : "zoop.planchat.routine.title")))
@@ -68,7 +54,39 @@ struct PlanChatSheet: View {
         .task { await prepare() }
     }
 
+    private var chat: some View {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: ZoopSpacing.l) {
+                        header
+                        ForEach(model.messages) { message in
+                            PlanChatRow(message: message) { card(for: message) }
+                                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                        }
+                        if model.busy {
+                            PlanThinkingRow(text: PlanFormat.t(creating ? (kind == .plan ? "zoop.planform.creating.plan"
+                                                                                       : "zoop.planform.creating.routine")
+                                                                       : "zoop.planchat.thinking"))
+                        }
+                        if let error = model.errorText, !model.busy { errorRow(error) }
+                        Color.clear.frame(height: 1).id(Self.bottomID)
+                    }
+                    .padding(.horizontal, ZoopSpacing.gutter)
+                    .padding(.vertical, ZoopSpacing.m)
+                    .animation(.snappy, value: model.messages.count)
+                }
+                .scrollDismissesKeyboard(.interactively)
+                .defaultScrollAnchor(.bottom)
+                .onChange(of: model.messages.count) { _, _ in scrollDown(proxy) }
+                .onChange(of: model.busy) { _, _ in scrollDown(proxy) }
+                .safeAreaInset(edge: .bottom, spacing: 0) { bottomBar }
+            }
+    }
+
     // MARK: Parts
+
+    /// True until the first plan or routine card exists: the wait after the form, not after "Anpassen".
+    private var creating: Bool { model.latestPlan == nil && model.latestRoutine == nil }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: ZoopSpacing.s) {
@@ -104,20 +122,9 @@ struct PlanChatSheet: View {
 
     @ViewBuilder private var bottomBar: some View {
         VStack(spacing: ZoopSpacing.s) {
-            if !isConfigured {
-                Text(PlanFormat.t("zoop.planchat.setup"))
-                    .font(ZoopType.caption)
-                    .foregroundStyle(StrandPalette.textSecondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            } else if model.phase == .saved {
+            if model.phase == .saved {
                 ZoopButton("zoop.planchat.done", kind: .primary, fullWidth: true) { dismiss() }
             } else if model.phase != .drafting {
-                if model.asksForWeekdays {
-                    PlanWeekdayPicker(selected: $model.selectedWeekdays, onSend: send)
-                }
-                if !model.chips.isEmpty, !model.busy {
-                    PlanQuickReplies(replies: model.chips, onSend: send)
-                }
                 PlanComposer(placeholder: PlanFormat.t(model.phase == .refining || model.phase == .review
                                                        ? "zoop.planchat.composer.adjust" : "zoop.planchat.composer"),
                              disabled: model.busy || saving, focus: $composerFocused, onSend: send)
@@ -159,13 +166,14 @@ struct PlanChatSheet: View {
         #else
         model.transport = { [coach] system, messages in try await coach.converse(systemPrompt: system, messages: messages) }
         #endif
-        model.start(name: profile.name)
         model.updateHistory(await PlanChatApply.historySummary(repo: repo))
         #if DEBUG
         guard PlanChatDemo.isEnabled else { return }
-        for answer in PlanChatDemo.answers(kind).prefix(PlanChatDemo.autoAnswers) {
+        if PlanChatDemo.autoAnswers > 0 {
             try? await Task.sleep(nanoseconds: 700_000_000)
-            await model.send(answer)
+            let answers = PlanChatDemo.answers(kind)
+            await model.submitForm(Dictionary(uniqueKeysWithValues: zip(PlanInterview.slots(for: kind), answers)),
+                                   summary: answers.prefix(3).joined(separator: " · "))
         }
         if PlanChatDemo.autoAccept, model.phase == .review { await accept() }
         #endif
