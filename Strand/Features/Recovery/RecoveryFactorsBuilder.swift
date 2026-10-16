@@ -39,6 +39,19 @@ enum RecoveryFactorsBuilder {
 
     /// Only for a score earned this morning: "yesterday" is then the day before the anchor.
     static func build(_ input: RecoveryInput, drivers: [ChargeDriver]) -> RecoveryFactorsContent? {
+        guard let factors = factorsInput(input, drivers: drivers) else { return nil }
+        let ranked = RecoveryFactors.rank(factors)
+        let items = ranked.enumerated().map { index, factor in
+            RecoveryFactorItem(id: "\(factor.kind.rawValue)-\(index)",
+                               sentence: RecoveryStrings.factorSentence(factor, name: name(factor.question)),
+                               effect: effect(factor))
+        }
+        return RecoveryFactorsContent(items: items, advice: RecoveryFactors.advice(ranked).map(RecoveryStrings.advice))
+    }
+
+    /// The deviations behind this morning's score, unranked. Shared with the morning brief so the two
+    /// cannot name different drivers. Nil unless the anchor is today's score.
+    static func factorsInput(_ input: RecoveryInput, drivers: [ChargeDriver]) -> RecoveryFactors.Input? {
         guard let row = input.anchor, row.day == input.todayKey,
               let today = RecoveryDayKey.date(row.day),
               let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today) else { return nil }
@@ -62,14 +75,7 @@ enum RecoveryFactorsBuilder {
         }
         bedtime(into: &factors, input: input, days: days, todayKey: row.day)
         factors.logged = logged(input: input, days: days, keys: [row.day, yesterdayKey])
-
-        let ranked = RecoveryFactors.rank(factors)
-        let items = ranked.enumerated().map { index, factor in
-            RecoveryFactorItem(id: "\(factor.kind.rawValue)-\(index)",
-                               sentence: RecoveryStrings.factorSentence(factor, name: name(factor.question)),
-                               effect: effect(factor))
-        }
-        return RecoveryFactorsContent(items: items, advice: RecoveryFactors.advice(ranked).map(RecoveryStrings.advice))
+        return factors
     }
 
     private static func effect(_ factor: RecoveryFactors.Factor) -> MetricExplanation.Contributor.Effect {
@@ -135,7 +141,7 @@ enum RecoveryFactorsBuilder {
 
     /// The display name of a logged answer: a localised name for the known confounders, else the user's
     /// own question in quotes.
-    private static func name(_ question: String?) -> String {
+    static func name(_ question: String?) -> String {
         guard let question else { return "" }
         if var known = confounders[question] {
             known.locale = AppLanguage.activeLocale

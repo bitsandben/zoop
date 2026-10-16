@@ -98,6 +98,14 @@ enum RecoveryContentBuilder {
         }
     }
 
+    /// The personal range of the stored scores, for callers outside this screen (the morning brief).
+    static func recoveryRange(days: [DailyMetric]) -> ClosedRange<Double>? {
+        personalRange(days.sorted { $0.day < $1.day }.compactMap { day in
+            guard let value = day.recovery, let date = RecoveryDayKey.date(day.day) else { return nil }
+            return Scored(date: date, value: value)
+        })
+    }
+
     /// Recovery has no baseline of its own (it is itself a score against baselines), so its typical
     /// range is mean ± one SD of the user's last 30 scored days.
     private static func personalRange(_ history: [Scored]) -> ClosedRange<Double>? {

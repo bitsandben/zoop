@@ -79,16 +79,9 @@ enum AIProvider: String, CaseIterable, Identifiable {
                 "gemini-flash-lite-latest"
             ]
         case .openRouter:
-            // A starting set of free models. OpenRouter rotates which models are free, so
-            // `refreshModels()` replaces this with the live list of `:free` ids once a key is set.
-            return [
-                AIProvider.openRouterDefaultModel,
-                "meta-llama/llama-3.3-70b-instruct:free",
-                "deepseek/deepseek-chat-v3-0324:free",
-                "google/gemma-3-27b-it:free",
-                "mistralai/mistral-small-3.2-24b-instruct:free",
-                "qwen/qwen3-235b-a22b:free"
-            ]
+            // The recommended free models (AIProvider+Recommended.swift); `refreshModels()` appends the
+            // live list of `:free` ids once a key is set.
+            return AIProvider.openRouterRecommended.map(\.id)
         case .custom:
             return []   // populated from the server's /models (refreshModels) or typed in
         }
@@ -124,8 +117,11 @@ enum AIProvider: String, CaseIterable, Identifiable {
         }
     }
 
-    /// The model a new setup starts on: the free dots-3 note preview on OpenRouter.
-    static let openRouterDefaultModel = "dots-studio/dots-3-note-preview:free"
+    /// The model a new setup starts on: Gemma 4 26B A4B on OpenRouter (free, ~4B active parameters, so
+    /// short replies come back fast; see AIProvider+Recommended.swift for the choice).
+    static let openRouterDefaultModel = "google/gemma-4-26b-a4b-it:free"
+    /// The previous default; a user still on it is moved to the new one once (`AICoachEngine.init`).
+    static let openRouterLegacyDefaultModel = "dots-studio/dots-3-note-preview:free"
     /// Where a request goes when the chosen OpenRouter model is gone: OpenRouter's free router, so the
     /// "nothing is billed" promise of the setup screen still holds. Editable in Coach settings.
     static let openRouterDefaultFallback = "openrouter/free"

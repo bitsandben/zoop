@@ -163,12 +163,12 @@ final class CoachMorningRulesTests: XCTestCase {
 
     // MARK: Prioritisation
 
-    func testCappedAtThreeInPriorityOrder() {
+    func testCappedAtTwoInPriorityOrder() {
         let r = reasons(input {
             $0.recovery = 25; $0.sleepDebtMin = 90; $0.bedtimeMinute = 1360
             $0.hrv = 40; $0.hrvBaseline = 60; $0.stressLevel = 2.5; $0.stressPeakHour = 15
         })
-        XCTAssertEqual(r, [.lowRecoveryRest, .sleepDebtBedtime, .stressPeakBreathe])
+        XCTAssertEqual(r, [.lowRecoveryRest, .sleepDebtBedtime])
     }
 
     func testFastingBreakOutranksTheBedtime() {
@@ -176,7 +176,7 @@ final class CoachMorningRulesTests: XCTestCase {
             $0.recovery = 20; $0.sleepDebtMin = 90; $0.bedtimeMinute = 1360
             $0.fasting = .init(elapsedHours: 18, targetHours: 20)
         })
-        XCTAssertEqual(r, [.lowRecoveryRest, .fastingBreak, .sleepDebtBedtime])
+        XCTAssertEqual(r, [.lowRecoveryRest, .fastingBreak])
     }
 
     func testEveryCandidateCarriesEvidence() {

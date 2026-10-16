@@ -25,12 +25,12 @@ struct CoachTodayCard: View {
     @ViewBuilder
     private func content(now: Date) -> some View {
         let day = Repository.localDayKey(now)
-        if coachEnabled, proactive, store.brief(for: day) != nil {
+        if coachEnabled, proactive, let brief = store.brief(for: day) {
             let active = store.active(at: now)
             Button { showsBrief = true } label: {
                 ContentCard(LocalizedStringKey(CoachStrings.cardTitle.key), showsChevron: true) {
                     VStack(alignment: .leading, spacing: ZoopSpacing.xs) {
-                        Text(CoachTodayCard.headline(active: active))
+                        Text(CoachTodayCard.headline(brief: brief, active: active))
                             .font(ZoopType.body)
                             .foregroundStyle(StrandPalette.textPrimary)
                             .lineLimit(2)
@@ -55,9 +55,11 @@ struct CoachTodayCard: View {
         }
     }
 
-    /// The single most important takeaway: the top waiting suggestion's title, or, once everything is
+    /// The single most important takeaway: the brief's headline (why recovery is where it is, or the
+    /// quiet all-in-the-green line), else the top waiting suggestion's title, or, once everything is
     /// answered, the all-set line. Never the paragraph.
-    static func headline(active: [CoachSuggestion]) -> String {
+    static func headline(brief: CoachDailyBrief, active: [CoachSuggestion]) -> String {
+        if let line = brief.headline, !line.isEmpty { return line }
         if let top = active.first { return top.title }
         return String(localized: CoachStrings.allAnswered)
     }

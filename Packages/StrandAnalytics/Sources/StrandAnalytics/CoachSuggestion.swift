@@ -106,12 +106,19 @@ public struct CoachDailyBrief: Codable, Equatable, Sendable {
     public let text: String
     /// True when a cloud provider wrote the text, false for the on-device rules.
     public let byAI: Bool
+    /// The one-line takeaway for the compact Today card; nil on briefs stored before it existed.
+    public let headline: String?
+    /// Whether something stood out this morning (`MorningBriefDrivers`); nil on older briefs.
+    public let notable: Bool?
 
-    public init(day: String, createdAt: Date, text: String, byAI: Bool) {
+    public init(day: String, createdAt: Date, text: String, byAI: Bool, headline: String? = nil,
+                notable: Bool? = nil) {
         self.day = day
         self.createdAt = createdAt
         self.text = text
         self.byAI = byAI
+        self.headline = headline
+        self.notable = notable
     }
 }
 

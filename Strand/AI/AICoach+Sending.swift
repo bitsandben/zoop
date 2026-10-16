@@ -262,15 +262,21 @@ extension AICoachEngine {
 
     /// Send a single prompt with its own system prompt through the user's configured provider and
     /// model, returning the raw reply. Touches neither the chat transcript nor the metrics context:
-    /// only `systemPrompt` and `prompt` leave the device. Used by the Lift Log routine generator.
-    func oneShot(systemPrompt: String, prompt: String) async throws -> String {
+    /// only `systemPrompt` and `prompt` leave the device. Used by the Lift Log routine generator and the
+    /// morning brief. `json` asks OpenAI-compatible providers for a JSON object (structured outputs).
+    func oneShot(systemPrompt: String, prompt: String, json: Bool = false) async throws -> String {
         guard CoachBriefScheduler.coachMasterEnabled, isConfigured, let key = resolvedKey else {
             throw AICoachError.noKey
         }
         let client = provider.client
         return try await withModelFallback { model in
-            try await client.send(key: key, model: model, systemPrompt: systemPrompt,
-                                  messages: [(.user, prompt)], session: self.session)
+            if json, let openAI = client as? OpenAIClient {
+                return try await openAI.sendDetailed(key: key, model: model, systemPrompt: systemPrompt,
+                                                     messages: [(.user, prompt)], session: self.session,
+                                                     jsonMode: true).text
+            }
+            return try await client.send(key: key, model: model, systemPrompt: systemPrompt,
+                                         messages: [(.user, prompt)], session: self.session)
         }
     }
 }

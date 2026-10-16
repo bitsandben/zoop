@@ -2,8 +2,9 @@ import Foundation
 
 // CoachBriefReply.swift - the contract between the morning coach and a cloud provider.
 //
-// The provider receives the rule-based candidates (numbered, each with its action kind) and may only
-// pick and reword them, returning plain structured JSON: the app draws the card, so a reply carries
+// The provider receives the morning's drivers (what moved recovery, with numbers) and the rule-based
+// candidates (numbered, each with its action kind). It may only explain the listed drivers and pick and
+// reword the candidates, returning plain structured JSON: the app draws the card, so a reply carries
 // no markdown, no emoji and no styling of its own. Anything malformed falls back to the rules
 // wholesale: a half-parsed reply would mix two voices in one card.
 
@@ -17,17 +18,24 @@ public enum CoachBriefReply {
     }
 
     public struct Parsed: Equatable, Sendable {
-        public let brief: String
+        /// The one-line takeaway.
+        public let headline: String
+        /// Short "because" lines naming the drivers, at most `MorningBriefDrivers.maxDrivers`.
+        public let reasons: [String]
         public let picks: [Pick]
+
+        /// The stored brief text: the headline, then one reason per line.
+        public var brief: String { ([headline] + reasons.map { "• " + $0 }).joined(separator: "\n") }
 
         /// Everything the reply puts on screen, for the language check.
         public var allText: String {
-            ([brief] + picks.flatMap { [$0.title, $0.body] }).joined(separator: " ")
+            ([headline] + reasons + picks.flatMap { [$0.title, $0.body] }).joined(separator: " ")
         }
     }
 
     /// Caps on what a reply can put on screen; a model can return anything.
     static let maxBriefLength = 360
+    static let maxReasonLength = 140
     static let maxTitleLength = 60
     static let maxBodyLength = 160
 
@@ -43,18 +51,23 @@ public enum CoachBriefReply {
         }
     }
 
-    /// The system prompt: the JSON schema, the rules of the game and the language, nothing else.
+    /// The system prompt: persona, the JSON schema, the rules of the game and the language.
     public static func systemPrompt(languageCode: String) -> String {
         """
-        You are a calm, practical morning coach inside a fitness-tracker app. Reply with ONE JSON object \
-        and nothing else: no prose, no markdown, no code fences. Schema:
-        {"brief": string, "suggestions": [{"id": integer, "action": string, "title": string, "body": string}]}
-        Rules: "brief" is two or three short sentences about today, citing the numbers given. \
-        "suggestions" holds one to three items chosen ONLY from the numbered candidates, by their id; \
-        never invent a new one. "action" repeats the candidate's action kind exactly as listed. \
-        "title" is at most six words, "body" is one sentence. All strings are plain text: no markdown, \
-        no asterisks, no emoji, no bullet characters, no line breaks. The app styles the buttons itself. \
-        Do not repeat advice the user recently declined.
+        You are a concise, data-driven morning coach inside a fitness-tracker app. You explain WHY the \
+        user's recovery is what it is today, using only the facts given. Reply with ONE JSON object and \
+        nothing else: no prose, no markdown, no code fences. Schema:
+        {"headline": string, "reasons": [string], "suggestions": [{"id": integer, "action": string, "title": string, "body": string}]}
+        Rules: "headline" is one short sentence with the recovery score and what it means for today. \
+        "reasons" holds one to three short sentences, one per listed driver, in the listed order, each \
+        citing that driver's number (for example "You moved a lot in your sleep: 14 bouts instead of 6."). \
+        Never add a reason that is not listed and never change a number. If no drivers are listed, \
+        "reasons" is empty. "suggestions" holds at most two items chosen ONLY from the numbered \
+        candidates, by their id; never invent one. "action" repeats the candidate's action kind exactly. \
+        "title" is at most six words, "body" is one concrete sentence tied to today's numbers. No generic \
+        advice (no "listen to your body", "stay hydrated" unless a candidate says so), no greetings, no \
+        medical diagnosis. All strings are plain text: no markdown, asterisks, emoji, bullet characters \
+        or line breaks. Do not repeat advice the user recently declined or was given in the last days.
         \(languageDirective(languageCode: languageCode))
         """
     }
@@ -65,8 +78,9 @@ public enum CoachBriefReply {
         guard let start = reply.firstIndex(of: "{"), let end = reply.lastIndex(of: "}"), start < end,
               let data = String(reply[start...end]).data(using: .utf8),
               let raw = try? JSONDecoder().decode(Raw.self, from: data) else { return nil }
-        let brief = clip(plain(raw.brief), maxBriefLength)
-        guard !brief.isEmpty else { return nil }
+        let headline = clip(plain(raw.headline ?? raw.brief ?? ""), maxBriefLength)
+        guard !headline.isEmpty else { return nil }
+        let reasons = (raw.reasons ?? []).map { clip(plain($0), maxReasonLength) }.filter { !$0.isEmpty }
         var seen = Set<Int>()
         var picks: [Pick] = []
         for item in raw.suggestions ?? [] {
@@ -79,7 +93,7 @@ public enum CoachBriefReply {
             picks.append(Pick(index: id, title: title, body: body))
             if picks.count == CoachMorningRules.maxSuggestions { break }
         }
-        return Parsed(brief: brief, picks: picks)
+        return Parsed(headline: headline, reasons: Array(reasons.prefix(MorningBriefDrivers.maxDrivers)), picks: picks)
     }
 
     /// Strips what a model uses to style text: markdown marks, list bullets, emoji and line breaks.
@@ -102,7 +116,9 @@ public enum CoachBriefReply {
 
     private struct Raw: Decodable {
         struct Item: Decodable { let id: Int?; let action: String?; let title: String?; let body: String? }
-        let brief: String
+        let headline: String?
+        let brief: String?
+        let reasons: [String]?
         let suggestions: [Item]?
     }
 

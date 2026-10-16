@@ -24,7 +24,15 @@ final class RecoveryModel: ObservableObject {
 
     private func build(repo: Repository, now: Date, calibrationOn: Bool,
                        checkIns: [String: MorningCheckIn], journal: [JournalEntry]) -> RecoveryContent {
-        RecoveryContentBuilder.build(RecoveryInput(
+        RecoveryContentBuilder.build(Self.input(repo: repo, now: now, calibrationOn: calibrationOn,
+                                                checkIns: checkIns, journal: journal))
+    }
+
+    /// The builder's input from the repository. Also used by the morning brief, so the brief reads the
+    /// exact anchor, baselines and journal this screen does.
+    static func input(repo: Repository, now: Date, calibrationOn: Bool = false,
+                      checkIns: [String: MorningCheckIn] = [:], journal: [JournalEntry]) -> RecoveryInput {
+        RecoveryInput(
             days: repo.days,
             // The same anchor Home resolves its Recovery ring through, so the two cannot disagree.
             anchor: Repository.widgetAnchor(days: repo.days, now: now),
@@ -37,11 +45,11 @@ final class RecoveryModel: ObservableObject {
             todayKey: Repository.logicalDayKey(now),
             sleeps: repo.sleeps,
             journal: journal,
-            illnessSignals: illnessSignals))
+            illnessSignals: illnessSignals)
     }
 
     /// The illness engine's one decision for today; a quiet or confounded result names no signals.
-    private var illnessSignals: Int {
+    private static var illnessSignals: Int {
         guard let result = AppModel.shared?.illnessSignal else { return 0 }
         switch result.level {
         case .mild, .raised: return result.signalCount

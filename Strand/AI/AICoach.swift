@@ -127,6 +127,7 @@ final class AICoachEngine: ObservableObject {
     private static let customConnectedKey = "ai.customConnected"
     private static let onDeviceSignalsKey = "ai.includeOnDeviceSignals"
     private static let multimodalChartKey = "ai.multimodalChartEnabled"
+    private static let defaultMigratedKey = "zoop.ai.openRouterDefaultMigrated.gemma4"
 
     /// Used in place of the metrics context when the user has NOT granted data access.
     let noConsentNote = """
@@ -145,8 +146,17 @@ final class AICoachEngine: ObservableObject {
         self.provider = storedProvider
 
         // A model stored without a provider belonged to the old OpenAI default, not to the new one.
-        let storedModel = persistedProvider == nil && storedProvider != .openAI
+        var storedModel = persistedProvider == nil && storedProvider != .openAI
             ? nil : UserDefaults.standard.string(forKey: Self.modelKey)
+        // Once: a user still on the old (slow, reasoning) OpenRouter default moves to the new one.
+        // Picking the old model again afterwards is respected.
+        if storedProvider == .openRouter, !UserDefaults.standard.bool(forKey: Self.defaultMigratedKey) {
+            UserDefaults.standard.set(true, forKey: Self.defaultMigratedKey)
+            if storedModel == AIProvider.openRouterLegacyDefaultModel {
+                storedModel = AIProvider.openRouterDefaultModel
+                UserDefaults.standard.set(storedModel, forKey: Self.modelKey)
+            }
+        }
         // A persisted custom id is honoured even if it's not in the built-in list.
         if let storedModel, !storedModel.isEmpty {
             self.model = storedModel

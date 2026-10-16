@@ -184,7 +184,7 @@ struct CoachSettingsPage: View {
             }
             Menu {
                 Picker("Model", selection: $coach.model) {
-                    ForEach(models, id: \.self) { Text($0).tag($0) }
+                    ForEach(models, id: \.self) { Text(AIProvider.pickerLabel($0)).tag($0) }
                 }
             } label: {
                 HStack {
@@ -192,7 +192,7 @@ struct CoachSettingsPage: View {
                         Text("Model")
                             .font(StrandFont.caption)
                             .foregroundStyle(StrandPalette.textTertiary)
-                        Text(coach.model)
+                        Text(AIProvider.pickerLabel(coach.model))
                             .font(StrandFont.subhead.weight(.semibold))
                             .foregroundStyle(StrandPalette.textPrimary)
                             .lineLimit(1)
@@ -226,6 +226,16 @@ struct CoachSettingsPage: View {
             }
             .buttonStyle(.plain)
             .disabled(refreshing || !coach.hasKey)
+            NavigationLink { CoachModelTestPage() } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "stopwatch")
+                    Text(PlanFormat.t("zoop.coach.model.test.open"))
+                }
+                .font(ZoopType.caption.weight(.semibold))
+                .foregroundStyle(StrandPalette.accent)
+            }
+            .buttonStyle(.plain)
+            .disabled(!coach.isConfigured)
         }
         .padding(16)
         .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(StrandPalette.surfaceRaised))

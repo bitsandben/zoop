@@ -2,7 +2,7 @@ import Foundation
 
 // CoachMorningRules.swift - the deterministic morning coach.
 //
-// Turns the morning's numbers into a readiness band and up to three prioritised suggestions. This is
+// Turns the morning's numbers into a readiness band and up to two prioritised suggestions. This is
 // the coach that always works: offline, with no provider configured, and as the safety net when a
 // cloud reply cannot be used. It returns structure only (reason codes, actions and the numbers each
 // suggestion rests on); the app turns that into sentences in the app language. A cloud provider may
@@ -185,7 +185,7 @@ public enum CoachMorningRules {
     static let earliestBeforeUsualMin = 60
     /// A running fast at least this long (planned or elapsed) is worth breaking on a low day.
     static let longFastHours: Double = 16
-    public static let maxSuggestions = 3
+    public static let maxSuggestions = 2
 
     /// The morning plan. Pure: same input, same plan.
     public static func evaluate(_ input: Input) -> Plan {
