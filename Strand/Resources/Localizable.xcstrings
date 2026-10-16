@@ -291033,6 +291033,66 @@
           }
         }
       }
+    },
+    "slept %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "geschlafen %@"
+          }
+        }
+      }
+    },
+    "recovery %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholung %lld"
+          }
+        }
+      }
+    },
+    "night end %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nachtende %@"
+          }
+        }
+      }
+    },
+    "history synced to %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlauf synchronisiert bis %@"
+          }
+        }
+      }
+    },
+    "Morning brief rewritten: the night changed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morgen-Briefing neu geschrieben: Die Nacht hat sich geändert"
+          }
+        }
+      }
+    },
+    "Morning brief written" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morgen-Briefing geschrieben"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
