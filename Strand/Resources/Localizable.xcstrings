@@ -291033,6 +291033,23 @@
           }
         }
       }
+    },
+    "zoop.sync.problem" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisierungsproblem"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync problem"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

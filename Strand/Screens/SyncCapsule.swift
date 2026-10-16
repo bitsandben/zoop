@@ -79,15 +79,7 @@ struct SyncCapsule: View {
     }
 
     /// The charge only while it is known for the current link (see `StrapBatteryDisplay`).
-    private var battery: StrapBatteryDisplay? {
-        let display = StrapBatteryDisplay.resolve(
-            activeIsWhoop: live.activeIsWhoop, connected: live.connected, batteryPct: live.batteryPct,
-            charging: live.charging, ringPct: live.ouraBatteryPct, ringCharging: live.ouraWearState == .charging)
-        switch display {
-        case .charge, .pending(true): return display
-        case .pending(false), .offline, .notActiveDevice: return nil
-        }
-    }
+    private var battery: StrapBatteryDisplay? { live.knownBattery }
 
     private func accessibilityText(_ state: SyncCapsuleState) -> String {
         [state.title, battery.map(BatteryLabel.text)].compactMap { $0 }.joined(separator: ", ")
@@ -144,7 +136,7 @@ struct SyncRingGlyph: View {
 }
 
 /// A battery glyph that tracks the charge, beside the percentage.
-private struct BatteryLabel: View {
+struct BatteryLabel: View {
     let display: StrapBatteryDisplay
 
     var body: some View {
@@ -187,7 +179,7 @@ private struct BatteryLabel: View {
 }
 
 /// What a blocked or noted sync means, with the one fix that applies.
-private struct SyncExplanationSheet: View {
+struct SyncExplanationSheet: View {
     let explanation: SyncExplanation
     let onRetry: (() -> Void)?
     let onOpenDevices: (() -> Void)?
@@ -242,6 +234,19 @@ private struct SyncExplanationSheet: View {
             } else {
                 ZoopButton("zoop.sync.done", kind: .secondary, fullWidth: true) { dismiss() }
             }
+        }
+    }
+}
+
+extension LiveState {
+    /// The active device's charge, only while it is known for the current link.
+    var knownBattery: StrapBatteryDisplay? {
+        let display = StrapBatteryDisplay.resolve(
+            activeIsWhoop: activeIsWhoop, connected: connected, batteryPct: batteryPct,
+            charging: charging, ringPct: ouraBatteryPct, ringCharging: ouraWearState == .charging)
+        switch display {
+        case .charge, .pending(true): return display
+        case .pending(false), .offline, .notActiveDevice: return nil
         }
     }
 }

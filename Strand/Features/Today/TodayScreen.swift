@@ -44,7 +44,7 @@ struct TodayScreen: View {
                     }
                 }
                 .padding(.horizontal, ZoopSpacing.gutter)
-                .padding(.top, ZoopSpacing.xs)
+                .padding(.top, ZoopSpacing.xs + TodaySyncPill.height)
                 // The tab bar already insets the scroll content by its own height; this only leaves
                 // a little air under the last card.
                 .padding(.bottom, ZoopSpacing.l)
@@ -58,6 +58,11 @@ struct TodayScreen: View {
             .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
             .modifier(PullToSync(isBusy: pullSync.phase.isBusy) { await syncAndRefresh() })
             .background { background }
+            // Sync shows only while it runs: a pill over the very top, never part of the layout.
+            .overlay(alignment: .top) {
+                TodaySyncPill(pull: pullSync.phase, onOpenDevices: { router.openDevices() })
+                    .padding(.top, ZoopSpacing.xs)
+            }
             .simultaneousGesture(daySwipe)
             .sensoryFeedback(.selection, trigger: model.dayOffset)
             .sensoryFeedback(.impact(weight: .medium), trigger: napEditHaptic)
@@ -96,15 +101,13 @@ struct TodayScreen: View {
     // MARK: Pieces
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: ZoopSpacing.xs) {
-            TodayHeader(dayOffset: model.dayOffset, today: Repository.logicalDay(Date()),
-                        onSelectDay: { offset in withAnimation(StrandMotion.interactive) { model.select(offset) } },
-                        onProfile: { sheet = .settings },
-                        onQuickActions: { router.requestQuickActions() })
-            SyncCapsule(pull: pullSync.phase,
-                        onOpenDevices: { router.openDevices() },
-                        onRetry: { Task { await syncAndRefresh() } })
-        }
+        TodayHeader(dayOffset: model.dayOffset, today: Repository.logicalDay(Date()),
+                    onSelectDay: { offset in withAnimation(StrandMotion.interactive) { model.select(offset) } },
+                    onProfile: { sheet = .settings },
+                    onQuickActions: { router.requestQuickActions() },
+                    pull: pullSync.phase,
+                    onOpenDevices: { router.openDevices() },
+                    onRetry: { Task { await syncAndRefresh() } })
     }
 
     @ViewBuilder
@@ -163,7 +166,7 @@ struct TodayScreen: View {
         }
     }
 
-    /// A pull asks the strap for its stored history; the sync capsule under the header reports how
+    /// A pull asks the strap for its stored history; the sync pill at the top reports how
     /// that goes.
     private func syncAndRefresh() async {
         await pullSync.run(live: ble.state, ble: ble) {
