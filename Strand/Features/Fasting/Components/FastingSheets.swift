@@ -53,67 +53,40 @@ struct FastingEditSheet: View {
     }
 }
 
-/// Plan presets, a custom goal, and the opt-in goal reminder.
-struct FastingPlanSheet: View {
+/// Move an eating window: the first meal ends the earlier fast, the last meal starts the later one.
+struct FastingWindowEditSheet: View {
     let model: FastingModel
-    @State private var customHours = 16
+    @State var draft: FastingWindowDraft
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    ForEach(FastingPlan.presets) { plan in
-                        planRow(plan)
-                    }
-                    planRow(FastingPlan.custom(hours: customHours))
-                    if model.plan.isCustom {
-                        Stepper(value: $customHours, in: FastingPlan.customHours) {
-                            Text(FastingStrings.customHours(customHours))
-                        }
-                        .onChange(of: customHours) { _, hours in model.choosePlan(.custom(hours: hours)) }
-                    }
+                    DatePicker(selection: $draft.opens, in: ...model.now()) { Text(FastingStrings.firstMeal) }
+                    DatePicker(selection: $draft.closes, in: ...model.now()) { Text(FastingStrings.lastMeal) }
+                } footer: {
+                    Text(FastingStrings.windowEditNote)
                 }
-                Section {
-                    Toggle(isOn: Binding(get: { model.reminderEnabled },
-                                         set: { on in Task { await model.setReminder(on) } })) {
-                        Text(FastingStrings.reminderToggle)
-                    }
-                    if model.reminderDenied {
-                        Text(FastingStrings.reminderDenied).font(ZoopType.caption)
-                            .foregroundStyle(StrandPalette.textSecondary)
-                    }
+                if let problem = model.problem(with: draft) {
+                    Text(problem).font(ZoopType.caption).foregroundStyle(StrandPalette.textSecondary)
                 }
             }
-            .navigationTitle(Text(FastingStrings.planTitle))
+            .navigationTitle(Text(FastingStrings.windowEditTitle))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button("zoop.fasting.done") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("zoop.fasting.edit.cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("zoop.fasting.edit.save") {
+                        Task { await model.save(draft); dismiss() }
+                    }
+                    .disabled(model.problem(with: draft) != nil)
+                }
             }
-            .onAppear { if model.plan.isCustom { customHours = Int(model.plan.fastingHours) } }
         }
         .presentationDetents([.medium, .large])
-    }
-
-    private func planRow(_ plan: FastingPlan) -> some View {
-        let selected = plan.isCustom ? model.plan.isCustom : model.plan.id == plan.id
-        return Button { model.choosePlan(plan) } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(plan.isCustom ? FastingStrings.custom : FastingFormat.planName(plan))
-                        .foregroundStyle(StrandPalette.textPrimary)
-                    Text(FastingStrings.split(fasting: Int(plan.fastingHours), eating: Int(plan.eatingHours)))
-                        .font(ZoopType.caption).foregroundStyle(StrandPalette.textSecondary)
-                }
-                Spacer()
-                if selected {
-                    Image(systemName: "checkmark").foregroundStyle(StrandPalette.accent)
-                }
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 

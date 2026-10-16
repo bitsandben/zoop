@@ -18,36 +18,47 @@ struct FastingDraft: Identifiable, Equatable {
     var id: String { rowID ?? "new" }
 }
 
+/// An eating window being edited: `opens` is the earlier fast's end (first meal), `closes` the later
+/// fast's start (last meal).
+struct FastingWindowDraft: Identifiable, Equatable {
+    let previous: FastingSessionRow
+    let next: FastingSessionRow
+    var opens: Date
+    var closes: Date
+
+    var id: String { previous.id + ">" + next.id }
+}
+
 /// The Fasting screen's state and intents. Reads the log from the store and the nightly values from the
-/// Repository; every derived number comes from `FastingEngine` and is formatted in FastingPresentation.
+/// Repository; every derived number comes from `FastingEngine` / `FastingCycle` and is formatted in the
+/// presentation builders.
 @Observable @MainActor
 final class FastingModel {
     private(set) var rows: [FastingSessionRow] = []
-    private(set) var plan: FastingPlan = FastingPreferences.plan
-    private(set) var planSummary: FastingPlanSummary?
-    private(set) var week: FastingWeek?
-    private(set) var streak: LocalizedStringResource?
-    private(set) var consistency: LocalizedStringResource?
+    private(set) var schedule: FastingSchedule = FastingPreferences.schedule
+    private(set) var scheduleSummary: FastingScheduleSummary?
+    private(set) var week: FastingTimelineWeek?
+    private(set) var stats: FastingStatsModel?
     private(set) var history: [FastingHistoryItem] = []
     private(set) var patterns: FastingPatterns?
-    private(set) var reminderEnabled = FastingPreferences.reminderEnabled
-    private(set) var reminderDenied = false
+    private(set) var deniedReminder: FastingPreferences.Reminder?
     private(set) var saveError: LocalizedStringResource?
     private(set) var loaded = false
+    /// Bumped on every rebuild so settings read from UserDefaults re-render their toggles.
+    private(set) var settingsRevision = 0
 
     /// The one clock for this screen; injectable for tests.
     var now: () -> Date = Date.init
     private var repo: Repository?
     private let calendar = Calendar.current
 
-    /// Rows shown in history: the newest finished fasts.
-    static let historyLimit = 12
+    /// Rows shown in history: the newest fasts and eating windows.
+    static let historyLimit = 16
 
+    var plan: FastingPlan { schedule.plan }
     var activeRow: FastingSessionRow? { rows.first { $0.endTs == nil } }
     private var intervals: [FastingInterval] { rows.map(FastingInterval.init) }
-    private var lastEnd: Date? {
-        intervals.compactMap(\.end).max()
-    }
+    private var lastEnd: Date? { intervals.compactMap(\.end).max() }
 
     // MARK: Loading
 
@@ -57,23 +68,26 @@ final class FastingModel {
         #if DEBUG
         await FastingDemoSeed.seedIfRequested(store: store, now: now())
         #endif
-        rows = await FastingLog.load(store: store, now: now())
+        rows = await FastingLog.reconcile(store: store, now: now())
         rebuild()
         loaded = true
     }
 
     /// Everything derived from `rows`, recomputed after each load or write.
     private func rebuild() {
+        settingsRevision &+= 1
         let now = now()
-        plan = FastingPreferences.plan
+        schedule = FastingPreferences.schedule
         let all = intervals
-        let active = all.first(where: \.isActive)
-        planSummary = .make(plan: plan, active: active, lastEnd: lastEnd, now: now)
-        week = .make(FastingEngine.week(all, now: now, calendar: calendar), plan: plan)
-        streak = FastingStrings.streakValue(FastingEngine.streak(all, now: now, calendar: calendar))
-        let c = FastingEngine.consistency(all, now: now, days: 30, calendar: calendar)
-        consistency = FastingStrings.consistencyValue(met: c.metDays, of: c.consideredDays)
-        history = rows.compactMap(FastingHistoryItem.make).prefix(Self.historyLimit).map { $0 }
+        scheduleSummary = .make(schedule)
+        var open: EatingWindow?
+        if case .eating(let w) = FastingLog.state(rows, now: now) { open = w }
+        week = .make(FastingCycle.timeline(all, open: open, now: now, calendar: calendar),
+                     week: FastingEngine.week(all, now: now, calendar: calendar))
+        stats = .make(FastingCycle.stats(all, now: now, calendar: calendar),
+                      streak: FastingEngine.streak(all, now: now, calendar: calendar),
+                      consistency: FastingEngine.consistency(all, now: now, days: 30, calendar: calendar))
+        history = FastingHistoryItem.make(rows: rows, limit: Self.historyLimit)
         patterns = makePatterns(all, now: now)
     }
 
@@ -93,25 +107,29 @@ final class FastingModel {
         ])
     }
 
-    /// The timer card at `date` (the view's TimelineView drives the tick).
+    /// The hero at `date` (the view's TimelineView drives the tick).
     func timer(at date: Date) -> FastingTimerState {
-        .make(active: activeRow.map(FastingInterval.init), lastEnd: lastEnd, now: date)
+        .make(FastingLog.state(rows, now: date), schedule: schedule, lastEnd: lastEnd, now: date)
     }
 
-    // MARK: Intents
+    // MARK: Fasts
 
     func startFast() async {
         let t = now()
         await write { store in _ = try await FastingLog.start(store: store, at: t, now: t, source: .app) }
     }
 
+    /// Ends the fast; the eating window opens at the same instant.
     func stopFast() async {
         let t = now()
         await write { store in _ = try await FastingLog.stop(store: store, at: t) }
     }
 
+    /// A backdated start an hour ago, but never before the last meal of the open window.
     func draftForStartEarlier() -> FastingDraft {
-        FastingDraft(rowID: nil, start: now().addingTimeInterval(-3600), end: nil, canRun: true)
+        var start = now().addingTimeInterval(-3600)
+        if let lastEnd, lastEnd > start { start = min(now(), lastEnd.addingTimeInterval(60)) }
+        return FastingDraft(rowID: nil, start: start, end: nil, canRun: true)
     }
 
     func draft(for row: FastingSessionRow) -> FastingDraft {
@@ -145,15 +163,77 @@ final class FastingModel {
         await write { store in try await FastingLog.delete(store: store, row) }
     }
 
+    // MARK: Eating windows
+
+    func windowDraft(previous: FastingSessionRow, next: FastingSessionRow) -> FastingWindowDraft? {
+        guard let end = previous.endTs else { return nil }
+        return FastingWindowDraft(previous: previous, next: next,
+                                  opens: Date(timeIntervalSince1970: TimeInterval(end)),
+                                  closes: Date(timeIntervalSince1970: TimeInterval(next.startTs)))
+    }
+
+    func problem(with draft: FastingWindowDraft) -> LocalizedStringResource? {
+        FastingStrings.validation(FastingCycle.validateWindow(
+            opens: draft.opens, closes: draft.closes, previous: FastingInterval(draft.previous),
+            next: FastingInterval(draft.next), now: now(), others: intervals))
+    }
+
+    func save(_ draft: FastingWindowDraft) async {
+        guard problem(with: draft) == nil else { return }
+        await write { store in
+            try await FastingLog.saveWindow(store: store, previous: draft.previous, next: draft.next,
+                                            opens: draft.opens, closes: draft.closes)
+        }
+    }
+
+    // MARK: Schedule and reminders
+
     func choosePlan(_ plan: FastingPlan) {
         FastingPreferences.setPlan(plan)
+        scheduleChanged()
+    }
+
+    func setFixedStart(_ on: Bool) {
+        FastingPreferences.usesFixedStart = on
+        scheduleChanged()
+    }
+
+    func setStartMinute(_ minute: Int) {
+        FastingPreferences.startMinute = minute
+        scheduleChanged()
+    }
+
+    func setAutoStart(_ on: Bool) {
+        FastingPreferences.autoStart = on
+        // Arming it must not backfill the window that is already due; it applies from the next one.
+        if on, case .due(let since) = FastingLog.state(rows, now: now()) { FastingPreferences.lastAutoStart = since }
+        scheduleChanged()
+    }
+
+    func setShowOnToday(_ on: Bool) {
+        FastingPreferences.showOnToday = on
+        rebuild()
+        NotificationCenter.default.post(name: FastingLog.didChange, object: nil)
+    }
+
+    func isOn(_ reminder: FastingPreferences.Reminder) -> Bool { _ = settingsRevision; return FastingPreferences.isOn(reminder) }
+    var autoStart: Bool { _ = settingsRevision; return FastingPreferences.autoStart }
+    var showOnToday: Bool { _ = settingsRevision; return FastingPreferences.showOnToday }
+    var startMinute: Int { _ = settingsRevision; return FastingPreferences.startMinute }
+
+    func setReminder(_ reminder: FastingPreferences.Reminder, _ on: Bool) async {
+        let t = now()
+        let outcome = await FastingReminder.setEnabled(reminder, on, state: FastingLog.state(rows, now: t), now: t)
+        deniedReminder = on && outcome == .denied ? reminder : nil
         rebuild()
     }
 
-    func setReminder(_ on: Bool) async {
-        let outcome = await FastingReminder.setEnabled(on, active: activeRow)
-        reminderEnabled = FastingPreferences.reminderEnabled
-        reminderDenied = on && outcome == .denied
+    /// A schedule edit is the user setting a plan, so the Today card turns on with it.
+    private func scheduleChanged() {
+        FastingPreferences.showOnToday = true
+        rebuild()
+        FastingReminder.sync(state: FastingLog.state(rows, now: now()), now: now())
+        NotificationCenter.default.post(name: FastingLog.didChange, object: nil)
     }
 
     /// Runs one write, reloads, and surfaces a failure instead of swallowing it.

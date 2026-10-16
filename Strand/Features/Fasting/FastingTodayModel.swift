@@ -4,51 +4,9 @@ import Observation
 import StrandAnalytics
 import WhoopStore
 
-/// What Today's fasting card shows at one instant. Nothing at all for people who don't use fasting.
-enum FastingTodayState: Equatable {
-    case hidden
-    case running(Running)
-    case next(Next)
-
-    struct Running: Equatable {
-        let progress: Double
-        /// "13h 20min"
-        let elapsed: String
-        /// "Goal at 12:30" or "Goal reached".
-        let status: LocalizedStringResource
-        let goalReached: Bool
-    }
-
-    struct Next: Equatable {
-        /// "from 20:00", or "now" when the planned start has passed.
-        let when: LocalizedStringResource
-    }
-
-    /// A fast counts as "using the feature" when one started in the last week.
-    static let recentWindow: TimeInterval = 7 * 86_400
-
-    static func make(rows: [FastingSessionRow], plan: FastingPlan, now: Date) -> FastingTodayState {
-        let intervals = rows.map(FastingInterval.init)
-        if let active = intervals.first(where: \.isActive) {
-            let s = FastingEngine.status(of: active, now: now)
-            return .running(Running(
-                progress: s.progress,
-                elapsed: FastingFormat.duration(s.elapsed),
-                status: s.goalReached ? FastingTodayStrings.goalReached
-                    : FastingTodayStrings.goalAt(FastingFormat.time(s.goalDate)),
-                goalReached: s.goalReached))
-        }
-        let cutoff = now.addingTimeInterval(-recentWindow)
-        guard intervals.contains(where: { $0.start >= cutoff }),
-              let lastEnd = intervals.compactMap(\.end).max() else { return .hidden }
-        let planned = lastEnd.addingTimeInterval(plan.eatingHours * 3600)
-        return .next(Next(when: planned > now ? FastingTodayStrings.plannedAt(FastingFormat.time(planned))
-                                              : FastingTodayStrings.startNow))
-    }
-}
-
-/// Loads the fasting log for Today's card and starts / stops through `FastingLog`, the same write path
-/// as the Fasting screen and the Shortcuts intents. The card reloads on `FastingLog.didChange`.
+/// Loads the fasting log for Today's card and starts / ends fasts through `FastingLog`, the same write
+/// path as the Fasting screen and the Shortcuts intents. The card reloads on `FastingLog.didChange`.
+/// Loading reconciles (automatic start, reminders), so opening the app keeps the cycle current.
 @Observable @MainActor
 final class FastingTodayModel {
     private(set) var rows: [FastingSessionRow] = []
@@ -59,12 +17,19 @@ final class FastingTodayModel {
     func load(repo: Repository) async {
         self.repo = repo
         guard let store = await repo.storeHandle() else { return }
+        rows = await FastingLog.reconcile(store: store, now: now())
+    }
+
+    /// Reload after another screen wrote; no reconcile (the writer already did).
+    func reload() async {
+        guard let store = await repo?.storeHandle() else { return }
         rows = await FastingLog.load(store: store, now: now())
     }
 
     /// The card at `date`; the card's TimelineView supplies the tick.
     func state(at date: Date) -> FastingTodayState {
-        .make(rows: rows, plan: FastingPreferences.plan, now: date)
+        .make(rows: rows, state: FastingLog.state(rows, now: date),
+              showOnToday: FastingPreferences.showOnToday, now: date)
     }
 
     func start() async { await write { store, t in _ = try await FastingLog.start(store: store, at: t, now: t, source: .app) } }
@@ -83,8 +48,15 @@ enum FastingTodayStrings {
     }
     static func goalAt(_ time: String) -> LocalizedStringResource { r("zoop.today.fasting.goalAt", "Goal at \(time)") }
     static let goalReached = r("zoop.today.fasting.goalReached", "Goal reached")
-    static let nextTitle = r("zoop.today.fasting.next", "Next fast")
-    static func plannedAt(_ time: String) -> LocalizedStringResource { r("zoop.today.fasting.plannedAt", "from \(time)") }
-    static let startNow = r("zoop.today.fasting.now", "now")
+    static func plannedAt(_ time: String) -> LocalizedStringResource { r("zoop.today.fasting.nextAt", "Next fast at \(time)") }
+    static func fastingCaption(_ phase: String) -> LocalizedStringResource {
+        r("zoop.today.fasting.caption", "Fasting · \(phase)")
+    }
+    static let eatingCaption = r("zoop.today.fasting.eatingCaption", "Eating window")
+    static func closesIn(_ left: String) -> LocalizedStringResource { r("zoop.today.fasting.closesIn", "Closes in \(left)") }
+    static func closedCaption(_ time: String) -> LocalizedStringResource {
+        r("zoop.today.fasting.closedCaption", "Eating window closed at \(time)")
+    }
+    static let idleCaption = r("zoop.today.fasting.idleCaption", "Fasting")
 }
 #endif

@@ -48,9 +48,54 @@ enum FastingStrings {
     static func customHours(_ hours: Int) -> LocalizedStringResource {
         r("zoop.fasting.plan.customHours", "\(hours) h fasting")
     }
-    static func eatingWindow(_ from: String, _ to: String) -> LocalizedStringResource {
-        r("zoop.fasting.plan.window", "Eating window \(from)–\(to)")
+
+    // Eating window and cycle
+    static let timeToFast = r("zoop.fasting.timeToFast", "Time to fast")
+    static func nextFastAt(_ when: String) -> LocalizedStringResource { r("zoop.fasting.nextAt", "Next fast \(when)") }
+    static let windowLeft = r("zoop.fasting.window.left", "left to eat")
+    static func windowClosesIn(_ left: String) -> LocalizedStringResource {
+        r("zoop.fasting.window.closesIn", "Eating window closes in \(left)")
     }
+    static func windowOpened(_ time: String) -> LocalizedStringResource { r("zoop.fasting.window.opened", "Open since \(time)") }
+    static func windowClosesAt(_ time: String) -> LocalizedStringResource { r("zoop.fasting.window.closesAt", "Closes \(time)") }
+    static func windowClosedAt(_ time: String) -> LocalizedStringResource {
+        r("zoop.fasting.window.closedAt", "Eating window closed at \(time)")
+    }
+    static let firstMeal = r("zoop.fasting.window.firstMeal", "First meal")
+    static let lastMeal = r("zoop.fasting.window.lastMeal", "Last meal")
+    static let windowEditTitle = r("zoop.fasting.window.editTitle", "Edit eating window")
+    static let windowEditNote = r("zoop.fasting.window.editNote",
+                                  "Moves the end of the fast before and the start of the fast after.")
+
+    // Schedule
+    static let scheduleTitle = r("zoop.fasting.schedule.title", "Schedule")
+    static let flexibleTiming = r("zoop.fasting.schedule.flexible", "Flexible: the eating window starts when you end a fast.")
+    static func fixedTiming(_ time: String) -> LocalizedStringResource {
+        r("zoop.fasting.schedule.fixed", "Fasting starts daily at \(time)")
+    }
+    static let modeLabel = r("zoop.fasting.schedule.mode", "Start")
+    static let modeFlexible = r("zoop.fasting.schedule.mode.flexible", "Flexible")
+    static let modeFixed = r("zoop.fasting.schedule.mode.fixed", "Fixed time")
+    static let fixedStartLabel = r("zoop.fasting.schedule.startAt", "Fast starts at")
+    static let flexibleNote = r("zoop.fasting.schedule.flexibleNote",
+                                "After each fast, the eating window lasts as long as your plan allows.")
+    static let fixedNote = r("zoop.fasting.schedule.fixedNote", "The eating window closes when your next fast is due.")
+    static let autoStartToggle = r("zoop.fasting.schedule.autoStart", "Start the next fast automatically")
+    static let autoStartNote = r("zoop.fasting.schedule.autoStartNote",
+                                 "When the eating window closes, Zoop starts the fast from that time.")
+    static let showOnToday = r("zoop.fasting.schedule.showOnToday", "Show on Today")
+    static let remindersTitle = r("zoop.fasting.reminders.title", "Notifications")
+    static let closingReminderToggle = r("zoop.fasting.reminder.closing.toggle", "Eating window closes in 30 minutes")
+    static let startReminderToggle = r("zoop.fasting.reminder.start.toggle", "Time to start fasting")
+    static let closingReminderTitle = r("zoop.fasting.reminder.closing.title", "Eating window closing soon")
+    static func closingReminderBody(_ left: String) -> LocalizedStringResource {
+        r("zoop.fasting.reminder.closing.body", "Your eating window closes in \(left).")
+    }
+    static let startReminderTitle = r("zoop.fasting.reminder.start.title", "Time to fast")
+    static let startReminderBody = r("zoop.fasting.reminder.start.body",
+                                     "Your eating window has closed. Start your fast in Zoop.")
+    static let startReminderAutoBody = r("zoop.fasting.reminder.start.autoBody",
+                                         "Your eating window has closed; Zoop starts your fast from now.")
     static let reminderToggle = r("zoop.fasting.reminder.toggle", "Notify me when the goal is reached")
     static let reminderDenied = r("zoop.fasting.reminder.denied", "Notifications for Zoop are off in iOS Settings.")
     static let reminderTitle = r("zoop.fasting.reminder.title", "Fasting goal reached")
@@ -73,7 +118,20 @@ enum FastingStrings {
 
     // History
     static let historyTitle = r("zoop.fasting.history.title", "History")
-    static let historyEmpty = r("zoop.fasting.history.empty", "Your finished fasts appear here.")
+    static let historyEmpty = r("zoop.fasting.history.empty", "Your finished fasts and eating windows appear here.")
+    static let historyFast = r("zoop.fasting.history.fast", "Fast")
+    static let historyWindow = r("zoop.fasting.history.window", "Eating window")
+    static let legendFasting = r("zoop.fasting.legend.fasting", "Fasting")
+    static let legendEating = r("zoop.fasting.legend.eating", "Eating window")
+
+    // Stats
+    static let statsEmpty = r("zoop.fasting.stats.empty", "Finish a fast to see your averages.")
+    static let statAverage = r("zoop.fasting.stats.average", "Average fast")
+    static func statAverageWindow(_ d: String) -> LocalizedStringResource {
+        r("zoop.fasting.stats.averageWindow", "Eating window \(d)")
+    }
+    static let statLongest = r("zoop.fasting.stats.longest", "Longest fast")
+    static let statAdherence = r("zoop.fasting.stats.adherence", "Plan adherence")
     static func historyGoal(_ goal: String) -> LocalizedStringResource { r("zoop.fasting.history.goal", "Goal \(goal)") }
 
     // Edit sheet
@@ -127,6 +185,15 @@ enum FastingStrings {
     static let intentAlreadyRunning = r("zoop.fasting.intent.alreadyRunning", "A fast is already running.")
     static func intentStopped(_ duration: String) -> LocalizedStringResource {
         r("zoop.fasting.intent.stopped", "Fast ended after \(duration).")
+    }
+    static func intentStoppedWindow(_ duration: String, _ until: String) -> LocalizedStringResource {
+        r("zoop.fasting.intent.stoppedWindow", "Fast ended after \(duration). Eating window open until \(until).")
+    }
+    static func intentStatusFasting(_ elapsed: String, _ goal: String) -> LocalizedStringResource {
+        r("zoop.fasting.intent.status.fasting", "You have fasted for \(elapsed); goal at \(goal).")
+    }
+    static func intentStatusGoalReached(_ elapsed: String) -> LocalizedStringResource {
+        r("zoop.fasting.intent.status.goalReached", "You have fasted for \(elapsed) and reached your goal.")
     }
     static let intentNotRunning = r("zoop.fasting.intent.notRunning", "No fast is running.")
     static let intentUnavailable = r("zoop.fasting.intent.unavailable", "Open Zoop once, then try again.")

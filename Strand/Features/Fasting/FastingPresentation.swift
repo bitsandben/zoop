@@ -7,7 +7,8 @@ import WhoopStore
 // MARK: - View data for the Fasting screen
 //
 // Pure builders from engine output to what the views draw: every number is formatted here (through
-// `MetricUnit` and `AppClock`), so the views hold no date math and no formatting.
+// `MetricUnit` and `AppClock`), so the views hold no date math and no formatting. The timer, Today and
+// week builders live in FastingCyclePresentation.
 
 enum FastingFormat {
     static var locale: Locale { AppClock.activeLocale }
@@ -35,6 +36,18 @@ enum FastingFormat {
             + ", " + time(date)
     }
 
+    /// "Mon 14 Oct, 20:10 – 12:00", with the end's day only when it differs.
+    static func range(_ start: Date, _ end: Date) -> String {
+        let sameDay = Calendar.current.isDate(start, inSameDayAs: end)
+        return dayAndTime(start) + " – " + (sameDay ? time(end) : dayAndTime(end))
+    }
+
+    /// "20:00" for minutes after midnight, in the user's clock style.
+    static func minuteOfDay(_ minute: Int) -> String {
+        let day = Calendar.current.startOfDay(for: Date())
+        return time(Calendar.current.date(byAdding: .minute, value: minute, to: day) ?? day)
+    }
+
     static func planName(_ plan: FastingPlan) -> LocalizedStringResource {
         if plan.id == FastingPlan.omad.id { return FastingStrings.omad }
         if plan.isCustom { return FastingStrings.customHours(Int(plan.fastingHours)) }
@@ -42,112 +55,66 @@ enum FastingFormat {
     }
 }
 
-/// What the timer card shows at one instant.
-enum FastingTimerState: Equatable {
-    case idle(lastEnded: LocalizedStringResource?)
-    case running(Running)
-
-    struct Running: Equatable {
-        let clock: String
-        let progress: Double
-        /// Ring clock marks: fraction of the goal and the hour label ("12h").
-        let markers: [Marker]
-        let phase: LocalizedStringResource
-        let since: LocalizedStringResource
-        let goal: LocalizedStringResource
-        /// "of 16h" under the clock.
-        let ofGoal: LocalizedStringResource
-        /// "2h 40min to go" or "Goal reached".
-        let status: LocalizedStringResource
-        let goalReached: Bool
-    }
-
-    struct Marker: Equatable, Hashable {
-        let fraction: Double
-        let label: String
-    }
-
-    static func make(active: FastingInterval?, lastEnd: Date?, now: Date) -> FastingTimerState {
-        guard let active else {
-            return .idle(lastEnded: lastEnd.map { FastingStrings.lastEnded(FastingFormat.dayAndTime($0)) })
-        }
-        let s = FastingEngine.status(of: active, now: now)
-        let markers = FastingEngine.markerFractions(goal: s.goal).map {
-            Marker(fraction: $0.fraction, label: FastingFormat.duration($0.hours * 3600))
-        }
-        return .running(Running(
-            clock: FastingFormat.clock(s.elapsed),
-            progress: s.progress,
-            markers: markers,
-            phase: FastingStrings.phase(s.phase),
-            since: FastingStrings.since(FastingFormat.time(active.start)),
-            goal: FastingStrings.goalAt(FastingFormat.time(s.goalDate)),
-            ofGoal: FastingStrings.ofGoal(FastingFormat.duration(s.goal)),
-            status: s.goalReached ? FastingStrings.goalReached
-                : FastingStrings.remaining(FastingFormat.duration(s.remaining)),
-            goalReached: s.goalReached))
-    }
-}
-
-/// The plan card: name, split and (when there is an anchor) today's eating window.
-struct FastingPlanSummary: Equatable {
+/// The schedule card: plan name, split and when fasts start.
+struct FastingScheduleSummary: Equatable {
     let name: LocalizedStringResource
     let split: LocalizedStringResource
-    let window: LocalizedStringResource?
+    let timing: LocalizedStringResource
 
-    /// The eating window opens when the running fast reaches its goal, or when the last fast ended.
-    static func make(plan: FastingPlan, active: FastingInterval?, lastEnd: Date?, now: Date) -> FastingPlanSummary {
-        let opens = active.map { $0.start.addingTimeInterval($0.goal) } ?? lastEnd
-        let closes = opens?.addingTimeInterval(plan.eatingHours * 3600)
-        var window: LocalizedStringResource?
-        if let opens, let closes, closes > now, plan.eatingHours > 0 {
-            window = FastingStrings.eatingWindow(FastingFormat.time(opens), FastingFormat.time(closes))
+    static func make(_ schedule: FastingSchedule) -> FastingScheduleSummary {
+        let plan = schedule.plan
+        let timing: LocalizedStringResource
+        switch schedule.mode {
+        case .flexible: timing = FastingStrings.flexibleTiming
+        case .fixed(let minute): timing = FastingStrings.fixedTiming(FastingFormat.minuteOfDay(minute))
         }
-        return FastingPlanSummary(name: FastingFormat.planName(plan),
-                                  split: FastingStrings.split(fasting: Int(plan.fastingHours),
-                                                              eating: Int(plan.eatingHours)),
-                                  window: window)
+        return FastingScheduleSummary(name: FastingFormat.planName(plan),
+                                      split: FastingStrings.split(fasting: Int(plan.fastingHours),
+                                                                  eating: Int(plan.eatingHours)),
+                                      timing: timing)
     }
 }
 
-struct FastingWeekBar: Identifiable, Equatable {
-    var id: Date { day }
-    let day: Date
-    let hours: Double
-    let met: Bool
-}
-
-struct FastingWeek: Equatable {
-    let bars: [FastingWeekBar]
-    let goalHours: Double
-    let takeaway: LocalizedStringResource
-    let isEmpty: Bool
-
-    static func make(_ days: [FastingDay], plan: FastingPlan) -> FastingWeek {
-        let bars = days.map { FastingWeekBar(day: $0.dayStart, hours: $0.fasted / 3600, met: $0.met) }
-        let logged = days.filter { $0.goal != nil }
-        return FastingWeek(bars: bars, goalHours: plan.fastingHours,
-                           takeaway: logged.isEmpty ? FastingStrings.weekEmpty
-                               : FastingStrings.weekTakeaway(met: days.filter(\.met).count, days: days.count),
-                           isEmpty: logged.isEmpty)
-    }
-}
-
+/// One history row: a finished fast or a logged eating window between two fasts.
 struct FastingHistoryItem: Identifiable, Equatable {
-    var id: String { row.id }
-    let row: FastingSessionRow
-    let when: String
-    let duration: String
-    let goalMet: Bool
-    let goal: LocalizedStringResource
+    enum Kind: Equatable {
+        case fast(FastingSessionRow)
+        case window(previous: FastingSessionRow, next: FastingSessionRow)
+    }
 
-    static func make(_ row: FastingSessionRow) -> FastingHistoryItem? {
-        let interval = FastingInterval(row)
-        guard let end = interval.end else { return nil }
-        return FastingHistoryItem(row: row, when: FastingFormat.dayAndTime(end),
-                                  duration: FastingFormat.duration(end.timeIntervalSince(interval.start)),
-                                  goalMet: interval.metGoal,
-                                  goal: FastingStrings.historyGoal(FastingFormat.duration(interval.goal)))
+    let id: String
+    let kind: Kind
+    let sortDate: Date
+    let title: LocalizedStringResource
+    let duration: String
+    let when: String
+    /// "Goal reached" / "Goal 16h" for fasts, nil for windows.
+    let goal: LocalizedStringResource?
+    let goalMet: Bool
+
+    var isWindow: Bool { if case .window = kind { return true } else { return false } }
+
+    /// Fasts and the windows between them, newest first.
+    static func make(rows: [FastingSessionRow], limit: Int) -> [FastingHistoryItem] {
+        let byID = Dictionary(rows.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let fasts: [FastingHistoryItem] = rows.compactMap { row in
+            let i = FastingInterval(row)
+            guard let end = i.end else { return nil }
+            return FastingHistoryItem(
+                id: row.id, kind: .fast(row), sortDate: end, title: FastingStrings.historyFast,
+                duration: FastingFormat.duration(end.timeIntervalSince(i.start)),
+                when: FastingFormat.range(i.start, end),
+                goal: i.metGoal ? FastingStrings.goalReached : FastingStrings.historyGoal(FastingFormat.duration(i.goal)),
+                goalMet: i.metGoal)
+        }
+        let windows: [FastingHistoryItem] = FastingCycle.eatingWindows(rows.map(FastingInterval.init)).compactMap { w in
+            guard let p = byID[w.previousID], let n = byID[w.nextID] else { return nil }
+            return FastingHistoryItem(
+                id: w.id, kind: .window(previous: p, next: n), sortDate: w.closes, title: FastingStrings.historyWindow,
+                duration: FastingFormat.duration(w.length), when: FastingFormat.range(w.opens, w.closes),
+                goal: nil, goalMet: false)
+        }
+        return Array((fasts + windows).sorted { $0.sortDate > $1.sortDate }.prefix(limit))
     }
 }
 
